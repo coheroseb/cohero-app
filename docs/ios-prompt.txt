@@ -1,0 +1,80 @@
+# Prompt til Generering af Cohéro iOS App
+
+## App Navn
+Cohéro
+
+## Platform
+Native iOS (iPhone & iPad)
+
+## Kernekoncept
+En AI-drevet digital lærings- og træningsplatform for socialrådgiverstuderende i Danmark. Appen skal fungere som en "digital fagfælle" og bygge bro mellem teori og praksis ved at tilbyde et trygt, kollegialt rum til at træne færdigheder, reflektere og opbygge professionel selvtillid.
+
+## Teknologisk Stack
+-   **UI Framework:** SwiftUI (Prioriter et rent, moderne og deklarativt design).
+-   **Sprog:** Swift.
+-   **Arkitektur:** MVVM (Model-View-ViewModel).
+-   **Backend & Database:** Firebase (Firestore, Authentication, Storage) via det officielle Firebase iOS SDK.
+-   **Abonnement:** RevenueCat til håndtering af in-app køb via App Store.
+-   **AI:** Opkald til eksisterende Genkit-backend via Firebase Callable Functions.
+
+## Design & UX Guidelines
+Appen skal føles som en ægte iOS-app og følge Apples Human Interface Guidelines.
+-   **Farver:**
+    -   Primary: Dyb indigo (#4B0082) til primære knapper og navigationselementer.
+    -   Background: Meget lys lavendel (#F0E6EF) til skærmbaggrunde.
+    -   Accent: Violet (#8F00FF) til interaktive elementer.
+-   **Font:** Brug system-fontet (San Francisco) og efterlign "Inter"s vægt og stil for et rent udtryk.
+-   **Ikoner:** Brug udelukkende SF Symbols for et konsistent, platform-native look.
+-   **Navigation:** En primær `TabView` i bunden til hovedsektionerne. `NavigationView` (eller `NavigationStack` i nyere SwiftUI) til at håndtere navigation i dybden.
+-   **Komponenter:** Brug native SwiftUI-komponenter som `List`, `Form`, `Button`, `TextField` osv. Undgå custom UI, der ikke føles hjemmevant på iOS.
+
+## App Struktur & Kernefunktioner
+
+Appen skal organiseres omkring en `TabView` med følgende fem faner:
+
+### 1. Portal (Hjem)
+-   **Skærm:** "PortalView"
+-   **Indhold:** Et personaliseret dashboard, der byder brugeren velkommen.
+-   Viser brugerens navn, medlemsstatus og Cohéro Points.
+-   En "Kom i gang"-sektion, der linker til 2-3 centrale værktøjer.
+-   Et lille feed med de seneste aktiviteter fra "Opslagstavlen".
+
+### 2. Værktøjer
+-   **Skærm:** "ToolsView"
+-   **Indhold:** En `List` eller `Grid` med adgang til de AI-drevne træningsværktøjer:
+    -   **Case-træner:** En guidet, trin-for-trin oplevelse.
+    -   **Journal-træner:** En skærm med et scenarie og et tekstfelt til journalnotat.
+    -   **Refleksionslog:** Simpelt tekst-input, der kalder AI for at få sokratiske spørgsmål.
+    -   **Eksamens-Arkitekten:** En formular-baseret skærm til at generere en opgave-disposition.
+    -   **Second Opinion (Kollega+):** En skærm til at uploade dokumenter (via `FileImporter`).
+    -   **Seminar-Arkitekten:** En skærm til at uploade seminar-PDF'er.
+
+### 3. Viden
+-   **Skærm:** "KnowledgeView"
+-   **Indhold:** En sektion med adgang til vidensbanken:
+    -   **Lovportal:** En søgbar `List` over love. Ved valg vises lovteksten, hvor man kan trykke på en paragraf for at få en AI-forklaring.
+    -   **Begrebsguide:** En søgbar `List` over faglige begreber og metoder.
+    -   **Studieteknikker:** En `List` med artikler.
+
+### 4. Fællesskab
+-   **Skærm:** "CommunityView"
+-   **Indhold:** Funktioner der styrker fællesskabet:
+    -   **Opslagstavle:** En `List` der viser posts. Mulighed for at oprette, like og kommentere. Anonyme posts skal understøttes.
+    -   **Memento:** En gamified quiz-oplevelse.
+
+### 5. Min Profil
+-   **Skærm:** "SettingsView"
+-   **Indhold:** Håndtering af brugerens konto:
+    -   Vis og rediger profiloplysninger (navn, semester, studiested).
+    -   Administrer abonnement (link til RevenueCat/App Store-abonnementsside).
+    -   Log ud-knap.
+
+## Firebase Integration (iOS SDK)
+-   **Authentication:** Implementer login med e-mail/password og "Sign in with Apple". Brugeroprettelse skal følge den eksisterende logik for at oprette et `user` dokument i Firestore.
+-   **Firestore:** Alle data skal læses fra og skrives til den eksisterende Firestore-database. Brug `Firebase/FirestoreSwift` til at mappe dokumenter til Swift `Codable` structs.
+-   **Sikkerhedsregler:** Appen skal respektere de eksisterende Firestore-sikkerhedsregler. Vis kun UI-elementer, som brugeren har rettigheder til (f.eks. slet-knap på egne kommentarer).
+
+## Abonnement & Monetization
+-   **RevenueCat:** Integrer RevenueCat SDK'et til at håndtere al logik omkring in-app køb.
+-   **Entitlements:** Brug RevenueCats "entitlements" til at låse op for premium-funktioner (f.eks. ubegrænset brug af værktøjer, adgang til "Second Opinion"). Appen skal tjekke brugerens aktive "entitlement" for at vise/skjule funktioner.
+-   **Paywalls:** Præsenter en simpel, informativ "paywall"-skærm, når en bruger forsøger at tilgå en premium-funktion uden det rette abonnement.

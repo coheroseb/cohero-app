@@ -1,0 +1,35 @@
+Funktionsbeskrivelse: Folketinget Direkte
+
+**Formål:**
+"Folketinget Direkte"-værktøjet er designet til at bygge bro mellem den politiske proces på Christiansborg og den socialfaglige praksis. Det giver socialrådgiverstuderende direkte adgang til de nyeste sager fra Folketinget, herunder lovforslag, beslutningsforslag og redegørelser. Formålet er at gøre det nemt og hurtigt at forstå relevansen af aktuel lovgivning for socialt arbejde.
+
+**Kernefunktioner:**
+
+1.  **Automatisk Liste over Sager:**
+    *   Platformen henter automatisk en opdateret liste over de seneste sager fra Folketingets åbne data API.
+    *   Listen viser sagens titel, nummer, type (f.eks. Lovforslag) og seneste opdateringsdato.
+
+2.  **Sagsdetaljer og Dokumenter:**
+    *   Ved at klikke på en sag, kan brugeren folde den ud og se sagens officielle resumé samt en tidslinje over sagsforløbet (sagstrin).
+    *   En "Vis dokumenter"-knap henter dynamisk en liste over alle tilknyttede dokumenter (betænkninger, bilag etc.), som kan åbnes direkte som PDF.
+
+3.  **AI-Analyse: "Forklar Sagen" (Kollega+ funktion):**
+    *   En AI-assistent analyserer sagens resumé og titel for at give en pædagogisk forklaring, der dækker:
+        *   **Hvad sagen handler om:** En letforståelig opsummering.
+        *   **Relevans for socialrådgivere:** Konkrete implikationer for den faglige praksis.
+        *   **Hovedpointer:** De vigtigste punkter i sagen.
+
+4.  **AI-Opgavehjælp: "Brug som Opgavegrundlag" (Kollega+ funktion):**
+    *   Denne funktion integrerer en sag direkte med "Eksamens-Arkitekten".
+    *   Ved et klik analyserer AI'en sagen og genererer en komplet "byggeplan" til en eksamensopgave, inklusive:
+        *   Et forslag til en skarp problemformulering.
+        *   En struktureret disposition for opgaven.
+        *   Forslag til relevant teori og litteratur.
+
+5.  **Fællesskabsintegration: "Start Debat" (Kollega+ funktion):**
+    *   Gør det muligt for brugeren at tage en sag direkte til "Opslagstavlen".
+    *   Funktionen opretter automatisk et udkast til et debatindlæg med sagens titel og et link, så brugeren nemt kan starte en faglig diskussion med sine medstuderende.
+
+**Adgangsniveauer:**
+*   **Kollega (Gratis):** Brugere kan se de seneste 5 sager på listen. Analyse- og debatfunktionerne er deaktiverede.
+*   **Kollega+ (Premium):** Brugere har fuld adgang til alle sager og alle AI-drevne funktioner ("Forklar Sagen", "Brug som Opgavegrundlag", "Start Debat").

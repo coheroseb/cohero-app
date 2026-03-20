@@ -1,0 +1,160 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* =========================
+       Helper Functions
+    ========================== */
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    /* =========================
+       Global Collections
+    ========================== */
+    
+    // Simplest possible admin rule at top
+    match /{path=**} {
+      allow read, write: if isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /laws/{lawId} {
+      allow read: if true;
+    }
+
+    match /groups/{groupId} {
+      function isGroupMember() {
+        let group = get(/databases/$(database)/documents/groups/$(groupId)).data;
+        return isSignedIn() && (
+          group.creatorId == request.auth.uid ||
+          request.auth.uid in group.get('memberIds', [])
+        );
+      }
+      allow read: if isSignedIn() && (resource.data.creatorId == request.auth.uid || request.auth.uid in resource.data.get('memberIds', []));
+      allow create: if isSignedIn() && request.resource.data.memberIds.size() == 1 && request.resource.data.memberIds[0] == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.creatorId == request.auth.uid || request.auth.uid in resource.data.get('memberIds', []));
+      allow delete: if isSignedIn() && (resource.data.creatorId == request.auth.uid);
+
+      match /members/{memberId} {
+        allow read: if isSignedIn();
+        allow write: if (isSignedIn() && (
+          get(/databases/$(database)/documents/groups/$(groupId)).data.creatorId == request.auth.uid ||
+          request.auth.uid == memberId ||
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.get('memberIds', [])
+        ));
+      }
+      match /tasks/{taskId} { allow read, write: if isGroupMember(); }
+      match /evidence/{evidenceId} { allow read, write: if isGroupMember(); }
+      match /contacts/{contactId} { allow read, write: if isGroupMember(); }
+      match /availability/{userId} { allow read: if isGroupMember(); allow write: if isOwner(userId); }
+      match /mindMapNodes/{mindMapNodeId} { allow read, write: if isGroupMember(); }
+      match /mindMapConnections/{mindMapConnectionId} { allow read, write: if isGroupMember(); }
+    }
+
+    match /surveys/{surveyId} {
+      allow read: if isSignedIn();
+      match /responses/{userId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.surveyId == surveyId;
+      }
+    }
+
+    match /dilemmas/{dilemmaId} {
+      allow read: if isSignedIn();
+      match /votes/{voteId} {
+        allow read, get: if isOwner(voteId);
+        allow create: if isOwner(voteId) && request.resource.data.userId == voteId;
+      }
+    }
+
+    match /dilemmaResults/{dilemmaId} { allow read: if true; }
+
+    match /userActivities/{activityId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+    }
+
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isSignedIn() && (request.resource.data.keys().hasOnly(['likeCount']) || request.resource.data.keys().hasOnly(['commentCount']));
+      allow delete: if isOwner(resource.data.authorId);
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+        allow delete: if (isSignedIn() && resource.data.authorId == request.auth.uid);
+      }
+      match /likes/{userId} { allow read: if isSignedIn(); allow create, delete: if isOwner(userId); }
+    }
+
+    match /followedSager/{followId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(request.resource.data.userId);
+      allow delete: if isOwner(request.resource.data.userId);
+      allow update: if isOwner(request.resource.data.userId);
+    }
+
+    match /redemptionCodes/{codeId} {
+      allow get: if isSignedIn();
+      allow update: if isSignedIn() && resource.data.redeemedBy == null && request.resource.data.redeemedBy == request.auth.uid;
+    }
+
+    match /partnerDomains/{domainId} { allow read: if isSignedIn(); }
+    match /lawExplanations/{explanationId} { allow read: if true; allow create: if isSignedIn(); }
+    match /conceptExplanations/{explanationId} { allow read: if true; allow create: if isSignedIn(); }
+    match /techniques/{techniqueId} { allow read: if true; }
+    match /waitlist/{email} { allow create: if request.resource.data.email == email; }
+    match /teamReflections/{reflectionId} { allow read: if true; }
+    match /books/{bookId} { allow read: if true; }
+    match /reforms/{reformId} { allow read: if isSignedIn(); }
+    match /teamMembers/{memberId} { allow read: if true; }
+    match /highlightedSager/{sagId} { allow read: if isSignedIn(); }
+    match /pageViews/{viewId} { allow create: if isOwner(request.resource.data.userId); }
+
+    match /qr_tables/{tableId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+        match /presence/{userId} {
+            allow read: if true;
+            allow write: if isOwner(userId);
+        }
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; 
+      allow create: if isOwner(userId) && request.resource.data.role == 'user';
+      allow update: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role);
+      allow delete: if isOwner(userId);
+
+      match /collections/{collectionId} { allow read, write: if isOwner(userId); }
+      match /studyRegulations/{regulationId} { allow read, write: if isOwner(userId); }
+      match /highlights/{highlightId} { allow read, write: if isOwner(userId); }
+      match /cases/{caseId} { allow read, write: if isOwner(userId); }
+      match /secondOpinions/{opinionId} { allow read, write: if isOwner(userId); }
+      match /tokenUsage/{usageId} { allow create: if isOwner(userId); }
+      match /blueprints/{blueprintId} { allow read, write: if isOwner(userId); }
+      match /seminars/{seminarId} { allow read, write: if isOwner(userId); }
+      match /semesterPlans/{planId} { allow read, write: if isOwner(userId); }
+      match /studySchedules/{scheduleId} { allow read, write: if isOwner(userId); }
+      match /journalScenarios/{scenarioId} { allow read, write: if isOwner(userId); }
+      match /practiceGuides/{guideId} { allow read, write: if isOwner(userId); }
+      match /reflections/{reflectionId} { allow read, write: if isOwner(userId); }
+      match /savedViveArticles/{articleId} { allow read, write: if isOwner(userId); }
+      match /readDocuments/{docId} { allow read, write: if isOwner(userId); }
+      match /savedParagraphs/{savedId} { allow read, write: if isOwner(userId); }
+      match /quizResults/{resultId} { allow read, write: if isOwner(userId); }
+    }
+  }
+}

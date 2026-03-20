@@ -1,0 +1,93 @@
+# Prompt til Generering af en App som Cohéro
+
+## App Navn
+PlatformFlow
+
+## Kernekoncept
+En AI-drevet digital lærings- og træningsplatform for socialrådgiverstuderende i Danmark. Missionen er at bygge bro mellem teori og praksis ved at tilbyde et trygt, kollegialt rum, hvor studerende kan træne faglige færdigheder, reflektere over deres praksis og opbygge professionel selvtillid. Platformen skal fungere som en "digital fagfælle" snarere end en tutor, der giver facit.
+
+## Målgruppe
+Primært socialrådgiverstuderende i Danmark. Sekundært nyuddannede socialrådgivere og studerende fra beslægtede professioner (pædagog, lærer, sygeplejerske).
+
+## Style Guidelines
+-   **Primærfarve:** Dyb indigo (#4B0082)
+-   **Baggrundsfarve:** Meget lys lavendel (#F0E6EF)
+-   **Accentfarve:** Violet (#8F00FF)
+-   **Font:** 'Inter' (sans-serif)
+-   **Ikoner:** Simple, outlined ikoner (f.eks. fra Lucide React).
+-   **Layout:** Grid-baseret, moderne og luftigt.
+-   **Tone-of-voice:** Professionel, støttende, opmuntrende og kollegial.
+
+## Teknisk Stack
+-   **Frontend:** Next.js (App Router), React, TypeScript.
+-   **Styling:** Tailwind CSS med ShadCN UI-komponenter.
+-   **Backend & Database:** Firebase (Firestore, Authentication, Storage).
+-   **AI:** Genkit med Google Gemini-modeller.
+-   **Betaling:** Stripe til håndtering af abonnementer.
+-   **E-mail:** Resend til transaktionelle e-mails.
+
+## Kernefunktioner
+
+### 1. Træningsværktøjer (AI-drevne)
+-   **Case-træner:**
+    -   AI genererer realistiske, fiktive socialfaglige scenarier baseret på et valgt emne (f.eks. "Børn og unge").
+    -   Brugeren stilles over for et dilemma med 3 handlemuligheder.
+    -   Efter valget forklarer AI'en konsekvensen og de faglige trade-offs.
+    -   Efter endt case giver AI'en feedback fra 3 personaer: "Den Juridiske", "Den Erfarne" og "Den Travle".
+
+-   **Journal-træner:**
+    -   Brugeren skriver et journalnotat baseret på et AI-genereret scenarie.
+    -   AI'en giver feedback på notatet ud fra de samme tre personaer, med fokus på objektivitet, faglig præcision og anvendelighed.
+
+-   **Refleksionslog:**
+    -   Brugeren skriver en fri refleksion om en oplevelse.
+    -   AI'en stiller 3-4 sokratiske spørgsmål for at fremme dybere refleksion og identificerer centrale faglige begreber i teksten.
+
+-   **Eksamens-Arkitekten:**
+    -   Brugeren indtaster opgaveemne og problemformulering.
+    -   AI'en genererer en "byggeplan" for opgaven med forslag til struktur, afsnitsvægtning, relevant teori og råd til "den røde tråd".
+
+-   **Second Opinion:**
+    -   Brugeren uploader studieordning, eksamensregler og deres egen opgavebesvarelse.
+    -   AI'en giver en neutral vurdering af, om der er fagligt grundlag for en karakterklage, inklusiv en analyse af styrker/svagheder og en risikovurdering.
+
+-   **Seminar-Arkitekten:**
+    -   Brugeren uploader slides fra et seminar (PDF).
+    -   AI'en analyserer teksten og omdanner den til strukturerede "Videnskort" med resuméer, nøglebegreber og juridiske henvisninger pr. slide.
+
+### 2. Vidensbank
+-   **Lovportal:**
+    -   En søgbar database over centrale love (Barnets Lov, Serviceloven, Forvaltningsloven etc.).
+    -   AI-funktion til at forklare enkelte paragraffer pædagogisk: 1) Kerneindhold, 2) Betydning for praksis, 3) Forhold til andre paragraffer.
+
+-   **Begrebsguide & Modelguide:**
+    -   En søgbar guide til centrale faglige begreber og metoder (f.eks. "Anerkendelse", "ICS-modellen").
+    -   AI giver dybdegående, praksisnære forklaringer. Visse modeller visualiseres interaktivt.
+
+-   **Studieteknikker:**
+    -   En samling af artikler med læse- og skriveteknikker, der er relevante for studiet.
+
+### 3. Fællesskab & Gamification
+-   **Opslagstavle:**
+    -   Et forum, hvor studerende kan diskutere faglige emner, stille spørgsmål og dele viden.
+    -   Mulighed for at poste anonymt.
+    -   Likes og kommentarer.
+-   **Memento (Huskespil):**
+    -   Gamified træning af paratviden, hvor brugere matcher f.eks. teoretikere med deres begreber eller paragraffer med deres indhold.
+-   **Badges & Streaks:**
+    -   Brugere tildeles mærkater (f.eks. "Early Bird") og kan opbygge en "streak" for daglige udfordringer.
+
+## Brugerhåndtering og Abonnement (Monetization)
+-   **Firebase Authentication:** Brugernavn/adgangskode og Google-login.
+-   **Firestore Database:**
+    -   En `users` collection, hvor hver brugers dokument-ID er deres Firebase UID.
+    -   Sikkerhedsregler skal sikre, at brugere kun kan læse og skrive til deres egne data.
+    -   Sub-collections under hver bruger til personligt indhold (f.eks. `/users/{userId}/cases/{caseId}`).
+    -   Offentlige collections (f.eks. `posts`) med separate sikkerhedsregler.
+-   **Abonnementsniveauer (via Stripe):**
+    1.  **Kollega (Gratis):** Begrænset daglig/ugentlig/månedlig brug af de fleste værktøjer.
+    2.  **Kollega+ (Månedsabonnement):** Ubegrænset brug af de fleste værktøjer (med højere daglige grænser for træningsværktøjer) og adgang til premium indhold som "Second Opinion".
+    3.  **Semesterpakken (Forudbetalt for 5 mdr.):** Samme fordele som Kollega+, men til en reduceret pris.
+    4.  **Kollega++ (Premium Månedsabonnement):** Alt fra Kollega+ samt personlig sparring med en rigtig socialrådgiver/konsulent.
+-   **Partneraftaler:**
+    -   Mulighed for at institutioner (f.eks. uddannelsessteder, kommuner) kan købe adgang til deres studerende/praktikanter via en domæne-baseret løsning (f.eks. alle med en `@via.dk` mail får automatisk Kollega+).

@@ -1,0 +1,190 @@
+
+{
+  "entities": {
+    "Group": {
+      "title": "Group",
+      "description": "Represents a study group created by a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "memberIds": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "List of user UIDs who are members of this group."
+        },
+        "membersCount": { "type": "number" },
+        "finalDeadline": { "type": "string", "format": "date", "description": "The overall deadline for the group's project." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "creatorId", "memberIds", "createdAt"]
+    },
+    "GroupMember": {
+      "title": "Group Member",
+      "description": "A member of a study group.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "User UID" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "member"] },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "joinedAt"]
+    },
+    "GroupTask": {
+      "title": "Group Task",
+      "description": "A task within a study group.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["todo", "in-progress", "done"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "subtasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "text": { "type": "string" },
+              "completed": { "type": "boolean" }
+            }
+          }
+        },
+        "dueDate": { "type": "string", "format": "date" },
+        "startDate": { "type": "string", "format": "date" },
+        "assignedToId": { "type": "string" },
+        "assignedToName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "status", "createdAt"]
+    },
+    "GroupEvidence": {
+      "title": "Group Evidence",
+      "description": "Empirical data collected by the study group.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["interview", "survey", "observation", "document", "other"] },
+        "url": { "type": "string", "format": "uri" },
+        "addedById": { "type": "string" },
+        "addedByName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "type", "addedById", "createdAt"]
+    },
+    "GroupContact": {
+      "title": "Group Contact",
+      "description": "A contact relevant to the study group (e.g., informant, partner).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "organization": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "notes": { "type": "string" },
+        "addedById": { "type": "string" },
+        "addedByName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "addedById", "createdAt"]
+    },
+    "MemberAvailability": {
+      "title": "Member Availability",
+      "description": "Detailed availability for a specific group member including time of day and mode.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "User UID" },
+        "username": { "type": "string" },
+        "icalUrl": { "type": "string", "format": "uri", "description": "The URL to the user's iCal feed." },
+        "slots": {
+          "type": "object",
+          "description": "Keys follow the pattern 'day-timeslot' (e.g., 'mandag-morning'). Values are 'physical', 'online', 'unavailable', or null."
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["slots", "updatedAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": { "$ref": "#/backend/entities/User" },
+          "description": "Stores user profile information.",
+          "params": [{ "name": "userId" }]
+        }
+      },
+      {
+        "path": "/groups/{groupId}",
+        "definition": {
+          "entityName": "Group",
+          "schema": { "$ref": "#/backend/entities/Group" },
+          "description": "Stores study group metadata.",
+          "params": [{ "name": "groupId" }]
+        }
+      },
+      {
+        "path": "/groups/{groupId}/members/{memberId}",
+        "definition": {
+          "entityName": "GroupMember",
+          "schema": { "$ref": "#/backend/entities/GroupMember" },
+          "description": "Members of a study group.",
+          "params": [{ "name": "groupId" }, { "name": "memberId" }]
+        }
+      },
+      {
+        "path": "/groups/{groupId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "GroupTask",
+          "schema": { "$ref": "#/backend/entities/GroupTask" },
+          "description": "Shared tasks within a study group.",
+          "params": [{ "name": "groupId" }, { "name": "taskId" }]
+        }
+      },
+      {
+        "path": "/groups/{groupId}/evidence/{evidenceId}",
+        "definition": {
+          "entityName": "GroupEvidence",
+          "schema": { "$ref": "#/backend/entities/GroupEvidence" },
+          "description": "Empirical data collected by the group.",
+          "params": [{ "name": "groupId" }, { "name": "evidenceId" }]
+        }
+      },
+      {
+        "path": "/groups/{groupId}/contacts/{contactId}",
+        "definition": {
+          "entityName": "GroupContact",
+          "schema": { "$ref": "#/backend/entities/GroupContact" },
+          "description": "Contacts related to the group.",
+          "params": [{ "name": "groupId" }, { "name": "contactId" }]
+        }
+      },
+      {
+        "path": "/groups/{groupId}/availability/{userId}",
+        "definition": {
+          "entityName": "MemberAvailability",
+          "schema": { "$ref": "#/backend/entities/MemberAvailability" },
+          "description": "Detailed availability for a member.",
+          "params": [{ "name": "groupId" }, { "name": "userId" }]
+        }
+      }
+    ]
+  }
+}
