@@ -43,6 +43,8 @@ import { generateWelcomeEmail } from './flows/generate-welcome-email-flow';
 import { getLawContent } from './flows/get-law-content-flow';
 import { getIntroCaseConsequence } from './flows/intro-case-consequence-flow';
 import { journalSynthesisFeedback } from './flows/journal-synthesis-feedback-flow';
+import { getRelevantLawContextFlow } from './flows/law-context-wrapper-flow';
+import { getSpecificLawContextFlow } from './flows/law-context-wrapper-flow';
 import { getLivePortfolioFeedback } from './flows/live-portfolio-feedback-flow';
 import { getMythBusterResponse } from './flows/myth-buster-flow';
 import { oralExamAnalysis } from './flows/oral-exam-analysis-flow';
@@ -157,6 +159,10 @@ export const allFlows: Record<string, any> = {
   "getIntroCaseConsequence": getIntroCaseConsequence,
   "journalSynthesisFeedbackFlow": journalSynthesisFeedback,
   "journalSynthesisFeedback": journalSynthesisFeedback,
+  "getRelevantLawContextFlowFlow": getRelevantLawContextFlow,
+  "getRelevantLawContextFlow": getRelevantLawContextFlow,
+  "getSpecificLawContextFlowFlow": getSpecificLawContextFlow,
+  "getSpecificLawContextFlow": getSpecificLawContextFlow,
   "getLivePortfolioFeedbackFlow": getLivePortfolioFeedback,
   "getLivePortfolioFeedback": getLivePortfolioFeedback,
   "getMythBusterResponseFlow": getMythBusterResponse,

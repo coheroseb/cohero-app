@@ -7,7 +7,7 @@ import { Brain, ArrowLeft, Sparkles, MessageSquare, PenTool, ShieldCheck, Lightb
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, writeBatch, serverTimestamp, increment, collection, query, orderBy, addDoc, getDoc } from 'firebase/firestore';
-import { getSocraticReflection as getSocraticReflectionAction } from '@/ai/flows/sokratisk-refleksion/flow';
+import { getSocraticReflectionAction } from '@/app/actions';
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';

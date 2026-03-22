@@ -115,7 +115,6 @@ import type Stripe from 'stripe';
 // Third-party and utility imports
 import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { Resend } from 'resend';
-import { getRelevantLawContext, getSpecificLawAndGuidelinesContext } from '@/lib/law-context-helper';
 
 import { headers } from 'next/headers';
 import { promises as fs } from 'fs';
@@ -242,7 +241,8 @@ export async function syncCalendarAvailability(
 export async function recommendContentAction(input: any) { return callFirebaseFlow('recommendContentFlow', input); }
 
 export async function generateNewCase(input: { topic: string }): Promise<any> {
-    const lawContext = await getRelevantLawContext(input.topic);
+    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
+    const lawContext = fetchRes.data;
     return callFirebaseFlow('generateCaseFlow', { topic: input.topic, lawContext });
 }
 
@@ -251,12 +251,14 @@ export const generateCaseAction = generateNewCase;
 export async function getSecondOpinionAction(input: any) { return callFirebaseFlow('getSecondOpinionFlow', input); }
 
 export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string }): Promise<any> {
-    const lawContext = await getRelevantLawContext(input.topic);
+    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
+    const lawContext = fetchRes.data;
     return callFirebaseFlow('journalSynthesisFeedbackFlow', { ...input, lawContext });
 }
 
 export async function getCaseFeedbackAction(input: { topic: string, scenario: string, initialObservation: string, assessment: string, goals: string, actionPlan: string }): Promise<Types.CaseFeedbackOutput> {
-    const lawContext = await getRelevantLawContext(input.topic);
+    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
+    const lawContext = fetchRes.data;
     return callFirebaseFlow('getCaseFeedbackFlow', { ...input, lawContext });
 }
 
@@ -281,7 +283,8 @@ export async function extractLawInfoAction(input: any) { return callFirebaseFlow
 export async function getLawContentAction(input: any) { return callFirebaseFlow('getLawContentFlow', input); }
 
 export async function explainLawParagraphAction(input: { lawId: string, lovTitel: string, paragrafNummer: string, paragrafTekst: string }): Promise<Types.ExplainLawParagraphOutput> {
-    const lawContext = await getSpecificLawAndGuidelinesContext({ id: input.lawId, name: input.lovTitel });
+    const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: input.lawId, name: input.lovTitel });
+    const lawContext = fetchRes.data;
     return callFirebaseFlow('explainLawParagraphFlow', {
         lovTitel: input.lovTitel,
         paragrafNummer: input.paragrafNummer,
@@ -365,7 +368,8 @@ export async function generateQuizAction(input: { topic: string, numQuestions: n
     if (input.lawId) {
         // This helper fetches both the main law and all its associated guidelines
         // including their XML URLs as text in the prompt.
-        lawContext = await getSpecificLawAndGuidelinesContext({ id: input.lawId, name: input.topic });
+        const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: input.lawId, name: input.topic });
+        lawContext = fetchRes.data;
     }
 
     return callFirebaseFlow('generateQuizFlow', {
@@ -401,12 +405,14 @@ export async function explainFolketingetSagAction(input: any) { return callFireb
 export async function oralExamAnalysisAction(input: any) { return callFirebaseFlow('oralExamAnalysisFlow', input); }
 
 export async function generateRawCaseSourcesAction(input: { topic: string }): Promise<any> {
-    const lawContext = await getRelevantLawContext(input.topic);
+    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
+    const lawContext = fetchRes.data;
     return callFirebaseFlow('generateRawCaseSourcesFlow', { topic: input.topic, lawContext });
 }
 
 export async function simulateStartAction(input: { theme: string, userName: string, currentDateStr: string }): Promise<any> {
-    const lawContext = await getRelevantLawContext(input.theme);
+    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.theme });
+    const lawContext = fetchRes.data;
     return callFirebaseFlow('simulateStartFlowFlow', { theme: input.theme, lawContext, userName: input.userName, currentDateStr: input.currentDateStr });
 }
 
@@ -437,7 +443,8 @@ export async function semanticLawSearchAction(query: string, lawId?: string, doc
         // Scope to specific law
         const snapshot = await adminFirestore.collection('laws').doc(lawId).get();
         if (snapshot.exists) {
-            context = await getSpecificLawAndGuidelinesContext({ id: lawId, ...snapshot.data() } as any);
+            const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: lawId, ...snapshot.data() } as any);
+            context = fetchRes.data;
         }
     } else if (lawId === 'reference' && documentData) {
         // Scope to reference document (which we already have data for)
@@ -446,7 +453,8 @@ export async function semanticLawSearchAction(query: string, lawId?: string, doc
 
     // Fallback or global search if no specific context built
     if (!context) {
-        context = await getRelevantLawContext(query);
+        const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: query });
+        context = fetchRes.data;
     }
     
     return callFirebaseFlow('semanticLawSearchFlow', { query, legalContext: context });
