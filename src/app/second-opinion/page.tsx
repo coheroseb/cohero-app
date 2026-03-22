@@ -226,7 +226,7 @@ const SecondOpinionPageContent = () => {
 
       const isPremiumUser = useMemo(() => {
         const m = userProfile?.membership;
-        return m && ['Kollega+', 'Semesterpakken', 'Kollega++', 'Group Pro'].includes(m);
+        return m && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(m);
     }, [userProfile]);
 
     const handleGetSecondOpinion = async (e?: React.FormEvent) => {
