@@ -29,6 +29,7 @@ import {
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import PWAInstallGuide from '@/components/PWAInstallGuide';
+import HeroIllustration from '@/components/home/HeroIllustration';
 
 const Reveal = ({ children, delay = 0, className = "" }: { children: React.ReactNode, delay?: number, className?: string }) => (
   <motion.div
@@ -171,34 +172,34 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          {/* Hero Image Container - Mobile Optimized */}
+          {/* Hero Illustration Container - Animated and Dynamic */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="w-full lg:w-5/12 max-w-[400px] lg:max-w-none relative z-10 mt-6 lg:mt-0 px-4 sm:px-0"
+            className="w-full lg:w-5/12 relative z-10 mt-6 lg:mt-0 px-4 sm:px-0 flex items-center justify-center min-h-[450px] lg:min-h-[600px]"
           >
-            <div className="relative aspect-[4/5] sm:aspect-[3/4] bg-white p-2.5 sm:p-4 rounded-[40px] sm:rounded-[3.5rem] border border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-transform duration-700 sm:hover:scale-[1.01] overflow-hidden group will-change-transform">
-              <Image 
-                src="/nan_jul.jpg" 
-                alt="Stifterne af Cohéro"
-                width={800}
-                height={1000}
-                priority
-                className="rounded-[30px] sm:rounded-[2.5rem] object-cover h-full w-full grayscale-[0.05] sm:group-hover:grayscale-0 transition-all duration-700"
-              />
-              {/* Floating mobile-first badge */}
-              <div className="absolute -bottom-2 -left-2 sm:-bottom-6 sm:-left-6 lg:bottom-4 lg:-left-12 bg-white/90 backdrop-blur-md p-4 sm:p-6 rounded-[24px] shadow-2xl border border-white/40 flex items-center gap-3 sm:gap-4 animate-[float_4s_ease-in-out_infinite] will-change-transform">
-                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-inner shrink-0">
+            <div className="w-full h-full relative group">
+              <HeroIllustration />
+              
+              {/* Floating mobile-first badge - Moved and styled to complement the illustration */}
+              <div className="absolute bottom-4 -left-4 sm:bottom-12 sm:-left-8 lg:bottom-12 lg:-left-4 bg-white/95 backdrop-blur-md p-4 sm:p-5 rounded-[24px] shadow-2xl border border-amber-100/50 flex items-center gap-3 sm:gap-4 animate-[float_4s_ease-in-out_infinite] z-40">
+                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-inner shrink-0">
                     <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
                  </div>
                  <div className="pr-2 sm:pr-4">
                     <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-0.5">Din sikkerhed</p>
-                    <p className="text-[15px] sm:text-base font-extrabold text-slate-800 leading-tight">Faglig rygdækning</p>
+                    <p className="text-[14px] sm:text-base font-extrabold text-slate-800 leading-tight">Faglig rygdækning</p>
                  </div>
+              </div>
+
+              {/* Founder Reference (Optional, but kept as a subtle trust element or removed if preferred) */}
+              <div className="absolute -bottom-8 right-0 text-[10px] font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity whitespace-nowrap">
+                <Users className="w-3 h-3" /> Stiftet af socialrådgivere
               </div>
             </div>
           </motion.div>
+
         </div>
       </section>
 
