@@ -38,3 +38,6 @@ yarn-error.log*
 .firebase/
 functions/.next/
 functions/node_modules/
+
+.env
+.env.local
