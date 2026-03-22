@@ -2,16 +2,17 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { 
   Book, 
   FileText, 
   Users, 
   Scale, 
-  Quote, 
-  Hash, 
   MessageSquare,
   Sparkles,
-  Smartphone
+  Smartphone,
+  CheckCircle2,
+  Hash
 } from 'lucide-react';
 
 const HeroIllustration = () => {
@@ -120,7 +121,6 @@ const HeroIllustration = () => {
 
             {/* The Person (indicated by arms/hands holding the phone) */}
             <div className="relative z-30 flex flex-col items-center">
-                {/* Hand/Arm Suggestion (Optional or just the phone) */}
                 <motion.div 
                     variants={phoneVariants}
                     initial="initial"
@@ -136,24 +136,18 @@ const HeroIllustration = () => {
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-slate-900 rounded-b-2xl z-50"></div>
                         
                         {/* Screen Content */}
-                        <div className="w-full h-full bg-[#FDFBF7] rounded-[2rem] overflow-hidden relative">
-                            {/* App UI placeholder */}
-                            <div className="p-6 pt-10 space-y-6">
-                                <div className="space-y-2">
-                                    <div className="h-4 w-3/4 bg-slate-100 rounded-full animate-pulse"></div>
-                                    <div className="h-4 w-1/2 bg-slate-50 rounded-full animate-pulse"></div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="aspect-square bg-amber-50 rounded-2xl"></div>
-                                    <div className="aspect-square bg-blue-50 rounded-2xl"></div>
-                                    <div className="aspect-square bg-emerald-50 rounded-2xl"></div>
-                                    <div className="aspect-square bg-rose-50 rounded-2xl"></div>
-                                </div>
-                                <div className="h-12 w-full bg-slate-900 rounded-xl"></div>
-                            </div>
+                        <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative">
+                            {/* NEW: App Screenshot from User */}
+                            <Image 
+                                src="/hero-phone-screen.jpg"
+                                alt="Cohéro App Interface"
+                                fill
+                                className="object-cover"
+                                priority
+                            />
                             
-                            {/* Glow from screen */}
-                            <div className="absolute inset-0 bg-amber-500/5 mix-blend-overlay"></div>
+                            {/* Inner Screen Glow */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-white/0 mix-blend-overlay pointer-events-none"></div>
                         </div>
                     </div>
 
