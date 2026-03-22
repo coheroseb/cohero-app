@@ -55,14 +55,14 @@ export async function POST(req: NextRequest) {
                 membershipLevel = 'Kollega++';
             }
             
-            await userRef.update({
+            await userRef.set({
                 stripeSubscriptionId: subscription.id,
                 stripePriceId: price.id,
                 stripeSubscriptionStatus: subscription.status,
                 stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
                 membership: membershipLevel,
                 stripeCancelAtPeriodEnd: false,
-            });
+            }, { merge: true });
           } else {
              console.warn(`Webhook: checkout.session.completed event missing client_reference_id.`);
           }
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
                 updateData.stripePriceId = price.id;
             }
 
-            await userDoc.ref.update(updateData);
+            await userDoc.ref.set(updateData, { merge: true });
           } else {
              console.warn(`Webhook: Could not find user for stripeCustomerId: ${subscription.customer} on update.`);
           }
@@ -113,14 +113,14 @@ export async function POST(req: NextRequest) {
 
           if (!userRefSnap.empty) {
               const userDoc = userRefSnap.docs[0];
-              await userDoc.ref.update({
+              await userDoc.ref.set({
                   stripeSubscriptionStatus: subscription.status,
                   membership: 'Kollega',
                   stripeCancelAtPeriodEnd: null,
                   stripeCurrentPeriodEnd: null,
                   stripePriceId: null,
                   stripeSubscriptionId: null,
-              });
+              }, { merge: true });
           } else {
               console.warn(`Webhook: Could not find user for stripeSubscriptionId: ${subscription.id} on deletion.`);
           }
