@@ -143,7 +143,6 @@ export default function RootLayout({
               <PageViewTracker />
             </Suspense>
             {children}
-            <BugReportButton />
             <CookieConsent />
           </AppProvider>
         </FirebaseClientProvider>
