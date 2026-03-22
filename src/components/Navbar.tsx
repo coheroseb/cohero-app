@@ -264,15 +264,15 @@ const Navbar: React.FC<NavbarProps> = ({
       className="fixed top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/90 via-white/40 to-transparent z-[90] pointer-events-none backdrop-blur-sm"
     />
 
-    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ease-in-out px-4 py-4 md:px-8 pointer-events-none`}>
+    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out px-4 py-4 md:px-8 pointer-events-none`}>
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className={`max-w-7xl mx-auto w-full transition-all duration-300 pointer-events-auto will-change-transform
+        className={`max-w-7xl mx-auto w-full transition-all duration-500 pointer-events-auto will-change-transform
           ${scrolled 
-            ? 'bg-white/80 backdrop-blur-lg rounded-[2rem] shadow-lg border border-white/50 h-16 px-6' 
-            : 'bg-transparent h-24 px-2 md:px-4'
+            ? 'bg-[#FDFCF8]/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(45,35,15,0.1)] border border-white/60 h-16 px-6' 
+            : 'bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/20 h-20 px-6 sm:px-8 shadow-sm'
           }`}
       >
         <div className="flex items-center justify-between h-full">
@@ -424,9 +424,10 @@ const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <div className="hidden lg:flex items-center gap-4">
                 <button onClick={() => onAuth('login')} className="px-5 py-2.5 text-[14px] font-bold text-slate-700 hover:text-slate-950 transition-colors">Log ind</button>
-                <button onClick={() => onAuth('signup')} className="relative px-6 py-2.5 bg-amber-950 text-amber-400 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-amber-950/20 active:scale-95 transition-all flex items-center gap-2 group">
-                  <span>Bliv medlem</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"/>
+                <button onClick={() => onAuth('signup')} className="relative px-6 py-2.5 bg-gradient-to-br from-amber-950 to-slate-900 text-amber-400 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-[0_10px_30px_-10px_rgba(45,35,15,0.4)] active:scale-95 transition-all flex items-center gap-2 group border border-white/5">
+                  <span className="relative z-10">Bliv medlem</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform relative z-10"/>
+                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
                 </button>
               </div>
             )}
