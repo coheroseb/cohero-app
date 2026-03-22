@@ -359,7 +359,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             <Navbar onAuth={() => openAuthPage()} user={user} userProfile={userProfile} onLogout={handleLogout} />
           </>
         )}
-        <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : isStandaloneGroups ? 'pt-0' : 'pt-24 md:pt-32'}`}>
+        <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : isStandaloneGroups ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'}`}>
             {/* Soft top gradient to blend with navbar when scrolling */}
             {!isNativeApp && !isStandaloneGroups && (
                 <div className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-inherit to-transparent pointer-events-none z-10`} />
