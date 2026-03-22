@@ -256,7 +256,7 @@ export default function SettingsPage() {
 
 
   const handleConfirmDelete = async () => {
-    if (!user || !firestore || !auth.currentUser) {
+    if (!user || !firestore || !auth || !auth.currentUser) {
       throw new Error("Bruger eller database er ikke tilgængelig.");
     }
     

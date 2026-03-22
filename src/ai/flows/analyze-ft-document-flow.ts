@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to analyze the text content of a legal document.
  * - analyzeFtDocument - Analyzes the document's text.

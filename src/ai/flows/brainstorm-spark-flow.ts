@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to spark ideas for a brainstorm in a group.
  */

@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to analyze an oral exam presentation.
  *

@@ -28,7 +28,8 @@ import {
   Copy,
   ChevronDown,
   FolderKanban,
-  Info
+  Info,
+  Check
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';

@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to explain a social work concept using an analogy.
  * - explainConceptWithAnalogy - Generates a new explanation for a concept.

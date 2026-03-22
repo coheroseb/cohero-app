@@ -7,15 +7,13 @@
  * - ReviseJournalEntryOutput - The return type for the function.
  */
 
-'use server';
+
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { FeedbackDataSchema } from './types';
-
 const ReviseJournalEntryInputSchema = z.object({
   journalEntry: z.string().describe("The social work student's original journal entry."),
-  feedback: FeedbackDataSchema.describe("The feedback object from the three personas."),
+  feedback: z.string().describe("The feedback object stringified to incorporate."),
 });
 export type ReviseJournalEntryInput = z.infer<typeof ReviseJournalEntryInputSchema>;
 
@@ -56,9 +54,7 @@ const prompt = ai.definePrompt({
 ---
 
 **Feedback to Incorporate:**
-- **Juridisk:** {{{feedback.juridisk.feedback}}} (Score: {{{feedback.juridisk.score}}})
-- **Erfaren:** {{{feedback.erfaren.feedback}}} (Score: {{{feedback.erfaren.score}}})
-- **Travl:** {{{feedback.travl.feedback}}} (Score: {{{feedback.travl.score}}})
+{{{feedback}}}
 
 Your response must be a JSON object with a single key: "revisedJournalEntry".
 `,
@@ -75,8 +71,8 @@ const reviseJournalEntryFlow = ai.defineFlow(
     return {
       data: output!,
       usage: {
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens
+        inputTokens: usage.inputTokens || 0,
+        outputTokens: usage.outputTokens || 0
       }
     };
   }

@@ -1,0 +1,183 @@
+node_modules/@genkit-ai/ai/lib/generate-DwF0_FvC.d.ts(142,69): error TS2503: Cannot find namespace 'Handlebars'.
+node_modules/dotprompt/dist/index.d.ts(1,24): error TS7016: Could not find a declaration file for module 'handlebars/dist/cjs/handlebars.js'. '/Users/sebastianviste/Cohero-Version-4/functions/node_modules/handlebars/dist/cjs/handlebars.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/handlebars` if it exists or add a new declaration (.d.ts) file containing `declare module 'handlebars/dist/cjs/handlebars.js';`
+node_modules/genkit/lib/index-BFNSbSWp.d.ts(251,36): error TS2503: Cannot find namespace 'Handlebars'.
+src/ai/dev.ts(2,24): error TS2307: Cannot find module 'dotenv' or its corresponding type declarations.
+src/ai/flows/analyze-ft-document-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/analyze-ft-document-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/analyze-ft-document-flow.ts(49,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/analyze-legal-decision-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/analyze-legal-decision-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/analyze-legal-decision-flow.ts(58,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/analyze-paragraph-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/analyze-paragraph-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/analyze-paragraph-flow.ts(74,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/analyze-reform-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/analyze-reform-flow.ts(11,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/analyze-reform-flow.ts(64,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/analyze-star-data-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/analyze-star-data-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/analyze-star-data-flow.ts(62,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/analyze-task-schedule-flow.ts(6,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/book-cache.ts(1,38): error TS6133: 'DocumentData' is declared but its value is never read.
+src/ai/flows/brainstorm-spark-flow.ts(6,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/brainstorm-spark-flow.ts(11,10): error TS6133: 'BrainstormSparkInput' is declared but its value is never read.
+src/ai/flows/brainstorm-spark-flow.ts(12,10): error TS6133: 'BrainstormSparkOutput' is declared but its value is never read.
+src/ai/flows/brainstorm-spark-flow.ts(51,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/career-match-flow.ts(7,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/career-match-flow.ts(65,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/case-consequence-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/case-consequence-flow.ts(84,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/case-feedback-flow.ts(11,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/case-feedback-flow.ts(98,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/consensus-analysis-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/consensus-analysis-flow.ts(100,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/content-recommendations.ts(13,18): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/content-recommendations.ts(97,9): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/design-section-outline-flow.ts(26,5): error TS2740: Type 'ZodObject<{ sectionTitle: ZodString; assignmentContext: ZodOptional<ZodString>; groupName: ZodOptional<ZodString>; evidence: ZodOptional<...>; }, $strip>' is missing the following properties from type 'ZodType<any, any, any>': _type, _parse, _getType, _getOrReturnCtx, and 7 more.
+src/ai/flows/design-section-outline-flow.ts(27,5): error TS2740: Type 'ZodObject<{ outline: ZodArray<ZodString>; suggestedEvidence: ZodArray<ZodString>; startingSentence: ZodString; encouragement: ZodString; }, $strip>' is missing the following properties from type 'ZodType<any, any, any>': _type, _parse, _getType, _getOrReturnCtx, and 7 more.
+src/ai/flows/design-section-outline-flow.ts(32,46): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/ai/flows/design-section-outline-flow.ts(50,33): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(strPrompt: string): Promise<GenerateResponse<any>>', gave the following error.
+    Argument of type '{ model: string; prompt: string; output: { schema: z.ZodObject<{ outline: z.ZodArray<z.ZodString>; suggestedEvidence: z.ZodArray<z.ZodString>; startingSentence: z.ZodString; encouragement: z.ZodString; }, z.core.$strip>; }; config: { ...; }; }' is not assignable to parameter of type 'string'.
+  Overload 2 of 3, '(parts: ({ text: string; custom?: Record<string, unknown> | undefined; metadata?: Record<string, unknown> | undefined; media?: undefined; toolRequest?: undefined; toolResponse?: undefined; data?: unknown; reasoning?: undefined; resource?: undefined; } | ... 6 more ... | { ...; })[]): Promise<...>', gave the following error.
+    Object literal may only specify known properties, and 'model' does not exist in type '({ text: string; custom?: Record<string, unknown> | undefined; metadata?: Record<string, unknown> | undefined; media?: undefined; toolRequest?: undefined; toolResponse?: undefined; data?: unknown; reasoning?: undefined; resource?: undefined; } | ... 6 more ... | { ...; })[]'.
+  Overload 3 of 3, '(opts: GenerateOptions<ZodTypeAny, ZodObject<{ version: ZodOptional<ZodString>; temperature: ZodOptional<ZodNumber>; maxOutputTokens: ZodOptional<...>; topK: ZodOptional<...>; topP: ZodOptional<...>; stopSequences: ZodOptional<...>; apiKey: ZodOptional<...>; }, "passthrough", ZodTypeAny, objectOutputType<...>, objectInputType<...>>> | PromiseLike<...>): Promise<...>', gave the following error.
+    Type 'ZodObject<{ outline: ZodArray<ZodString>; suggestedEvidence: ZodArray<ZodString>; startingSentence: ZodString; encouragement: ZodString; }, $strip>' is missing the following properties from type 'ZodType<any, any, any>': _type, _parse, _getType, _getOrReturnCtx, and 7 more.
+src/ai/flows/detect-ai-content-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/dev.ts(1,24): error TS2307: Cannot find module 'dotenv' or its corresponding type declarations.
+src/ai/flows/dilemma-analysis-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/dilemma-analysis-flow.ts(17,39): error TS2307: Cannot find module '@/lib/law-context-helper' or its corresponding type declarations.
+src/ai/flows/dilemma-analysis-flow.ts(84,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/draft-email-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/draft-email-flow.ts(2,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/draft-email-flow.ts(42,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/evidence-chat-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/evidence-chat-flow.ts(67,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/exam-architect-flow.ts(9,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/exam-architect-flow.ts(10,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/exam-architect-flow.ts(81,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/explain-concept-analogy-flow.ts(7,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/explain-concept-analogy-flow.ts(68,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/explain-concept-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/explain-concept-flow.ts(104,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/explain-ft-case-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/explain-ft-case-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/explain-ft-case-flow.ts(58,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/explain-law-paragraph-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/explain-law-paragraph-flow.ts(86,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/explain-technique-analogy-flow.ts(7,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/explain-technique-analogy-flow.ts(68,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/explain-text-chunk-flow.ts(2,1): error TS6133: 'UserProfile' is declared but its value is never read.
+src/ai/flows/extract-apa-metadata-flow.ts(2,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/extract-apa-metadata-flow.ts(49,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/extract-law-info-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/extract-law-info-flow.ts(111,12): error TS7031: Binding element 'url' implicitly has an 'any' type.
+src/ai/flows/extract-tasks-flow.ts(7,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/extract-tasks-flow.ts(36,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/fagligt-mycelium-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/fagligt-mycelium-flow.ts(11,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/fagligt-mycelium-flow.ts(80,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-case-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-case-flow.ts(112,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-case-update-email-flow.ts(2,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-case-update-email-flow.ts(3,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/generate-case-update-email-flow.ts(41,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-comment-notification-email-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-comment-notification-email-flow.ts(11,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/generate-comment-notification-email-flow.ts(59,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-concept-video-script-flow.ts(2,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-concept-video-script-flow.ts(3,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/generate-concept-video-script-flow.ts(11,39): error TS2307: Cannot find module '@/lib/eleven-labs' or its corresponding type declarations.
+src/ai/flows/generate-concept-video-script-flow.ts(12,37): error TS2307: Cannot find module '@/lib/banana-image' or its corresponding type declarations.
+src/ai/flows/generate-concept-video-script-flow.ts(13,34): error TS2307: Cannot find module '@/lib/veo-video' or its corresponding type declarations.
+src/ai/flows/generate-concept-video-script-flow.ts(77,57): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/ai/flows/generate-evidence-tags-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-fieldwork-agreement-flow.ts(6,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-group-invitation-email-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-group-invitation-email-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/generate-group-invitation-email-flow.ts(49,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-raw-case-sources-flow.ts(5,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-raw-case-sources-flow.ts(83,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-report-questions-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-report-questions-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/generate-report-questions-flow.ts(56,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-streak-reminder-email-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-streak-reminder-email-flow.ts(11,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/generate-streak-reminder-email-flow.ts(58,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-study-schedule-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-study-schedule-flow.ts(116,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-study-schedule-flow.ts(122,53): error TS7006: Parameter 'week' implicitly has an 'any' type.
+src/ai/flows/generate-subscription-confirmation-email-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-subscription-confirmation-email-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/generate-subscription-confirmation-email-flow.ts(63,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-verification-email-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-verification-email-flow.ts(64,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/generate-welcome-email-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/generate-welcome-email-flow.ts(11,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/generate-welcome-email-flow.ts(18,10): error TS6133: 'WelcomeEmailData' is declared but its value is never read.
+src/ai/flows/generate-welcome-email-flow.ts(82,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/get-law-content-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/get-law-content-flow.ts(314,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/helpers.ts(3,32): error TS2307: Cannot find module '@/firebase/config' or its corresponding type declarations.
+src/ai/flows/intro-case-consequence-flow.ts(7,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/intro-case-consequence-flow.ts(58,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/journal-synthesis-feedback-flow.ts(5,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/journal-synthesis-feedback-flow.ts(7,1): error TS6133: 'SourceItem' is declared but its value is never read.
+src/ai/flows/journal-synthesis-feedback-flow.ts(98,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/live-portfolio-feedback-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/live-portfolio-feedback-flow.ts(65,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/myth-buster-flow.ts(7,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/myth-buster-flow.ts(64,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/oral-exam-analysis-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/oral-exam-analysis-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/oral-exam-analysis-flow.ts(78,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/process-exam-regulations-flow.ts(6,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/process-study-regulation-flow.ts(9,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/process-study-regulation-flow.ts(75,15): error TS6133: 'embedData' is declared but its value is never read.
+src/ai/flows/quiz-generator-flow.ts(11,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/quiz-generator-flow.ts(12,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/quiz-generator-flow.ts(84,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/recommend-task-assignee-flow.ts(3,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/recommend-technique-flow.ts(7,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/recommend-technique-flow.ts(75,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/revise-case-flow.ts(12,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/revise-case-flow.ts(82,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/revise-journal-entry-flow.ts(12,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/revise-journal-entry-flow.ts(69,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/second-opinion-flow.ts(10,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/second-opinion-flow.ts(100,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/semantic-law-search-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/semantic-law-search-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/semantic-law-search-flow.ts(66,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/semester-planner-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/semester-planner-flow.ts(12,3): error TS6133: 'SemesterPlanSchema' is declared but its value is never read.
+src/ai/flows/semester-planner-flow.ts(228,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/seminar-architect-flow.ts(11,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/simulate-feedback-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/simulate-feedback-flow.ts(81,12): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/simulate-next-day-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/simulate-next-day-flow.ts(77,12): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/simulate-start-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/simulate-start-flow.ts(62,12): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/sokratisk-refleksion/flow.ts(9,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/sokratisk-refleksion/flow.ts(11,120): error TS2307: Cannot find module '@/ai/flows/types' or its corresponding type declarations.
+src/ai/flows/sokratisk-refleksion/flow.ts(67,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/suggest-concepts-for-event-flow.ts(7,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/suggest-concepts-for-event-flow.ts(65,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/ai/flows/text-to-speech-flow.ts(7,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/text-to-speech-flow.ts(9,3): error TS6133: 'TextToSpeechInputSchema' is declared but its value is never read.
+src/ai/flows/text-to-speech-flow.ts(10,3): error TS6133: 'TextToSpeechOutputSchema' is declared but its value is never read.
+src/ai/flows/text-to-speech-flow.ts(15,39): error TS2307: Cannot find module '@/lib/eleven-labs' or its corresponding type declarations.
+src/ai/flows/transcribe-audio-flow.ts(8,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/transcribe-audio-flow.ts(9,10): error TS6133: 'TranscribeAudioInputSchema' is declared but its value is never read.
+src/ai/flows/transcribe-audio-flow.ts(9,38): error TS6133: 'TranscribeAudioOutputSchema' is declared but its value is never read.
+src/ai/flows/twist-blueprint-flow.ts(1,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/vive-indsigt-flow.ts(41,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Object literal may only specify known properties, and 'next' does not exist in type 'RequestInit'.
+  Overload 2 of 2, '(input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Object literal may only specify known properties, and 'next' does not exist in type 'RequestInit'.
+src/ai/flows/vive-report-qa-flow.ts(8,20): error TS2307: Cannot find module '@/ai/genkit' or its corresponding type declarations.
+src/ai/flows/vive-report-qa-flow.ts(9,1): error TS6133: 'z' is declared but its value is never read.
+src/ai/flows/vive-report-qa-flow.ts(60,10): error TS7006: Parameter 'input' implicitly has an 'any' type.

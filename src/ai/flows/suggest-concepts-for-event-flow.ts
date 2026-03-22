@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to suggest preparation concepts for a calendar event.
  * - suggestConceptsForEvent - Analyzes an event and suggests key concepts.

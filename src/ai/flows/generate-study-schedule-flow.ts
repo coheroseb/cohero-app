@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to generate a recommended study schedule based on a semester plan.
  * - generateStudySchedule - Creates a weekly study plan.

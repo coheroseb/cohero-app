@@ -1,40 +1,49 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // 🔥 KRITISK for Firebase SSR (reducerer bundle size markant)
+  output: "standalone",
+
+  // ⚠️ Midlertidigt – fjern senere når du har styr på types
   typescript: {
     ignoreBuildErrors: true,
   },
+
+  // ⚠️ Midlertidigt – fjern senere
   eslint: {
     ignoreDuringBuilds: true,
   },
+
+  // Removed Firebase/Genkit experimental external packages since Genkit is now in Firebase Functions
+
+  // 🖼️ Images config (din eksisterende)
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "placehold.co",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "picsum.photos",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-        port: '',
-        pathname: '/**',
-      }
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
+      },
     ],
   },
+
+  // 🔥 Ekstra: reducer unødvendig tracing (mindre bundle)
+  productionBrowserSourceMaps: false,
+
 };
 
 module.exports = nextConfig;

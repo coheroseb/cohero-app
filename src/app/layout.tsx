@@ -7,6 +7,7 @@ import BugReportButton from '@/components/BugReportButton';
 import Script from 'next/script';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
+import GoogleTagManager from '@/components/GoogleTagManager';
 import { Suspense } from 'react';
 import CookieConsent from '@/components/CookieConsent';
 import PageViewTracker from '@/components/PageViewTracker';
@@ -112,33 +113,33 @@ export default function RootLayout({
     ]
   };
 
-  const serviceWorkerScript = `
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        }, function(err) {
-          console.log('ServiceWorker registration failed: ', err);
-        });
-      });
-    }
-  `;
-
   return (
     <html lang="da">
-      <body className="bg-background text-foreground">
-        <script
+      <body className="bg-background text-foreground antialiased min-h-screen font-sans">
+        <Script
+          id="json-ld"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <script
-          dangerouslySetInnerHTML={{ __html: serviceWorkerScript }}
-        />
+        <Script id="service-worker-registration" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+                  console.log('ServiceWorker registration successful');
+                }).catch(function(err) {
+                  console.log('ServiceWorker registration failed: ', err);
+                });
+              });
+            }
+          `}
+        </Script>
         <FirebaseClientProvider>
           <AppProvider>
-            <Suspense>
+            <Suspense fallback={null}>
               <GoogleAnalytics />
               <MetaPixel />
+              <GoogleTagManager />
               <PageViewTracker />
             </Suspense>
             {children}
@@ -151,6 +152,7 @@ export default function RootLayout({
           type="text/javascript"
           src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js"
           async
+          strategy="lazyOnload"
         />
       </body>
     </html>

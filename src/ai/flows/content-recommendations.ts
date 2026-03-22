@@ -1,5 +1,5 @@
 
-'use server';
+
 // src/ai/flows/content-recommendations.ts
 
 /**

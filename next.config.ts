@@ -8,7 +8,17 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-slot', '@radix-ui/react-toast', '@radix-ui/react-tooltip'],
+  },
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
+  reactStrictMode: true,
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',

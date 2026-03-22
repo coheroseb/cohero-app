@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to create a "Practice Guide" by connecting user reflections to curriculum.
  *

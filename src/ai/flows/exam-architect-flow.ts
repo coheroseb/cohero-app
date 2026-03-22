@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview An AI-powered tool to create a blueprint for academic assignments.
  *
@@ -28,55 +27,49 @@ const prompt = ai.definePrompt({
   name: 'examArchitectPrompt',
   input: { schema: PromptInputSchema },
   output: { schema: ExamBlueprintSchema },
-  prompt: `You are an experienced academic supervisor for social work students in Denmark. Your task is to create a "Byggeplan" (blueprint) for an assignment. Your analysis and suggestions MUST be grounded in the provided context.
+  prompt: `Du er en erfaren akademisk vejleder for socialrådgiverstuderende i Danmark. Din opgave er at skabe en "Byggeplan" (blueprint) for en opgave, der ikke bare er en liste af afsnit, men en strategisk arkitektur for akademisk succes.
 
-**Student's Details:**
-- Assignment Type: {{{assignmentType}}}
+**Studerendes Detaljer:**
+- Opgavetype: {{{assignmentType}}}
 - Semester: {{{semester}}}
-- Topic: "{{{topic}}}"
-- Draft Problem Statement: "{{{problemStatement}}}"
+- Emne: "{{{topic}}}"
+- Udkast til Problemformulering: "{{{problemStatement}}}"
 
-**Contextual Information:**
-- Relevant Law Context: {{{lawContext}}}
+**Kontekstuel Information:**
+- Relevant Jura: {{{lawContext}}}
 {{#if seminarContext}}
-- Student's Own Processed Seminar Notes (to use for inspiration and context):
+- Studerendes egne seminar-noter (brug dette til at skabe sammenhæng med undervisningen):
 ---
 {{{seminarContext}}}
 ---
 {{/if}}
 {{#if books}}
-- Available Curriculum Books (Content Info contains keywords, topics, and excerpts):
+- Tilgængelig Pensum (RAG-uddrag):
 {{#each books}}
-- Title: {{{this.title}}}, Author: {{{this.author}}}, Content Info: {{{this.RAG}}}
+- Titel: {{{this.title}}}, Forfatter: {{{this.author}}}, Indhold: {{{this.RAG}}}
 {{/each}}
 {{/if}}
 
-**Your Task:**
-Create a detailed blueprint for the assignment. All output MUST be in Danish.
-Your response MUST be a JSON object with the following keys:
+**Din Opgave:**
+Skab en detaljeret byggeplan på dansk. Vær kritisk, akademisk og konstruktiv.
+Outputtet skal være et JSON objekt med følgende nøgler:
 
-1.  **title**: Generate a concise and academic working title for the assignment.
-2.  **draftProblemStatement**: Based on the student's topic and draft, create a refined, academic problem statement. It should be specific, researchable, and clearly state what will be investigated.
-3.  **problemStatementTip**: Provide one sharp, constructive tip to further refine the generated problem formulation, explaining *why* the refinement is an improvement.
-4.  **redThreadAdvice**: Provide a short paragraph of advice on how the student can maintain the "røde tråd" (common thread) throughout their assignment, connecting the different sections.
-5.  **sections**: Propose a logical structure with 5-6 sections. For each section, provide:
-    - \`title\`: The section's title (e.g., "Indledning", "Teoretisk Fundament", "Analyse").
-    - \`weight\`: An estimated percentage of the total page count (e.g., "15%").
-    - \`focus\`: A brief description of the section's purpose and content.
-    - \`theoryLink\`: Optionally, name a key theory relevant to this section.
-6.  **suggestedTheories**: Recommend 2 key theories or concepts relevant to the topic. For each, provide:
-    - \`name\`: The name of the theory or theorist.
-    - \`why\`: A short explanation of why it is relevant for this specific assignment.
-    - \`bookReference\`: **CRITICAL:** Search ONLY the 'AVAILABLE BOOKS' list. When searching, consider related forms of words (e.g., for 'anerkendelse', also look for 'anerkendende'). If a book seems to cover the suggested theory (check title, author, and Content Info), include its title. If no clear match is found in the list, you MUST omit this field. Do not invent sources.
-`,
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
-    ],
-  },
+1.  **title**: En fængende og præcis akademisk arbejdstitel.
+2.  **draftProblemStatement**: En skarp, akademisk problemformulering baseret på elevens input. Den skal være specifik og undersøgende.
+3.  **problemStatementTip**: Et konkret råd til hvordan eleven kan gøre problemformuleringen endnu skarpere (forklar *hvorfor*).
+4.  **redThreadAdvice**: En vejledning i hvordan den "røde tråd" bevares gennem hele opgaven.
+5.  **researchStrategy**: En strategisk overvejelse om hvordan eleven skal gribe undersøgelsen an (f.eks. valg af metode eller fokusområde).
+6.  **sections**: Foreslå 5-6 logiske afsnit. For hvert afsnit:
+    - \`title\`: Overskrift.
+    - \`weight\`: Estimeret vægtning i procent (f.eks. "20%").
+    - \`focus\`: Hvad skal afsnittet indeholde og hvorfor?
+    - \`theoryLink\`: Navngiv en specifik teori eller teoretiker der er central her.
+7.  **suggestedTheories**: Anbefal 2-3 nøgleteorier. For hver:
+    - \`name\`: Teorien/Teoretikerens navn.
+    - \`why\`: Hvorfor er den uundværlig for lige netop denne opgave?
+    - \`bookReference\`: **KRITISK:** Søg KUN i den tilgængelige pensumliste. Find præcise match. Hvis intet match findes, udelad feltet.
+
+Vær ambitiøs på elevens vegne.`,
 });
 
 const examArchitectFlow = ai.defineFlow(
@@ -93,8 +86,8 @@ const examArchitectFlow = ai.defineFlow(
     return {
       data: output!,
       usage: {
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
+        inputTokens: usage.inputTokens || 0,
+        outputTokens: usage.outputTokens || 0,
       },
     };
   }

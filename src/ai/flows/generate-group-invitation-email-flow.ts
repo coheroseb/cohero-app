@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to generate an invitation email for a study group.
  *

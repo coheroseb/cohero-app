@@ -7,7 +7,7 @@
  * - ReviseCaseOutput - The return type for the function.
  */
 
-'use server';
+
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';

@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to generate a formal fieldwork agreement email.
  */
@@ -21,8 +21,7 @@ const FieldworkAgreementOutputSchema = z.object({
 
 export async function generateFieldworkAgreement(input: z.infer<typeof FieldworkAgreementInputSchema>) {
   const { output } = await ai.generate({
-    model: 'googleai/gemini-1.5-flash-latest',
-    input: input,
+    model: 'googleai/gemini-2.5-flash',
     output: { schema: FieldworkAgreementOutputSchema },
     system: "Du er en professionel akademisk koordinator. Din opgave er at skrive en høflig, formel og tillidvækkende anmodning om feltarbejde/interview på vegne af en studiegruppe af socialrådgiverstuderende. Svar på dansk.",
     prompt: `Skriv en formel feltarbejdsaftale til følgende modtager:

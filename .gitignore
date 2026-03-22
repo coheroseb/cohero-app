@@ -34,3 +34,7 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+.firebase/
+functions/.next/
+functions/node_modules/

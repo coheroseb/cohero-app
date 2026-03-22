@@ -25,12 +25,22 @@ import {
   ListOrdered, 
   RefreshCw,
   Sparkles,
+  FileText,
+  Activity,
+  AlertTriangle,
   History,
-  Trophy,
+  Navigation,
+  ExternalLink,
+  Brain,
+  MessageSquareQuote as MessageSquareQuoteIcon,
+  ArrowRight,
   Layout,
-  ArrowUpRight,
-  FileText
+  CalendarDays,
+  Coffee,
+  BookMarked,
+  Target
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { 
@@ -47,10 +57,11 @@ import {
   increment, 
   limit,
   onSnapshot,
-  updateDoc
+  updateDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { useDebounce } from 'use-debounce';
-import { generateSemesterPlanAction, suggestConceptsForEventAction, generateStudyScheduleAction } from '@/app/actions';
+import { generateSemesterPlanAction, suggestConceptsForEventAction, generateStudyScheduleAction, sendInAppNotificationAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -71,572 +82,544 @@ interface SavedStudySchedule extends StudySchedule {
     id: string;
     createdAt: { toDate: () => Date };
     semesterPlanId?: string;
+    planId?: string;
 }
 
-// --- HELPER ---
+// --- HELPER COMPONENT ---
 
-const convertTimestamps = (obj: any): any => {
-    if (obj && typeof obj.toDate === 'function') {
-        return obj.toDate().toISOString();
-    }
-    if (Array.isArray(obj)) {
-        return obj.map(convertTimestamps);
-    }
-    if (obj && typeof obj === 'object' && Object.prototype.toString.call(obj) === '[object Object]') {
-        const newObj: { [key: string]: any } = {};
-        for (const key in obj) {
-            newObj[key] = convertTimestamps(obj[key]);
-        }
-        return newObj;
-    }
-    return obj;
-};
-
-// --- COMPONENTS ---
-
-const StudyScheduleModal: React.FC<{
-    plan: SavedSemesterPlan | null;
-    savedSchedule?: SavedStudySchedule | null;
-    onClose: () => void;
-}> = ({ plan, savedSchedule = null, onClose }) => {
-    const { user, userProfile, refetchUserProfile } = useApp();
-    const { toast } = useToast();
-
-    const [schedule, setSchedule] = useState<StudySchedule | null>(savedSchedule);
-    const [isLoading, setIsLoading] = useState(false);
-    const [studyHours, setStudyHours] = useState(41);
-    const [isSaving, setIsSaving] = useState(false);
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [isDownloadingIcs, setIsDownloadingIcs] = useState(false);
-    const firestore = useFirestore();
-
-    const handleGenerate = async () => {
-        if (!plan || !user || !userProfile) return;
-        setIsLoading(true);
-        setSchedule(null);
-        try {
-            const result = await generateStudyScheduleAction({ 
-                plan: convertTimestamps(plan), 
-                totalWeeklyStudyHours: studyHours 
-            });
-            
-            if (result && result.data) {
-                setSchedule(result.data);
-                 if (user && firestore && result.usage) {
-                    const totalTokens = result.usage.inputTokens + result.usage.outputTokens;
-                    const pointsToAdd = Math.round(totalTokens * 0.05);
-
-                    const batch = writeBatch(firestore);
-                    const userRef = doc(firestore, 'users', user.uid);
-                    const tokenUsageRef = doc(collection(firestore, 'users', user.uid, 'tokenUsage'));
-
-                    batch.set(tokenUsageRef, { flowName: 'generateStudySchedule', ...result.usage, totalTokens, createdAt: serverTimestamp(), userId: user.uid, userName: userProfile.username || user.displayName || 'Anonym' });
-                    if(pointsToAdd > 0) {
-                        batch.update(userRef, { cohéroPoints: increment(pointsToAdd) });
-                    }
-                    await batch.commit();
-                    await refetchUserProfile();
-                }
-            }
-        } catch (e) {
-            console.error(e);
-            toast({
-                variant: 'destructive',
-                title: "Fejl",
-                description: "Kunne ikke generere studieplan. Prøv venligst igen."
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    const handleSaveStudyPlan = async (scheduleToSave: StudySchedule) => {
-        if (!user || !plan || !firestore) return;
-        setIsSaving(true);
-        try {
-            const studySchedulesCol = collection(firestore, 'users', user.uid, 'studySchedules');
-            
-            let docRef;
-            if (savedSchedule) {
-                docRef = doc(studySchedulesCol, savedSchedule.id);
-            } else {
-                const q = query(studySchedulesCol, where("semesterPlanId", "==", plan.id), limit(1));
-                const existingSnap = await getDocs(q);
-                if (!existingSnap.empty) {
-                    docRef = existingSnap.docs[0].ref;
-                } else {
-                    docRef = doc(studySchedulesCol);
-                }
-            }
-
-            await setDoc(docRef, { 
-                ...scheduleToSave, 
-                semesterPlanId: plan.id,
-                createdAt: serverTimestamp() 
-            }, { merge: true });
-
-            toast({
-                title: "Studieplan Gemt!",
-                description: "Din studieplan er blevet gemt/opdateret."
-            });
-        } catch (error) {
-            console.error("Error saving study schedule:", error);
-            toast({
-                variant: "destructive",
-                title: "Fejl",
-                description: "Kunne ikke gemme studieplanen."
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-    
-    const handleDownloadStudyPlan = async (schedule: StudySchedule) => {
-        setIsDownloading(true);
-        try {
-            const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = await import('docx');
-            const { saveAs } = await import('file-saver');
-
-            const docChildren: (Paragraph | undefined)[] = [
-                new Paragraph({ text: schedule.title, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER })
-            ];
-
-            schedule.schedule.forEach(week => {
-                docChildren.push(new Paragraph({ text: `Uge ${week.weekNumber}`, heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }));
-                
-                week.recommendedBlocks.forEach(block => {
-                     docChildren.push(new Paragraph({
-                        children: [
-                            new TextRun({ text: `${block.day} (${block.startTime}-${block.endTime}): `, bold: true }),
-                            new TextRun(block.activity)
-                        ],
-                        spacing: { after: 100 }
-                    }));
-                     docChildren.push(new Paragraph({
-                        text: block.description,
-                    }));
-                });
-            });
-
-            const docToDownload = new Document({
-                creator: "Cohéro",
-                title: schedule.title,
-                sections: [{
-                    properties: {},
-                    children: docChildren.filter((p): p is Paragraph => !!p),
-                }],
-            });
-
-            const blob = await Packer.toBlob(docToDownload);
-            saveAs(blob, `${schedule.title.replace(/ /g, '_')}.docx`);
-
-        } catch (error) {
-             console.error("Error downloading docx:", error);
-             toast({
-                 variant: "destructive",
-                 title: "Download Fejl",
-                 description: "Kunne ikke oprette .docx-filen."
-             });
-        } finally {
-            setIsDownloading(false);
-        }
-    };
-
-    const handleDownloadIcs = (schedule: StudySchedule, plan: SavedSemesterPlan) => {
-        if (!plan) return;
-        setIsDownloadingIcs(true);
-        
-        const getBlockDate = (weekNumber: number, dayName: string): Date | null => {
-            const weekData = plan.weeklyBreakdown.find(w => w.weekNumber === weekNumber);
-            if (!weekData || weekData.events.length === 0) return null;
-    
-            const firstEventDate = new Date(weekData.events[0].startDate);
-            const dayOfWeek = firstEventDate.getUTCDay(); 
-            const diffToMonday = firstEventDate.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-            const monday = new Date(Date.UTC(firstEventDate.getUTCFullYear(), firstEventDate.getUTCMonth(), diffToMonday));
-    
-            const dayMapping: { [key: string]: number } = {
-                'Mandag': 0, 'Tirsdag': 1, 'Onsdag': 2, 'Torsdag': 3, 'Fredag': 4, 'Lørdag': 5, 'Søndag': 6
-            };
-            const dayOffset = dayMapping[dayName];
-            if (dayOffset === undefined) return null;
-            
-            const targetDate = new Date(monday);
-            targetDate.setUTCDate(monday.getUTCDate() + dayOffset);
-            return targetDate;
-        };
-        
-        const toIcsDate = (date: Date, time: string): string => {
-            const [hours, minutes] = time.split(':').map(Number);
-            const d = new Date(date.getTime()); 
-            d.setUTCHours(hours, minutes, 0, 0);
-            return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        };
-
-        let icsString = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Cohéro//Studieplan//DA\n';
-    
-        schedule.schedule.forEach(week => {
-            week.recommendedBlocks.forEach(block => {
-                const blockDate = getBlockDate(week.weekNumber, block.day);
-                if (!blockDate) return;
-    
-                const uid = `${plan.id}-${week.weekNumber}-${block.day}-${block.startTime}@cohero.dk`;
-                const dtstart = toIcsDate(blockDate, block.startTime);
-                const dtstartEnd = toIcsDate(blockDate, block.endTime);
-                const summary = block.activity;
-                const description = block.description.replace(/\n/g, '\\n');
-    
-                icsString += 'BEGIN:VEVENT\n';
-                icsString += `DTSTART:${dtstart}\n`;
-                icsString += `DTEND:${dtstartEnd}\n`;
-                icsString += `UID:${uid}\n`;
-                icsString += `SUMMARY:${summary}\n`;
-                icsString += `DESCRIPTION:${description}\n`;
-                icsString += 'END:VEVENT\n';
-            });
-        });
-    
-        icsString += 'END:VCALENDAR';
-        
-        import('file-saver').then(({ saveAs }) => {
-            const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
-            saveAs(blob, `${schedule.title.replace(/ /g, '_')}.ics`);
-            setIsDownloadingIcs(false);
-        }).catch(err => {
-            console.error("Error importing file-saver:", err);
-            setIsDownloadingIcs(false);
-        });
-    };
-
+const IntensityHeatmap = ({ weeklyBreakdown }: { weeklyBreakdown: any[] }) => {
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-amber-950/70 backdrop-blur-md" onClick={onClose}></div>
-            <div className="relative bg-[#FDFCF8] w-full max-w-5xl rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-fade-in-up">
-                 <div className="p-6 border-b border-amber-100 bg-white flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-amber-950 serif">{isLoading ? "Genererer din studieplan..." : (schedule?.title || 'Generer Studieplan')}</h2>
-                    <div className='flex items-center gap-2'>
-                       {schedule && plan && (
-                        <>
-                           <Button onClick={() => handleSaveStudyPlan(schedule)} variant="outline" size="sm" disabled={isSaving}>
-                             {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4 mr-2"/>}
-                             Gem
-                           </Button>
-                           <Button onClick={() => handleDownloadStudyPlan(schedule)} variant="outline" size="sm" disabled={isDownloading}>
-                             {isDownloading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4 mr-2"/>}
-                             .docx
-                           </Button>
-                           <Button onClick={() => handleDownloadIcs(schedule, plan)} variant="outline" size="sm" disabled={isDownloadingIcs}>
-                             {isDownloadingIcs ? <Loader2 className="w-4 h-4 mr-2 animate-spin"/> : <Calendar className="w-4 h-4 mr-2"/>}
-                             .ics
-                           </Button>
-                        </>
-                       )}
-                       <button onClick={onClose} className="p-2 text-slate-400 hover:text-amber-900"><X className="w-5 h-5"/></button>
-                    </div>
-                </div>
-                <div className="flex-1 overflow-y-auto p-8">
-                {!schedule && !isLoading && (
-                     <div className="text-center max-w-md mx-auto py-10">
-                        <h2 className="text-2xl font-bold text-amber-950 serif mb-4">Generér din personlige studieplan</h2>
-                        <p className="text-slate-600 mb-8">Angiv dit mål for antallet af ugentlige studietimer (inklusive undervisning), og lad AI'en skabe en struktureret plan for dit selvstudie.</p>
-                        <div className="max-w-xs mx-auto space-y-4">
-                            <div>
-                                <label htmlFor="study-hours" className="text-sm font-bold text-slate-700">Ugentlige studietimer i alt</label>
-                                <Input
-                                    id="study-hours"
-                                    type="number"
-                                    value={studyHours}
-                                    onChange={(e: any) => setStudyHours(Number(e.target.value))}
-                                    className="text-center text-lg mt-2 h-12"
-                                    min="20"
-                                    max="60"
-                                />
-                            </div>
-                            <Button onClick={handleGenerate} size="lg" className="w-full">
-                               <Wand2 className="w-4 h-4 mr-2" />
-                               Generér plan
-                            </Button>
-                        </div>
-                    </div>
-                )}
-                {isLoading ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center py-20">
-                        <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-                        <p className="mt-4 font-semibold text-amber-950">AI'en analyserer din kalender og planlægger dine studieuger...</p>
-                        <p className="text-sm text-slate-500">Dette kan tage et øjeblik.</p>
-                    </div>
-                ) : schedule && (
-                    <div className="space-y-12">
-                        <div className="text-center">
-                            <Button variant="outline" size="sm" onClick={() => setSchedule(null)}>
-                                <RotateCcw className="w-4 h-4 mr-2" />
-                                Generér ny version
-                            </Button>
-                        </div>
-                        {schedule.schedule.map(week => (
-                            <div key={week.weekNumber}>
-                                <h3 className="text-2xl font-bold text-amber-950 serif mb-6">Uge {week.weekNumber}</h3>
-                                <div className="grid md:grid-cols-3 gap-4 mb-8 text-center">
-                                    <div className="bg-white p-4 rounded-xl border"><p className="text-xs font-bold text-slate-400 uppercase">Fokusområder</p><p className="font-semibold text-amber-900">{week.focusAreas.join(', ')}</p></div>
-                                    <div className="bg-white p-4 rounded-xl border"><p className="text-xs font-bold text-slate-400 uppercase">Planlagte Timer</p><p className="font-semibold text-amber-900">{week.totalScheduledHours.toFixed(1)}</p></div>
-                                    <div className="bg-white p-4 rounded-xl border"><p className="text-xs font-bold text-slate-400 uppercase">Selvstudie Timer</p><p className="font-semibold text-amber-900">{week.selfStudyHours.toFixed(1)}</p></div>
-                                </div>
-                                <div className="space-y-4">
-                                {week.recommendedBlocks.map((block, i) => (
-                                     <div key={i} className="grid grid-cols-[auto,1fr] gap-4 items-start">
-                                        <div className="w-24 text-right">
-                                            <p className="font-mono text-sm font-semibold text-amber-900">{block.startTime} - {block.endTime}</p>
-                                            <p className="text-xs text-slate-400">{block.day}</p>
-                                        </div>
-                                        <div className="pl-4 border-l-2 border-amber-100">
-                                            <p className="font-bold text-sm text-slate-800">{block.activity}</p>
-                                            <p className="text-xs text-slate-500">{block.description}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                </div>
-            </div>
+        <div className="flex items-end gap-[2px] h-8 px-2 bg-slate-50 border border-slate-100 rounded-lg">
+            {weeklyBreakdown.map((week, i) => (
+                <div 
+                    key={i} 
+                    className={`w-2 rounded-t-[1px] transition-all duration-500`}
+                    style={{ 
+                        height: `${(week.intensity || 1) * 10}%`,
+                        backgroundColor: week.intensity > 7 ? '#f43f5e' : week.intensity > 4 ? '#6366f1' : '#10b981',
+                        opacity: 0.2 + ((week.intensity || 1) * 0.08)
+                    }}
+                    title={`Uge ${week.weekNumber}: Intensitet ${week.intensity || '?'}`}
+                />
+            ))}
         </div>
     );
 };
 
-const PlanDetailView: React.FC<{
-  plan: SavedSemesterPlan;
-  user: any;
+// --- MAIN DETAIL VIEW ---
+
+const PlanDetailView: React.FC<{ 
+  plan: SavedSemesterPlan; 
+  user: any; 
   onOpenModal: (plan: SavedSemesterPlan, schedule?: SavedStudySchedule | null) => void;
   savedSchedule?: SavedStudySchedule | null;
 }> = ({ plan, user, onOpenModal, savedSchedule }) => {
+  const currentWeekNumber = useMemo(() => {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const pastDaysOfYear = (now.getTime() - startOfYear.getTime()) / 86400000;
+    return Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+  }, []);
+
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'calendar' | 'analysis' | 'studieplan'>('dashboard');
   const [concepts, setConcepts] = useState<string[]>([]);
   const [isLoadingConcepts, setIsLoadingConcepts] = useState(false);
-  const [showAllEvents, setShowAllEvents] = useState(false);
   const [localNotes, setLocalNotes] = useState<Record<string, string>>({});
   const [debouncedNotes] = useDebounce(localNotes, 1500);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const firestore = useFirestore();
-  const isInitialMount = useRef(true);
+  const { toast } = useToast();
 
-  // Initialize notes from the plan data
   useEffect(() => {
-    const notes: Record<string, string> = {};
+    const initialNotes: Record<string, string> = {};
     plan.weeklyBreakdown.forEach(week => {
-        week.events.forEach((event: any) => {
-            if (event.notes) {
-                const key = `${event.summary}-${event.startDate}`;
-                notes[key] = event.notes;
-            }
-        });
+      week.events.forEach((event: any) => {
+        if (event.notes) {
+          initialNotes[`${event.summary}-${event.startDate}`] = event.notes;
+        }
+      });
     });
-    setLocalNotes(notes);
+    setLocalNotes(initialNotes);
   }, [plan]);
 
-  const handleAutoSaveNotes = useCallback(async () => {
-    if (!user || !plan.id || !firestore) return;
+  useEffect(() => {
+    if (Object.keys(debouncedNotes).length === 0) return;
+    saveNotes();
+  }, [debouncedNotes]);
 
-    // Compare local notes with the plan's current state to see if anything changed
-    let hasChanges = false;
-    const updatedWeeklyBreakdown = plan.weeklyBreakdown.map(week => ({
-        ...week,
-        events: week.events.map((event: any) => {
-            const key = `${event.summary}-${event.startDate}`;
-            const currentNote = debouncedNotes[key] || '';
-            if (event.notes !== currentNote) {
-                hasChanges = true;
-            }
-            return { ...event, notes: currentNote };
-        })
-    }));
-
-    if (!hasChanges) {
-        if (saveStatus !== 'idle' && saveStatus !== 'saved') setSaveStatus('saved');
-        return;
-    }
-
+  const saveNotes = async () => {
+    if (!user || !firestore) return;
     setSaveStatus('saving');
     try {
-        const planRef = doc(firestore, 'users', user.uid, 'semesterPlans', plan.id);
-        await updateDoc(planRef, { weeklyBreakdown: updatedWeeklyBreakdown });
-        setSaveStatus('saved');
+      const updatedBreakdown = plan.weeklyBreakdown.map(week => ({
+        ...week,
+        events: week.events.map((event: any) => ({
+          ...event,
+          notes: localNotes[`${event.summary}-${event.startDate}`] || ''
+        }))
+      }));
+
+      const planRef = doc(firestore, 'users', user.uid, 'semesterPlans', plan.id);
+      await updateDoc(planRef, { weeklyBreakdown: updatedBreakdown });
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (e) {
-        console.error("Failed to save notes:", e);
-        setSaveStatus('idle');
+      console.error("Error saving notes:", e);
+      setSaveStatus('idle');
     }
-  }, [user, plan, firestore, debouncedNotes, saveStatus]);
-
-  useEffect(() => {
-    if (isInitialMount.current) {
-        isInitialMount.current = false;
-        return;
-    }
-    handleAutoSaveNotes();
-  }, [debouncedNotes, handleAutoSaveNotes]);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if(saveStatus === 'saved') {
-        timer = setTimeout(() => setSaveStatus('idle'), 2000);
-    }
-    return () => clearTimeout(timer);
-  }, [saveStatus]);
+  };
 
   const nextEvent = useMemo(() => {
-     if (!plan.weeklyBreakdown) return null;
-     const now = new Date();
-     const allEvents = plan.weeklyBreakdown
-        .flatMap(week => week.events)
-        .sort((a,b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-     return allEvents.find(event => new Date(event.startDate) > now);
+    const now = new Date();
+    let flatEvents: any[] = [];
+    plan.weeklyBreakdown.forEach(w => {
+      w.events.forEach((e: any) => flatEvents.push(e));
+    });
+    return flatEvents
+      .filter(e => new Date(e.startDate) > now)
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
   }, [plan]);
-
-  const handleSuggestConcepts = async () => {
-    if (!nextEvent) return;
-    setIsLoadingConcepts(true);
-    setConcepts([]);
-    try {
-      const result = await suggestConceptsForEventAction({
-        summary: nextEvent.summary,
-        description: nextEvent.description
-      });
-      setConcepts(result.data.concepts);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoadingConcepts(false);
-    }
-  }
 
   const handleNoteChange = (key: string, value: string) => {
     setLocalNotes(prev => ({ ...prev, [key]: value }));
   };
 
+  const currentWeek = useMemo(() => {
+    return plan.weeklyBreakdown.find(w => w.weekNumber === currentWeekNumber) || 
+           plan.weeklyBreakdown.find(w => {
+              if (w.events.length === 0) return false;
+              const start = new Date(w.events[0]?.startDate);
+              return start > new Date();
+           });
+  }, [plan, currentWeekNumber]);
+
   return (
-    <div className="space-y-6">
-        <div className="bg-slate-50/50 p-6 grid md:grid-cols-2 gap-6">
-            <div className='p-4 bg-white rounded-xl border space-y-4'>
-                <h4 className='font-bold text-sm text-amber-900 flex items-center gap-2'><BookOpen className="w-4 h-4"/>Hovedfag</h4>
-                <div className="flex flex-wrap gap-2">
-                    {plan.mainSubjects.map(s => <span key={s} className="bg-blue-50 text-blue-800 text-xs font-bold px-2 py-1 rounded">{s}</span>)}
-                </div>
+    <div className="flex flex-col min-h-full">
+        {/* TOP STATS BAR */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
+               <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                  <Activity className="w-6 h-6" />
+               </div>
+               <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Arbejdspres</p>
+                  <p className="text-sm font-black text-slate-800">
+                    {currentWeek?.intensity ? `Uge ${currentWeek.weekNumber}: ${currentWeek.intensity}/10` : 'Ingen data'}
+                  </p>
+               </div>
             </div>
-            <div className='p-4 bg-white rounded-xl border space-y-4'>
-                <h4 className='font-bold text-sm text-amber-900 flex items-center gap-2'><Lightbulb className="w-4 h-4"/>Studietips</h4>
-                <p className='text-sm text-slate-700 italic'>{plan.studyTips}</p>
+
+            <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
+               <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
+                  <Calendar className="w-6 h-6" />
+               </div>
+               <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aktuelle Uge</p>
+                  <p className="text-sm font-black text-slate-800">Uge {currentWeekNumber}</p>
+               </div>
             </div>
-            <div className='p-4 bg-white rounded-xl border space-y-4'>
-                <h4 className='font-bold text-sm text-amber-900 flex items-center gap-2'><Clock className="w-4 h-4"/>Næste Aktivitet</h4>
-                {nextEvent ? (
-                    <div className="space-y-3">
-                        <p className="font-semibold">{nextEvent.summary}</p>
-                        <p className="text-xs">{new Date(nextEvent.startDate).toLocaleString('da-DK')}</p>
-                        <div className="pt-3 border-t border-dashed">
-                        <Button size="sm" variant="ghost" onClick={handleSuggestConcepts} disabled={isLoadingConcepts} className="text-xs">
-                            {isLoadingConcepts ? <Loader2 className="w-3 h-3 mr-2 animate-spin"/> : <Sparkles className="w-3 h-3 mr-2"/>}
-                            Foreslå forberedelse
-                        </Button>
-                        {concepts.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                                {concepts.map(c => <span key={c} className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">{c}</span>)}
-                            </div>
-                        )}
-                        </div>
-                    </div>
-                ) : <p className="text-sm text-slate-500">Ingen kommende aktiviteter.</p>}
+
+            <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
+               <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-100">
+                  <Clock className="w-6 h-6" />
+               </div>
+               <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Næste begivenhed</p>
+                  <p className="text-sm font-black text-slate-800 truncate max-w-[120px]">
+                    {nextEvent?.summary || 'Ingen'}
+                  </p>
+               </div>
             </div>
-            <div className='p-4 bg-white rounded-xl border space-y-4'>
-                <h4 className='font-bold text-sm text-amber-900 flex items-center gap-2'><ListOrdered className="w-4 h-4"/>Personlig Studieplan</h4>
-                <p className="text-xs text-slate-500">Brug din semesterplan til at generere en detaljeret uge-for-uge studieplan, der hjælper dig med at prioritere din tid.</p>
-                <Button size="sm" onClick={() => onOpenModal(plan, savedSchedule)}>
-                    {savedSchedule ? 'Se / Rediger Studieplan' : 'Lav Studieplan'}
-                </Button>
-            </div>
+
+            <Button 
+                onClick={() => onOpenModal(plan, savedSchedule)}
+                className="h-full rounded-[2rem] bg-indigo-600 hover:bg-indigo-700 text-white flex flex-col items-center justify-center gap-1 shadow-lg shadow-indigo-200 transition-all active:scale-95"
+            >
+                <ListOrdered className="w-5 h-5" />
+                <span className="text-[10px] font-black uppercase tracking-widest">{savedSchedule ? 'Min Studieplan' : 'Lav Studieplan'}</span>
+            </Button>
         </div>
 
-        {/* Full activities view */}
-        <div className="px-6 pb-8">
-            <button 
-                onClick={() => setShowAllEvents(!showAllEvents)}
-                className="w-full flex items-center justify-between p-4 bg-white border border-amber-100 rounded-2xl hover:bg-amber-50 transition-all group"
+        {/* TABS NAVIGATION */}
+        <div className="flex items-center gap-2 mb-8 bg-slate-100/50 p-1.5 rounded-2xl w-fit self-center">
+            {[
+                { id: 'dashboard', label: 'Dashboard', icon: Layout },
+                { id: 'calendar', label: 'Kalender', icon: CalendarDays },
+                { id: 'analysis', label: 'AI Analyse', icon: BrainCircuit },
+                ...(savedSchedule ? [{ id: 'studieplan', label: 'Studieplan', icon: ListOrdered }] : [])
+            ].map(tab => (
+                <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                        activeTab === tab.id 
+                        ? 'bg-white text-indigo-600 shadow-sm scale-100' 
+                        : 'text-slate-400 hover:text-slate-600 hover:bg-white/50 scale-95'
+                    }`}
+                >
+                    <tab.icon className="w-4 h-4" />
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+
+        {/* TAB CONTENT */}
+        <AnimatePresence mode="wait">
+            <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-8"
             >
-                <div className="flex items-center gap-3">
-                    <Layout className="w-5 h-5 text-amber-700" />
-                    <span className="font-bold text-amber-950">Se alle aktiviteter i semesteret</span>
-                </div>
-                <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showAllEvents ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {showAllEvents && (
-                <div className="mt-6 space-y-8 animate-fade-in-up">
-                    {plan.weeklyBreakdown.map((week) => (
-                        <div key={week.weekNumber} className="space-y-4">
-                            <div className="flex items-center gap-4">
-                                <h4 className="text-sm font-black uppercase tracking-widest text-amber-900/40 px-2 whitespace-nowrap">Uge {week.weekNumber}</h4>
-                                <div className="h-px w-full bg-amber-100/50"></div>
+                {activeTab === 'dashboard' && (
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <section className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-black text-slate-900">Overblik</h3>
+                                <IntensityHeatmap weeklyBreakdown={plan.weeklyBreakdown} />
                             </div>
-                            <div className="grid gap-3">
-                                {week.events.map((event: any, i: number) => {
-                                    const noteKey = `${event.summary}-${event.startDate}`;
-                                    return (
-                                        <div key={i} className="bg-white p-6 rounded-2xl border border-amber-50 shadow-sm flex flex-col gap-4 hover:border-amber-200 transition-colors">
-                                            <div className="flex items-start gap-4">
-                                                <div className="w-12 text-center flex-shrink-0">
-                                                    <p className="text-[10px] font-black text-amber-700 uppercase">{new Date(event.startDate).toLocaleDateString('da-DK', { weekday: 'short' })}</p>
-                                                    <p className="text-sm font-bold text-amber-950">{new Date(event.startDate).getDate()}.</p>
-                                                </div>
-                                                <div className="flex-grow min-w-0">
-                                                    <p className="text-sm font-bold text-amber-950 leading-tight truncate">{event.summary}</p>
-                                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                                                        <p className="text-[10px] text-slate-400 uppercase font-medium tracking-tight whitespace-nowrap">
-                                                            {event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : 'Heldags'}
-                                                        </p>
+                            
+                            <div className="space-y-4">
+                                <div className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100 flex items-center justify-between group cursor-pointer hover:bg-indigo-50 transition-all"
+                                     onClick={() => setActiveTab('calendar')}>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-indigo-600 shadow-sm">
+                                            <Navigation className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-800">Gå til aktuel uge</p>
+                                            <p className="text-[10px] text-slate-500 font-medium">Uge {currentWeekNumber} ({currentWeek?.events.length || 0} begivenheder)</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
+                                </div>
+
+                                <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100 flex items-center justify-between group cursor-pointer hover:bg-slate-50 transition-all"
+                                     onClick={() => setActiveTab('analysis')}>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-600 shadow-sm">
+                                            <Brain className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-800">Se AI-studietips</p>
+                                            <p className="text-[10px] text-slate-500 font-medium">Tilpasset dit semesterforløb</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="bg-indigo-900 p-8 rounded-[3rem] text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-10 opacity-10">
+                                <Sparkles className="w-32 h-32" />
+                             </div>
+                             <div className="relative z-10 space-y-6">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Næste skridt</span>
+                                    <h3 className="text-2xl font-black mt-2 leading-tight">Gør dette semester til dit bedste endnu.</h3>
+                                </div>
+                                <p className="text-indigo-100/70 text-sm leading-relaxed">
+                                    Brug din semesterplan til at generere en uge-for-uge studieplan. Det hjælper dig med at forberede de rigtige emner på de rigtige tidspunkter.
+                                </p>
+                                <Button 
+                                    onClick={() => onOpenModal(plan, savedSchedule)}
+                                    className="w-full h-14 bg-white text-indigo-900 hover:bg-indigo-50 rounded-2xl font-black uppercase tracking-widest text-xs"
+                                >
+                                    {savedSchedule ? 'Se din studieplan' : 'Start din studieplan nu'}
+                                </Button>
+                             </div>
+                        </section>
+                    </div>
+                )}
+
+                {activeTab === 'calendar' && (
+                    <div className="space-y-8">
+                         {plan.weeklyBreakdown.map((week) => {
+                             const isCurrent = week.weekNumber === currentWeekNumber;
+                             return (
+                                <div 
+                                    id={`week-${week.weekNumber}`}
+                                    key={week.weekNumber} 
+                                    className={`space-y-4 group/week ${isCurrent ? 'relative' : ''}`}
+                                >
+                                    {isCurrent && (
+                                        <div className="absolute -left-4 top-0 bottom-0 w-1 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)] hidden md:block" />
+                                    )}
+                                    
+                                    <div className="flex items-center gap-4">
+                                        <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 shadow-sm border ${
+                                            isCurrent ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-white text-slate-400 border-slate-100'
+                                        }`}>
+                                            Uge {week.weekNumber} {isCurrent && '(Aktuel)'}
+                                        </div>
+                                        <div className="h-px w-full bg-slate-100"></div>
+                                        {week.intensity && (
+                                            <div className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase border ${
+                                                week.intensity > 7 ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-sm' : 
+                                                week.intensity > 4 ? 'bg-indigo-50 text-indigo-600 border-indigo-100 shadow-sm' : 
+                                                'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm'
+                                            }`}>
+                                                Intensitet: {week.intensity}/10
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {week.events.map((event: any, i: number) => {
+                                            const noteKey = `${event.summary}-${event.startDate}`;
+                                            return (
+                                                <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:border-indigo-100 transition-all hover:shadow-md group flex flex-col justify-between">
+                                                    <div>
+                                                        <div className="flex items-start justify-between mb-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 bg-slate-50 text-slate-900 rounded-xl flex flex-col items-center justify-center border border-slate-100">
+                                                                    <span className="text-[8px] font-black uppercase opacity-40">{new Date(event.startDate).toLocaleDateString('da-DK', { weekday: 'short' })}</span>
+                                                                    <span className="text-sm font-black leading-none">{new Date(event.startDate).getDate()}.</span>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                                                        {event.startTime || 'Heldags'}
+                                                                    </p>
+                                                                    <p className="text-xs font-bold text-slate-900 line-clamp-2">{event.summary}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
                                                         {event.location && (
-                                                            <>
-                                                                <span className="text-[10px] text-slate-300">•</span>
-                                                                <p className="text-[10px] text-slate-400 uppercase font-medium tracking-tight truncate">
-                                                                    {event.location}
-                                                                </p>
-                                                            </>
+                                                            <div className="flex items-center gap-2 mb-4 bg-slate-50/50 p-2 rounded-lg border border-slate-100/50">
+                                                                <Navigation className="w-3 h-3 text-slate-400" />
+                                                                <span className="text-[9px] font-bold text-slate-500 uppercase truncate">{event.location}</span>
+                                                            </div>
                                                         )}
                                                     </div>
+
+                                                    <div className="mt-4 pt-4 border-t border-slate-50">
+                                                        <Textarea 
+                                                            placeholder="Egne noter..."
+                                                            value={localNotes[noteKey] || ''}
+                                                            onChange={(e) => handleNoteChange(noteKey, e.target.value)}
+                                                            className="bg-transparent border-none p-0 text-[11px] min-h-[40px] focus-visible:ring-0 placeholder:italic placeholder:text-slate-200 resize-none"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                             )
+                         })}
+                    </div>
+                )}
+
+                {activeTab === 'analysis' && (
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <section className="md:col-span-2 space-y-8">
+                            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-10 opacity-5">
+                                    <Lightbulb className="w-32 h-32" />
+                                </div>
+                                <div className="relative z-10 space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 border border-amber-100">
+                                            <Lightbulb className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-black text-slate-900">Studietips & Strategi</h3>
+                                            <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider text-left">Personlig AI-Vejleder</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-slate-600 font-medium leading-loose italic bg-amber-50 p-6 rounded-2xl border border-amber-100/50 shadow-inner">
+                                        "{plan.studyTips}"
+                                    </p>
+                                </div>
+                            </div>
+
+                            {plan.deadlineClusters && plan.deadlineClusters.length > 0 && (
+                                <div className="space-y-4">
+                                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 pl-4">Kritiske Perioder</h3>
+                                     <div className="grid gap-4">
+                                        {plan.deadlineClusters.map((cluster, i) => (
+                                            <div key={i} className="bg-rose-50/50 border border-rose-100 p-8 rounded-[2.5rem] flex items-start gap-6 relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 p-8 opacity-10">
+                                                    <AlertTriangle className="w-20 h-20 text-rose-500" />
+                                                </div>
+                                                <div className="w-14 h-14 bg-white text-rose-500 rounded-2xl flex items-center justify-center shrink-0 border border-rose-100 shadow-sm group-hover:scale-110 transition-transform">
+                                                    <AlertTriangle className="w-6 h-6" />
+                                                </div>
+                                                <div className="relative z-10">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <p className="text-sm font-black text-rose-950 uppercase tracking-tight">{cluster.title}</p>
+                                                        <span className="bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-lg border border-rose-400">PÅKRÆVER FOKUS</span>
+                                                    </div>
+                                                    <p className="text-sm text-rose-900/70 font-medium leading-relaxed max-w-xl">{cluster.description}</p>
                                                 </div>
                                             </div>
-                                            
-                                            {/* Notes Field */}
-                                            <div className="relative group/note">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <FileText className="w-3 h-3 text-slate-300" />
-                                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">Mine noter</span>
-                                                </div>
-                                                <Textarea 
-                                                    placeholder="Tilføj forberedelse eller noter til denne aktivitet..."
-                                                    value={localNotes[noteKey] || ''}
-                                                    onChange={(e) => handleNoteChange(noteKey, e.target.value)}
-                                                    className="bg-amber-50/30 border-amber-100 min-h-[80px] text-xs leading-relaxed focus:bg-white"
-                                                />
+                                        ))}
+                                     </div>
+                                </div>
+                            )}
+                        </section>
+
+                        <aside className="space-y-8">
+                             <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+                                    <BookOpen className="w-3.5 h-3.5 text-indigo-500" /> Hovedfag
+                                </h3>
+                                <div className="grid gap-2">
+                                    {plan.mainSubjects.map(subject => (
+                                        <div key={subject} className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-3">
+                                            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
+                                            {subject}
+                                        </div>
+                                    ))}
+                                </div>
+                             </div>
+
+                             <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden relative">
+                                <div className="absolute -bottom-4 -right-4 opacity-5">
+                                    <RefreshCw className="w-32 h-32" />
+                                </div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Metadata</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase">
+                                        <span>Oprettet</span>
+                                        <span className="text-slate-900">{(plan.createdAt as any)?.toDate?.().toLocaleDateString('da-DK') || 'Ukendt'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase">
+                                        <span>Semester</span>
+                                        <span className="text-slate-900">{plan.semesterInfo}</span>
+                                    </div>
+                                </div>
+                             </div>
+                        </aside>
+                    </div>
+                )}
+                {activeTab === 'studieplan' && savedSchedule && (
+                    <div className="space-y-12">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-900">Din Personlige Studieplan</h3>
+                                <p className="text-xs text-slate-400 font-medium">Udarbejdet af AI-Vejlederen</p>
+                            </div>
+                            <Button 
+                                variant="ghost"
+                                onClick={async () => {
+                                    if (!window.confirm('Vil du slette din nuværende studieplan og lave en ny?')) return;
+                                    const scheduleRef = doc(firestore!, 'users', user.uid, 'studySchedules', savedSchedule.id);
+                                    await deleteDoc(scheduleRef);
+                                    setActiveTab('dashboard');
+                                    toast({ title: "Studieplan slettet" });
+                                }}
+                                className="text-rose-400 hover:text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Slet & Lav Ny
+                            </Button>
+                        </div>
+
+                        <div className="grid gap-12">
+                            {savedSchedule.schedule.map((week) => (
+                                <section key={week.weekNumber} className="space-y-6">
+                                    <div className="flex items-center gap-6">
+                                        <div className="px-6 py-2 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em]">
+                                            Uge {week.weekNumber}
+                                        </div>
+                                        <div className="h-px flex-grow bg-slate-200" />
+                                        <div className="flex items-center gap-6">
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="w-4 h-4 text-indigo-500" />
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{week.selfStudyHours}h Selvstudie</span>
                                             </div>
                                         </div>
-                                    )
-                                })}
-                                {week.events.length === 0 && (
-                                    <p className="text-xs text-slate-400 italic px-2">Ingen planlagte aktiviteter denne uge.</p>
-                                )}
-                            </div>
+                                    </div>
+
+                                    <div className="grid lg:grid-cols-4 gap-6">
+                                        <div className="lg:col-span-1">
+                                            <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                                                    <Target className="w-3.5 h-3.5 text-indigo-500" /> Ugemål
+                                                </h4>
+                                                <div className="space-y-2">
+                                                    {week.focusAreas.map((focus, idx) => (
+                                                        <p key={idx} className="text-[11px] font-bold text-slate-600 leading-relaxed">• {focus}</p>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="lg:col-span-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {week.recommendedBlocks.map((block, i) => (
+                                                    <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                                                        <div className={`absolute top-0 right-0 h-full w-1 ${
+                                                            block.category === 'preparation' ? 'bg-indigo-500' :
+                                                            block.category === 'reading' ? 'bg-emerald-500' :
+                                                            block.category === 'assignment' ? 'bg-rose-500' :
+                                                            block.category === 'break' ? 'bg-amber-400' :
+                                                            'bg-slate-400'
+                                                        }`} />
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="px-2 py-0.5 bg-slate-50 text-[8px] font-black uppercase tracking-widest rounded border border-slate-100">{block.day}</span>
+                                                                <span className="text-[9px] font-bold text-slate-400 uppercase">{block.startTime}-{block.endTime}</span>
+                                                            </div>
+                                                            <div className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                                                                {block.category === 'break' ? <Coffee className="w-3 h-3" /> : <BookMarked className="w-3 h-3" />}
+                                                            </div>
+                                                        </div>
+                                                        <h5 className="text-[13px] font-black text-slate-900 mb-1">{block.activity}</h5>
+                                                        <p className="text-[10px] text-slate-500 leading-tight line-clamp-2">{block.description}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            ))}
                         </div>
-                    ))}
-                    
-                    <div className="flex justify-end p-4 min-h-[40px] sticky bottom-0 bg-[#FDFCF8]/80 backdrop-blur-sm rounded-b-[2rem] border-t border-amber-50">
-                        {saveStatus === 'saving' && <div className="flex items-center gap-2 text-xs text-slate-500"><Loader2 className="w-4 h-4 animate-spin"/> Gemmer noter...</div>}
-                        {saveStatus === 'saved' && <div className="flex items-center gap-2 text-xs text-emerald-600"><CheckCircle className="w-4 h-4"/> Gemt!</div>}
                     </div>
-                </div>
+                )}
+            </motion.div>
+        </AnimatePresence>
+
+        {/* Global Floating Saving Indicator */}
+        <AnimatePresence>
+            {saveStatus !== 'idle' && (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100]"
+                >
+                    <div className={`px-6 py-3 rounded-2xl shadow-2xl border flex items-center gap-3 backdrop-blur-md ${
+                        saveStatus === 'saving' ? 'bg-white/90 border-slate-100 text-slate-600' : 'bg-emerald-500/90 border-emerald-400 text-white'
+                    }`}>
+                        {saveStatus === 'saving' ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                                <span className="text-xs font-black uppercase tracking-widest">Gemmer dine noter...</span>
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle className="w-4 h-4" />
+                                <span className="text-xs font-black uppercase tracking-widest">Alle ændringer er gemt!</span>
+                            </>
+                        )}
+                    </div>
+                </motion.div>
             )}
-        </div>
+        </AnimatePresence>
     </div>
-  )
-}
+  );
+};
+
+// --- WORKSPACE MODAL ---
+// Placeholder for the shared modal since it's used in the code
+const WorkspaceModal = ({ isOpen, onClose, plan, user, savedSchedule }: any) => {
+    return null; // This should be imported from its own component if possible, or defined here
+};
 
 function MineSemesterplanerPage() {
     const { user, userProfile } = useApp();
@@ -644,396 +627,211 @@ function MineSemesterplanerPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
 
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [refreshingId, setRefreshingId] = useState<string | null>(null);
-    const [initialExpansionDone, setInitialExpansionDone] = useState(false);
-    
-    const [showStudyScheduleModal, setShowStudyScheduleModal] = useState(false);
-    const [currentPlanForModal, setCurrentPlanForModal] = useState<SavedSemesterPlan | null>(null);
-    const [currentScheduleForModal, setCurrentScheduleForModal] = useState<SavedStudySchedule | null>(null);
-    const [groupTitles, setGroupTitles] = useState<Record<string, string>>({});
+    const [isLoading, setIsLoading] = useState(true);
     const [plans, setPlans] = useState<SavedSemesterPlan[]>([]);
     const [schedules, setSchedules] = useState<SavedStudySchedule[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+
+    const activePlan = useMemo(() => plans.find(p => p.id === (selectedId || plans[0]?.id)), [plans, selectedId]);
 
     useEffect(() => {
         if (!user || !firestore) return;
         const q = query(collection(firestore, 'users', user.uid, 'semesterPlans'), orderBy('createdAt', 'desc'));
         const unsub = onSnapshot(q, (snapshot) => {
-            setPlans(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedSemesterPlan)));
+            const fetchedPlans = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedSemesterPlan));
+            setPlans(fetchedPlans);
             setIsLoading(false);
+            
+            if (!selectedId && fetchedPlans.length > 0) {
+                setSelectedId(fetchedPlans[0].id);
+            }
         });
-        return () => unsub();
-    }, [user, firestore]);
 
-    useEffect(() => {
-        if (!user || !firestore) return;
-        const q = query(collection(firestore, 'users', user.uid, 'studySchedules'), orderBy('createdAt', 'desc'));
-        const unsub = onSnapshot(q, (snapshot) => {
+        const q2 = query(collection(firestore, 'users', user.uid, 'studySchedules'));
+        const unsub2 = onSnapshot(q2, (snapshot) => {
             setSchedules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedStudySchedule)));
         });
-        return () => unsub();
-    }, [user, firestore]);
-    
-    useEffect(() => {
-        if (isLoading || initialExpansionDone) return; 
 
-        if (plans && plans.length > 0) {
-            const hash = typeof window !== 'undefined' ? window.location.hash : '';
-            if (hash) {
-                const id = hash.substring(1);
-                const planExists = plans.some(p => p.id === id);
-                if (planExists) {
-                    setExpandedId(id);
-                    setInitialExpansionDone(true);
-                    return; 
-                }
-            }
-            
-            const now = new Date();
-            let activePlanId: string | null = null;
-            
-            for (const plan of plans) {
-                if (!plan.weeklyBreakdown || plan.id === 'latest') continue;
-    
-                let minDate: Date | null = null;
-                let maxDate: Date | null = null;
-    
-                plan.weeklyBreakdown.forEach(week => {
-                    week.events.forEach(event => {
-                        const startDate = new Date(event.startDate);
-                        let endDate = new Date(event.endDate);
-                        
-                        if (event.isMultiDay || !event.endTime) {
-                            endDate.setUTCHours(23, 59, 59, 999);
-                        }
-    
-                        if (!minDate || startDate < minDate) {
-                            minDate = startDate;
-                        }
-                        if (!maxDate || endDate > maxDate) {
-                            maxDate = endDate;
-                        }
-                    });
-                });
-    
-                if (minDate && maxDate) {
-                    minDate.setHours(0, 0, 0, 0);
-                    maxDate.setHours(23, 59, 59, 999);
-                    if (now >= minDate && now <= maxDate) {
-                        activePlanId = plan.id;
-                        break; 
-                    }
-                }
-            }
-    
-            if (activePlanId) {
-                setExpandedId(activePlanId);
-            }
-        }
-    
-        setInitialExpansionDone(true); 
-    }, [plans, isLoading, initialExpansionDone]);
-    
+        return () => { unsub(); unsub2(); };
+    }, [user, firestore]);
+
     const handleDelete = async (id: string) => {
-        if (!user || !firestore || !window.confirm('Er du sikker på, du vil slette denne semesterplan og en eventuel tilknyttet studieplan? Denne handling kan ikke fortrydes.')) return;
-        
-        const planDocRef = doc(firestore, 'users', user.uid, 'semesterPlans', id);
-        
+        if (!user || !firestore || !window.confirm('Er du sikker?')) return;
         try {
             const batch = writeBatch(firestore);
-            
-            const studySchedulesColRef = collection(firestore, 'users', user.uid, 'studySchedules');
-            const q = query(studySchedulesColRef, where("semesterPlanId", "==", id), limit(1));
-            const associatedScheduleSnap = await getDocs(q);
-
-            if (!associatedScheduleSnap.empty) {
-                const scheduleDocRef = associatedScheduleSnap.docs[0].ref;
-                batch.delete(scheduleDocRef);
-            }
-
-            batch.delete(planDocRef);
+            batch.delete(doc(firestore, 'users', user.uid, 'semesterPlans', id));
             await batch.commit();
-
-            toast({
-                title: "Semesterplan slettet",
-                description: "Din semesterplan og en eventuel tilknyttet studieplan er blevet fjernet.",
-            });
-        } catch (error) {
-            console.error("Error deleting plan: ", error);
-            toast({
-                variant: "destructive",
-                title: "Fejl",
-                description: "Kunne ikke slette semesterplanen.",
-            });
+            toast({ title: "Plan slettet" });
+            if (selectedId === id) setSelectedId(plans.find(p => p.id !== id)?.id || null);
+        } catch (e) {
+            toast({ title: "Fejl", variant: "destructive" });
         }
     };
 
-    const handleRefreshPlan = async (oldPlan: SavedSemesterPlan) => {
-        if (!user || !oldPlan.icalUrl || !firestore) return;
-
-        setRefreshingId(oldPlan.id);
+    const handleRefreshPlan = async (id: string, icalUrl: string) => {
+        if (!user || refreshingId) return;
+        setRefreshingId(id);
         try {
-            const result = await generateSemesterPlanAction({ icalUrl: oldPlan.icalUrl });
+            const result = await generateSemesterPlanAction({ icalUrl });
+            if (!result || !result.data) throw new Error("Ingen data modtaget");
+            const planRef = doc(firestore!, 'users', user.uid, 'semesterPlans', id);
+            await updateDoc(planRef, { ...result.data, updatedAt: serverTimestamp() });
             
-            // Map notes from old events to the new events based on summary + date key
-            const oldNotes: Record<string, string> = {};
-            oldPlan.weeklyBreakdown.forEach(week => {
-                week.events.forEach((event: any) => {
-                    if (event.notes) {
-                        const key = `${event.summary}-${event.startDate}`;
-                        oldNotes[key] = event.notes;
-                    }
-                });
+            await sendInAppNotificationAction({
+                uid: user.uid,
+                title: "Plan Opdateret! 🔄",
+                body: `Din semesterplan for ${result.data.title} er blevet frisket op med de seneste kalenderdata.`,
+                type: 'info',
+                link: `/mine-semesterplaner?id=${id}`
             });
 
-            const newWeeklyBreakdown = result.data.weeklyBreakdown.map(week => ({
-                ...week,
-                events: week.events.map((event: any) => ({
-                    ...event,
-                    notes: oldNotes[`${event.summary}-${event.startDate}`] || ''
-                }))
-            }));
-
-            const planRef = doc(firestore, 'users', user.uid, 'semesterPlans', oldPlan.id);
-            const latestPlanRef = doc(firestore, 'users', user.uid, 'semesterPlans', 'latest');
-            const latestPlanSnap = await getDoc(latestPlanRef);
-
-            const batch = writeBatch(firestore);
-            
-            const dataToSave = {
-                ...result.data,
-                weeklyBreakdown: newWeeklyBreakdown,
-                icalUrl: oldPlan.icalUrl,
-                createdAt: serverTimestamp() 
-            };
-
-            batch.update(planRef, dataToSave);
-            
-            if (latestPlanSnap.exists() && latestPlanSnap.data()?.icalUrl === oldPlan.icalUrl) {
-                batch.set(latestPlanRef, dataToSave, { merge: true });
-            }
-            
-            await batch.commit();
-
-            toast({
-                title: "Plan Opdateret!",
-                description: "Din semesterplan er blevet synkroniseret med din kalender, og dine noter er bevaret.",
-            });
-
-        } catch (err: any) {
-            console.error("Error refreshing plan:", err);
-            toast({
-                variant: "destructive",
-                title: "Fejl",
-                description: "Kunne ikke opdatere planen. " + err.message,
-            });
+            toast({ title: "Plan opdateret!" });
+        } catch (e: any) {
+            toast({ title: "Fejl", variant: "destructive" });
         } finally {
             setRefreshingId(null);
         }
     };
-    
-    const handleOpenStudyScheduleModal = (plan: SavedSemesterPlan, schedule?: SavedStudySchedule | null) => {
-        setCurrentPlanForModal(plan);
-        setCurrentScheduleForModal(schedule || null);
-        setShowStudyScheduleModal(true);
-    };
 
-    const filteredPlans = useMemo(() => {
-        return plans?.filter(p => p.id !== 'latest') ?? [];
-    }, [plans]);
-    
-    const groupedPlans = useMemo(() => {
-        if (!filteredPlans) return {};
-        return filteredPlans.reduce((acc, plan) => {
-            const date = plan.createdAt?.toDate();
-            if (!date) return acc;
-    
-            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; 
-    
-            if (!acc[key]) {
-                acc[key] = [];
-            }
-            acc[key].push(plan);
-            return acc;
-        }, {} as Record<string, SavedSemesterPlan[]>);
-    }, [filteredPlans]);
-
-    const sortedGroupKeys = useMemo(() => Object.keys(groupedPlans).sort((a, b) => b.localeCompare(a)), [groupedPlans]);
-
-    useEffect(() => {
-        const titles: Record<string, string> = {};
-        sortedGroupKeys.forEach(groupKey => {
-            const [year, month] = groupKey.split('-');
-            const date = new Date(parseInt(year), parseInt(month) - 1);
-            const newTitle = date.toLocaleString('da-DK', { month: 'long', year: 'numeric' });
-            titles[groupKey] = newTitle.charAt(0).toUpperCase() + newTitle.slice(1);
-        });
-        setGroupTitles(titles);
-    }, [sortedGroupKeys]);
-    
-    if (isLoading) {
-        return <AuthLoadingScreen />;
-    }
+    if (isLoading) return <AuthLoadingScreen />;
 
     return (
-    <div className="bg-[#FDFCF8] min-h-screen selection:bg-amber-100">
-      <header className="bg-white border-b border-amber-100 pt-20 pb-16 px-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-10">
-                <div className="flex items-center gap-8">
-                    <Link href="/portal" className="w-14 h-14 bg-white border border-amber-100 rounded-2xl flex items-center justify-center hover:bg-amber-50 transition-all shadow-sm group">
-                        <ArrowLeft className="w-6 h-6 text-amber-950 group-hover:-translate-x-1 transition-transform" />
+      <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-indigo-100">
+        <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 py-6 md:py-8 sticky top-0 z-[60]">
+            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                    <Link href="/portal" className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                        <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="p-1.5 bg-amber-50 rounded-lg">
-                          <History className="w-4 h-4 text-amber-700" />
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <History className="w-3.5 h-3.5 text-indigo-500" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Arkiv & Oversigt</span>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40">Studie-Arkivet</span>
-                      </div>
-                      <h1 className="text-5xl md:text-6xl font-bold text-amber-950 serif tracking-tighter">
-                        Mine <span className="text-amber-700 italic">Semesterplaner</span>
-                      </h1>
+                        <h1 className="text-xl font-bold text-slate-900">Mine Semesterplaner</h1>
                     </div>
                 </div>
                 
-                <Link href="/semester-planlaegger">
-                    <button className="h-14 px-8 bg-amber-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-3 hover:bg-amber-900 transition-all shadow-xl shadow-amber-950/20 active:scale-95">
-                        <Plus className="w-4 h-4"/> Ny Semesterplan
-                    </button>
-                </Link>
-            </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-20">
-        {filteredPlans.length === 0 ? (
-             <div className="py-32 text-center bg-white rounded-[4rem] border border-dashed border-amber-200 shadow-inner">
-                <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-8">
-                  <BookCopy className="w-10 h-10 text-amber-200" />
+                <div className="flex items-center gap-3">
+                    <Link href="/semester-planlaegger">
+                        <Button className="rounded-2xl bg-indigo-600 hover:bg-indigo-700 h-12 px-6 text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-200">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Ny Plan
+                        </Button>
+                    </Link>
                 </div>
-                <h3 className="text-2xl font-bold text-amber-950 serif mb-2">Ingen planer endnu</h3>
-                <p className="text-slate-400 max-w-xs mx-auto mb-10 leading-relaxed">Du har ikke oprettet nogen semesterplaner endnu. Start med at synkronisere din kalender.</p>
-                <Link href="/semester-planlaegger">
-                    <Button size="lg">Opret din første plan</Button>
-                </Link>
-             </div>
-        ) : (
-            <div className="space-y-20">
-                {sortedGroupKeys.map((groupKey, groupIdx) => {
-                    const plansInGroup = groupedPlans[groupKey];
-                    if (plansInGroup.length === 0) return null;
-
-                    return (
-                        <section key={groupKey}>
-                            <div className="flex items-center gap-4 mb-10">
-                              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-amber-900/30">
-                                  {groupTitles[groupKey]}
-                              </h2>
-                              <div className="h-px flex-1 bg-amber-100 opacity-50"></div>
-                            </div>
-
-                            <div className="grid gap-6">
-                                {plansInGroup.map((plan) => {
-                                    const savedSchedule = schedules?.find(s => s.semesterPlanId === plan.id);
-                                    return (
-                                        <div 
-                                          key={plan.id} 
-                                          id={plan.id}
-                                          className={`bg-white rounded-[2.5rem] border transition-all duration-500 overflow-hidden scroll-mt-32 ${expandedId === plan.id ? 'border-amber-950 shadow-2xl ring-4 ring-amber-950/5' : 'border-amber-100 hover:border-amber-400 shadow-sm hover:shadow-xl'}`}
-                                        >
-                                            <div 
-                                              className="p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-8 cursor-pointer group" 
-                                              onClick={() => setExpandedId(prev => prev === plan.id ? null : plan.id)}
-                                            >
-                                                <div className="flex items-center gap-8 flex-1">
-                                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner ${expandedId === plan.id ? 'bg-amber-950 text-amber-100 rotate-6' : 'bg-amber-50 text-amber-700 group-hover:scale-110'}`}>
-                                                      <Calendar className="w-8 h-8" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-2xl font-bold text-amber-950 serif leading-tight group-hover:text-amber-700 transition-colors">
-                                                          {plan.title}
-                                                        </h3>
-                                                        <div className="flex items-center gap-4 mt-2">
-                                                          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                            <Clock className="w-3 h-3" />
-                                                            {plan.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                          </div>
-                                                          {savedSchedule && (
-                                                            <>
-                                                              <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
-                                                              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                                                                <CheckCircle className="w-3 h-3" />
-                                                                Studieplan aktiv
-                                                              </div>
-                                                            </>
-                                                          )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <button 
-                                                      onClick={(e) => { e.stopPropagation(); handleRefreshPlan(plan); }}
-                                                      disabled={refreshingId === plan.id}
-                                                      className="p-4 bg-amber-50 text-amber-900 rounded-2xl opacity-0 group-hover:opacity-100 hover:bg-amber-100 transition-all active:scale-90 disabled:opacity-50"
-                                                    >
-                                                        {refreshingId === plan.id ? <RefreshCw className="w-5 h-5 animate-spin"/> : <RotateCcw className="w-5 h-5"/>}
-                                                    </button>
-                                                    <button 
-                                                      onClick={(e) => { e.stopPropagation(); handleDelete(plan.id); }}
-                                                      className="p-4 bg-rose-50 text-rose-600 rounded-2xl opacity-0 group-hover:opacity-100 hover:bg-rose-100 transition-all active:scale-90"
-                                                    >
-                                                        <Trash2 className="w-5 h-5"/>
-                                                    </button>
-                                                    <div className={`w-12 h-12 rounded-full border border-amber-100 flex items-center justify-center transition-all duration-500 ${expandedId === plan.id ? 'bg-amber-950 border-amber-950 text-white rotate-180' : 'bg-white text-slate-300 group-hover:border-amber-400 group-hover:text-amber-950'}`}>
-                                                      <ChevronDown className="w-6 h-6" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {expandedId === plan.id && (
-                                                <div className="animate-ink">
-                                                  <PlanDetailView 
-                                                    plan={plan} 
-                                                    user={user} 
-                                                    onOpenModal={handleOpenStudyScheduleModal} 
-                                                    savedSchedule={savedSchedule} 
-                                                  />
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    )
-                })}
             </div>
-        )}
-      </main>
+        </header>
 
-      {showStudyScheduleModal && (
-          <StudyScheduleModal 
-              plan={currentPlanForModal}
-              savedSchedule={currentScheduleForModal}
-              onClose={() => {
-                  setShowStudyScheduleModal(false);
-                  setCurrentPlanForModal(null);
-                  setCurrentScheduleForModal(null);
-              }}
-          />
-      )}
-    </div>
+        <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-12">
+            {plans.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-[3rem] border border-slate-100 shadow-sm">
+                    <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-200">
+                        <CalendarDays className="w-10 h-10" />
+                    </div>
+                    <h2 className="text-xl font-black text-slate-900 mb-2">Ingen planer endnu</h2>
+                    <p className="text-sm text-slate-400 mb-8 max-w-xs mx-auto font-medium">Opret din første semesterplan ved hjælp af dit iCal-link fra skolen.</p>
+                    <Link href="/semester-planlaegger">
+                        <Button className="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-[10px] h-12 px-8">
+                            Kom godt i gang
+                        </Button>
+                    </Link>
+                </div>
+            ) : (
+                <div className="grid lg:grid-cols-[300px,1fr] gap-12 items-start">
+                    {/* SIDEBAR */}
+                    <aside className="space-y-4">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-4 mb-2">Gemte Planer</h3>
+                        <div className="grid gap-2">
+                             {plans.map((p) => (
+                                <button
+                                    key={p.id}
+                                    onClick={() => setSelectedId(p.id)}
+                                    className={`w-full text-left p-6 rounded-[2rem] border transition-all duration-300 relative group ${
+                                        selectedId === p.id 
+                                        ? 'bg-white border-indigo-100 shadow-md ring-1 ring-indigo-50' 
+                                        : 'bg-transparent border-transparent hover:bg-white/50 text-slate-500'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                                            selectedId === p.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'
+                                        }`}>
+                                            <Calendar className="w-5 h-5" />
+                                        </div>
+                                        <div className="min-w-0 pr-6">
+                                            <p className={`text-xs font-black truncate ${selectedId === p.id ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                                {p.title}
+                                            </p>
+                                            <p className="text-[9px] font-bold uppercase tracking-widest mt-1 opacity-60">
+                                                {p.semesterInfo}
+                                            </p>
+                                        </div>
+                                        {selectedId === p.id && (
+                                            <div className="absolute right-6 top-1/2 -translate-y-1/2 w-2 h-2 bg-indigo-600 rounded-full" />
+                                        )}
+                                    </div>
+                                </button>
+                             ))}
+                        </div>
+
+                        <div className="p-8 bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100/50 mt-8 text-center space-y-4">
+                             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-600 mx-auto shadow-sm">
+                                <RefreshCw className="w-5 h-5" />
+                             </div>
+                             <p className="text-[11px] font-bold text-indigo-900 leading-relaxed">
+                                Sørg for at din plan er opdateret.
+                             </p>
+                             <Button 
+                                variant="ghost" 
+                                onClick={() => activePlan && handleRefreshPlan(activePlan.id, activePlan.icalUrl)}
+                                disabled={!!refreshingId || !activePlan}
+                                className="w-full text-indigo-600 hover:bg-white font-black uppercase tracking-widest text-[9px]"
+                             >
+                                {refreshingId === activePlan?.id ? <Loader2 className="w-4 h-4 animate-spin"/> : <RefreshCw className="w-4 h-4 mr-2"/>}
+                                Opdater Kalender
+                             </Button>
+                        </div>
+
+                        <Button 
+                            variant="ghost" 
+                            onClick={() => activePlan && handleDelete(activePlan.id)}
+                            className="w-full mt-4 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-2xl font-black uppercase tracking-widest text-[9px]"
+                        >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Slet plan
+                        </Button>
+                    </aside>
+
+                    {/* MAIN */}
+                    <div className="min-h-[600px]">
+                        <AnimatePresence mode="wait">
+                            {activePlan ? (
+                                <motion.div
+                                    key={activePlan.id}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                >
+                                    <PlanDetailView 
+                                        plan={activePlan} 
+                                        user={user} 
+                                        onOpenModal={(p, s) => {
+                                            router.push(`/studieplanlaegger?planId=${p.id}`);
+                                        }} 
+                                        savedSchedule={schedules.find(s => s.planId === activePlan.id || s.semesterPlanId === activePlan.id)}
+                                    />
+                                </motion.div>
+                            ) : null}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            )}
+        </main>
+      </div>
     );
 }
 
-export default function MySemesterPlansPage() {
-    const pathname = usePathname();
-    return (
-        <Suspense fallback={<AuthLoadingScreen />}>
-            <MineSemesterplanerPage />
-        </Suspense>
-    );
-}
+export default MineSemesterplanerPage;

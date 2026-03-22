@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to extract structured tasks from a text document.
  * - extractTasksFromText - Analyzes text and returns a list of tasks.
@@ -34,10 +34,13 @@ const extractTasksFlow = ai.defineFlow(
     outputSchema: TaskExtractionOutputSchema,
   },
   async (input) => {
+    // Truncate input text to avoid token limits for large PDFs
+    const truncatedText = input.text.substring(0, 10000);
+
     const { output } = await ai.generate({
       output: { schema: TaskExtractionOutputSchema },
       system: "Du er en ekspert i projektledelse for studiegrupper. Din opgave er at analysere en tekst og udtrække en liste over konkrete opgaver. For hver opgave skal du lave en præcis titel og en kort beskrivelse. Hvis du finder en dato, der ligner en deadline, skal du inkludere den i YYYY-MM-DD format. Svar på dansk.",
-      prompt: `Udtræk opgaver fra følgende tekst:\n\n${input.text}`,
+      prompt: `Udtræk opgaver fra følgende tekst:\n\n${truncatedText}`,
     });
 
     return output!;

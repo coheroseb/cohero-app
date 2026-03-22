@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to recommend study techniques.
  * - recommendTechnique - Recommends techniques based on a user's challenge.

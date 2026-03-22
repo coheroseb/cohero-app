@@ -1,0 +1,15 @@
+[
+    {
+        "origin": [
+            "http://localhost:3000",
+            "https://cohero.dk"
+        ],
+        "method": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE"
+        ],
+        "maxAgeSeconds": 3600
+    }
+]

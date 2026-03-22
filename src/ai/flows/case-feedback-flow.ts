@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to provide feedback on social work case study responses.
  *

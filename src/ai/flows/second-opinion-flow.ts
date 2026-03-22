@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI-powered tool to assess if there is a basis for a grade complaint.
  *

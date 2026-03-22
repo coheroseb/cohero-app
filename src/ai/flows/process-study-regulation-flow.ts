@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to process a study regulation PDF using Gemini Embedding 2.
  * 

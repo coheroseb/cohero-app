@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to provide a structured legal assessment of a law paragraph.
  * - analyzeParagraph - Breaks down a paragraph into Subjekt, Handling, and Betingelser.

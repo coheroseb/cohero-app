@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/simulate-days",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/check-sager",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

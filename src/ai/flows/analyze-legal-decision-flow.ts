@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to analyze and summarize a legal decision.
  * - analyzeLegalDecision - Breaks down an "Afgørelse" into a pedagogical resume.

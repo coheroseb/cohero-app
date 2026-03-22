@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to explain a law paragraph for social work students.
  * - explainLawParagraph - Generates a student-oriented explanation.

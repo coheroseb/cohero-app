@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview A flow to fetch law and guideline text from Retsinformation XML endpoints and structure it.
  * - getLawContent - Fetches a URL and structures the content according to Retsinfo schema.

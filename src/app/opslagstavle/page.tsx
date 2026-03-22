@@ -319,6 +319,7 @@ const OpslagstavlePageContent = () => {
           commenterName: userProfile.username || 'En bruger',
           postTitle: post.title || 'dit opslag',
           postId: post.id,
+          authorId: post.authorId
         });
       }
 

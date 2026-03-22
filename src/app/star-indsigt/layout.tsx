@@ -10,10 +10,19 @@ export const metadata: Metadata = {
   },
 };
 
+import { StarSidebar } from '@/components/star-indsigt/StarSidebar';
+
 export default function StarIndsigtLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-indigo-100 overflow-x-hidden">
+      <StarSidebar />
+      <main className="flex-1 min-w-0 h-screen overflow-y-auto relative pt-0 custom-scrollbar bg-[#FDFCF8]">
+        {children}
+      </main>
+    </div>
+  );
 }

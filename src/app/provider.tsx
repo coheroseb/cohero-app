@@ -12,6 +12,7 @@ import React, {
 } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import OnboardingModal from '@/components/OnboardingModal';
 import Footer from '@/components/Footer';
@@ -26,7 +27,7 @@ import {
 import { doc, getDoc, setDoc, DocumentData, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { sendStreakReminderEmailAction } from '@/app/actions';
 import { UserProfile } from '@/ai/flows/types';
-import { Home, Compass, BookOpen, User as UserIcon, MessageSquare, QrCode } from 'lucide-react';
+import { Home, Compass, BookOpen, User as UserIcon, MessageSquare, QrCode, Sparkles } from 'lucide-react';
 
 type GameType = 'theorist' | 'paragraph' | 'method';
 
@@ -55,11 +56,25 @@ const AppContext = createContext<AppContextType | null>(null);
 
 const UpgradeBanner = () => {
     return (
-        <div className="bg-amber-900 text-white text-center text-sm font-bold p-3">
-            <Link href="/upgrade" className="hover:underline">
-                Du er gratis Kollega medlem. Opgrader for ubegrænset adgang.
+        <motion.div 
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.5, type: "spring", stiffness: 200, damping: 20 }}
+            className="fixed bottom-6 md:bottom-10 right-6 md:right-10 z-[120] pointer-events-auto group"
+        >
+            <Link 
+                href="/upgrade" 
+                className="flex flex-row items-center gap-3 bg-white/95 backdrop-blur-xl border border-amber-200/50 shadow-2xl p-2.5 pr-6 rounded-full hover:bg-white hover:border-amber-300 hover:scale-105 transition-all cursor-pointer ring-4 ring-black/5"
+            >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-inner">
+                    <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex flex-col text-left">
+                    <span className="text-[10px] uppercase tracking-widest text-slate-400 font-black group-hover:text-amber-900 transition-colors">Opgrader Konto</span>
+                    <span className="text-sm font-bold text-slate-800 leading-tight">Lås alt op <span className="text-amber-500">→</span></span>
+                </div>
             </Link>
-        </div>
+        </motion.div>
     );
 };
 
@@ -111,7 +126,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin } = useUser();
   const [userProfile, setUserProfile] = useState<UserProfile | null | undefined>(undefined);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [hasPlayedDailyChallenge, setHasPlayedDailyChallenge] = useState(false);
   const [cookieConsent, setCookieConsent] = useState<'granted' | 'denied' | 'pending'>('pending');
@@ -121,11 +135,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [mounted, setMounted] = useState(false);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
 
   useEffect(() => {
+    setMounted(true);
     // Check if running as PWA
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || document.referrer.includes('android-app://');
+    const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || document.referrer.includes('android-app://'));
     setIsNativeApp(isStandalone);
   }, []);
 
@@ -185,6 +201,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setUserProfile(null);
       return;
     }
+    if (userProfile === null) setUserProfile(undefined);
     refetchUserProfile();
   }, [user, isUserLoading, refetchUserProfile]);
 
@@ -211,8 +228,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     
     if (!user) {
-      setShowOnboarding(false);
-      
       // AUTO-LOGIN REDIRECT FOR PWA
       if (isNativeApp && pathname === '/') {
           router.push('/auth?mode=login');
@@ -220,21 +235,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const needsOnboarding = userProfile === null || (!userProfile.isQualified && (!userProfile.institution || !userProfile.semester));
+    const needsOnboarding = userProfile === null || (userProfile && !userProfile.isQualified && (!userProfile.institution || !userProfile.semester));
 
     if (isStandaloneGroups) {
-        setShowOnboarding(false); // We handle onboarding via page in groups
         if (needsOnboarding && !pathname?.includes('/onboarding')) {
             const redirectUrl = `/rum/groups/onboarding${pathname?.includes('/join/') ? `?callbackUrl=${encodeURIComponent(pathname)}` : ''}`;
             router.push(redirectUrl);
         }
         return;
-    }
-
-    if (pathname === '/' && needsOnboarding) {
-        setShowOnboarding(false);
-    } else {
-        setShowOnboarding(needsOnboarding);
     }
 
     const isPartnerUser = userProfile && userProfile.stripePriceId?.startsWith('b2b-');
@@ -254,6 +262,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     }
   }, [user, isUserLoading, userProfile, pathname, router, isStandaloneGroups, isNativeApp]);
+
+  const showOnboardingModal = useMemo(() => {
+    if (isUserLoading || userProfile === undefined || !user || isStandaloneGroups || pathname === '/') {
+        return false;
+    }
+    return userProfile === null || (!userProfile.isQualified && (!userProfile.institution || !userProfile.semester));
+  }, [isUserLoading, userProfile, user, isStandaloneGroups, pathname]);
 
   const openAuthPage = (mode: 'login' | 'signup' = 'signup', priceId?: string) => {
     const authUrl = isStandaloneGroups ? `/rum/groups/auth` : `/auth`;
@@ -298,10 +313,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [auth]);
 
-  if (IS_PRE_LAUNCH) {
-    return <ComingSoon />;
-  }
-
   const showUpgradeBanner = !isStandaloneGroups && userProfile && userProfile.membership === 'Kollega';
 
   const contextValue = useMemo((): AppContextType => ({
@@ -326,28 +337,51 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, isNativeApp]);
 
 
+  const pageBackground = useMemo(() => {
+    if (pathname?.includes('/lov-portal')) return 'bg-[#F9F7F2]';
+    if (pathname?.includes('/grupper') || pathname?.includes('/rum/groups')) return 'bg-[#F8FAFC]';
+    if (pathname?.includes('/memento') || pathname?.includes('/case-trainer')) return 'bg-[#FFFBF5]';
+    return 'bg-white';
+  }, [pathname]);
+
+  if (IS_PRE_LAUNCH) {
+    return <ComingSoon />;
+  }
+
   return (
     <AppContext.Provider
       value={contextValue}
     >
-      <div className={`min-h-screen flex flex-col selection:bg-amber-200 ${isNativeApp ? 'native-app' : ''}`}>
-        {!isNativeApp && !isStandaloneGroups && (
-          <div className="sticky top-0 z-50">
+      <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
+        {mounted && !isNativeApp && !isStandaloneGroups && (
+          <>
             {showUpgradeBanner && <UpgradeBanner />}
             <Navbar onAuth={() => openAuthPage()} user={user} userProfile={userProfile} onLogout={handleLogout} />
-          </div>
+          </>
         )}
-        <main className={`flex-grow ${isNativeApp ? 'pb-24 pt-4' : ''}`}>
-            {children}
+        <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : isStandaloneGroups ? 'pt-0' : 'pt-24 md:pt-32'}`}>
+            {/* Soft top gradient to blend with navbar when scrolling */}
+            {!isNativeApp && !isStandaloneGroups && (
+                <div className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-inherit to-transparent pointer-events-none z-10`} />
+            )}
+            
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="h-full"
+            >
+                {children}
+            </motion.div>
         </main>
-        {!isNativeApp && !isStandaloneGroups && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && <Footer />}
         
-        {isNativeApp && user && <MobileTabNavigation />}
+        {mounted && isNativeApp && user && <MobileTabNavigation />}
 
         <Suspense fallback={null}>
             {/* AuthModal has been removed */}
         </Suspense>
-        {!isStandaloneGroups && showOnboarding && <OnboardingModal onComplete={refetchUserProfile} />}
+        {!isStandaloneGroups && showOnboardingModal && <OnboardingModal onComplete={refetchUserProfile} />}
         {isTeamModalOpen && <TeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />}
       </div>
     </AppContext.Provider>

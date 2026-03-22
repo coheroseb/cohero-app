@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow for a mini-case simulation for prospective students.
  * - getIntroCaseConsequence - Determines the consequence of a chosen action.

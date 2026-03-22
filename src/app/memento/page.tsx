@@ -31,7 +31,13 @@ import {
   TrendingUp,
   Bookmark,
   ChevronRight,
-  ArrowUpRight
+  ArrowUpRight,
+  Activity,
+  Lightbulb,
+  MousePointer2,
+  Timer,
+  Medal,
+  Dna
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -39,15 +45,19 @@ import { useFirestore } from '@/firebase';
 import { doc, writeBatch, serverTimestamp, increment } from 'firebase/firestore';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { Button } from '@/components/ui/button';
+import { useToast } from "@/hooks/use-toast";
 
 // --- GAME DATA ---
 
 const gameDataSets = {
   theorist: {
+    id: 'theorist',
     title: 'Teori-Tinder',
     description: 'Match teoretikere med deres kernebegreber.',
-    icon: <Users className="w-5 h-5" />,
-    color: 'blue',
+    icon: <Users className="w-6 h-6" />,
+    color: 'from-blue-500 to-indigo-600',
+    lightColor: 'bg-blue-50',
+    accentColor: 'text-blue-600',
     pairs: [
       { itemA: 'Pierre Bourdieu', itemB: 'Habitus, Kapital & Felter', difficulty: 1 },
       { itemA: 'Erving Goffman', itemB: 'Dramaturgisk analyse & Stigma', difficulty: 1 },
@@ -62,10 +72,13 @@ const gameDataSets = {
     cardBType: 'concept' as const,
   },
   paragraph: {
+    id: 'paragraph',
     title: 'Paragraf-Partneren',
     description: 'Match paragraffer med deres indhold.',
-    icon: <Scale className="w-5 h-5" />,
-    color: 'emerald',
+    icon: <Scale className="w-6 h-6" />,
+    color: 'from-emerald-500 to-teal-600',
+    lightColor: 'bg-emerald-50',
+    accentColor: 'text-emerald-600',
     pairs: [
       { itemA: 'Forvaltningsloven § 7', itemB: 'Myndigheders pligt til at yde vejledning og bistand', difficulty: 1 },
       { itemA: 'Forvaltningsloven § 19', itemB: 'Partshøring før en afgørelse træffes', difficulty: 1 },
@@ -80,10 +93,13 @@ const gameDataSets = {
     cardBType: 'content' as const,
   },
   method: {
+    id: 'method',
     title: 'Metode-Matchet',
     description: 'Match cases med rette metodiske redskab.',
-    icon: <CheckSquare className="w-5 h-5" />,
-    color: 'rose',
+    icon: <CheckSquare className="w-6 h-6" />,
+    color: 'from-rose-500 to-orange-600',
+    lightColor: 'bg-rose-50',
+    accentColor: 'text-rose-600',
     pairs: [
       { itemA: 'Systematisk afdækning af et barns behov.', itemB: 'ICS-trekanten', difficulty: 1 },
       { itemA: 'Udredning af voksens funktionsevne til støtte.', itemB: 'Voksenudredningsmetoden (VUM)', difficulty: 1 },
@@ -116,51 +132,54 @@ const shuffleArray = (array: any[]) => {
 
 // --- COMPONENTS ---
 
-const GameCardComponent = ({ card, isFlipped, isMatched, onClick }: { card: CardData, isFlipped: boolean, isMatched: boolean, onClick: () => void }) => {
-  const cardStyles: { [key in CardType]: string } = {
-    theorist: 'bg-blue-50 text-blue-900 border-blue-200',
-    concept: 'bg-purple-50 text-purple-900 border-purple-200',
-    paragraph: 'bg-emerald-50 text-emerald-900 border-emerald-200',
-    content: 'bg-teal-50 text-teal-900 border-teal-200',
-    case: 'bg-rose-50 text-rose-900 border-rose-200',
-    tool: 'bg-cyan-50 text-cyan-900 border-cyan-200',
-  };
+const PremiumGlassCard = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+    <div className={`backdrop-blur-xl bg-white/70 border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] rounded-[2.5rem] ${className}`}>
+        {children}
+    </div>
+);
 
+const GameCardComponent = ({ card, isFlipped, isMatched, onClick, colorGradient }: { card: CardData, isFlipped: boolean, isMatched: boolean, onClick: () => void, colorGradient: string }) => {
   return (
     <motion.div 
-      className="relative w-full h-40 sm:h-48 md:h-64 cursor-pointer perspective-1000 group"
+      className="relative w-full h-44 sm:h-52 md:h-64 cursor-pointer perspective-1000 group"
       onClick={onClick}
-      whileHover={{ scale: isFlipped || isMatched ? 1 : 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ scale: isFlipped || isMatched ? 1 : 1.05, rotateZ: isFlipped || isMatched ? 0 : 1 }}
+      whileTap={{ scale: 0.95 }}
     >
       <motion.div
-        className="w-full h-full relative transition-all duration-500 preserve-3d"
+        className="w-full h-full relative preserve-3d"
         animate={{ rotateY: isFlipped || isMatched ? 180 : 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       >
         {/* Front of Card */}
-        <div className={`absolute inset-0 backface-hidden flex flex-col items-center justify-center p-4 sm:p-6 text-center rounded-[1.5rem] sm:rounded-[2.5rem] border-2 bg-white shadow-sm border-amber-100/50 group-hover:border-amber-200 transition-colors`}>
-          <div className="w-10 h-10 sm:w-16 sm:h-16 bg-amber-50 rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center mb-3 sm:mb-4 shadow-inner group-hover:scale-110 transition-transform duration-500">
-            <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 text-amber-300" />
+        <div className={`absolute inset-0 backface-hidden flex flex-col items-center justify-center p-6 text-center rounded-[2rem] border-2 bg-white shadow-xl border-amber-50 hover:border-amber-200 transition-colors`}>
+          <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mb-4 shadow-inner group-hover:bg-amber-100 transition-colors duration-500">
+            <Sparkle className="w-8 h-8 text-amber-300 group-hover:rotate-45 transition-transform duration-700" />
           </div>
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/20">Memento</p>
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-900/10">Memento</span>
         </div>
 
         {/* Back of Card */}
-        <div className={`absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-4 sm:p-8 text-center rounded-[1.5rem] sm:rounded-[2.5rem] border-2 shadow-2xl ${isMatched ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : cardStyles[card.type]}`}>
-          <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
-             <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-widest opacity-30">{card.type}</span>
+        <div className={`absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center rounded-[2rem] border-2 shadow-2xl overflow-hidden ${isMatched ? 'bg-emerald-50 border-emerald-200 text-emerald-950 shadow-emerald-900/10' : 'bg-white border-white/10'}`}>
+          {!isMatched && (
+              <div className={`absolute inset-0 bg-gradient-to-br ${colorGradient} opacity-5`} />
+          )}
+          
+          <div className="absolute top-4 left-4">
+             <span className={`text-[8px] font-black uppercase tracking-widest opacity-30 ${isMatched ? 'text-emerald-500' : ''}`}>{card.type}</span>
           </div>
-          <p className="text-xs sm:text-sm md:text-base font-bold leading-relaxed serif italic line-clamp-6 sm:line-clamp-none">
+
+          <p className={`text-sm md:text-base font-bold leading-relaxed serif italic relative z-10 ${isMatched ? 'text-emerald-950' : 'text-slate-700'}`}>
             {card.content}
           </p>
+
           {isMatched && (
             <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 w-6 h-6 sm:w-8 sm:h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg"
+              initial={{ scale: 0, rotate: -45 }}
+              animate={{ scale: 1, rotate: 0 }}
+              className="absolute bottom-4 right-4 w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/20"
             >
-              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <CheckCircle className="w-5 h-5" />
             </motion.div>
           )}
         </div>
@@ -171,9 +190,10 @@ const GameCardComponent = ({ card, isFlipped, isMatched, onClick }: { card: Card
 
 const MementoGame = ({ gameType, level, onGameEnd }: { gameType: GameType, level: number, onGameEnd: (score: number, success: boolean) => void }) => {
     const gameDef = gameDataSets[gameType];
+    const { toast } = useToast();
     
     const numPairs = useMemo(() => {
-        return Math.min(level + 3, 8, gameDef.pairs.length);
+        return Math.min(level + 3, 10, gameDef.pairs.length);
     }, [level, gameDef]);
     
     const gameData = useMemo(() => {
@@ -210,14 +230,20 @@ const MementoGame = ({ gameType, level, onGameEnd }: { gameType: GameType, level
     const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
     const [matchedIds, setMatchedIds] = useState<string[]>([]);
     const [score, setScore] = useState(0);
+    const [startTime] = useState(Date.now());
+    const [combo, setCombo] = useState(0);
 
     useEffect(() => {
         const allMatched = matchedIds.length === numPairs;
         if (allMatched) {
-            const timer = setTimeout(() => onGameEnd(score, true), 1000);
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            const timeBonus = Math.max(0, 100 - timeSpent);
+            const finalScore = score + timeBonus;
+            
+            const timer = setTimeout(() => onGameEnd(finalScore, true), 1200);
             return () => clearTimeout(timer);
         }
-    }, [onGameEnd, score, matchedIds.length, numPairs]);
+    }, [matchedIds.length, numPairs, onGameEnd, score, startTime]);
 
     useEffect(() => {
         if (flippedIndices.length === 2) {
@@ -227,14 +253,23 @@ const MementoGame = ({ gameType, level, onGameEnd }: { gameType: GameType, level
 
             if (firstCard.matchId === secondCard.matchId) {
                 setMatchedIds(prev => [...prev, firstCard.matchId]);
-                setScore(prev => prev + 10);
+                const comboBonus = combo * 5;
+                setScore(prev => prev + 10 + comboBonus);
+                setCombo(prev => prev + 1);
                 setFlippedIndices([]);
+                
+                if (combo > 0) {
+                    toast({ title: `Combo x${combo+1}!`, description: "Din hukommelse er i fokus." });
+                }
             } else {
-                const timer = setTimeout(() => setFlippedIndices([]), 1500);
+                const timer = setTimeout(() => {
+                    setFlippedIndices([]);
+                    setCombo(0);
+                }, 1200);
                 return () => clearTimeout(timer);
             }
         }
-    }, [flippedIndices, gameData]);
+    }, [flippedIndices, gameData, combo, toast]);
 
     const handleCardClick = (index: number) => {
         if (flippedIndices.length < 2 && !flippedIndices.includes(index) && !matchedIds.includes(gameData[index].matchId)) {
@@ -243,43 +278,76 @@ const MementoGame = ({ gameType, level, onGameEnd }: { gameType: GameType, level
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto px-4">
             <motion.div 
-              initial={{ y: -20, opacity: 0 }}
+              initial={{ y: -30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="flex justify-between items-center bg-white p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-amber-100 shadow-sm mb-8 sm:mb-12 sticky top-4 z-20"
+              className="mb-12 sticky top-6 z-[60]"
             >
-                <div className="flex items-center gap-3 sm:gap-4">
-                    <div className={`p-2.5 sm:p-3 rounded-xl bg-amber-50 text-amber-700`}>
-                      {React.cloneElement(gameDef.icon as React.ReactElement, { className: 'w-5 h-5 sm:w-6 sm:h-6' })}
+                <PremiumGlassCard className="p-6 md:p-8 flex items-center justify-between border-amber-950/5 shadow-2xl shadow-amber-950/5">
+                    <div className="flex items-center gap-5">
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gameDef.color} flex items-center justify-center text-white shadow-lg`}>
+                          {React.cloneElement(gameDef.icon as React.ReactElement, { className: 'w-7 h-7' })}
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-black text-amber-950 serif tracking-tight">{gameDef.title}</h2>
+                          <div className="flex items-center gap-3 mt-1">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Level {level + 1}</span>
+                              <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                              <span className="text-[10px] font-black uppercase tracking-widest text-amber-600/60">{matchedIds.length} ud af {numPairs}</span>
+                          </div>
+                        </div>
                     </div>
-                    <div className="min-w-0">
-                      <h2 className="font-bold text-amber-950 serif text-sm sm:text-xl leading-none truncate">{gameDef.title}</h2>
-                      <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Level {level + 1}</p>
+
+                    <div className="flex items-center gap-10">
+                        {combo > 1 && (
+                            <motion.div 
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="hidden md:flex flex-col items-center"
+                            >
+                                <div className="flex items-center gap-1 text-rose-500">
+                                    <Flame className="w-5 h-5 fill-current" />
+                                    <span className="text-xl font-black italic">x{combo}</span>
+                                </div>
+                                <span className="text-[8px] font-black uppercase text-rose-400 tracking-tighter">Streak Bonus</span>
+                            </motion.div>
+                        )}
+                        <div className="text-right">
+                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Score</p>
+                            <p className="text-4xl font-black text-amber-950 serif leading-none">{score}</p>
+                        </div>
+                        <div className="hidden sm:block">
+                            <div className="relative w-24 h-24">
+                                <svg className="w-full h-full transform -rotate-90">
+                                    <circle cx="48" cy="48" r="40" fill="transparent" stroke="currentColor" strokeWidth="8" className="text-slate-50" />
+                                    <circle 
+                                        cx="48" cy="48" r="40" fill="transparent" stroke="currentColor" strokeWidth="8" 
+                                        strokeDasharray={251.2} 
+                                        strokeDashoffset={251.2 - (251.2 * (matchedIds.length / numPairs))} 
+                                        className={`${gameDef.accentColor} transition-all duration-1000 ease-out`}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-xs font-black text-amber-950 serif">{Math.round((matchedIds.length / numPairs) * 100)}%</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-4 sm:gap-8 shrink-0">
-                     <div className="text-right">
-                        <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Score</p>
-                        <p className="text-lg sm:text-2xl font-black text-amber-950 serif leading-none">{score}</p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Status</p>
-                        <p className={`text-lg sm:text-2xl font-black text-amber-950 serif leading-none`}>{matchedIds.length}/{numPairs}</p>
-                    </div>
-                </div>
+                </PremiumGlassCard>
             </motion.div>
 
             <motion.div 
               layout
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 pb-20 px-2"
+              className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 pb-32"
             >
                 <AnimatePresence>
                   {gameData.map((card, index) => (
                       <motion.div
                         key={card.id}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                       >
                         <GameCardComponent
@@ -287,6 +355,7 @@ const MementoGame = ({ gameType, level, onGameEnd }: { gameType: GameType, level
                             isFlipped={flippedIndices.includes(index)}
                             isMatched={matchedIds.includes(card.matchId)}
                             onClick={() => handleCardClick(index)}
+                            colorGradient={gameDef.color}
                         />
                       </motion.div>
                   ))}
@@ -299,77 +368,97 @@ const MementoGame = ({ gameType, level, onGameEnd }: { gameType: GameType, level
 const GameOverScreen = ({ score, success, onRestart, onMenu, isSaving }: { score: number, success: boolean, onRestart: () => void, onMenu: () => void, isSaving: boolean }) => {
     return (
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3rem] border border-amber-100 shadow-2xl max-w-md mx-auto text-center relative overflow-hidden mt-10"
+          initial={{ opacity: 0, scale: 0.9, y: 40 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="relative max-w-2xl mx-auto"
         >
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200"></div>
-            
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-50 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-inner">
-              <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500" />
-            </div>
-            
-            <h2 className="text-2xl sm:text-3xl font-bold text-amber-950 serif mb-2">
-              Mesterligt!
-            </h2>
-            <p className="text-sm sm:text-base text-slate-500 mb-8 sm:mb-10 italic">
-              Din faglige hukommelse er knivskarp.
-            </p>
-            
-            <div className="bg-amber-50/50 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-amber-100 mb-8 sm:mb-10">
-                <p className="text-[8px] sm:text-[10px] font-black text-amber-800 uppercase tracking-[0.2em] mb-2">Optjente Point</p>
-                <p className="text-5xl sm:text-6xl font-black text-amber-950 serif mb-1">{score}</p>
-                <p className="text-[10px] sm:text-xs font-bold text-amber-700 uppercase tracking-widest">Cohéro Points</p>
-            </div>
+            <PremiumGlassCard className="p-10 md:p-20 text-center overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500" />
+                
+                <motion.div 
+                    animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.1, 1] }}
+                    transition={{ duration: 6, repeat: Infinity }}
+                    className="w-32 h-32 bg-amber-50 rounded-[3rem] flex items-center justify-center mx-auto mb-10 shadow-inner group"
+                >
+                  <Trophy className="w-14 h-14 text-amber-500 group-hover:scale-110 transition-transform" />
+                </motion.div>
+                
+                <h2 className="text-5xl font-black text-amber-950 serif mb-4 tracking-tight">Mesterligt Fokus!</h2>
+                <p className="text-lg text-slate-400 mb-12 italic font-medium">Din faglige genkaldelse er nu endnu skarpere.</p>
+                
+                <div className="grid grid-cols-2 gap-8 mb-16">
+                    <div className="bg-white/50 p-8 rounded-[2.5rem] border border-amber-100 shadow-inner">
+                        <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-3">Cohéro Points</p>
+                        <p className="text-5xl font-black text-amber-950 serif leading-none">+{score}</p>
+                    </div>
+                    <div className="bg-amber-950 p-8 rounded-[2.5rem] text-white shadow-2xl">
+                        <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-3">Videns-Level</p>
+                        <p className="text-5xl font-black serif leading-none">Op!</p>
+                    </div>
+                </div>
 
-            <div className="flex flex-col gap-3 sm:gap-4">
-                <button 
-                  onClick={onRestart} 
-                  disabled={isSaving}
-                  className="w-full py-4 sm:py-5 bg-amber-950 text-white rounded-2xl font-black uppercase text-[9px] sm:text-[10px] tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                >
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-                    {isSaving ? 'Gemmer...' : 'Spil igen'}
-                </button>
-                <button 
-                  onClick={onMenu} 
-                  className="w-full py-4 sm:py-5 bg-white text-amber-950 border border-amber-100 rounded-2xl font-black uppercase text-[9px] sm:text-[10px] tracking-[0.2em] hover:bg-amber-50 transition-all"
-                >
-                    Tilbage til menu
-                </button>
+                <div className="flex flex-col sm:flex-row gap-5">
+                    <Button 
+                        onClick={onRestart} 
+                        disabled={isSaving}
+                        className="flex-1 h-20 rounded-[2rem] bg-amber-950 text-white font-black uppercase text-xs tracking-widest hover:scale-105 transition-all shadow-2xl shadow-amber-900/20"
+                    >
+                        {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <RotateCcw className="w-5 h-5 mr-3" />}
+                        {isSaving ? 'Gemmer...' : 'Prøv Level Igen'}
+                    </Button>
+                    <Button 
+                        onClick={onMenu} 
+                        variant="outline"
+                        className="flex-1 h-20 rounded-[2rem] border-amber-100 font-black uppercase text-xs tracking-widest text-amber-900 bg-white"
+                    >
+                        Tilbage til Menu
+                    </Button>
+                </div>
+            </PremiumGlassCard>
+            
+            {/* Visual particles simulation */}
+            <div className="absolute -z-10 -top-20 inset-x-0 flex justify-center opacity-30">
+                <Sparkles className="w-40 h-40 text-amber-200 animate-pulse" />
             </div>
         </motion.div>
     );
 };
 
-const GameSelectionCard = ({ icon, title, description, level, color, onSelect }: { icon: React.ReactNode, title: string, description: string, level: number, color: string, onSelect: () => void }) => {
-  const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-100',
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    rose: 'bg-rose-50 text-rose-600 border-rose-100',
-  };
-
+const GameSelectionCard = ({ icon, title, description, level, colorGradient, accentColor, onSelect }: { icon: React.ReactNode, title: string, description: string, level: number, colorGradient: string, accentColor: string, onSelect: () => void }) => {
   return (
     <motion.div 
-      whileHover={{ y: -8 }}
-      className="bg-white p-8 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border border-amber-100 shadow-sm flex flex-col group hover:shadow-xl transition-all duration-500 h-full cursor-pointer overflow-hidden relative"
-      onClick={onSelect}
+      whileHover={{ y: -12, scale: 1.02 }}
+      className="group relative h-full"
     >
-        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 shadow-inner ${colorClasses[color]}`}>
-            {React.cloneElement(icon as React.ReactElement, { className: 'w-6 h-6 sm:w-7 sm:h-7' })}
-        </div>
-        <h3 className="text-xl sm:text-2xl font-bold text-amber-950 serif mb-3 sm:mb-4 group-hover:text-amber-700 transition-colors">{title}</h3>
-        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed italic flex-grow mb-8">{description}</p>
+        <div className={`absolute inset-0 bg-gradient-to-br ${colorGradient} opacity-0 group-hover:opacity-5 blur-3xl transition-opacity duration-700 rounded-[3rem]`} />
         
-        <div className="mt-auto pt-6 sm:pt-8 border-t border-amber-50 flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Nuværende Niveau</span>
-              <span className="text-xs sm:text-sm font-bold text-amber-900">Level {level + 1}</span>
+        <PremiumGlassCard 
+            className="p-10 h-full flex flex-col hover:border-amber-200/50 hover:shadow-2xl hover:shadow-amber-950/5 transition-all duration-700 cursor-pointer overflow-hidden"
+            onClick={onSelect}
+        >
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-xl bg-gradient-to-br ${colorGradient} text-white group-hover:rotate-6 transition-transform duration-500`}>
+                {React.cloneElement(icon as React.ReactElement, { className: 'w-8 h-8' })}
             </div>
-            <div className="w-10 h-10 rounded-full border border-amber-100 flex items-center justify-center group-hover:bg-amber-950 group-hover:text-white transition-all">
-                <ChevronRight className="w-5 h-5" />
+            
+            <div className="flex-grow">
+                <h3 className="text-3xl font-black text-amber-950 serif mb-4 tracking-tight leading-none">{title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed italic mb-10 group-hover:text-amber-900/60 transition-colors">"{description}"</p>
             </div>
-        </div>
+            
+            <div className="pt-8 border-t border-amber-50/50 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Fremdrift</span>
+                  <div className="flex items-center gap-2">
+                      <span className={`text-base font-black ${accentColor}`}>Level {level + 1}</span>
+                      <ChevronRight className="w-4 h-4 text-slate-200 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+                
+                <div className="w-12 h-12 rounded-2xl border-2 border-amber-50 flex items-center justify-center text-slate-300 group-hover:bg-amber-950 group-hover:text-white group-hover:border-amber-950 transition-all duration-500 shadow-sm">
+                    <MousePointer2 className="w-5 h-5" />
+                </div>
+            </div>
+        </PremiumGlassCard>
     </motion.div>
   );
 };
@@ -482,203 +571,225 @@ const MementoPageContent: React.FC<{ user: any }> = ({ user }) => {
     }, []);
 
     return (
-        <div className="animate-fade-in-up bg-[#FDFCF8] min-h-screen selection:bg-amber-100 overflow-x-hidden">
+        <div className="bg-[#FAF9F6] min-h-screen selection:bg-amber-100 overflow-x-hidden relative">
+            
+            {/* Background Atmosphere */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-blue-100/30 rounded-full blur-[150px] animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-5%] w-[50vw] h-[50vw] bg-indigo-100/20 rounded-full blur-[120px]" />
+                <div className="absolute top-[40%] right-[10%] w-[25vw] h-[25vw] bg-amber-100/20 rounded-full blur-[100px]" />
+            </div>
+
             <AnimatePresence mode="wait">
                 {gameState === 'selection' && (
-                    <div key="selection">
-                        {/* 1. SMART COMMAND HEADER */}
-                        <header className="bg-white border-b border-amber-100 px-4 sm:px-6 py-10 md:py-16 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 md:w-[500px] md:h-[500px] bg-amber-50 rounded-full blur-[80px] md:blur-[120px] -mr-16 md:-mr-32 -mt-16 md:-mt-32 opacity-50 pointer-events-none"></div>
-                            
-                            <div className="max-w-7xl mx-auto relative z-10">
-                                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 md:gap-10 mb-10 md:mb-16">
-                                    <div className="text-center lg:text-left">
-                                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-6">
-                                            <span className="px-3 md:px-4 py-1.5 bg-amber-950 text-amber-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg border border-white/10">
-                                                Memento
-                                            </span>
-                                            <div className="flex items-center gap-2 px-3 md:px-4 py-1.5 bg-rose-50 text-rose-600 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border border-rose-100">
-                                                <Flame className="w-3 md:w-3.5 h-3 md:h-3.5 fill-current" /> {userProfile?.dailyChallengeStreak || 0} Dages dannelse
+                    <motion.div 
+                        key="selection" 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0, y: -20 }}
+                        className="relative z-10"
+                    >
+                        {/* 1. HERO HEADER */}
+                        <header className="px-6 py-20 md:py-32 relative">
+                            <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
+                                <motion.div 
+                                    initial={{ scale: 0.8, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="mb-10 px-6 py-2 bg-amber-950 text-amber-400 text-[10px] font-black uppercase tracking-[0.4em] rounded-full shadow-2xl border border-white/10"
+                                >
+                                    Dannelses-Modul: Memento
+                                </motion.div>
+                                <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-amber-950 serif leading-[0.9] tracking-tighter mb-8 max-w-5xl">
+                                    Hvad rører sig i <br /><span className="text-indigo-600 italic">din bevidsthed?</span>
+                                </h1>
+                                <p className="text-xl md:text-2xl text-slate-400 max-w-2xl italic leading-relaxed font-medium mb-16">
+                                    Træn din faglige intuition og genkaldelse gennem interaktive dannelses-spil.
+                                </p>
+
+                                <div className="flex flex-wrap items-center justify-center gap-6">
+                                    <PremiumGlassCard className="px-10 py-6 flex items-center gap-6 border-amber-950/5">
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-1">Dannelses Point</p>
+                                            <p className="text-3xl font-black text-amber-950 serif leading-none">{userProfile?.cohéroPoints || 0}</p>
+                                        </div>
+                                        <div className="w-px h-10 bg-amber-950/5" />
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-1">Nuværende Rank</p>
+                                            <div className="flex items-center gap-2">
+                                                <Medal className="w-5 h-5 text-amber-500" />
+                                                <p className="text-2xl font-black text-amber-950 serif leading-none">{Math.floor((userProfile?.cohéroPoints || 0) / 1000) + 1}</p>
                                             </div>
                                         </div>
-                                        <h1 className="text-4xl md:text-7xl font-bold text-amber-950 serif leading-none tracking-tighter">
-                                            Hvad husker du <span className="text-amber-700 italic">i dag?</span>
-                                        </h1>
-                                        <p className="text-base md:text-xl text-slate-500 mt-4 md:mt-6 italic font-medium max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                                            Træn din faglige hukommelse gennem interaktive huskespil. Match teoretikere, paragraffer og metoder.
-                                        </p>
+                                    </PremiumGlassCard>
+                                    
+                                    <div className="flex gap-4">
+                                        <Button variant="ghost" className="h-16 px-8 rounded-2xl hover:bg-white/50 text-slate-400 hover:text-amber-950 font-bold uppercase text-[10px] tracking-widest transition-all">
+                                            <TrendingUp className="w-4 h-4 mr-3" /> Se Stats
+                                        </Button>
+                                        <Button variant="ghost" className="h-16 px-8 rounded-2xl hover:bg-white/50 text-slate-400 hover:text-amber-950 font-bold uppercase text-[10px] tracking-widest transition-all">
+                                            <Bookmark className="w-4 h-4 mr-3" /> Mine Bedrifter
+                                        </Button>
                                     </div>
-
-                                    <div className="flex items-center justify-center gap-3 sm:gap-4 bg-white/50 backdrop-blur-sm p-3 sm:p-4 rounded-[2rem] sm:rounded-[2.5rem] border border-amber-100/50 shadow-inner">
-                                        <div className="text-center px-4">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Score</p>
-                                            <p className="text-2xl font-black text-amber-950 serif">{userProfile?.cohéroPoints || 0}</p>
-                                        </div>
-                                        <div className="w-[1px] h-8 bg-amber-100"></div>
-                                        <div className="text-center px-4">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Level</p>
-                                            <p className="text-2xl font-black text-amber-950 serif">
-                                                {Math.floor((userProfile?.cohéroPoints || 0) / 1000) + 1}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-                                    <Button variant="outline" className="rounded-xl border-amber-100 gap-2 font-bold h-12">
-                                        <TrendingUp className="w-4 h-4" /> Leaderboard
-                                    </Button>
-                                    <Button variant="outline" className="rounded-xl border-amber-100 gap-2 font-bold h-12">
-                                        <History className="w-4 h-4" /> Mine Stats
-                                    </Button>
                                 </div>
                             </div>
                         </header>
 
-                        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-20">
-                            <div className="grid lg:grid-cols-12 gap-12 lg:gap-16">
-                                <div className="lg:col-span-8 space-y-16">
-                                    {/* Daily Challenge Highlight */}
-                                    <section>
-                                        <div className="flex items-center gap-3 mb-8 px-2">
-                                            <div className="p-2.5 bg-amber-50 rounded-xl shadow-inner">
-                                                <Target className="w-5 h-5 text-amber-700" />
-                                            </div>
-                                            <h2 className="text-xl font-bold text-amber-950 serif">Dagens Prioritet</h2>
-                                        </div>
-
-                                        <div 
+                        <main className="max-w-7xl mx-auto px-6 pb-40">
+                            <div className="grid lg:grid-cols-12 gap-16 xl:gap-24">
+                                <div className="lg:col-span-8 space-y-24">
+                                    {/* Daily Challenge - The "Big Action" */}
+                                    <section className="relative">
+                                        <motion.div 
+                                            whileHover={{ scale: 1.01 }}
                                             onClick={() => !hasPlayedDailyChallenge && handleSelectGame(dailyChallengeGameType)}
-                                            className="bg-amber-950 p-8 md:p-14 rounded-[3rem] md:rounded-[4rem] text-white shadow-2xl relative overflow-hidden group cursor-pointer hover:scale-[1.01] transition-all duration-500"
+                                            className="bg-amber-950 p-12 md:p-24 rounded-[4rem] text-white shadow-[0_40px_80px_-20px_rgba(69,26,3,0.3)] relative overflow-hidden group cursor-pointer"
                                         >
-                                            <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
-                                                <div className="flex-1 space-y-6 text-center md:text-left">
-                                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400 text-amber-950 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg">
-                                                        <Sparkles className="w-3.5 h-3.5" /> Dagens Udfordring
+                                            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-indigo-500/20 to-transparent rounded-full blur-[150px] -mr-[400px] -mt-[400px] pointer-events-none group-hover:opacity-40 transition-opacity duration-1000" />
+                                            
+                                            <div className="relative z-10 grid md:grid-cols-[1fr_250px] gap-12 items-center">
+                                                <div className="space-y-8">
+                                                    <div className="inline-flex items-center gap-3 px-5 py-2 bg-indigo-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-xl">
+                                                        <Sparkles className="w-4 h-4 text-amber-200" /> Dagens Udfordring
                                                     </div>
-                                                    <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold serif leading-tight">
-                                                        Hold din <span className="text-amber-400 italic">dannelses-streak</span> i live
+                                                    <h3 className="text-4xl md:text-5xl lg:text-6xl font-black serif leading-[1.1] tracking-tight transition-transform group-hover:translate-x-2 duration-700">
+                                                        Styrk din <span className="text-indigo-400 italic">streak</span> <br />& få dobbelt op
                                                     </h3>
-                                                    <p className="text-amber-100/60 text-base md:text-lg leading-relaxed italic max-w-lg mx-auto md:mx-0">
+                                                    <p className="text-amber-100/50 text-xl font-medium italic leading-relaxed max-w-xl">
                                                         {hasPlayedDailyChallenge 
-                                                            ? "Flot arbejde! Du har gennemført dagens udfordring og sikret din streak."
-                                                            : `Gennemfør ${gameDataSets[dailyChallengeGameType].title} for at optjene bonuspoint.`
+                                                            ? "Du hviler på et solidt fundament i dag. Dagens streak er sikret."
+                                                            : `Gennemfør ${gameDataSets[dailyChallengeGameType].title} nu for at låse op for dagens visdom.`
                                                         }
                                                     </p>
-                                                    <Button size="lg" disabled={hasPlayedDailyChallenge} className="bg-white text-amber-950 hover:bg-amber-100 shadow-xl shadow-black/10 w-full sm:w-auto disabled:bg-emerald-500 disabled:text-white">
-                                                        {hasPlayedDailyChallenge ? <><CheckCircle className="w-4 h-4 mr-2" /> Allerede klaret</> : <><Zap className="w-4 h-4 mr-2" /> Start udfordring</>}
+                                                    <Button disabled={hasPlayedDailyChallenge} size="lg" className="h-20 px-12 rounded-[2rem] bg-indigo-500 text-white hover:bg-white hover:text-indigo-900 border-none font-black uppercase text-xs tracking-widest transition-all disabled:bg-emerald-500">
+                                                        {hasPlayedDailyChallenge ? <><CheckCircle className="w-5 h-5 mr-3" /> Gennemført i dag</> : <><Zap className="w-5 h-5 mr-3 text-amber-300" /> Start udfordring</>}
                                                     </Button>
                                                 </div>
-                                                <div className="w-full md:w-64 h-56 md:h-64 bg-white/5 rounded-[2.5rem] md:rounded-[3rem] border border-white/10 p-8 flex flex-col justify-center items-center text-center">
-                                                    <div className="w-14 h-14 bg-amber-400 rounded-2xl flex items-center justify-center text-amber-950 mb-4 shadow-xl">
-                                                        <Flame className="w-8 h-8 fill-current" />
+
+                                                <div className="bg-white/5 border border-white/10 p-10 rounded-[3.5rem] flex flex-col items-center justify-center text-center backdrop-blur-md relative group-hover:bg-white/10 transition-all duration-700">
+                                                    <div className="w-20 h-20 bg-amber-400 rounded-3xl flex items-center justify-center text-amber-950 mb-6 shadow-2xl relative">
+                                                        <Flame className="w-10 h-10 fill-current" />
+                                                        <div className="absolute inset-0 bg-amber-400 rounded-3xl animate-ping opacity-20" />
                                                     </div>
-                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400 mb-2">Din Streak</p>
-                                                    <p className="text-2xl font-bold text-amber-50">{userProfile?.dailyChallengeStreak || 0} Dage</p>
+                                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-2">Dannelses Streak</p>
+                                                    <p className="text-4xl font-black serif tracking-tighter">{userProfile?.dailyChallengeStreak || 0} Dage</p>
                                                 </div>
                                             </div>
-                                            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/5 rounded-full blur-[80px] -mr-24 -mt-24 pointer-events-none"></div>
-                                        </div>
+                                        </motion.div>
                                     </section>
 
-                                    {/* Game Categories */}
-                                    <section>
-                                        <div className="flex items-center gap-3 border-b border-amber-100 pb-6 mb-8 px-2">
-                                            <div className="p-2.5 bg-white border border-amber-100 rounded-2xl shadow-sm">
-                                                <Layers className="w-5 h-5 text-amber-700" />
+                                    {/* Categories */}
+                                    <section className="space-y-12">
+                                        <div className="flex items-center justify-between pb-6 border-b border-amber-950/5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-amber-900 shadow-sm">
+                                                    <Layers className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-3xl font-black text-amber-950 serif tracking-tight">Vælg Disciplin</h3>
+                                                    <p className="text-xs font-bold text-slate-300 uppercase tracking-widest mt-1">Hvad vil du træne i dag?</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-xl md:text-2xl font-bold text-amber-950 serif">Discipliner</h3>
-                                                <p className="text-xs sm:text-sm text-slate-400 font-medium">Vælg et fokusområde for din træning</p>
+                                            <div className="hidden md:flex items-center gap-2">
+                                                <Filter className="w-4 h-4 text-slate-300" />
+                                                <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest">Filtrering</span>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                            <GameSelectionCard 
-                                                icon={<Users />}
-                                                title="Teori-Tinder"
-                                                description="Match centrale teoretikere med deres kernebegreber for at skabe en stærk forbindelse mellem teori og afsender."
-                                                onSelect={() => handleSelectGame('theorist')}
-                                                level={userProfile?.mementoLevels?.theorist || 0}
-                                                color="blue"
-                                            />
-                                            <GameSelectionCard 
-                                                icon={<Scale />}
-                                                title="Paragraf-Partneren"
-                                                description="Træn din evne til hurtigt at navigere i lovgivningen ved at matche paragraffer med deres indhold."
-                                                onSelect={() => handleSelectGame('paragraph')}
-                                                level={userProfile?.mementoLevels?.paragraph || 0}
-                                                color="emerald"
-                                            />
-                                            <GameSelectionCard 
-                                                icon={<CheckSquare />}
-                                                title="Metode-Matchet"
-                                                description="Omsæt teori til praksis. Læs en kort case-beskrivelse og find det rette metodiske redskab."
-                                                onSelect={() => handleSelectGame('method')}
-                                                level={userProfile?.mementoLevels?.method || 0}
-                                                color="rose"
-                                            />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                            {Object.values(gameDataSets).map((game) => (
+                                                <GameSelectionCard 
+                                                    key={game.id}
+                                                    icon={game.icon}
+                                                    title={game.title}
+                                                    description={game.description}
+                                                    onSelect={() => handleSelectGame(game.id as GameType)}
+                                                    level={userProfile?.mementoLevels?.[game.id as GameType] || 0}
+                                                    colorGradient={game.color}
+                                                    accentColor={game.accentColor}
+                                                />
+                                            ))}
+                                            <motion.div 
+                                                whileHover={{ scale: 1.02 }}
+                                                className="bg-slate-50/50 border-2 border-dashed border-slate-100 rounded-[3rem] p-10 flex flex-col items-center justify-center text-center gap-6 opacity-40 group grayscale cursor-not-allowed"
+                                            >
+                                                <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-slate-200">
+                                                    <PlusCircle className="w-8 h-8" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-xl font-black text-slate-400 serif">Flere spil på vej...</h4>
+                                                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-2">Nye dannelses-kategorier</p>
+                                                </div>
+                                            </motion.div>
                                         </div>
                                     </section>
                                 </div>
 
-                                {/* Aside - Stats & Info */}
-                                <aside className="lg:col-span-4 space-y-10">
-                                    <div className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm relative overflow-hidden group">
-                                        <div className="flex items-center justify-between mb-8">
-                                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Dannelsesstatus</h3>
-                                            <Award className="w-5 h-5 text-amber-700/30" />
+                                {/* Sidebar / Global Progress */}
+                                <aside className="lg:col-span-4 space-y-12">
+                                    <PremiumGlassCard className="p-10 border-amber-950/5 space-y-10">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-amber-900/30">Næste Niveau</h3>
+                                            <Activity className="w-5 h-5 text-amber-400" />
                                         </div>
-                                        <div className="space-y-6">
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-sm font-bold text-amber-950">Level</p>
-                                                <p className="text-lg font-black text-amber-700">{Math.floor((userProfile?.cohéroPoints || 0) / 1000) + 1}</p>
+                                        
+                                        <div className="flex flex-col items-center gap-6">
+                                            <div className="relative w-40 h-40">
+                                                <svg className="w-full h-full transform -rotate-90">
+                                                    <circle cx="80" cy="80" r="72" fill="transparent" stroke="currentColor" strokeWidth="12" className="text-slate-50" />
+                                                    <circle 
+                                                        cx="80" cy="80" r="72" fill="transparent" stroke="currentColor" strokeWidth="12" 
+                                                        strokeDasharray={452.4} 
+                                                        strokeDashoffset={452.4 - (452.4 * (((userProfile?.cohéroPoints || 0) % 1000) / 1000))} 
+                                                        className="text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                                                        strokeLinecap="round"
+                                                    />
+                                                </svg>
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                    <span className="text-4xl font-black text-amber-950 serif">{Math.floor((userProfile?.cohéroPoints || 0) / 1000) + 1}</span>
+                                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Rank</span>
+                                                </div>
                                             </div>
-                                            <div className="h-2 w-full bg-amber-50 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-amber-500" 
-                                                    style={{ width: `${((userProfile?.cohéroPoints || 0) % 1000) / 10}%` }}
-                                                />
+                                            <div className="text-center">
+                                                <p className="text-[11px] font-bold text-amber-900 mb-1">{1000 - ((userProfile?.cohéroPoints || 0) % 1000)} CP tilbage</p>
+                                                <p className="text-[10px] text-slate-400 italic">Fortsæt træningen for at stige i grad.</p>
                                             </div>
-                                            <p className="text-[10px] text-slate-400 text-center italic">
-                                                {1000 - ((userProfile?.cohéroPoints || 0) % 1000)} CP til næste level
-                                            </p>
                                         </div>
-                                    </div>
+                                    </PremiumGlassCard>
 
-                                    <div className="bg-amber-950 p-8 rounded-[2.5rem] text-white shadow-xl">
-                                        <h3 className="text-lg font-bold serif mb-4">Hvorfor Memento?</h3>
-                                        <p className="text-amber-100/60 text-sm leading-relaxed mb-6 italic">
-                                            "Gentagelse er dannelsens moder. Gennem leg styrker du din evne til at bringe faglig viden i spil i pressede situationer."
+                                    <div className="p-10 bg-amber-950 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
+                                        <Dna className="absolute top-4 right-4 w-12 h-12 text-white/5 group-hover:rotate-12 transition-transform duration-1000" />
+                                        <h3 className="text-2xl font-black serif mb-6 tracking-tight">Hvorfor Memento?</h3>
+                                        <p className="text-amber-100/60 leading-relaxed italic text-base mb-10">
+                                            "Videnskaben viser, at legende genkaldelse styrker dine neurale forbindelser, så du kan handle hurtigere i praksis."
                                         </p>
-                                        <ul className="space-y-4">
-                                            <li className="flex items-center gap-3 text-xs font-bold">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                                Hurtig genkaldelse
-                                            </li>
-                                            <li className="flex items-center gap-3 text-xs font-bold">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                                Præcis paragrafbrug
-                                            </li>
-                                            <li className="flex items-center gap-3 text-xs font-bold">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                                Teoretisk rygdækning
-                                            </li>
-                                        </ul>
+                                        <div className="space-y-5">
+                                            {[
+                                                { label: "Styrk intuitiv viden", icon: <Brain className="w-4 h-4" /> },
+                                                { label: "Reducer kognitiv belastning", icon: <Timer className="w-4 h-4" /> },
+                                                { label: "Faglig rygdækning", icon: <ShieldCheck className="w-4 h-4" /> }
+                                            ].map((item, i) => (
+                                                <div key={i} className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-400">
+                                                        {item.icon}
+                                                    </div>
+                                                    <span className="text-xs font-black uppercase tracking-widest text-amber-100">{item.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </aside>
                             </div>
                         </main>
-                    </div>
+                    </motion.div>
                 )}
 
                 {gameState === 'playing' && (
                     <motion.div 
                         key="playing"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="py-10"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.05 }}
+                        className="py-12 md:py-20 relative z-10"
                     >
                         <MementoGame 
                             gameType={selectedGame!} 
@@ -691,10 +802,10 @@ const MementoPageContent: React.FC<{ user: any }> = ({ user }) => {
                 {gameState === 'finished' && gameResult && (
                     <motion.div 
                         key="finished"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="py-20"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="py-24 relative z-10"
                     >
                         <GameOverScreen 
                             score={gameResult.score} 
@@ -707,24 +818,24 @@ const MementoPageContent: React.FC<{ user: any }> = ({ user }) => {
                 )}
             </AnimatePresence>
 
-            {/* 3. FOOTER INFO */}
-            <footer className="bg-white border-t border-amber-100 px-6 sm:px-8 py-6">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-8">
+            {/* Premium Footer */}
+            <footer className="relative z-10 border-t border-amber-950/5 bg-white/40 backdrop-blur-3xl px-10 py-10 mt-20">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="flex items-center gap-10">
                         <div className="flex items-center gap-3">
-                            <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-950">Optjen CP</span>
+                            <Brain className="w-5 h-5 text-indigo-500" />
+                            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-950">Memento v2.0</span>
                         </div>
-                        <div className="h-4 w-[1px] bg-amber-100" />
-                        <div className="flex items-center gap-3 text-slate-300">
-                            <Star className="w-4 h-4" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Dannelse v4.0</span>
+                        <div className="w-px h-6 bg-amber-100 hidden md:block" />
+                        <div className="flex items-center gap-4 text-slate-300">
+                            <Medal className="w-4 h-4" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Akademisk Dannelse</span>
                         </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-full border border-amber-100">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <p className="text-[9px] font-black text-amber-900 uppercase tracking-widest">System Status: Optimal</p>
+                    <div className="flex items-center gap-4 px-6 py-3 bg-white/50 rounded-full border border-amber-950/5 shadow-inner">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <p className="text-[10px] font-black text-amber-950 uppercase tracking-[0.2em]">Kognitiv Synkronisering: 100%</p>
                     </div>
                 </div>
             </footer>
@@ -732,15 +843,21 @@ const MementoPageContent: React.FC<{ user: any }> = ({ user }) => {
     );
 };
 
+// Add plus-circle back since I used it but forgot it might not be imported if I just copy-pasted
+import { PlusCircle } from 'lucide-react';
+// And ShieldCheck
+import { ShieldCheck } from 'lucide-react';
+
 export default function MementoPage() {
     const { user, isUserLoading } = useApp();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.replace('/');
+            router.replace(`/?callbackUrl=${encodeURIComponent(pathname)}`);
         }
-    }, [user, isUserLoading, router]);
+    }, [user, isUserLoading, router, pathname]);
 
     if (isUserLoading || !user) {
         return <AuthLoadingScreen />;
@@ -748,3 +865,5 @@ export default function MementoPage() {
 
     return <MementoPageContent user={user} />;
 }
+
+import { usePathname } from 'next/navigation';

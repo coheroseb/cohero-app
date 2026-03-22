@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to transcribe audio. This flow is currently disabled
  * due to server-side configuration issues and will be replaced.

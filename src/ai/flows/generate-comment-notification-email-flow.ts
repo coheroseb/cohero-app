@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to generate a notification email for a new comment.
  *

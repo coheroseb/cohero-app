@@ -1,5 +1,12 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
+import * as dotenv from "dotenv";
+import * as path from "path";
+
+// Load Next.js environment variables for local emulator testing
+dotenv.config({ path: path.resolve(process.cwd(), "../.env.local") });
+dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
+console.log("GEMINI KEY:", !!process.env.GEMINI_API_KEY);
 
 admin.initializeApp();
 
@@ -80,3 +87,37 @@ export const processNotificationQueue = functions.firestore
       });
     }
   });
+
+
+
+import { onRequest } from "firebase-functions/v2/https";
+
+export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Methods', 'GET, POST');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(204).send('');
+    return;
+  }
+
+  const { flowName, data } = req.body;
+  if (!flowName) {
+     res.status(404).json({ error: "Flow name missing" });
+     return;
+  }
+
+  try {
+     const { allFlows } = await import("./ai/flows-export.js");
+     if (!allFlows[flowName]) {
+        res.status(404).json({ error: "Flow not found" });
+        return;
+     }
+
+     const result = await allFlows[flowName](data);
+     res.status(200).json(result);
+  } catch (error: any) {
+     console.error(`Error in flow ${flowName}:`, error);
+     res.status(500).json({ error: error.message });
+  }
+});

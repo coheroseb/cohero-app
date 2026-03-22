@@ -1,4 +1,4 @@
-'use server';
+
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
@@ -7,7 +7,6 @@ import { RecommendTaskAssigneeInputSchema, RecommendTaskAssigneeOutputSchema } f
 export async function recommendTaskAssignee(input: z.infer<typeof RecommendTaskAssigneeInputSchema>) {
   const { output } = await ai.generate({
     model: 'googleai/gemini-2.5-flash',
-    input: input,
     output: { schema: RecommendTaskAssigneeOutputSchema },
     system: `Du er en intelligent assistent til studiegrupper. Din opgave er at anbefale hvem en ny opgave skal tildeles til, baseret på opgavens indhold, gruppemedlemmernes nuværende arbejdsbyrde og deres tilgængelighed. Svar på dansk.
 

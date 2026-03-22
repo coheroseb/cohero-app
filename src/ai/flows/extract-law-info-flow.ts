@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to extract structured information from a law text URL.
  *

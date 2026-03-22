@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -27,15 +26,17 @@ import {
   GraduationCap,
   Download
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useApp } from '@/app/provider';
+import PWAInstallGuide from '@/components/PWAInstallGuide';
 
-const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
+const Reveal = ({ children, delay = 0, className = "" }: { children: React.ReactNode, delay?: number, className?: string }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 30 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.8, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+    viewport={{ once: true, margin: "-50px" }}
+    transition={{ duration: 0.7, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+    className={className}
   >
     {children}
   </motion.div>
@@ -44,8 +45,9 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
 export default function LandingPage() {
   const { openAuthPage } = useApp();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
+  const [showStickyCTA, setShowStickyCTA] = useState(false);
   
-  // We remove the activeTrack state as it's no longer needed for switching between tracks on the landing page.
   const activeTrack = 'social';
 
   useEffect(() => {
@@ -57,11 +59,24 @@ export default function LandingPage() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
+  // Handle sticky CTA visibility on scroll for mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowStickyCTA(true);
+      } else {
+        setShowStickyCTA(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const onStart = () => openAuthPage('signup');
 
   const handleInstallClick = async (e: React.MouseEvent) => {
     if (!deferredPrompt) {
-        // Fallback or info if not supported/already installed
+        setIsInstallGuideOpen(true);
         return;
     }
     e.preventDefault();
@@ -73,353 +88,397 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col selection:bg-amber-100 selection:text-amber-900 overflow-x-hidden bg-[#FDFCF8]">
+    <div className="flex flex-col selection:bg-amber-200 selection:text-amber-950 overflow-x-hidden bg-[#FDFBF7] font-sans antialiased">
       
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[95vh] lg:min-h-[90vh] flex items-center pt-32 pb-20 px-6">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.08)_0,transparent_70%)] -z-10"></div>
-        <div className="absolute top-20 left-10 w-64 h-64 bg-amber-100/30 rounded-full blur-[100px] animate-pulse"></div>
+      <section className="relative min-h-[100dvh] flex flex-col justify-center pt-10 pb-16 px-5 sm:px-8 md:pt-16 overflow-hidden">
+        {/* Dynamic Mobile-First Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FFFDF9] via-[#FAF6EC]/60 to-[#FDFBF7] -z-20"></div>
+        <div className="absolute top-[-10%] sm:top-0 right-[-10%] sm:left-1/2 sm:-translate-x-1/2 w-[120%] sm:w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(251,191,36,0.12)_0%,transparent_60%)] -z-10"></div>
+        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-64 h-48 sm:h-64 bg-amber-200/40 rounded-full blur-[80px] sm:blur-[100px] animate-pulse"></div>
         
-        <div className="max-w-7xl mx-auto w-full">
-          <div className="grid lg:grid-cols-12 items-center gap-12 lg:gap-24">
-            <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 md:space-y-10">
-              
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTrack}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  transition={{ duration: 0.4 }}
-                  className="space-y-8 md:space-y-10"
-                >
-                  <h1 className="text-4xl sm:text-6xl md:text-7xl xl:text-8xl font-bold text-amber-950 serif leading-[1.05] md:leading-[0.95] tracking-tight max-w-5xl">
-                    Din intelligente <br />
-                    <span className="text-amber-700 italic relative inline-block mt-2 md:mt-4 px-2">
-                      digitale kollega.
-                      <svg className="absolute -bottom-2 md:-bottom-4 left-0 w-full h-3 md:h-4 text-amber-300/40 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
-                          <path d="M0 5 Q 25 0, 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="4" />
-                      </svg>
-                    </span>
-                  </h1>
+        <div className="max-w-7xl mx-auto w-full relative z-10 flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+          
+          {/* Main Hero Text */}
+          <div className="flex-1 flex flex-col items-center text-center lg:items-start lg:text-left space-y-6 sm:space-y-10 w-full mt-8 lg:mt-0">
+            
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTrack}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="space-y-5 sm:space-y-8 flex flex-col items-center lg:items-start w-full"
+              >
+                {/* Mobile top badge */}
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-amber-50 border border-amber-200/50 rounded-full shadow-sm mb-2">
+                   <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-500" />
+                   <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-900">Din nye digitale makker</span>
+                </div>
+
+                <h1 className="text-[40px] leading-[1.05] sm:text-6xl md:text-7xl xl:text-[88px] font-extrabold text-slate-900 tracking-[-0.04em] w-full max-w-[20ch] lg:max-w-none">
+                  Din intelligente <br className="hidden sm:block" />
+                  <span className="text-amber-600 relative inline-block mt-2 md:mt-4 px-2 sm:px-4 shrink-0">
+                    <span className="relative z-10">digitale kollega.</span>
+                    <svg className="absolute -bottom-1 sm:-bottom-3 left-0 w-full h-3 sm:h-5 text-amber-300 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                        <path d="M0 5 Q 25 0, 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                </h1>
+                
+                <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
+                  Cohéro ruster dig til at mestre juraen, etikken og det faglige skøn gennem intelligent sparring på dine cases og journaler.
+                </p>
+              </motion.div>
+            </AnimatePresence>
+            
+            <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.6, delay: 0.2 }}
+               className="flex flex-col w-full sm:w-auto items-center lg:items-start gap-5 pt-4"
+            >
+              <div className="flex flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center gap-3 sm:gap-4">
+                  <button 
+                  onClick={onStart}
+                  className="group relative flex justify-center items-center px-8 sm:px-10 py-5 sm:py-6 bg-slate-900 text-white rounded-[20px] sm:rounded-2xl text-[17px] sm:text-xl font-bold transition-all active:scale-[0.98] sm:hover:bg-slate-800 sm:hover:scale-[1.02] shadow-xl shadow-slate-900/10 w-full overflow-hidden will-change-transform"
+                  >
+                      <span className="relative z-10 flex items-center justify-center gap-3">
+                          Kom i gang gratis
+                          <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1.5 transition-transform" />
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  </button>
                   
-                  <p className="text-lg md:text-2xl text-slate-500 max-w-xl leading-relaxed font-medium">
-                    Cohéro ruster dig til at mestre juraen, etikken og det faglige skøn gennem intelligent sparring på dine egne cases og journaler.
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-              
-              <div className="flex flex-col items-center lg:items-start gap-6 pt-4 w-full reveal">
-                <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                    <button 
-                    onClick={onStart}
-                    className="group relative px-10 md:px-12 py-5 md:py-6 bg-amber-950 text-white rounded-2xl text-lg md:text-xl font-bold transition-all hover:bg-amber-900 hover:shadow-2xl hover:scale-[1.02] active:scale-95 w-full sm:w-auto overflow-hidden shadow-xl shadow-amber-950/20"
-                    >
-                        <span className="relative z-10 flex items-center justify-center gap-3">
-                            Kom i gang gratis
-                            <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" />
-                        </span>
-                        <div className="absolute inset-0 bg-white/5 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                    </button>
-                    
-                    <button
-                        onClick={handleInstallClick}
-                        className="flex items-center gap-3 px-8 py-5 md:py-6 bg-white border-2 border-amber-950 text-amber-950 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-50 active:scale-95 transition-all shadow-lg"
-                    >
-                        <Download className="w-5 h-5" />
-                        Hent App
-                    </button>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-6 mt-4">
-                    <div className="flex flex-col items-center sm:items-start">
-                        <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
-                            <ShieldCheck className="w-4 h-4" />
-                            7 dages gratis prøveperiode
-                        </div>
-                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">Ingen binding • Opret på 30 sek.</p>
-                    </div>
-
-                    <div className="flex items-center gap-4 py-2 px-4 bg-white/50 backdrop-blur-sm rounded-xl border border-amber-100 shadow-sm">
-                        <div className="flex -space-x-2">
-                            {[1,2,3,4].map(i => (
-                                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-amber-100 flex items-center justify-center">
-                                    <span className="text-[8px] font-bold text-amber-900">S{i}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <div className="flex gap-0.5">
-                                {[1,2,3,4,5].map(i => <Star key={i} size={12} className="text-amber-500 fill-amber-500" />)}
-                            </div>
-                            <p className="text-[9px] font-black text-amber-950/60 uppercase tracking-widest leading-none text-center sm:text-left">Brugt på tværs af landets uddannelser</p>
-                        </div>
-                    </div>
-                </div>
+                  <button
+                      onClick={handleInstallClick}
+                      className="flex justify-center items-center gap-2.5 px-6 sm:px-8 py-5 sm:py-6 bg-white/80 backdrop-blur-md border border-slate-200 text-slate-800 rounded-[20px] sm:rounded-2xl font-bold text-[15px] sm:text-[13px] uppercase sm:tracking-widest active:scale-[0.98] sm:hover:bg-slate-50 transition-all shadow-sm w-full sm:w-auto will-change-transform"
+                  >
+                      <Download className="w-5 h-5 sm:w-4 sm:h-4 text-slate-500" />
+                      Hent App
+                  </button>
               </div>
-            </div>
 
-            <div className="lg:col-span-5 relative reveal mt-8 lg:mt-0">
-              <div className="relative bg-white p-3 md:p-4 rounded-[2.5rem] md:rounded-[3.5rem] border border-amber-100 shadow-2xl transition-transform duration-700 hover:scale-[1.01] overflow-hidden group">
-                <Image 
-                  src="/nan_jul.jpg" 
-                  alt="Stifterne af Cohéro"
-                  width={800}
-                  height={600}
-                  priority
-                  className="rounded-[2rem] md:rounded-[3rem] object-cover shadow-inner grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700"
-                />
-                <div className="absolute bottom-4 left-4 md:-bottom-6 md:-left-6 bg-white p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl border border-amber-50 flex items-center gap-4 animate-float-spine">
-                   <div className="w-10 h-10 md:w-14 md:h-14 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-inner">
-                      <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8 fill-current" />
-                   </div>
-                   <div>
-                      <p className="text-[8px] md:text-[10px] font-black uppercase text-slate-300 tracking-widest mb-0.5">Din sikkerhed</p>
-                      <p className="text-sm md:text-base font-bold text-amber-950 serif leading-none">Faglig rygdækning</p>
-                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. TRUST RIBBON */}
-      <section className="py-12 md:py-20 bg-white border-y border-amber-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-           <Reveal>
-             <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-amber-900/40 mb-8 md:mb-10 px-4">Styrker dannelsen på tværs af landets professionshøjskoler</p>
-           </Reveal>
-           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700 cursor-default">
-              <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] text-amber-950">VIA UC</span>
-              <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] text-amber-950 px-2 border-x border-amber-100">KP</span>
-              <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] text-amber-950">UCL</span>
-              <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] text-amber-950 px-2 border-x border-amber-100">Absalon</span>
-              <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] text-amber-950">AAU</span>
-           </div>
-        </div>
-      </section>
-
-      {/* 3. CORE FEATURES BENTO GRID */}
-      <section id="vaerktojer" className="py-24 md:py-32 bg-[#FDFCF8] px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="max-w-3xl mb-16 md:mb-24 reveal text-center md:text-left">
-            <h2 className="text-4xl md:text-6xl font-bold text-amber-950 serif mb-6 md:mb-8 leading-tight tracking-tight px-4 md:px-0">Værktøjer der <span className="text-amber-700 italic">skærper</span> din dømmekraft.</h2>
-            <p className="text-lg md:text-xl text-slate-500 leading-relaxed font-medium">
-              Vores digitale økosystem er designet til at understøtte dig der, hvor teorien møder virkeligheden – uanset om du er på farten eller ved computeren.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 md:gap-8">
-             
-             {/* Begrebsguiden - PRIMARY */}
-             <div onClick={onStart} className="md:col-span-2 lg:col-span-8 bg-white border border-amber-100 p-8 md:p-16 rounded-[2.5rem] md:rounded-[3.5rem] shadow-sm relative overflow-hidden group hover:shadow-2xl hover:border-amber-950 transition-all cursor-pointer">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-700 pointer-events-none">
-                   <Library className="w-64 h-64 -rotate-12 text-amber-900" />
-                </div>
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
-                   <div className="w-20 h-20 md:w-32 md:h-32 bg-amber-50 text-amber-700 rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center flex-shrink-0 group-hover:rotate-6 transition-transform shadow-inner">
-                      <Wand2 className="w-10 h-10 md:w-16 md:h-16" />
-                   </div>
-                   <div className="text-center md:text-left space-y-4 md:space-y-6">
-                      <span className="inline-block px-4 py-1.5 bg-amber-50 text-amber-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-100">Intelligent Opslagsværk</span>
-                      <h3 className="text-3xl md:text-5xl font-bold text-amber-950 serif leading-tight">Begrebsguiden</h3>
-                      <p className="text-slate-500 text-base md:text-xl leading-relaxed italic font-medium">"Få pædagogiske og praksisnære forklaringer på komplekse faglige begreber fra dit pensum."</p>
-                      <div className="flex items-center justify-center md:justify-start gap-3 text-amber-950 font-black uppercase text-xs tracking-widest pt-2 md:pt-4 group-hover:translate-x-2 transition-transform">
-                        Prøv Begrebsguiden <ArrowRight className="w-5 h-5" />
+              <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 mt-4 opacity-90">
+                  <div className="flex flex-col items-center sm:items-start gap-1">
+                      <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[13px] sm:text-sm bg-emerald-50 px-3 py-1 rounded-full">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>7 dages gratis prøveperiode</span>
                       </div>
-                   </div>
-                </div>
-             </div>
-
-             {/* Lovportalen - SECONDARY */}
-             <div onClick={onStart} className="lg:col-span-4 bg-amber-950 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl text-white flex flex-col justify-between group cursor-pointer overflow-hidden border border-amber-900 hover:scale-[1.02] transition-all">
-                <div>
-                  <div className="w-14 h-14 md:w-16 md:h-16 bg-white/10 rounded-2xl md:rounded-3xl flex items-center justify-center mb-8 md:mb-10 backdrop-blur-sm group-hover:bg-amber-400 group-hover:text-amber-950 transition-colors">
-                    <Scale className="w-7 h-7 md:w-8 md:h-8" />
+                      <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider text-center sm:text-left mx-1">Ingen binding • Opret på 30 sek.</p>
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-bold serif mb-4 leading-tight">Lovportalen</h3>
-                  <p className="text-amber-100/60 text-sm md:text-base leading-relaxed">Slå op i de mest relevante love for socialt arbejde med indbygget AI-fortolkning i øjenhøjde.</p>
-                </div>
-                <div className="pt-8 md:pt-12 flex items-center justify-between border-t border-white/10">
-                   <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-amber-400">Åbn Lovportalen</span>
-                   <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-amber-950 transition-all">
-                    <ChevronRight className="w-5 h-5" />
-                   </div>
-                </div>
-             </div>
+              </div>
+            </motion.div>
+          </div>
 
-             {/* Folketinget - LARGE MOBILE */}
-             <div onClick={onStart} className="md:col-span-2 lg:col-span-8 bg-white border border-amber-100 p-8 md:p-16 rounded-[2.5rem] md:rounded-[3.5rem] flex flex-col md:flex-row items-center gap-8 md:gap-12 group hover:shadow-2xl hover:border-amber-950 transition-all cursor-pointer shadow-sm relative overflow-hidden">
-                <div className="flex-1 space-y-4 md:space-y-6 text-center md:text-left order-2 md:order-1">
-                   <div className="flex items-center justify-center md:justify-start gap-2 text-[9px] md:text-[10px] font-black text-rose-600 uppercase tracking-widest">
-                      <Zap className="w-4 h-4 fill-current" /> Sagens kerne i realtid
-                   </div>
-                   <h3 className="text-3xl md:text-5xl font-bold text-amber-950 serif leading-tight">Folketinget Direkte</h3>
-                   <p className="text-slate-500 text-base md:text-xl leading-relaxed italic">"Overvågning af lovforslag med direkte analyse af betydningen for socialrådgiverens virke."</p>
-                   <div className="flex items-center justify-center md:justify-start gap-3 text-amber-950 font-black uppercase text-xs tracking-widest pt-2 group-hover:translate-x-2 transition-transform">
-                        Overvåg lovgivning <ArrowRight className="w-5 h-5" />
-                   </div>
-                </div>
-                <div className="w-20 h-20 md:w-40 md:h-40 bg-rose-50 text-rose-600 rounded-[2rem] md:rounded-[3rem] flex items-center justify-center flex-shrink-0 group-hover:rotate-6 transition-transform shadow-inner order-1 md:order-2">
-                   <Building className="w-10 h-10 md:w-20 md:h-20" />
-                </div>
-             </div>
+          {/* Hero Image Container - Mobile Optimized */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="w-full lg:w-5/12 max-w-[400px] lg:max-w-none relative z-10 mt-6 lg:mt-0 px-4 sm:px-0"
+          >
+            <div className="relative aspect-[4/5] sm:aspect-[3/4] bg-white p-2.5 sm:p-4 rounded-[40px] sm:rounded-[3.5rem] border border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-transform duration-700 sm:hover:scale-[1.01] overflow-hidden group will-change-transform">
+              <Image 
+                src="/nan_jul.jpg" 
+                alt="Stifterne af Cohéro"
+                width={800}
+                height={1000}
+                priority
+                className="rounded-[30px] sm:rounded-[2.5rem] object-cover h-full w-full grayscale-[0.05] sm:group-hover:grayscale-0 transition-all duration-700"
+              />
+              {/* Floating mobile-first badge */}
+              <div className="absolute -bottom-2 -left-2 sm:-bottom-6 sm:-left-6 lg:bottom-4 lg:-left-12 bg-white/90 backdrop-blur-md p-4 sm:p-6 rounded-[24px] shadow-2xl border border-white/40 flex items-center gap-3 sm:gap-4 animate-[float_4s_ease-in-out_infinite] will-change-transform">
+                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-inner shrink-0">
+                    <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
+                 </div>
+                 <div className="pr-2 sm:pr-4">
+                    <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-0.5">Din sikkerhed</p>
+                    <p className="text-[15px] sm:text-base font-extrabold text-slate-800 leading-tight">Faglig rygdækning</p>
+                 </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-             {/* Memento - QUICK TASK */}
-             <div onClick={onStart} className="lg:col-span-4 bg-white border border-amber-100 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] flex flex-col justify-between group hover:bg-amber-50/30 hover:border-amber-950 transition-all cursor-pointer shadow-sm hover:shadow-xl">
-                <div>
-                   <div className="w-14 h-14 md:w-16 md:h-16 bg-amber-50 text-amber-700 rounded-2xl md:rounded-3xl flex items-center justify-center mb-8 md:mb-10 shadow-inner group-hover:scale-110 transition-transform">
-                    <Brain className="w-7 h-7 md:w-8 md:h-8" />
-                   </div>
-                   <h3 className="text-2xl md:text-3xl font-bold text-amber-950 serif mb-4 leading-tight">Memento</h3>
-                   <p className="text-slate-500 text-sm md:text-base leading-relaxed">Træn din paratviden med huskespil om paragraffer og vigtige teorier fra pensum.</p>
-                </div>
-                <div className="pt-8 md:pt-12 text-[9px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center justify-between group-hover:text-amber-950 transition-colors">
-                   <span>Start træning</span>
-                   <Trophy className="w-5 h-5 text-amber-500" />
-                </div>
+      {/* 2. TRUST RIBBON (Mobile Scroller) */}
+      <section className="py-8 sm:py-16 bg-white border-y border-slate-100 overflow-hidden relative">
+        <div className="absolute inset-y-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-white to-transparent z-10"></div>
+        <div className="absolute inset-y-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-white to-transparent z-10"></div>
+        <div className="max-w-7xl mx-auto flex flex-col items-center">
+           <Reveal>
+             <p className="text-[10px] items-center text-center font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400 mb-6 sm:mb-8 px-4">Styrker dannelsen på tværs af professionshøjskoler</p>
+           </Reveal>
+           <div className="w-full overflow-x-auto no-scrollbar px-4 sm:px-6">
+             <div className="flex items-center justify-start sm:justify-center gap-8 sm:gap-16 min-w-max pb-2 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">VIA UC</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">KP</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">UCL</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">Absalon</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">AAU</span>
              </div>
+           </div>
+        </div>
+      </section>
+
+      {/* 3. CORE FEATURES (Mobile-First Card Layout) */}
+      <section id="vaerktojer" className="py-20 sm:py-32 bg-[#FDFBF7] px-5 sm:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mb-12 sm:mb-20 text-center lg:text-left mx-auto lg:mx-0">
+            <Reveal>
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] mb-4 sm:mb-6 leading-tight">
+                Værktøjer der <span className="text-amber-500 line-through decoration-amber-200 decoration-4 sm:decoration-8">skærper</span><br/> 
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400 italic">udvikler</span> din dømmekraft.
+              </h2>
+              <p className="text-[17px] sm:text-xl text-slate-500 leading-relaxed font-medium">
+                Vores digitale økosystem er bygget 'mobile first', mod at støtte dig der, hvor teorien møder virkeligheden.
+              </p>
+            </Reveal>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8">
+             
+             {/* Feature 1: Begrebsguiden */}
+             <Reveal className="lg:col-span-8">
+               <div onClick={onStart} className="h-full bg-white border border-slate-100 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] shadow-sm relative overflow-hidden group sm:hover:shadow-2xl sm:hover:border-amber-200 transition-all cursor-pointer active:scale-[0.98]">
+                  <div className="absolute top-[-20%] right-[-10%] p-12 opacity-[0.03] sm:group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+                     <Library className="w-80 h-80 -rotate-12 text-slate-900" />
+                  </div>
+                  <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-10">
+                     <div className="w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-br from-amber-100 to-amber-50 text-amber-600 rounded-[24px] sm:rounded-[32px] flex items-center justify-center flex-shrink-0 sm:group-hover:rotate-6 sm:group-hover:scale-105 transition-all shadow-sm border border-amber-200/50">
+                        <Wand2 className="w-10 h-10 sm:w-12 sm:h-12" />
+                     </div>
+                     <div className="space-y-4">
+                        <span className="inline-block px-3 py-1.5 bg-slate-50 text-slate-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full border border-slate-200">Intelligent Opslagsværk</span>
+                        <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Begrebsguiden</h3>
+                        <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium">Få pædagogiske og praksisnære forklaringer på komplekse faglige begreber direkte fra dit pensum.</p>
+                        <div className="flex items-center gap-2 text-amber-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
+                          Prøv guiden <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </div>
+                     </div>
+                  </div>
+               </div>
+             </Reveal>
+
+             {/* Feature 2: Lovportalen */}
+             <Reveal delay={0.1} className="lg:col-span-4">
+               <div onClick={onStart} className="h-full bg-slate-900 p-8 sm:p-12 rounded-[32px] sm:rounded-[48px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] text-white flex flex-col justify-between group cursor-pointer overflow-hidden relative active:scale-[0.98] transition-all">
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 to-transparent"></div>
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 rounded-[24px] flex items-center justify-center mb-6 sm:mb-8 backdrop-blur-md sm:group-hover:bg-amber-400 sm:group-hover:text-amber-950 transition-colors border border-white/5">
+                      <Scale className="w-8 h-8 sm:w-10 sm:h-10 text-amber-300 sm:group-hover:text-amber-950 transition-colors" />
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-extrabold tracking-tight mb-3">Lovportalen</h3>
+                    <p className="text-slate-300 text-[15px] sm:text-base leading-relaxed font-medium max-w-[280px]">Slå op i de mest relevante love med indbygget AI-fortolkning i øjenhøjde.</p>
+                  </div>
+                  <div className="pt-10 flex items-center justify-between border-t border-white/10 mt-auto relative z-10">
+                     <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400">Åbn Portalen</span>
+                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 sm:group-hover:bg-white sm:group-hover:text-slate-900 transition-all">
+                      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                     </div>
+                  </div>
+               </div>
+             </Reveal>
+
+             {/* Feature 3: Folketinget */}
+             <Reveal className="lg:col-span-12">
+               <div onClick={onStart} className="bg-gradient-to-br from-rose-50 to-white border border-rose-100 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-12 group sm:hover:shadow-2xl sm:hover:border-rose-200 transition-all cursor-pointer shadow-sm relative overflow-hidden active:scale-[0.98]">
+                  <div className="flex-1 space-y-4 sm:space-y-6 order-2 sm:order-1 relative z-10">
+                     <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-rose-600 uppercase tracking-widest bg-white px-3 py-1.5 rounded-full border border-rose-100 mb-2">
+                        <Zap className="w-3.5 h-3.5 fill-current" /> Sagens kerne i realtid
+                     </div>
+                     <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Folketinget Direkte</h3>
+                     <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium max-w-2xl">Overvågning af nye lovforslag med direkte analyse af betydningen for dit faglige virke som socialrådgiver.</p>
+                     <div className="flex items-center gap-2 text-rose-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
+                          Overvåg lovgivning <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                     </div>
+                  </div>
+                  <div className="w-20 h-20 sm:w-32 sm:h-32 bg-white text-rose-500 rounded-[24px] sm:rounded-[32px] flex items-center justify-center flex-shrink-0 sm:group-hover:-translate-y-2 transition-all shadow-xl border border-rose-100 order-1 sm:order-2 relative z-10">
+                     <Building className="w-10 h-10 sm:w-16 sm:h-16" />
+                  </div>
+                  {/* Decor */}
+                  <div className="absolute top-1/2 -translate-y-1/2 right-0 w-64 h-64 bg-rose-200/20 rounded-full blur-[60px] pointer-events-none"></div>
+               </div>
+             </Reveal>
           </div>
         </div>
       </section>
 
-      {/* 4. SOCIAL PROOF / QUOTE SECTION */}
-      <section className="py-24 md:py-32 bg-white relative overflow-hidden px-6">
-        <div className="max-w-4xl mx-auto text-center reveal">
-           <div className="w-16 h-16 md:w-24 md:h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-10 md:mb-16 shadow-inner">
-              <Quote className="w-8 h-8 md:w-12 md:h-12 text-amber-700 opacity-20" />
-           </div>
-           <blockquote className="text-2xl md:text-5xl font-bold text-amber-950 serif leading-[1.3] italic mb-10 md:mb-16 tracking-tight px-4">
-             "Cohéro har givet mig den faglige rygdækning, jeg manglede i min praktik. At kunne tjekke juraen og få sparring har gjort mig langt mere tryg i myndighedsrollen."
-           </blockquote>
-           <div className="space-y-2">
-              <p className="text-lg md:text-xl font-bold text-amber-950">Mads Henriksen</p>
-              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-amber-700/50 px-6">Socialrådgiverstuderende • 6. semester</p>
-           </div>
+      {/* 4. SOCIAL PROOF */}
+      <section className="py-20 sm:py-32 bg-white relative overflow-hidden px-5 sm:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <Reveal>
+             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-50 rounded-[24px] flex items-center justify-center mx-auto mb-8 sm:mb-12 shadow-sm border border-amber-100/50">
+                <Quote className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500" />
+             </div>
+             <blockquote className="text-[22px] sm:text-3xl md:text-5xl font-extrabold text-slate-800 leading-[1.3] sm:leading-[1.4] tracking-tight mb-8 sm:mb-12 px-2 sm:px-4 text-balance">
+               "At kunne tjekke juraen og få sparring har gjort mig langt mere tryg i min praktik."
+             </blockquote>
+             <div className="space-y-1 sm:space-y-2 flex flex-col items-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-full mb-3 flex items-center justify-center border border-slate-200 overflow-hidden">
+                    <Image src="/nan_jul.jpg" alt="Student" width={48} height={48} className="object-cover w-full h-full scale-150 grayscale object-top" />
+                </div>
+                <p className="text-[17px] sm:text-xl font-bold text-slate-900">Mads Henriksen</p>
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 px-6">Socialrådgiverstuderende, 6. semester</p>
+             </div>
+          </Reveal>
         </div>
-        <div className="absolute top-1/2 left-0 w-64 h-64 bg-amber-100/10 rounded-full blur-[100px] -ml-32"></div>
-        <div className="absolute top-1/2 right-0 w-64 h-64 bg-indigo-100/10 rounded-full blur-[100px] -mr-32"></div>
+        <div className="absolute top-1/2 left-[-10%] sm:left-0 w-64 h-64 bg-amber-100/30 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none"></div>
       </section>
 
       {/* 5. PRICING SECTION */}
-      <section id="priser" className="py-24 md:py-32 bg-[#FDFCF8] px-6 border-t border-amber-50">
+      <section id="priser" className="py-20 sm:py-32 bg-[#FDFBF7] px-5 sm:px-8 border-t border-slate-100">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16 md:mb-24 space-y-4 md:space-y-6 reveal">
-            <h2 className="text-4xl md:text-6xl font-bold text-amber-950 serif tracking-tight leading-none px-4">Prøv <span className="text-amber-700 italic">Kollega+</span> i dag.</h2>
-            <p className="text-lg md:text-xl text-slate-500 italic max-w-xl mx-auto px-4">Fuld rygdækning gennem hele dit studie. Start din gratis prøveperiode nu.</p>
+          <div className="text-center mb-12 sm:mb-20 space-y-4 sm:space-y-6">
+            <Reveal>
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-none px-2">
+                Prøv <span className="text-amber-500">Kollega+</span> i dag.
+              </h2>
+              <p className="text-[17px] sm:text-xl text-slate-500 font-medium max-w-xl mx-auto px-4">
+                Fuld rygdækning i studietet. Start gratis – ingen binding.
+              </p>
+            </Reveal>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-10 items-stretch max-w-5xl mx-auto lg:max-w-none pt-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-8 items-stretch max-w-lg mx-auto lg:max-w-none">
             {/* Free Plan */}
-            <div className="bg-white border border-amber-100 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] shadow-sm flex flex-col transition-all duration-500 hover:shadow-xl relative overflow-hidden group reveal">
-               <h3 className="text-2xl font-bold text-amber-950 serif mb-1">Kollega</h3>
-               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-8 italic">Det fundamentale</p>
-               <div className="text-4xl md:text-5xl font-black text-amber-950 mb-10 serif">0 kr. <span className="text-base font-normal text-slate-300 italic">/mdr</span></div>
-               <ul className="space-y-4 mb-12 flex-grow">
-                 {[
-                   "3 daglige opslag i Guiden",
-                   "3 daglige STAR-tolkninger",
-                   "Begrænset Lovportal-adgang",
-                   "1 daglig Journal-træning",
-                   "3 daglige Case-simuleringer"
-                 ].map(item => (
-                   <li key={item} className="flex items-start gap-4 text-sm text-slate-500 font-medium leading-tight">
-                     <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                     <span>{item}</span>
-                   </li>
-                 ))}
-               </ul>
-               <button onClick={onStart} className="w-full py-5 border-2 border-amber-950 text-amber-950 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-amber-950 hover:text-white transition-all active:scale-95 shadow-sm">Kom i gang</button>
-            </div>
+            <Reveal delay={0} className="w-full">
+              <div className="h-full bg-white border border-slate-200 p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] shadow-sm flex flex-col transition-all active:scale-[0.98] sm:hover:border-slate-300">
+                 <h3 className="text-[22px] sm:text-2xl font-bold text-slate-900 mb-1">Kollega</h3>
+                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mb-6 sm:mb-8">Det fundamentale</p>
+                 <div className="text-4xl sm:text-5xl font-black text-slate-900 mb-8 sm:mb-10 tracking-tight">0 kr. <span className="text-[15px] sm:text-base font-medium text-slate-400 tracking-normal text-balance">/mdr</span></div>
+                 <ul className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 flex-grow">
+                   {[
+                     "3 daglige opslag i Guiden",
+                     "3 daglige STAR-tolkninger",
+                     "Begrænset Lovportal",
+                     "1 daglig Journal-træning"
+                   ].map(item => (
+                     <li key={item} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-600 font-medium">
+                       <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                       <span>{item}</span>
+                     </li>
+                   ))}
+                 </ul>
+                 <button onClick={onStart} className="w-full py-4 sm:py-5 border-2 border-slate-200 text-slate-700 rounded-[20px] font-bold uppercase text-[13px] tracking-wider sm:hover:bg-slate-50 sm:hover:text-slate-900 transition-all active:scale-[0.98]">Vælg plan</button>
+              </div>
+            </Reveal>
 
-            {/* Kollega+ */}
-            <div className="relative lg:scale-105 z-10 reveal pt-6 md:pt-0">
-               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-amber-400 text-amber-950 px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl z-20 whitespace-nowrap animate-pulse">
-                    Første 7 dage gratis
+            {/* Kollega+ (Highlighted) */}
+            <Reveal delay={0.1} className="w-full lg:-mt-4 lg:mb-[-1rem] relative z-10">
+               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-amber-500 text-white px-5 sm:px-6 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-[12px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 z-20 whitespace-nowrap hidden sm:block">
+                    Mest populære
                 </div>
                 
-               <div onClick={onStart} className="bg-amber-950 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] shadow-[0_40px_80px_-20px_rgba(69,26,3,0.4)] flex flex-col text-white cursor-pointer border-2 border-amber-400/30 h-full relative overflow-hidden group">
-                  <div className="mt-4">
-                        <h3 className="text-2xl font-bold serif mb-1">Kollega+</h3>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-8 italic">For den dedikerede studerende</p>
+               <div onClick={onStart} className="h-full bg-slate-900 p-8 sm:p-10 rounded-[32px] sm:rounded-[48px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] flex flex-col text-white cursor-pointer border border-slate-800 relative overflow-hidden active:scale-[0.98] transition-transform">
+                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-amber-500/20 blur-[60px] rounded-full"></div>
+                  
+                  <div className="relative z-10">
+                        <div className="sm:hidden inline-block bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-amber-500/30">
+                            Mest Populære
+                        </div>
+                        <h3 className="text-[22px] sm:text-2xl font-bold mb-1">Kollega+</h3>
+                        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-amber-400 mb-6 sm:mb-8">Til den dedikerede studerende</p>
                         
                         <div className="mb-8">
-                            <div className="text-4xl md:text-5xl font-black serif leading-none">89 kr. <span className="text-base font-normal text-amber-100/30 italic">/mdr</span></div>
-                            <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest mt-2">Ingen binding • Start med 0 kr.</p>
+                            <div className="text-4xl sm:text-5xl font-black tracking-tight leading-none mb-2">89 kr. <span className="text-[15px] sm:text-base font-medium text-slate-400 tracking-normal">/mdr</span></div>
+                            <p className="text-emerald-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">Første 7 dage gratis</p>
                         </div>
                   </div>
 
-                  <ul className="space-y-4 mb-12 flex-grow">
+                  <ul className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 flex-grow relative z-10">
                     {[
                       "Ubegrænset Lovportal-adgang",
-                      "Fuld overvågning af Folketinget",
+                      "Fuld Folketingsovervågning",
                       "Ubegrænsede opslag i Guiden",
                       "Ubegrænset STAR-tolkning",
-                      "Ubegrænset Journal-træning",
-                      "Op til 3 månedlige Second Opinions",
-                      "Personligt arkiv over dine analyser"
+                      "Personligt arkiv over analyser",
+                      "Prioriteret support"
                     ].map(item => (
-                      <li key={item} className="flex items-start gap-4 text-sm md:text-base text-amber-50/90 font-bold leading-tight">
-                        <div className="p-0.5 bg-amber-400 rounded-full shrink-0 mt-0.5">
-                            <Check className="w-3 h-3 text-amber-950" />
+                      <li key={item} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-200 font-medium">
+                        <div className="bg-amber-500/20 rounded-full p-0.5 shrink-0 mt-1">
+                            <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                         </div>
-                        <span>{item}</span>
+                        <span className="leading-snug">{item}</span>
                       </li>
                     ))}
                   </ul>
-                  <button className="w-full py-6 bg-amber-400 text-amber-950 rounded-2xl font-black uppercase text-xs md:text-sm tracking-widest hover:bg-white hover:scale-105 transition-all active:scale-95 shadow-xl shadow-amber-400/20">Prøv gratis nu</button>
-                  
-                  <div className="mt-4 text-center opacity-40">
-                      <p className="text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                        <ShieldCheck className="w-3 h-3" />
-                        Sikker checkout via Stripe
-                      </p>
-                  </div>
+                  <button className="relative z-10 w-full py-4 sm:py-5 bg-white text-slate-900 rounded-[20px] font-black uppercase text-[13px] tracking-wider sm:hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/10">Start gratis prøve</button>
                </div>
-            </div>
+            </Reveal>
 
             {/* Semester pakke */}
-            <div onClick={onStart} className="bg-white border border-amber-100 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] shadow-sm flex flex-col transition-all duration-500 hover:shadow-xl relative overflow-hidden cursor-pointer group reveal">
-               <h3 className="text-2xl font-bold text-amber-950 serif mb-1">Semesteret</h3>
-               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-8 italic">Mest værdi for pengene</p>
-               <div className="text-4xl md:text-5xl font-black text-amber-950 mb-10 serif">329 kr. <span className="text-base font-normal text-slate-300 italic">/5 mdr.</span></div>
-               <ul className="space-y-4 mb-12 flex-grow">
-                 {[
-                   "Alt fra Kollega+ i 5 måneder",
-                   "Spar 116 kr. (svarende til -25%)",
-                   "Gælder for hele semesteret",
-                   "Perfekt til eksamensperioden",
-                   "Første adgang til beta-værktøjer"
-                 ].map((item, i) => (
-                   <li key={i} className="flex items-start gap-4 text-sm text-slate-500 font-medium leading-tight">
-                       <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                       <span>{item}</span>
-                    </li>
-                  ))}
-               </ul>
-               <button className="w-full py-5 border-2 border-amber-950 text-amber-950 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-amber-950 hover:text-white transition-all active:scale-95 shadow-sm">Sikr dit semester</button>
-            </div>
+            <Reveal delay={0.2} className="w-full">
+               <div onClick={onStart} className="h-full bg-white border border-slate-200 p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] shadow-sm flex flex-col transition-all active:scale-[0.98] sm:hover:border-slate-300 cursor-pointer">
+                 <h3 className="text-[22px] sm:text-2xl font-bold text-slate-900 mb-1">Semesteret</h3>
+                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mb-6 sm:mb-8">Bedste værdi</p>
+                 <div className="text-4xl sm:text-5xl font-black text-slate-900 mb-8 sm:mb-10 tracking-tight">329 kr. <span className="text-[15px] sm:text-base font-medium text-slate-400 tracking-normal text-balance">/5 mdr</span></div>
+                 <ul className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 flex-grow">
+                   {[
+                     "Alt fra Kollega+",
+                     "Spar 116 kr. (-25%)",
+                     "Gælder hele semesteret",
+                     "Ekstra case-adgang"
+                   ].map((item, i) => (
+                     <li key={i} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-600 font-medium">
+                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                         <span>{item}</span>
+                      </li>
+                    ))}
+                 </ul>
+                 <button className="w-full py-4 sm:py-5 border-2 border-slate-200 text-slate-700 rounded-[20px] font-bold uppercase text-[13px] tracking-wider sm:hover:bg-slate-50 sm:hover:text-slate-900 transition-all active:scale-[0.98]">Betal én gang</button>
+               </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* 6. FINAL CALL TO ACTION */}
-      <section className="py-32 md:py-48 bg-amber-950 text-center relative overflow-hidden px-6">
-         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0,transparent_70%)] -z-10"></div>
-         <div className="max-w-4xl mx-auto space-y-8 md:space-y-12 relative z-10 reveal px-4">
-            <h2 className="text-4xl md:text-8xl font-bold text-white serif tracking-tight leading-none">Din dannelse starter nu.</h2>
-            <p className="text-amber-100/50 text-lg md:text-2xl max-w-xl mx-auto leading-relaxed italic">
-              "Det kræver mod at være usikker. Det kræver Cohéro at blive sikker i dit faglige virke."
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-8 pt-8 w-full md:w-auto">
-               <button onClick={onStart} className="w-full sm:w-auto px-12 md:px-16 py-6 md:py-8 bg-amber-400 text-amber-950 rounded-2xl font-black uppercase tracking-widest text-base md:text-lg hover:bg-white hover:scale-110 transition-all shadow-2xl shadow-amber-400/20 active:scale-95">Kom i gang gratis</button>
-               <Link href="/paedagog" className="text-white font-bold border-b-2 border-white/20 pb-1 hover:border-amber-400 transition-all text-base md:text-lg">Pædagogstuderende? Læs her</Link>
-            </div>
+      {/* 6. FINAL CTA SECTION */}
+      <section className="py-24 sm:py-40 bg-gradient-to-b from-slate-900 to-slate-950 text-center relative overflow-hidden px-5 sm:px-8 mb-0 md:mb-0">
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0,transparent_60%)] -z-10"></div>
+         <div className="max-w-3xl mx-auto space-y-8 sm:space-y-12 relative z-10 reveal px-2">
+            <Reveal>
+              <h2 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-[-0.03em] leading-tight">Din faglige rejse<br className="sm:hidden" /> <span className="text-amber-400">starter nu.</span></h2>
+              <p className="text-slate-400 text-[17px] sm:text-2xl mt-4 sm:mt-6 leading-relaxed font-medium">
+                Bliv sikker i dit faglige virke.
+              </p>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-6 sm:pt-8 w-full">
+                 <button onClick={onStart} className="w-full sm:w-auto px-8 sm:px-12 py-5 sm:py-6 bg-white text-slate-900 rounded-[20px] font-black uppercase tracking-widest text-[15px] sm:text-base sm:hover:scale-105 transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] active:scale-[0.98]">Vis mig hvordan</button>
+                 <Link href="/paedagog" className="text-slate-400 font-bold border-b border-slate-600 pb-1 sm:hover:text-white sm:hover:border-white transition-all text-[15px] sm:text-base w-full sm:w-auto py-3 sm:py-0">Går du på pædagoguddannelsen?</Link>
+              </div>
+            </Reveal>
          </div>
-         <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-amber-400/5 rounded-full blur-[120px] pointer-events-none"></div>
       </section>
 
+      {/* MOBILE STICKY CTA (Bottom Bar) */}
+      <AnimatePresence>
+        {showStickyCTA && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:hidden bg-white/80 backdrop-blur-xl border-t border-slate-200/50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] pb-[max(1rem,env(safe-area-inset-bottom))]"
+          >
+            <button 
+                onClick={onStart}
+                className="w-full relative flex justify-center items-center px-6 py-4 bg-slate-900 text-white rounded-[16px] text-[16px] font-bold active:scale-[0.98] transition-transform shadow-lg"
+            >
+                Start din gratis prøve
+                <ArrowRight className="w-5 h-5 ml-2" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <PWAInstallGuide isOpen={isInstallGuideOpen} onClose={() => setIsInstallGuideOpen(false)} />
     </div>
   );
 }

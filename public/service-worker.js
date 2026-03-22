@@ -1,11 +1,9 @@
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
-
-const CACHE_NAME = 'cohero-v3';
+const CACHE_NAME = 'cohero-v4';
 const urlsToCache = [
   '/',
   '/portal',
   '/manifest.json',
+  '/App_Icon.png',
   '/Lovportal.png'
 ];
 
@@ -18,26 +16,22 @@ const firebaseConfig = {
   appId: "1:815145067598:web:84e929ee06f58e67858f1f",
 };
 
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 // Handle background messages
-// We only manually show a notification if the payload DOES NOT have a 'notification' property
-// This prevents double notifications on Android/iOS
 messaging.onBackgroundMessage((payload) => {
   console.log('[SW] Background message received: ', payload);
-  
-  if (payload.notification) {
-      // Browser will handle display automatically
-      return;
-  }
+  if (payload.notification) return;
 
-  // Fallback if only data is sent
   const notificationTitle = payload.data?.title || 'Ny besked fra Cohéro';
   const notificationOptions = {
     body: payload.data?.body || '',
-    icon: 'https://cohero.dk/App_Icon.png',
-    badge: 'https://cohero.dk/App_Icon.png',
+    icon: '/App_Icon.png',
+    badge: '/App_Icon.png',
     data: {
         url: payload.data?.url || '/portal'
     }
@@ -61,16 +55,57 @@ self.addEventListener('notificationclick', (event) => {
 
 self.addEventListener('install', event => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    Promise.all([
+      clients.claim(),
+      // Clean up old caches
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.filter(cacheName => cacheName !== CACHE_NAME)
+                    .map(cacheName => caches.delete(cacheName))
+        );
+      })
+    ])
+  );
 });
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  
   const url = new URL(event.request.url);
-  if (url.pathname.includes('_workstation') || url.pathname.includes('forwardAuthCookie')) return;
-  event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+  
+  // Skip specific URLs
+  if (url.pathname.includes('_workstation') || url.pathname.includes('forwardAuthCookie') || url.pathname.includes('_next/webpack-hmr')) return;
+
+  // Use Network First strategy for HTML/Navigation to ensure we get latest JS/CSS chunk filenames
+  if (event.request.mode === 'navigate' || (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'))) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache First strategy for assets, failing over to network
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) return cachedResponse;
+      return fetch(event.request).catch(error => {
+        // Fail gracefully without spamming the console 
+        throw error;
+      });
+    })
+  );
 });
+

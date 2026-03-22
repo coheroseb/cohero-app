@@ -1,10 +1,9 @@
 
-import { NextRequest, NextResponse } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { initializeServerFirebase } from '@/firebase/server-init';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 const relevantEvents = new Set([
   'checkout.session.completed',
@@ -41,11 +40,22 @@ export async function POST(req: NextRequest) {
           
           if (session.mode === 'subscription' && session.subscription && userId) {
             const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-            const userRef = doc(firestore, 'users', userId);
+            const userRef = firestore.collection('users').doc(userId);
             const price = subscription.items.data[0].price;
-            const membershipLevel = price.nickname || 'Kollega+';
+            let membershipLevel = price.nickname || 'Kollega+';
+
+            // Explicit mapping for specific price IDs to ensure reliability
+            if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
+                membershipLevel = 'Group Pro';
+            } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
+                membershipLevel = 'Kollega+';
+            } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
+                membershipLevel = 'Semesterpakken';
+            } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
+                membershipLevel = 'Kollega++';
+            }
             
-            await updateDoc(userRef, {
+            await userRef.update({
                 stripeSubscriptionId: subscription.id,
                 stripePriceId: price.id,
                 stripeSubscriptionStatus: subscription.status,
@@ -61,13 +71,22 @@ export async function POST(req: NextRequest) {
 
         case 'customer.subscription.updated': {
           const subscription = event.data.object as Stripe.Subscription;
-          const userRefQuery = query(collection(firestore, 'users'), where('stripeCustomerId', '==', subscription.customer));
-          const userRefSnap = await getDocs(userRefQuery);
+          const userRefSnap = await firestore.collection('users').where('stripeCustomerId', '==', subscription.customer).get();
           
           if (!userRefSnap.empty) {
             const userDoc = userRefSnap.docs[0];
             const price = subscription.items.data[0].price;
-            const membershipLevel = price.nickname || 'Kollega+';
+            let membershipLevel = price.nickname || 'Kollega+';
+
+            if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
+                membershipLevel = 'Group Pro';
+            } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
+                membershipLevel = 'Kollega+';
+            } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
+                membershipLevel = 'Semesterpakken';
+            } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
+                membershipLevel = 'Kollega++';
+            }
 
             const updateData: any = {
                 stripeSubscriptionStatus: subscription.status,
@@ -81,7 +100,7 @@ export async function POST(req: NextRequest) {
                 updateData.stripePriceId = price.id;
             }
 
-            await updateDoc(userDoc.ref, updateData);
+            await userDoc.ref.update(updateData);
           } else {
              console.warn(`Webhook: Could not find user for stripeCustomerId: ${subscription.customer} on update.`);
           }
@@ -90,12 +109,11 @@ export async function POST(req: NextRequest) {
 
         case 'customer.subscription.deleted': {
           const subscription = event.data.object as Stripe.Subscription;
-          const userRefQuery = query(collection(firestore, 'users'), where('stripeSubscriptionId', '==', subscription.id));
-          const userRefSnap = await getDocs(userRefQuery);
+          const userRefSnap = await firestore.collection('users').where('stripeSubscriptionId', '==', subscription.id).get();
 
           if (!userRefSnap.empty) {
               const userDoc = userRefSnap.docs[0];
-              await updateDoc(userDoc.ref, {
+              await userDoc.ref.update({
                   stripeSubscriptionStatus: subscription.status,
                   membership: 'Kollega',
                   stripeCancelAtPeriodEnd: null,

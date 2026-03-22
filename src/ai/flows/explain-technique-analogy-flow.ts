@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to explain a study technique or concept using an analogy.
  * - explainTechniqueWithAnalogy - Generates a new explanation for a technique or concept.

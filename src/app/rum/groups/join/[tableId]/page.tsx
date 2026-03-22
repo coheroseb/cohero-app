@@ -23,6 +23,7 @@ import { Users, Loader2, Sparkles, UserCheck, ArrowRight, UserPlus, LogIn, Clock
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
+import QRCode from 'react-qr-code';
 
 interface PresenceUser {
     id: string;
@@ -33,7 +34,7 @@ interface PresenceUser {
 
 export default function JoinGroupQRPage() {
     const params = useParams();
-    const tableId = params.tableId as string;
+    const tableId = params?.tableId as string;
     const { user, userProfile, isUserLoading, openAuthPage } = useApp();
     const firestore = useFirestore();
     const router = useRouter();
@@ -42,6 +43,11 @@ export default function JoinGroupQRPage() {
     const [isJoining, setIsJoining] = useState(false);
     const [hasJoined, setHasJoined] = useState(false);
     const [countdown, setCountdown] = useState<number | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // 1. Manage Presence for this Table
     useEffect(() => {
@@ -142,10 +148,10 @@ export default function JoinGroupQRPage() {
 
             // 3. Mark table as used/group created to trigger redirection for others
             const tableRef = doc(firestore, 'qr_tables', tableId);
-            batch.update(tableRef, {
+            batch.set(tableRef, {
                 createdGroupId: groupRef.id,
                 lastUsedAt: serverTimestamp()
-            });
+            }, { merge: true });
 
             await batch.commit();
         } catch (err) {
@@ -182,8 +188,21 @@ export default function JoinGroupQRPage() {
                         <Users className="w-8 h-8" />
                     </div>
                     <h1 className="text-4xl font-bold text-amber-950 serif">I finder sammen nu...</h1>
-                    <p className="text-slate-500 italic">Vent på at dine studiekammerater scanner koden ved bordet.</p>
+                    <p className="text-slate-500 italic">Scan koden eller vent på at dine studiekammerater scanner den herover.</p>
                 </header>
+
+                <div className="flex justify-center mb-4">
+                    <div className="p-4 bg-white rounded-3xl shadow-xl border-4 border-amber-950">
+                        {isMounted && tableId && (
+                            <QRCode 
+                                value={`${window.location.origin}/rum/groups/join/${tableId}`}
+                                size={160}
+                                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                viewBox={`0 0 256 256`}
+                            />
+                        )}
+                    </div>
+                </div>
 
                 <div className="bg-white rounded-[3rem] p-8 sm:p-12 shadow-2xl border border-amber-100 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.02]">

@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to generate suggested questions based on a report's content.
  * - generateReportQuestions - Processes report text and returns suggestions.

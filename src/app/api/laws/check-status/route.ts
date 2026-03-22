@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { initializeServerFirebase } from '@/firebase/server-init';
-import { collection, getDocs, query } from 'firebase/firestore';
 import { XMLParser } from 'fast-xml-parser';
 
 const parser = new XMLParser();
@@ -35,8 +34,8 @@ export async function GET(request: Request) {
   // 2. BULK CHECK (Admin/Cron job)
   if (isCron) {
     try {
-      const { adminFirestore } = initializeServerFirebase(); // Use adminFirestore
-      const lawsSnap = await getDocs(query(collection(adminFirestore, 'laws')));
+      const { firestore } = initializeServerFirebase();
+      const lawsSnap = await firestore.collection('laws').get();
       
       if (lawsSnap.empty) {
         return NextResponse.json({ success: true, message: 'Ingen love fundet.', results: [] });
@@ -59,8 +58,6 @@ export async function GET(request: Request) {
           const jsonObj = parser.parse(xmlText);
           const status = jsonObj.Dokument?.Meta?.Status || 'Ukendt';
           
-          // Update Firestore with new status
-          // await updateDoc(doc(adminFirestore, 'laws', docSnapshot.id), { status, updatedAt: serverTimestamp() });
           return { id: docSnapshot.id, status };
         } catch (e: any) {
           console.error(`Cron job error for law ID ${docSnapshot.id} at URL ${xmlUrl}:`, e); // Catch and log specific errors

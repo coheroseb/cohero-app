@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, BrainCircuit, Check, HelpCircle, Loader2, Sparkles, X } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { generateQuizAction } from '@/app/actions';
-import type { QuizData } from '@/ai/flows/quiz-generator-flow';
+import type { QuizData } from '@/ai/flows/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';

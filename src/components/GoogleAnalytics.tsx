@@ -10,7 +10,7 @@ export default function GoogleAnalytics() {
   const { cookieConsent } = useApp();
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_ID;
 
-  if (!gaMeasurementId || pathname.startsWith('/admin') || cookieConsent !== 'granted') {
+  if (!gaMeasurementId || pathname?.startsWith('/admin') || cookieConsent !== 'granted') {
     return null;
   }
 

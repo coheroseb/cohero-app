@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to bust common myths about social work.
  * - getMythBusterResponse - Provides a nuanced explanation for a selected myth.

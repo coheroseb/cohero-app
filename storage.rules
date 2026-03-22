@@ -6,10 +6,22 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function isGroupMember(groupId) {
+      let group = firestore.get(/databases/(default)/documents/groups/$(groupId)).data;
+      return isSignedIn() && (
+        group.creatorId == request.auth.uid ||
+        request.auth.uid in group.get('memberIds', [])
+      );
+    }
+
     match /groups/{groupId}/evidence/{fileName} {
-      // Allow read/write if the user is authenticated. 
-      // In a real production environment, you would verify group membership here.
-      allow read, write: if isSignedIn();
+      // Kun gruppens medlemmer kan se eller uploade filer
+      allow read, write: if isGroupMember(groupId);
+    }
+
+    // Allow users to access their own files in other paths if exists
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
   }
 }

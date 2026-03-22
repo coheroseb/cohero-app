@@ -1,18 +1,17 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
+  Bell,
+  BellRing,
   ArrowLeft, 
   Search,
   Loader2, 
   ExternalLink,
   Building,
-  ChevronDown,
   ChevronRight,
-  Filter,
   Library,
   Calendar,
   ArrowUpRight,
@@ -39,12 +38,12 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useDebounce } from 'use-debounce';
-import { fetchVivePublicationsAction, getViveReportQaAction, generateReportQuestionsAction } from '@/app/actions';
+import { fetchVivePublicationsAction, getViveReportQaAction, generateReportQuestionsAction, toggleViveAreaFollowAction } from '@/app/actions';
 import type { VivePublication, ViveReportQaData } from '@/ai/flows/types';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc, serverTimestamp, writeBatch, increment, where, setDoc } from 'firebase/firestore';
+import { collection, query, doc, deleteDoc, serverTimestamp, writeBatch, increment, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -256,6 +255,32 @@ const ViveIndsigtPageContent: React.FC = () => {
         }
     };
 
+    const handleToggleFollowArea = async (e: React.MouseEvent, areaId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!user || !userProfile) return;
+
+        try {
+            const result = await toggleViveAreaFollowAction(user.uid, areaId);
+            if (result.success) {
+                await refetchUserProfile();
+                toast({
+                    title: result.followed ? "Område fulgt!" : "Ikke længere fulgt",
+                    description: result.followed ? "Du modtager nu en notifikation, når der kommer nye udgivelser i dette område." : "Du modtager ikke længere automatiske opdateringer herfra."
+                });
+            } else {
+                console.error("Follow error:", result.message);
+                toast({ variant: 'destructive', title: "Fejl", description: result.message || "Kunne ikke opdatere abonnement." });
+            }
+        } catch (err) {
+            toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke opdatere abonnement." });
+        }
+    };
+
+    const isFollowingArea = (areaId: string) => {
+        return userProfile?.followedViveAreas?.includes(areaId) || false;
+    };
+
     const handleToggleSave = async (e: React.MouseEvent, pub: VivePublication) => {
         e.preventDefault();
         e.stopPropagation();
@@ -301,155 +326,236 @@ const ViveIndsigtPageContent: React.FC = () => {
 
     return (
         <div className="h-[calc(100vh-6rem)] bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 selection:bg-cyan-100 overflow-hidden">
-            
+            <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes ink-flow {
+                    0% { opacity: 0; transform: translateY(10px) scale(0.98); filter: blur(4px); }
+                    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+                }
+                .animate-ink {
+                    animation: ink-flow 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+            ` }} />
+
             {/* LEFT SIDEBAR: AREAS & RECENT */}
-            <aside className={`w-72 bg-white border-r border-amber-100 flex flex-col h-full z-30 shadow-sm shrink-0 ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
-                <div className="p-8 flex items-center gap-4 border-b border-amber-50 flex-shrink-0">
-                    <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-lg"><Building className="w-6 h-6" /></div>
-                    <div>
-                        <h1 className="text-xl font-bold text-amber-950 serif tracking-tight">VIVE Indsigt</h1>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Forsknings-Portal</p>
+            <aside className={`w-80 bg-white border-r border-amber-100/50 flex flex-col h-full z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0 ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
+                <div className="p-10 flex flex-col gap-6 border-b border-amber-50/50 flex-shrink-0 bg-gradient-to-br from-white to-amber-50/10">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-amber-950 rounded-2xl flex items-center justify-center text-amber-400 shadow-xl shadow-amber-950/20 rotate-3"><Building className="w-6 h-6" /></div>
+                        <div>
+                            <h1 className="text-2xl font-black text-amber-950 serif tracking-tight leading-none">VIVE Indsigt</h1>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-600 mt-2">Dansk Velfærd-Forskning</p>
+                        </div>
                     </div>
                 </div>
-                <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto custom-scrollbar">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-4">Områder</h3>
-                    {viveAreas.map(area => (
-                        <button 
-                            key={area.id} 
-                            onClick={() => setActiveAreaId(area.id)} 
-                            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between group ${activeAreaId === area.id ? 'bg-amber-100 text-amber-950 shadow-sm' : 'text-slate-500 hover:bg-amber-50 hover:text-amber-950'}`}
-                        >
-                            <span className="truncate">{area.name}</span>
-                            <ChevronRight className={`w-3 h-3 transition-transform ${activeAreaId === area.id ? 'translate-x-0' : '-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} />
-                        </button>
-                    ))}
-                    <div className="pt-8 pb-4 px-4"><h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Mit Arkiv</h3></div>
-                    <Link href="/mine-gemte-artikler" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-500 hover:bg-amber-50">
-                        <Bookmark className="w-4 h-4" /> Gemte artikler
+
+                <nav className="flex-1 px-6 py-10 space-y-2 overflow-y-auto custom-scrollbar">
+                    <div className="px-4 mb-6 flex items-center justify-between">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Forsknings-Kategorier</h3>
+                        <div className="h-[1px] flex-1 bg-amber-100/50 ml-4"></div>
+                    </div>
+                    
+                    {viveAreas.map(area => {
+                        const isFollowing = isFollowingArea(area.id);
+                        const isActive = activeAreaId === area.id;
+                        return (
+                            <div key={area.id} className="relative group/area">
+                                <button 
+                                    onClick={() => setActiveAreaId(area.id)} 
+                                    className={`w-full text-left px-5 py-4 rounded-2xl text-[13px] font-bold transition-all flex items-center justify-between group ${isActive ? 'bg-amber-950 text-amber-400 shadow-lg shadow-amber-950/10 -translate-y-0.5' : 'text-slate-500 hover:bg-amber-50 hover:text-amber-950'}`}
+                                >
+                                    <span className="truncate pr-10">{area.name}</span>
+                                    <ChevronRight className={`w-4 h-4 transition-all duration-300 ${isActive ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} />
+                                </button>
+                                <button
+                                    onClick={(e) => handleToggleFollowArea(e, area.id)}
+                                    className={`absolute right-12 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isFollowing ? 'text-amber-500 bg-amber-900/10' : 'text-slate-300 opacity-0 group-hover/area:opacity-100 hover:text-amber-950 hover:bg-amber-100'}`}
+                                    title={isFollowing ? "Følger (Klik for at stoppe)" : "Modtag notifikationer fra dette område"}
+                                >
+                                    {isFollowing ? <BellRing className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        );
+                    })}
+
+                    <div className="pt-12 pb-6 px-4 flex items-center justify-between">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Mit Arkiv</h3>
+                        <div className="h-[1px] flex-1 bg-amber-100/50 ml-4"></div>
+                    </div>
+                    <Link href="/mine-gemte-artikler" className="flex items-center gap-4 px-5 py-4 rounded-2xl text-[13px] font-bold text-slate-500 hover:bg-amber-50 hover:text-amber-950 transition-all group">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-amber-200 group-hover:text-amber-950 transition-colors"><Bookmark className="w-4 h-4" /></div>
+                        Gemte artikler
                     </Link>
-                    <Link href="/mine-vive-analyser" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-500 hover:bg-amber-50">
-                        <History className="w-4 h-4" /> Mine analyser
+                    <Link href="/mine-vive-analyser" className="flex items-center gap-4 px-5 py-4 rounded-2xl text-[13px] font-bold text-slate-500 hover:bg-amber-50 hover:text-amber-950 transition-all group">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-amber-200 group-hover:text-amber-950 transition-colors"><History className="w-4 h-4" /></div>
+                        Mine analyser
                     </Link>
                 </nav>
             </aside>
 
             {/* MIDDLE WRAPPER */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
+            <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#FDFCF8]">
                 {/* SHARED HEADER */}
-                <header className="h-20 bg-white border-b border-amber-100 px-4 sm:px-8 flex items-center justify-between z-40 shadow-sm flex-shrink-0">
+                <header className="h-24 bg-white/80 backdrop-blur-md border-b border-amber-100/50 px-8 flex items-center justify-between z-40 shrink-0">
                     <div className="flex items-center gap-6 flex-1 max-w-2xl relative group">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-cyan-600 transition-colors" />
+                        <div className="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Search className="w-4 h-4 text-slate-400 group-focus-within:text-cyan-600 transition-colors" />
+                        </div>
                         <input 
                             type="text" 
-                            placeholder="Søg i VIVE's udgivelser..."
+                            placeholder="Søg i VIVE's arkiv..."
                             value={searchQuery} 
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 bg-[#FDFCF8] border border-amber-100 rounded-2xl focus:ring-4 focus:ring-cyan-500/5 focus:outline-none transition-all shadow-inner text-sm font-bold h-12"
+                            className="w-full pl-16 pr-6 py-4 bg-slate-50/50 border border-slate-100 rounded-[2rem] focus:ring-4 focus:ring-cyan-500/10 focus:bg-white focus:outline-none transition-all text-sm font-bold h-14"
                         />
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-4 ml-4 sm:ml-8">
+                    <div className="flex items-center gap-4 ml-8">
                         <button 
                             onClick={() => setIsFocusMode(!isFocusMode)}
-                            className={`p-2.5 sm:p-3 rounded-xl transition-all border shadow-sm active:scale-95 ${isFocusMode ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}
+                            className={`p-4 rounded-2xl transition-all border shadow-sm active:scale-95 ${isFocusMode ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}
                         >
                             {isFocusMode ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                         </button>
                         {!isFocusMode && (
-                            <button onClick={() => setIsContextSidebarOpen(!isContextSidebarOpen)} className={`p-2.5 sm:p-3 rounded-xl transition-all border shadow-sm active:scale-95 ${isContextSidebarOpen ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}>
+                            <button onClick={() => setIsContextSidebarOpen(!isContextSidebarOpen)} className={`p-4 rounded-2xl transition-all border shadow-sm active:scale-95 ${isContextSidebarOpen ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}>
                                 <PanelRight className="w-5 h-5" />
                             </button>
                         )}
                     </div>
                 </header>
 
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex overflow-hidden relative">
                     {/* SCROLLABLE MAIN CONTENT */}
-                    <div className={`flex-1 h-full overflow-y-auto custom-scrollbar transition-all duration-500 ${isFocusMode ? 'max-w-full' : ''}`}>
-                        <div className={`p-6 sm:p-8 md:p-12 mx-auto w-full ${isFocusMode ? 'max-w-full' : 'max-w-5xl'}`}>
+                    <div className="flex-1 h-full overflow-y-auto custom-scrollbar">
+                        <div className="p-8 sm:p-12 md:p-16 mx-auto w-full max-w-6xl">
                             <AnimatePresence mode="wait">
                                 {isLoading ? (
-                                    <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[60vh] flex flex-col items-center justify-center space-y-8">
+                                    <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[60vh] flex flex-col items-center justify-center space-y-10">
                                         <div className="relative">
-                                            <Loader2 className="w-16 h-16 animate-spin text-cyan-600/20" />
-                                            <Library className="absolute inset-0 m-auto w-6 h-6 text-cyan-700 animate-pulse" />
+                                            <div className="w-24 h-24 border-4 border-cyan-100 border-t-cyan-600 rounded-full animate-spin"></div>
+                                            <Building className="absolute inset-0 m-auto w-8 h-8 text-cyan-700 animate-pulse" />
                                         </div>
-                                        <p className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Henter forskning...</p>
+                                        <div className="text-center">
+                                            <p className="text-sm font-black uppercase tracking-[0.4em] text-slate-400">Synkroniserer</p>
+                                            <p className="text-xs text-slate-400 mt-2 font-medium italic">Vi henter den nyeste forskning fra VIVE...</p>
+                                        </div>
                                     </motion.div>
                                 ) : error ? (
-                                    <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-24 text-center bg-rose-50 rounded-[3rem] border border-dashed border-rose-200">
-                                        <p className="text-rose-600 font-bold text-lg">{error}</p>
-                                        <Button onClick={() => window.location.reload()} variant="outline" className="mt-6 rounded-xl border-rose-200 text-rose-900">Prøv igen</Button>
+                                    <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-24 text-center bg-rose-50/50 rounded-[4rem] border-2 border-dashed border-rose-100 max-w-2xl mx-auto">
+                                        <div className="w-20 h-20 bg-rose-100 rounded-3xl flex items-center justify-center text-rose-600 mx-auto mb-8"><X className="w-10 h-10" /></div>
+                                        <p className="text-rose-950 font-black serif text-2xl px-12">{error}</p>
+                                        <button onClick={() => window.location.reload()} className="mt-10 px-10 py-4 bg-rose-950 text-rose-50 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-rose-900/20 active:scale-95 transition-all">Prøv igen</button>
                                     </motion.div>
                                 ) : (
-                                    <motion.div key="content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
-                                        <div className="flex items-center justify-between border-b border-amber-100 pb-8">
-                                            <div>
-                                                <h2 className="text-3xl font-bold text-amber-950 serif tracking-tight">Aktuelle Udgivelser</h2>
-                                                <p className="text-sm text-slate-500 mt-1 font-medium italic">{viveAreas.find(a => a.id === activeAreaId)?.name}</p>
+                                    <motion.div key="content" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-16 pb-32">
+                                        
+                                        {/* HERO HEADER */}
+                                        <section className="relative overflow-hidden p-12 rounded-[4rem] bg-amber-950 text-white shadow-2xl shadow-amber-950/20 animate-ink">
+                                            <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-400/10 rounded-full blur-[100px] -mr-48 -mt-48"></div>
+                                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-400/5 rounded-full blur-[80px] -ml-32 -mb-32"></div>
+                                            
+                                            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-10">
+                                                <div className="space-y-6 max-w-2xl">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10"><Library className="w-5 h-5 text-amber-400" /></div>
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Beskæftigelse & Velfærd</span>
+                                                    </div>
+                                                    <h2 className="text-4xl md:text-5xl font-black serif leading-none tracking-tight">Aktuel Forskning</h2>
+                                                    <p className="text-base text-amber-100/70 leading-relaxed font-medium max-w-xl italic">
+                                                        Du kigger på &quot;{viveAreas.find(a => a.id === activeAreaId)?.name}&quot;. Udforsk de seneste analyser, der danner grundlag for fremtidens sociale indsats.
+                                                    </p>
+                                                </div>
+                                                
+                                                <div className="flex flex-col items-end gap-6 shrink-0">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-right">
+                                                            <p className="text-[10px] font-black uppercase text-amber-400 tracking-widest opacity-60">Resultater</p>
+                                                            <p className="text-3xl font-black">{publications.length}</p>
+                                                        </div>
+                                                        <div className="h-10 w-[1px] bg-white/20"></div>
+                                                        {!isFollowingArea(activeAreaId) ? (
+                                                            <button 
+                                                                onClick={(e) => handleToggleFollowArea(e, activeAreaId)}
+                                                                className="px-8 py-4 bg-cyan-500 text-cyan-950 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-xl shadow-cyan-900/40 hover:bg-white hover:shadow-cyan-400/20 active:scale-95 transition-all flex items-center gap-3"
+                                                            >
+                                                                <Bell className="w-4 h-4" /> Følg område
+                                                            </button>
+                                                        ) : (
+                                                            <button 
+                                                                onClick={(e) => handleToggleFollowArea(e, activeAreaId)}
+                                                                className="px-8 py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-white/20 active:scale-95 transition-all flex items-center gap-3"
+                                                            >
+                                                                <BellRing className="w-4 h-4 text-amber-400" /> Du følger dette
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">{publications.length} resultater</span>
-                                        </div>
+                                        </section>
 
-                                        <div className="grid md:grid-cols-2 gap-8">
+                                        {/* GRID OF PUBLICATIONS */}
+                                        <div className="grid md:grid-cols-2 gap-10">
                                             {publications.map((pub, idx) => (
                                                 <div 
                                                     key={pub.id} 
-                                                    className="group bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all flex flex-col h-full relative overflow-hidden animate-ink"
-                                                    style={{ animationDelay: `${idx * 0.05}s` }}
+                                                    className="group bg-white p-10 rounded-[3.5rem] border border-amber-100/50 shadow-sm hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] hover:border-cyan-200 transition-all duration-500 flex flex-col h-full relative overflow-hidden animate-ink"
+                                                    style={{ animationDelay: `${idx * 0.08}s` }}
                                                 >
-                                                    <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-50/50 rounded-bl-[4rem] -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700"></div>
+                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-50/30 rounded-bl-[5rem] translate-x-12 -translate-y-12 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-700 ease-out"></div>
                                                     
                                                     <div className="relative z-10 flex flex-col h-full">
-                                                        <div className="flex items-center justify-between mb-6">
-                                                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                                <Calendar className="w-3 h-3" />
-                                                                {new Date(pub.publicationDate).toLocaleDateString('da-DK', { year: 'numeric', month: 'short' })}
+                                                        <div className="flex items-center justify-between mb-8">
+                                                            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                                                <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300 group-hover:text-cyan-600 group-hover:bg-cyan-50 transition-colors"><Calendar className="w-4 h-4" /></div>
+                                                                {new Date(pub.publicationDate).toLocaleDateString('da-DK', { year: 'numeric', month: 'long' })}
                                                             </div>
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-3">
                                                                 <button 
                                                                     onClick={(e) => handleToggleSave(e, pub)}
-                                                                    className={`p-3 rounded-xl border transition-all ${savedArticleIds.has(pub.id) ? 'bg-amber-100 border-amber-300 text-amber-900 shadow-sm' : 'bg-white border-amber-50 text-slate-300 hover:text-amber-900 hover:border-amber-900'}`}
+                                                                    className={`w-12 h-12 rounded-2xl border transition-all flex items-center justify-center group/btn active:scale-90 ${savedArticleIds.has(pub.id) ? 'bg-amber-100 border-amber-300 text-amber-900 shadow-inner' : 'bg-white border-slate-100 text-slate-300 hover:text-amber-950 hover:border-amber-950 shadow-sm'}`}
                                                                 >
-                                                                    {savedArticleIds.has(pub.id) ? <BookmarkCheck className="w-5 h-5 fill-current" /> : <Bookmark className="w-5 h-5" />}
+                                                                    {savedArticleIds.has(pub.id) ? <BookmarkCheck className="w-5 h-5 fill-current" /> : <Bookmark className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />}
                                                                 </button>
-                                                                <a href={pub.url} target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center hover:bg-cyan-100 hover:text-cyan-700 transition-all">
+                                                                <a href={pub.url} target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center hover:bg-cyan-100 hover:text-cyan-700 transition-all active:scale-90 shadow-sm">
                                                                     <ExternalLink className="w-5 h-5" />
                                                                 </a>
                                                             </div>
                                                         </div>
 
-                                                        <h3 className="text-xl font-bold text-amber-950 serif leading-tight group-hover:text-cyan-900 transition-colors mb-4 line-clamp-3">
+                                                        <h3 className="text-2xl font-black text-amber-950 serif leading-tight group-hover:text-cyan-900 transition-colors mb-6 line-clamp-3 decoration-cyan-400/0 hover:decoration-cyan-400/100">
                                                             {pub.title}
                                                         </h3>
                                                         
-                                                        <p className="text-sm text-slate-500 leading-relaxed mb-8 line-clamp-4 flex-grow">
+                                                        <p className="text-[15px] text-slate-500 leading-relaxed mb-10 line-clamp-5 flex-grow font-medium leading-[1.6]">
                                                             {pub.description}
                                                         </p>
 
                                                         {pub.apa && (
-                                                            <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 group/apa relative">
-                                                                <div className="flex items-center justify-between mb-2">
-                                                                    <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-slate-400">
-                                                                        <Quote className="w-2.5 h-2.5" /> APA Reference
+                                                            <div className="mb-10 p-6 bg-slate-50/80 rounded-[2rem] border border-slate-100 group/apa relative shadow-inner overflow-hidden">
+                                                                <div className="absolute inset-0 bg-white/20 backdrop-blur-sm opacity-0 group-hover/apa:opacity-100 transition-opacity"></div>
+                                                                <div className="relative z-10">
+                                                                    <div className="flex items-center justify-between mb-4">
+                                                                        <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-slate-400">
+                                                                            <Quote className="w-3 h-3 text-cyan-600" /> APA Source
+                                                                        </div>
+                                                                        <button 
+                                                                            onClick={(e) => handleCopyApa(e, pub.id, pub.apa!)}
+                                                                            className="text-[8px] font-black uppercase tracking-widest text-cyan-700 hover:text-amber-950 px-3 py-1.5 bg-white rounded-lg border border-cyan-100 transition-all active:scale-95 shadow-sm"
+                                                                        >
+                                                                            {copiedId === pub.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                                                            <span className="ml-2">{copiedId === pub.id ? 'Færdig' : 'Kopier'}</span>
+                                                                        </button>
                                                                     </div>
-                                                                    <button 
-                                                                        onClick={(e) => handleCopyApa(e, pub.id, pub.apa!)}
-                                                                        className="text-[8px] font-black uppercase tracking-widest text-cyan-700 hover:text-cyan-900 transition-colors flex items-center gap-1"
-                                                                    >
-                                                                        {copiedId === pub.id ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5" />}
-                                                                        {copiedId === pub.id ? 'Kopieret' : 'Kopier'}
-                                                                    </button>
+                                                                    <div 
+                                                                        className="text-[11px] text-slate-600 leading-relaxed italic pr-2 select-all font-serif"
+                                                                        dangerouslySetInnerHTML={{ __html: pub.apa }}
+                                                                    />
                                                                 </div>
-                                                                <div 
-                                                                    className="text-[10px] text-slate-600 leading-relaxed italic pr-2 select-all"
-                                                                    dangerouslySetInnerHTML={{ __html: pub.apa }}
-                                                                />
                                                             </div>
                                                         )}
 
-                                                        <div className="pt-6 border-t border-amber-50 flex items-center justify-between mt-auto">
-                                                            <a href={pub.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-amber-900 hover:text-cyan-700 transition-all group-hover:translate-x-1">
-                                                                Læs mere <ArrowUpRight className="w-3 h-3" />
+                                                        <div className="pt-8 border-t border-amber-50 flex items-center justify-between mt-auto">
+                                                            <a href={pub.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-amber-900 hover:text-cyan-700 transition-all group-hover:translate-x-2">
+                                                                Læs fuld rapport <ArrowUpRight className="w-4 h-4" />
                                                             </a>
                                                         </div>
                                                     </div>
@@ -458,14 +564,17 @@ const ViveIndsigtPageContent: React.FC = () => {
                                         </div>
 
                                         {hasMore && (
-                                            <div className="text-center mt-20">
+                                            <div className="text-center mt-24">
                                                 <button 
                                                     onClick={handleLoadMore} 
                                                     disabled={isLoadingMore}
-                                                    className="px-10 py-5 bg-white border border-amber-200 text-amber-950 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-sm hover:shadow-xl hover:border-cyan-400 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3 mx-auto"
+                                                    className="relative group px-12 py-6 bg-white border border-amber-200 text-amber-950 rounded-[2.5rem] font-black uppercase text-[11px] tracking-[0.3em] shadow-xl hover:shadow-2xl hover:border-cyan-400 transition-all active:scale-95 disabled:opacity-50 overflow-hidden"
                                                 >
-                                                    {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin"/> : <RefreshCw className="w-4 h-4" />}
-                                                    Indlæs flere udgivelser
+                                                    <div className="absolute inset-0 bg-amber-50 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                                                    <div className="relative z-10 flex items-center gap-4 mx-auto justify-center">
+                                                        {isLoadingMore ? <Loader2 className="w-5 h-5 animate-spin"/> : <RefreshCw className="w-5 h-5" />}
+                                                        Indlæs flere rapporter
+                                                    </div>
                                                 </button>
                                             </div>
                                         )}
@@ -596,7 +705,7 @@ const ViveIndsigtPageContent: React.FC = () => {
                                         <div>
                                             <p className="text-[9px] font-black uppercase text-cyan-950 mb-2">Forsknings-tips</p>
                                             <p className="text-[10px] text-cyan-800 leading-relaxed italic">
-                                                Brug VIVE-analysen til at underbygge dine argumenter i din eksamensopgave. AI'en kan hjælpe dig med at finde præcis de fund, der er relevante for din problemformulering.
+                                                Brug VIVE-analysen til at underbygge dine argumenter i din eksamensopgave. AI&apos;en kan hjælpe dig med at finde præcis de fund, der er relevante for din problemformulering.
                                             </p>
                                         </div>
                                     </div>
@@ -617,7 +726,8 @@ export default function ViveIndsigtPage() {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.replace(`/?callbackUrl=${encodeURIComponent(pathname)}`);
+            const callbackUrl = pathname ? encodeURIComponent(pathname) : '';
+            router.replace(`/?callbackUrl=${callbackUrl}`);
         }
     }, [user, isUserLoading, router, pathname]);
 

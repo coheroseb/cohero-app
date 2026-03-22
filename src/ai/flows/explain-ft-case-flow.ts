@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to explain a case from the Danish Parliament.
  * - explainFolketingetSag - Generates a pedagogical explanation of a case.

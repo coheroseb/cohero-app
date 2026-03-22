@@ -28,7 +28,6 @@ const GuideSection = ({ icon: Icon, title, children, color }: { icon: any, title
 
 const ReadingGuideModal: React.FC<ReadingGuideModalProps> = ({ isOpen, onClose, lawTitle = "Loven" }) => {
   
-  if (!isOpen) return null;
 
   const isVejledning = lawTitle.toLowerCase().includes('vejledning');
   const isBekendtgoerelse = lawTitle.toLowerCase().includes('bekendtgørelse');
@@ -99,6 +98,8 @@ const ReadingGuideModal: React.FC<ReadingGuideModalProps> = ({ isOpen, onClose, 
     },
     situation: 'Start med at identificere borgerens problemstilling, find den relevante hovedlov, og brug derefter vejledningen til at se, hvordan reglerne skal fortolkes i praksis.'
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">

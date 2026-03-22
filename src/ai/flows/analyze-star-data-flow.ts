@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to analyze statistical data from STAR.
  * - analyzeStarData - Pedagogically interprets numbers for social work students.

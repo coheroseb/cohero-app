@@ -2,80 +2,121 @@
 
 // Polyfill for Promise.withResolvers to support older Node.js versions
 if (!Promise.withResolvers) {
-  Promise.withResolvers = function withResolvers<T>() {
-    let resolve!: (value: T | PromiseLike<T>) => void;
-    let reject!: (reason?: any) => void;
-    const promise = new Promise<T>((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
-    // @ts-ignore
-    return { promise, resolve, reject };
-  };
+    Promise.withResolvers = function withResolvers<T>() {
+        let resolve!: (value: T | PromiseLike<T>) => void;
+        let reject!: (reason?: any) => void;
+        const promise = new Promise<T>((res, rej) => {
+            resolve = res;
+            reject = rej;
+        });
+        // @ts-ignore
+        return { promise, resolve, reject };
+    };
 }
 
 // AI Flow Imports
-import { recommendContent } from '@/ai/flows/content-recommendations';
-import { generateCase } from '@/ai/flows/generate-case-flow';
-import { getSecondOpinion } from '@/ai/flows/second-opinion-flow';
-import { getJournalFeedback } from '@/ai/flows/journal-feedback-flow';
-import { getCaseFeedback } from '@/ai/flows/case-feedback-flow';
-import { generateWelcomeEmail } from '@/ai/flows/generate-welcome-email-flow';
-import { extractLawInfoFromUrl } from '@/ai/flows/extract-law-info-flow';
-import { getLawContent } from '@/ai/flows/get-law-content-flow';
-import { explainLawParagraph } from '@/ai/flows/explain-law-paragraph-flow';
-import { recommendTechnique } from '@/ai/flows/recommend-technique-flow';
-import { explainTechniqueWithAnalogy } from '@/ai/flows/explain-technique-analogy-flow';
-import { generateExamBlueprint } from '@/ai/flows/exam-architect-flow';
-import { getIntroCaseConsequence } from '@/ai/flows/intro-case-consequence-flow';
-import { getMythBusterResponse } from '@/ai/flows/myth-buster-flow';
-import { getCareerMatch } from '@/ai/flows/career-match-flow';
-import { reviseJournalEntry } from '@/ai/flows/revise-journal-entry-flow';
-import { reviseCase } from '@/ai/flows/revise-case-flow';
-import { generateVerificationEmail } from '@/ai/flows/generate-verification-email-flow';
-import { getConsensusAnalysis } from '@/ai/flows/consensus-analysis-flow';
-import { getSocraticReflection } from '@/ai/flows/sokratisk-refleksion/flow';
-import { explainConcept } from '@/ai/flows/explain-concept-flow';
-import { explainConceptWithAnalogy } from '@/ai/flows/explain-concept-analogy-flow';
-import { getCaseConsequence } from '@/ai/flows/case-consequence-flow';
-import { generateQuiz } from '@/ai/flows/quiz-generator-flow';
-import { getFagligtMycelium } from '@/ai/flows/fagligt-mycelium-flow';
-import { generateCommentNotificationEmail } from '@/ai/flows/generate-comment-notification-email-flow';
-import { analyzeReformPdf } from '@/ai/flows/analyze-reform-flow';
-import { seminarArchitect } from '@/ai/flows/seminar-architect-flow';
-import { generateSubscriptionConfirmationEmail } from '@/ai/flows/generate-subscription-confirmation-email-flow';
-import { generateStreakReminderEmail } from '@/ai/flows/generate-streak-reminder-email-flow';
-import { generateSemesterPlan } from '@/ai/flows/semester-planner-flow';
-import { suggestConceptsForEvent } from '@/ai/flows/suggest-concepts-for-event-flow';
-import { generateStudySchedule } from '@/ai/flows/generate-study-schedule-flow';
-import { explainFolketingetSag } from '@/ai/flows/explain-ft-case-flow';
-import { oralExamAnalysis } from '@/ai/flows/oral-exam-analysis-flow';
-import { generateJournalScenario } from '@/ai/flows/generate-journal-scenario-flow';
-import { generateCaseUpdateEmail } from '@/ai/flows/generate-case-update-email-flow';
-import { analyzeFtDocument } from '@/ai/flows/analyze-ft-document-flow';
-import { fetchVivePublications as fetchVivePublicationsFlow } from '@/ai/flows/vive-indsigt-flow';
-import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
-import { getViveReportQa } from '@/ai/flows/vive-report-qa-flow';
-import { generateReportQuestions } from '@/ai/flows/generate-report-questions-flow';
-import { analyzeStarData } from '@/ai/flows/analyze-star-data-flow';
-import { analyzeParagraph } from '@/ai/flows/analyze-paragraph-flow';
-import { analyzeLegalDecision } from '@/ai/flows/analyze-legal-decision-flow';
-import { processStudyRegulation } from '@/ai/flows/process-study-regulation-flow';
-import { extractTasksFromText } from '@/ai/flows/extract-tasks-flow';
-import { analyzeTaskSchedule } from '@/ai/flows/analyze-task-schedule-flow';
-import { generateGroupInvitationEmail } from '@/ai/flows/generate-group-invitation-email-flow';
-import { recommendTaskAssignee } from '@/ai/flows/recommend-task-assignee-flow';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { adminFirestore } from '@/firebase/server-init';
+import { uploadMediaToStorage } from '@/lib/storage-utils';
+
+
+
+
 
 // Type Imports
 import type * as Types from '@/ai/flows/types';
+
+async function callFirebaseFlow(flowName, data) {
+  const adminSecret = process.env.CRON_SECRET || "dev-secret-123";
+  const projectId = 'studio-7870211338-fe921';
+  const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
+    ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + "/runAiFlow")
+    : ("http://127.0.0.1:5001/" + projectId + "/us-central1/runAiFlow");
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + adminSecret
+    },
+    body: JSON.stringify({ flowName, data })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Firebase Flow call failed:", errorText);
+    throw new Error('Firebase Flow API Error: ' + response.statusText);
+  }
+
+  return response.json();
+}
+
 import type Stripe from 'stripe';
 
 
 // Third-party and utility imports
 import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { Resend } from 'resend';
-import { adminFirestore } from '@/firebase/server-init';
 import { getRelevantLawContext, getSpecificLawAndGuidelinesContext } from '@/lib/law-context-helper';
+
 import { headers } from 'next/headers';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -88,7 +129,7 @@ import { FieldValue } from 'firebase-admin/firestore';
  * template ugeplan based on statistical availability.
  */
 export async function syncCalendarAvailability(
-    icalUrl: string, 
+    icalUrl: string,
     customRange?: { start: string, end: string }
 ): Promise<Record<string, 'physical' | 'online' | 'unavailable' | null>> {
     const url = icalUrl.replace(/^webcal:\/\//i, 'https://');
@@ -98,7 +139,7 @@ export async function syncCalendarAvailability(
 
     const dayNames = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'];
     const timeSlots = ['morning', 'afternoon', 'evening'];
-    
+
     // Determine range
     const now = new Date();
     const startRange = customRange ? new Date(customRange.start) : new Date(now.getFullYear(), now.getMonth(), 1);
@@ -116,7 +157,7 @@ export async function syncCalendarAvailability(
 
     // 2. Parse iCal events
     const events = icalText.split('BEGIN:VEVENT').slice(1);
-    
+
     // We need to track busy days to avoid counting multiple events in one slot on same day twice
     const trackedBusySlots = new Set<string>(); // key: 'dateISO-slot'
 
@@ -182,11 +223,11 @@ export async function syncCalendarAvailability(
             // If you are busy in > 30% of the days, don't promise availability
             if (busyRatio > 0.3) {
                 result[key] = 'unavailable';
-            } 
+            }
             // ONLY mark as physical if 100% free across the whole month on weekdays
             else if (busyRatio === 0 && dIdx !== 0 && dIdx !== 6) {
                 result[key] = 'physical';
-            } 
+            }
             // For everything else, default to null so the user has to make a conscious choice
             else {
                 result[key] = null;
@@ -198,54 +239,54 @@ export async function syncCalendarAvailability(
 }
 
 // AI Actions (wrapping flows)
-export const recommendContentAction = recommendContent;
+export async function recommendContentAction(input: any) { return callFirebaseFlow('recommendContentFlow', input); }
 
 export async function generateNewCase(input: { topic: string }): Promise<any> {
-  const lawContext = await getRelevantLawContext(input.topic);
-  return generateCase({ topic: input.topic, lawContext });
+    const lawContext = await getRelevantLawContext(input.topic);
+    return callFirebaseFlow('generateCaseFlow', { topic: input.topic, lawContext });
 }
 
 export const generateCaseAction = generateNewCase;
 
-export const getSecondOpinionAction = getSecondOpinion;
+export async function getSecondOpinionAction(input: any) { return callFirebaseFlow('getSecondOpinionFlow', input); }
 
-export async function getJournalFeedbackAction(input: { topic: string, scenario: string, initialObservation: string, journalEntry: string }): Promise<Types.JournalFeedbackOutput> {
-  const lawContext = await getRelevantLawContext(input.topic);
-  return getJournalFeedback({ ...input, lawContext });
+export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string }): Promise<any> {
+    const lawContext = await getRelevantLawContext(input.topic);
+    return callFirebaseFlow('journalSynthesisFeedbackFlow', { ...input, lawContext });
 }
 
 export async function getCaseFeedbackAction(input: { topic: string, scenario: string, initialObservation: string, assessment: string, goals: string, actionPlan: string }): Promise<Types.CaseFeedbackOutput> {
-  const lawContext = await getRelevantLawContext(input.topic);
-  return getCaseFeedback({ ...input, lawContext });
+    const lawContext = await getRelevantLawContext(input.topic);
+    return callFirebaseFlow('getCaseFeedbackFlow', { ...input, lawContext });
 }
 
 export async function generateWelcomeEmailAction(input: { userName: string, userEmail: string }): Promise<{ success: boolean; message: string }> {
-  try {
-    const { data: { subject, body } } = await generateWelcomeEmail({ userName: input.userName });
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'Cohéro <velkommen@cohero.dk>',
-      to: input.userEmail,
-      subject: subject,
-      html: body,
-    });
-    return { success: true, message: 'Welcome email sent.' };
-  } catch (error) {
-    console.error('Failed to send welcome email:', error);
-    return { success: false, message: 'Failed to send welcome email.' };
-  }
+    try {
+        const { data: { subject, body } } = await callFirebaseFlow('generateWelcomeEmailFlow', { userName: input.userName, userEmail: input.userEmail });
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+            from: 'Cohéro <velkommen@cohero.dk>',
+            to: input.userEmail,
+            subject: subject,
+            html: body,
+        });
+        return { success: true, message: 'Welcome email sent.' };
+    } catch (error) {
+        console.error('Failed to send welcome email:', error);
+        return { success: false, message: 'Failed to send welcome email.' };
+    }
 }
 
-export const extractLawInfoAction = extractLawInfoFromUrl;
-export const getLawContentAction = getLawContent;
+export async function extractLawInfoAction(input: any) { return callFirebaseFlow('extractLawInfoFromUrlFlow', input); }
+export async function getLawContentAction(input: any) { return callFirebaseFlow('getLawContentFlow', input); }
 
 export async function explainLawParagraphAction(input: { lawId: string, lovTitel: string, paragrafNummer: string, paragrafTekst: string }): Promise<Types.ExplainLawParagraphOutput> {
-    const lawContext = await getSpecificLawAndGuidelinesContext(input.lawId);
-    return explainLawParagraph({ 
+    const lawContext = await getSpecificLawAndGuidelinesContext({ id: input.lawId, name: input.lovTitel });
+    return callFirebaseFlow('explainLawParagraphFlow', {
         lovTitel: input.lovTitel,
         paragrafNummer: input.paragrafNummer,
         paragrafTekst: input.paragrafTekst,
-        lovtekst: lawContext 
+        lovtekst: lawContext
     });
 }
 
@@ -277,67 +318,67 @@ export async function analyzeParagraphAction(input: { lovTitel: string, paragraf
             console.error("Failed to fetch related context links:", e);
         }
     }
-    
-    return analyzeParagraph({ ...input, urlContext });
+
+    return callFirebaseFlow('analyzeParagraphFlow', { ...input, urlContext });
 }
 
-export const recommendTechniqueAction = recommendTechnique;
-export const explainTechniqueWithAnalogyAction = explainTechniqueWithAnalogy;
-export const generateExamBlueprintAction = generateExamBlueprint;
-export const getIntroCaseConsequenceAction = getIntroCaseConsequence;
-export const getMythBusterResponseAction = getMythBusterResponse;
-export const getCareerMatchAction = getCareerMatch;
-export const reviseJournalEntryAction = reviseJournalEntry;
-export const reviseCaseAction = reviseCase;
+export async function recommendTechniqueAction(input: any) { return callFirebaseFlow('recommendTechniqueFlow', input); }
+export async function explainTechniqueWithAnalogyAction(input: any) { return callFirebaseFlow('explainTechniqueWithAnalogyFlow', input); }
+export async function generateExamBlueprintAction(input: any) { return callFirebaseFlow('generateExamBlueprintFlow', input); }
+export async function getIntroCaseConsequenceAction(input: any) { return callFirebaseFlow('getIntroCaseConsequenceFlow', input); }
+export async function getMythBusterResponseAction(input: any) { return callFirebaseFlow('getMythBusterResponseFlow', input); }
+export async function getCareerMatchAction(input: any) { return callFirebaseFlow('getCareerMatchFlow', input); }
+export async function reviseJournalEntryAction(input: any) { return callFirebaseFlow('reviseJournalEntryFlow', input); }
+export async function reviseCaseAction(input: any) { return callFirebaseFlow('reviseCaseFlow', input); }
 
 export async function generateVerificationEmailAction(input: Types.VerificationEmailInput): Promise<{ success: boolean; message: string; }> {
     try {
-        const { subject, body } = await generateVerificationEmail(input);
+        const { subject, body } = await callFirebaseFlow('generateVerificationEmailFlow', input);
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-          from: 'Cohéro <velkommen@cohero.dk>',
-          // @ts-ignore
-          to: input.userEmail, // Assuming userEmail is part of VerificationEmailInput
-          subject: subject,
-          html: body,
+            from: 'Cohéro <velkommen@cohero.dk>',
+            // @ts-ignore
+            to: input.userEmail, // Assuming userEmail is part of VerificationEmailInput
+            subject: subject,
+            html: body,
         });
         return { success: true, message: 'Verification email sent.' };
-      } catch (error) {
+    } catch (error) {
         console.error('Failed to send verification email:', error);
         return { success: false, message: 'Failed to send verification email.' };
-      }
+    }
 }
 
-export const getConsensusAnalysisAction = getConsensusAnalysis;
-export const getSocraticReflectionAction = getSocraticReflection;
+export async function getConsensusAnalysisAction(input: any) { return callFirebaseFlow('getConsensusAnalysisFlow', input); }
+export async function getSocraticReflectionAction(input: any) { return callFirebaseFlow('getSocraticReflectionFlow', input); }
 
 export async function explainConceptAction(input: { concept: string }): Promise<Types.ExplainConceptOutput> {
     // Concept explainer now focuses only on non-legal social work concepts.
-    return explainConcept({ ...input });
+    return callFirebaseFlow('explainConceptFlow', { ...input });
 }
 
-export const explainConceptWithAnalogyAction = explainConceptWithAnalogy;
-export const getCaseConsequenceAction = getCaseConsequence;
+export async function explainConceptWithAnalogyAction(input: any) { return callFirebaseFlow('explainConceptWithAnalogyFlow', input); }
+export async function getCaseConsequenceAction(input: any) { return callFirebaseFlow('getCaseConsequenceFlow', input); }
 
 export async function generateQuizAction(input: { topic: string, numQuestions: number, lawId?: string, contextText?: string }): Promise<Types.QuizGeneratorOutput> {
     let lawContext = '';
     if (input.lawId) {
         // This helper fetches both the main law and all its associated guidelines
         // including their XML URLs as text in the prompt.
-        lawContext = await getSpecificLawAndGuidelinesContext(input.lawId);
+        lawContext = await getSpecificLawAndGuidelinesContext({ id: input.lawId, name: input.topic });
     }
-    
-    return generateQuiz({ 
-        topic: input.topic, 
-        numQuestions: input.numQuestions, 
+
+    return callFirebaseFlow('generateQuizFlow', {
+        topic: input.topic,
+        numQuestions: input.numQuestions,
         lawContext: lawContext || undefined,
-        contextText: input.contextText 
+        contextText: input.contextText
     });
 }
 
 export async function saveQuizResultAction(params: { userId: string, result: Omit<Types.QuizResult, 'createdAt'> }): Promise<{ success: boolean }> {
     const resultRef = adminFirestore.collection('users').doc(params.userId).collection('quizResults').doc();
-    
+
     try {
         await resultRef.set({
             ...params.result,
@@ -350,52 +391,87 @@ export async function saveQuizResultAction(params: { userId: string, result: Omi
     }
 }
 
-export const getFagligtMyceliumAction = getFagligtMycelium;
-export const analyzeReformPdfAction = analyzeReformPdf;
-export const seminarArchitectAction = seminarArchitect;
-export const generateSemesterPlanAction = generateSemesterPlan;
-export const suggestConceptsForEventAction = suggestConceptsForEvent;
-export const generateStudyScheduleAction = generateStudySchedule;
-export const explainFolketingetSagAction = explainFolketingetSag;
-export const oralExamAnalysisAction = oralExamAnalysis;
+export async function getFagligtMyceliumAction(input: any) { return callFirebaseFlow('getFagligtMyceliumFlow', input); }
+export async function analyzeReformPdfAction(input: any) { return callFirebaseFlow('analyzeReformPdfFlow', input); }
+export async function seminarArchitectAction(input: any) { return callFirebaseFlow('seminarArchitectFlow', input); }
+export async function generateSemesterPlanAction(input: any) { return callFirebaseFlow('generateSemesterPlanFlow', input); }
+export async function suggestConceptsForEventAction(input: any) { return callFirebaseFlow('suggestConceptsForEventFlow', input); }
+export async function generateStudyScheduleAction(input: any) { return callFirebaseFlow('generateStudyScheduleFlow', input); }
+export async function explainFolketingetSagAction(input: any) { return callFirebaseFlow('explainFolketingetSagFlow', input); }
+export async function oralExamAnalysisAction(input: any) { return callFirebaseFlow('oralExamAnalysisFlow', input); }
 
-export async function generateJournalScenarioAction(input: { topic: string }): Promise<Types.GenerateJournalScenarioOutput> {
-  const lawContext = await getRelevantLawContext(input.topic);
-  return generateJournalScenario({ topic: input.topic, lawContext });
+export async function generateRawCaseSourcesAction(input: { topic: string }): Promise<any> {
+    const lawContext = await getRelevantLawContext(input.topic);
+    return callFirebaseFlow('generateRawCaseSourcesFlow', { topic: input.topic, lawContext });
 }
 
-export const analyzeFtDocumentAction = analyzeFtDocument;
-export const fetchVivePublicationsAction = fetchVivePublicationsFlow;
-export const textToSpeechAction = textToSpeech;
-export const getViveReportQaAction = getViveReportQa;
-export const generateReportQuestionsAction = generateReportQuestions;
+export async function simulateStartAction(input: { theme: string, userName: string, currentDateStr: string }): Promise<any> {
+    const lawContext = await getRelevantLawContext(input.theme);
+    return callFirebaseFlow('simulateStartFlowFlow', { theme: input.theme, lawContext, userName: input.userName, currentDateStr: input.currentDateStr });
+}
+
+export async function simulateNextDayAction(input: { cases: any[], previousInbox: any[], userJournals: Record<string, string>, currentDay: number, daysPassed: number, userName: string, newDateStr: string }): Promise<any> {
+    return callFirebaseFlow('simulateNextDayFlowFlow', input);
+}
+
+export async function simulateFeedbackAction(input: { cases: any[], inbox: any[], userJournals: Record<string, string>, totalDays: number, userName: string }): Promise<any> {
+    return callFirebaseFlow('simulateFeedbackFlowFlow', input);
+}
+
+export async function analyzeFtDocumentAction(input: any) { return callFirebaseFlow('analyzeFtDocumentFlow', input); }
+export async function fetchVivePublicationsAction(input: any) { return callFirebaseFlow('fetchVivePublicationsFlow', input); }
+export async function textToSpeechAction(input: any) { return callFirebaseFlow('textToSpeechFlow', input); }
+export async function getViveReportQaAction(input: any) { return callFirebaseFlow('getViveReportQaFlow', input); }
+export async function generateReportQuestionsAction(input: any) { return callFirebaseFlow('generateReportQuestionsFlow', input); }
 
 export async function analyzeStarDataAction(input: Types.AnalyzeStarDataInput): Promise<Types.AnalyzeStarDataOutput> {
-    return analyzeStarData(input);
+    return callFirebaseFlow('analyzeStarDataFlow', input);
 }
 
-export const analyzeLegalDecisionAction = analyzeLegalDecision;
+export async function analyzeLegalDecisionAction(input: any) { return callFirebaseFlow('analyzeLegalDecisionFlow', input); }
+
+export async function semanticLawSearchAction(query: string, lawId?: string, documentData?: any): Promise<Types.SemanticLawSearchOutput> {
+    let context = '';
+    
+    if (lawId && lawId !== 'reference') {
+        // Scope to specific law
+        const snapshot = await adminFirestore.collection('laws').doc(lawId).get();
+        if (snapshot.exists) {
+            context = await getSpecificLawAndGuidelinesContext({ id: lawId, ...snapshot.data() } as any);
+        }
+    } else if (lawId === 'reference' && documentData) {
+        // Scope to reference document (which we already have data for)
+        context = `[REFERENCE-DOKUMENT: ${documentData.titel}]\n${documentData.rawText}\n\n`;
+    }
+
+    // Fallback or global search if no specific context built
+    if (!context) {
+        context = await getRelevantLawContext(query);
+    }
+    
+    return callFirebaseFlow('semanticLawSearchFlow', { query, legalContext: context });
+}
 
 export async function generateCaseUpdateEmailAction(input: Types.CaseUpdateEmailInput): Promise<{ success: boolean; message: string; }> {
-  try {
-      const {subject, body} = await generateCaseUpdateEmail(input);
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-          from: 'Cohéro Notifikationer <info@cohero.dk>',
-          to: input.userEmail,
-          subject: subject,
-          html: body,
-      });
-      return { success: true, message: "Update email sent." };
-  } catch (error) {
-      console.error('Failed to send case update email:', error);
-      return { success: false, message: "Failed to update email." };
-  }
+    try {
+        const { subject, body } = await callFirebaseFlow('generateCaseUpdateEmailFlow', input);
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+            from: 'Cohéro Notifikationer <info@cohero.dk>',
+            to: input.userEmail,
+            subject: subject,
+            html: body,
+        });
+        return { success: true, message: "Update email sent." };
+    } catch (error) {
+        console.error('Failed to send case update email:', error);
+        return { success: false, message: "Failed to update email." };
+    }
 }
 
-export async function sendCommentNotificationEmailAction(input: {postAuthorEmail: string, postAuthorName: string, commenterName: string, postTitle: string, postId: string}): Promise<{ success: boolean; message: string; }> {
+export async function sendCommentNotificationEmailAction(input: { postAuthorEmail: string, postAuthorName: string, commenterName: string, postTitle: string, postId: string, authorId: string }): Promise<{ success: boolean; message: string; }> {
     try {
-        const {subject, body} = await generateCommentNotificationEmail({ ...input, postUrl: `https://cohero.dk/opslagstavle#${input.postId}` });
+        const { subject, body } = await callFirebaseFlow('generateCommentNotificationEmailFlow', { ...input, postUrl: `https://cohero.dk/opslagstavle#${input.postId}` });
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
             from: 'Cohéro Notifikationer <info@cohero.dk>',
@@ -403,6 +479,16 @@ export async function sendCommentNotificationEmailAction(input: {postAuthorEmail
             subject: subject,
             html: body,
         });
+
+        // Add in-app notification
+        await sendInAppNotificationAction({
+            uid: input.authorId,
+            title: "Ny kommentar! 💬",
+            body: `${input.commenterName} svarede på dit opslag: "${input.postTitle}"`,
+            type: 'info',
+            link: `/opslagstavle#${input.postId}`
+        });
+
         return { success: true, message: "Notification sent." };
     } catch (error) {
         console.error('Failed to send comment notification:', error);
@@ -410,9 +496,9 @@ export async function sendCommentNotificationEmailAction(input: {postAuthorEmail
     }
 }
 
-export async function sendStreakReminderEmailAction(input: {userEmail: string, userName: string, streakCount: number}): Promise<{ success: boolean; message: string; }> {
+export async function sendStreakReminderEmailAction(input: { userEmail: string, userName: string, streakCount: number, userId: string }): Promise<{ success: boolean; message: string; }> {
     try {
-        const {subject, body} = await generateStreakReminderEmail({ ...input });
+        const { subject, body } = await callFirebaseFlow('generateStreakReminderEmailFlow', { ...input });
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
             from: 'Cohéro Notifikationer <info@cohero.dk>',
@@ -420,6 +506,16 @@ export async function sendStreakReminderEmailAction(input: {userEmail: string, u
             subject: 'Hold din streak i live!',
             html: body,
         });
+
+        // Add in-app notification
+        await sendInAppNotificationAction({
+            uid: input.userId,
+            title: "Hold din streak i live! 🔥",
+            body: `Du har en streak på ${input.streakCount} dage. Log ind i dag for at holde den kørende!`,
+            type: 'warning',
+            link: '/portal'
+        });
+
         return { success: true, message: "Streak reminder sent." };
     } catch (error) {
         console.error('Failed to send streak reminder:', error);
@@ -429,7 +525,7 @@ export async function sendStreakReminderEmailAction(input: {userEmail: string, u
 
 export async function sendGroupInvitationEmailAction(input: { recipientEmail: string, inviteeName: string, inviterName: string, groupName: string, groupUrl: string }): Promise<{ success: boolean; message: string; }> {
     try {
-        const { subject, body } = await generateGroupInvitationEmail({
+        const { subject, body } = await callFirebaseFlow('generateGroupInvitationEmailFlow', {
             inviteeName: input.inviteeName,
             inviterName: input.inviterName,
             groupName: input.groupName,
@@ -449,33 +545,40 @@ export async function sendGroupInvitationEmailAction(input: { recipientEmail: st
     }
 }
 
-export async function sendBulkEmailAction(input: { recipientEmails: string[], subject: string, htmlBody: string }): Promise<{ success: boolean; message: string; sentCount: number }> {
-    const { recipientEmails, subject, htmlBody } = input;
-    
-    if (!recipientEmails || recipientEmails.length === 0) {
+export async function sendBulkEmailAction(input: { recipients: { email: string, name: string }[], subject: string, htmlBody: string }): Promise<{ success: boolean; message: string; sentCount: number }> {
+    const { recipients, subject, htmlBody } = input;
+
+    if (!recipients || recipients.length === 0) {
         return { success: false, message: 'Ingen modtagere angivet.', sentCount: 0 };
     }
 
     try {
         const resend = new Resend(process.env.RESEND_API_KEY);
-        
-        const { data, error } = await resend.batch.send(
-             recipientEmails.map(email => ({
-                from: 'Cohéro Platform <info@platform.cohero.dk>',
-                to: email,
-                subject: subject,
-                html: htmlBody,
-            }))
-        );
+        let totalSentCount = 0;
 
-        if (error) {
-            console.error('Resend batch error:', error);
-            throw new Error(error.message);
+        // Resend batch has a limit of 100 emails per request
+        const CHUNK_SIZE = 100;
+        for (let i = 0; i < recipients.length; i += CHUNK_SIZE) {
+            const chunk = recipients.slice(i, i + CHUNK_SIZE);
+
+            const { data, error } = await resend.batch.send(
+                chunk.map(recipient => ({
+                    from: 'Cohéro Platform <info@platform.cohero.dk>',
+                    to: recipient.email,
+                    subject: subject,
+                    html: htmlBody.replace(/\[Navn\]/gi, recipient.name).replace(/\{\{navn\}\}/gi, recipient.name),
+                }))
+            );
+
+            if (error) {
+                console.error(`Resend batch error for chunk ${i}:`, error);
+                throw new Error(error.message);
+            }
+
+            totalSentCount += chunk.length;
         }
 
-        const successfulSends = data?.filter(d => d.id !== null) || [];
-
-        return { success: true, message: `E-mails sendt.`, sentCount: successfulSends.length };
+        return { success: true, message: `E-mails sendt.`, sentCount: totalSentCount };
 
     } catch (error: any) {
         console.error('Failed to send bulk email:', error);
@@ -483,7 +586,7 @@ export async function sendBulkEmailAction(input: { recipientEmails: string[], su
     }
 }
 
-export const processStudyRegulationAction = processStudyRegulation;
+export async function processStudyRegulationAction(input: any) { return callFirebaseFlow('processStudyRegulationFlow', input); }
 
 export async function listInternalDocsAction(): Promise<string[]> {
     const docsDir = path.join(process.cwd(), 'docs');
@@ -504,13 +607,13 @@ export async function processInternalDocAction(fileName: string): Promise<any> {
 
         const content = await fs.readFile(filePath);
         const base64 = content.toString('base64');
-        
+
         // For .txt files, we use the text content directly
         // For .pdf files, we'd normally use a PDF parser, but for this prototype 
         // we'll assume the txt content is the primary source if it's not a PDF.
-        const pdfText = fileName.endsWith('.txt') ? content.toString('utf-8') : 'PDF content...'; 
+        const pdfText = fileName.endsWith('.txt') ? content.toString('utf-8') : 'PDF content...';
 
-        return processStudyRegulation({
+        return callFirebaseFlow('processStudyRegulationFlow', {
             pdfBase64: base64,
             pdfText: pdfText,
             institution: 'Indlæst fra Arkiv'
@@ -521,8 +624,73 @@ export async function processInternalDocAction(fileName: string): Promise<any> {
     }
 }
 
-export const extractTasksFromTextAction = extractTasksFromText;
-export const analyzeTaskScheduleAction = analyzeTaskSchedule;
+export async function extractTasksFromTextAction(input: any) { return callFirebaseFlow('extractTasksFromTextFlow', input); }
+export async function analyzeTaskScheduleAction(input: any) { return callFirebaseFlow('analyzeTaskScheduleFlow', input); }
+export async function extractApaMetadataAction(input: any) { return callFirebaseFlow('extractApaMetadataFlow', input); }
+export async function processExamRegulationsAction(input: any) { return callFirebaseFlow('processExamRegulationsFlow', input); }
+export async function getLivePortfolioFeedbackAction(input: any) { return callFirebaseFlow('getLivePortfolioFeedbackFlow', input); }
+export async function designSectionOutlineAction(input: any) { return callFirebaseFlow('designSectionOutlineFlowFlow', input); }
+export async function generateConceptVideoScriptAction(input: Types.GenerateConceptVideoScriptInput) {
+    console.log(">>> ACTION TRIGGERED: generateConceptVideoScriptAction", input.concept);
+
+    const normalizedTerm = input.concept.toLowerCase().trim().replace(/\s+/g, '-');
+    const docRef = adminFirestore.collection('conceptVideos').doc(normalizedTerm);
+
+    try {
+        // 1. Tjek om videoen findes i cachen
+        const snap = await docRef.get();
+        if (snap.exists) {
+            console.log(">>> ACTION: Fundet eksisterende video i Firestore.");
+            return {
+                data: snap.data() as Types.GenerateConceptVideoScriptOutput['data'],
+                usage: { inputTokens: 0, outputTokens: 0 }
+            };
+        }
+
+        // 2. Generer ny video hvis ikke i cache
+        const res = await callFirebaseFlow('generateConceptVideoScriptFlow', input);
+        const script = res.data;
+
+        // 3. Upload medier til Storage for at undgå enorme payloads og hit document limit
+        console.log(">>> ACTION: Uploader medier til Storage for persistens...");
+        const scenesWithUrls = await Promise.all(script.scenes.map(async (scene) => {
+            const updatedScene = { ...scene };
+
+            // Upload audio
+            if (scene.audioDataUri && scene.audioDataUri.startsWith('data:')) {
+                const path = `concept-explainer/${normalizedTerm}/scene-${scene.sceneNumber}-audio.mp3`;
+                updatedScene.audioDataUri = await uploadMediaToStorage(scene.audioDataUri, path);
+            }
+
+            // Upload video (fra Veo)
+            if (scene.videoUrl && scene.videoUrl.startsWith('data:')) {
+                const path = `concept-explainer/${normalizedTerm}/scene-${scene.sceneNumber}-video.mp4`;
+                updatedScene.videoUrl = await uploadMediaToStorage(scene.videoUrl, path);
+            }
+
+            // Upload image (fra Banana)
+            if (scene.imageUrl && scene.imageUrl.startsWith('data:')) {
+                const path = `concept-explainer/${normalizedTerm}/scene-${scene.sceneNumber}-image.png`;
+                updatedScene.imageUrl = await uploadMediaToStorage(scene.imageUrl, path);
+            }
+
+            return updatedScene;
+        }));
+
+        const finalScript = { ...script, scenes: scenesWithUrls };
+
+        // 4. Gem i Firestore
+        await docRef.set(finalScript);
+        console.log(">>> ACTION: Video gemt i Firestore.");
+
+        return { data: finalScript, usage: res.usage };
+    } catch (e: any) {
+        console.error(">>> ACTION ERROR in generateConceptVideoScriptAction:", e.message);
+        throw new Error(`Fejl under videogenerering: ${e.message}`);
+    }
+}
+
+
 
 // --- STAR API Actions ---
 
@@ -609,7 +777,7 @@ export async function fetchStarTableDetailsAction(tableId: string): Promise<any>
     }
 }
 
-export async function fetchStarTableDataAction(tableId: string, filters: Record<string, string[]>): Promise<any> {
+export async function fetchStarTableDataAction(tableId: string, filters: Record<string, string[]>, format: 'json' | 'csv' = 'json'): Promise<any> {
     const token = process.env.STAR_API_TOKEN;
     if (!token) {
         throw new Error("STAR API token mangler.");
@@ -625,10 +793,10 @@ export async function fetchStarTableDataAction(tableId: string, filters: Record<
     }
 
     const queryString = params.toString();
-    const url = `${STAR_BASE_URL}/data/${tableId}/json?${queryString}`;
-    
+    const url = `${STAR_BASE_URL}/data/${tableId}/${format}?${queryString}`;
+
     // Log the constructed URL for debugging as requested by user
-    console.log("STAR Data Fetch URL (Server):", url);
+    console.log(`STAR Data Fetch URL (${format}) (Server):`, url);
 
     try {
         const response = await fetch(url, {
@@ -645,6 +813,9 @@ export async function fetchStarTableDataAction(tableId: string, filters: Record<
             throw new Error(`Kald til STAR Data fejlede: ${response.statusText}`);
         }
 
+        if (format === 'csv') {
+            return await response.text();
+        }
         return await response.json();
     } catch (error: any) {
         console.error("STAR Table Data Fetch Error:", error);
@@ -657,7 +828,7 @@ export async function fetchStarTableDataAction(tableId: string, filters: Record<
 export async function fetchLawTimeline(uniqueDocumentId: string): Promise<any[]> {
     const url = `https://www.retsinformation.dk/api/document/${String(uniqueDocumentId)}/timeline`;
     try {
-        const response = await fetch(url, { 
+        const response = await fetch(url, {
             headers: { 'Accept': 'application/json' },
             next: { revalidate: 3600 }
         });
@@ -681,7 +852,7 @@ export async function fetchLawTimeline(uniqueDocumentId: string): Promise<any[]>
 export async function fetchRelatedDocumentLinks(uniqueDocumentId: string): Promise<any[]> {
     const url = `https://www.retsinformation.dk/api/document/documentLinks/3/${String(uniqueDocumentId)}`;
     try {
-        const response = await fetch(url, { 
+        const response = await fetch(url, {
             headers: { 'Accept': 'application/json' },
             next: { revalidate: 3600 }
         });
@@ -705,7 +876,7 @@ export async function fetchRelatedDocumentLinks(uniqueDocumentId: string): Promi
 export async function fetchRelatedDecisions(uniqueDocumentId: string): Promise<any[]> {
     const url = `https://www.retsinformation.dk/api/document/documentLinks/6/${String(uniqueDocumentId)}`;
     try {
-        const response = await fetch(url, { 
+        const response = await fetch(url, {
             headers: { 'Accept': 'application/json' },
             next: { revalidate: 3600 }
         });
@@ -728,7 +899,7 @@ export async function fetchRelatedDecisions(uniqueDocumentId: string): Promise<a
 export async function fetchOmbudsmandReports(uniqueDocumentId: string): Promise<any[]> {
     const url = `https://www.retsinformation.dk/api/document/documentLinks/5/${String(uniqueDocumentId)}`;
     try {
-        const response = await fetch(url, { 
+        const response = await fetch(url, {
             headers: { 'Accept': 'application/json' },
             next: { revalidate: 3600 }
         });
@@ -751,11 +922,11 @@ export async function fetchFolketingetSagByLovnummer(lovnummer: string, dato: st
     const parts = dato.split('.');
     if (parts.length !== 3) return null;
     const [day, month, year] = parts;
-    
+
     // Construct filter for ODA API
     const filter = `lovnummer eq '${lovnummer}' and year(lovnummerdato) eq ${year} and month(lovnummerdato) eq ${parseInt(month)} and day(lovnummerdato) eq ${parseInt(day)}`;
     const url = `https://oda.ft.dk/api/Sag?$filter=${encodeURIComponent(filter)}`;
-    
+
     try {
         const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
         if (!response.ok) return null;
@@ -769,18 +940,18 @@ export async function fetchFolketingetSagByLovnummer(lovnummer: string, dato: st
 }
 
 // Stripe and other Server Actions
-export async function createCheckoutSession(params: { priceId: string, userId: string, userEmail?: string, userName?: string, stripeCustomerId?: string | null, originPath?: string }): Promise<{ sessionId: string, stripeCustomerId: string }> {
+export async function createCheckoutSession(params: { priceId: string, userId: string, userEmail?: string, userName?: string, stripeCustomerId?: string | null, originPath?: string, trialDays?: number }): Promise<{ sessionId: string, stripeCustomerId: string }> {
     if (!isStripeConfigured) {
         throw new Error('Betalingssystemet er ikke konfigureret korrekt på serveren (mangler API-nøgle).');
     }
 
-    const { priceId, userId, userEmail, userName, stripeCustomerId, originPath } = params;
-    
+    const { priceId, userId, userEmail, userName, stripeCustomerId, originPath, trialDays } = params;
+
     const headersList = headers();
     const host = headersList.get('host');
     const protocol = headersList.get('x-forwarded-proto') || 'https';
     const origin = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
-    
+
     const success_url = `${origin}/portal?session_id={CHECKOUT_SESSION_ID}`;
     const cancel_url = `${origin}${originPath || '/upgrade'}`;
 
@@ -801,7 +972,7 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
             throw new Error('Kunne ikke oprette kunde i betalingssystemet.');
         }
     }
-    
+
     try {
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -814,7 +985,7 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
                 },
             ],
             subscription_data: {
-                trial_period_days: 7,
+                trial_period_days: trialDays !== undefined ? trialDays : 7,
             },
             mode: 'subscription',
             allow_promotion_codes: true,
@@ -846,15 +1017,26 @@ export async function processStripeSession(sessionId: string): Promise<{ success
         if (session.status !== 'complete') {
             return { success: false, message: 'Betaling ikke fuldført.' };
         }
-        
+
         const subscription = session.subscription as Stripe.Subscription;
         if (!subscription) {
             throw new Error('Subscription not found on session.');
         }
 
         const price = subscription.items.data[0].price;
-        const membershipLevel = price.nickname || 'Kollega+';
-        
+        let membershipLevel = price.nickname || 'Kollega+';
+
+        // Explicit mapping for specific price IDs to ensure reliability
+        if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
+            membershipLevel = 'Group Pro';
+        } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
+            membershipLevel = 'Kollega+';
+        } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
+            membershipLevel = 'Semesterpakken';
+        } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
+            membershipLevel = 'Kollega++';
+        }
+
         const updateData = {
             stripeSubscriptionId: subscription.id,
             stripeCustomerId: subscription.customer as string,
@@ -862,25 +1044,25 @@ export async function processStripeSession(sessionId: string): Promise<{ success
             stripeSubscriptionStatus: subscription.status,
             stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
             membership: membershipLevel,
-            stripeCancelAtPeriodEnd: false, 
+            stripeCancelAtPeriodEnd: false,
         };
 
         if (session.customer_details?.email) {
-          try {
-              const { subject, body } = await generateSubscriptionConfirmationEmail({
-                  userName: session.customer_details.name || 'Kollega',
-                  membershipLevel: membershipLevel,
-              });
-              const resend = new Resend(process.env.RESEND_API_KEY);
-              await resend.emails.send({
-                  from: 'Cohéro <velkommen@cohero.dk>',
-                  to: session.customer_details.email,
-                  subject: subject,
-                  html: body,
-              });
-          } catch (emailError) {
-              console.error("Confirmation email failed to send:", emailError);
-          }
+            try {
+                const { subject, body } = await callFirebaseFlow('generateSubscriptionConfirmationEmailFlow', {
+                    userName: session.customer_details.name || 'Kollega',
+                    membershipLevel: membershipLevel,
+                });
+                const resend = new Resend(process.env.RESEND_API_KEY);
+                await resend.emails.send({
+                    from: 'Cohéro <velkommen@cohero.dk>',
+                    to: session.customer_details.email,
+                    subject: subject,
+                    html: body,
+                });
+            } catch (emailError) {
+                console.error("Confirmation email failed to send:", emailError);
+            }
         }
 
         return { success: true, message: 'Subscription data retrieved.', updateData };
@@ -922,80 +1104,90 @@ export async function cancelSubscription(subscriptionId: string): Promise<{ succ
 }
 
 export async function syncSubscriptionStatusAction(stripeCustomerId: string): Promise<{
-  stripeSubscriptionStatus: string;
-  stripeCurrentPeriodEnd: string;
-  membership: string;
-  stripeCancelAtPeriodEnd: boolean;
-  stripePriceId: string;
-  stripeSubscriptionId: string;
+    stripeSubscriptionStatus: string;
+    stripeCurrentPeriodEnd: string;
+    membership: string;
+    stripeCancelAtPeriodEnd: boolean;
+    stripePriceId: string;
+    stripeSubscriptionId: string;
 } | null> {
-  if (!isStripeConfigured) return null;
+    if (!isStripeConfigured) return null;
 
-  try {
-    const subscriptions = await stripe.subscriptions.list({
-      customer: stripeCustomerId,
-      limit: 1,
-      status: 'all',
-    });
+    try {
+        const subscriptions = await stripe.subscriptions.list({
+            customer: stripeCustomerId,
+            limit: 1,
+            status: 'all',
+        });
 
-    if (subscriptions.data.length === 0) return null;
+        if (subscriptions.data.length === 0) return null;
 
-    const sub = subscriptions.data[0];
-    const price = sub.items.data[0].price;
-    const membershipLevel = price.nickname || 'Kollega+';
+        const sub = subscriptions.data[0];
+        const price = sub.items.data[0].price;
+        let membershipLevel = price.nickname || 'Kollega+';
 
-    // We only grant premium membership if the status is active or trialing
-    const isActive = sub.status === 'active' || sub.status === 'trialing';
+        if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
+            membershipLevel = 'Group Pro';
+        } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
+            membershipLevel = 'Kollega+';
+        } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
+            membershipLevel = 'Semesterpakken';
+        } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
+            membershipLevel = 'Kollega++';
+        }
 
-    return {
-      stripeSubscriptionStatus: sub.status,
-      stripeCurrentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
-      membership: isActive ? membershipLevel : 'Kollega',
-      stripeCancelAtPeriodEnd: sub.cancel_at_period_end,
-      stripePriceId: price.id,
-      stripeSubscriptionId: sub.id,
-    };
-  } catch (e) {
-    // Only log errors if customer was provided.
-    if (stripeCustomerId) {
-        console.error('Error syncing Stripe subscription:', e);
+        // We only grant premium membership if the status is active or trialing
+        const isActive = sub.status === 'active' || sub.status === 'trialing';
+
+        return {
+            stripeSubscriptionStatus: sub.status,
+            stripeCurrentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
+            membership: isActive ? membershipLevel : 'Kollega',
+            stripeCancelAtPeriodEnd: sub.cancel_at_period_end,
+            stripePriceId: price.id,
+            stripeSubscriptionId: sub.id,
+        };
+    } catch (e) {
+        // Only log errors if customer was provided.
+        if (stripeCustomerId) {
+            console.error('Error syncing Stripe subscription:', e);
+        }
+        return null;
     }
-    return null;
-  }
 }
 
 // Other Server Actions
 export async function sendBugReport(reportText: string, pathname: string, username: string, email: string): Promise<{ success: boolean; message: string; }> {
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'Cohéro Bug Rapport <bug@cohero.dk>',
-      to: 'kontakt@cohero.dk',
-      subject: `Ny Fejlrapport fra: ${username}`,
-      html: `
+    try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+            from: 'Cohéro Bug Rapport <bug@cohero.dk>',
+            to: 'kontakt@cohero.dk',
+            subject: `Ny Fejlrapport fra: ${username}`,
+            html: `
         <p><strong>Bruger:</strong> ${username} (${email})</p>
         <p><strong>Side:</strong> ${pathname}</p>
         <hr>
         <p><strong>Rapport:</strong></p>
         <p>${reportText}</p>
       `,
-    });
-    return { success: true, message: 'Din fejlrapport er blevet sendt. Tak for hjælpen!' };
-  } catch (error) {
-    console.error('Failed to send bug report:', error);
-    return { success: false, message: 'Kunne ikke sende rapport. Prøv igen senere.' };
-  }
+        });
+        return { success: true, message: 'Din fejlrapport er blevet sendt. Tak for hjælpen!' };
+    } catch (error) {
+        console.error('Failed to send bug report:', error);
+        return { success: false, message: 'Kunne ikke sende rapport. Prøv igen senere.' };
+    }
 }
 
 export async function sendEmailToConsultant(subject: string, message: string, userName: string, userEmail: string): Promise<{ success: boolean; message: string; }> {
     try {
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-          from: 'Cohéro Spørgsmål <info@cohero.dk>',
-          to: 'julie@cohero.dk',
-          reply_to: userEmail,
-          subject: `Spørgsmål fra ${userName}: ${subject}`,
-          html: `<p>Fra: ${userName} (${userEmail})</p><p>${message}</p>`,
+            from: 'Cohéro Spørgsmål <info@cohero.dk>',
+            to: 'julie@cohero.dk',
+            reply_to: userEmail,
+            subject: `Spørgsmål fra ${userName}: ${subject}`,
+            html: `<p>Fra: ${userName} (${userEmail})</p><p>${message}</p>`,
         });
         return { success: true, message: 'Din besked er sendt!' };
     } catch (error) {
@@ -1005,49 +1197,49 @@ export async function sendEmailToConsultant(subject: string, message: string, us
 }
 
 export async function fetchPoliticalNews(): Promise<any[]> {
-  try {
-    const response = await fetch('https://www.dr.dk/nyheder/service/feeds/politik', { next: { revalidate: 3600 } });
-    if (!response.ok) return [];
-    const text = await response.text();
-    const items = [...text.matchAll(/<item>(.*?)<\/item>/gs)];
-    return items.map(item => {
-      const title = item[1].match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/s)?.[1] || '';
-      const link = item[1].match(/<link><!\[CDATA\[(.*?)\]\]><\/link>/s)?.[1] || '';
-      const pubDate = item[1].match(/<pubDate>(.*?)<\/pubDate>/s)?.[1] || '';
-      return { title, link, pubDate };
-    });
-  } catch (error) {
-    console.error("Failed to fetch DR news:", error);
-    return [];
-  }
+    try {
+        const response = await fetch('https://www.dr.dk/nyheder/service/feeds/politik', { next: { revalidate: 3600 } });
+        if (!response.ok) return [];
+        const text = await response.text();
+        const items = [...text.matchAll(/<item>(.*?)<\/item>/gs)];
+        return items.map(item => {
+            const title = item[1].match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/s)?.[1] || '';
+            const link = item[1].match(/<link><!\[CDATA\[(.*?)\]\]><\/link>/s)?.[1] || '';
+            const pubDate = item[1].match(/<pubDate>(.*?)<\/pubDate>/s)?.[1] || '';
+            return { title, link, pubDate };
+        });
+    } catch (error) {
+        console.error("Failed to fetch DR news:", error);
+        return [];
+    }
 }
 
 export async function fetchSocialMinistryNews(): Promise<any[]> {
     try {
-      const response = await fetch('https://www.sm.dk/handlers/DynamicRss.ashx?id=d66aadb0-8d96-4027-9a8f-7a3176ad49f9', { next: { revalidate: 3600 } });
-      if (!response.ok) return [];
-      const text = await response.text();
-      const items = [...text.matchAll(/<item>(.*?)<\/item>/gs)];
-      return items.map(item => {
-        const title = item[1].match(/<title>(.*?)<\/title>/s)?.[1] || '';
-        const link = item[1].match(/<link>(.*?)<\/link>/s)?.[1] || '';
-        const pubDate = item[1].match(/<pubDate>(.*?)<\/pubDate>/s)?.[1] || '';
-        return { title, link, pubDate };
-      });
+        const response = await fetch('https://www.sm.dk/handlers/DynamicRss.ashx?id=d66aadb0-8d96-4027-9a8f-7a3176ad49f9', { next: { revalidate: 3600 } });
+        if (!response.ok) return [];
+        const text = await response.text();
+        const items = [...text.matchAll(/<item>(.*?)<\/item>/gs)];
+        return items.map(item => {
+            const title = item[1].match(/<title>(.*?)<\/title>/s)?.[1] || '';
+            const link = item[1].match(/<link>(.*?)<\/link>/s)?.[1] || '';
+            const pubDate = item[1].match(/<pubDate>(.*?)<\/pubDate>/s)?.[1] || '';
+            return { title, link, pubDate };
+        });
     } catch (error) {
-      console.error("Failed to fetch SM news:", error);
-      return [];
+        console.error("Failed to fetch SM news:", error);
+        return [];
     }
 }
 
-export async function fetchFolketingetSager(params: {searchTerm?: string, typeId?: number | null, statusId?: number | null, followedIds?: number[] | null, skip?: number, top?: number}): Promise<any[]> {
+export async function fetchFolketingetSager(params: { searchTerm?: string, typeId?: number | null, statusId?: number | null, followedIds?: number[] | null, skip?: number, top?: number }): Promise<any[]> {
     const { searchTerm, typeId, statusId, followedIds, skip = 0, top = 10 } = params;
-    
+
     if (params.followedIds && (!followedIds || followedIds.length === 0)) {
         return [];
     }
-    
-    let filters = [];
+
+    let filters: string[] = [];
     if (searchTerm) {
         const escapedSearchTerm = searchTerm.replace(/'/g, "''");
         filters.push(`substringof('${escapedSearchTerm}', titel) eq true`);
@@ -1058,14 +1250,14 @@ export async function fetchFolketingetSager(params: {searchTerm?: string, typeId
 
     if (typeId) filters.push(`typeid eq ${typeId}`);
     if (statusId) filters.push(`statusid eq ${statusId}`);
-    
+
     if (followedIds) {
         filters.push(`(${followedIds.map(id => `id eq ${id}`).join(' or ')})`);
     }
 
     const filterString = filters.length > 0 ? `$filter=${filters.join(' and ')}` : '';
     const url = `https://oda.ft.dk/api/Sag?$inlinecount=allpages&${filterString}&$orderby=opdateringsdato desc&$skip=${skip}&$top=${top}`;
-    
+
     try {
         const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
         if (!response.ok) {
@@ -1095,7 +1287,7 @@ export async function fetchFolketingetSagById(id: number): Promise<any> {
 export async function fetchSagDokumenter(sagId: number): Promise<any[]> {
     const sagDokUrl = `https://oda.ft.dk/api/SagDokument?$filter=sagid eq ${sagId}`;
     try {
-        const sagDokResponse = await fetch(sagDokUrl, { 
+        const sagDokResponse = await fetch(sagDokUrl, {
             headers: { 'Accept': 'application/json' },
             next: { revalidate: 3600 }
         });
@@ -1104,7 +1296,7 @@ export async function fetchSagDokumenter(sagId: number): Promise<any[]> {
             console.error(`Failed to fetch SagDokument list for sagId ${sagId}: ${sagDokResponse.statusText}`);
             return [];
         }
-        
+
         const sagDokData = await sagDokResponse.json();
         const sagDokumenterRefs = sagDokData.value || [];
 
@@ -1114,10 +1306,10 @@ export async function fetchSagDokumenter(sagId: number): Promise<any[]> {
 
         const dokumentPromises = sagDokumenterRefs.map(async (sagDokRef: any) => {
             if (!sagDokRef.dokumentid) {
-                return null; 
+                return null;
             }
             const dokUrl = `https://oda.ft.dk/api/Dokument(${sagDokRef.dokumentid})?$expand=Fil`;
-            
+
             try {
                 const dokResponse = await fetch(dokUrl, { headers: { 'Accept': 'application/json' }, next: { revalidate: 3600 } });
                 if (!dokResponse.ok) {
@@ -1137,7 +1329,7 @@ export async function fetchSagDokumenter(sagId: number): Promise<any[]> {
         });
 
         const fullDokumenter = await Promise.all(dokumentPromises);
-        
+
         return fullDokumenter.filter((d): d is any => d !== null);
 
     } catch (error) {
@@ -1177,13 +1369,13 @@ export async function fetchPrincipmeddelelserAction(lawName: string): Promise<an
     const cleanName = lawName.replace(/bekendtgørelse af\s+/i, '').trim();
     const encodedLaw = encodeURIComponent(cleanName);
     const url = `https://www.retsinformation.dk/api/documentsearch?dt=230&dt=240&dt=250&dt=260&dt=980&ps=20&r=188&t=Ankestyrelsens%20principmeddelelse&t=${encodedLaw}`;
-    
+
     try {
         const response = await fetch(url, { headers: { 'Accept': 'application/json' }, next: { revalidate: 3600 } });
         if (!response.ok) return [];
         const data = await response.json();
         const items = data.documents || data.items || data || [];
-        
+
         return items.map((item: any) => ({
             id: item.id?.toString() || Math.random().toString(),
             title: item.title || item.name || 'Uden titel',
@@ -1197,15 +1389,49 @@ export async function fetchPrincipmeddelelserAction(lawName: string): Promise<an
     }
 }
 
-export const recommendTaskAssigneeAction = recommendTaskAssignee;
+export async function recommendTaskAssigneeAction(input: any) { return callFirebaseFlow('recommendTaskAssigneeFlow', input); }
 
 export async function queueNotificationAction(input: { title: string, body: string, recipientUids: string[], sentBy: string, targetGroup: string }) {
     try {
+        let targets: string[] = input.recipientUids;
+
+        // If 'all', fetch all user UIDs
+        if (input.targetGroup === 'all') {
+            const usersSnapshot = await adminFirestore.collection('users').select().get();
+            targets = usersSnapshot.docs.map(doc => doc.id);
+        }
+
+        // 1. Push notification queue (for the background function to pick up)
         await adminFirestore.collection('notifications_queue').add({
             ...input,
+            recipientUids: targets,
             createdAt: FieldValue.serverTimestamp(),
             status: 'pending'
         });
+
+        // 2. Add to each recipient's in-app notification list
+        const chunks: string[][] = [];
+        for (let i = 0; i < targets.length; i += 500) {
+            chunks.push(targets.slice(i, i + 500));
+        }
+
+        for (const chunk of chunks) {
+            const batch = adminFirestore.batch();
+            for (const uid of chunk) {
+                const notifRef = adminFirestore.collection('users').doc(uid).collection('notifications').doc();
+                batch.set(notifRef, {
+                    title: input.title,
+                    body: input.body,
+                    type: 'info',
+                    read: false,
+                    createdAt: FieldValue.serverTimestamp(),
+                    sentBy: input.sentBy,
+                    sourceGroup: input.targetGroup
+                });
+            }
+            await batch.commit();
+        }
+
         return { success: true };
     } catch (error: any) {
         console.error("Failed to queue notification:", error);
@@ -1213,13 +1439,43 @@ export async function queueNotificationAction(input: { title: string, body: stri
     }
 }
 
+export async function sendInAppNotificationAction(input: { uid: string, title: string, body: string, type: string, link?: string }) {
+    try {
+        // 1. In-App Notification (Firestore subcollection)
+        await adminFirestore.collection('users').doc(input.uid).collection('notifications').add({
+            title: input.title,
+            body: input.body,
+            type: input.type,
+            link: input.link || '',
+            read: false,
+            createdAt: FieldValue.serverTimestamp()
+        });
+
+        // 2. Queue Push Notification (for Devices)
+        await adminFirestore.collection('notifications_queue').add({
+            title: input.title,
+            body: input.body,
+            recipientUids: [input.uid],
+            sentBy: 'system',
+            targetGroup: 'private',
+            createdAt: FieldValue.serverTimestamp(),
+            status: 'pending'
+        });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to send notification:", error);
+        return { success: false, message: error.message };
+    }
+}
+
 export async function addGroupMemberByEmailAction(input: { groupId: string, email: string, inviterId: string, inviterName: string }) {
     const { groupId, email, inviterId, inviterName } = input;
-    
+
     try {
         // 1. Find user by email
         const userSnap = await adminFirestore.collection('users').where('email', '==', email.toLowerCase()).limit(1).get();
-        
+
         if (userSnap.empty) {
             return { success: false, message: 'Bruger ikke fundet.' };
         }
@@ -1232,7 +1488,7 @@ export async function addGroupMemberByEmailAction(input: { groupId: string, emai
         const groupRef = adminFirestore.collection('groups').doc(groupId);
         const groupDoc = await groupRef.get();
         if (!groupDoc.exists) return { success: false, message: 'Gruppe ikke fundet.' };
-        
+
         const groupData = groupDoc.data();
         const memberIds = groupData?.memberIds || [];
 
@@ -1242,7 +1498,7 @@ export async function addGroupMemberByEmailAction(input: { groupId: string, emai
 
         // 3. Perform batch update
         const batch = adminFirestore.batch();
-        
+
         const memberDocRef = groupRef.collection('members').doc(targetUserId);
         batch.set(memberDocRef, {
             id: targetUserId,
@@ -1259,14 +1515,80 @@ export async function addGroupMemberByEmailAction(input: { groupId: string, emai
 
         await batch.commit();
 
-        return { 
-            success: true, 
-            targetUserId, 
-            targetUserName, 
-            groupName: groupData?.name 
+        return {
+            success: true,
+            targetUserId,
+            targetUserName,
+            groupName: groupData?.name
         };
     } catch (error: any) {
         console.error("Add member action error:", error);
         return { success: false, message: error.message };
     }
 }
+export async function twistBlueprintAction(input: { blueprintTitle: string; currentProblemStatement: string; twist: string }) {
+    const result = await callFirebaseFlow('twistBlueprintFlowFlow', input);
+    return {
+        data: result.data,
+        usage: result.usage
+    };
+}
+
+export async function toggleViveAreaFollowAction(userId: string, areaId: string) {
+    try {
+        const userRef = adminFirestore.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) throw new Error('User not found');
+
+        const data = userDoc.data();
+        const followed = data?.followedViveAreas || [];
+
+        if (followed.includes(areaId)) {
+            await userRef.update({
+                followedViveAreas: FieldValue.arrayRemove(areaId)
+            });
+            return { success: true, followed: false };
+        } else {
+            await userRef.update({
+                followedViveAreas: FieldValue.arrayUnion(areaId)
+            });
+            return { success: true, followed: true };
+        }
+    } catch (error: any) {
+        console.error(`[toggleViveAreaFollowAction] Error for user ${userId}, area ${areaId}:`, error);
+        return { success: false, message: error.message };
+    }
+}
+export async function generateEvidenceTagsAction(input: any) {
+    try {
+        return await callFirebaseFlow('generateEvidenceTagsFlow', input);
+    } catch (e) {
+        console.error("AI Tags error:", e);
+        return { tags: [] };
+    }
+}
+
+
+
+export async function chatWithEvidenceContentAction(input: any) {
+    return callFirebaseFlow('chatWithEvidenceContentFlow', input);
+}
+
+
+export async function detectAiContentAction(input: { text: string }) {
+    return await callFirebaseFlow('detectAiContentContentFlow', input);
+}
+
+
+export async function draftEmailAction(topic: string) {
+    try {
+        const result = await callFirebaseFlow('draftEmailFlow', { topic });
+        return { success: true, data: result.data };
+    } catch (e: any) {
+        console.error("Draft Email Error:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+
+

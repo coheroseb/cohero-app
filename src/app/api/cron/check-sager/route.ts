@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';
 import { initializeServerFirebase } from '@/firebase/server-init';
 import { generateCaseUpdateEmailAction, fetchFolketingetSagById } from '@/app/actions';
 
@@ -27,8 +26,7 @@ export async function GET(request: NextRequest) {
 
     try {
         const { firestore } = initializeServerFirebase();
-        const followedSagerRef = collection(firestore, 'followedSager');
-        const followedSagerSnap = await getDocs(followedSagerRef);
+        const followedSagerSnap = await firestore.collection('followedSager').get();
 
         if (followedSagerSnap.empty) {
             return NextResponse.json({ success: true, message: 'No followed sager to check.' });
@@ -46,7 +44,7 @@ export async function GET(request: NextRequest) {
             sagerToUpdate[sagId].followers.push({ ...followData, docId: followDoc.id });
         }
         
-        const batch = writeBatch(firestore);
+        const batch = firestore.batch();
         let notificationsSent = 0;
 
         for (const sagIdStr in sagerToUpdate) {
@@ -59,7 +57,7 @@ export async function GET(request: NextRequest) {
             const followers = sagerToUpdate[sagId].followers;
 
             for (const follower of followers) {
-                const lastUpdatedAt = follower.lastUpdatedAt?.toDate();
+                const lastUpdatedAt = follower.lastUpdatedAt?.toDate ? follower.lastUpdatedAt.toDate() : follower.lastUpdatedAt;
 
                 if (!lastUpdatedAt || odaOpdateringsdato > lastUpdatedAt) {
                     // Send notification email
@@ -72,7 +70,7 @@ export async function GET(request: NextRequest) {
                     notificationsSent++;
 
                     // Update the timestamp in our database
-                    const followDocRef = doc(firestore, 'followedSager', follower.docId);
+                    const followDocRef = firestore.collection('followedSager').doc(follower.docId);
                     batch.update(followDocRef, { lastUpdatedAt: odaOpdateringsdato });
                 }
             }

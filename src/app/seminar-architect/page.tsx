@@ -13,499 +13,670 @@ import {
   Tags,
   Scale,
   Wrench,
-  Save,
   FileText,
   CheckCircle,
   Info,
-  BrainCircuit,
-  HelpCircle,
-  MoreVertical,
-  Plus,
-  ChevronRight,
-  ChevronLeft,
-  Flame,
   History,
-  TrendingUp,
-  Target,
-  Zap,
   Layers,
-  ArrowUpRight
+  Zap,
+  ChevronRight,
+  BookOpen,
+  Lock,
+  FileUp,
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { seminarArchitect as seminarArchitectAction } from '@/ai/flows/seminar-architect-flow';
-import type { SeminarAnalysis, SeminarArchitectInput, QuizData } from '@/ai/flows/types';
+import { seminarArchitectAction } from '@/app/actions';
+import type { SeminarAnalysis } from '@/ai/flows/types';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from '@/components/ui/textarea';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, addDoc, serverTimestamp, writeBatch, increment, getDoc, query, updateDoc } from 'firebase/firestore';
-import { DocumentData } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, doc, addDoc, serverTimestamp, writeBatch, increment, getDoc, updateDoc } from 'firebase/firestore';
 import { useDebounce } from 'use-debounce';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// ---------------------------------------------------------------------------
+// File Parsers
+// ---------------------------------------------------------------------------
+
 async function extractTextFromPdf(file: File): Promise<string> {
   const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist/build/pdf.mjs');
-  const pdfjsVersion = '4.10.38'; 
+  const pdfjsVersion = '4.10.38';
   GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
-
   const buffer = await file.arrayBuffer();
-  const loadingTask = getDocument({data: new Uint8Array(buffer)});
-  const pdf = await loadingTask.promise;
+  const pdf = await getDocument({ data: new Uint8Array(buffer) }).promise;
   const slideTexts: string[] = [];
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const strings = content.items.map(item => ('str' in item ? item.str : '')).join(' ');
+    const strings = content.items.map((item: any) => item.str || '').join(' ');
     slideTexts.push(`--- SLIDE ${i} ---\n${strings}`);
   }
   return slideTexts.join('\n\n');
 }
 
-function SeminarArchitectPageContent() {
-    const { user, userProfile, refetchUserProfile } = useApp();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const router = useRouter();
+/**
+ * Robust PPTX text extractor using proper XML DOM parsing.
+ * Walks the slide XML tree to collect ALL text nodes in reading order,
+ * preserving paragraph breaks and handling all text run variants.
+ */
+async function extractTextFromPptx(file: File): Promise<string> {
+  const PizZip = (await import('pizzip')).default;
+  const buffer = await file.arrayBuffer();
+  const zip = new PizZip(buffer);
 
-    const [pdfFile, setPdfFile] = useState<File | null>(null);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [analysisResult, setAnalysisResult] = useState<SeminarAnalysis | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [limitError, setLimitError] = useState<string | null>(null);
-    const [slideNotes, setSlideNotes] = useState<Record<number, string>>({});
-    const [savedAnalysisId, setSavedAnalysisId] = useState<string | null>(null);
-    const [debouncedNotes] = useDebounce(slideNotes, 1500);
-    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-    const isInitialMount = useRef(true);
+  const slideTexts: string[] = [];
 
-    const handleAnalyze = async () => {
-        if (!pdfFile || !user || !firestore || !userProfile || isAnalyzing) return;
+  // Find all slide files and sort them numerically
+  const slideFiles = Object.keys(zip.files)
+    .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+    .sort((a, b) => {
+      const na = parseInt(a.match(/slide(\d+)\.xml/)?.[1] || '0', 10);
+      const nb = parseInt(b.match(/slide(\d+)\.xml/)?.[1] || '0', 10);
+      return na - nb;
+    });
 
-        setIsAnalyzing(true);
-        setAnalysisResult(null);
-        setError(null);
-        setLimitError(null);
-        setSlideNotes({});
-        setSavedAnalysisId(null);
+  if (slideFiles.length === 0) {
+    throw new Error('Ingen slides fundet. Er filen en gyldig .pptx?');
+  }
 
-        // Limit Check
-        if (userProfile.membership === 'Kollega') {
-            const getWeek = (d: Date) => {
-                const date = new Date(d.getTime());
-                date.setHours(0, 0, 0, 0);
-                date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-                const week1 = new Date(date.getFullYear(), 0, 4);
-                return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-            };
+  // Also get the slide-layout order from presentation.xml if possible
+  let slideOrder: string[] = slideFiles; // fallback to file order
+  try {
+    const presXml = zip.file('ppt/presentation.xml')?.asText() || '';
+    const rIdMatches = presXml.matchAll(/r:id="(rId\d+)"/g);
+    // Map rIds to slide filenames via slide relationships
+    // This is optional — file sort order is usually correct
+  } catch { /* ignore */ }
 
-            const lastUsage = userProfile.lastSeminarArchitectUsage?.toDate();
-            const now = new Date();
-            let weeklyCount = userProfile.weeklySeminarArchitectCount || 0;
-
-            if (lastUsage && (getWeek(lastUsage) !== getWeek(now) || lastUsage.getFullYear() !== now.getFullYear())) {
-                weeklyCount = 0;
-            }
-
-            if (weeklyCount >= 1) {
-                setLimitError('Du har brugt dit ugentlige forsøg. Opgrader til Kollega+ for ubegrænset brug.');
-                setIsAnalyzing(false);
-                return;
-            }
-        }
-
-        try {
-            const slideText = await extractTextFromPdf(pdfFile);
-
-            const input: SeminarArchitectInput = {
-                slideText: slideText,
-                semester: userProfile.semester || '1. semester',
-            };
-            
-            const response = await seminarArchitectAction(input);
-            
-            if (!response || !response.data) {
-                throw new Error("Ingen data returneret fra analysen.");
-            }
-
-            const analysisData = response.data;
-            setAnalysisResult(analysisData);
-
-            const batch = writeBatch(firestore);
-            const userRef = doc(firestore, 'users', user.uid);
-            
-            const seminarsColRef = collection(firestore, 'users', user.uid, 'seminars');
-            const newSeminarRef = doc(seminarsColRef);
-            batch.set(newSeminarRef, { 
-                ...analysisData, 
-                createdAt: serverTimestamp() 
-            });
-            setSavedAnalysisId(newSeminarRef.id);
-            
-            const activityRef = doc(collection(firestore, 'userActivities'));
-            batch.set(activityRef, {
-                userId: user.uid,
-                userName: userProfile.username || user.displayName || 'Anonym bruger',
-                actionText: 'analyserede et seminar med Seminar-Arkitekten.',
-                createdAt: serverTimestamp(),
-            });
-            
-            const userUpdates: {[key: string]: any} = {
-                lastSeminarArchitectUsage: serverTimestamp(),
-            };
-            if(userProfile.membership === 'Kollega') {
-                userUpdates.weeklySeminarArchitectCount = increment(1);
-            }
-
-            if (response.usage) {
-                const totalTokens = response.usage.inputTokens + response.usage.outputTokens;
-                const pointsToAdd = Math.round(totalTokens * 0.05);
-                if (pointsToAdd > 0) userUpdates.cohéroPoints = increment(pointsToAdd);
-            }
-            
-            if (Object.keys(userUpdates).length > 0) {
-              batch.update(userRef, userUpdates);
-            }
-            
-            await batch.commit();
-            await refetchUserProfile();
-            
-            toast({
-              title: "Videnskort Gemt!",
-              description: "Din analyse er blevet gemt i 'Mine Seminarer'.",
-            });
-
-        } catch (err: any) {
-            console.error("Seminar analysis error:", err);
-            setError(err.message || "Der opstod en fejl under analysen. Prøv venligst igen.");
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
+  for (let si = 0; si < slideOrder.length; si++) {
+    const fileName = slideOrder[si];
+    const slideNum = si + 1;
     
-    const handleAutoSaveNotes = useCallback(async () => {
-        if (!user || !firestore || !savedAnalysisId || Object.keys(debouncedNotes).length === 0) return;
-        setSaveStatus('saving');
-        try {
-            const seminarRef = doc(firestore, 'users', user.uid, 'seminars', savedAnalysisId);
-            const seminarSnap = await getDoc(seminarRef);
-            if (!seminarSnap.exists()) {
-                setSaveStatus('idle'); 
-                return;
-            }
-            const existingSlides = seminarSnap.data().slides || [];
-            const updatedSlides = existingSlides.map((slide: any) => ({
-                ...slide,
-                notes: debouncedNotes[slide.slideNumber] ?? slide.notes ?? ''
-            }));
-            await updateDoc(seminarRef, { slides: updatedSlides });
-            setSaveStatus('saved');
-        } catch (error) {
-            console.error("Error auto-saving notes:", error);
-            setSaveStatus('idle');
-        }
-    }, [user, firestore, savedAnalysisId, debouncedNotes]);
-    
-    useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            return;
-        }
-        if (savedAnalysisId) handleAutoSaveNotes();
-    }, [debouncedNotes, savedAnalysisId, handleAutoSaveNotes]);
-    
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-        if(saveStatus === 'saved') timer = setTimeout(() => setSaveStatus('idle'), 2000);
-        return () => clearTimeout(timer);
-    }, [saveStatus]);
+    try {
+      const xml = zip.file(fileName)?.asText() || '';
+      if (!xml) continue;
 
-    return (
-        <div className="animate-fade-in-up bg-[#FDFCF8] min-h-screen selection:bg-amber-100 overflow-x-hidden">
-            
-            {/* 1. SMART COMMAND HEADER */}
-            <header className="bg-white border-b border-amber-100 px-4 sm:px-6 py-10 md:py-16 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 md:w-[500px] md:h-[500px] bg-amber-50 rounded-full blur-[80px] md:blur-[120px] -mr-16 md:-mr-32 -mt-16 md:-mt-32 opacity-50 pointer-events-none"></div>
-                
-                <div className="max-w-7xl mx-auto relative z-10">
-                    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 md:gap-10 mb-10 md:mb-16">
-                        <div className="text-center lg:text-left">
-                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-6">
-                                <span className="px-3 md:px-4 py-1.5 bg-amber-950 text-amber-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg border border-white/10">
-                                    Seminar-Arkitekten
-                                </span>
-                                <div className="flex items-center gap-2 px-3 md:px-4 py-1.5 bg-rose-50 text-rose-600 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border border-rose-100">
-                                    <Presentation className="w-3 md:w-3.5 h-3 md:h-3.5 fill-current" /> Vidensbehandling
-                                </div>
-                            </div>
-                            <h1 className="text-4xl md:text-7xl font-bold text-amber-950 serif leading-none tracking-tighter">
-                                Fra slides til <span className="text-amber-700 italic">videnskort.</span>
-                            </h1>
-                            <p className="text-base md:text-xl text-slate-500 mt-4 md:mt-6 italic font-medium max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                                Upload dine seminar-slides og lad AI omdanne dem til et struktureret overblik over begreber, jura og metoder.
-                            </p>
-                        </div>
+      // ----------------------------------------------------------------
+      // Parse XML using native browser DOMParser (client-side only)
+      // ----------------------------------------------------------------
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xml, 'text/xml');
 
-                        <div className="flex items-center justify-center gap-3 sm:gap-4 bg-white/50 backdrop-blur-sm p-3 sm:p-4 rounded-[2rem] sm:rounded-[2.5rem] border border-amber-100/50 shadow-inner">
-                            <Link href="/mine-seminarer">
-                                <Button variant="outline" className="h-16 w-24 sm:h-20 sm:w-32 flex-col gap-1 rounded-2xl bg-amber-50/50 border-amber-100 hover:bg-amber-100">
-                                    <History className="w-5 h-5 sm:w-6 sm:h-6 text-amber-800"/>
-                                    <span className="text-[10px] sm:text-xs font-bold text-amber-950">Arkiv</span>
-                                </Button>
-                            </Link>
-                             <div className="text-center px-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status</p>
-                                <p className="text-2xl font-black text-amber-950 serif">Klar</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
+      // Collect text from all paragraphs in the slide body
+      // Namespace-aware: look for a:txBody > a:p > a:r > a:t
+      const paragraphs: string[] = [];
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-20">
-                <div className="grid lg:grid-cols-12 gap-12 lg:gap-16">
-                    
-                    {/* LEFT COLUMN: UPLOAD & ANALYSIS */}
-                    <div className="lg:col-span-8 space-y-16">
-                        
-                        {/* Analysis Interface */}
-                        {!analysisResult ? (
-                            <section>
-                                <div className="flex items-center gap-3 mb-8 px-2">
-                                    <div className="p-2.5 bg-amber-50 rounded-xl shadow-inner">
-                                        <UploadCloud className="w-5 h-5 text-amber-700" />
-                                    </div>
-                                    <h2 className="text-xl font-bold text-amber-950 serif">Forberedelse</h2>
-                                </div>
+      // Get all shape text bodies
+      const spNodes = doc.querySelectorAll('sp, graphicFrame, pic');
+      const txBodies = doc.querySelectorAll('txBody');
 
-                                <div className="bg-white p-8 md:p-14 rounded-[3rem] md:rounded-[4rem] border border-amber-100 shadow-sm relative overflow-hidden group">
-                                    <div className="relative z-10 space-y-8">
-                                        <div className="bg-indigo-50 text-indigo-800 text-xs p-4 rounded-2xl flex items-start gap-3 border border-indigo-100">
-                                            <Info className="w-5 h-5 flex-shrink-0"/>
-                                            <p className="leading-relaxed font-medium">Download din undervisnings slides som <strong>PDF</strong> og upload dem herunder. Vi udtrækker automatisk essensen af undervisningen for dig.</p>
-                                        </div>
+      const allParas: Element[] = [];
+      txBodies.forEach(tb => {
+        tb.querySelectorAll('p').forEach(p => allParas.push(p));
+      });
 
-                                        <div className="space-y-4">
-                                            {pdfFile ? (
-                                                <div className="flex items-center justify-between p-6 bg-amber-50 rounded-3xl border border-amber-200 animate-ink">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                                                            <File className="w-6 h-6 text-amber-600" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-bold text-amber-950 truncate max-w-xs">{pdfFile.name}</p>
-                                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Klar til analyse</p>
-                                                        </div>
-                                                    </div>
-                                                    <button onClick={() => setPdfFile(null)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors"><X className="w-5 h-5" /></button>
-                                                </div>
-                                            ) : (
-                                                <label htmlFor="pdf-upload" className="relative block w-full border-2 border-dashed border-slate-100 rounded-[2.5rem] p-16 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50/30 transition-all group/upload">
-                                                    <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover/upload:scale-110 transition-transform">
-                                                        <UploadCloud className="h-10 w-10 text-slate-300 group-hover/upload:text-amber-500" />
-                                                    </div>
-                                                    <span className="block text-sm font-bold text-amber-950 mb-1">Vælg din PDF-fil</span>
-                                                    <span className="block text-xs font-medium text-slate-400">Træk slides herover eller klik for at gennemse</span>
-                                                    <input id="pdf-upload" name="pdf-upload" type="file" className="sr-only" accept=".pdf,application/pdf" onChange={(e) => e.target.files && setPdfFile(e.target.files[0])} />
-                                                </label>
-                                            )}
-                                        </div>
+      // Also grab any stray paragraphs
+      if (allParas.length === 0) {
+        doc.querySelectorAll('p').forEach(p => allParas.push(p));
+      }
 
-                                        {limitError && (
-                                            <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
-                                                <X className="w-5 h-5 text-rose-500" />
-                                                <p className="text-xs font-bold text-rose-700">{limitError} <Link href="/upgrade" className="underline ml-2">Opgrader nu</Link></p>
-                                            </div>
-                                        )}
+      for (const para of allParas) {
+        // Collect all text runs in this paragraph
+        const runs: string[] = [];
+        const tNodes = para.querySelectorAll('t');
+        tNodes.forEach(t => {
+          const txt = t.textContent?.trim();
+          if (txt) runs.push(txt);
+        });
+        const lineText = runs.join(' ').trim();
+        if (lineText) paragraphs.push(lineText);
+      }
 
-                                        <Button 
-                                            onClick={handleAnalyze} 
-                                            disabled={!pdfFile || isAnalyzing || !!limitError} 
-                                            className="w-full h-16 rounded-2xl text-lg font-black uppercase tracking-widest gap-3 shadow-xl active:scale-[0.98] transition-all"
-                                        >
-                                            {isAnalyzing ? <Loader2 className="w-6 h-6 animate-spin"/> : <Sparkles className="w-6 h-6" />}
-                                            {isAnalyzing ? 'Udfører Analyse...' : 'Generér Videnskort'}
-                                        </Button>
-                                        
-                                        {error && <p className="text-sm text-rose-500 text-center font-bold">{error}</p>}
-                                    </div>
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/5 rounded-full blur-[100px] -mr-32 -mt-32"></div>
-                                </div>
-                            </section>
-                        ) : (
-                            <section className="space-y-12 animate-ink">
-                                <div className="flex items-center justify-between px-2">
-                                    <h2 className="text-3xl font-bold text-amber-950 serif">{analysisResult.overallTitle}</h2>
-                                    <Button variant="ghost" onClick={() => setAnalysisResult(null)} className="text-slate-400 hover:text-amber-950">
-                                        <ArrowLeft className="w-4 h-4 mr-2" /> Ny analyse
-                                    </Button>
-                                </div>
+      // Fallback: raw regex if DOMParser yielded nothing (e.g., namespace issues)
+      if (paragraphs.length === 0) {
+        const rawMatches = xml.match(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g) || [];
+        rawMatches.forEach(m => {
+          const txt = m.replace(/<[^>]+>/g, '').trim();
+          if (txt) paragraphs.push(txt);
+        });
+      }
 
-                                <div className="space-y-8">
-                                    {analysisResult.slides.map((slide, index) => (
-                                        <div key={index} className="bg-white p-8 md:p-10 rounded-[3rem] border border-amber-100 shadow-sm hover:shadow-xl transition-all duration-500 group">
-                                            <div className="flex items-center gap-4 mb-6">
-                                                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 font-bold text-sm shadow-inner group-hover:bg-amber-950 group-hover:text-white transition-colors">
-                                                    {slide.slideNumber}
-                                                </div>
-                                                <h3 className="text-xl font-bold text-amber-950 serif">{slide.slideTitle}</h3>
-                                            </div>
+      const slideText = paragraphs.join('\n').trim();
+      slideTexts.push(`--- SLIDE ${slideNum} ---\n${slideText || '(Ingen tekst)'}`);
+    } catch (err) {
+      console.warn(`[PPTX] Failed to parse slide ${slideNum}:`, err);
+      slideTexts.push(`--- SLIDE ${slideNum} ---\n(Fejl under udlæsning af slide)`);
+    }
+  }
 
-                                            <p className="text-slate-600 leading-relaxed italic mb-8 border-l-4 border-amber-100 pl-6 py-2">{slide.summary}</p>
-                                            
-                                            <div className="grid md:grid-cols-2 gap-8">
-                                                <div className="space-y-6">
-                                                    {slide.keyConcepts && slide.keyConcepts.length > 0 && (
-                                                        <div>
-                                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 flex items-center gap-2">
-                                                                <Tags className="w-3.5 h-3.5" /> Begreber
-                                                            </h4>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {slide.keyConcepts.map((c: any, i: number) => (
-                                                                    <Link key={i} href={`/concept-explainer?term=${encodeURIComponent(c.term)}`} className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg text-[10px] font-bold border border-purple-100 hover:bg-purple-100 transition-all">
-                                                                        {c.term}
-                                                                    </Link>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {slide.legalFrameworks && slide.legalFrameworks.length > 0 && (
-                                                        <div>
-                                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 flex items-center gap-2">
-                                                                <Scale className="w-3.5 h-3.5" /> Jura
-                                                            </h4>
-                                                            <ul className="space-y-3">
-                                                                {slide.legalFrameworks.map((l: any, i: number) => (
-                                                                    <li key={i} className="text-xs leading-relaxed">
-                                                                        <span className="font-bold text-amber-950">{l.law} {l.paragraphs.join(', ')}</span>
-                                                                        <p className="text-slate-500 mt-0.5">{l.relevance}</p>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-                                                </div>
+  if (slideTexts.length === 0) {
+    throw new Error('Ingen slides kunne udlæses fra PowerPoint-filen.');
+  }
 
-                                                <div className="space-y-6">
-                                                    {slide.practicalTools && slide.practicalTools.length > 0 && (
-                                                        <div>
-                                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 flex items-center gap-2">
-                                                                <Wrench className="w-3.5 h-3.5" /> Metoder
-                                                            </h4>
-                                                            <ul className="space-y-3">
-                                                                {slide.practicalTools.map((t: any, i: number) => (
-                                                                    <li key={i} className="text-xs leading-relaxed">
-                                                                        <span className="font-bold text-amber-950">{t.tool}</span>
-                                                                        <p className="text-slate-500 mt-0.5">{t.description}</p>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-                                                    <div>
-                                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 flex items-center gap-2">
-                                                            <FileText className="w-3.5 h-3.5" /> Egne Noter
-                                                        </h4>
-                                                        <Textarea
-                                                            placeholder="Notér vigtige pointer..."
-                                                            value={slideNotes[slide.slideNumber] || ''}
-                                                            onChange={(e) => setSlideNotes(prev => ({...prev, [slide.slideNumber]: e.target.value}))}
-                                                            className="bg-amber-50/20 border-amber-100 rounded-2xl text-xs min-h-[100px] focus:ring-amber-950"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                
-                                <div className="flex justify-center pb-20">
-                                    <div className="bg-white px-6 py-3 rounded-full border border-amber-100 shadow-lg flex items-center gap-4">
-                                        {saveStatus === 'saving' ? (
-                                            <><Loader2 className="w-4 h-4 animate-spin text-amber-600"/> <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Autogemmer...</span></>
-                                        ) : (
-                                            <><CheckCircle className="w-4 h-4 text-emerald-500"/> <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Alle ændringer gemt</span></>
-                                        )}
-                                    </div>
-                                </div>
-                            </section>
-                        )}
-                    </div>
+  console.log(`[PPTX] Extracted ${slideTexts.length} slides from ${file.name}`);
+  return slideTexts.join('\n\n');
+}
 
-                    {/* RIGHT COLUMN: ASIDE */}
-                    <aside className="lg:col-span-4 space-y-10">
-                        <section className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm relative overflow-hidden group">
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Hurtig Viden</h3>
-                                <Target className="w-5 h-5 text-amber-700/30" />
-                            </div>
-                            <div className="space-y-6">
-                                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                                    <h4 className="text-xs font-bold text-amber-950 mb-1">Maksimal Udbytte</h4>
-                                    <p className="text-[10px] text-slate-600 leading-relaxed italic">"Brug videnskortet til at repetere undervisningens kernebegreber før du går i gang med pensumlæsning."</p>
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                        <p className="text-[10px] font-bold text-slate-500">Automatisk kildehenvisning</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                        <p className="text-[10px] font-bold text-slate-500">Direkte link til Begrebsguiden</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
+async function extractText(file: File): Promise<string> {
+  const isPptx = file?.name.toLowerCase().endsWith('.pptx') || file.type.includes('presentationml');
+  if (isPptx) return extractTextFromPptx(file);
+  throw new Error('Kun PowerPoint (.pptx) filer understøttes.');
+}
 
-                        <div className="bg-amber-950 p-8 rounded-[2.5rem] text-white shadow-xl">
-                            <h3 className="text-lg font-bold serif mb-4">Gode Råd</h3>
-                            <p className="text-amber-100/60 text-sm leading-relaxed mb-6 italic">
-                                "Et godt videnskort er fundamentet for din eksamensforberedelse. Husk at tilføje dine egne noter løbende."
-                            </p>
-                            <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 rounded-xl h-12" onClick={() => router.push('/mine-seminarer')}>
-                                <Layers className="w-4 h-4 mr-2" /> Mine Videnskort
-                            </Button>
-                        </div>
-                    </aside>
-                </div>
-            </main>
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
-            {/* FOOTER */}
-            <footer className="bg-white border-t border-amber-100 px-6 sm:px-8 py-6">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-8">
-                        <div className="flex items-center gap-3">
-                            <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-950">Vidensbehandling</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-full border border-amber-100">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                        <p className="text-[9px] font-black text-amber-900 uppercase tracking-widest">Klar til transformation</p>
-                    </div>
-                </div>
-            </footer>
+const SlideCard = ({ slide, notes, onNotesChange }: { slide: any; notes: string; onNotesChange: (val: string) => void }) => (
+  <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 overflow-hidden group">
+    {/* Card Header */}
+    <div className="flex items-center gap-4 p-6 sm:p-8 border-b border-slate-50">
+      <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-sm shrink-0 group-hover:bg-indigo-600 transition-colors">
+        {slide.slideNumber}
+      </div>
+      <h3 className="text-lg font-bold text-slate-900 leading-tight">{slide.slideTitle}</h3>
+    </div>
+
+    {/* Card Body */}
+    <div className="p-6 sm:p-8 space-y-6">
+      <p className="text-slate-500 leading-relaxed text-sm italic border-l-2 border-indigo-100 pl-4">{slide.summary}</p>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-5">
+          {slide.keyConcepts?.length > 0 && (
+            <div>
+              <h4 className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
+                <Tags className="w-3 h-3" /> Begreber
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {slide.keyConcepts.map((c: any, i: number) => (
+                  <Link key={i} href={`/concept-explainer?term=${encodeURIComponent(c.term)}`}>
+                    <span className="px-3 py-1.5 bg-violet-50 text-violet-700 border border-violet-100 rounded-lg text-[10px] font-bold hover:bg-violet-100 transition-colors cursor-pointer">
+                      {c.term}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          {slide.legalFrameworks?.length > 0 && (
+            <div>
+              <h4 className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
+                <Scale className="w-3 h-3" /> Jura
+              </h4>
+              <ul className="space-y-2.5">
+                {slide.legalFrameworks.map((l: any, i: number) => (
+                  <li key={i} className="text-xs">
+                    <span className="font-bold text-slate-900">{l.law} {l.paragraphs?.join(', ')}</span>
+                    <p className="text-slate-500 mt-0.5">{l.relevance}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
+
+        <div className="space-y-5">
+          {slide.practicalTools?.length > 0 && (
+            <div>
+              <h4 className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
+                <Wrench className="w-3 h-3" /> Metoder
+              </h4>
+              <ul className="space-y-2.5">
+                {slide.practicalTools.map((t: any, i: number) => (
+                  <li key={i} className="text-xs">
+                    <span className="font-bold text-slate-900">{t.tool}</span>
+                    <p className="text-slate-500 mt-0.5">{t.description}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div>
+            <h4 className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
+              <FileText className="w-3 h-3" /> Egne Noter
+            </h4>
+            <Textarea
+              placeholder="Notér vigtige pointer..."
+              value={notes}
+              onChange={(e) => onNotesChange(e.target.value)}
+              className="bg-slate-50 border-slate-100 rounded-2xl text-xs min-h-[90px] focus:ring-indigo-500 focus:border-indigo-300 resize-none"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ---------------------------------------------------------------------------
+// Drop Zone Sub-component
+// ---------------------------------------------------------------------------
+const FileDropZone = ({ file, onFile, onClear }: { file: File | null; onFile: (f: File) => void; onClear: () => void }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) onFile(dropped);
+  };
+
+  const isPptx = file?.name.endsWith('.pptx');
+
+  return (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+      className={`relative transition-all duration-300 ${isDragging ? 'scale-[1.01]' : ''}`}
+    >
+      {file ? (
+        <div className="flex items-center justify-between p-5 bg-indigo-50 rounded-2xl border border-indigo-100">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${isPptx ? 'bg-orange-100' : 'bg-red-100'}`}>
+              <File className={`w-6 h-6 ${isPptx ? 'text-orange-500' : 'text-red-500'}`} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 max-w-[220px] truncate">{file.name}</p>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-0.5">
+                {isPptx ? 'PowerPoint' : 'PDF'} · Klar til analyse
+              </p>
+            </div>
+          </div>
+          <button onClick={onClear} className="p-2 text-slate-300 hover:text-rose-500 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      ) : (
+        <label
+          htmlFor="file-upload"
+          className={`flex flex-col items-center justify-center gap-5 w-full border-2 border-dashed rounded-[2rem] p-12 sm:p-16 cursor-pointer transition-all
+            ${isDragging ? 'border-orange-400 bg-orange-50/50' : 'border-slate-100 hover:border-orange-300 hover:bg-orange-50/30'}`}
+        >
+          <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all ${isDragging ? 'bg-orange-100' : 'bg-slate-50'}`}>
+            <FileUp className={`w-10 h-10 transition-colors ${isDragging ? 'text-orange-500' : 'text-slate-300'}`} />
+          </div>
+          <div className="text-center">
+            <p className="font-bold text-slate-800 mb-1">Vælg eller træk din PowerPoint-fil herover</p>
+            <p className="text-xs text-slate-400">Understøtter <strong className="text-orange-500">PowerPoint (.pptx)</strong></p>
+          </div>
+          <input
+            id="file-upload"
+            ref={inputRef}
+            type="file"
+            className="sr-only"
+            accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            onChange={(e) => e.target.files && onFile(e.target.files[0])}
+          />
+        </label>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Main Page Component
+// ---------------------------------------------------------------------------
+
+function SeminarArchitectPageContent() {
+  const { user, userProfile, refetchUserProfile } = useApp();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const [file, setFile] = useState<File | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<SeminarAnalysis | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [slideNotes, setSlideNotes] = useState<Record<number, string>>({});
+  const [savedAnalysisId, setSavedAnalysisId] = useState<string | null>(null);
+  const [debouncedNotes] = useDebounce(slideNotes, 1500);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [activeTab, setActiveTab] = useState<'cards' | 'overview'>('cards');
+  const isInitialMount = useRef(true);
+
+  const isPremiumUser = useMemo(() =>
+    !!userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership ?? ''),
+    [userProfile]
+  );
+
+  const handleAnalyze = async () => {
+    if (!file || !user || !firestore || !userProfile || isAnalyzing) return;
+
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+    setError(null);
+    setSlideNotes({});
+    setSavedAnalysisId(null);
+
+    // Weekly limit for free tier
+    if (!isPremiumUser) {
+      const getWeek = (d: Date) => {
+        const date = new Date(d);
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+      };
+      const lastUsage = userProfile.lastSeminarArchitectUsage?.toDate?.();
+      const now = new Date();
+      let weeklyCount = userProfile.weeklySeminarArchitectCount || 0;
+      if (lastUsage && (getWeek(lastUsage) !== getWeek(now) || lastUsage.getFullYear() !== now.getFullYear())) weeklyCount = 0;
+      if (weeklyCount >= 1) {
+        setError('Du har brugt dit ugentlige forsøg. Opgrader til Kollega+ for ubegrænset brug.');
+        setIsAnalyzing(false);
+        return;
+      }
+    }
+
+    try {
+      const slideText = await extractText(file);
+      const response = await seminarArchitectAction({ slideText, semester: userProfile.semester || '1. semester' });
+
+      if (!response?.data) throw new Error('Ingen data returneret fra analysen.');
+
+      setAnalysisResult(response.data);
+
+      const batch = writeBatch(firestore!);
+      const userRef = doc(firestore!, 'users', user.uid);
+      const newSeminarRef = doc(collection(firestore!, 'users', user.uid, 'seminars'));
+      batch.set(newSeminarRef, { ...response.data, fileName: file.name, createdAt: serverTimestamp() });
+      setSavedAnalysisId(newSeminarRef.id);
+
+      const activityRef = doc(collection(firestore!, 'userActivities'));
+      batch.set(activityRef, {
+        userId: user.uid,
+        userName: userProfile.username || user.displayName || 'Anonym',
+        actionText: 'analyserede et seminar med Seminar-Arkitekten.',
+        createdAt: serverTimestamp(),
+      });
+
+      const userUpdates: Record<string, any> = { lastSeminarArchitectUsage: serverTimestamp() };
+      if (!isPremiumUser) userUpdates.weeklySeminarArchitectCount = increment(1);
+      if (response.usage) {
+        const totalTokens = response.usage.inputTokens + response.usage.outputTokens;
+        const pts = Math.round(totalTokens * 0.05);
+        if (pts > 0) userUpdates['cohéroPoints'] = increment(pts);
+      }
+      batch.update(userRef, userUpdates);
+      await batch.commit();
+      await refetchUserProfile();
+
+      toast({ title: 'Videnskort Gemt!', description: `Analyserede ${response.data.slides.length} slides.` });
+    } catch (err: any) {
+      console.error('[SeminarArchitect]', err);
+      setError(err.message || 'Der opstod en fejl under analysen. Prøv venligst igen.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleAutoSaveNotes = useCallback(async () => {
+    if (!user || !firestore || !savedAnalysisId || Object.keys(debouncedNotes).length === 0) return;
+    setSaveStatus('saving');
+    try {
+      const ref = doc(firestore, 'users', user.uid, 'seminars', savedAnalysisId);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) { setSaveStatus('idle'); return; }
+      const updated = (snap.data().slides || []).map((s: any) => ({ ...s, notes: debouncedNotes[s.slideNumber] ?? s.notes ?? '' }));
+      await updateDoc(ref, { slides: updated });
+      setSaveStatus('saved');
+    } catch { setSaveStatus('idle'); }
+  }, [user, firestore, savedAnalysisId, debouncedNotes]);
+
+  useEffect(() => {
+    if (isInitialMount.current) { isInitialMount.current = false; return; }
+    if (savedAnalysisId) handleAutoSaveNotes();
+  }, [debouncedNotes, savedAnalysisId, handleAutoSaveNotes]);
+
+  useEffect(() => {
+    let t: NodeJS.Timeout;
+    if (saveStatus === 'saved') t = setTimeout(() => setSaveStatus('idle'), 2500);
+    return () => clearTimeout(t);
+  }, [saveStatus]);
+
+  if (!isPremiumUser) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full bg-white rounded-[36px] border border-slate-100 shadow-2xl shadow-slate-900/5 p-10 sm:p-14 flex flex-col items-center text-center"
+        >
+          <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl flex items-center justify-center text-white mb-8 shadow-xl shadow-indigo-500/20">
+            <Presentation className="w-10 h-10" />
+          </div>
+          <div className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full mb-6">
+            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Kollega+ Funktion</span>
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-4">Seminar-Arkitekten</h2>
+          <p className="text-slate-500 text-sm leading-relaxed mb-10">
+            Upload dine slides (PDF eller PowerPoint) og lad AI omdanne dem til et struktureret videnskort med begreber, jura og metoder.
+          </p>
+          <Link href="/upgrade" className="w-full">
+            <Button className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-700 text-white font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+              <Sparkles className="w-4 h-4 mr-2" /> Opgrader til Kollega+
+            </Button>
+          </Link>
+        </motion.div>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+
+      {/* HEADER */}
+      <header className="bg-white border-b border-slate-100 sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <button onClick={() => router.back()} className="p-2.5 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 transition-all active:scale-95">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
+                <Presentation className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h1 className="text-sm font-black text-slate-900">Seminar-Arkitekten</h1>
+                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-500">Fra slides til videnskort</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {saveStatus === 'saving' && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-100">
+                <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Gemmer...</span>
+              </div>
+            )}
+            {saveStatus === 'saved' && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100">
+                <CheckCircle className="w-3 h-3 text-emerald-500" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600">Gemt</span>
+              </div>
+            )}
+            <Link href="/mine-seminarer">
+              <Button variant="outline" size="sm" className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50">
+                <History className="w-4 h-4 mr-2" /> Arkiv
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
+        <AnimatePresence mode="wait">
+          {!analysisResult ? (
+            <motion.div
+              key="upload"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="max-w-2xl mx-auto"
+            >
+              {/* Hero */}
+              <div className="text-center mb-10">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full mb-6">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                  <span className="text-xs font-black uppercase tracking-widest text-indigo-600">AI-Vidensbehandling</span>
+                </div>
+                <h2 className="text-4xl sm:text-5xl font-black text-slate-900 leading-none mb-4">
+                  Fra slides til<br /><span className="text-indigo-600 italic">videnskort.</span>
+                </h2>
+                <p className="text-slate-500 max-w-md mx-auto text-sm leading-relaxed">
+                  Upload dine seminarslides og lad AI udtrække begreber, lovgivning og metoder til et struktureret studieoverblik.
+                </p>
+              </div>
+
+              {/* Upload card */}
+              <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 sm:p-10 space-y-6">
+                <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                  <Info className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-orange-700 leading-relaxed">
+                    Upload din <strong>PowerPoint-præsentation (.pptx)</strong> direkte. Vi udtrækker automatisk al tekst og analyserer hvert enkelt slide.
+                  </p>
+                </div>
+
+                <FileDropZone file={file} onFile={(f) => {
+                  if (!f.name.toLowerCase().endsWith('.pptx')) {
+                    toast({ title: 'Forkert filtype', description: 'Kun PowerPoint-filer (.pptx) er understøttet.', variant: 'destructive' });
+                    return;
+                  }
+                  setFile(f);
+                }} onClear={() => setFile(null)} />
+
+                {error && (
+                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
+                    <X className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <p className="text-xs font-bold text-rose-700">{error}</p>
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleAnalyze}
+                  disabled={!file || isAnalyzing}
+                  className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:scale-[1.01] active:scale-95 transition-all"
+                >
+                  {isAnalyzing
+                    ? <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Analyserer slides...</>
+                    : <><Sparkles className="w-5 h-5 mr-2" /> Generér Videnskort</>
+                  }
+                </Button>
+
+                {isAnalyzing && (
+                  <div className="flex flex-col items-center gap-3 py-4 animate-pulse">
+                    <div className="w-12 h-1.5 bg-indigo-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-400 rounded-full animate-[slide_1.5s_ease-in-out_infinite]" style={{ width: '60%' }} />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Behandler dine slides...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Guide */}
+              <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+                {[  
+                  { icon: FileUp, label: 'Upload', desc: 'PowerPoint (.pptx)' },
+                  { icon: Sparkles, label: 'Analyse', desc: 'AI behandler slides' },
+                  { icon: BookOpen, label: 'Videnskort', desc: 'Struktureret overblik' },
+                ].map(({ icon: Icon, label, desc }) => (
+                  <div key={label} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-3">
+                      <Icon className="w-5 h-5 text-indigo-500" />
+                    </div>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-900 mb-1">{label}</p>
+                    <p className="text-[10px] text-slate-400">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-8"
+            >
+              {/* Results Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Analyse fuldført</p>
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900">{analysisResult.overallTitle}</h2>
+                  <p className="text-sm text-slate-400 mt-1">{analysisResult.slides.length} slides analyseret</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setAnalysisResult(null); setFile(null); }}
+                    className="rounded-xl border-slate-200 text-slate-600"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Ny analyse
+                  </Button>
+                </div>
+              </div>
+
+              {/* Overview stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Slides', val: analysisResult.slides.length, color: 'bg-indigo-50 text-indigo-700 border-indigo-100' },
+                  { label: 'Begreber', val: analysisResult.slides.reduce((a, s) => a + (s.keyConcepts?.length || 0), 0), color: 'bg-violet-50 text-violet-700 border-violet-100' },
+                  { label: 'Love', val: analysisResult.slides.reduce((a, s) => a + (s.legalFrameworks?.length || 0), 0), color: 'bg-blue-50 text-blue-700 border-blue-100' },
+                  { label: 'Metoder', val: analysisResult.slides.reduce((a, s) => a + (s.practicalTools?.length || 0), 0), color: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+                ].map(({ label, val, color }) => (
+                  <div key={label} className={`bg-white rounded-2xl border p-5 shadow-sm text-center flex flex-col items-center justify-center ${color}`}>
+                    <p className="text-2xl font-black">{val}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest mt-1">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Slide cards */}
+              <div className="space-y-5">
+                {analysisResult.slides.map((slide) => (
+                  <SlideCard
+                    key={slide.slideNumber}
+                    slide={slide}
+                    notes={slideNotes[slide.slideNumber] || ''}
+                    onNotesChange={(val) => setSlideNotes(prev => ({ ...prev, [slide.slideNumber]: val }))}
+                  />
+                ))}
+              </div>
+
+              <div className="flex justify-center pb-10">
+                <div className="bg-white px-6 py-3 rounded-full border border-slate-100 shadow-sm flex items-center gap-3">
+                  {saveStatus === 'saving'
+                    ? <><Loader2 className="w-4 h-4 animate-spin text-indigo-400" /><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Autogemmer...</span></>
+                    : <><CheckCircle className="w-4 h-4 text-emerald-500" /><span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Alle ændringer gemt</span></>
+                  }
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+    </div>
+  );
 }
 
 const SeminarArchitectPage = () => {
-    const { user, isUserLoading } = useApp();
-    const router = useRouter();
-    const pathname = usePathname();
+  const { user, isUserLoading } = useApp();
+  const router = useRouter();
+  const pathname = usePathname();
 
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.replace(`/?callbackUrl=${encodeURIComponent(pathname)}`);
-        }
-    }, [user, isUserLoading, router, pathname]);
-
-    if (isUserLoading || !user) {
-        return <AuthLoadingScreen />;
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.replace(`/?callbackUrl=${encodeURIComponent(pathname ?? '/')}`);
     }
-    
-    return <SeminarArchitectPageContent />;
-}
+  }, [user, isUserLoading, router, pathname]);
+
+  if (isUserLoading || !user) return <AuthLoadingScreen />;
+  return <SeminarArchitectPageContent />;
+};
 
 export default SeminarArchitectPage;

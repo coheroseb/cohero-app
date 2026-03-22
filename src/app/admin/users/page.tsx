@@ -168,38 +168,38 @@ const AdminUsersPage = () => {
 
   return (
     <>
-    <div className="space-y-8 animate-ink">
-      <div className="bg-white rounded-[3rem] border border-amber-100 shadow-sm overflow-hidden">
-         <div className="p-10 border-b border-amber-50 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+    <div className="space-y-12 animate-ink">
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden group">
+         <div className="p-10 border-b border-slate-50 flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-slate-50/20">
             <div>
-              <h3 className="text-2xl font-bold text-amber-950 serif">Brugerarkiv</h3>
-              <p className="text-sm text-slate-400 mt-1">Administrér dine kolleger og deres adgangsniveauer.</p>
+              <h3 className="text-3xl font-bold text-slate-900 serif">Brugerarkiv</h3>
+              <p className="text-sm text-slate-500 mt-1 font-medium italic">Administrér dine kolleger og monitorér deres engagement.</p>
             </div>
             <div className="relative group w-full max-w-sm">
-               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-950 transition-colors" />
                <input 
                 type="text" 
-                placeholder="Søg i kolleger..." 
+                placeholder="Søg i navne eller e-mails..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-11 pr-5 py-4 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:border-amber-950 transition-all text-sm w-full"
+                className="pl-11 pr-5 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 transition-all text-sm w-full font-medium"
                />
             </div>
          </div>
          {isLoading ? (
-            <div className="h-96 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-amber-300" /></div>
+            <div className="h-96 flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-slate-200" /></div>
          ) : error ? (
-            <div className="h-96 flex items-center justify-center text-red-500">Fejl: {error.message}</div>
+            <div className="h-96 flex items-center justify-center text-rose-500 font-bold">Fejl i indlæsning: {error.message}</div>
          ) : (
            <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-amber-50/20 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-amber-50">
+                <thead className="bg-slate-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100">
                   <tr>
                     <th className="px-10 py-6">Kollega</th>
-                    <th className="px-10 py-6">Studie</th>
+                    <th className="px-10 py-6">Studie & Information</th>
                     <th className="px-10 py-6">Engagement</th>
                     <th className="px-10 py-6">Seneste Aktivitet</th>
-                    <th className="px-10 py-6 text-right">Handlinger</th>
+                    <th className="px-10 py-6 text-right pr-12">Handlinger</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-amber-50/50">

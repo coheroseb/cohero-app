@@ -23,7 +23,10 @@ import {
   Lock,
   ArrowUpRight,
   MessageSquare,
-  Check
+  Check,
+  Zap,
+  Cpu,
+  ArrowRight
 } from 'lucide-react';
 import { fetchFolketingetSagById, fetchSagDokumenter, fetchDagsordenspunkter, explainFolketingetSagAction } from '@/app/actions';
 import { useApp } from '@/app/provider';
@@ -32,6 +35,13 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, serverTimestamp, collection, query } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // --- Type definitions ---
 interface Sag {
@@ -78,13 +88,15 @@ interface DagsordenspunktSag {
 
 const SagViewPage = () => {
     const params = useParams();
-    const sagIdParam = params.sagId as string;
+    const sagIdParam = params?.sagId as string;
     const router = useRouter();
     const sagId = Number(sagIdParam);
 
     const { user, userProfile } = useApp();
     const firestore = useFirestore();
-    const isPremiumUser = useMemo(() => userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership), [userProfile]);
+    const isPremiumUser = useMemo(() => {
+        return userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || '');
+    }, [userProfile]);
 
     const [sag, setSag] = useState<Sag | null>(null);
     const [dokumenter, setDokumenter] = useState<SagDokument[]>([]);
@@ -92,9 +104,9 @@ const SagViewPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // AI Analysis state
     const [isAnalysing, setIsAnalysing] = useState(false);
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+
 
     // Helpers to get type/status strings
     const [typer, setTyper] = useState<{ id: number; type: string }[]>([]);
@@ -202,7 +214,7 @@ const SagViewPage = () => {
         try {
             const result = await explainFolketingetSagAction({
                 caseTitle: sag.titel,
-                caseResume: sag.resume,
+                caseResume: sag.resume || undefined,
             });
             setAiAnalysis(result.data.explanation);
         } catch (e) {
@@ -213,15 +225,25 @@ const SagViewPage = () => {
         }
     };
 
+
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-6">
+            <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6">
+                <div className="flex flex-col items-center gap-10">
                     <div className="relative">
-                        <Loader2 className="w-16 h-16 animate-spin text-amber-900/20" />
-                        <Gavel className="absolute inset-0 m-auto w-6 h-6 text-amber-900 animate-pulse" />
+                        <motion.div 
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            className="w-24 h-24 rounded-[2.5rem] border-4 border-slate-100 border-t-rose-500 shadow-xl"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <Gavel className="w-8 h-8 text-slate-900" />
+                        </div>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-900/40">Henter sag fra ODA...</p>
+                    <div className="text-center space-y-2">
+                        <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">Åbner Dossier...</p>
+                        <p className="text-[10px] font-bold text-slate-400/60 lowercase italic">Henter data direkte fra Folketinget</p>
+                    </div>
                 </div>
             </div>
         );
@@ -230,280 +252,351 @@ const SagViewPage = () => {
     if (error || !sag) {
         return (
             <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6 text-center">
-                <div className="max-w-md space-y-6">
-                    <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto">
-                        <Info className="w-10 h-10 text-rose-600" />
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md space-y-8"
+                >
+                    <div className="w-24 h-24 bg-rose-50 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner border border-rose-100/50">
+                        <Info className="w-10 h-10 text-rose-500" />
                     </div>
-                    <h2 className="text-2xl font-bold text-amber-950 serif">{error || 'Ingen sag fundet'}</h2>
-                    <Link href="/folketinget" className="inline-flex items-center gap-2 px-8 py-4 bg-amber-950 text-white rounded-2xl font-bold transition-transform hover:scale-105">
-                        <ArrowLeft className="w-4 h-4" /> Tilbage til oversigten
+                    <div className="space-y-3">
+                        <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">{error || 'Ingen sag fundet'}</h2>
+                        <p className="text-slate-400 font-medium italic">Den ønskede sag kunne ikke hentes fra Folketingets arkiv.</p>
+                    </div>
+                    <Link href="/folketinget" className="inline-flex items-center gap-4 px-10 py-5 bg-slate-900 text-white rounded-[2rem] font-black uppercase tracking-widest transition-all hover:bg-rose-900 hover:-translate-y-1 active:scale-95 shadow-2xl shadow-slate-900/20">
+                        <ArrowLeft className="w-5 h-5" /> Gå tilbage
                     </Link>
-                </div>
+                </motion.div>
             </div>
         );
     }
 
     return (
-        <div className="bg-[#FDFCF8] min-h-screen selection:bg-amber-100">
-            
-            {/* 1. OFFICIAL DOSSIER HEADER - Mobile Optimized */}
-            <header className="bg-white/80 backdrop-blur-xl border-b border-amber-100 px-4 sm:px-6 py-6 sm:py-12 sticky top-24 z-30 shadow-sm">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8">
-                        <div className="flex items-start gap-4 sm:gap-6">
-                            <button onClick={() => router.back()} className="mt-1 p-2 sm:p-3 bg-amber-50 text-amber-900 rounded-2xl hover:bg-amber-100 transition-all group active:scale-95 shrink-0">
-                                <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                            </button>
-                            <div className="space-y-3 sm:space-y-4">
-                                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                                    <span className="px-2.5 py-1 bg-amber-950 text-amber-400 text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-lg shadow-sm border border-white/10">
-                                        {sag.nummer || 'ID:' + sag.id}
-                                    </span>
-                                    <span className="px-2.5 py-1 bg-amber-50 text-amber-700 text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-lg border border-amber-100">
-                                        {getSagTypeString(sag.typeid)}
-                                    </span>
-                                    <span className={`px-2.5 py-1 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
-                                        sag.statusid === vedtagetStatusId 
-                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                                            : 'bg-amber-50 text-amber-600 border border-amber-100'
-                                    }`}>
-                                        {sag.statusid === vedtagetStatusId && <CheckCircle className="w-3 h-3" />}
-                                        {getSagStatusString(sag.statusid)}
-                                    </span>
-                                </div>
-                                <h1 className="text-lg sm:text-2xl font-bold text-amber-950 serif leading-tight max-w-4xl animate-ink line-clamp-3 sm:line-clamp-none">
-                                    {sag.titel}
-                                </h1>
+        <div className="bg-[#FDFCF8] min-h-screen selection:bg-rose-100 flex flex-col relative overflow-hidden font-sans">
+            {/* Background elements */}
+            <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.03)_0,transparent_70%)] rounded-full blur-[120px] pointer-events-none z-0"></div>
+            <div className="fixed bottom-0 left-0 w-[1000px] h-[1000px] bg-[radial-gradient(circle_at_center,rgba(15,23,42,0.02)_0,transparent_70%)] rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-slate-100/80 px-4 sm:px-8 py-6 md:py-8 transition-all">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <button 
+                            onClick={() => router.back()} 
+                            className="p-4 bg-white border border-slate-200 text-slate-900 rounded-2xl hover:bg-slate-50 hover:border-slate-300 transition-all group active:scale-95 shrink-0 shadow-sm"
+                        >
+                            <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1.5 transition-transform" />
+                        </button>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                                <span className="px-3 py-1 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-lg shadow-slate-900/10">
+                                    {sag.nummer || 'ID:' + sag.id}
+                                </span>
+                                <span className="px-3 py-1 bg-white border border-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest rounded-lg">
+                                    {getSagTypeString(sag.typeid)}
+                                </span>
                             </div>
+                            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight line-clamp-1">
+                                {sag.titel}
+                            </h1>
                         </div>
-                        
-                        <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
-                            <button className="flex-1 md:flex-none p-4 bg-white border border-amber-100 rounded-2xl text-amber-950 hover:bg-amber-50 transition-all shadow-sm flex items-center justify-center">
-                                <Download className="w-5 h-5" />
-                            </button>
-                            <a href={`https://www.ft.dk/samling/20231/lovforslag/${sag.nummer}/index.htm`} target="_blank" rel="noreferrer" className="flex-[3] md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-amber-950 text-white rounded-2xl font-bold text-[10px] sm:text-xs uppercase tracking-widest hover:bg-amber-900 transition-all shadow-xl shadow-amber-950/20">
-                                FT.dk <ExternalLink className="w-4 h-4 text-amber-400" />
-                            </a>
-                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <a 
+                            href={`https://www.ft.dk/samling/20231/lovforslag/${sag.nummer}/index.htm`} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 bg-white border border-slate-200 text-slate-900 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm group"
+                        >
+                            Folketinget.dk <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-rose-500 transition-colors" />
+                        </a>
+                        <button className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-rose-900 transition-all shadow-xl shadow-slate-900/10 active:scale-95">
+                            <Download className="w-5 h-5" />
+                        </button>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto p-4 sm:p-6 md:p-12">
-                <div className="grid lg:grid-cols-12 gap-8 md:gap-12">
+            <main className="max-w-7xl mx-auto w-full p-4 sm:p-8 md:p-12 relative z-10">
+                <div className="grid lg:grid-cols-12 gap-10 lg:gap-16">
                     
-                    {/* LEFT COLUMN: THE SUBSTANCE */}
-                    <div className="lg:col-span-8 space-y-10 md:space-y-12">
-                        
-                        {/* CASE RESUME */}
-                        <section className="bg-white p-6 sm:p-10 md:p-16 rounded-[2.5rem] sm:rounded-[4rem] border border-amber-100 shadow-xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
-                                <FileText className="w-96 h-96 -rotate-12" />
+                    <div className="lg:col-span-8 space-y-12">
+                        {/* CASE OVERVIEW CARD */}
+                        <motion.section 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white/60 backdrop-blur-xl p-8 sm:p-14 rounded-[3rem] border border-slate-100 shadow-xl relative overflow-hidden group"
+                        >
+                            <div className="absolute top-0 right-0 p-16 opacity-[0.03] pointer-events-none group-hover:opacity-[0.06] transition-opacity">
+                                <FileText className="w-80 h-80 -rotate-12 translate-x-1/4 -translate-y-1/4" />
                             </div>
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-6 sm:mb-10 text-amber-900/40">
-                                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em]">Officielt Resume</span>
+                            
+                            <div className="relative z-10 space-y-10">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 border border-rose-100 shadow-sm">
+                                            <BookOpen className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Officielt Resume</h3>
+                                            <p className="text-[10px] text-slate-400 font-medium italic">Status: {getSagStatusString(sag.statusid)}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border ${
+                                        sag.statusid === vedtagetStatusId 
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm shadow-emerald-700/5' 
+                                            : 'bg-rose-50 text-rose-700 border-rose-100 shadow-sm shadow-rose-700/5'
+                                    }`}>
+                                        {getSagStatusString(sag.statusid)}
+                                    </div>
                                 </div>
+
                                 {sag.resume ? (
                                     <div 
-                                        className="prose prose-amber prose-sm sm:prose-lg max-w-none text-slate-700 leading-[1.8] serif italic" 
+                                        className="prose prose-slate prose-lg max-w-none text-slate-700 leading-[1.8] font-medium" 
                                         dangerouslySetInnerHTML={{ __html: sag.resume }} 
                                     />
                                 ) : (
-                                    <p className="text-slate-400 italic text-sm">Inget officielt resume tilgængeligt for denne sag.</p>
+                                    <div className="py-20 text-center space-y-4 bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200">
+                                        <p className="text-slate-400 font-bold italic">Intet officielt resume tilgængeligt for denne sag.</p>
+                                        <p className="text-[10px] text-slate-300 uppercase tracking-widest">Vi afventer dataopdatering fra Folketinget</p>
+                                    </div>
                                 )}
                             </div>
-                        </section>
+                        </motion.section>
 
                         {/* SAGENS FORLØB (TIMELINE) */}
-                        <section className="space-y-8 sm:space-y-10">
-                            <div className="flex items-center justify-between px-2 sm:px-4">
-                                <h3 className="text-lg sm:text-xl font-bold text-amber-950 serif flex items-center gap-3">
-                                    <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-700" />
+                        <section className="space-y-10">
+                            <div className="flex items-center justify-between px-4">
+                                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg">
+                                        <Clock className="w-5 h-5" />
+                                    </div>
                                     Lovgivningsprocessen
                                 </h3>
-                                <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                    {sag.Sagstrin?.length || 0} trin
-                                </span>
+                                <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-xl">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+                                        {sag.Sagstrin?.length || 0} trin i alt
+                                    </span>
+                                </div>
                             </div>
                             
-                            <div className="relative pl-8 sm:pl-12 md:pl-20 space-y-6 sm:space-y-8">
-                                {/* Timeline line */}
-                                <div className="absolute left-[15px] sm:left-[23px] md:left-[31px] top-4 bottom-4 w-[1px] bg-gradient-to-b from-amber-200 via-amber-100 to-transparent"></div>
+                            <div className="relative pl-12 sm:pl-16 space-y-8">
+                                {/* Vertical Timeline Bar */}
+                                <div className="absolute left-[23px] sm:left-[31px] top-6 bottom-6 w-[2px] bg-gradient-to-b from-slate-200 via-slate-100 to-transparent"></div>
                                 
                                 {(sag.Sagstrin || []).sort((a: any, b: any) => new Date(b.dato).getTime() - new Date(a.dato).getTime()).map((sagstrin: any, idx) => (
-                                    <div key={sagstrin.id} className="relative group">
-                                        {/* Dot */}
-                                        <div className={`absolute -left-[15px] sm:-left-[23px] md:-left-[31px] top-1.5 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-[3px] sm:border-4 border-[#FDFCF8] shadow-md z-10 transition-transform group-hover:scale-125 ${
-                                            idx === 0 ? 'bg-amber-950 animate-pulse' : 'bg-amber-200'
+                                    <motion.div 
+                                        key={sagstrin.id}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        className="relative group"
+                                    >
+                                        {/* Timeline Descriptor Dot */}
+                                        <div className={`absolute -left-[15px] sm:-left-[23px] md:-left-[31px] top-2 w-4 h-4 rounded-full border-4 border-[#FDFCF8] shadow-sm z-10 transition-all group-hover:scale-125 ${
+                                            idx === 0 ? 'bg-rose-500 ring-4 ring-rose-500/20' : 'bg-slate-300 group-hover:bg-slate-900'
                                         }`}></div>
                                         
-                                        <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-amber-50 shadow-sm group-hover:shadow-md group-hover:border-amber-950 transition-all">
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
-                                                <p className="text-[8px] sm:text-[10px] font-black text-amber-600 uppercase tracking-widest">
-                                                    {new Date(sagstrin.dato).toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                </p>
+                                        <div className="bg-white/40 backdrop-blur-sm p-6 sm:p-8 rounded-[2rem] border border-slate-100/50 shadow-sm hover:shadow-xl hover:bg-white hover:border-slate-200 transition-all duration-300 group/item">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 text-slate-400 group-hover/item:text-rose-500 transition-colors">
+                                                        <Calendar className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <p className="text-[11px] font-black text-slate-900 uppercase tracking-widest">
+                                                        {new Date(sagstrin.dato).toLocaleDateString('da-DK', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                                    </p>
+                                                </div>
                                                 {sagstrin.afstemningskonklusion && (
-                                                    <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-emerald-50 text-emerald-700 text-[8px] sm:text-[10px] font-black uppercase rounded-lg border border-emerald-100 flex items-center gap-1 sm:gap-1.5 self-start sm:self-center">
-                                                        <CheckCircle className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                                                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-lg border border-emerald-100 flex items-center gap-2">
+                                                        <CheckCircle className="w-3.5 h-3.5 shadow-sm" />
                                                         {sagstrin.afstemningskonklusion}
                                                     </span>
                                                 )}
                                             </div>
-                                            <h4 className="font-bold text-base sm:text-lg text-amber-950 serif group-hover:text-amber-800 transition-colors leading-snug">
+                                            
+                                            <h4 className="font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight leading-snug mb-4 decoration-rose-500/20 group-hover/item:underline underline-offset-4">
                                                 {sagstrin.titel}
                                             </h4>
+                                            
                                             {sagstrin.SagstrinAktør?.[0]?.Aktør && (
-                                                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-amber-50 flex items-center gap-2">
-                                                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-slate-100 flex items-center justify-center text-[7px] sm:text-[8px] font-black text-slate-400 uppercase">
+                                                <div className="pt-4 border-t border-slate-50 flex items-center gap-4">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200 uppercase overflow-hidden">
                                                         {sagstrin.SagstrinAktør[0].Aktør.navn.charAt(0)}
                                                     </div>
-                                                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium">
-                                                        Fremført af: <span className="text-amber-900 font-bold">{sagstrin.SagstrinAktør[0].Aktør.navn}</span>
-                                                    </p>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Ansvarlig aktør</p>
+                                                        <p className="text-xs text-slate-900 font-bold">
+                                                            {sagstrin.SagstrinAktør[0].Aktør.navn}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 ))}
                             </div>
                         </section>
                     </div>
 
-                    {/* RIGHT COLUMN: METADATA & SIDEBAR - Stacks after main content on mobile */}
-                    <aside className="lg:col-span-4 space-y-8 md:space-y-10">
+                    {/* RIGHT COLUMN: METADATA & SIDEBAR */}
+                    <aside className="lg:col-span-4 space-y-10">
                         
                         {/* AI ANALYSIS CALLOUT */}
-                        <section className="bg-amber-950 text-white p-8 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl relative overflow-hidden group">
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-6 sm:mb-8">
-                                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-amber-400 rounded-xl flex items-center justify-center text-amber-950 shadow-inner group-hover:rotate-6 transition-transform">
-                                        <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <motion.section 
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="bg-slate-900 text-white p-8 sm:p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group border border-slate-800"
+                        >
+                            <div className="relative z-10 space-y-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center text-white shadow-lg ring-4 ring-rose-500/20 group-hover:rotate-12 transition-transform duration-500">
+                                        <Cpu className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold serif text-sm sm:text-base">Faglig Perspektivering</h3>
-                                        <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-amber-400">Eksklusivt for Cohéro</p>
+                                        <h3 className="font-black text-sm uppercase tracking-widest text-white">AI Perspektivering</h3>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-400/80">Eksklusiv analyse</p>
                                     </div>
                                 </div>
                                 
-                                {!aiAnalysis && !isAnalysing && (
-                                    <div className="space-y-5 sm:space-y-6">
-                                        <p className="text-xs sm:text-sm text-amber-100/60 leading-relaxed italic">
-                                            Lad din AI-kollega analysere betydningen af dette forslag for socialrådgiverens professionelle skøn.
-                                        </p>
-                                        {isPremiumUser ? (
-                                            <Button 
-                                                onClick={handleAiAnalysis}
-                                                className="w-full bg-amber-400 text-amber-950 hover:bg-white text-[10px] sm:text-xs"
-                                            >
-                                                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" /> Start AI-Analyse
-                                            </Button>
-                                        ) : (
-                                            <Link href="/upgrade" className="block">
-                                                <Button className="w-full bg-amber-400 text-amber-900 hover:bg-amber-300 text-[10px] sm:text-xs">
-                                                    <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2"/>
-                                                    Opgrader for at analysere
+                                <div className="space-y-6">
+                                    {!aiAnalysis && !isAnalysing && (
+                                        <>
+                                            <p className="text-sm text-slate-300 leading-relaxed font-medium italic">
+                                                Lad din AI-kollega analysere betydningen af dette forslag for det socialfaglige område.
+                                            </p>
+                                            {isPremiumUser ? (
+                                                <Button 
+                                                    onClick={handleAiAnalysis}
+                                                    className="w-full h-16 bg-white text-slate-900 hover:bg-rose-500 hover:text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl active:scale-[0.98]"
+                                                >
+                                                    <Zap className="w-4 h-4 mr-2" /> Start Analyse
                                                 </Button>
-                                            </Link>
-                                        )}
-                                    </div>
-                                )}
+                                            ) : (
+                                                <Link href="/upgrade" className="block">
+                                                    <Button className="w-full h-16 bg-rose-600 text-white hover:bg-rose-500 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl">
+                                                        <Lock className="w-4 h-4 mr-2"/>
+                                                        Lås op med Kollega+
+                                                    </Button>
+                                                </Link>
+                                            )}
+                                        </>
+                                    )}
 
-                                {isAnalysing && (
-                                    <div className="py-10 sm:py-12 flex flex-col items-center justify-center space-y-4">
-                                        <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 animate-spin text-amber-400" />
-                                        <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-amber-100/40 animate-pulse">Læser lovtekst...</p>
-                                    </div>
-                                )}
+                                    {isAnalysing && (
+                                        <div className="py-12 flex flex-col items-center justify-center space-y-6">
+                                            <motion.div 
+                                                animate={{ rotate: 360 }}
+                                                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                                                className="w-12 h-12 rounded-xl border-2 border-white/10 border-t-rose-500"
+                                            />
+                                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 animate-pulse">Læser lovtekst og referater...</p>
+                                        </div>
+                                    )}
 
-                                {aiAnalysis && (
-                                    <div className="space-y-5 sm:space-y-6 animate-ink">
-                                        <div className="p-5 sm:p-6 bg-white/5 border border-white/10 rounded-2xl text-xs sm:text-sm leading-relaxed text-amber-50 font-medium prose prose-sm prose-invert"
-                                         dangerouslySetInnerHTML={{ __html: aiAnalysis }} />
-                                        <button 
-                                            onClick={() => setAiAnalysis(null)}
-                                            className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-amber-400 underline underline-offset-4"
+                                    {aiAnalysis && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="space-y-6"
                                         >
-                                            Nulstil
-                                        </button>
-                                    </div>
-                                )}
+                                            <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] text-sm leading-relaxed text-slate-100 font-medium prose prose-invert prose-rose"
+                                             dangerouslySetInnerHTML={{ __html: aiAnalysis }} />
+                                            <button 
+                                                onClick={() => setAiAnalysis(null)}
+                                                className="text-[10px] font-black uppercase tracking-widest text-rose-400 hover:text-white transition-colors flex items-center gap-2"
+                                            >
+                                                Nulstil analyse <ArrowRight className="w-3 h-3" />
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
-                        </section>
+                            
+                            {/* Animated Background Mesh */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none group-hover:bg-rose-500/15 transition-colors duration-1000"></div>
+                        </motion.section>
 
                         {/* SAGSDOKUMENTER */}
-                        <section className="bg-white p-8 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border border-amber-100 shadow-sm group">
-                            <h4 className="text-xs sm:text-sm font-black uppercase text-slate-400 mb-6 sm:mb-8 tracking-widest flex items-center gap-2">
-                                <Scale className="w-4 h-4 text-amber-700" /> Dokumenter ({dokumenter.length})
+                        <section className="bg-white/60 backdrop-blur-xl p-8 sm:p-10 rounded-[3rem] border border-slate-100 shadow-sm group">
+                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 flex items-center gap-3">
+                                <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center text-slate-500">
+                                    <Scale className="w-4 h-4" />
+                                </div>
+                                Dokumenter ({dokumenter.length})
                             </h4>
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {dokumenter.map(docData => {
                                     const docId = docData.Dokument?.id;
                                     const isRead = docId ? readDocIds.has(docId.toString()) : false;
-                                    const pdfFileUrl = docData.Dokument?.Fil?.[0]?.filurl;
+                                    const pdfFileUrl = (docData.Dokument?.Fil as any[])?.find(f => f.format === 'PDF')?.filurl || docData.Dokument?.Fil?.[0]?.filurl;
+                                    const htmFileUrl = (docData.Dokument?.Fil as any[])?.find(f => f.format === 'HTML' || f.format === 'HTM')?.filurl;
                                     
                                     return (
-                                        <a 
+                                        <div 
                                             key={docData.id} 
-                                            href={pdfFileUrl} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            onClick={() => docId && handleMarkAsRead(docId)}
-                                            className={`flex items-center justify-between p-4 border rounded-2xl group/doc transition-all hover:bg-white cursor-pointer ${
+                                            className={`flex items-center justify-between p-5 border rounded-[1.5rem] group/doc transition-all hover:-translate-y-1 ${
                                                 isRead 
-                                                ? 'bg-slate-50 border-slate-100 opacity-70 grayscale-[0.5]' 
-                                                : 'bg-amber-50/30 border-amber-50 hover:border-amber-950'
+                                                ? 'bg-slate-50/50 border-slate-100 italic' 
+                                                : 'bg-white border-slate-100 hover:border-slate-900 shadow-sm hover:shadow-xl'
                                             }`}
                                         >
-                                            <div className="flex-1 min-w-0 pr-4">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    {isRead && (
-                                                        <span className="flex items-center gap-1 text-[7px] sm:text-[8px] font-black uppercase tracking-tighter text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 shrink-0">
-                                                            <Check className="w-2 h-2 sm:w-2.5 sm:h-2.5" /> Læst
-                                                        </span>
-                                                    )}
-                                                    <p className={`text-[11px] sm:text-xs font-bold truncate transition-colors ${isRead ? 'text-slate-500' : 'text-amber-950 group-hover/doc:text-amber-700'}`}>
+                                            <div className="flex-1 min-w-0 pr-4 space-y-1.5 cursor-pointer" onClick={() => pdfFileUrl && window.open(pdfFileUrl, '_blank')}>
+                                                <div className="flex items-center gap-2">
+                                                    {isRead && <Check className="w-3 h-3 text-emerald-500" />}
+                                                    <p className={`text-[12px] font-black truncate ${isRead ? 'text-slate-400' : 'text-slate-900'}`}>
                                                         {docData.Dokument?.titel || 'Unavngivet Dokument'}
                                                     </p>
                                                 </div>
-                                                <p className="text-[8px] sm:text-[9px] text-slate-400 font-black uppercase tracking-tighter">
+                                                <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none">
                                                     {getDokumentTypeString(docData.Dokument?.typeid ?? 0)}
                                                 </p>
                                             </div>
-                                            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-200 group-hover/doc:translate-x-1 group-hover/doc:text-amber-950 transition-all" />
-                                        </a>
+                                            <div className="flex items-center gap-2">
+                                                <div onClick={() => pdfFileUrl && window.open(pdfFileUrl, '_blank')} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover/doc:bg-slate-900 group-hover/doc:text-white transition-all cursor-pointer">
+                                                    <Download className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        </div>
                                     );
                                 })}
                                 {dokumenter.length === 0 && (
-                                    <p className="text-xs text-slate-400 italic py-4">Ingen dokumenter fundet.</p>
+                                    <div className="py-12 text-center bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200">
+                                        <p className="text-xs text-slate-400 font-bold italic">Ingen dokumenter fundet.</p>
+                                    </div>
                                 )}
                             </div>
                         </section>
 
                         {/* DAGSORDENSPUNKTER */}
-                        <section className="bg-white p-8 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border border-amber-100 shadow-sm group">
-                            <h4 className="text-xs sm:text-sm font-black uppercase text-slate-400 mb-6 sm:mb-8 tracking-widest flex items-center gap-2">
-                                <Gavel className="w-4 h-4 text-rose-600" /> Dagsordenspunkter
+                        <section className="bg-white/60 backdrop-blur-xl p-8 sm:p-10 rounded-[3rem] border border-slate-100 shadow-sm group">
+                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 flex items-center gap-3">
+                                <div className="w-8 h-8 bg-rose-50 border border-rose-100 rounded-lg flex items-center justify-center text-rose-500">
+                                    <Gavel className="w-4 h-4" />
+                                </div>
+                                Dagsordenspunkter
                             </h4>
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 {dagsordenspunkter.map(dpSag => {
                                     if (!dpSag.Dagsordenspunkt) return null;
                                     return (
-                                        <div key={dpSag.id} className="p-5 sm:p-6 bg-slate-50/50 rounded-2xl sm:rounded-[2rem] border border-slate-100 hover:border-rose-200 transition-all">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-300" />
-                                                <span className="text-[9px] sm:text-[10px] font-black uppercase text-slate-400">
+                                        <div key={dpSag.id} className="p-6 bg-slate-50/50 rounded-[2rem] border border-slate-100/50 hover:bg-white hover:border-rose-200 transition-all group/pun">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <Calendar className="w-3.5 h-3.5 text-slate-300 group-hover/pun:text-rose-500 transition-colors" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                                                     {new Date(dpSag.Dagsordenspunkt.Møde?.dato || '').toLocaleDateString('da-DK')}
                                                 </span>
                                             </div>
-                                            <p className="text-[11px] sm:text-xs font-bold text-amber-950 mb-4 leading-relaxed">
+                                            <p className="text-[13px] font-bold text-slate-900 mb-6 leading-relaxed">
                                                 {dpSag.Dagsordenspunkt.titel}
                                             </p>
                                             
                                             {dpSag.Dagsordenspunkt.Dokument && dpSag.Dagsordenspunkt.Dokument.length > 0 && (
-                                                <div className="space-y-2 pt-4 border-t border-dashed border-slate-200">
+                                                <div className="space-y-3 pt-6 border-t border-dashed border-slate-200">
                                                     {dpSag.Dagsordenspunkt.Dokument.slice(0, 3).map((dpd: any) => {
                                                         const pdfFileUrl = dpd.Fil?.[0]?.filurl;
                                                         const docId = dpd.id;
@@ -516,13 +609,12 @@ const SagViewPage = () => {
                                                                 target="_blank" 
                                                                 rel="noopener noreferrer"
                                                                 onClick={() => docId && handleMarkAsRead(docId)}
-                                                                className={`flex items-center gap-2 text-[8px] sm:text-[9px] font-bold truncate transition-colors ${
-                                                                    isRead ? 'text-slate-400 italic' : 'text-rose-600 hover:text-rose-900'
+                                                                className={`flex items-center gap-3 text-[10px] font-bold truncate transition-colors ${
+                                                                    isRead ? 'text-slate-400 italic' : 'text-slate-600 hover:text-rose-600'
                                                                 }`}
                                                             >
-                                                                <FileText className={`w-3 h-3 shrink-0 ${isRead ? 'text-slate-300' : 'text-rose-600'}`} />
-                                                                {isRead && <Check className="w-2.5 h-2.5" />}
-                                                                {dpd.titel}
+                                                                <FileText className={`w-3.5 h-3.5 shrink-0 ${isRead ? 'text-slate-200' : 'text-slate-400'}`} />
+                                                                <span className="truncate">{dpd.titel}</span>
                                                             </a>
                                                         )
                                                     })}
@@ -532,18 +624,20 @@ const SagViewPage = () => {
                                     )
                                 })}
                                 {dagsordenspunkter.length === 0 && (
-                                    <p className="text-xs text-slate-400 italic py-4">Ingen dagsordenspunkter fundet.</p>
+                                    <p className="text-xs text-slate-400 font-bold italic py-4">Ingen dagsordenspunkter fundet.</p>
                                 )}
                             </div>
                         </section>
 
                         {/* DISCLAIMER */}
-                        <div className="p-6 sm:p-8 bg-rose-50 border border-rose-100 rounded-[2rem] sm:rounded-[2.5rem] flex items-start gap-4">
-                            <Info className="w-5 h-5 sm:w-6 sm:h-6 text-rose-700 shrink-0 mt-1" />
-                            <div>
-                                <p className="text-[9px] sm:text-[10px] font-black uppercase text-rose-950 mb-2">Ansvarsfraskrivelse</p>
-                                <p className="text-[9px] sm:text-[10px] text-rose-800 leading-relaxed italic">
-                                    Data hentes automatisk fra Folketingets ODA API. Vi tager forbehold for forsinkelser og fejl i kildedata. AI-analysen er vejledende sparring.
+                        <div className="p-8 bg-rose-50/50 border border-rose-100 rounded-[2.5rem] flex items-start gap-4">
+                            <div className="p-2 bg-white rounded-xl shadow-sm border border-rose-100">
+                                <Info className="w-5 h-5 text-rose-500 shrink-0" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-rose-900">Ansvarsfraskrivelse</p>
+                                <p className="text-[10px] text-rose-800/60 leading-relaxed font-medium italic">
+                                    Data opdateres automatisk via ODA API. AI-perspektivering er maskinskabt sparring og bør altid efterprøves fagligt.
                                 </p>
                             </div>
                         </div>
@@ -552,9 +646,9 @@ const SagViewPage = () => {
             </main>
 
             {/* STICKY BOTTOM ACTION (Only on small screens) */}
-            <div className="md:hidden fixed bottom-6 right-6 z-50">
-                <button className="w-14 h-14 bg-amber-950 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group">
-                    <MessageSquare className="w-5 h-5 group-hover:animate-bounce" />
+            <div className="md:hidden fixed bottom-10 right-8 z-50">
+                <button className="w-16 h-16 bg-slate-900 text-white rounded-3xl shadow-2xl flex items-center justify-center hover:bg-rose-600 hover:scale-110 active:scale-90 transition-all shadow-slate-900/40">
+                    <Sparkles className="w-6 h-6" />
                 </button>
             </div>
         </div>

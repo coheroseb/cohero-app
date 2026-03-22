@@ -1,596 +1,676 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
-  BookCopy, 
-  ChevronDown, 
-  Trash2, 
-  Loader2, 
-  Quote, 
-  HelpCircle, 
-  BookOpen, 
-  Plus, 
-  Tags, 
-  Scale, 
-  Wrench, 
-  FileText, 
-  CheckCircle, 
-  Info, 
-  BrainCircuit, 
-  MoreVertical,
+import {
+  ArrowLeft,
+  BookCopy,
+  Trash2,
+  Loader2,
+  Info,
+  BrainCircuit,
   Search,
   Presentation,
-  Save,
-  UploadCloud,
-  File,
-  X,
-  Sparkles,
-  Calendar,
-  ChevronRight,
-  Clock,
-  Layout,
+  Plus,
+  Tags,
+  Scale,
+  Wrench,
+  FileText,
+  CheckCircle,
   Trophy,
-  History
+  ChevronRight,
+  Calendar,
+  Sparkles,
+  X,
+  ChevronDown,
+  ChevronUp,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { 
-  collection, 
-  query, 
-  orderBy, 
-  doc, 
-  deleteDoc, 
-  updateDoc, 
-  getDoc, 
+import { useFirestore } from '@/firebase';
+import {
+  collection,
+  query,
+  orderBy,
+  doc,
+  deleteDoc,
+  updateDoc,
+  getDoc,
   onSnapshot,
   DocumentData,
-  addDoc,
-  setDoc,
-  where,
-  getDocs,
-  increment,
-  limit
 } from 'firebase/firestore';
 import { useDebounce } from 'use-debounce';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { SeminarAnalysis, QuizData } from '@/ai/flows/types';
 import { generateQuizAction } from '@/app/actions';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
-
-// --- TYPES ---
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 interface SavedSeminar extends DocumentData {
   id: string;
   overallTitle: string;
+  fileName?: string;
   slides: (SeminarAnalysis['slides'][number] & { notes?: string })[];
   createdAt: { toDate: () => Date };
-  title?: string;
-  keyConcepts?: any[];
-  legalFrameworks?: any[];
-  practicalTools?: any[];
 }
 
-// --- COMPONENTS ---
-
+// ---------------------------------------------------------------------------
+// Quiz Component
+// ---------------------------------------------------------------------------
 const QuizView: React.FC<{ quizData: QuizData; onFinish: () => void }> = ({ quizData, onFinish }) => {
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-    const [isAnswered, setIsAnswered] = useState(false);
-    const [score, setScore] = useState(0);
-    const [quizComplete, setQuizComplete] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [answered, setAnswered] = useState(false);
+  const [score, setScore] = useState(0);
+  const [done, setDone] = useState(false);
 
-    const handleAnswerSelect = (index: number) => {
-        if (isAnswered) return;
-        setSelectedAnswer(index);
-        setIsAnswered(true);
-        if (index === quizData.questions[currentQuestionIndex].correctOptionIndex) {
-            setScore(s => s + 1);
-        }
-    };
+  const q = quizData.questions[idx];
+  const progress = ((idx + 1) / quizData.questions.length) * 100;
 
-    const handleNextQuestion = () => {
-        if (currentQuestionIndex < quizData.questions.length - 1) {
-            setCurrentQuestionIndex(i => i + 1);
-            setSelectedAnswer(null);
-            setIsAnswered(false);
-        } else {
-            setQuizComplete(true);
-        }
-    };
-    
-    const getButtonClass = (index: number) => {
-        if (!isAnswered) {
-          return "bg-white border-amber-100 hover:border-amber-400 hover:bg-amber-50/50";
-        }
-        const correctIndex = quizData.questions[currentQuestionIndex].correctOptionIndex;
-        if (index === correctIndex) {
-          return "bg-emerald-50 border-emerald-300 text-emerald-900 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
-        }
-        if (index === selectedAnswer && index !== correctIndex) {
-          return "bg-rose-50 border-rose-300 text-rose-900";
-        }
-        return "bg-white opacity-40 border-slate-100";
-    };
+  const handleAnswer = (i: number) => {
+    if (answered) return;
+    setSelected(i);
+    setAnswered(true);
+    if (i === q.correctOptionIndex) setScore(s => s + 1);
+  };
 
-    if (quizComplete) {
-        return (
-            <div 
-              className="text-center py-16 px-8 bg-white rounded-[3rem] border border-amber-100 shadow-2xl max-w-lg mx-auto"
-            >
-                <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-8">
-                   <Trophy className="w-12 h-12 text-amber-600" />
-                </div>
-                <h3 className="text-4xl font-bold text-amber-950 serif mb-4">Quiz Fuldført!</h3>
-                <p className="text-xl text-slate-500 mb-10">
-                  Du fik <span className="text-amber-950 font-black">{score}</span> ud af <span className="font-bold">{quizData.questions.length}</span> rigtige.
-                </p>
-                <div className="flex flex-col gap-4">
-                  <Button size="lg" onClick={onFinish} className="w-full">
-                    Afslut & Gem Resultat
-                  </Button>
-                  <Button variant="secondary" onClick={() => {
-                    setCurrentQuestionIndex(0);
-                    setSelectedAnswer(null);
-                    setIsAnswered(false);
-                    setScore(0);
-                    setQuizComplete(false);
-                  }}>
-                    Prøv igen
-                  </Button>
-                </div>
-            </div>
-        )
-    }
+  const handleNext = () => {
+    if (idx < quizData.questions.length - 1) {
+      setIdx(i => i + 1); setSelected(null); setAnswered(false);
+    } else { setDone(true); }
+  };
 
-    const question = quizData.questions[currentQuestionIndex];
-    const progress = ((currentQuestionIndex + 1) / quizData.questions.length) * 100;
-    
-    return (
-        <div className="max-w-2xl mx-auto py-12 px-6">
-            <div className="mb-12">
-              <div className="flex justify-between items-end mb-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40">Videns-check</p>
-                <p className="text-xs font-bold text-amber-950 serif">Spørgsmål {currentQuestionIndex + 1} af {quizData.questions.length}</p>
-              </div>
-              <div className="w-full h-1.5 bg-amber-50 rounded-full overflow-hidden border border-amber-100">
-                <div 
-                  className="h-full bg-amber-950" style={{width: `${progress}%`}}
-                />
-              </div>
-            </div>
+  const getBtnClass = (i: number) => {
+    if (!answered) return 'bg-white border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 text-slate-700';
+    if (i === q.correctOptionIndex) return 'bg-emerald-50 border-emerald-300 text-emerald-900';
+    if (i === selected) return 'bg-rose-50 border-rose-300 text-rose-900';
+    return 'bg-slate-50 opacity-50 border-slate-100 text-slate-500';
+  };
 
-            <div className="space-y-10">
-                <h2 className="text-3xl font-bold text-amber-950 serif leading-tight text-center">{question.question}</h2>
-                
-                <div className="grid gap-4">
-                  {question.options.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleAnswerSelect(index)}
-                      disabled={isAnswered}
-                      className={`group w-full p-6 rounded-2xl border-2 text-left flex items-start gap-5 transition-all duration-300 ${getButtonClass(index)}`}
-                    >
-                      <div className={`w-8 h-8 flex-shrink-0 rounded-md flex items-center justify-center font-bold text-xs border-2 border-current mt-1 ${isAnswered && index === quizData.questions[currentQuestionIndex].correctOptionIndex ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-amber-200 text-amber-900 group-hover:border-amber-400'}`}>
-                        {String.fromCharCode(65 + index)}
-                      </div>
-                      <span className="flex-1 font-medium text-lg pt-0.5">{option}</span>
-                    </button>
-                  ))}
-                </div>
+  if (done) return (
+    <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
+      <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-indigo-500/30">
+        <Trophy className="w-12 h-12 text-white" />
+      </div>
+      <h3 className="text-3xl font-black text-slate-900 mb-3">Quiz Fuldført!</h3>
+      <p className="text-slate-500 text-lg mb-10">
+        Du fik <span className="font-black text-indigo-600">{score}</span> ud af <span className="font-bold">{quizData.questions.length}</span> rigtige.
+      </p>
+      <div className="flex flex-col gap-3 w-full max-w-xs">
+        <Button size="lg" onClick={onFinish} className="w-full bg-slate-900 hover:bg-slate-800 rounded-2xl h-14 font-black">Afslut</Button>
+        <Button variant="outline" className="rounded-2xl h-14 font-bold" onClick={() => { setIdx(0); setSelected(null); setAnswered(false); setScore(0); setDone(false); }}>Prøv igen</Button>
+      </div>
+    </div>
+  );
 
-                {isAnswered && (
-                  <div className="mt-8 p-8 bg-white rounded-3xl border border-amber-100 shadow-xl">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-amber-50 rounded-lg">
-                        <Info className="w-4 h-4 text-amber-700" />
-                      </div>
-                      <h4 className="font-black uppercase text-[10px] tracking-widest text-amber-900">Forklaring</h4>
-                    </div>
-                    <p className="text-slate-600 leading-relaxed italic">"{question.explanation}"</p>
-                    <Button size="lg" onClick={handleNextQuestion} className="w-full mt-8 shadow-lg shadow-amber-950/10">
-                      {currentQuestionIndex < quizData.questions.length - 1 ? 'Næste spørgsmål' : 'Se resultat'}
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-            </div>
+  return (
+    <div className="h-full flex flex-col">
+      {/* Progress */}
+      <div className="p-6 border-b border-slate-100">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Spørgsmål {idx + 1} af {quizData.questions.length}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">{Math.round(progress)}%</span>
         </div>
-    );
+        <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 sm:p-10 max-w-2xl mx-auto w-full">
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-8 leading-snug">{q.question}</h2>
+        <div className="space-y-3">
+          {q.options.map((opt, i) => (
+            <button key={i} onClick={() => handleAnswer(i)} disabled={answered}
+              className={`w-full p-4 sm:p-5 rounded-2xl border-2 text-left flex items-center gap-4 transition-all duration-200 ${getBtnClass(i)}`}>
+              <div className={`w-8 h-8 shrink-0 rounded-xl flex items-center justify-center font-black text-xs border-2 
+                ${answered && i === q.correctOptionIndex ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-current opacity-60'}`}>
+                {String.fromCharCode(65 + i)}
+              </div>
+              <span className="font-semibold text-sm sm:text-base">{opt}</span>
+            </button>
+          ))}
+        </div>
+        {answered && (
+          <div className="mt-6 p-5 bg-slate-50 rounded-2xl border border-slate-100">
+            <p className="text-sm text-slate-600 italic mb-4">"{q.explanation}"</p>
+            <Button onClick={handleNext} className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl h-12 font-bold">
+              {idx < quizData.questions.length - 1 ? 'Næste spørgsmål' : 'Se resultat'}
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
-const SeminarDetailView: React.FC<{ seminar: SavedSeminar, user: any }> = ({ seminar, user }) => {
-    const { userProfile, refetchUserProfile } = useApp();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [notes, setSlideNotes] = useState<Record<number, string>>(() => {
-        if (!seminar.slides || !Array.isArray(seminar.slides)) return {};
-        return seminar.slides.reduce((acc, slide) => {
-            if (slide.notes) {
-                acc[slide.slideNumber] = slide.notes;
-            }
-            return acc;
-        }, {} as Record<number, string>);
-    });
-    
-    const [debouncedNotes] = useDebounce(notes, 1500);
-    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-    const isInitialMount = useRef(true);
+// ---------------------------------------------------------------------------
+// Slide Feed Card
+// ---------------------------------------------------------------------------
+const SlideCard: React.FC<{
+  slide: any;
+  note: string;
+  onNoteChange: (v: string) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  index: number;
+}> = ({ slide, note, onNoteChange, isOpen, onToggle, index }) => {
+  const totalItems = (slide.keyConcepts?.length || 0) + (slide.legalFrameworks?.length || 0) + (slide.practicalTools?.length || 0);
 
-    const [quizData, setQuizData] = useState<QuizData | null>(null);
-    const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
-
-    const handleStartQuiz = async () => {
-        if (!seminar || !user || !seminar.slides) return;
-        setIsGeneratingQuiz(true);
-        setQuizData(null);
-        try {
-            const contextText = seminar.slides.map(s => `Slide ${s.slideNumber} (${s.slideTitle}): ${s.summary}`).join('\n');
-            const result = await generateQuizAction({
-                topic: `Seminaret '${seminar.overallTitle}'`,
-                numQuestions: 5,
-                contextText: contextText,
-            });
-            setQuizData(result.data);
-
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setIsGeneratingQuiz(false);
-        }
-    };
-
-    const handleAutoSaveNotes = useCallback(async () => {
-        if (!user || !seminar.id || !firestore) return;
-
-        const hasChanges = seminar.slides.some(slide => {
-            const serverNote = slide.notes || '';
-            const clientNote = debouncedNotes[slide.slideNumber];
-            return clientNote !== undefined && serverNote !== clientNote;
-        });
-
-        if (!hasChanges) {
-             if (saveStatus !== 'idle' && saveStatus !== 'saved') setSaveStatus('saved');
-            return;
-        }
-
-        setSaveStatus('saving');
-        try {
-            const seminarRef = doc(firestore, 'users', user.uid, 'seminars', seminar.id);
-            
-            const seminarSnap = await getDoc(seminarRef);
-            if (!seminarSnap.exists()) {
-                console.error("Cannot save notes, document does not exist:", seminar.id);
-                setSaveStatus('idle'); 
-                return;
-            }
-
-            const existingSlides = seminarSnap.data().slides || [];
-            const updatedSlides = existingSlides.map((slide: any) => ({
-                ...slide,
-                notes: debouncedNotes[slide.slideNumber] ?? slide.notes ?? ''
-            }));
-            
-            await updateDoc(seminarRef, { slides: updatedSlides });
-            setSaveStatus('saved');
-        } catch (error) {
-            console.error("Error auto-saving notes:", error);
-            // toast({
-            //     variant: "destructive",
-            //     title: "Fejl ved lagring",
-            //     description: "Dine noter kunne ikke gemmes automatisk. Tjek din internetforbindelse.",
-            // });
-            setSaveStatus('idle');
-        }
-    }, [user, seminar.id, seminar.slides, firestore, debouncedNotes, toast, saveStatus]);
-    
-    useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            return;
-        }
-        if (seminar.id) {
-          handleAutoSaveNotes();
-        }
-    }, [debouncedNotes, seminar.id, handleAutoSaveNotes]);
-    
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-        if(saveStatus === 'saved') {
-            timer = setTimeout(() => setSaveStatus('idle'), 2000);
-        }
-        return () => clearTimeout(timer);
-    }, [saveStatus]);
-
-    if (quizData) {
-        return (
-            <div className="bg-amber-50/30 min-h-[500px]">
-                <QuizView 
-                  quizData={quizData} 
-                  onFinish={() => setQuizData(null)} 
-                />
-            </div>
-        )
-    }
-
-    const isNewFormat = seminar.slides && Array.isArray(seminar.slides);
-
-    return (
-        <div className="bg-slate-50/50 p-8 md:p-12 space-y-12">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-amber-100 pb-8">
-                <div>
-                  <h4 className="text-sm font-black uppercase tracking-[0.2em] text-amber-900/40 mb-1">Analyse-dybde</h4>
-                  <p className="text-lg font-bold text-amber-950 serif">{isNewFormat ? `${seminar.slides.length} Slides analyseret` : 'Gammel format'}</p>
-                </div>
-                <Button onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="shadow-xl shadow-amber-950/10">
-                    {isGeneratingQuiz ? <Loader2 className="w-4 h-4 animate-spin"/> : <BrainCircuit className="w-4 h-4"/>}
-                    Start Videns-Quiz
-                </Button>
-            </div>
-
-            {isNewFormat ? (
-                <div className="space-y-10">
-                    {seminar.slides.map((slide, index) => (
-                        <div key={index} className="bg-white p-10 rounded-[3rem] border border-amber-100 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-4 mb-8">
-                              <div className="w-12 h-12 rounded-2xl bg-amber-950 text-amber-100 flex items-center justify-center font-black serif text-xl">
-                                {slide.slideNumber}
-                              </div>
-                              <h4 className='font-bold text-2xl text-amber-950 serif'>{slide.slideTitle}</h4>
-                            </div>
-                            
-                            <p className="text-slate-500 italic mb-10 leading-relaxed text-lg border-l-4 border-amber-100 pl-6">
-                              "{slide.summary}"
-                            </p>
-                            
-                            <div className="grid md:grid-cols-2 gap-10">
-                                <div className="space-y-8">
-                                    {slide.keyConcepts && slide.keyConcepts.length > 0 && (
-                                        <div className="space-y-4">
-                                            <h5 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
-                                              <Tags className="w-3.5 h-3.5"/> Kernebegreber
-                                            </h5>
-                                            <div className="flex flex-wrap gap-2">
-                                                {slide.keyConcepts.map((c: any, i: number) => (
-                                                    <Link key={i} href={`/concept-explainer?term=${encodeURIComponent(c.term)}`} className="bg-indigo-50 text-indigo-800 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-indigo-100 transition-colors border border-indigo-100">
-                                                        {c.term}
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    
-                                    {slide.legalFrameworks && slide.legalFrameworks.length > 0 && (
-                                        <div className="pt-3 mt-3 border-t border-dashed">
-                                           <h5 className="text-[10px] font-black uppercase tracking-widest text-rose-600 flex items-center gap-2">
-                                             <Scale className="w-3.5 h-3.5"/> Lovgrundlag
-                                           </h5>
-                                            <ul className="space-y-3">
-                                                {slide.legalFrameworks.map((l: any, i: number) => <li key={i} className="text-sm text-slate-700 bg-rose-50/30 p-4 rounded-2xl border border-rose-100">
-                                                    <span className="font-bold text-rose-900">{l.law} {l.paragraphs.join(', ')}:</span>
-                                                    <p className="mt-1 text-xs italic opacity-70">{l.relevance}</p>
-                                                  </li>)}
-                                            </ul>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="space-y-8">
-                                    {slide.practicalTools && slide.practicalTools.length > 0 && (
-                                        <div className="space-y-4">
-                                             <h5 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-2">
-                                               <Wrench className="w-3.5 h-3.5"/> Metodiske Greb
-                                             </h5>
-                                             <ul className="space-y-3">
-                                                {slide.practicalTools.map((t: any, i: number) => (
-                                                  <li key={i} className="text-sm text-slate-700 bg-emerald-50/30 p-4 rounded-2xl border border-emerald-100">
-                                                    <span className="font-bold text-emerald-900">{t.tool}:</span>
-                                                    <p className="mt-1 text-xs italic opacity-70">{t.description}</p>
-                                                  </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-4">
-                                         <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                           <FileText className="w-3.5 h-3.5"/> Mine Noter
-                                         </h5>
-                                         <Textarea
-                                             placeholder="Tilføj dine noter til dette slide..."
-                                             value={notes[slide.slideNumber] || ''}
-                                             onChange={(e) => setSlideNotes(prev => ({...prev, [slide.slideNumber]: e.target.value}))}
-                                             className="mt-2 bg-amber-50/30 border-amber-100"
-                                             rows={3}
-                                         />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <p>Gammelt format, ingen slide-opdeling</p>
-            )}
-
-            <div className="flex justify-end pt-8 border-t border-amber-100 min-h-[40px] items-center">
-                  {saveStatus === 'saving' && <div className="flex items-center gap-2 text-xs text-slate-500"><Loader2 className="w-4 h-4 animate-spin"/> Gemmer noter...</div>}
-                  {saveStatus === 'saved' && <div className="flex items-center gap-2 text-xs text-emerald-600"><CheckCircle className="w-4 h-4"/> Gemt!</div>}
-            </div>
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.03 }}
+      className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${isOpen ? 'border-indigo-200 shadow-lg shadow-indigo-500/5' : 'border-slate-100 shadow-sm'}`}
+    >
+      {/* Card Header - always visible */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-4 p-5 text-left hover:bg-slate-50/80 transition-colors"
+      >
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 transition-colors ${isOpen ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+          {slide.slideNumber}
         </div>
-    )
-}
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-slate-900 truncate text-sm">{slide.slideTitle}</p>
+          {!isOpen && (
+            <p className="text-xs text-slate-400 truncate mt-0.5">{slide.summary}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {totalItems > 0 && (
+            <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-1 rounded-lg">{totalItems} punkter</span>
+          )}
+          {note && <span className="w-2 h-2 rounded-full bg-amber-400" title="Du har noter på dette slide" />}
+          {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        </div>
+      </button>
 
-function MineSeminarerPageContent() {
-    const { user } = useApp();
-    const firestore = useFirestore();
-    const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [seminars, setSeminars] = useState<SavedSeminar[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-      if (!user || !firestore) return;
-      const q = query(collection(firestore, 'users', user.uid, 'seminars'), orderBy('createdAt', 'desc'));
-      const unsub = onSnapshot(q, (snapshot) => {
-        setSeminars(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedSeminar)));
-        setIsLoading(false);
-      }, (error) => {
-        console.error("Error fetching seminars:", error);
-        setIsLoading(false);
-      });
-      return () => unsub();
-    }, [user, firestore]);
-    
-    const handleDelete = async (id: string) => {
-        if (!user || !firestore || !window.confirm('Er du sikker på, du vil slette dette videnskort?')) return;
-        
-        const docRef = doc(firestore, 'users', user.uid, 'seminars', id);
-        try {
-            await deleteDoc(docRef);
-        } catch (error) {
-            console.error("Error deleting seminar analysis: ", error);
-        }
-    };
-    
-    const filteredSeminars = useMemo(() => {
-        if (!seminars) return [];
-        if (!searchQuery) return seminars;
-
-        const lowercasedQuery = searchQuery.toLowerCase();
-        
-        return seminars.filter(seminar => {
-            if (seminar.overallTitle?.toLowerCase().includes(lowercasedQuery)) return true;
-            if (seminar.title?.toLowerCase().includes(lowercasedQuery)) return true;
-
-            if (seminar.slides) {
-                for (const slide of seminar.slides) {
-                    if (slide.slideTitle?.toLowerCase().includes(lowercasedQuery)) return true;
-                    if (slide.summary?.toLowerCase().includes(lowercasedQuery)) return true;
-                    if (slide.keyConcepts?.some(c => c.term.toLowerCase().includes(lowercasedQuery))) return true;
-                    if (slide.legalFrameworks?.some(l => l.law.toLowerCase().includes(lowercasedQuery))) return true;
-                    if (slide.practicalTools?.some(t => t.tool.toLowerCase().includes(lowercasedQuery))) return true;
-                    if (slide.notes?.toLowerCase().includes(lowercasedQuery)) return true;
-                }
-            }
-            return false;
-        });
-    }, [seminars, searchQuery]);
-
-    const groupedSeminars = useMemo(() => {
-        if (!filteredSeminars) return {};
-        return filteredSeminars.reduce((acc, seminar) => {
-            const date = seminar.createdAt?.toDate();
-            if (!date) return acc;
-    
-            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    
-            if (!acc[key]) {
-                acc[key] = [];
-            }
-            acc[key].push(seminar);
-            return acc;
-        }, {} as Record<string, SavedSeminar[]>);
-    }, [filteredSeminars]);
-
-    const sortedGroupKeys = useMemo(() => Object.keys(groupedSeminars).sort((a, b) => b.localeCompare(a)), [groupedSeminars]);
-    
-    return (
-    <div className="bg-[#FDFCF8] min-h-screen">
-      <header className="bg-white border-b border-amber-100/50">
-        <div className="max-w-7xl mx-auto py-8 px-4 md:px-8 flex items-center gap-4">
-            <Link href="/portal" className="p-3 bg-amber-50 text-amber-900 rounded-2xl hover:bg-amber-100 transition-all">
-                <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-amber-950 serif">
-                Mine Seminarer
-              </h1>
-              <p className="text-base text-slate-500">
-                Oversigt over dine gemte videnskort fra Seminar-Arkitekten.
+      {/* Expanded content */}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-6 space-y-5 border-t border-slate-100 pt-5">
+              {/* Summary */}
+              <p className="text-sm text-slate-600 leading-relaxed italic border-l-2 border-indigo-200 pl-4">
+                {slide.summary}
               </p>
+
+              <div className="grid sm:grid-cols-3 gap-4">
+                {/* Concepts */}
+                {slide.keyConcepts?.length > 0 && (
+                  <div>
+                    <h4 className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-600 mb-2.5">
+                      <Tags className="w-3 h-3" /> Begreber
+                    </h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {slide.keyConcepts.map((c: any, i: number) => (
+                        <Link key={i} href={`/concept-explainer?term=${encodeURIComponent(c.term)}`}>
+                          <span className="px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-lg text-[10px] font-bold hover:bg-indigo-100 transition-colors cursor-pointer">
+                            {c.term}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Legal */}
+                {slide.legalFrameworks?.length > 0 && (
+                  <div>
+                    <h4 className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-rose-600 mb-2.5">
+                      <Scale className="w-3 h-3" /> Lovgrundlag
+                    </h4>
+                    <ul className="space-y-2">
+                      {slide.legalFrameworks.map((l: any, i: number) => (
+                        <li key={i} className="p-3 bg-rose-50 rounded-xl border border-rose-100 text-xs">
+                          <span className="font-bold text-rose-900 block">{l.law} {l.paragraphs?.join(', ')}</span>
+                          <span className="text-rose-700 opacity-80">{l.relevance}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Methods */}
+                {slide.practicalTools?.length > 0 && (
+                  <div>
+                    <h4 className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-600 mb-2.5">
+                      <Wrench className="w-3 h-3" /> Metoder
+                    </h4>
+                    <ul className="space-y-2">
+                      {slide.practicalTools.map((t: any, i: number) => (
+                        <li key={i} className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs">
+                          <span className="font-bold text-emerald-900 block">{t.tool}</span>
+                          <span className="text-emerald-700 opacity-80">{t.description}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <h4 className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                  <FileText className="w-3 h-3" /> Mine noter
+                </h4>
+                <Textarea
+                  placeholder="Tilføj noter til dette slide..."
+                  value={note}
+                  onChange={e => onNoteChange(e.target.value)}
+                  className="bg-slate-50 border-slate-100 rounded-xl text-xs min-h-[72px] resize-none focus:border-indigo-300 focus:ring-indigo-100"
+                  rows={3}
+                />
+              </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Seminar Detail (Feed View)
+// ---------------------------------------------------------------------------
+const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; onClose: () => void }> = ({ seminar, user, onClose }) => {
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [notes, setNotes] = useState<Record<number, string>>(() =>
+    (seminar.slides || []).reduce((acc, s) => { if (s.notes) acc[s.slideNumber] = s.notes; return acc; }, {} as Record<number, string>)
+  );
+  const [debouncedNotes] = useDebounce(notes, 1500);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [quizData, setQuizData] = useState<QuizData | null>(null);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [openSlides, setOpenSlides] = useState<Set<number>>(new Set([0]));
+  const [expandAll, setExpandAll] = useState(false);
+  const isInitialMount = useRef(true);
+
+  const slides = seminar.slides || [];
+
+  const toggleSlide = (index: number) => {
+    setOpenSlides(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const handleExpandAll = () => {
+    if (expandAll) {
+      setOpenSlides(new Set([0]));
+    } else {
+      setOpenSlides(new Set(slides.map((_, i) => i)));
+    }
+    setExpandAll(!expandAll);
+  };
+
+  const handleAutoSaveNotes = useCallback(async () => {
+    if (!user || !seminar.id || !firestore) return;
+    setSaveStatus('saving');
+    try {
+      const ref = doc(firestore, 'users', user.uid, 'seminars', seminar.id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) { setSaveStatus('idle'); return; }
+      const updated = (snap.data().slides || []).map((s: any) => ({
+        ...s, notes: debouncedNotes[s.slideNumber] ?? s.notes ?? ''
+      }));
+      await updateDoc(ref, { slides: updated });
+      setSaveStatus('saved');
+    } catch { setSaveStatus('idle'); }
+  }, [user, seminar.id, firestore, debouncedNotes]);
+
+  useEffect(() => {
+    if (isInitialMount.current) { isInitialMount.current = false; return; }
+    handleAutoSaveNotes();
+  }, [debouncedNotes, handleAutoSaveNotes]);
+
+  useEffect(() => {
+    let t: NodeJS.Timeout;
+    if (saveStatus === 'saved') t = setTimeout(() => setSaveStatus('idle'), 2500);
+    return () => clearTimeout(t);
+  }, [saveStatus]);
+
+  const handleStartQuiz = async () => {
+    setIsGeneratingQuiz(true);
+    setQuizData(null);
+    try {
+      const contextText = slides.map(s => `Slide ${s.slideNumber} (${s.slideTitle}): ${s.summary}`).join('\n');
+      const result = await generateQuizAction({ topic: seminar.overallTitle, numQuestions: 5, contextText });
+      setQuizData(result.data);
+    } catch { toast({ title: 'Fejl', description: 'Quiz kunne ikke genereres.', variant: 'destructive' }); }
+    finally { setIsGeneratingQuiz(false); }
+  };
+
+  const totalConcepts = slides.reduce((a, s) => a + (s.keyConcepts?.length || 0), 0);
+  const totalLaw = slides.reduce((a, s) => a + (s.legalFrameworks?.length || 0), 0);
+  const totalTools = slides.reduce((a, s) => a + (s.practicalTools?.length || 0), 0);
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 top-[80px] z-[200] bg-slate-50 overflow-hidden flex flex-col">
+      {/* Top bar */}
+      <header className="bg-white border-b border-slate-100 px-5 sm:px-8 py-3 flex items-center gap-4 shrink-0">
+        <button onClick={quizData ? () => setQuizData(null) : onClose}
+          className="p-2 bg-slate-50 rounded-xl text-slate-600 hover:bg-slate-100 transition-all active:scale-95 shrink-0">
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-black text-slate-900 truncate text-sm">{seminar.overallTitle}</h2>
+          <p className="text-[10px] font-bold text-slate-400">{slides.length} slides · {seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {saveStatus === 'saving' && <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest hidden sm:block">Gemmer...</span>}
+          {saveStatus === 'saved' && (
+            <div className="flex items-center gap-1 text-emerald-600">
+              <CheckCircle className="w-3.5 h-3.5" />
+              <span className="text-[9px] font-black uppercase tracking-widest hidden sm:block">Gemt</span>
+            </div>
+          )}
+          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz}
+            className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white h-9 px-4 shadow-sm">
+            {isGeneratingQuiz ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <BrainCircuit className="w-3.5 h-3.5 mr-1.5" />}
+            Quiz
+          </Button>
         </div>
       </header>
-      <main className="max-w-4xl mx-auto p-4 md:p-8">
-        <div className="mb-8">
-            <Link href="/seminar-architect">
-                <Button>
-                    <Plus className="w-4 h-4 mr-2"/>
-                    Analyser nyt seminar
-                </Button>
-            </Link>
-        </div>
-        {isLoading ? (
-            <div className="flex justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-            </div>
-        ) : filteredSeminars.length === 0 ? (
-             <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed border-amber-100">
-                <BookCopy className="w-12 h-12 text-amber-100 mx-auto mb-4" />
-                <p className="text-slate-500 font-bold">Du har ingen gemte seminarer endnu.</p>
-                <p className="text-sm text-slate-400 mt-2">Gå til <Link href="/seminar-architect" className="underline font-semibold text-amber-700">Seminar-Arkitekten</Link> for at analysere dit første.</p>
-             </div>
+
+      <AnimatePresence mode="wait">
+        {quizData ? (
+          <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto bg-white">
+            <QuizView quizData={quizData} onFinish={() => setQuizData(null)} />
+          </motion.div>
         ) : (
-            <div className="space-y-12">
-                {sortedGroupKeys.map(groupKey => {
-                    const seminarsInGroup = groupedSeminars[groupKey];
-                    if (seminarsInGroup.length === 0) return null;
-                    const groupTitle = new Date(parseInt(groupKey.split('-')[0]), parseInt(groupKey.split('-')[1]) - 1).toLocaleString('da-DK', { month: 'long', year: 'numeric' });
+          <motion.div key="feed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+              {/* Stats row */}
+              <div className="grid grid-cols-4 gap-3 mb-6">
+                {[
+                  { label: 'Slides', val: slides.length, color: 'text-slate-700 bg-slate-100' },
+                  { label: 'Begreber', val: totalConcepts, color: 'text-indigo-700 bg-indigo-50' },
+                  { label: 'Love', val: totalLaw, color: 'text-rose-700 bg-rose-50' },
+                  { label: 'Metoder', val: totalTools, color: 'text-emerald-700 bg-emerald-50' },
+                ].map(({ label, val, color }) => (
+                  <div key={label} className={`${color} rounded-2xl p-3 text-center`}>
+                    <p className="text-xl font-black">{val}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest opacity-70 mt-0.5">{label}</p>
+                  </div>
+                ))}
+              </div>
 
-                    return (
-                        <section key={groupKey}>
-                            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-4 mb-4">
-                                {groupTitle}
-                            </h2>
-                            <div className="space-y-4">
-                                {seminarsInGroup.map(seminar => (
-                                    <div key={seminar.id} className="bg-white rounded-2xl border border-amber-100/60 shadow-sm overflow-hidden">
-                                        <div className="p-6 flex justify-between items-center cursor-pointer hover:bg-amber-50/30" onClick={() => setExpandedId(prev => prev === seminar.id ? null : seminar.id)}>
-                                            <div>
-                                                <p className="font-bold text-amber-950">{seminar.overallTitle || seminar.title}</p>
-                                                <p className="text-xs text-slate-400 mt-1">{seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDelete(seminar.id); }}>
-                                                    <Trash2 className="w-4 h-4 text-rose-500"/>
-                                                </Button>
-                                                <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${expandedId === seminar.id ? 'rotate-180' : ''}`} />
-                                            </div>
-                                        </div>
-                                        {expandedId === seminar.id && <SeminarDetailView seminar={seminar} user={user} />}
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    )
-                })}
+              {/* Controls */}
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Slides</p>
+                <button onClick={handleExpandAll} className="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 transition-colors">
+                  {expandAll ? '↑ Fold alle sammen' : '↓ Udvid alle'}
+                </button>
+              </div>
+
+              {/* Slide feed */}
+              <div className="space-y-3">
+                {slides.map((slide, i) => (
+                  <SlideCard
+                    key={slide.slideNumber}
+                    slide={slide}
+                    note={notes[slide.slideNumber] || ''}
+                    onNoteChange={val => setNotes(prev => ({ ...prev, [slide.slideNumber]: val }))}
+                    isOpen={openSlides.has(i)}
+                    onToggle={() => toggleSlide(i)}
+                    index={i}
+                  />
+                ))}
+              </div>
             </div>
+          </motion.div>
         )}
-      </main>
+      </AnimatePresence>
     </div>
-    )
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Seminar Card (Archive)
+// ---------------------------------------------------------------------------
+const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelete: () => void }> = ({ seminar, onOpen, onDelete }) => {
+  const totalConcepts = seminar.slides?.reduce((a, s) => a + (s.keyConcepts?.length || 0), 0) || 0;
+  const totalLaw = seminar.slides?.reduce((a, s) => a + (s.legalFrameworks?.length || 0), 0) || 0;
+  const date = seminar.createdAt?.toDate();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-300 cursor-pointer"
+      onClick={onOpen}
+    >
+      <div className="p-6">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shrink-0 shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <Presentation className="w-5 h-5 text-white" />
+          </div>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(); }}
+            className="p-1.5 text-slate-200 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all shrink-0"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        <h3 className="font-black text-slate-900 leading-snug mb-1 text-sm line-clamp-2">{seminar.overallTitle}</h3>
+        {seminar.fileName && (
+          <p className="text-[10px] text-slate-400 font-medium truncate mb-4">{seminar.fileName}</p>
+        )}
+
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          <span className="px-2 py-0.5 bg-slate-50 rounded-md text-[10px] font-black text-slate-500">{seminar.slides?.length || 0} slides</span>
+          {totalConcepts > 0 && <span className="px-2 py-0.5 bg-indigo-50 rounded-md text-[10px] font-black text-indigo-600">{totalConcepts} begreber</span>}
+          {totalLaw > 0 && <span className="px-2 py-0.5 bg-rose-50 rounded-md text-[10px] font-black text-rose-600">{totalLaw} love</span>}
+        </div>
+
+        <div className="flex items-center justify-between">
+          {date && (
+            <p className="text-[10px] text-slate-400 flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {date.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </p>
+          )}
+          <span className="text-[10px] font-black text-indigo-500 group-hover:text-indigo-700 transition-colors flex items-center gap-0.5">
+            Åbn <ChevronRight className="w-3 h-3" />
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
+function MineSeminarerPageContent() {
+  const { user } = useApp();
+  const firestore = useFirestore();
+  const [seminars, setSeminars] = useState<SavedSeminar[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [openSeminar, setOpenSeminar] = useState<SavedSeminar | null>(null);
+
+  useEffect(() => {
+    if (!user || !firestore) return;
+    const q = query(collection(firestore, 'users', user.uid, 'seminars'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, snap => {
+      setSeminars(snap.docs.map(d => ({ id: d.id, ...d.data() } as SavedSeminar)));
+      setIsLoading(false);
+    }, () => setIsLoading(false));
+    return () => unsub();
+  }, [user, firestore]);
+
+  const handleDelete = async (id: string) => {
+    if (!user || !firestore || !window.confirm('Er du sikker på, du vil slette dette videnskort?')) return;
+    await deleteDoc(doc(firestore, 'users', user.uid, 'seminars', id));
+    if (openSeminar?.id === id) setOpenSeminar(null);
+  };
+
+  const filtered = useMemo(() => {
+    if (!searchQuery) return seminars;
+    const q = searchQuery.toLowerCase();
+    return seminars.filter(s =>
+      s.overallTitle?.toLowerCase().includes(q) ||
+      s.slides?.some(sl =>
+        sl.slideTitle?.toLowerCase().includes(q) ||
+        sl.summary?.toLowerCase().includes(q) ||
+        sl.keyConcepts?.some((c: any) => c.term?.toLowerCase().includes(q)) ||
+        sl.notes?.toLowerCase().includes(q)
+      )
+    );
+  }, [seminars, searchQuery]);
+
+  const groups = useMemo(() => {
+    const g: Record<string, SavedSeminar[]> = {};
+    filtered.forEach(s => {
+      const d = s.createdAt?.toDate();
+      if (!d) return;
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!g[k]) g[k] = [];
+      g[k].push(s);
+    });
+    return g;
+  }, [filtered]);
+
+  const groupKeys = useMemo(() => Object.keys(groups).sort((a, b) => b.localeCompare(a)), [groups]);
+
+  return (
+    <>
+      <AnimatePresence>
+        {openSeminar && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}>
+            <SeminarDetailView seminar={openSeminar} user={user} onClose={() => setOpenSeminar(null)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="min-h-screen bg-slate-50">
+        {/* Header */}
+        <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
+          <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Link href="/portal" className="p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 transition-all active:scale-95">
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+              <div>
+                <h1 className="text-sm font-black text-slate-900">Mine Seminarer</h1>
+                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-500">{seminars.length} videnskort</p>
+              </div>
+            </div>
+            <Link href="/seminar-architect">
+              <Button size="sm" className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white h-9 shadow-sm shadow-indigo-500/20">
+                <Plus className="w-4 h-4 mr-1.5" /> Ny analyse
+              </Button>
+            </Link>
+          </div>
+        </header>
+
+        <main className="max-w-6xl mx-auto px-5 sm:px-8 py-8">
+          {/* Page title */}
+          <div className="mb-8">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-1">Dine videnskort</h2>
+            <p className="text-sm text-slate-500">Analyserede seminar-præsentationer fra Seminar-Arkitekten.</p>
+          </div>
+
+          {/* Search */}
+          {seminars.length > 2 && (
+            <div className="relative max-w-sm mb-8">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Søg..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-9 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Content */}
+          {isLoading ? (
+            <div className="flex justify-center py-24"><Loader2 className="w-7 h-7 animate-spin text-indigo-400" /></div>
+          ) : filtered.length === 0 ? (
+            <div className="py-20 text-center bg-white rounded-3xl border border-dashed border-slate-200">
+              {searchQuery ? (
+                <>
+                  <Search className="w-9 h-9 text-slate-200 mx-auto mb-3" />
+                  <p className="font-bold text-slate-600 mb-1">Ingen resultater for "{searchQuery}"</p>
+                  <button onClick={() => setSearchQuery('')} className="text-sm text-indigo-500 underline">Ryd søgning</button>
+                </>
+              ) : (
+                <>
+                  <BookCopy className="w-11 h-11 text-slate-200 mx-auto mb-4" />
+                  <p className="font-black text-slate-700 mb-1">Ingen videnskort endnu</p>
+                  <p className="text-sm text-slate-400 mb-6">Upload dine første seminar-slides for at komme i gang.</p>
+                  <Link href="/seminar-architect">
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11">
+                      <Sparkles className="w-4 h-4 mr-2" /> Start Seminar-Arkitekten
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-10">
+              {groupKeys.map(key => {
+                const [year, month] = key.split('-');
+                const title = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('da-DK', { month: 'long', year: 'numeric' });
+                const items = groups[key];
+                return (
+                  <section key={key}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 capitalize">{title}</p>
+                      <div className="flex-1 h-px bg-slate-100" />
+                    </div>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {items.map(seminar => (
+                        <SeminarCard key={seminar.id} seminar={seminar} onOpen={() => setOpenSeminar(seminar)} onDelete={() => handleDelete(seminar.id)} />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      </div>
+    </>
+  );
 }
 
-const MineSeminarerPageWrapper = () => {
-    const { user, isUserLoading } = useApp();
-    const router = useRouter();
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.replace('/');
-        }
-    }, [user, isUserLoading, router]);
+const MineSeminarerPage = () => {
+  const { user, isUserLoading } = useApp();
+  const router = useRouter();
+  useEffect(() => {
+    if (!isUserLoading && !user) router.replace('/');
+  }, [user, isUserLoading, router]);
+  if (isUserLoading || !user) return <AuthLoadingScreen />;
+  return <MineSeminarerPageContent />;
+};
 
-    if (isUserLoading || !user) {
-        return <AuthLoadingScreen />;
-    }
-    
-    return <MineSeminarerPageContent />;
-}
-
-export default MineSeminarerPageWrapper;
+export default MineSeminarerPage;

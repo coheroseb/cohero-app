@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to answer questions based on an uploaded VIVE report.
  * - getViveReportQa - Processes report text and a user question.

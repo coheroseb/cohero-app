@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview A robust flow to fetch publications from the VIVE API.
  * - Supports search, pagination, and validates output.

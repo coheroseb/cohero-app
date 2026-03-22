@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to explain social work concepts.
  * - explainConcept - Generates a studerende-oriented explanation of a concept.

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -30,7 +30,13 @@ import {
   Clock,
   Layout,
   BookOpen,
-  GraduationCap
+  GraduationCap,
+  Scale,
+  MessageSquare,
+  Quote,
+  ShieldCheck,
+  Bookmark,
+  Share2
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
@@ -50,7 +56,9 @@ import {
 } from 'firebase/firestore';
 import { getSecondOpinionAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // --- TYPES ---
 
@@ -96,26 +104,38 @@ async function extractTextFromPdf(file: File): Promise<string> {
 
 // --- COMPONENTS ---
 
-const ResultCard: React.FC<{
+const DashboardCard: React.FC<{
   title: string;
   icon: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-}> = ({ title, icon, children, className }) => (
-  <div 
-    className={`bg-white rounded-[2.5rem] border border-amber-100 p-8 shadow-sm animate-ink ${className}`}
-  >
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-700 shadow-inner">
-        {icon}
-      </div>
-      <h3 className="text-xl font-bold text-amber-950 serif">{title}</h3>
-    </div>
-    <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed font-medium">
-      {children}
-    </div>
-  </div>
-);
+  variant?: 'white' | 'amber' | 'slate' | 'rose';
+}> = ({ title, icon, children, className, variant = 'white' }) => {
+    const variantStyles = {
+        white: 'bg-white border-amber-100',
+        amber: 'bg-amber-50/50 border-amber-100',
+        slate: 'bg-slate-50/50 border-slate-100',
+        rose: 'bg-rose-50/50 border-rose-100'
+    };
+
+    return (
+        <motion.section 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`${variantStyles[variant]} p-10 rounded-[3.5rem] border shadow-sm relative group hover:shadow-xl transition-all ${className}`}
+        >
+            <div className="flex items-center gap-3 border-b border-black/5 pb-6 mb-8">
+                <div className="w-8 h-8 rounded-lg bg-white/80 flex items-center justify-center text-amber-950 shadow-sm border border-black/5">
+                    {icon}
+                </div>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-black/40">{title}</h3>
+            </div>
+            <div className="relative z-10">
+                {children}
+            </div>
+        </motion.section>
+    );
+};
 
 const FileInputCard: React.FC<{
   file: File | null;
@@ -131,26 +151,26 @@ const FileInputCard: React.FC<{
   };
 
   return (
-    <div className="bg-white p-6 rounded-3xl border border-amber-100 shadow-sm hover:border-rose-200 transition-all group">
+    <div className="bg-white p-6 rounded-3xl border border-amber-100 shadow-sm hover:border-amber-400 transition-all group overflow-hidden relative">
       <label htmlFor={id} className="block text-[10px] font-black uppercase tracking-widest text-amber-900/50 mb-3">
         {label} {required && <span className="text-rose-500">*</span>}
       </label>
       {file ? (
-        <div className="flex items-center justify-between gap-4 p-4 bg-rose-50/50 rounded-2xl border border-rose-100">
+        <div className="flex items-center justify-between gap-4 p-4 bg-amber-50/30 rounded-2xl border border-amber-100">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-               <FileIcon className="w-5 h-5 text-rose-600" />
+               <FileIcon className="w-5 h-5 text-amber-600" />
             </div>
-            <span className="text-sm font-bold text-rose-950 truncate">{file.name}</span>
+            <span className="text-sm font-bold text-amber-950 truncate">{file.name}</span>
           </div>
-          <button onClick={() => setFile(null)} className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-100 rounded-xl transition-all">
+          <button onClick={() => setFile(null)} className="p-2 text-amber-400 hover:text-amber-600 hover:bg-amber-100 rounded-xl transition-all">
             <X className="w-4 h-4" />
           </button>
         </div>
       ) : (
-        <label htmlFor={id} className="relative block w-full border-2 border-dashed border-amber-100 rounded-2xl p-8 text-center cursor-pointer hover:border-rose-400 hover:bg-rose-50/50 transition-all group/label">
-            <UploadCloud className="mx-auto h-10 w-10 text-amber-200 group-hover/label:text-rose-400 transition-colors" />
-            <span className="mt-4 block text-[10px] font-black uppercase tracking-widest text-amber-900/40">Træk & slip eller klik for at vælge PDF</span>
+        <label htmlFor={id} className="relative block w-full border-2 border-dashed border-amber-100 rounded-2xl p-6 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition-all group/label">
+            <UploadCloud className="mx-auto h-8 w-8 text-amber-200 group-hover/label:text-amber-400 transition-colors" />
+            <span className="mt-3 block text-[9px] font-black uppercase tracking-widest text-amber-900/40">Vælg PDF</span>
             <input id={id} name={id} type="file" className="sr-only" accept=".pdf" onChange={handleFileChange} />
         </label>
       )}
@@ -164,6 +184,7 @@ const SecondOpinionPageContent = () => {
     const router = useRouter();
     const { user, userProfile, refetchUserProfile } = useApp();
     const firestore = useFirestore();
+    const { toast } = useToast();
 
     const [studyRegulationsFile, setStudyRegulationsFile] = useState<File | null>(null);
     const [examRegulationsFile, setExamRegulationsFile] = useState<File | null>(null);
@@ -172,11 +193,13 @@ const SecondOpinionPageContent = () => {
     const [grade, setGrade] = useState('');
 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisProgress, setAnalysisProgress] = useState<{ step: number; label: string }>({ step: 0, label: '' });
     const [result, setResult] = useState<Analysis | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [limitError, setLimitError] = useState<string | null>(null);
     const [pastOpinions, setPastOpinions] = useState<SecondOpinionRecord[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [showHistory, setShowHistory] = useState(false);
 
     // Fetch history
     useEffect(() => {
@@ -184,7 +207,7 @@ const SecondOpinionPageContent = () => {
         const q = query(
             collection(firestore, 'users', user.uid, 'secondOpinions'), 
             orderBy('createdAt', 'desc'), 
-            limit(6)
+            limit(10)
         );
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const records = snapshot.docs.map(doc => ({
@@ -201,18 +224,30 @@ const SecondOpinionPageContent = () => {
         return studyRegulationsFile && examRegulationsFile && assignmentFile && grade.trim();
     }, [studyRegulationsFile, examRegulationsFile, assignmentFile, grade]);
 
-     const isPremiumUser = useMemo(() => {
-        return userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership);
+      const isPremiumUser = useMemo(() => {
+        const m = userProfile?.membership;
+        return m && ['Kollega+', 'Semesterpakken', 'Kollega++', 'Group Pro'].includes(m);
     }, [userProfile]);
 
-    const handleGetSecondOpinion = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleGetSecondOpinion = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!isFormValid || isAnalyzing || !user || !userProfile || !firestore) return;
 
         setIsAnalyzing(true);
         setResult(null);
         setError(null);
         setLimitError(null);
+        setAnalysisProgress({ step: 1, label: 'Parser dokumenter...' });
+
+        let progressInterval: NodeJS.Timeout | undefined;
+        progressInterval = setInterval(() => {
+            setAnalysisProgress(prev => {
+                if (prev.step === 1) return { step: 2, label: 'Analyserer rød tråd og taksonomi...' };
+                if (prev.step === 2) return { step: 3, label: 'Sammenligner med læringsmål...' };
+                if (prev.step === 3) return { step: 4, label: 'Syntetiserer juridisk vurdering...' };
+                return prev;
+            });
+        }, 3000);
 
         try {
             const userRef = doc(firestore, 'users', user.uid);
@@ -237,26 +272,25 @@ const SecondOpinionPageContent = () => {
             
             const currentCount = isNewMonth ? 0 : (userData.monthlySecondOpinionCount || 0);
 
-            if (currentCount >= limitVal) {
-                 const planName = userProfile.membership;
-                 const upgradeText = planName === 'Kollega' ? ' Opgrader til Kollega+ for flere forsøg.' : '';
-                 setLimitError(`Du har brugt dine ${limitVal} månedlige forsøg i Second Opinion for ${planName}.${upgradeText}`);
+            if (currentCount >= (limitVal || 0)) {
+                 const planName = userProfile.membership || 'din plan';
+                 setLimitError(`Månedlig grænse nået for ${planName}.`);
                  setIsAnalyzing(false);
+                 if (progressInterval) clearInterval(progressInterval);
                  return;
             }
 
-            // Extract text from PDFs on the client
-            const [studyRegulationsText, examRegulationsText, assignmentText, feedbackText] = await Promise.all([
+            // Client-side extraction
+            const [studyText, examText, assignmentText, feedbackText] = await Promise.all([
                 extractTextFromPdf(studyRegulationsFile!),
                 extractTextFromPdf(examRegulationsFile!),
                 extractTextFromPdf(assignmentFile!),
                 feedbackFile ? extractTextFromPdf(feedbackFile) : Promise.resolve(undefined),
             ]);
 
-            // Call Server Action for AI analysis
             const response = await getSecondOpinionAction({
-                studyRegulations: studyRegulationsText,
-                examRegulations: examRegulationsText,
+                studyRegulations: studyText,
+                examRegulations: examText,
                 assignmentText: assignmentText,
                 grade: grade,
                 feedback: feedbackText
@@ -265,334 +299,322 @@ const SecondOpinionPageContent = () => {
             const analysisResult = response.data;
             setResult(analysisResult);
 
-            // Save to Firestore
+            // Save
             const batch = writeBatch(firestore);
             const secondOpinionRef = doc(collection(firestore, 'users', user.uid, 'secondOpinions'));
-            
-            const dataToSave = {
-                input: { grade },
-                analysis: analysisResult,
-                createdAt: serverTimestamp()
-            };
-
+            const dataToSave = { input: { grade }, analysis: analysisResult, createdAt: serverTimestamp() };
             batch.set(secondOpinionRef, dataToSave);
-            
-            const latestRef = doc(firestore, 'users', user.uid, 'secondOpinions', 'latest');
-            batch.set(latestRef, dataToSave);
+            batch.set(doc(firestore, 'users', user.uid, 'secondOpinions', 'latest'), dataToSave);
 
-            const userUpdates: {[key: string]: any} = {};
-            if (isNewMonth) {
-                userUpdates.monthlySecondOpinionCount = 1;
-            } else {
-                userUpdates.monthlySecondOpinionCount = increment(1);
-            }
+            const userUpdates: any = {};
+            if (isNewMonth) userUpdates.monthlySecondOpinionCount = 1;
+            else userUpdates.monthlySecondOpinionCount = increment(1);
             userUpdates.lastSecondOpinionUsage = serverTimestamp();
-            userUpdates.cohéroPoints = increment(500); // Reward for using the tool
+            userUpdates.cohéroPoints = increment(500);
 
             batch.update(userRef, userUpdates);
             await batch.commit();
             await refetchUserProfile();
 
         } catch (err: any) {
-            console.error(err);
-            setError('Der skete en fejl under analysen. Prøv venligst igen.');
+            setError('Der skete en fejl. Prøv igen.');
+            toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke gennemføre analysen." });
         } finally {
             setIsAnalyzing(false);
+            setAnalysisProgress({ step: 0, label: '' });
+            if (progressInterval) clearInterval(progressInterval);
         }
     };
 
     return (
-    <div className="bg-[#FDFCF8] min-h-screen flex flex-col selection:bg-rose-100">
+    <div className="bg-[#FDFCF8] min-h-screen flex flex-col selection:bg-amber-100">
         
-        {/* Editorial Header */}
-        <header className="bg-white border-b border-amber-100 pt-24 pb-16 px-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-rose-50/30 rounded-full blur-[120px] -mr-48 -mt-48 pointer-events-none"></div>
-            
-            <div className="max-w-7xl mx-auto relative z-10">
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-                    <div className="flex items-center gap-8">
-                        <Link href="/portal" className="w-14 h-14 bg-white border border-amber-100 rounded-2xl flex items-center justify-center hover:bg-amber-50 transition-all shadow-sm group">
-                            <ArrowLeft className="w-6 h-6 text-amber-950 group-hover:-translate-x-1 transition-transform" />
-                        </Link>
-                        <div>
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="p-1.5 bg-rose-50 rounded-lg">
-                                    <SearchCode className="w-4 h-4 text-rose-700" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-900/50">Akademisk Kontrol</span>
-                            </div>
-                            <h1 className="text-5xl md:text-6xl font-bold text-amber-950 serif tracking-tighter">
-                                Second <span className="text-rose-700 italic">Opinion</span>
-                            </h1>
-                            <p className="text-slate-500 mt-4 max-w-xl text-lg leading-relaxed">
-                                Få en uvildig, AI-drevet vurdering af din opgave. Vi sammenligner dit arbejde med studieordningens krav for at se, om din karakter er retvisende.
-                            </p>
-                        </div>
-                    </div>
+        {/* HEADER */}
+        <header className="w-full h-20 bg-white/80 backdrop-blur-md border-b border-amber-50 px-8 flex items-center justify-between sticky top-0 z-50">
+            <div className="flex items-center gap-6">
+                <Link href="/portal" className="p-3 bg-amber-50 text-amber-900 rounded-2xl hover:bg-amber-100 transition-all border border-amber-100">
+                    <ArrowLeft className="w-5 h-5" />
+                </Link>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-rose-900 rounded-xl flex items-center justify-center text-white shadow-lg"><Scale className="w-5 h-5" /></div>
+                    <h1 className="text-xl font-bold text-amber-950 serif tracking-tight hidden sm:block">Second Opinion</h1>
+                </div>
+            </div>
 
-                    <div className="flex items-center gap-4">
-                         <div className="hidden md:flex items-center gap-3 px-6 py-4 bg-amber-50 text-amber-900 rounded-2xl border border-amber-100">
-                            <Gavel className="w-5 h-5" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Klage-vejledning inkluderet</span>
-                         </div>
-                    </div>
+            <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setShowHistory(!showHistory)}
+                  className={`p-3 rounded-2xl transition-all border ${showHistory ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}
+                >
+                    <History className="w-5 h-5" />
+                </button>
+                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-rose-50 rounded-full border border-rose-100 text-[10px] font-black uppercase tracking-widest text-rose-900">
+                    <ShieldCheck className="w-4 h-4" /> Klage-tjek aktivt
                 </div>
             </div>
         </header>
 
-        <main className="max-w-7xl mx-auto w-full px-6 py-20 grid lg:grid-cols-12 gap-16 relative z-10">
-            
-            {/* SIDEBAR: INPUTS & HISTORY */}
-            <aside className="lg:col-span-4 space-y-12">
-                
-                <section 
-                    className="bg-white p-10 rounded-[3rem] border border-amber-100 shadow-xl relative overflow-hidden animate-ink"
-                >
-                    <h3 className="text-xl font-bold text-amber-950 serif mb-8 flex items-center gap-3">
-                        <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
-                            <UploadCloud className="w-5 h-5 text-rose-700" />
-                        </div>
-                        Upload Dokumenter
-                    </h3>
-                    
-                    <form onSubmit={handleGetSecondOpinion} className="space-y-6">
-                        <FileInputCard file={studyRegulationsFile} setFile={setStudyRegulationsFile} label="Studieordning (Læringsmål)" id="study-regulations" required />
-                        <FileInputCard file={examRegulationsFile} setFile={setExamRegulationsFile} label="Eksamensbestemmelser" id="exam-regulations" required />
-                        <FileInputCard file={assignmentFile} setFile={setAssignmentFile} label="Din opgavebesvarelse" id="assignment" required />
-                        <FileInputCard file={feedbackFile} setFile={setFeedbackFile} label="Feedback fra bedømmer (valgfri)" id="feedback" />
-
-                        <div className="bg-white p-6 rounded-3xl border border-amber-100 shadow-sm">
-                             <label htmlFor="grade" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/50 mb-3">
-                               Modtaget karakter <span className="text-rose-500">*</span>
-                             </label>
-                            <input 
-                                id="grade" 
-                                value={grade} 
-                                onChange={(e) => setGrade(e.target.value)} 
-                                placeholder="f.eks. 7, 10, B..." 
-                                className="w-full p-4 bg-[#FDFCF8] border border-amber-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-rose-500/5 focus:outline-none transition-all shadow-inner"
-                            />
-                        </div>
-                        
-                        {error && <p className="text-xs text-rose-600 font-bold text-center pt-2 animate-pulse">{error}</p>}
-                        
-                        {limitError && (
-                            <div className="bg-amber-50 border-2 border-dashed border-amber-200 text-amber-950 p-6 rounded-3xl text-center">
-                                <h3 className="font-bold text-sm mb-2">Grænse nået</h3>
-                                <p className="text-xs text-slate-500 leading-relaxed">{limitError}</p>
-                                <Link href="/upgrade" className="mt-4 inline-flex items-center gap-2 px-6 py-2 bg-amber-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-900 transition-all">
-                                    Opgrader nu <ArrowUpRight className="w-3 h-3" />
-                                </Link>
-                            </div>
-                        )}
-                        
-                        <button 
-                            type="submit" 
-                            disabled={!isFormValid || isAnalyzing || !!limitError} 
-                            className="w-full h-16 bg-amber-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-rose-900 transition-all disabled:opacity-50 shadow-xl shadow-amber-950/20 active:scale-95"
-                        >
-                            {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin"/> : <Sparkles className="w-5 h-5 text-amber-400" />}
-                            {isAnalyzing ? 'Analyserer...' : 'Start Second Opinion'}
-                        </button>
-                    </form>
-                </section>
-
-                {/* HISTORY SECTION */}
-                <section className="bg-white p-10 rounded-[3rem] border border-amber-100 shadow-xl">
-                    <h3 className="text-[10px] font-black uppercase text-slate-400 mb-8 tracking-[0.3em] flex items-center gap-3">
-                        <History className="w-4 h-4 text-rose-700" /> Tidligere Analyser
-                    </h3>
-                    
-                    {isLoadingHistory ? (
-                        <div className="flex justify-center py-10">
-                            <Loader2 className="w-6 h-6 animate-spin text-amber-200" />
-                        </div>
-                    ) : pastOpinions.length > 0 ? (
-                        <div className="space-y-4">
-                            {pastOpinions.map((opinion, idx) => (
-                                <button 
-                                    key={opinion.id}
-                                    onClick={() => setResult(opinion.analysis)} 
-                                    className="w-full text-left p-5 rounded-2xl bg-slate-50 border border-transparent hover:border-rose-200 hover:bg-white transition-all flex justify-between items-center group"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-rose-50 transition-colors">
-                                            <FileText className="w-5 h-5 text-slate-400 group-hover:text-rose-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-amber-950">Karakter: {opinion.input?.grade || 'N/A'}</p>
-                                            <p className="text-[9px] font-black uppercase text-slate-300 mt-1 tracking-widest">
-                                                {opinion.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 group-hover:text-rose-600 transition-all" />
-                                </button>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="py-10 text-center">
-                            <p className="text-[10px] font-black uppercase text-slate-300 tracking-widest">Ingen historik endnu</p>
-                        </div>
-                    )}
-                </section>
-            </aside>
-
-            {/* MAIN AREA: RESULTS */}
-            <main className="lg:col-span-8">
+        {/* MAIN DASHBOARD */}
+        <main className="w-full max-w-[1600px] mx-auto px-6 sm:px-12 pt-12 pb-40">
+            <AnimatePresence mode="wait">
                 {!result && !isAnalyzing ? (
-                    <div 
-                        className="h-full min-h-[700px] border-2 border-dashed border-amber-100 rounded-[4rem] flex flex-col items-center justify-center text-center p-16 space-y-10 bg-white/50 shadow-inner animate-ink"
+                    <motion.div 
+                        key="input-screen"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start"
                     >
-                        <div className="w-32 h-32 bg-amber-50 rounded-[3rem] flex items-center justify-center text-amber-200 shadow-inner">
-                            <SearchCode className="w-16 h-16" />
-                        </div>
-                        <div>
-                            <h3 className="text-3xl font-bold text-amber-900/30 serif">Klar til akademisk kontrol</h3>
-                            <p className="text-base text-slate-400 max-w-sm mx-auto mt-6 leading-relaxed">
-                                Upload dine dokumenter for at få en uvildig vurdering af din opgave. Vi analyserer den røde tråd og det teoretiske niveau.
-                            </p>
-                        </div>
-                        <div className="flex gap-4">
-                            <div className="px-6 py-3 bg-amber-50/50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-amber-900/30">PDF Analyse</div>
-                            <div className="px-6 py-3 bg-amber-50/50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-amber-900/30">Læringsmål-tjek</div>
-                        </div>
-                    </div>
-                ) : isAnalyzing ? (
-                    <div 
-                        className="h-full min-h-[700px] bg-white rounded-[4rem] border border-amber-100 flex flex-col items-center justify-center p-16 text-center shadow-2xl relative overflow-hidden animate-ink"
-                    >
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')] opacity-10"></div>
-                        <div className="relative mb-12">
-                            <div className="w-40 h-40 border-4 border-rose-50 border-t-rose-600 rounded-full animate-spin"></div>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <GraduationCap className="w-12 h-12 text-rose-600 animate-pulse" />
+                        {/* LEFT: HERO & INFO */}
+                        <div className="lg:col-span-4 space-y-10">
+                            <div className="space-y-6">
+                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-900 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-rose-100">
+                                    <Sparkles className="w-4 h-4 text-rose-500" /> AI-drevet karakter-audit
+                                </div>
+                                <h2 className="text-5xl md:text-7xl font-black text-amber-950 serif tracking-tighter leading-none">
+                                    Er din karakter <span className="text-rose-700 italic">retvisende</span>?
+                                </h2>
+                                <p className="text-lg text-slate-500 font-medium italic leading-relaxed">
+                                    Upload din opgave og pensumkrav for at få en uvildig analyse af din bedømmelse – før du beslutter dig for at klage.
+                                </p>
                             </div>
-                        </div>
-                        <h3 className="text-3xl font-bold text-amber-950 serif">Gennemlæser din opgave...</h3>
-                        <p className="text-sm text-slate-400 mt-6 uppercase tracking-[0.3em] animate-pulse">Sammenligner med studieordning og læringsmål</p>
-                    </div>
-                ) : (
-                    <div 
-                        className="space-y-12 animate-fade-in-up"
-                    >
-                        {/* CONCLUSION HERO */}
-                        <section className="bg-white rounded-[4rem] border border-amber-100 shadow-2xl overflow-hidden group">
-                            <div className={`p-12 flex flex-col md:flex-row items-center justify-between gap-10 text-white transition-colors duration-700 ${
-                                result.isGradeAccurate ? 'bg-emerald-900' : 'bg-rose-950'
-                            }`}>
-                                <div className="flex items-center gap-8">
-                                    <div className="w-24 h-24 bg-white/10 rounded-[2rem] flex items-center justify-center backdrop-blur-md shadow-2xl">
-                                        {result.isGradeAccurate ? (
-                                            <CheckCircle2 className="w-12 h-12 text-emerald-400" />
+
+                            {/* HISTORY DRAWER (Inline on Desktop) */}
+                            {showHistory && (
+                                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="p-8 bg-white border border-amber-100 rounded-[3rem] shadow-sm space-y-6">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tidligere analyser</h4>
+                                    <div className="space-y-3">
+                                        {pastOpinions.length > 0 ? (
+                                            pastOpinions.map(op => (
+                                                <button key={op.id} onClick={() => setResult(op.analysis)} className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-amber-50 transition-colors group">
+                                                    <div className="flex items-center gap-3">
+                                                        <FileText className="w-4 h-4 text-slate-400" />
+                                                        <span className="text-xs font-bold text-amber-950">Karakter {op.input.grade}</span>
+                                                    </div>
+                                                    <ChevronRight className="w-3 h-3 text-slate-300 group-hover:translate-x-1" />
+                                                </button>
+                                            ))
                                         ) : (
-                                            <XCircle className="w-12 h-12 text-rose-400" />
+                                            <p className="text-[10px] text-slate-300 text-center py-4 uppercase font-black">Ingen historik fundet</p>
                                         )}
                                     </div>
-                                    <div>
-                                        <h2 className="text-3xl font-bold serif leading-tight">
-                                            {result.isGradeAccurate ? 'Karakteren er retvisende' : 'Karakteren er IKKE retvisende'}
-                                        </h2>
-                                        <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mt-2">
-                                            Baseret på faglig sammenligning
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="px-8 py-4 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Din Karakter</p>
-                                    <p className="text-3xl font-black serif">{grade}</p>
-                                </div>
-                            </div>
-                            
-                            <div className="p-16">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                                        <Gavel className="w-5 h-5 text-amber-700" />
-                                    </div>
-                                    <h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-950">Faglig Argumentation</h3>
-                                </div>
-                                <div 
-                                    className="prose prose-lg max-w-none text-amber-950/80 leading-relaxed serif italic" 
-                                    dangerouslySetInnerHTML={{ __html: result.gradeAccuracyArgument }} 
-                                />
-                            </div>
-                        </section>
+                                </motion.div>
+                            )}
+                        </div>
 
-                        {/* DETAILED ANALYSIS */}
-                        {isPremiumUser ? (
-                            <div className="space-y-12">
-                                <div className="grid md:grid-cols-2 gap-8">
-                                    <ResultCard icon={<ThumbsUp className="text-emerald-600" />} title="Opgavens Styrker">
-                                        <ul className="space-y-4">
-                                            {result.strengths.map((item, index) => (
-                                                <li key={index} className="flex items-start gap-3">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 shrink-0"></div>
-                                                    <span className="text-sm">{item}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </ResultCard>
-                                    <ResultCard icon={<ThumbsDown className="text-rose-600" />} title="Opgavens Svagheder">
-                                        <ul className="space-y-4">
-                                            {result.weaknesses.map((item, index) => (
-                                                <li key={index} className="flex items-start gap-3">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-2 shrink-0"></div>
-                                                    <span className="text-sm">{item}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </ResultCard>
+                        {/* RIGHT: UPLOAD FORM */}
+                        <div className="lg:col-span-8 bg-white p-10 md:p-14 rounded-[4rem] border border-amber-100 shadow-xl relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-12 w-64 h-64 bg-rose-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-10" />
+                             
+                             <form onSubmit={handleGetSecondOpinion} className="space-y-12">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <FileInputCard file={studyRegulationsFile} setFile={setStudyRegulationsFile} label="Studieordning" id="s-reg" required />
+                                    <FileInputCard file={examRegulationsFile} setFile={setExamRegulationsFile} label="Eksamensbestemmelser" id="e-reg" required />
+                                    <FileInputCard file={assignmentFile} setFile={setAssignmentFile} label="Besvarelse" id="assign" required />
+                                    <FileInputCard file={feedbackFile} setFile={setFeedbackFile} label="Feedback (valgfri)" id="feed" />
                                 </div>
 
-                                <ResultCard icon={<AlertTriangle className="text-amber-600" />} title="Risikovurdering ved klage">
-                                    <div className="grid md:grid-cols-2 gap-8">
-                                        {result.riskAssessment.map((item, index) => (
-                                            <div key={index} className="p-6 bg-amber-50/50 rounded-2xl border border-amber-100 flex items-start gap-4">
-                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm shrink-0">
-                                                    <span className="text-xs font-bold text-amber-700">{index + 1}</span>
-                                                </div>
-                                                <p className="text-sm text-amber-900/70 font-medium">{item}</p>
+                                <div className="flex flex-col md:flex-row items-center gap-8 pt-8 border-t border-amber-50">
+                                    <div className="flex-1 w-full space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-amber-900/50">Modtaget Karakter</label>
+                                        <input 
+                                            value={grade} 
+                                            onChange={e => setGrade(e.target.value)}
+                                            placeholder="f.eks. 4 el. 7" 
+                                            className="w-full bg-slate-50 border border-amber-100 py-6 px-10 rounded-[2.5rem] text-2xl font-black text-amber-950 focus:ring-4 focus:ring-rose-100 outline-none transition-all placeholder:text-slate-200"
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit"
+                                        disabled={!isFormValid || isAnalyzing}
+                                        className="h-20 w-full md:w-auto px-12 bg-rose-950 text-white rounded-[2.5rem] font-black uppercase text-xs tracking-[0.3em] shadow-2xl hover:bg-rose-900 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30"
+                                    >
+                                        Start Analysen <Zap className="w-5 h-5 text-amber-400" />
+                                    </button>
+                                </div>
+
+                                {limitError && (
+                                    <div className="p-6 bg-amber-950 text-white rounded-3xl text-center space-y-4">
+                                        <p className="text-xs font-bold font-serif italic text-amber-200">{limitError}</p>
+                                        <Link href="/upgrade" className="inline-flex items-center gap-2 text-[10px] font-black uppercase border-b border-white/20 pb-1">Opgrader nu</Link>
+                                    </div>
+                                )}
+                             </form>
+                        </div>
+                    </motion.div>
+                ) : isAnalyzing ? (
+                   <motion.div 
+                        key="loading-screen"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="min-h-[600px] flex flex-col items-center justify-center space-y-12"
+                   >
+                        <div className="relative">
+                            <motion.div 
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                                className="w-48 h-48 border-2 border-dashed border-rose-200 rounded-full"
+                            />
+                            <motion.div 
+                                animate={{ rotate: -360 }}
+                                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                                className="absolute inset-4 border-2 border-dotted border-amber-200 rounded-full"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <motion.div 
+                                    animate={{ scale: [1, 1.1, 1] }} 
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="w-20 h-20 bg-rose-950 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl"
+                                >
+                                    <Gavel className="w-8 h-8" />
+                                </motion.div>
+                            </div>
+                        </div>
+                        <div className="text-center space-y-4">
+                            <h3 className="text-3xl font-bold text-amber-950 serif">{analysisProgress.label}</h3>
+                            <div className="flex items-center justify-center gap-2">
+                                {[1,2,3,4].map(s => (
+                                    <div key={s} className={`w-2 h-2 rounded-full transition-all duration-500 ${analysisProgress.step >= s ? 'bg-rose-600 scale-125' : 'bg-slate-200'}`} />
+                                ))}
+                            </div>
+                        </div>
+                   </motion.div>
+                ) : result && (
+                    <motion.div 
+                        key="result-screen"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-12"
+                    >
+                         {/* DASHBOARD GRID */}
+                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                             
+                             {/* COLUMN 1: VERDICT & ARGUMENT */}
+                             <div className="lg:col-span-8 space-y-8">
+                                 <section className={`rounded-[4rem] overflow-hidden shadow-2xl border ${result.isGradeAccurate ? 'bg-emerald-950 border-emerald-900' : 'bg-rose-950 border-rose-900'}`}>
+                                     <div className="p-12 md:p-20 flex flex-col md:flex-row items-center gap-12 border-b border-white/5 relative">
+                                         <div className="absolute top-0 right-0 p-12 w-64 h-64 bg-white/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
+                                         <div className="w-40 h-40 bg-white/10 rounded-[4rem] flex flex-col items-center justify-center backdrop-blur-md shadow-2xl shrink-0 group hover:scale-105 transition-transform">
+                                              <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Karakter</p>
+                                              <p className="text-6xl font-black text-white serif">{grade}</p>
+                                         </div>
+                                         <div className="text-center md:text-left space-y-4">
+                                             <div className="flex items-center justify-center md:justify-start gap-4">
+                                                 <div className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${result.isGradeAccurate ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+                                                     {result.isGradeAccurate ? 'Karakter Bekræftet' : 'Misforhold fundet'}
+                                                 </div>
+                                                 <div className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/5 text-white/60 border border-white/10`}>
+                                                     Audit ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}
+                                                 </div>
+                                             </div>
+                                             <h2 className="text-4xl md:text-6xl font-black text-white serif tracking-tighter leading-none">
+                                                 {result.isGradeAccurate 
+                                                    ? 'Karakteren er pædagogisk retvisende.' 
+                                                    : 'Din karakter er potentielt under vurderet.'}
+                                             </h2>
+                                         </div>
+                                     </div>
+                                     <div className="p-12 md:p-20 space-y-8 bg-black/10">
+                                         <div className="flex items-center gap-3">
+                                             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60"><Gavel className="w-4 h-4" /></div>
+                                             <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Juridisk & Faglig Argumentation</h4>
+                                         </div>
+                                         <div className="prose prose-invert prose-lg max-w-none text-white/80 serif italic italic leading-relaxed" dangerouslySetInnerHTML={{ __html: result.gradeAccuracyArgument }} />
+                                     </div>
+                                 </section>
+
+                                 {/* DETAILED CARDS ROW 1 */}
+                                 {isPremiumUser ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                         <DashboardCard title="Opgavens Styrker" icon={<ThumbsUp className="w-4 h-4 text-emerald-600" />} variant="slate">
+                                            <ul className="space-y-4">
+                                                {result.strengths.map((s, i) => (
+                                                    <li key={i} className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-slate-100 text-sm text-slate-600 font-medium">
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                        <span>{s}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                         </DashboardCard>
+                                         <DashboardCard title="Opgavens Svagheder" icon={<ThumbsDown className="w-4 h-4 text-rose-600" />} variant="rose">
+                                            <ul className="space-y-4">
+                                                {result.weaknesses.map((w, i) => (
+                                                    <li key={i} className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-rose-100 text-sm text-rose-600 font-medium italic">
+                                                        <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                                                        <span>{w}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                         </DashboardCard>
+                                    </div>
+                                 ) : (
+                                    <section className="bg-amber-950 p-12 md:p-20 rounded-[4rem] text-center space-y-10 shadow-2xl overflow-hidden relative group">
+                                         <div className="absolute inset-0 bg-gradient-to-br from-rose-900/40 to-black/40" />
+                                         <div className="relative z-10 space-y-6">
+                                             <div className="w-20 h-20 bg-amber-400 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl text-amber-950 group-hover:rotate-12 transition-transform duration-500"><Lock className="w-10 h-10" /></div>
+                                             <h3 className="text-3xl md:text-5xl font-black text-white serif tracking-tighter">Lås op for dybden</h3>
+                                             <p className="text-white/60 text-lg max-w-sm mx-auto font-medium italic">Få præcise styrker, svagheder og din personlige klage-risiko vurdering.</p>
+                                             <Link href="/upgrade" className="inline-block px-12 py-6 bg-white text-rose-950 rounded-full font-black uppercase text-xs tracking-widest hover:bg-amber-400 transition-all shadow-2xl">Opgrader nu</Link>
+                                         </div>
+                                    </section>
+                                 )}
+                             </div>
+
+                             {/* COLUMN 2: RISKS & NEXT STEPS */}
+                             <div className="lg:col-span-4 space-y-8">
+                                 {isPremiumUser && (
+                                     <>
+                                         <DashboardCard title="Risiko ved klage" icon={<AlertTriangle className="w-4 h-4 text-amber-600" />} variant="amber">
+                                            <div className="space-y-4">
+                                                {result.riskAssessment.map((r, i) => (
+                                                    <div key={i} className="flex items-center gap-4 p-5 bg-white rounded-3xl border border-amber-100 text-xs font-bold text-amber-900 italic">
+                                                        <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                                                        {r}
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                </ResultCard>
+                                         </DashboardCard>
 
-                                <ResultCard icon={<ListChecks className="text-indigo-600" />} title="Anbefalede Næste Skridt">
-                                    <div className="space-y-4">
-                                        {result.suggestedNextSteps.map((item, index) => (
-                                            <div key={index} className="flex items-center gap-4 p-5 bg-indigo-50/30 rounded-2xl border border-indigo-100 group/item hover:bg-white transition-all">
-                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover/item:bg-indigo-600 group-hover/item:text-white transition-all">
-                                                    <ChevronRight className="w-4 h-4" />
-                                                </div>
-                                                <p className="text-sm font-bold text-indigo-950">{item}</p>
+                                         <DashboardCard title="Anbefalede skridt" icon={<ListChecks className="w-4 h-4 text-indigo-600" />} variant="slate">
+                                            <div className="space-y-3">
+                                                {result.suggestedNextSteps.map((step, i) => (
+                                                    <button key={i} className="w-full text-left p-5 bg-white border border-slate-100 rounded-3xl flex items-center justify-between group hover:border-indigo-200 transition-all">
+                                                        <span className="text-[11px] font-black text-slate-500 group-hover:text-indigo-950 transition-colors">{step}</span>
+                                                        <ArrowUpRight className="w-4 h-4 text-slate-200 group-hover:text-indigo-400 group-hover:-translate-y-1 group-hover:translate-x-1" />
+                                                    </button>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                </ResultCard>
-                            </div>
-                        ) : (
-                            <section className="bg-amber-950 p-16 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-amber-400/5 rounded-full blur-[100px] -mr-48 -mt-48"></div>
-                                <div className="relative z-10">
-                                    <div className="w-24 h-24 bg-amber-400 text-amber-950 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl group-hover:rotate-12 transition-transform duration-500">
-                                        <Sparkles className="w-12 h-12" />
-                                    </div>
-                                    <h3 className="text-4xl font-bold serif mb-6 leading-tight">Lås op for den <br/>dybe analyse</h3>
-                                    <p className="text-amber-100/60 text-xl mb-12 max-w-lg mx-auto italic font-medium leading-relaxed">
-                                        Bliv klar til en eventuel klagesag med en detaljeret gennemgang af styrker, svagheder og risici.
-                                    </p>
-                                    <Link href="/upgrade">
-                                        <button className="h-20 px-12 bg-amber-400 hover:bg-white text-amber-950 rounded-[2rem] font-black uppercase text-xs tracking-[0.3em] shadow-2xl transition-all flex items-center gap-4 mx-auto group/btn">
-                                            Opgrader til Kollega+
-                                            <ArrowUpRight className="w-5 h-5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                                        </button>
-                                    </Link>
-                                </div>
-                            </section>
-                        )}
-                    </div>
+                                         </DashboardCard>
+                                     </>
+                                 )}
+
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={() => window.print()} className="p-8 bg-white border border-amber-100 rounded-[3rem] flex flex-col items-center gap-4 shadow-sm hover:bg-slate-50 transition-all group">
+                                        <Share2 className="w-6 h-6 text-slate-300 group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">PDF Audit</span>
+                                    </button>
+                                    <button className="p-8 bg-white border border-amber-100 rounded-[3rem] flex flex-col items-center gap-4 shadow-sm hover:bg-slate-50 transition-all group">
+                                        <Bookmark className="w-6 h-6 text-slate-300 group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gem Fund</span>
+                                    </button>
+                                 </div>
+                             </div>
+                         </div>
+
+                         {/* FOOTER ACTION */}
+                         {!result.isGradeAccurate && (
+                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center pt-12">
+                                <Link href="/klage-hjaelp">
+                                    <button className="px-12 py-6 bg-amber-950 text-white rounded-full font-black uppercase text-xs tracking-[0.4em] flex items-center gap-6 shadow-2xl hover:bg-rose-900 transition-all group">
+                                        Generér din officielle klage <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                    </button>
+                                </Link>
+                             </motion.div>
+                         )}
+                    </motion.div>
                 )}
-            </main>
+            </AnimatePresence>
         </main>
     </div>
     );
@@ -602,8 +624,13 @@ const SecondOpinionPage = () => {
   const { user, isUserLoading } = useApp();
   const router = useRouter();
 
-  if (isUserLoading || !user) {
+  if (isUserLoading) {
     return <AuthLoadingScreen />;
+  }
+
+  if (!user) {
+    router.push('/auth');
+    return null;
   }
 
   return <SecondOpinionPageContent />;

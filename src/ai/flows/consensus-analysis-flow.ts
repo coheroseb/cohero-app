@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview AI flow to analyze consensus in a collaborative session.
  *

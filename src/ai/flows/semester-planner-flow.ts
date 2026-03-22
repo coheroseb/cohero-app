@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI-augmented flow to parse an iCal feed and create a structured semester overview.
  * - generateSemesterPlan - The main function that orchestrates the process.
@@ -61,8 +61,8 @@ function parseDescription(description: string): { [key: string]: string } {
 
 
 // Main parsing function (deterministic)
-function parseIcal(icalContent: string): Omit<SemesterPlan, 'title' | 'mainSubjects' | 'studyTips' | 'semesterInfo'> & { allSummaries: string[] } {
-    const events = [];
+function parseIcal(icalContent: string): Omit<SemesterPlan, 'title' | 'mainSubjects' | 'studyTips' | 'semesterInfo' | 'deadlineClusters'> & { allSummaries: string[] } {
+    const events: any[] = [];
     const eventBlocks = icalContent.split('BEGIN:VEVENT');
     eventBlocks.shift(); // Remove the part before the first event
 
@@ -178,7 +178,12 @@ const AnalysisOutputSchema = z.object({
   title: z.string().describe("A descriptive title for the semester plan, e.g., 'Semesterplan for Forårssemester 2025'."),
   semesterInfo: z.string().describe("Information about the current semester extracted from the calendar, e.g., 'Forårssemester 2025'"),
   mainSubjects: z.array(z.string()).describe("A list of the main subjects or themes identified from the calendar events."),
-  studyTips: z.string().describe("A short paragraph with 2-3 concrete study tips based on the calendar's structure, like busy periods or overlapping deadlines."),
+  studyTips: z.string().describe("A short paragraph with 2-3 concrete study tips based on the calendar's structure."),
+  deadlineClusters: z.array(z.object({
+    title: z.string(),
+    weeks: z.array(z.number()),
+    description: z.string(),
+  })).describe("Identify intense periods where multiple deadlines or exams occur close to each other."),
 });
 
 const analysisPrompt = ai.definePrompt({
@@ -192,6 +197,7 @@ Your tasks, based *only* on this list of titles, are to:
 2.  **Create Title**: Create a clear title like "Semesterplan for [The Semester Info you extracted]". If you can't find semester info, use a generic title like "Dit Semesteroverblik".
 3.  **Identify Main Subjects**: Identify and list 3-5 recurring main subjects or themes (e.g., "Socialret", "Psykologi", "Videnskabsteori").
 4.  **Generate Study Tips**: Based on the distribution of events (especially those with "eksamen", "aflevering", "deadline"), write a short paragraph with 2-3 concrete study tips. Point out busy periods or suggest when to start preparing.
+5.  **Identify Deadline Clusters**: Identify periods (weeks) where major academic pressure occurs (e.g., clusters of exams or project deadlines). Give each cluster a short title like "Projekteksamen" and a description of why it's a tight period.
 
 Your entire response must be a single JSON object. All text must be in Danish.
 
@@ -233,21 +239,37 @@ const semesterPlannerFlow = ai.defineFlow(
     // 2. Focused AI analysis
     const { output: analysis, usage } = await analysisPrompt({ summaries: allSummaries });
     
-    // 3. Combine results
+    // 3. Calculate Intensity per week
+    const maxEvents = Math.max(...weeklyBreakdown.map(w => w.events.length), 1);
+    const enrichedWeeklyBreakdown = weeklyBreakdown.map(week => {
+        // Simple logic: Base intensity on event count + presence of exams/deadlines
+        let intensity = Math.ceil((week.events.length / maxEvents) * 7);
+        const hasExam = week.events.some((e: any) => 
+            e.summary.toLowerCase().includes('eksamen') || 
+            e.summary.toLowerCase().includes('deadline') ||
+            e.summary.toLowerCase().includes('aflevering')
+        );
+        if (hasExam) intensity = Math.min(10, intensity + 3);
+        
+        return { ...week, intensity };
+    });
+
+    // 4. Combine results
     const finalPlan: SemesterPlan = {
       title: analysis!.title,
       semesterInfo: analysis!.semesterInfo,
       mainSubjects: analysis!.mainSubjects,
       studyTips: analysis!.studyTips,
+      deadlineClusters: analysis!.deadlineClusters,
       keyDates,
-      weeklyBreakdown,
+      weeklyBreakdown: enrichedWeeklyBreakdown,
     };
 
     return {
       data: finalPlan,
       usage: {
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens
+        inputTokens: usage.inputTokens || 0,
+        outputTokens: usage.outputTokens || 0,
       }
     };
   }

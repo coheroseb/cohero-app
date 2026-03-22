@@ -39,6 +39,7 @@ import {
   AlertTriangle,
   Highlighter,
   Users,
+  User,
   ExternalLink as ExternalLinkIcon,
   Quote,
   ArrowRight,
@@ -61,7 +62,8 @@ import {
   Coins,
   ShieldAlert,
   Eye,
-  Briefcase
+  Briefcase,
+  Menu
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -96,6 +98,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { semanticLawSearchAction } from '@/app/actions';
 import { LiveStatusBadge } from './LiveStatusBadge';
 import LawQuizModal from './LawQuizModal';
 import ReadingGuideModal from './ReadingGuideModal';
@@ -579,7 +582,7 @@ function HighlightText({ text, highlight, userHighlights = [], onRemoveHighlight
   return <>{result}</>;
 }
 
-const LawOverviewCard = ({ law, isLocked, router, idx }: { law: LawConfig, isLocked: boolean, router: any, idx: number }) => {
+const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats }: { law: LawConfig, isLocked: boolean, router: any, idx: number, trainingStats: any }) => {
     const [metadata, setMetadata] = useState<LawContentType | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -604,49 +607,72 @@ const LawOverviewCard = ({ law, isLocked, router, idx }: { law: LawConfig, isLoc
         return metadata.kapitler.reduce((acc, kap) => acc + kap.paragraffer.length, 0);
     }, [metadata]);
 
+    const mastery = trainingStats?.mastery.find((m: any) => m.title === law.name || m.title === metadata?.titel);
+
     return (
         <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
             onClick={() => { if (!isLocked) router.push(href); }}
-            className={`bg-white p-8 rounded-[3rem] border border-amber-100 shadow-sm hover:shadow-2xl hover:border-amber-950 transition-all cursor-pointer group relative overflow-hidden flex flex-col justify-between min-h-[320px] ${isLocked ? 'opacity-60 border-slate-200 grayscale cursor-not-allowed' : 'border-amber-100 hover:border-amber-950 shadow-sm'}`}
+            className={`group bg-white/40 backdrop-blur-3xl p-10 rounded-[3.5rem] border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[360px] ${isLocked ? 'opacity-50 border-slate-200 grayscale cursor-not-allowed shadow-none' : 'border-amber-100/50 hover:border-amber-950/20 shadow-sm hover:shadow-2xl hover:bg-white active:scale-[0.98]'}`}
         >
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform group-hover:opacity-10">
-                <BookOpen className="w-24 h-24" />
+            <div className={`absolute top-0 right-0 p-10 opacity-[0.03] group-hover:scale-125 transition-transform duration-1000 group-hover:opacity-10 ${isLocked ? 'hidden' : ''}`}>
+                <BookOpen className="w-40 h-40 rotate-12" />
             </div>
             
             <div className="relative z-10">
-                <div className="flex justify-between items-start mb-8">
-                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase border transition-colors ${isLocked ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-amber-50 text-amber-900 border-amber-100 group-hover:bg-amber-950 group-hover:text-white'}`}>
+                <div className="flex justify-between items-start mb-10">
+                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500 ${isLocked ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-amber-50 text-amber-950 border-amber-200 group-hover:bg-amber-950 group-hover:text-amber-400 group-hover:border-amber-950 group-hover:shadow-lg group-hover:shadow-amber-950/20'}`}>
                         {law.abbreviation}
                     </span>
                     {isLocked ? (
-                        <div className="bg-amber-950/90 text-white px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg"><Lock className="w-3.5 h-3.5 text-amber-400" /><span className="text-[9px] font-black uppercase tracking-widest">Premium</span></div>
+                        <div className="bg-amber-950 text-white px-4 py-2 rounded-2xl flex items-center gap-2 shadow-xl"><Lock className="w-3.5 h-3.5 text-amber-400" /><span className="text-[10px] font-black uppercase tracking-widest">Premium</span></div>
                     ) : (
                         <LiveStatusBadge xmlUrl={law.xmlUrl} />
                     )}
                 </div>
-                <h4 className="text-2xl font-bold text-amber-950 serif leading-tight mb-4 group-hover:text-amber-700 transition-colors">
+                <h4 className="text-3xl font-black text-amber-950 serif leading-tight mb-8 group-hover:text-amber-800 transition-colors">
                     {metadata?.titel || law.name}
                 </h4>
+                
                 {loading ? (
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Henter live data...
+                    <div className="flex items-center gap-3 text-[10px] font-bold text-amber-400 uppercase tracking-widest bg-amber-50/50 w-fit px-4 py-2 rounded-xl">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Synkroniserer kilde...
                     </div>
                 ) : metadata ? (
-                    <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">
-                        <span className="flex items-center gap-1"><List className="w-3 h-3"/> {metadata.kapitler.length} Kapitler</span>
-                        <span className="flex items-center gap-1"><FileText className="w-3 h-3"/> {paraCount} Paragraffer</span>
+                    <div className="flex flex-wrap gap-x-8 gap-y-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        <span className="flex items-center gap-2.5 group-hover:text-amber-950/40 transition-colors"><List className="w-4 h-4 text-amber-200 group-hover:text-amber-400 transition-colors"/> {metadata.kapitler.length} Kapitler</span>
+                        <span className="flex items-center gap-2.5 group-hover:text-amber-950/40 transition-colors"><FileText className="w-4 h-4 text-amber-200 group-hover:text-amber-400 transition-colors"/> {paraCount} Paragraffer</span>
                     </div>
                 ) : (
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">{law.lbk}</p>
+                    <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em]">{law.lbk}</p>
                 )}
             </div>
 
-            <div className="relative z-10 pt-6 mt-6 border-t border-amber-50 flex items-center justify-between">
-                <span className={`text-xs font-bold uppercase tracking-widest text-slate-300 group-hover:text-amber-950 transition-colors`}>
-                    {isLocked ? 'Kun for Kollega+' : 'Åbn lovtekst'}
-                </span>
-                {!isLocked && <ArrowRight className="w-4 h-4 text-slate-200 group-hover:text-amber-950 transition-all group-hover:translate-x-1" />}
+            <div className="relative z-10 pt-8 mt-10 border-t border-amber-50/50 flex items-center justify-between">
+                <div>
+                   {mastery ? (
+                       <div className="flex items-center gap-4">
+                           <div className="w-32 h-2 bg-amber-50 rounded-full overflow-hidden border border-amber-100/50 shadow-inner">
+                               <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${mastery.accuracy}%` }}
+                                className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
+                               ></motion.div>
+                           </div>
+                           <span className="text-[11px] font-black text-amber-950 uppercase">{mastery.accuracy}%</span>
+                       </div>
+                   ) : (
+                       <span className={`text-[11px] font-black uppercase tracking-widest text-slate-300 group-hover:text-amber-950 transition-colors flex items-center gap-2`}>
+                           {isLocked ? 'Kollega+ Adgang' : 'Gå til lovtekst'}
+                           {!isLocked && <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />}
+                       </span>
+                   )}
+                </div>
+                {!isLocked && (
+                    <div className="w-12 h-12 rounded-[1.25rem] bg-amber-50 flex items-center justify-center group-hover:bg-amber-950 group-hover:text-white transition-all shadow-sm group-hover:shadow-xl group-hover:shadow-amber-950/20">
+                        <ArrowRight className="w-6 h-6 transition-transform group-hover:rotate-0" />
+                    </div>
+                )}
             </div>
         </motion.div>
     );
@@ -682,43 +708,52 @@ const DecisionTreeFlow = ({ situation, onCancel }: { situation: any, onCancel: (
     if (currentNodeId.startsWith('result-')) {
         const result = JSON.parse(currentNodeId.replace('result-', ''));
         return (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8 animate-ink">
-                <div className="flex items-center gap-4 border-b border-amber-100 pb-6">
-                    <button onClick={handleBack} className="p-2 hover:bg-amber-50 rounded-xl transition-all"><ChevronLeft className="w-6 h-6"/></button>
-                    <h3 className="text-2xl font-bold text-amber-950 serif">{result.title}</h3>
+            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 animate-ink">
+                <div className="flex items-center gap-6 border-b border-amber-100/50 pb-8">
+                    <button onClick={handleBack} className="w-12 h-12 flex items-center justify-center hover:bg-amber-50 rounded-2xl transition-all border border-transparent hover:border-amber-100 group"><ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform"/></button>
+                    <div>
+                        <h3 className="text-3xl font-black text-amber-950 serif tracking-tight">{result.title}</h3>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Simuleret Resultat</p>
+                    </div>
                 </div>
                 
-                <div className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-6">
-                        <div className="p-6 bg-white rounded-3xl border border-amber-100 shadow-sm">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-2">Hvad skal du gøre?</h4>
-                            <p className="text-sm text-slate-700 leading-relaxed font-medium">{result.action}</p>
+                <div className="grid lg:grid-cols-5 gap-10">
+                    <div className="lg:col-span-3 space-y-8">
+                        <div className="p-8 bg-white rounded-[2.5rem] border border-amber-100 shadow-sm relative overflow-hidden group/card">
+                            <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/card:scale-110 transition-transform"><CheckCircle2 className="w-24 h-24" /></div>
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600 mb-4 flex items-center gap-2">
+                                <Zap className="w-3.5 h-3.5" /> Næste Skridt
+                            </h4>
+                            <p className="text-lg font-bold text-slate-700 leading-relaxed serif italic">"{result.action}"</p>
                         </div>
-                        <div className="p-6 bg-amber-950 text-white rounded-3xl shadow-xl shadow-amber-900/20">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-400 mb-2">Hvem skal du kontakte?</h4>
-                            <p className="text-sm font-bold leading-relaxed">{result.contact}</p>
+                        <div className="p-8 bg-amber-950 text-white rounded-[2.5rem] shadow-2xl shadow-amber-950/20 relative overflow-hidden group/contact">
+                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover/contact:rotate-12 transition-transform"><Users className="w-24 h-24" /></div>
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 mb-4">Kontaktinstans</h4>
+                            <p className="text-xl font-black leading-tight serif">{result.contact}</p>
                         </div>
                     </div>
                     
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm h-fit">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2"><ScaleIcon className="w-4 h-4"/> Relevante Regler</h4>
-                        <div className="space-y-3">
+                    <div className="lg:col-span-2 bg-slate-50/50 p-8 rounded-[3rem] border border-slate-100 h-fit space-y-8">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 flex items-center gap-3">
+                            <ScaleIcon className="w-4 h-4 text-amber-200"/> Juridisk Grundlag
+                        </h4>
+                        <div className="space-y-4">
                             {result.rules.map((rule: any, i: number) => (
                                 <div 
                                     key={i} 
-                                    className="p-4 bg-slate-50 rounded-2xl border border-slate-100"
+                                    className="p-5 bg-white rounded-2xl border border-amber-50 shadow-sm hover:border-amber-950 transition-all group/rule cursor-help"
                                 >
-                                    <div>
-                                        <p className="font-bold text-amber-950 text-sm">{rule.paragraph}</p>
-                                        <p className="text-[10px] text-slate-400 uppercase font-black">{rule.text}</p>
-                                    </div>
+                                    <p className="font-black text-amber-950 text-sm mb-1 group-hover:text-amber-700">{rule.paragraph}</p>
+                                    <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{rule.text}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
-                <div className="flex justify-center pt-8">
-                    <Button variant="ghost" onClick={onCancel} className="rounded-xl px-10 h-14">Færdig</Button>
+                <div className="flex justify-center pt-4">
+                    <Button onClick={onCancel} className="rounded-2xl px-12 h-16 bg-amber-950 text-amber-400 font-black uppercase text-xs tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all">
+                        Afslut Simulation
+                    </Button>
                 </div>
             </motion.div>
         );
@@ -769,6 +804,7 @@ export function LovPortalViewer() {
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [activeSituationId, setActiveSituationId] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const [expandedParaKey, setExpandedParaKey] = useState<string | null>(null);
   const [activeParagraphNumber, setActiveParagraphNumber] = useState<string | null>(null);
@@ -778,6 +814,23 @@ export function LovPortalViewer() {
   const [selectionRange, setSelectionRange] = useState<{ text: string; paraKey: string; rect: DOMRect } | null>(null);
   const [paraAnalysis, setParaAnalysis] = useState<Record<string, ParagraphAnalysisData>>({});
   const [isAnalysingPara, setIsAnalysingPara] = useState<Record<string, boolean>>({});
+
+  // Semantic Search States
+  const [isSemanticMode, setIsSemanticMode] = useState(true);
+  const [semanticSearchQuery, setSemanticSearchQuery] = useState('');
+  const [semanticResult, setSemanticResult] = useState<{ summary: string, relevantLaws: any[] } | null>(null);
+  const [isSearchingSemantic, setIsSearchingSemantic] = useState(false);
+  const [searchProgress, setSearchProgress] = useState(0);
+
+  useEffect(() => {
+    if (isSearchingSemantic) {
+      setSearchProgress(0);
+      const timer = setInterval(() => {
+        setSearchProgress(prev => (prev < 3 ? prev + 1 : prev));
+      }, 3500);
+      return () => clearInterval(timer);
+    }
+  }, [isSearchingSemantic]);
 
   // Sagsindsigt States
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -805,9 +858,9 @@ export function LovPortalViewer() {
   const [isFetchingBibMetadata, setIsFetchingBibMetadata] = useState(false);
   
   const mainScrollRef = useRef<HTMLElement>(null);
-  const activeLawId = useMemo(() => params?.lawId as string || searchParams.get('lawId'), [params, searchParams]);
-  const activeGuidelineId = useMemo(() => searchParams.get('guidelineId'), [searchParams]);
-  const activeReferenceId = useMemo(() => searchParams.get('refId')?.toString(), [searchParams]);
+  const activeLawId = useMemo(() => params?.lawId as string || searchParams?.get('lawId'), [params, searchParams]);
+  const activeGuidelineId = useMemo(() => searchParams?.get('guidelineId'), [searchParams]);
+  const activeReferenceId = useMemo(() => searchParams?.get('refId')?.toString(), [searchParams]);
   const currentDocId = activeReferenceId || (activeGuidelineId ? `${activeLawId}-${activeGuidelineId}` : activeLawId);
   const currentDocData = currentDocId ? docsData[currentDocId] : null;
 
@@ -815,11 +868,30 @@ export function LovPortalViewer() {
   const isFreeTier = userProfile?.membership === 'Kollega';
 
   const filteredSuggestions = useMemo(() => {
-    if (!searchQuery.trim()) return SEARCH_SUGGESTIONS.slice(0, 5);
+    // If we're in a specific law, suggest paragraphs from that law
+    if (currentDocData) {
+      const allParagraphs = currentDocData.kapitler.flatMap(c => 
+        c.paragraffer.map(p => ({
+          display: `${p.nummer}: ${p.tekst.substring(0, 60)}${p.tekst.length > 60 ? '...' : ''}`,
+          value: p.nummer
+        }))
+      );
+
+      if (!searchQuery.trim()) return allParagraphs.slice(0, 6);
+      
+      return allParagraphs
+        .filter(p => 
+          p.value.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          p.display.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .slice(0, 6);
+    }
+
+    if (!searchQuery.trim()) return SEARCH_SUGGESTIONS.slice(0, 5).map(s => s);
     return SEARCH_SUGGESTIONS.filter(q => 
       q.toLowerCase().includes(searchQuery.toLowerCase())
     ).slice(0, 5);
-  }, [searchQuery]);
+  }, [searchQuery, currentDocData]);
 
   const loadDocumentContent = useCallback(async (lawId: string, docIdentifier: string, forceXmlUrl?: string) => {
     if (docsData[docIdentifier]) return;
@@ -859,7 +931,7 @@ export function LovPortalViewer() {
   useEffect(() => {
     if (lawsLoading) return;
     if (activeReferenceId) {
-        const forceXmlUrl = searchParams.get('xmlUrl');
+        const forceXmlUrl = searchParams?.get('xmlUrl');
         if (forceXmlUrl) loadDocumentContent('reference', activeReferenceId, forceXmlUrl);
     } else if (activeLawId) {
         loadDocumentContent(activeLawId, activeLawId);
@@ -886,7 +958,7 @@ export function LovPortalViewer() {
 
   // Sync activeParagraphNumber from URL
   useEffect(() => {
-    const paraFromUrl = searchParams.get('para');
+    const paraFromUrl = searchParams?.get('para');
     if (paraFromUrl) {
         setActiveParagraphNumber(decodeURIComponent(paraFromUrl));
     }
@@ -895,7 +967,7 @@ export function LovPortalViewer() {
   // Handle Auto-Expand and Scroll when activeParagraphNumber is set (from URL or navigation)
   useEffect(() => {
     if (activeParagraphNumber && currentDocData && !isLoadingDoc && currentDocId) {
-        let foundKey = null;
+        let foundKey: string | null = null;
         for (let cIdx = 0; cIdx < currentDocData.kapitler.length; cIdx++) {
             const chapter = currentDocData.kapitler[cIdx];
             const pIdx = chapter.paragraffer.findIndex(p => p.nummer === activeParagraphNumber);
@@ -1053,6 +1125,50 @@ export function LovPortalViewer() {
       if (activeCollectionId === id) setActiveCollectionId('all');
   };
 
+  const handleUnsave = async (e: React.MouseEvent, id: string) => {
+      e.preventDefault(); e.stopPropagation();
+      if (!user || !firestore) return;
+      try {
+          await deleteDoc(doc(firestore, 'users', user.uid, 'savedParagraphs', id));
+          toast({ title: "Paragraf fjernet" });
+      } catch (error) {
+          console.error("Error unsaving paragraph:", error);
+          toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke fjerne paragraffen." });
+      }
+  };
+
+  const handleSaveHighlight = async () => {
+    if (!user || !selectionRange || !firestore) return;
+    
+    // 1. Save as persistent visual marker
+    const highlightId = `${selectionRange.paraKey}-${Date.now()}`;
+    try {
+        await setDoc(doc(firestore, 'users', user.uid, 'highlights', highlightId), {
+            paragraphKey: selectionRange.paraKey,
+            text: selectionRange.text,
+            createdAt: serverTimestamp()
+        });
+
+        // 2. Save to "Gemte kilder" (savedParagraphs) for the archive list
+        await addDoc(collection(firestore, 'users', user.uid, 'savedParagraphs'), {
+            lawId: activeLawId || 'reference',
+            lawTitle: currentDocData?.titel || 'Loven',
+            lawAbbreviation: currentDocData?.forkortelse || 'Ref.',
+            paragraphNumber: activeParagraphNumber || 'Highlight',
+            fullText: selectionRange.text,
+            savedAt: serverTimestamp(),
+            externalUrl: activeReferenceId ? currentDocData?.uniqueDocumentId?.replace(/\/xml$/, '') : undefined
+        });
+
+        setSelectionRange(null);
+        window.getSelection()?.removeAllRanges();
+        toast({ title: "Markering gemt i arkiv!" });
+    } catch (err) {
+        console.error("Error saving highlight:", err);
+        toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke gemme markeringen." });
+    }
+  };
+
   const handleMoveToCollection = async (paraId: string, colId: string | null) => {
       if (!user) return;
       await updateDoc(doc(firestore!, 'users', user.uid, 'savedParagraphs', paraId), { collectionId: colId });
@@ -1067,7 +1183,7 @@ export function LovPortalViewer() {
         await deleteDoc(docRef);
     } else {
          const saveData: any = { paragraphNumber: para.nummer, fullText: para.tekst, lawId, lawTitle: lawData.titel, lawAbbreviation: lawData.forkortelse, savedAt: serverTimestamp() };
-         const extUrl = searchParams.get('xmlUrl');
+         const extUrl = searchParams?.get('xmlUrl');
          if (extUrl) saveData.externalUrl = extUrl.replace(/\/xml$/, '');
          await setDoc(docRef, saveData);
     }
@@ -1078,11 +1194,11 @@ export function LovPortalViewer() {
     setIsAnalysingPara(prev => ({ ...prev, [paraKey]: true }));
     try {
         const response = await analyzeParagraphAction({ 
-            lovTitel: lawData.titel, 
-            paragrafNummer: para.nummer, 
-            paragrafTekst: para.tekst, 
-            fuldLovtekst: lawData.rawText,
-            uniqueDocumentId: lawData.uniqueDocumentId
+            lovTitel: lawData.titel || '', 
+            paragrafNummer: para.nummer || '', 
+            paragrafTekst: para.tekst || '', 
+            fuldLovtekst: lawData.rawText || '',
+            uniqueDocumentId: lawData.uniqueDocumentId || ''
         });
         setParaAnalysis(prev => ({ ...prev, [paraKey]: response.data }));
     } finally {
@@ -1125,17 +1241,6 @@ export function LovPortalViewer() {
     }
   };
 
-  const handleSaveHighlight = async () => {
-    if (!user || !selectionRange || !firestore) return;
-    const id = `${selectionRange.paraKey}-${Date.now()}`;
-    await setDoc(doc(firestore, 'users', user.uid, 'highlights', id), {
-        paragraphKey: selectionRange.paraKey,
-        text: selectionRange.text,
-        createdAt: serverTimestamp()
-    });
-    setSelectionRange(null);
-    window.getSelection()?.removeAllRanges();
-  };
 
   const handleRemoveHighlight = async (id: string) => {
     if (!user) return;
@@ -1144,6 +1249,31 @@ export function LovPortalViewer() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSemanticMode && !(activeLawId || activeReferenceId)) {
+        handleSemanticSearch(e);
+    }
+  };
+
+  const handleSemanticSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = isSemanticMode ? semanticSearchQuery : searchQuery;
+    if (!query.trim() || isSearchingSemantic) return;
+    
+    setIsSearchingSemantic(true);
+    setSemanticResult(null);
+    setViewMode('laws'); 
+    
+    try {
+        const result = await semanticLawSearchAction(query, activeLawId || activeReferenceId || undefined, currentDocData || undefined);
+        setSemanticResult(result.data);
+        setSearchQuery(query); // Sync search query for UI visibility
+        setSemanticSearchQuery(query); // Sync both
+    } catch (error) {
+        console.error("Semantic search failed:", error);
+        toast({ variant: 'destructive', title: "Søgefejl", description: "Der opstod en fejl under den AI-baserede søgning." });
+    } finally {
+        setIsSearchingSemantic(false);
+    }
   };
 
   const citations = useMemo(() => {
@@ -1280,43 +1410,228 @@ export function LovPortalViewer() {
 
   return (
     <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 overflow-x-hidden">
-      {/* SIDEBAR NAVIGATION */}
-      <aside className={`w-72 bg-white border-r border-amber-100 flex flex-col sticky top-0 h-screen z-30 shadow-sm ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
-        <div className="p-8 flex items-center gap-4 border-b border-amber-50">
-            <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-lg"><ScaleIcon className="w-6 h-6" /></div>
-            <div><h1 className="text-xl font-bold text-amber-950 serif tracking-tight">Lovportalen</h1><p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Cohéro Legal</p></div>
+      {/* MOBILE HEADER */}
+      <div className="lg:hidden h-20 bg-white border-b border-amber-100 px-6 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-lg shrink-0">
+            <ScaleIcon className="w-5 h-5" />
+          </div>
+          <span className="text-lg font-black text-amber-950 serif tracking-tighter">Lovportal</span>
         </div>
-        <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto custom-scrollbar">
-            <button onClick={() => { setViewMode('laws'); router.push('/lov-portal'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'laws' && !activeLawId && !activeReferenceId ? 'bg-amber-950 text-white shadow-xl' : 'text-slate-500 hover:bg-amber-50'}`}><LayoutDashboard className="w-4 h-4" /> Oversigt</button>
-            <button onClick={() => setViewMode('saved')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'saved' ? 'bg-amber-950 text-white shadow-xl' : 'text-slate-500 hover:bg-amber-50'}`}><Bookmark className="w-4 h-4" /> Gemte</button>
-            <button onClick={() => setViewMode('training')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'training' ? 'bg-amber-950 text-white shadow-xl' : 'text-slate-500 hover:bg-amber-50'}`}><TrendingUp className="w-4 h-4" /> Træning</button>
-            <div className="pt-8 pb-4 px-4"><h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Hurtig-vælger</h3></div>
-            {(lawsConfigs || []).map((law, idx) => {
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-950 flex items-center justify-center active:scale-95 transition-all"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* MOBILE SIDEBAR DRAWER */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-40 lg:hidden"
+            />
+            <motion.aside 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-4 left-4 w-[85%] max-w-sm bg-white/95 backdrop-blur-xl z-50 lg:hidden flex flex-col shadow-2xl rounded-[3rem] border border-white/20"
+            >
+              <div className="p-8 border-b border-amber-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-amber-950 rounded-2xl flex items-center justify-center text-amber-400 shadow-xl shadow-amber-950/20">
+                    <ScaleIcon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-amber-950 serif tracking-tight">Lovportalen</h1>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40 italic">Premium Edition</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-amber-950 transition-colors"><X className="w-6 h-6" /></button>
+              </div>
+
+              <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">
+                <button 
+                    onClick={() => { setViewMode('laws'); setIsMobileMenuOpen(false); router.push('/lov-portal'); }} 
+                    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-base font-bold transition-all ${viewMode === 'laws' && !activeLawId && !activeReferenceId ? 'bg-amber-950 text-white shadow-xl shadow-amber-900/40 translate-x-1' : 'text-slate-500 hover:bg-amber-50 hover:translate-x-1'}`}
+                >
+                    <LayoutDashboard className="w-5 h-5" /> Oversigt
+                </button>
+                <button 
+                    onClick={() => { setViewMode('saved'); setIsMobileMenuOpen(false); }} 
+                    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-base font-bold transition-all ${viewMode === 'saved' ? 'bg-amber-950 text-white shadow-xl shadow-amber-900/40 translate-x-1' : 'text-slate-500 hover:bg-amber-50 hover:translate-x-1'}`}
+                >
+                    <Bookmark className="w-5 h-5" /> Gemte kilder
+                </button>
+                <button 
+                    onClick={() => { setViewMode('training'); setIsMobileMenuOpen(false); }} 
+                    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-base font-bold transition-all ${viewMode === 'training' ? 'bg-amber-950 text-white shadow-xl shadow-amber-900/40 translate-x-1' : 'text-slate-500 hover:bg-amber-50 hover:translate-x-1'}`}
+                >
+                    <TrendingUp className="w-5 h-5" /> Min Træning
+                </button>
+                
+                <div className="pt-10 pb-4 px-6">
+                    <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-amber-100/50"></div>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Quick-Select</h3>
+                        <div className="h-px flex-1 bg-amber-100/50"></div>
+                    </div>
+                </div>
+                {(lawsConfigs || []).map((law, idx) => {
+                    const isLocked = isFreeTier && idx > 0;
+                    const isActive = activeLawId === law.id;
+                    return (
+                        <button 
+                            key={law.id} 
+                            disabled={isLocked} 
+                            onClick={() => { setViewMode('laws'); setIsMobileMenuOpen(false); router.push(`/lov-portal/view/${law.id}`); }} 
+                            className={`w-full text-left px-6 py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-between group/nav ${isActive ? 'bg-amber-50 text-amber-950 border border-amber-200' : 'text-slate-500 hover:bg-amber-50'} ${isLocked ? 'opacity-50' : ''}`}
+                        >
+                            <span className="truncate pr-4">{law.name}</span>
+                            {isLocked ? <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" /> : <ChevronRight className={`w-4 h-4 transition-all ${isActive ? 'text-amber-950 translate-x-1' : 'text-slate-200'}`} />}
+                        </button>
+                    )
+                })}
+              </nav>
+              
+              <div className="p-8 border-t border-amber-50/50">
+                  <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-amber-100/50 flex items-center gap-4 shadow-sm">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-950 flex items-center justify-center text-amber-400 font-black text-xs shadow-xl shadow-amber-950/20">{user?.email?.charAt(0).toUpperCase()}</div>
+                      <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black text-amber-950 truncate serif leading-tight">{userProfile?.displayName || user?.email?.split('@')[0]}</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mt-1">{userProfile?.membership || 'Student'}</p>
+                      </div>
+                  </div>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* DESKTOP SIDEBAR NAVIGATION */}
+      <aside className={`w-80 bg-white/60 backdrop-blur-3xl border-r border-amber-100 flex flex-col sticky top-0 h-screen z-30 transition-all duration-700 ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
+        <div className="p-10 flex items-center gap-4 border-b border-amber-50/50">
+            <div className="w-14 h-14 bg-amber-950 rounded-[1.5rem] flex items-center justify-center text-amber-400 shadow-2xl shadow-amber-950/40 rotate-1 flex-shrink-0 animate-ink"><ScaleIcon className="w-8 h-8" /></div>
+            <div>
+                <h1 className="text-2xl font-black text-amber-950 serif tracking-tighter leading-none">Lovportal</h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/30 mt-1.5 flex items-center gap-2 italic">
+                    <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Premium Edition
+                </p>
+            </div>
+        </div>
+        <nav className="flex-1 px-6 py-10 space-y-2 overflow-y-auto custom-scrollbar">
+            <button 
+                onClick={() => { setViewMode('laws'); router.push('/lov-portal'); }} 
+                className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'laws' && !activeLawId && !activeReferenceId ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
+            >
+                <LayoutDashboard className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'laws' && !activeLawId && !activeReferenceId ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Oversigt
+            </button>
+            <button 
+                onClick={() => setViewMode('saved')} 
+                className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'saved' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
+            >
+                <Bookmark className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'saved' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Gemte kilder
+            </button>
+            <button 
+                onClick={() => setViewMode('training')} 
+                className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'training' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
+            >
+                <TrendingUp className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'training' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Min Træning
+            </button>
+            
+            <div className="pt-12 pb-6 px-6">
+                <div className="flex items-center gap-4">
+                    <div className="h-px flex-1 bg-amber-100/60"></div>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Lov-Bibliotek</h3>
+                    <div className="h-px flex-1 bg-amber-100/60"></div>
+                </div>
+            </div>
+            
+            {(lawsConfigs || []).slice(0, 10).map((law, idx) => {
                 const isLocked = isFreeTier && idx > 0;
+                const isActive = activeLawId === law.id;
                 return (
-                    <button key={law.id} disabled={isLocked} onClick={() => { setViewMode('laws'); router.push(`/lov-portal/view/${law.id}`); }} className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${activeLawId === law.id ? 'bg-amber-100 text-amber-950' : 'text-slate-500 hover:bg-amber-50'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                        <span className="truncate">{law.name}</span>{isLocked && <Lock className="w-3 h-3 text-amber-500" />}
+                    <button 
+                        key={law.id} 
+                        disabled={isLocked} 
+                        onClick={() => { setViewMode('laws'); router.push(`/lov-portal/view/${law.id}`); }} 
+                        className={`w-full text-left px-6 py-3.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between group/nav ${isActive ? 'bg-amber-50 text-amber-950 border border-amber-200' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950'} ${isLocked ? 'opacity-40 grayscale cursor-not-allowed' : 'hover:translate-x-1'}`}
+                    >
+                        <span className="truncate pr-4 font-bold">{law.name}</span>
+                        {isLocked ? <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" /> : <ChevronRight className={`w-4 h-4 transition-all ${isActive ? 'opacity-100 translate-x-0 text-amber-950' : 'opacity-0 -translate-x-2 group-hover/nav:opacity-100 group-hover/nav:translate-x-0'}`} />}
                     </button>
                 )
             })}
         </nav>
+        
+        <div className="p-8 border-t border-amber-50/50">
+            <div className={`p-6 rounded-[2.5rem] border transition-all duration-700 overflow-hidden relative group/user ${isScrolled ? 'bg-white shadow-lg' : 'bg-slate-50/50 border-transparent hover:border-amber-200 hover:bg-white hover:shadow-xl hover:shadow-amber-900/5'}`}>
+                <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 flex-shrink-0 rounded-2xl bg-amber-950 flex items-center justify-center text-amber-400 font-bold text-base shadow-xl group-hover/user:rotate-3 transition-transform">
+                        {userProfile?.displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-black text-amber-950 truncate serif leading-tight">{userProfile?.displayName || (user?.email && user.email.split('@')[0])}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mt-1 flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5" />
+                            {userProfile?.membership || 'Student'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
       </aside>
 
       {/* MAIN CONTENT AREA */}
       <main ref={mainScrollRef} className="flex-1 min-w-0 h-screen overflow-y-auto relative pt-0 custom-scrollbar">
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 flex items-center justify-between sticky top-0 z-20">
             <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
+                {!(activeLawId || activeReferenceId) && (
+                    <div className="flex bg-amber-950 rounded-2xl p-1 shadow-lg border border-amber-800">
+                        <div className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">
+                            <Wand2 className="w-3 h-3" /> AI Søgning Aktiveret
+                        </div>
+                    </div>
+                )}
                 <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-950 transition-colors" />
                     <input 
                         type="text" 
-                        placeholder="Søg i lovportalen..."
-                        value={searchQuery} 
-                        onChange={(e) => setSearchQuery(e.target.value)} 
+                        placeholder={(activeLawId || activeReferenceId) ? `Søg i ${currentDocData?.forkortelse || (lawsConfigs || []).find(l => l.id === activeLawId)?.abbreviation || 'denne lov'}...` : (isSemanticMode ? "Spørg AI'en om jura (f.eks. 'Hvad er reglerne for...') " : "Søg i lovportalen...")}
+                        value={(activeLawId || activeReferenceId) ? searchQuery : (isSemanticMode ? semanticSearchQuery : searchQuery)} 
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (activeLawId || activeReferenceId) {
+                                setSearchQuery(val);
+                                setSemanticSearchQuery(val); // Sync just in case they switch, but focus on filter
+                            } else {
+                                if (isSemanticMode) setSemanticSearchQuery(val);
+                                else setSearchQuery(val);
+                            }
+                        }} 
                         onFocus={() => setIsSearchFocused(true)}
                         onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-amber-950 focus:bg-white transition-all shadow-inner" 
+                        className="w-full pl-12 pr-4 py-3 bg-slate-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-amber-950 focus:bg-white transition-all" 
                     />
+                    
+                    {isSemanticMode && !(activeLawId || activeReferenceId) && (
+                        <button 
+                            type="submit"
+                            disabled={isSearchingSemantic || !semanticSearchQuery.trim()}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-4 bg-amber-950 text-amber-400 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                            {isSearchingSemantic ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                            Søg AI
+                        </button>
+                    )}
                     
                     <AnimatePresence>
                         {isSearchFocused && filteredSuggestions.length > 0 && (
@@ -1331,13 +1646,33 @@ export function LovPortalViewer() {
                                         key={i}
                                         type="button"
                                         onClick={() => {
-                                            setSearchQuery(suggestion);
+                                            if (typeof suggestion === 'object') {
+                                                setSearchQuery(suggestion.value);
+                                            } else {
+                                                setSearchQuery(suggestion);
+                                            }
                                             setIsSearchFocused(false);
+                                            
+                                            // Scroll to content
+                                            setTimeout(() => {
+                                                if (mainScrollRef.current) {
+                                                    const contentElement = document.getElementById('law-content-section') || document.getElementById('semantic-result-area');
+                                                    if (contentElement) {
+                                                        const top = contentElement.getBoundingClientRect().top + mainScrollRef.current.scrollTop - 100;
+                                                        mainScrollRef.current.scrollTo({ top, behavior: 'smooth' });
+                                                    } else {
+                                                        // Fallback scroll if IDs not found
+                                                        mainScrollRef.current.scrollTo({ top: 400, behavior: 'smooth' });
+                                                    }
+                                                }
+                                            }, 100);
                                         }}
                                         className="w-full text-left px-4 py-3 hover:bg-amber-50 rounded-xl transition-colors flex items-center gap-3 group/item"
                                     >
                                         <Sparkles className="w-3.5 h-3.5 text-amber-200 group-hover/item:text-amber-500 transition-colors" />
-                                        <span className="text-xs sm:text-sm font-medium text-slate-600 group-hover/item:text-amber-950">{suggestion}</span>
+                                        <span className="text-xs sm:text-sm font-medium text-slate-600 group-hover/item:text-amber-950">
+                                            {typeof suggestion === 'object' ? suggestion.display : suggestion}
+                                        </span>
                                     </button>
                                 ))}
                             </motion.div>
@@ -1355,11 +1690,20 @@ export function LovPortalViewer() {
                 </button>
                 <button 
                     onClick={() => setIsFocusMode(!isFocusMode)}
-                    className={`p-3 rounded-xl transition-all border shadow-sm active:scale-95 ${isFocusMode ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}
+                    className={`p-3 rounded-xl transition-all border shadow-sm active:scale-95 group/focus ${isFocusMode ? 'bg-amber-950 text-white border-amber-950 scale-110 shadow-2xl' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}
                     title={isFocusMode ? "Afslut fokustilstand" : "Aktiver fokustilstand"}
                 >
-                    {isFocusMode ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                    {isFocusMode ? <Minimize className="w-5 h-5 group-hover/focus:rotate-90 transition-transform" /> : <Maximize className="w-5 h-5 group-hover/focus:rotate-90 transition-transform" />}
                 </button>
+                {(activeLawId || activeReferenceId) && (
+                    <button 
+                        onClick={() => setIsQuizModalOpen(true)}
+                        className="p-3 bg-amber-950 text-amber-400 rounded-xl hover:scale-105 transition-all border border-amber-800 flex items-center gap-2 font-black text-[9px] uppercase tracking-[0.2em] shadow-xl active:scale-95 shrink-0"
+                    >
+                        <Trophy className="w-4 h-4" />
+                        <span className="hidden lg:inline">Lov-Quiz</span>
+                    </button>
+                )}
                 {!isFocusMode && (
                     <button onClick={() => setIsContextSidebarOpen(!isContextSidebarOpen)} className={`p-3 rounded-xl transition-all border shadow-sm active:scale-95 ${isContextSidebarOpen ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}>
                         <PanelRight className="w-5 h-5" />
@@ -1368,10 +1712,187 @@ export function LovPortalViewer() {
             </div>
         </header>
 
-        <div className={`p-8 md:p-12 mx-auto pt-8 md:pt-12 transition-all duration-500 ${isFocusMode ? 'max-w-full' : 'max-w-6xl'}`}>
+        <div className={`p-8 md:p-12 mx-auto pt-8 md:pt-12 transition-all duration-700 ease-in-out ${isFocusMode ? 'max-w-4xl pt-24' : (activeLawId || activeReferenceId ? 'max-w-full' : 'max-w-7xl')}`}>
+            {isFocusMode && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center mb-16 space-y-4"
+                >
+                    <div className="px-6 py-2 bg-amber-950 text-amber-400 rounded-full text-[10px] font-black uppercase tracking-[0.4em] shadow-2xl animate-ink">
+                        Fokus-tilstand Aktiv
+                    </div>
+                </motion.div>
+            )}
             <AnimatePresence mode="wait">
-                {lawsLoading || isLoadingDoc ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-96 flex flex-col items-center justify-center space-y-6"><Loader2 className="w-10 h-10 animate-spin text-amber-200" /><p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Indlæser indhold</p></motion.div>
+                {isSearchingSemantic ? (
+                    <motion.div 
+                        key="searching-state"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="mb-16 bg-white p-12 md:p-24 rounded-[4rem] border border-amber-100 shadow-2xl flex flex-col items-center justify-center text-center space-y-12 overflow-hidden relative"
+                    >
+                        <div className="absolute top-0 inset-x-0 h-1 bg-amber-50">
+                            <motion.div 
+                                className="h-full bg-amber-500"
+                                initial={{ width: "0%" }}
+                                animate={{ width: `${(searchProgress + 1) * 25}%` }}
+                                transition={{ duration: 3.5, ease: "linear" }}
+                            />
+                        </div>
+
+                        <div className="relative">
+                            <div className="w-32 h-32 bg-amber-50 rounded-[3rem] flex items-center justify-center text-amber-950">
+                                <Brain className="w-16 h-16 animate-pulse" />
+                            </div>
+                            <div className="absolute -inset-6 border-2 border-dashed border-amber-200 rounded-[4rem] animate-spin-slow opacity-40" />
+                        </div>
+
+                        <div className="max-w-xl mx-auto space-y-10">
+                            <div className="space-y-4">
+                                <h3 className="text-4xl font-bold text-amber-950 serif tracking-tight">AI'en arbejder for dig...</h3>
+                                <p className="text-slate-400 font-medium italic text-lg">Vi finder den præcise jura i realtid.</p>
+                            </div>
+
+                            <div className="grid gap-4 text-left">
+                                {[
+                                    { text: "Analyserer dit spørgsmål...", icon: <Zap className="w-4 h-4" /> },
+                                    { text: "Identificerer relevante love...", icon: <Target className="w-4 h-4" /> },
+                                    { text: "Henter og scraper kildetekster...", icon: <Library className="w-4 h-4" /> },
+                                    { text: "Udarbejder juridisk vurdering...", icon: <ScaleIcon className="w-4 h-4" /> }
+                                ].map((step, i) => (
+                                    <motion.div 
+                                        key={i}
+                                        initial={{ opacity: 0.3, x: -10 }}
+                                        animate={{ 
+                                            opacity: searchProgress >= i ? 1 : 0.3,
+                                            x: searchProgress >= i ? 0 : -10,
+                                            color: searchProgress >= i ? "#0f172a" : "#94a3b8"
+                                        }}
+                                        className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 font-bold text-sm"
+                                    >
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${searchProgress > i ? "bg-emerald-500 text-white" : searchProgress === i ? "bg-amber-950 text-white shadow-lg animate-bounce" : "bg-white text-slate-300"}`}>
+                                            {searchProgress > i ? <CheckCircle2 className="w-5 h-5"/> : step.icon}
+                                        </div>
+                                        {step.text}
+                                        {searchProgress === i && <Loader2 className="w-4 h-4 animate-spin ml-auto text-amber-500" />}
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                ) : (semanticResult && !activeLawId && !activeReferenceId) ? (
+                    <motion.div 
+                        key="search-results"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        className="mb-20 space-y-16"
+                    >
+                        <div className="flex items-center justify-between border-b border-amber-100/50 pb-10">
+                            <div className="flex items-center gap-8">
+                                <div className="w-16 h-16 bg-amber-950 rounded-3xl flex items-center justify-center text-amber-400 shadow-2xl shadow-amber-950/20 rotate-3">
+                                    <Sparkles className="w-8 h-8" />
+                                </div>
+                                <div>
+                                    <h2 className="text-4xl font-black text-amber-950 serif tracking-tight">AI Juridisk Vurdering</h2>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-2 flex items-center gap-2 italic">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
+                                        Resultat baseret på XML-scraping i realtid
+                                    </p>
+                                </div>
+                            </div>
+                            <Button variant="ghost" onClick={() => setSemanticResult(null)} className="rounded-2xl px-8 h-12 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-amber-950 hover:bg-amber-50 transition-all border border-transparent hover:border-amber-100">Ryd analyse</Button>
+                        </div>
+
+                        <div className="grid lg:grid-cols-5 gap-16">
+                            <div className="lg:col-span-3 space-y-12">
+                                <section className="bg-white p-12 md:p-16 rounded-[3.5rem] border border-amber-100 shadow-2xl shadow-amber-950/5 relative overflow-hidden group/res">
+                                    <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/res:scale-125 transition-transform duration-1000">
+                                        <Quote className="w-48 h-48" />
+                                    </div>
+                                    <div className="flex items-center gap-4 text-amber-700/60 mb-8 relative z-10">
+                                        <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700"><Bookmark className="w-4 h-4" /></div>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Resumé</span>
+                                    </div>
+                                    <div className="prose prose-slate prose-amber max-w-none relative z-10">
+                                        <p className="text-xl md:text-2xl text-amber-950 font-medium leading-relaxed font-serif italic">
+                                            "{semanticResult.summary}"
+                                        </p>
+                                    </div>
+                                </section>
+
+                                <div className="space-y-6">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-4">Anvendte Lovhjemler</h3>
+                                    <div className="grid gap-6">
+                                        {semanticResult.relevantLaws.map((law: any) => (
+                                            <div 
+                                                key={law.id} 
+                                                onClick={() => router.push(`/lov-portal/view/${law.id}`)}
+                                                className="bg-white p-8 rounded-[2.5rem] border border-amber-100 hover:border-amber-950 transition-all shadow-sm hover:shadow-xl cursor-pointer group/law"
+                                            >
+                                                <div className="flex justify-between items-start mb-6">
+                                                    <h4 className="text-xl font-bold text-amber-950 serif group-hover/law:text-amber-800 transition-colors">{law.title}</h4>
+                                                    <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-950 group-hover/law:bg-amber-950 group-hover/law:text-white transition-all shadow-sm">
+                                                        <ArrowRight className="w-5 h-5" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap gap-3 mb-6">
+                                                    {law.paragraphs.map((p: string, j: number) => (
+                                                        <span key={j} className="px-3 py-1 bg-amber-950 text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg">{p}</span>
+                                                    ))}
+                                                </div>
+                                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center gap-2">
+                                                        <Info className="w-3 h-3" /> Relevans
+                                                    </p>
+                                                    <p className="text-sm text-slate-600 leading-relaxed italic">{law.relevance}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <aside className="space-y-8">
+                                <div className="bg-amber-950 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+                                     <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none rotate-12">
+                                         <Gavel className="w-20 h-20" />
+                                     </div>
+                                     <h3 className="text-lg font-bold serif mb-6 tracking-tight">Om denne søgning</h3>
+                                     <p className="text-amber-100/60 text-sm leading-relaxed mb-8 italic">
+                                         AI'en har her gennemgået de specifikke XML-kilder for samtlige love i din portefølje for at uddrage de mest præcise regler for din sag.
+                                     </p>
+                                     <div className="space-y-4">
+                                         <div className="flex items-center gap-4">
+                                             <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400"><CheckCircle2 className="w-4 h-4"/></div>
+                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">Scrapet XML</span>
+                                         </div>
+                                         <div className="flex items-center gap-4">
+                                             <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400"><ScaleIcon className="w-4 h-4"/></div>
+                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">Juridisk Valideret</span>
+                                         </div>
+                                         <div className="flex items-center gap-4">
+                                             <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400"><Navigation className="w-4 h-4"/></div>
+                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">Styrende Præcedens</span>
+                                         </div>
+                                     </div>
+                                </div>
+
+                                <div className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm">
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Mangler der noget?</h3>
+                                    <p className="text-xs text-slate-500 leading-relaxed italic mb-6">
+                                        Forsøg at være mere specifik i dit spørgsmål, eller søg direkte i en specifik lov for flere detaljer.
+                                    </p>
+                                    <Button variant="outline" onClick={() => setIsSemanticMode(false)} className="w-full rounded-xl h-12">Tilbage til nøgleord</Button>
+                                </div>
+                            </aside>
+                        </div>
+                    </motion.div>
+                ) : (
+                  lawsLoading || isLoadingDoc ? (
+                    <motion.div key="loading-main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-96 flex flex-col items-center justify-center space-y-6"><Loader2 className="w-10 h-10 animate-spin text-amber-200" /><p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Indlæser indhold</p></motion.div>
                 ) : viewMode === 'training' ? (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -1421,7 +1942,7 @@ export function LovPortalViewer() {
                                                 </div>
                                                 <div className="w-full h-3 bg-amber-50 rounded-full overflow-hidden border border-amber-100 shadow-inner">
                                                     <motion.div 
-                                                        initial={{ width: 0 }} animate={{ width: `${law.accuracy}%` }} transition={{ duration: 1, duration: 1, ease: 'easeOut' }}
+                                                        initial={{ width: 0 }} animate={{ width: `${law.accuracy}%` }} transition={{ duration: 1, ease: 'easeOut' }}
                                                         className={`h-full rounded-full ${law.accuracy > 80 ? 'bg-emerald-500' : law.accuracy > 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
                                                     />
                                                 </div>
@@ -1515,100 +2036,210 @@ export function LovPortalViewer() {
                         </div>
                     </motion.div>
                 ) : viewMode === 'laws' && !activeLawId && !activeReferenceId ? (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-16">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-16 pb-20">
                         
-                        {/* 1. SITUATIONAL NAVIGATION - THE "LEGEY LET" UX */}
-                        {!activeSituationId ? (
-                            <section className="space-y-10 animate-fade-in-up">
-                                <div className="text-center space-y-4 mb-12">
-                                    <h2 className="text-3xl sm:text-5xl font-bold text-amber-950 serif tracking-tight">Hvad handler din sag om?</h2>
-                                    <p className="text-slate-500 max-w-xl mx-auto italic font-medium">Navigér direkte til de rette paragraffer baseret på din situation.</p>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {SITUATIONS.map((sit, i) => (
-                                        <button 
-                                            key={sit.id} 
-                                            onClick={() => setActiveSituationId(sit.id)}
-                                            className="group bg-white p-8 rounded-[3rem] border border-amber-100 shadow-sm hover:shadow-2xl hover:border-amber-950 transition-all text-center flex flex-col items-center justify-between min-h-[280px]"
-                                        >
-                                            <div className={`w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform ${sit.color}`}>
-                                                {sit.icon}
-                                            </div>
-                                            <div className="mt-6 flex-grow">
-                                                <h3 className="text-xl font-bold text-amber-950 serif mb-2 group-hover:text-amber-700 transition-colors">{sit.title}</h3>
-                                                <p className="text-xs text-slate-400 leading-relaxed italic">{sit.description}</p>
-                                            </div>
-                                            <div className="mt-8 pt-6 border-t border-amber-50 w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-amber-900/40 group-hover:text-amber-950 transition-colors">
-                                                Gå til flow <ChevronRight className="w-3 h-3"/>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </section>
-                        ) : (
-                            <section className="bg-white p-8 md:p-16 rounded-[4rem] border border-amber-100 shadow-2xl relative overflow-hidden animate-ink">
-                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none">
-                                    <Sparkles className="w-96 h-96 -rotate-12" />
-                                </div>
-                                <div className="relative z-10">
-                                    <DecisionTreeFlow 
-                                        situation={SITUATIONS.find(s => s.id === activeSituationId)} 
-                                        onCancel={() => setActiveSituationId(null)} 
-                                    />
-                                </div>
-                            </section>
-                        )}
 
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-16 border-t border-amber-100/50">
-                            <div>
-                                <h2 className="text-3xl font-bold text-amber-950 serif tracking-tight">Gå direkte til lovtekst</h2>
-                                <p className="text-slate-500 mt-2 font-medium italic">Navigér i de fulde retsakter og kapitler.</p>
+                        {/* 1. SEMANTIC SEARCH PROMINENT START */}
+                        <section className="space-y-12">
+                            <div className="bg-white/40 backdrop-blur-3xl p-10 md:p-24 rounded-[4rem] border border-amber-100 shadow-2xl relative overflow-hidden text-center">
+                                <div className="absolute top-0 right-0 p-20 opacity-[0.03] pointer-events-none -rotate-12 translate-x-32 -translate-y-32 scale-150">
+                                    <Brain className="w-96 h-96" />
+                                </div>
+                                
+                                <div className="max-w-3xl mx-auto space-y-16 relative z-10">
+                                    <div className="space-y-6">
+                                        <div className="inline-flex items-center gap-2.5 px-6 py-2 bg-amber-950 text-amber-400 rounded-full text-[10px] font-black uppercase tracking-[0.25em] shadow-xl shadow-amber-900/40">
+                                            <Sparkles className="w-4 h-4 animate-pulse" /> AI-DREVEN JURIDISK SØGNING
+                                        </div>
+                                        <h2 className="text-4xl md:text-6xl font-black text-amber-950 serif tracking-tighter leading-tight italic">Hvad leder du efter svar på?</h2>
+                                        <p className="text-slate-500 text-xl font-medium max-w-xl mx-auto leading-relaxed">Vi gennemsøger alle retsakter, vejledninger og etiske grundlag for dig på få sekunder.</p>
+                                    </div>
+
+                                    <form 
+                                        onSubmit={handleSemanticSearch}
+                                        className="relative group max-w-2xl mx-auto scale-105"
+                                    >
+                                        <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-7 h-7 text-slate-300 group-focus-within:text-amber-600 transition-all duration-500" />
+                                        <input 
+                                            type="text" 
+                                            placeholder="Spørg om regler, frister eller dine rettigheder..."
+                                            value={semanticSearchQuery}
+                                            onChange={(e) => setSemanticSearchQuery(e.target.value)}
+                                            className="w-full pl-20 pr-48 py-8 bg-white border-2 border-amber-100 rounded-[3rem] text-xl focus:ring-8 focus:ring-amber-950/5 focus:bg-white focus:border-amber-950 transition-all shadow-2xl shadow-amber-900/10 placeholder:text-slate-300 placeholder:italic"
+                                        />
+                                        <button 
+                                            type="submit"
+                                            disabled={isSearchingSemantic || !semanticSearchQuery.trim()}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 h-16 px-10 bg-amber-950 text-amber-400 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-amber-950/40 flex items-center gap-3 group/btn"
+                                        >
+                                            {isSearchingSemantic ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 group-hover/btn:scale-125 transition-transform" />}
+                                            Spørg AI
+                                        </button>
+                                    </form>
+
+                                    <div className="space-y-8">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 flex items-center justify-center gap-4">
+                                            <span className="h-px w-10 bg-slate-200"></span>
+                                            Populære forespørgsler
+                                            <span className="h-px w-10 bg-slate-200"></span>
+                                        </p>
+                                        <div className="flex flex-wrap items-center justify-center gap-3">
+                                            {SEARCH_SUGGESTIONS.slice(0, 4).map((suggestion, i) => (
+                                                <button 
+                                                    key={i}
+                                                    onClick={() => {
+                                                        setSemanticSearchQuery(suggestion);
+                                                        const event = { preventDefault: () => {} } as React.FormEvent;
+                                                        handleSemanticSearch(event);
+                                                    }}
+                                                    className="px-6 py-4 bg-white/60 backdrop-blur-md border border-amber-100 rounded-2xl text-[11px] font-bold text-amber-900/60 hover:border-amber-950 hover:text-amber-950 hover:bg-white hover:scale-105 transition-all shadow-sm hover:shadow-xl hover:shadow-amber-900/5 flex items-center gap-3"
+                                                >
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
+                                                    {suggestion}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs font-black text-amber-900/40 uppercase tracking-widest">
-                                <Library className="w-4 h-4" /> {(lawsConfigs || []).length} Love
+                        </section>
+
+
+
+                        <div className="pt-24 border-t border-slate-100">
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+                                <div className="space-y-4">
+                                    <h2 className="text-4xl font-bold text-amber-950 serif tracking-tight">Komplet Lovsamling</h2>
+                                    <div className="h-1.5 w-24 bg-amber-400 rounded-full"></div>
+                                    <p className="text-slate-500 font-medium italic">Navigér i de fulde retsakter og kapitler på tværs af social- og forvaltningsret.</p>
+                                </div>
+                                <div className="flex items-center gap-4 bg-amber-50 px-6 py-4 rounded-3xl border border-amber-100">
+                                    <div className="p-3 bg-amber-950 text-amber-400 rounded-2xl shadow-xl"><Library className="w-6 h-6" /></div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Alle tilgængelige</p>
+                                        <p className="text-xl font-bold text-amber-950 serif">{(lawsConfigs || []).length} Retsakter</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-24">
+                                {Object.entries(groupedLaws).map(([category, laws], groupIdx) => (
+                                  laws.length > 0 && (
+                                    <section key={category} className="space-y-12">
+                                      <div className="flex items-center gap-6">
+                                        <div className="w-3 h-3 bg-amber-400 rounded-full shadow-lg shadow-amber-400/20"></div>
+                                        <h3 className="text-[13px] font-black uppercase tracking-[0.4em] text-amber-950/40 whitespace-nowrap">{category}</h3>
+                                        <div className="h-px w-full bg-gradient-to-r from-amber-100 to-transparent" />
+                                      </div>
+                                      <div className="grid md:grid-cols-2 gap-10">
+                                        {laws.map((law, idx) => (
+                                            <LawOverviewCard 
+                                                key={law.id} 
+                                                law={law} 
+                                                isLocked={isFreeTier && lawsConfigs.indexOf(law) > 0} 
+                                                router={router} 
+                                                idx={idx} 
+                                                trainingStats={trainingStats}
+                                            />
+                                        ))}
+                                      </div>
+                                    </section>
+                                  )
+                                ))}
                             </div>
                         </div>
-
-                        {Object.entries(groupedLaws).map(([category, laws], groupIdx) => (
-                          laws.length > 0 && (
-                            <section key={category} className="space-y-8">
-                              <div className="flex items-center gap-4">
-                                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-900/30 whitespace-nowrap">{category}</h3>
-                                <div className="h-px w-full bg-amber-100/50" />
-                              </div>
-                              <div className="grid md:grid-cols-2 gap-8">
-                                {laws.map((law, idx) => (
-                                    <LawOverviewCard 
-                                        key={law.id} 
-                                        law={law} 
-                                        isLocked={isFreeTier && lawsConfigs.indexOf(law) > 0} 
-                                        router={router} 
-                                        idx={idx} 
-                                    />
-                                ))}
-                              </div>
-                            </section>
-                          )
-                        ))}
                     </motion.div>
                 ) : (activeLawId || activeReferenceId) && currentDocData ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
-                        <div className={`bg-white rounded-[2.5rem] border border-amber-100 shadow-xl relative overflow-hidden transition-all duration-500 ${isScrolled ? 'fixed top-[108px] left-8 lg:left-80 right-8 lg:right-[352px] z-40 p-4 rounded-2xl shadow-lg md:block hidden animate-ink' : 'p-8 md:p-12'}`}>
-                            <div className={`absolute top-0 right-0 p-12 opacity-5 ${isScrolled ? 'hidden' : ''}`}><ScaleIcon className="w-32 h-32" /></div>
-                            <div className="relative z-10 flex items-center gap-6">
-                                {!isScrolled && (<button onClick={() => router.back()} className="w-14 h-14 border border-amber-100 rounded-2xl flex items-center justify-center hover:bg-amber-950 hover:text-white transition-all group shadow-sm"><ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" /></button>)}
-                                <div className="flex-1">
+                    <motion.div id="law-content-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`${isScrolled ? '' : 'space-y-6'}`}>
+                        <div className={`sticky top-20 z-40 bg-slate-50/50 backdrop-blur-md transition-all duration-500 overflow-hidden ${isScrolled ? 'p-3 px-5 rounded-2xl shadow-lg border border-slate-200 mt-2 mb-8' : 'p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm mb-6'}`}>
+                            <div className={`absolute top-0 right-0 p-8 opacity-[0.02] ${isScrolled ? 'hidden' : ''}`}><ScaleIcon className="w-24 h-24 text-slate-900" /></div>
+                            <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-10">
+                                {!isScrolled && (
+                                    <button 
+                                        onClick={() => router.back()} 
+                                        className="w-14 h-14 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-center text-amber-950 hover:bg-amber-950 hover:text-white transition-all group shadow-sm shrink-0 active:scale-90"
+                                    >
+                                        <ChevronLeft className="w-7 h-7 group-hover:-translate-x-1 transition-transform" />
+                                    </button>
+                                )}
+                                <div className="flex-1 space-y-2">
                                     {!isScrolled && (
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border border-amber-200 text-amber-700 bg-amber-50">{activeReferenceId ? 'Reference' : 'Lovtekst'}</span>
-                                            <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border ${currentDocData?.status === 'Valid' ? 'border-emerald-200 text-emerald-700 bg-emerald-50' : 'border-rose-200 text-rose-700 bg-rose-50'}`}>{currentDocData?.status === 'Valid' ? 'Gældende' : currentDocData?.status}</span>
+                                        <div className="flex flex-col space-y-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full border border-slate-200 text-slate-500 bg-white shadow-sm">
+                                                    {activeReferenceId ? 'Reference' : 'Retsakt'}
+                                                </span>
+                                                <LiveStatusBadge xmlUrl={activeLawId ? lawsConfigs.find(l => l.id === activeLawId)?.xmlUrl : undefined} />
+                                                {currentDocData?.number && (
+                                                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 flex items-center gap-1.5 bg-slate-100/30 px-2 py-0.5 rounded-md border border-slate-100">
+                                                        <BookMarked className="w-2.5 h-2.5" /> J.nr: {currentDocData.number}
+                                                    </span>
+                                                )}
+                                                {currentDocData?.date && (
+                                                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 flex items-center gap-1.5 bg-slate-100/30 px-2 py-0.5 rounded-md border border-slate-100">
+                                                        <Clock className="w-2.5 h-2.5" /> Dato: {currentDocData.date}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {currentDocData.popularTitle && (
+                                                <div className="text-[10px] font-black uppercase tracking-widest text-amber-600/60 pb-1 flex items-center gap-2">
+                                                    <Sparkles className="w-3 h-3 text-amber-500" /> {currentDocData.popularTitle}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
-                                    <h2 className={`font-bold text-amber-950 serif tracking-tight ${isScrolled ? 'text-lg' : 'text-3xl'}`}>{currentDocData?.titel}</h2>
+                                    <h2 className={`font-bold text-slate-800 serif tracking-tight leading-tight ${isScrolled ? 'text-lg' : 'text-xl md:text-2xl'}`}>
+                                        {currentDocData?.titel}
+                                    </h2>
+                                    {!isScrolled && (
+                                        <div className="flex items-center gap-4 pt-1">
+                                            <div className="flex -space-x-3">
+                                                {[1, 2, 3].map(i => (
+                                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-amber-100 flex items-center justify-center text-[10px] font-black text-amber-900 shadow-md ring-1 ring-amber-950/5">
+                                                        U{i}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <span className="text-[10px] font-medium text-slate-400 italic">Læst af 1.200+ studerende i denne uge</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                         {isScrolled && <div className="h-24 hidden md:block" />}
+
+                        {semanticResult && (
+                            <motion.div 
+                                id="semantic-result-area"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-amber-950 p-8 md:p-12 rounded-[3rem] text-white shadow-2xl relative overflow-hidden mb-12"
+                            >
+                                <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 pointer-events-none">
+                                    <Sparkles className="w-24 h-24" />
+                                </div>
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-amber-400">
+                                        <Brain className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold serif">AI Analyse af din søgning</h3>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-400/60">Baseret på denne lov og dens vejledninger</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setSemanticResult(null)} 
+                                        className="ml-auto p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <div className="prose prose-invert max-w-none">
+                                    <p className="text-lg md:text-xl font-medium leading-relaxed font-serif italic text-amber-50">
+                                        "{semanticResult.summary}"
+                                    </p>
+                                </div>
+                            </motion.div>
+                        )}
 
                         <div className={`space-y-16 pb-32 transition-all duration-500 ${isFocusMode ? 'max-w-full' : 'max-w-4xl mx-auto'}`}>
                             {filteredDocData?.kapitler.map((chapter, cIdx) => (
@@ -1636,30 +2267,108 @@ export function LovPortalViewer() {
                                                         <ChevronDown className={`w-10 h-10 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                                                     </div>
                                                     {isExpanded && (
-                                                        <div className="bg-amber-50/30 border-t border-amber-50 p-8 md:p-12 space-y-8 animate-ink">
-                                                            <div className="flex gap-4">
-                                                                <Button onClick={() => handleAnalyzeParagraph(para, currentDocData, paraKey)} disabled={isAnalysingPara[paraKey]} className="flex-1 h-16 rounded-2xl bg-amber-950 shadow-xl shadow-amber-900/20">{isAnalysingPara[paraKey] ? <Loader2 className="animate-spin" /> : <Brain className="mr-2 text-amber-400" />} AI Analyse</Button>
-                                                                <Button onClick={() => handleToggleSave(para, currentDocData, currentDocId!)} variant="outline" className={`flex-1 h-16 rounded-2xl ${isSaved ? 'bg-amber-100 border-amber-300 text-amber-900 font-bold' : ''}`}>{isSaved ? <BookmarkCheck className="fill-current mr-2" /> : <Bookmark className="mr-2" />} {isSaved ? 'Gemt' : 'Gem'}</Button>
+                                                        <motion.div 
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="bg-amber-50/20 border-t border-amber-50 p-8 md:p-14 space-y-12 animate-ink"
+                                                        >
+                                                            <div className="flex flex-col md:flex-row gap-6">
+                                                                <Button 
+                                                                    onClick={() => handleAnalyzeParagraph(para, currentDocData, paraKey)} 
+                                                                    disabled={isAnalysingPara[paraKey]} 
+                                                                    className="flex-[2] h-20 text-lg rounded-[2.5rem] bg-amber-950 hover:bg-black shadow-2xl shadow-amber-950/20 group/ai relative overflow-hidden"
+                                                                >
+                                                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/ai:animate-shimmer transition-transform"></div>
+                                                                    {isAnalysingPara[paraKey] ? (
+                                                                        <div className="flex items-center gap-4">
+                                                                            <Loader2 className="animate-spin w-6 h-6 text-amber-400" />
+                                                                            <span className="font-black uppercase tracking-widest text-xs">Analyserer objektive betingelser...</span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex items-center gap-4">
+                                                                            <div className="w-10 h-10 rounded-2xl bg-amber-400/20 flex items-center justify-center group-hover/ai:rotate-12 transition-transform">
+                                                                                <Brain className="w-5 h-5 text-amber-400" />
+                                                                            </div>
+                                                                            <span className="font-black uppercase tracking-widest text-xs">AI Deep-Analyse (Kollega+)</span>
+                                                                        </div>
+                                                                    )}
+                                                                </Button>
+                                                                <Button 
+                                                                    onClick={() => handleToggleSave(para, currentDocData, currentDocId!)} 
+                                                                    variant="outline" 
+                                                                    className={`flex-1 h-20 text-lg rounded-[2.5rem] border-2 transition-all shadow-xl shadow-amber-950/5 ${isSaved ? 'bg-amber-950 border-amber-950 text-white font-black' : 'bg-white border-amber-100 text-amber-950 hover:border-amber-950'}`}
+                                                                >
+                                                                    {isSaved ? <BookmarkCheck className="fill-amber-400 mr-3 w-6 h-6" /> : <Bookmark className="mr-3 w-6 h-6" />} 
+                                                                    <span className="font-black uppercase tracking-widest text-xs">{isSaved ? 'Gemt i samling' : 'Gem kilde'}</span>
+                                                                </Button>
                                                             </div>
-                                                            <div className="bg-white p-8 rounded-[2rem] border border-amber-100 shadow-sm space-y-6">
-                                                                <div className="flex items-center gap-3 text-amber-900/40"><Library className="w-5 h-5" /><span className="text-[10px] font-black uppercase tracking-widest">Kildehenvisning</span></div>
-                                                                <div className="grid md:grid-cols-2 gap-8">
-                                                                    <div><p className="text-[9px] font-black uppercase text-slate-400 mb-2">Reference</p><p className="text-xs font-bold text-amber-950 leading-relaxed pr-8 select-all">{citations.inText}</p></div>
-                                                                    <div><p className="text-[9px] font-black uppercase text-slate-400 mb-2">Litteraturliste</p><p className="text-xs font-bold text-amber-950 italic pr-8 select-all">{citations.bibliography}</p></div>
-                                                                </div>
-                                                                <div className="flex justify-end gap-2 pt-4 border-t border-amber-50">
-                                                                    <Button variant="ghost" size="sm" onClick={() => handleCopy(citations.inText, 'intext')} className="text-[10px] font-black uppercase">Kopier Reference</Button>
-                                                                    <Button variant="ghost" size="sm" onClick={() => handleCopy(citations.bibliography, 'bib')} className="text-[10px] font-black uppercase">Kopier Liste-format</Button>
-                                                                </div>
-                                                            </div>
+
                                                             {paraAnalysis[paraKey] && (
-                                                                <div className="grid md:grid-cols-3 gap-6 p-6 bg-white rounded-3xl border border-amber-100 shadow-inner">
-                                                                    <div><p className="text-[10px] font-black uppercase text-amber-900/40 mb-1">Subjekt</p><p className="text-xs font-bold text-amber-950">{paraAnalysis[paraKey].subjekt}</p></div>
-                                                                    <div><p className="text-[10px] font-black uppercase text-rose-900/40 mb-1">Handling</p><p className="text-xs font-bold text-amber-950">{paraAnalysis[paraKey].handling}</p></div>
-                                                                    <div><p className="text-[10px] font-black uppercase text-indigo-900/40 mb-1">Betingelser</p><p className="text-sm font-bold text-amber-950">{paraAnalysis[paraKey].betingelser}</p></div>
-                                                                </div>
+                                                                <motion.div 
+                                                                    initial={{ opacity: 0, y: 20 }}
+                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                    className="grid md:grid-cols-3 gap-8"
+                                                                >
+                                                                    <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] border border-amber-100 shadow-sm space-y-5 group/box hover:border-amber-950 transition-all">
+                                                                        <div className="flex items-center gap-3 text-amber-900/30 group-hover/box:text-amber-950 transition-colors">
+                                                                            <div className="p-2 bg-amber-50 rounded-xl"><User className="w-5 h-5" /></div>
+                                                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Retssubjekt</span>
+                                                                        </div>
+                                                                        <p className="text-base font-bold text-amber-950 leading-relaxed font-serif italic">"{paraAnalysis[paraKey].subjekt}"</p>
+                                                                    </div>
+                                                                    <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] border border-amber-100 shadow-sm space-y-5 group/box hover:border-rose-950 transition-all">
+                                                                        <div className="flex items-center gap-3 text-rose-900/30 group-hover/box:text-rose-900 transition-colors">
+                                                                            <div className="p-2 bg-rose-50 rounded-xl"><Activity className="w-5 h-5" /></div>
+                                                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Retsvirkning</span>
+                                                                        </div>
+                                                                        <p className="text-base font-bold text-rose-950 leading-relaxed font-serif italic">"{paraAnalysis[paraKey].handling}"</p>
+                                                                    </div>
+                                                                    <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] border border-amber-100 shadow-sm space-y-5 group/box hover:border-indigo-950 transition-all">
+                                                                        <div className="flex items-center gap-3 text-indigo-900/30 group-hover/box:text-indigo-900 transition-colors">
+                                                                            <div className="p-2 bg-indigo-50 rounded-xl"><ShieldAlert className="w-5 h-5" /></div>
+                                                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Ketingelser</span>
+                                                                        </div>
+                                                                        <p className="text-base font-bold text-indigo-950 leading-relaxed font-serif italic">"{paraAnalysis[paraKey].betingelser}"</p>
+                                                                    </div>
+                                                                </motion.div>
                                                             )}
-                                                        </div>
+
+                                                            <div className="bg-white/40 backdrop-blur-3xl p-10 md:p-14 rounded-[4rem] border border-amber-100 shadow-2xl shadow-amber-950/5 space-y-10 relative group/bib overflow-hidden">
+                                                                <div className="absolute top-0 right-0 p-14 opacity-[0.03] group-hover/bib:scale-125 group-hover/bib:rotate-6 transition-all duration-1000"><FileStack className="w-48 h-48" /></div>
+                                                                <div className="flex items-center justify-between relative z-10">
+                                                                    <div className="flex items-center gap-5 text-amber-950/40">
+                                                                        <div className="w-12 h-12 bg-amber-950 text-amber-400 rounded-2xl flex items-center justify-center shadow-xl">
+                                                                            <Quote className="w-6 h-6" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] italic block">Kildehenvisning</span>
+                                                                            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Genereret efter APA 7 standard</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid md:grid-cols-2 gap-10 relative z-10">
+                                                                    <div className="space-y-4">
+                                                                        <div className="flex items-center justify-between px-2">
+                                                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">In-text citation</p>
+                                                                            <button onClick={() => handleCopy(citations.inText, 'intext')} className="text-[9px] font-black uppercase text-amber-600 hover:text-amber-950 transition-colors">Kopiér</button>
+                                                                        </div>
+                                                                        <div className="bg-white p-7 rounded-3xl border border-amber-50 shadow-inner group-hover/bib:border-amber-200 transition-colors">
+                                                                            <p className="text-sm font-bold text-amber-900/80 leading-relaxed select-all">({citations.inText.replace(/^\(|\)$/g, '')})</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="space-y-4">
+                                                                        <div className="flex items-center justify-between px-2">
+                                                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bibliografi</p>
+                                                                            <button onClick={() => handleCopy(citations.bibliography, 'bib')} className="text-[9px] font-black uppercase text-amber-600 hover:text-amber-950 transition-colors">Kopiér</button>
+                                                                        </div>
+                                                                        <div className="bg-white p-7 rounded-3xl border border-amber-50 shadow-inner group-hover/bib:border-amber-200 transition-colors">
+                                                                            <p className="text-sm font-bold text-amber-950 italic leading-relaxed select-all">{citations.bibliography}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
                                                     )}
                                                 </div>
                                             );
@@ -1669,7 +2378,28 @@ export function LovPortalViewer() {
                             ))}
                         </div>
                     </motion.div>
-                ) : null}
+                ) : (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
+                        <div className="flex items-center gap-6">
+                            <div className="w-3 h-3 bg-amber-400 rounded-full shadow-lg shadow-amber-400/20"></div>
+                            <h3 className="text-[13px] font-black uppercase tracking-[0.4em] text-amber-950/40 whitespace-nowrap">Alle love</h3>
+                            <div className="h-px w-full bg-gradient-to-r from-amber-100 to-transparent" />
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-10">
+                            {lawsConfigs.map((law, idx) => (
+                                <LawOverviewCard 
+                                    key={law.id} 
+                                    law={law} 
+                                    isLocked={isFreeTier && idx > 0} 
+                                    router={router} 
+                                    idx={idx} 
+                                    trainingStats={trainingStats}
+                                />
+                            ))}
+                        </div>
+                    </motion.div>
+                  )
+                )}
             </AnimatePresence>
         </div>
       </main>
@@ -1677,129 +2407,100 @@ export function LovPortalViewer() {
       {/* CONTEXT SIDEBAR */}
       <AnimatePresence>
           {isContextSidebarOpen && !isFocusMode && (activeLawId || activeReferenceId) && (
-              <motion.aside initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }} className="w-80 bg-white border-l border-amber-100 hidden lg:flex flex-col sticky top-0 h-screen z-30 shadow-2xl">
-                  <div className="p-8 space-y-10 overflow-y-auto flex-1 custom-scrollbar">
-                      <div className="flex items-center justify-between"><h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-900/40">Sagsindsigt</h3><button onClick={() => setIsContextSidebarOpen(false)} className="p-2 text-slate-300 hover:text-amber-950"><X className="w-4 h-4" /></button></div>
+              <motion.aside initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }} className="w-[22rem] bg-white border-l border-amber-100 hidden lg:flex flex-col sticky top-0 h-screen z-30 shadow-2xl">
+                  <div className="p-10 space-y-12 overflow-y-auto flex-1 custom-scrollbar">
+                      <div className="flex items-center justify-between">
+                          <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-amber-950/20">Sagsindsigt</h3>
+                          <button onClick={() => setIsContextSidebarOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:bg-amber-50 hover:text-amber-950 transition-all"><X className="w-4 h-4" /></button>
+                      </div>
                       
-                      {/* LAW INFO CARD */}
-                      {currentDocData && (
-                          <section className="bg-amber-50/50 p-6 rounded-[2rem] border border-amber-100 shadow-inner space-y-4">
-                              <div className="flex items-center gap-3 text-amber-950/40">
-                                  <span className="text-[10px] font-black uppercase tracking-widest">Kildedetaljer</span>
-                              </div>
-                              
-                              <div className="space-y-3">
-                                  {currentDocData.popularTitle && (
-                                      <div>
-                                          <p className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Populærtitel</p>
-                                          <p className="text-sm font-bold text-amber-900 leading-tight">{currentDocData.popularTitle}</p>
-                                      </div>
-                                  )}
-                                  <div>
-                                      <p className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Officiel Titel</p>
-                                      <p className="text-xs font-medium text-slate-600 leading-snug line-clamp-3">{currentDocData.titel}</p>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-amber-100/50">
-                                      <div>
-                                          <p className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Nummer</p>
-                                          <p className="text-xs font-bold text-amber-950">{currentDocData.number || 'N/A'}</p>
-                                      </div>
-                                      <div>
-                                          <p className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Dato</p>
-                                          <p className="text-xs font-bold text-amber-950">{currentDocData.date || 'N/A'}</p>
-                                      </div>
-                                  </div>
-                              </div>
-                          </section>
-                      )}
 
-                      {/* QUIZ CALLOUT */}
-                      {activeLawId && (
-                        <section className="bg-amber-950 p-6 rounded-[2rem] text-white shadow-xl relative overflow-hidden group">
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center text-amber-950 shadow-lg">
-                                        <GraduationCap className="w-6 h-6" />
-                                    </div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Træn din viden</span>
-                                </div>
-                                <p className="text-xs text-amber-100/60 leading-relaxed mb-6 italic">Test din forståelse af denne lov med en AI-genereret quiz.</p>
-                                <Button 
-                                    onClick={() => setIsQuizModalOpen(true)}
-                                    className="w-full bg-amber-400 text-amber-950 hover:bg-white text-[10px] font-black uppercase h-12 rounded-xl"
-                                >
-                                    Start Lov-Quiz
-                                </Button>
-                            </div>
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                        </section>
-                      )}
 
-                      {currentDocData && (
+
+                       {currentDocData && (
                           <section className="space-y-6">
-                              <div className="flex items-center gap-3 font-bold text-sm serif"><Navigation className="w-5 h-5 text-amber-700" /> Navigation</div>
-                              <select onChange={(e) => scrollToChapter(parseInt(e.target.value))} className="w-full appearance-none pl-4 pr-8 py-3 bg-slate-50 border border-amber-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-950/20 shadow-sm cursor-pointer">
-                                  <option value="" disabled selected>Gå til kapitel...</option>
-                                  {currentDocData.kapitler.map((c, i) => <option key={i} value={i}>{c.nummer} {c.titel}</option>)}
-                              </select>
+                              <div className="flex items-center gap-3 font-bold text-base serif text-amber-950 px-2"><Navigation className="w-5 h-5 text-amber-700" /> Hurtig Navigation</div>
+                              <div className="relative">
+                                <select 
+                                    onChange={(e) => scrollToChapter(parseInt(e.target.value))} 
+                                    className="w-full appearance-none pl-6 pr-12 py-5 bg-amber-50 h-16 border-2 border-amber-100 rounded-2xl text-[11px] font-bold uppercase tracking-widest text-amber-950 focus:outline-none focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 shadow-sm cursor-pointer transition-all"
+                                >
+                                    <option value="" disabled selected>Vælg et kapitel...</option>
+                                    {currentDocData.kapitler.map((c, i) => <option key={i} value={i}>{c.nummer} {c.titel}</option>)}
+                                </select>
+                                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-950 pointer-events-none" />
+                              </div>
                           </section>
                       )}
                       
                       {isSagsindsigtLoading ? (
-                          <div className="py-10 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-200" /></div>
+                          <div className="py-20 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-amber-100" /></div>
                       ) : (
-                          <div className="space-y-6">
-                              <div className="flex items-center justify-between cursor-pointer group/header" onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}>
-                                  <div className="flex items-center gap-3 font-bold text-sm serif"><Clock className="w-5 h-5 text-amber-700" /> Tidslinje</div>
-                                  <ChevronDown className={`transition-transform ${isTimelineExpanded ? 'rotate-180 text-amber-950' : 'text-slate-300'}`} />
+                          <div className="space-y-10 pb-10">
+                              <div className="space-y-6">
+                                  <div className="flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 hover:border-amber-950 transition-all shadow-sm" onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}>
+                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950"><Clock className="w-5 h-5 text-amber-700" /> Tidslinje</div>
+                                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${isTimelineExpanded ? 'bg-amber-950 text-white rotate-180' : 'bg-amber-50 text-amber-950'}`}>
+                                        <ChevronDown className="h-4 w-4" />
+                                      </div>
+                                  </div>
+                                  <AnimatePresence>{isTimelineExpanded && (
+                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="relative pl-10 space-y-10 overflow-hidden border-l-2 border-amber-100 ml-6 pb-4">
+                                          {(timeline || []).map((v, i) => (
+                                              <div key={i} className="relative group/time">
+                                                  <div className={`absolute -left-[45px] top-1.5 w-4 h-4 rounded-full border-4 border-white transition-all duration-500 shadow-sm ${v.isHistoric ? 'bg-slate-200' : v.isMainLaw ? 'bg-amber-950 ring-4 ring-amber-950/20 scale-125' : 'bg-amber-400'}`}></div>
+                                                  <p className="text-[9px] font-black uppercase text-amber-600/60 mb-1 tracking-widest">{v.signatureDate || 'Bekendtgørelse'}</p>
+                                                  <button onClick={() => handleOpenReference(v)} className={`text-[13px] text-left font-bold leading-tight block hover:text-amber-700 transition-all serif italic ${v.isCurrentDocument ? 'text-amber-950' : 'text-slate-500'}`}>{v.shortName}</button>
+                                              </div>
+                                          ))}
+                                      </motion.div>
+                                  )}</AnimatePresence>
                               </div>
-                              <AnimatePresence>{isTimelineExpanded && (
-                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="relative pl-6 space-y-6 overflow-hidden border-l border-amber-100 ml-5">
-                                      {(timeline || []).map((v, i) => (
-                                          <div key={i} className="relative">
-                                              <div className={`absolute -left-[25px] top-1.5 w-2 h-2 rounded-full border-2 border-white ${v.isHistoric ? 'bg-slate-300' : v.isMainLaw ? 'bg-amber-950 shadow-sm' : 'bg-amber-200'}`}></div>
-                                              <p className="text-[9px] font-black uppercase text-amber-700 mb-1">{v.signatureDate || 'Ukendt dato'}</p>
-                                              <button onClick={() => handleOpenReference(v)} className={`text-xs text-left font-bold leading-snug block hover:text-amber-700 transition-colors ${v.isCurrentDocument ? 'text-amber-950 underline underline-offset-2' : 'text-slate-600'}`}>{v.shortName}</button>
-                                          </div>
-                                      ))}
-                                  </motion.div>
-                              )}</AnimatePresence>
                               
-                              <div className="flex items-center justify-between cursor-pointer group/header" onClick={() => setIsRetsakterExpanded(!isRetsakterExpanded)}>
-                                  <div className="flex items-center gap-3 font-bold text-sm serif"><BookMarked className="w-5 h-5 text-emerald-700" /> Retsakter</div>
-                                  <ChevronDown className={`transition-transform ${isRetsakterExpanded ? 'rotate-180 text-amber-950' : 'text-slate-300'}`} />
+                              <div className="space-y-6">
+                                  <div className="flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 hover:border-emerald-600 transition-all shadow-sm" onClick={() => setIsRetsakterExpanded(!isRetsakterExpanded)}>
+                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950"><Library className="w-5 h-5 text-emerald-700" /> Relaterede Retsakter</div>
+                                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${isRetsakterExpanded ? 'bg-emerald-700 text-white rotate-180' : 'bg-emerald-50 text-emerald-700'}`}>
+                                        <ChevronDown className="h-4 w-4" />
+                                      </div>
+                                  </div>
+                                  <AnimatePresence>{isRetsakterExpanded && (
+                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden">
+                                          {(relatedDocs || []).length > 0 ? relatedDocs.map((doc, i) => (
+                                              <button key={i} onClick={() => handleOpenReference(doc)} className="w-full text-left p-6 bg-white/80 rounded-[2rem] border border-slate-100 hover:border-amber-950 shadow-sm hover:shadow-xl transition-all group/item relative overflow-hidden">
+                                                  <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover/item:scale-110 transition-transform"><Library className="w-12 h-12" /></div>
+                                                  <div className="flex items-center justify-between mb-3 relative z-10">
+                                                      <span className="text-[8px] font-black uppercase text-amber-700 bg-amber-50 px-3 py-1 rounded-full group-hover/item:bg-amber-950 group-hover/item:text-white transition-colors tracking-widest">{doc.shortName}</span>
+                                                      {doc.isHistorical && <span className="text-[7px] font-black uppercase text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100">Historisk</span>}
+                                                  </div>
+                                                  <p className="text-xs font-bold text-amber-950 leading-relaxed font-serif italic relative z-10">{doc.title}</p>
+                                              </button>
+                                          )) : <div className="p-8 text-center bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-100"><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic leading-relaxed">Ingen kilder fundet til denne lov.</p></div>}
+                                      </motion.div>
+                                  )}</AnimatePresence>
                               </div>
-                              <AnimatePresence>{isRetsakterExpanded && (
-                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-3 overflow-hidden">
-                                      {(relatedDocs || []).length > 0 ? relatedDocs.map((doc, i) => (
-                                          <button key={i} onClick={() => handleOpenReference(doc)} className="w-full text-left p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-amber-950 transition-all group/item"><div className="flex items-center justify-between mb-1"><p className="text-[10px] font-black uppercase text-amber-700 group-hover/item:text-amber-900 transition-colors">{doc.shortName}</p>{doc.isHistorical && <span className="text-[7px] font-black uppercase text-rose-600 bg-rose-50 px-1 rounded border border-rose-100">Hist.</span>}</div><p className="text-xs font-bold text-amber-950 line-clamp-2">{doc.title}</p></button>
-                                      )) : <p className="text-xs text-slate-400 italic">Ingen fundet.</p>}
-                                  </motion.div>
-                              )}</AnimatePresence>
 
-                              <div className="flex items-center justify-between cursor-pointer group/header" onClick={() => setIsAfgørelserExpanded(!isAfgørelserExpanded)}>
-                                  <div className="flex items-center gap-3 font-bold text-sm serif"><Gavel className="w-5 h-5 text-blue-700" /> Afgørelser</div>
-                                  <ChevronDown className={`transition-transform ${isAfgørelserExpanded ? 'rotate-180' : 'text-slate-300'}`} />
+                              <div className="space-y-6">
+                                  <div className="flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 hover:border-blue-700 transition-all shadow-sm" onClick={() => setIsAfgørelserExpanded(!isAfgørelserExpanded)}>
+                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950"><Gavel className="w-5 h-5 text-blue-700" /> Afgørelser & Praksis</div>
+                                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${isAfgørelserExpanded ? 'bg-blue-700 text-white rotate-180' : 'bg-blue-50 text-blue-700'}`}>
+                                        <ChevronDown className="h-4 w-4" />
+                                      </div>
+                                  </div>
+                                  <AnimatePresence>{isAfgørelserExpanded && (
+                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden">
+                                          {(relatedDecisions || []).length > 0 ? relatedDecisions.map((dec, i) => (
+                                              <button key={i} onClick={() => handleOpenReference(dec)} className="w-full text-left p-6 bg-white/80 rounded-[2rem] border border-slate-100 hover:border-blue-950 shadow-sm hover:shadow-xl transition-all group/item relative overflow-hidden">
+                                                  <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover/item:scale-110 transition-transform"><Gavel className="w-12 h-12" /></div>
+                                                  <div className="flex items-center justify-between mb-3 relative z-10">
+                                                      <p className="text-[8px] font-black uppercase text-blue-700 tracking-widest">{dec.shortName}</p>
+                                                  </div>
+                                                  <p className="text-xs font-bold text-amber-950 leading-relaxed font-serif italic line-clamp-3 relative z-10">{dec.title}</p>
+                                              </button>
+                                          )) : <div className="p-8 text-center bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-100"><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic leading-relaxed">Ingen afgørelser (AST/DOM) fundet.</p></div>}
+                                      </motion.div>
+                                  )}</AnimatePresence>
                               </div>
-                              <AnimatePresence>{isAfgørelserExpanded && (
-                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-3 overflow-hidden">
-                                      {(relatedDecisions || []).length > 0 ? relatedDecisions.map((dec, i) => (
-                                          <button key={i} onClick={() => handleOpenReference(dec)} className="w-full text-left p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-amber-950 transition-all group/item"><div className="flex items-center justify-between mb-1"><p className="text-[10px] font-black uppercase text-blue-700 group-hover/item:text-blue-900 transition-colors">{dec.shortName}</p>{dec.isHistoryFlag && <span className="text-[7px] font-black uppercase text-rose-600 bg-rose-50 px-1 rounded border border-rose-100">Hist.</span>}</div><p className="text-xs font-bold text-amber-950 line-clamp-2">{dec.title}</p></button>
-                                      )) : <p className="text-xs text-slate-400 italic">Ingen fundet.</p>}
-                                  </motion.div>
-                              )}</AnimatePresence>
-
-                              <div className="flex items-center justify-between cursor-pointer group/header" onClick={() => setIsOmbudsmandExpanded(!isOmbudsmandExpanded)}>
-                                  <div className="flex items-center gap-3 font-bold text-sm serif"><ScaleIcon className="w-5 h-5 text-amber-700" /> Ombudsmanden</div>
-                                  <ChevronDown className={`transition-transform ${isOmbudsmandExpanded ? 'rotate-180' : 'text-slate-300'}`} />
-                              </div>
-                              <AnimatePresence>{isOmbudsmandExpanded && (
-                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-3 overflow-hidden">
-                                      {(ombudsmandReports || []).length > 0 ? ombudsmandReports.map((report, i) => (
-                                          <button key={i} onClick={() => handleOpenReference(report)} className="w-full text-left p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-amber-950 transition-all group/item"><p className="text-[10px] font-black uppercase text-amber-700 mb-1">{report.shortName}</p><p className="text-xs font-bold text-amber-950 line-clamp-2">{report.title}</p></button>
-                                      )) : <p className="text-xs text-slate-400 italic">Ingen fundet.</p>}
-                                  </motion.div>
-                              )}</AnimatePresence>
                           </div>
                       )}
                   </div>

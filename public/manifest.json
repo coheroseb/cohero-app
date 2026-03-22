@@ -2,7 +2,7 @@
   "name": "Cohéro",
   "short_name": "Cohéro",
   "description": "Din Digitale Kollega for Socialrådgiverstuderende",
-  "id": "cohero-app-v3",
+  "id": "cohero-app-v4",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FDFCF8",
@@ -21,3 +21,4 @@
     }
   ]
 }
+

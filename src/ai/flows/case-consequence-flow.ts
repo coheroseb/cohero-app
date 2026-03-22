@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview An AI flow to determine the consequence of a choice in a case dilemma.
  *

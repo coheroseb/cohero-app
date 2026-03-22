@@ -1,5 +1,5 @@
 
-'use server';
+
 /**
  * @fileOverview An AI flow to perform semantic search across the law collection.
  * - semanticLawSearch - Interprets natural language queries and maps them to concrete laws and paragraphs.
@@ -68,8 +68,8 @@ const semanticLawSearchFlow = ai.defineFlow(
     return {
       data: output!,
       usage: {
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
+        inputTokens: usage.inputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0,
       },
     };
   }
