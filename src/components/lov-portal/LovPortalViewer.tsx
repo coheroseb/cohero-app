@@ -787,7 +787,7 @@ const ReformOracleView = ({
                                     <p className="text-slate-500 text-sm font-medium leading-relaxed italic">Reform-Oraklet er forbeholdt vores Kollega+ medlemmer som en del af deres avancerede juridiske værktøjskasse.</p>
                                 </div>
                                 <button 
-                                    onClick={() => window.location.href = '/medlemskab'}
+                                    onClick={() => window.location.href = '/upgrade'}
                                     className="w-full py-5 bg-amber-950 text-amber-400 rounded-3xl font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-amber-950/30 hover:scale-[1.02] active:scale-95 transition-all"
                                 >
                                     Opgrader nu
