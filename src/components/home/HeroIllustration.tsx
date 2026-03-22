@@ -15,6 +15,8 @@ import {
   Hash
 } from 'lucide-react';
 
+import { Variants } from 'framer-motion';
+
 const HeroIllustration = () => {
     // Animation variants
     const phoneVariants = {
@@ -32,7 +34,8 @@ const HeroIllustration = () => {
         }
     };
 
-    const elementVariants = (delay: number, x: number, y: number) => ({
+    // Continuous floating animation for elements after they land
+    const elementVariants = (delay: number, x: number, y: number): Variants => ({
         initial: { 
             x: 0, 
             y: 0, 
@@ -48,87 +51,139 @@ const HeroIllustration = () => {
             rotate: Math.random() * 20 - 10,
             transition: { 
                 delay: 1.2 + delay,
-                duration: 0.8,
+                duration: 1.2,
                 type: "spring",
-                stiffness: 80,
-                damping: 12
+                stiffness: 60,
+                damping: 15
+            }
+        },
+        orbit: {
+            x: [x, x + 5, x - 5, x],
+            y: [y, y - 10, y + 5, y],
+            rotate: [0, Math.random() * 10 - 5, Math.random() * 10 - 5, 0],
+            transition: {
+                duration: 8 + Math.random() * 4,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 2.5 + delay
             }
         }
     });
 
-    const organizedVariants = (delay: number) => ({
-        initial: { opacity: 0, y: 20 },
+    const organizedVariants: Variants = {
+        initial: { opacity: 0, y: 20, scale: 0.9 },
         animate: { 
             opacity: 1, 
             y: 0,
+            scale: 1,
             transition: { 
-                delay: 3 + delay,
-                duration: 0.5
+                delay: 2.5, 
+                duration: 1 
+            }
+        },
+        pulse: {
+            boxShadow: [
+                "0 20px 50px -15px rgba(251, 191, 36, 0.1)",
+                "0 25px 60px -10px rgba(251, 191, 36, 0.2)",
+                "0 20px 50px -15px rgba(251, 191, 36, 0.1)"
+            ],
+            transition: {
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
             }
         }
-    });
+    };
 
     const elements = [
-        { icon: Book, color: "text-amber-500", delay: 0, x: -120, y: -180, label: "Pensum" },
-        { icon: Scale, color: "text-blue-500", delay: 0.2, x: 130, y: -200, label: "Jura" },
-        { icon: Users, color: "text-emerald-500", delay: 0.4, x: -150, y: -60, label: "Grupper" },
-        { icon: FileText, color: "text-rose-500", delay: 0.1, x: 140, y: -40, label: "Journaler" },
-        { icon: MessageSquare, color: "text-indigo-500", delay: 0.3, x: -40, y: -240, label: "Sparring" },
-        { icon: Hash, color: "text-slate-400", delay: 0.5, x: 60, y: -260, label: "Paragraffer" },
+        { icon: Book, color: "text-amber-500", delay: 0, x: -140, y: -200, label: "Pensum" },
+        { icon: Scale, color: "text-blue-500", delay: 0.2, x: 150, y: -220, label: "Jura" },
+        { icon: Users, color: "text-emerald-500", delay: 0.4, x: -170, y: -80, label: "Grupper" },
+        { icon: FileText, color: "text-rose-500", delay: 0.1, x: 160, y: -60, label: "Journaler" },
+        { icon: MessageSquare, color: "text-indigo-500", delay: 0.3, x: -40, y: -280, label: "Sparring" },
+        { icon: Hash, color: "text-slate-400", delay: 0.5, x: 80, y: -300, label: "Paragraffer" },
     ];
 
     return (
         <div className="relative w-full h-full flex items-center justify-center pt-20">
-            {/* Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-t from-amber-100/20 to-transparent blur-[120px] rounded-full"></div>
+            {/* Background Glows with pulsing animation */}
+            <motion.div 
+                animate={{ 
+                    scale: [1, 1.1, 1],
+                    opacity: [0.3, 0.5, 0.3]
+                }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 bg-gradient-to-t from-amber-100/30 to-transparent blur-[120px] rounded-full -z-10"
+            ></motion.div>
             
             {/* The "Organized Place" (Portal/Box) */}
             <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 2.5, duration: 1 }}
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-40 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[40px] shadow-2xl z-0"
+                variants={organizedVariants}
+                initial="initial"
+                animate={["animate", "pulse"]}
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-44 bg-white/40 backdrop-blur-3xl border border-white/80 rounded-[48px] shadow-2xl z-0"
             >
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent rounded-[40px]"></div>
-                <div className="flex flex-col items-center justify-center h-full space-y-2">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent rounded-[48px]"></div>
+                <div className="flex flex-col items-center justify-center h-full space-y-3">
                     <motion.div 
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                        className="w-12 h-12 rounded-full border-2 border-dashed border-amber-200 flex items-center justify-center"
+                        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                        className="w-16 h-16 rounded-full border-2 border-dashed border-amber-200/50 flex items-center justify-center relative"
                     >
-                        <Sparkles className="w-6 h-6 text-amber-500" />
+                        <motion.div
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 4, repeat: Infinity }}
+                            className="absolute inset-0 bg-amber-500/10 rounded-full blur-xl"
+                        ></motion.div>
+                        <Sparkles className="w-8 h-8 text-amber-500 relative z-10" />
                     </motion.div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40">Samlingspunktet</span>
+                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-900/40">Samlingspunktet</span>
                 </div>
             </motion.div>
 
-            {/* Floating Elements flying out */}
+            {/* Floating Elements flying out and then orbiting */}
             {elements.map((el, index) => (
                 <motion.div
                     key={index}
                     variants={elementVariants(el.delay, el.x, el.y)}
                     initial="initial"
-                    animate="animate"
+                    animate={["animate", "orbit"]}
                     className="absolute z-20"
                     style={{ left: '50%', top: '70%', marginLeft: -24, marginTop: -24 }}
                 >
-                    <div className={`p-4 bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center gap-2 sm:hover:scale-110 transition-transform cursor-default group`}>
-                        <el.icon className={`w-6 h-6 ${el.color}`} />
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-900 transition-colors">{el.label}</span>
-                    </div>
+                    <motion.div 
+                        whileHover={{ scale: 1.15, rotate: 0 }}
+                        className={`p-5 bg-white/95 backdrop-blur-sm rounded-3xl shadow-[0_15px_35px_-10px_rgba(0,0,0,0.1)] border border-slate-100/50 flex flex-col items-center gap-2 group cursor-pointer transition-shadow hover:shadow-2xl`}
+                    >
+                        <el.icon className={`w-7 h-7 ${el.color} transition-transform group-hover:scale-110`} />
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 group-hover:text-amber-900/60 transition-colors whitespace-nowrap">{el.label}</span>
+                    </motion.div>
                 </motion.div>
             ))}
 
             {/* The Person (indicated by arms/hands holding the phone) */}
             <div className="relative z-30 flex flex-col items-center">
                 <motion.div 
-                    variants={phoneVariants}
-                    initial="initial"
-                    animate="animate"
+                    animate={{ 
+                        y: [0, -12, 0],
+                        rotate: [0, 0.5, -0.5, 0]
+                    }}
+                    transition={{ 
+                        duration: 8, 
+                        repeat: Infinity, 
+                        ease: "easeInOut" 
+                    }}
                     className="relative"
                 >
-                    {/* Phone Shadow */}
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-900/10 blur-xl rounded-full"></div>
+                    {/* Phone Shadow with matching bobbing animation */}
+                    <motion.div 
+                        animate={{ 
+                            scale: [1, 0.9, 1],
+                            opacity: [0.1, 0.15, 0.1]
+                        }}
+                        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-40 h-8 bg-slate-900/20 blur-2xl rounded-full"
+                    ></motion.div>
                     
                     {/* The Smartphone */}
                     <div className="relative w-48 h-[380px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-[6px] border-slate-800 overflow-hidden">
@@ -171,7 +226,7 @@ const HeroIllustration = () => {
 
             {/* Labels for "Organized" area */}
             <motion.div 
-                variants={organizedVariants(0)}
+                variants={organizedVariants}
                 initial="initial"
                 animate="animate"
                 className="absolute top-4 left-1/2 -translate-x-1/2 -mt-12 text-center"
