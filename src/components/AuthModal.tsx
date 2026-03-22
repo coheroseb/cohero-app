@@ -23,9 +23,9 @@ import { sendVerificationEmail } from '@/lib/auth-helpers';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
+const stripePromise = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY 
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) 
+  : Promise.resolve(null);
 
 interface PartnerDomainConfig {
     institutionName: string;
