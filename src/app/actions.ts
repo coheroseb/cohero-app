@@ -437,6 +437,46 @@ export async function generateStudyScheduleAction(input: any) { return callFireb
 export async function explainFolketingetSagAction(input: any) { return callFirebaseFlow('explainFolketingetSagFlow', input); }
 export async function oralExamAnalysisAction(input: any) { return callFirebaseFlow('oralExamAnalysisFlow', input); }
 
+/**
+ * identifyReformAction
+ * Step 1: Identifies the documents for a reform.
+ */
+export async function identifyReformAction(query: string): Promise<Types.IdentifyReformOutput> {
+    return callFirebaseFlow('identifyReformFlow', { query });
+}
+
+/**
+ * generateReformAnalysisAction
+ * Step 2: Generates the detailed diff between a bill and a law.
+ * Includes caching in Firestore.
+ */
+export async function generateReformAnalysisAction(bill: Types.ReformCandidate, law: Types.ReformCandidate, query: string): Promise<Types.GenerateParagraphDiffOutput> {
+    // Normalizing query for cache key
+    const cacheKey = `analysis_${query.toLowerCase().trim().replace(/[^a-z0-9]/g, '_')}`;
+    
+    // Check cache
+    const { adminFirestore } = await import('@/firebase/server-init');
+    const cacheDoc = await adminFirestore.collection('reformAnalyses').doc(cacheKey).get();
+    
+    if (cacheDoc.exists) {
+        return { data: cacheDoc.data() as Types.GenerateParagraphDiffData, usage: { inputTokens: 0, outputTokens: 0 } };
+    }
+
+    const result = await callFirebaseFlow('generateParagraphDiffFlow', {
+        targetLawTitle: law.title,
+        oldLawXmlUrl: law.xmlUrl,
+        newBillXmlUrl: bill.xmlUrl,
+    });
+
+    // Save to cache
+    await adminFirestore.collection('reformAnalyses').doc(cacheKey).set({
+        ...result.data,
+        cachedAt: new Date().toISOString(),
+    });
+
+    return result;
+}
+
 export async function generateRawCaseSourcesAction(input: { topic: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
     const lawContext = fetchRes.data;

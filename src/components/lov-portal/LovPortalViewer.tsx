@@ -102,7 +102,10 @@ import { semanticLawSearchAction } from '@/app/actions';
 import { LiveStatusBadge } from './LiveStatusBadge';
 import LawQuizModal from './LawQuizModal';
 import ReadingGuideModal from './ReadingGuideModal';
-import type { LawContentType, ParagraphAnalysisData, CollectionData, SavedParagraph, QuizResult, LawConfig } from '@/ai/flows/types';
+import { identifyReformAction, generateReformAnalysisAction } from '@/app/actions';
+import { Progress } from "@/components/ui/progress";
+import type { LawContentType, ParagraphAnalysisData, CollectionData, SavedParagraph, QuizResult, LawConfig, GenerateParagraphDiffData } from '@/ai/flows/types';
+import { MobileBottomNav } from './MobileBottomNav';
 
 // --- CONSTANTS ---
 
@@ -613,7 +616,7 @@ const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats }: { law: L
         <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
             onClick={() => { if (!isLocked) router.push(href); }}
-            className={`group bg-white/40 backdrop-blur-3xl p-10 rounded-[3.5rem] border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[360px] ${isLocked ? 'opacity-50 border-slate-200 grayscale cursor-not-allowed shadow-none' : 'border-amber-100/50 hover:border-amber-950/20 shadow-sm hover:shadow-2xl hover:bg-white active:scale-[0.98]'}`}
+            className={`group bg-white/40 backdrop-blur-3xl p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[300px] md:min-h-[360px] ${isLocked ? 'opacity-50 border-slate-200 grayscale cursor-not-allowed shadow-none' : 'border-amber-100/50 hover:border-amber-950/20 shadow-sm hover:shadow-2xl hover:bg-white active:scale-[0.98]'}`}
         >
             <div className={`absolute top-0 right-0 p-10 opacity-[0.03] group-hover:scale-125 transition-transform duration-1000 group-hover:opacity-10 ${isLocked ? 'hidden' : ''}`}>
                 <BookOpen className="w-40 h-40 rotate-12" />
@@ -674,6 +677,237 @@ const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats }: { law: L
                     </div>
                 )}
             </div>
+        </motion.div>
+    );
+};
+
+// --- REFORM ORACLE COMPONENTS ---
+
+const ReformOracleView = ({ 
+    query, 
+    setQuery, 
+    onAnalyze, 
+    isAnalyzing, 
+    analysisStep,
+    analysisProgress,
+    result,
+    isPremium 
+}: { 
+    query: string; 
+    setQuery: (q: string) => void; 
+    onAnalyze: (e: React.FormEvent) => void; 
+    isAnalyzing: boolean; 
+    analysisStep: string;
+    analysisProgress: number;
+    result: GenerateParagraphDiffData | null;
+    isPremium: boolean;
+}) => {
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-24">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+                <div className="space-y-4">
+                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-amber-950 text-amber-400 rounded-full text-[10px] font-black uppercase tracking-[0.25em] shadow-xl shadow-amber-900/40 animate-ink">
+                        <Sparkles className="w-3.5 h-3.5" /> REFORM-ORAKLET
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-black text-amber-950 serif tracking-tight leading-tight">Forstå de nye reformer</h2>
+                    <p className="text-slate-500 font-medium italic text-lg max-w-2xl">Sammenlign lovforslag med gældende lov og få forklaret ændringernes praktiske betydning med AI-drevet indsigt.</p>
+                </div>
+                <div className="bg-amber-50 p-6 rounded-[2.5rem] border border-amber-100 flex items-center gap-4 shadow-sm shrink-0">
+                    <div className="w-12 h-12 bg-amber-950 rounded-2xl flex items-center justify-center text-amber-400 shadow-xl shadow-amber-900/20">
+                        <Gavel className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-0.5">Automatisering</p>
+                        <p className="text-xl font-bold text-amber-950 serif">Retsinformation XML</p>
+                    </div>
+                </div>
+            </div>
+
+            <section className="bg-white/40 backdrop-blur-3xl p-8 md:p-16 rounded-[3rem] border border-amber-100 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-16 opacity-[0.03] -rotate-12 pointer-events-none translate-x-20 -translate-y-20">
+                    <BookOpen className="w-80 h-80" />
+                </div>
+                <div className="max-w-3xl mx-auto space-y-12 relative z-10 text-center">
+                    <div className="space-y-4">
+                        <h3 className="text-2xl font-black text-amber-950 serif italic">Hvilken reform vil du undersøge?</h3>
+                        <p className="text-slate-400 text-sm font-medium">Indtast et emne eller et specifikt lovforslag (f.eks. "Hvad betyder kontanthjælpsreformen for § 23?")</p>
+                    </div>
+
+                    <form onSubmit={onAnalyze} className="relative group max-w-2xl mx-auto">
+                        <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-amber-600 transition-all" />
+                        <input 
+                            type="text" 
+                            disabled={!isPremium}
+                            placeholder={isPremium ? "Søg efter reform..." : "Opgrader for at bruge Oraklet..."}
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            className={`w-full pl-20 pr-48 py-7 bg-white border-2 border-amber-100 rounded-[2.5rem] text-lg focus:ring-8 focus:ring-amber-950/5 focus:bg-white focus:border-amber-950 transition-all shadow-xl shadow-amber-900/5 placeholder:text-slate-200 placeholder:italic ${!isPremium ? 'opacity-50 cursor-not-allowed filter blur-[2px]' : ''}`}
+                        />
+                        <button 
+                            type="submit"
+                            disabled={!isPremium || isAnalyzing || !query.trim()}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 h-14 px-8 bg-amber-950 text-amber-400 rounded-3xl font-black uppercase text-[10px] tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-amber-950/40 flex items-center gap-3 group/btn"
+                        >
+                            {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 group-hover/btn:scale-110" />}
+                            Analysér
+                        </button>
+                    </form>
+
+                    <div className={`flex flex-wrap justify-center gap-3 pt-4 transition-all ${!isPremium ? 'filter blur-md pointer-events-none' : ''}`}>
+                        {[
+                            "Kontanthjælpsreformen 2024",
+                            "Beskæftigelsesreformen",
+                            "Barnets Lov (ændringer)",
+                            "Beregning af ressourceforløbsydelse",
+                            "Arbejdspligten i 2025"
+                        ].map((s, i) => (
+                            <button 
+                                key={i}
+                                onClick={() => isPremium && setQuery(s)}
+                                className="px-5 py-2 bg-amber-950/5 text-amber-950/40 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-amber-950 hover:text-amber-400 transition-all border border-amber-950/5 shadow-sm"
+                            >
+                                {s}
+                            </button>
+                        ))}
+                    </div>
+
+                    {!isPremium && (
+                        <div className="absolute inset-0 z-[20] flex items-center justify-center p-8 bg-white/10 backdrop-blur-[2px] rounded-[3rem]">
+                            <motion.div 
+                                initial={{ scale: 0.9, opacity: 0 }} 
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="bg-white p-12 rounded-[2.5rem] border border-amber-100 shadow-2xl text-center space-y-8 max-w-sm relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200" />
+                                <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto text-amber-950 shadow-inner">
+                                    <Lock className="w-10 h-10" />
+                                </div>
+                                <div className="space-y-4">
+                                    <h3 className="text-2xl font-black text-amber-950 serif italic">Kollega+ Eksklusivt</h3>
+                                    <p className="text-slate-500 text-sm font-medium leading-relaxed italic">Reform-Oraklet er forbeholdt vores Kollega+ medlemmer som en del af deres avancerede juridiske værktøjskasse.</p>
+                                </div>
+                                <button 
+                                    onClick={() => window.location.href = '/medlemskab'}
+                                    className="w-full py-5 bg-amber-950 text-amber-400 rounded-3xl font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-amber-950/30 hover:scale-[1.02] active:scale-95 transition-all"
+                                >
+                                    Opgrader nu
+                                </button>
+                            </motion.div>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {isAnalyzing && (
+                <div className="py-24 space-y-12 flex flex-col items-center justify-center animate-ink">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-amber-200 blur-3xl opacity-20 animate-pulse" />
+                        <Loader2 className="w-20 h-20 animate-spin text-amber-300 relative z-10" />
+                    </div>
+                    <div className="max-w-md w-full space-y-6 text-center">
+                        <div className="space-y-3">
+                            <p className="text-2xl font-black text-amber-950 serif italic animate-pulse">
+                                {analysisStep === 'identifying' ? 'Oraklet finder love...' : 'Analyserer paragraffer...'}
+                            </p>
+                            <p className="text-slate-400 text-sm font-medium italic">Vi henter XML-kilder direkte fra Retsinformation og sammenligner ordlyd...</p>
+                        </div>
+                        <div className="space-y-4">
+                            <Progress value={analysisProgress} className="h-2 bg-amber-950/5" />
+                            <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/40">
+                                <span>Status: {analysisStep}</span>
+                                <span>{analysisProgress}% Færdig</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {result && !isAnalyzing && (
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-16 animate-ink">
+                    <div className="bg-amber-950 p-10 md:p-20 rounded-[3rem] md:rounded-[5rem] text-white shadow-[0_50px_100px_-20px_rgba(43,26,11,0.4)] relative overflow-hidden group/header">
+                        <div className="absolute top-0 right-0 p-20 opacity-[0.03] rotate-12 group-hover/header:rotate-45 transition-transform duration-1000 scale-150"><Zap className="w-96 h-96" /></div>
+                        <div className="max-w-4xl space-y-10 relative z-10">
+                            <div className="space-y-4">
+                                <div className="inline-flex items-center gap-3 px-6 py-2 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md border border-white/5">
+                                    <Sparkles className="w-4 h-4 text-amber-400" /> Analyse Færdiggjort
+                                </div>
+                                <h3 className="text-4xl md:text-7xl font-black serif italic tracking-tighter leading-[1.1]">{result.reformTitle}</h3>
+                            </div>
+                            <div className="h-px w-full bg-gradient-to-r from-white/20 to-transparent" />
+                            <div className="space-y-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-400/60">Overordnet Betydning</p>
+                                <p className="text-xl md:text-2xl font-serif text-amber-50 leading-relaxed italic opacity-90">"{result.overallImpact}"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-12">
+                        <div className="flex items-center gap-6">
+                            <div className="w-3 h-3 bg-amber-400 rounded-full shadow-lg shadow-amber-400/20"></div>
+                            <h4 className="text-[13px] font-black uppercase tracking-[0.4em] text-amber-950/40 whitespace-nowrap">Specifikke Paragraf-ændringer</h4>
+                            <div className="h-px w-full bg-gradient-to-r from-amber-100 to-transparent" />
+                        </div>
+
+                        <div className="grid gap-12">
+                            {result.diffs.map((diff, i) => (
+                                <motion.div 
+                                    key={i} 
+                                    initial={{ opacity: 0, x: -20 }} 
+                                    animate={{ opacity: 1, x: 0 }} 
+                                    transition={{ delay: i * 0.1 }}
+                                    className="bg-white rounded-[4rem] border border-amber-100 shadow-xl overflow-hidden hover:border-amber-950 transition-all group/diff"
+                                >
+                                    <div className="p-10 md:p-16 space-y-12">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                            <div className="flex items-center gap-6">
+                                                <div className="min-w-[5rem] min-h-[5rem] px-5 py-3 bg-amber-950 text-amber-400 rounded-[2rem] flex items-center justify-center text-lg md:text-xl font-black serif shadow-2xl shadow-amber-950/20 group-hover/diff:scale-105 transition-transform text-center leading-tight">{diff.paragraph}</div>
+                                                <div>
+                                                    <h5 className="text-2xl font-black text-amber-950 serif tracking-tight">Ændring i lovtekst</h5>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1 flex items-center gap-2">
+                                                        <Clock className="w-3.5 h-3.5" /> Gældende Lov vs. Nyt Lovforslag
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="px-6 py-2.5 bg-rose-50 text-rose-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-100 flex items-center gap-2 shadow-sm">
+                                                <AlertTriangle className="w-3.5 h-3.5" /> Ændret Ordlyd
+                                            </div>
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-10">
+                                            <div className="space-y-5">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 pl-4">Nugældende Lovtekst</p>
+                                                <div className="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 opacity-60 hover:opacity-100 transition-opacity">
+                                                    <p className="text-sm font-medium leading-relaxed text-slate-600 italic whitespace-pre-wrap">{diff.oldText}</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-5">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600 pl-4">Ny Lovtekst (Forslag)</p>
+                                                <div className="p-8 bg-emerald-50/20 rounded-[2.5rem] border border-emerald-100 shadow-inner group-hover/diff:border-emerald-600/30 transition-all relative overflow-hidden">
+                                                    <div className="absolute top-4 right-8 opacity-10"><CheckCircle2 className="w-12 h-12 text-emerald-600"/></div>
+                                                    <p className="text-base font-bold leading-relaxed text-amber-950 whitespace-pre-wrap relative z-10">{diff.newText}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid md:grid-cols-5 gap-8 pt-8 border-t border-amber-50">
+                                            <div className="md:col-span-2 p-8 bg-amber-50/30 rounded-[2.5rem] border border-amber-100 relative overflow-hidden group/imp">
+                                                <div className="absolute top-4 right-8 opacity-5"><Activity className="w-12 h-12" /></div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-800 mb-4 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Hvad betyder det?</p>
+                                                <p className="text-sm font-bold text-amber-950 leading-relaxed serif italic">"{diff.changeDescription}"</p>
+                                            </div>
+                                            <div className="md:col-span-3 p-8 bg-white rounded-[2.5rem] border border-amber-100 shadow-sm relative overflow-hidden group/res">
+                                                <div className="absolute top-4 right-8 opacity-5"><HelpCircle className="w-12 h-12" /></div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><Info className="w-3.5 h-3.5" /> Hensigt & Bemærkninger</p>
+                                                <p className="text-sm font-medium text-slate-600 leading-relaxed italic">"{diff.reasoning}"</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </motion.div>
+            )}
         </motion.div>
     );
 };
@@ -796,11 +1030,12 @@ export function LovPortalViewer() {
   const [lawsLoading, setLawsLoading] = useState(true);
   const [docsData, setDocsData] = useState<Record<string, LawContentType>>({});
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
-  const [viewMode, setViewMode] = useState<'laws' | 'decisions' | 'saved' | 'training'>('laws');
+  const [viewMode, setViewMode] = useState<'laws' | 'decisions' | 'saved' | 'training' | 'reforms'>('laws');
   const [isContextSidebarOpen, setIsContextSidebarOpen] = useState(true);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [activeSituationId, setActiveSituationId] = useState<string | null>(null);
@@ -856,6 +1091,14 @@ export function LovPortalViewer() {
   const [showBibliography, setShowBibliography] = useState(false);
   const [bibMetadata, setBibMetadata] = useState<Record<string, LawContentType>>({});
   const [isFetchingBibMetadata, setIsFetchingBibMetadata] = useState(false);
+
+  // Reform Oracle States
+  const [reformQuery, setReformQuery] = useState('');
+  const [isAnalyzingReform, setIsAnalyzingReform] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState<'idle' | 'identifying' | 'analyzing' | 'complete' | 'error'>('idle');
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [reformResult, setReformResult] = useState<GenerateParagraphDiffData | null>(null);
+  const [isReformOracleOpen, setIsReformOracleOpen] = useState(false);
   
   const mainScrollRef = useRef<HTMLElement>(null);
   const activeLawId = useMemo(() => params?.lawId as string || searchParams?.get('lawId'), [params, searchParams]);
@@ -1410,23 +1653,40 @@ export function LovPortalViewer() {
 
   return (
     <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 overflow-x-hidden">
-      {/* MOBILE HEADER */}
-      <div className="lg:hidden h-20 bg-white border-b border-amber-100 px-6 flex items-center justify-between sticky top-0 z-40">
+      
+      {/* MOBILE BOTTOM NAVIGATION (Premium Experience) */}
+      <MobileBottomNav 
+        viewMode={viewMode} 
+        onTabChange={(mode) => {
+            setViewMode(mode);
+            if (activeLawId || activeReferenceId) router.push('/lov-portal');
+        }} 
+        onSearchToggle={() => setIsSearching(true)}
+        activeLawId={activeLawId}
+        activeReferenceId={activeReferenceId}
+      />
+
+      {/* MOBILE HEADER - Redesigned, cleaner */}
+      <div className="lg:hidden h-16 bg-white/40 backdrop-blur-xl border-b border-amber-100 px-6 flex items-center justify-between sticky top-0 z-40 transition-shadow duration-300">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-lg shrink-0">
-            <ScaleIcon className="w-5 h-5" />
+          <div className="w-8 h-8 bg-amber-950 rounded-lg flex items-center justify-center text-amber-400 shadow-xl shrink-0">
+            <ScaleIcon className="w-4 h-4" />
           </div>
-          <span className="text-lg font-black text-amber-950 serif tracking-tighter">Lovportal</span>
+          <span className="text-base font-black text-amber-950 serif tracking-tighter">Lovportal</span>
         </div>
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-950 flex items-center justify-center active:scale-95 transition-all"
-        >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        
+        <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 text-amber-950 text-[10px] font-black uppercase tracking-widest border border-amber-100 shadow-sm transition-all active:scale-95"
+            >
+              <Library className="w-3 h-3" />
+              {activeLawId ? 'Lovtekst' : 'Vælg'}
+            </button>
+        </div>
       </div>
 
-      {/* MOBILE SIDEBAR DRAWER */}
+      {/* MOBILE SIDEBAR DRAWER - Used for Table of Contents / Law Selection */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -1435,55 +1695,29 @@ export function LovPortalViewer() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-40 lg:hidden"
+              className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[110] lg:hidden"
             />
             <motion.aside 
-              initial={{ x: '-100%' }}
+              initial={{ x: '100%' }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-4 left-4 w-[85%] max-w-sm bg-white/95 backdrop-blur-xl z-50 lg:hidden flex flex-col shadow-2xl rounded-[3rem] border border-white/20"
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+              className="fixed inset-y-4 right-4 w-[90%] max-w-sm bg-white/95 backdrop-blur-3xl z-[120] lg:hidden flex flex-col shadow-2xl rounded-[3rem] border border-white/20 overflow-hidden"
             >
-              <div className="p-8 border-b border-amber-50/50 flex items-center justify-between">
+              <div className="p-8 border-b border-amber-50/50 flex items-center justify-between bg-white/40">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-amber-950 rounded-2xl flex items-center justify-center text-amber-400 shadow-xl shadow-amber-950/20">
-                    <ScaleIcon className="w-6 h-6" />
+                  <div className="w-10 h-10 bg-amber-950 rounded-2xl flex items-center justify-center text-amber-400">
+                    <Folders className="w-5 h-5" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-amber-950 serif tracking-tight">Lovportalen</h1>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40 italic">Premium Edition</p>
+                    <h1 className="text-lg font-black text-amber-950 serif tracking-tight">Vælg kilde</h1>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Hurtigskift</p>
                   </div>
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-amber-950 transition-colors"><X className="w-6 h-6" /></button>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-amber-950 hover:bg-amber-50 rounded-full transition-all"><X className="w-6 h-6" /></button>
               </div>
 
-              <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">
-                <button 
-                    onClick={() => { setViewMode('laws'); setIsMobileMenuOpen(false); router.push('/lov-portal'); }} 
-                    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-base font-bold transition-all ${viewMode === 'laws' && !activeLawId && !activeReferenceId ? 'bg-amber-950 text-white shadow-xl shadow-amber-900/40 translate-x-1' : 'text-slate-500 hover:bg-amber-50 hover:translate-x-1'}`}
-                >
-                    <LayoutDashboard className="w-5 h-5" /> Oversigt
-                </button>
-                <button 
-                    onClick={() => { setViewMode('saved'); setIsMobileMenuOpen(false); }} 
-                    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-base font-bold transition-all ${viewMode === 'saved' ? 'bg-amber-950 text-white shadow-xl shadow-amber-900/40 translate-x-1' : 'text-slate-500 hover:bg-amber-50 hover:translate-x-1'}`}
-                >
-                    <Bookmark className="w-5 h-5" /> Gemte kilder
-                </button>
-                <button 
-                    onClick={() => { setViewMode('training'); setIsMobileMenuOpen(false); }} 
-                    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-base font-bold transition-all ${viewMode === 'training' ? 'bg-amber-950 text-white shadow-xl shadow-amber-900/40 translate-x-1' : 'text-slate-500 hover:bg-amber-50 hover:translate-x-1'}`}
-                >
-                    <TrendingUp className="w-5 h-5" /> Min Træning
-                </button>
-                
-                <div className="pt-10 pb-4 px-6">
-                    <div className="flex items-center gap-3">
-                        <div className="h-px flex-1 bg-amber-100/50"></div>
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Quick-Select</h3>
-                        <div className="h-px flex-1 bg-amber-100/50"></div>
-                    </div>
-                </div>
+              <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
                 {(lawsConfigs || []).map((law, idx) => {
                     const isLocked = isFreeTier && idx > 0;
                     const isActive = activeLawId === law.id;
@@ -1492,29 +1726,59 @@ export function LovPortalViewer() {
                             key={law.id} 
                             disabled={isLocked} 
                             onClick={() => { setViewMode('laws'); setIsMobileMenuOpen(false); router.push(`/lov-portal/view/${law.id}`); }} 
-                            className={`w-full text-left px-6 py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-between group/nav ${isActive ? 'bg-amber-50 text-amber-950 border border-amber-200' : 'text-slate-500 hover:bg-amber-50'} ${isLocked ? 'opacity-50' : ''}`}
+                            className={`w-full text-left p-6 rounded-[2rem] transition-all flex flex-col gap-2 relative overflow-hidden group/nav ${isActive ? 'bg-amber-950 text-white shadow-xl shadow-amber-950/20' : 'bg-amber-50/30 border border-transparent hover:border-amber-200'} ${isLocked ? 'opacity-50' : ''}`}
                         >
-                            <span className="truncate pr-4">{law.name}</span>
-                            {isLocked ? <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" /> : <ChevronRight className={`w-4 h-4 transition-all ${isActive ? 'text-amber-950 translate-x-1' : 'text-slate-200'}`} />}
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{law.abbreviation}</span>
+                            <span className="text-base font-black serif leading-tight">{law.name}</span>
+                            {isLocked ? <Lock className="w-3 h-3 text-amber-500 absolute top-6 right-6" /> : isActive && <ArrowRight className="w-5 h-5 text-amber-400 absolute bottom-6 right-6" />}
                         </button>
                     )
                 })}
               </nav>
-              
-              <div className="p-8 border-t border-amber-50/50">
-                  <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-amber-100/50 flex items-center gap-4 shadow-sm">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-950 flex items-center justify-center text-amber-400 font-black text-xs shadow-xl shadow-amber-950/20">{user?.email?.charAt(0).toUpperCase()}</div>
-                      <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black text-amber-950 truncate serif leading-tight">{userProfile?.displayName || user?.email?.split('@')[0]}</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mt-1">{userProfile?.membership || 'Student'}</p>
-                      </div>
-                  </div>
-              </div>
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
+      {/* MOBILE SEARCH OVERLAY (App-like feel) */}
+      <AnimatePresence>
+        {isSearching && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="fixed inset-0 z-[150] bg-[#FDFCF8] flex flex-col lg:hidden"
+          >
+            <div className="p-6 border-b border-amber-100 flex items-center gap-4">
+              <button onClick={() => setIsSearching(false)} className="p-2"><ChevronLeft className="w-6 h-6" /></button>
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Input 
+                  autoFocus
+                  placeholder="Søg..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-12 pl-12 pr-4 bg-slate-50 border-slate-200 rounded-2xl focus:ring-amber-950 focus:border-amber-950 font-bold"
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forslag</h4>
+              {SEARCH_SUGGESTIONS.slice(0, 5).map((s, i) => (
+                <button 
+                  key={i}
+                  onClick={() => { setSearchQuery(s); handleSearch({ preventDefault: () => {} } as any); setIsSearching(false); }}
+                  className="w-full text-left p-4 bg-white border border-amber-50 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all"
+                >
+                  <span className="text-sm font-bold text-amber-950">{s}</span>
+                  <ArrowUpRight className="w-4 h-4 text-slate-200" />
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* DESKTOP SIDEBAR NAVIGATION */}
       <aside className={`w-80 bg-white/60 backdrop-blur-3xl border-r border-amber-100 flex flex-col sticky top-0 h-screen z-30 transition-all duration-700 ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
         <div className="p-10 flex items-center gap-4 border-b border-amber-50/50">
@@ -1545,6 +1809,12 @@ export function LovPortalViewer() {
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'training' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
             >
                 <TrendingUp className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'training' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Min Træning
+            </button>
+            <button 
+                onClick={() => setViewMode('reforms')} 
+                className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'reforms' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
+            >
+                <Gavel className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'reforms' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Lov-reformer
             </button>
             
             <div className="pt-12 pb-6 px-6">
@@ -1591,8 +1861,8 @@ export function LovPortalViewer() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main ref={mainScrollRef} className="flex-1 min-w-0 h-screen overflow-y-auto relative pt-0 custom-scrollbar">
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 flex items-center justify-between sticky top-0 z-20">
+      <main ref={mainScrollRef} className="flex-1 min-w-0 h-screen overflow-y-auto relative pt-0 custom-scrollbar pb-32 lg:pb-0">
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-0 z-20">
             <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
                 {!(activeLawId || activeReferenceId) && (
                     <div className="flex bg-amber-950 rounded-2xl p-1 shadow-lg border border-amber-800">
@@ -1712,7 +1982,7 @@ export function LovPortalViewer() {
             </div>
         </header>
 
-        <div className={`p-8 md:p-12 mx-auto pt-8 md:pt-12 transition-all duration-700 ease-in-out ${isFocusMode ? 'max-w-4xl pt-24' : (activeLawId || activeReferenceId ? 'max-w-full' : 'max-w-7xl')}`}>
+        <div className={`p-4 md:p-12 mx-auto pt-8 md:pt-12 transition-all duration-700 ease-in-out ${isFocusMode ? 'max-w-4xl pt-24' : (activeLawId || activeReferenceId ? 'max-w-full' : 'max-w-7xl')}`}>
             {isFocusMode && (
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
@@ -1731,7 +2001,7 @@ export function LovPortalViewer() {
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="mb-16 bg-white p-12 md:p-24 rounded-[4rem] border border-amber-100 shadow-2xl flex flex-col items-center justify-center text-center space-y-12 overflow-hidden relative"
+                        className="mb-12 bg-white p-6 md:p-24 rounded-[2rem] md:rounded-[4rem] border border-amber-100 shadow-2xl flex flex-col items-center justify-center text-center space-y-12 overflow-hidden relative"
                     >
                         <div className="absolute top-0 inset-x-0 h-1 bg-amber-50">
                             <motion.div 
@@ -1808,7 +2078,7 @@ export function LovPortalViewer() {
 
                         <div className="grid lg:grid-cols-5 gap-16">
                             <div className="lg:col-span-3 space-y-12">
-                                <section className="bg-white p-12 md:p-16 rounded-[3.5rem] border border-amber-100 shadow-2xl shadow-amber-950/5 relative overflow-hidden group/res">
+                                <section className="bg-white p-6 md:p-16 rounded-[2rem] md:rounded-[3.5rem] border border-amber-100 shadow-2xl shadow-amber-950/5 relative overflow-hidden group/res">
                                     <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/res:scale-125 transition-transform duration-1000">
                                         <Quote className="w-48 h-48" />
                                     </div>
@@ -1893,6 +2163,55 @@ export function LovPortalViewer() {
                 ) : (
                   lawsLoading || isLoadingDoc ? (
                     <motion.div key="loading-main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-96 flex flex-col items-center justify-center space-y-6"><Loader2 className="w-10 h-10 animate-spin text-amber-200" /><p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Indlæser indhold</p></motion.div>
+                ) : viewMode === 'reforms' ? (
+                    <ReformOracleView 
+                        query={reformQuery}
+                        setQuery={setReformQuery}
+                        isAnalyzing={isAnalyzingReform}
+                        analysisStep={analysisStep}
+                        analysisProgress={analysisProgress}
+                        result={reformResult}
+                        isPremium={isPremium}
+                        onAnalyze={async (e) => {
+                            e.preventDefault();
+                            if (!reformQuery.trim() || isFreeTier) return;
+                            setIsAnalyzingReform(true);
+                            setAnalysisStep('identifying');
+                            setAnalysisProgress(10);
+                            try {
+                                const idRes = await identifyReformAction(reformQuery);
+                                setAnalysisProgress(40);
+                                const { candidates } = idRes.data;
+                                
+                                if (!candidates || candidates.length === 0) {
+                                    throw new Error("Kunne ikke identificere nogen relevante reformer.");
+                                }
+
+                                const bill = candidates.find(c => c.type === 'LF');
+                                const law = candidates.find(c => c.type === 'LBK');
+
+                                if (!bill || !law) {
+                                    throw new Error("Systemet har brug for både et lovforslag og en gældende lov for at lave en sammenligning.");
+                                }
+
+                                setAnalysisStep('analyzing');
+                                setAnalysisProgress(60);
+                                
+                                const analysisRes = await generateReformAnalysisAction(bill, law, reformQuery);
+                                setAnalysisProgress(100);
+                                
+                                if (analysisRes?.data) {
+                                    setReformResult(analysisRes.data);
+                                    setAnalysisStep('complete');
+                                }
+                            } catch (error: any) {
+                                setAnalysisStep('error');
+                                toast({ variant: "destructive", title: "Analyse-fejl", description: error.message || "Kunne ikke analysere reformen." });
+                            } finally {
+                                setIsAnalyzingReform(false);
+                            }
+                        }}
+                    />
                 ) : viewMode === 'training' ? (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -2041,7 +2360,7 @@ export function LovPortalViewer() {
 
                         {/* 1. SEMANTIC SEARCH PROMINENT START */}
                         <section className="space-y-12">
-                            <div className="bg-white/40 backdrop-blur-3xl p-10 md:p-24 rounded-[4rem] border border-amber-100 shadow-2xl relative overflow-hidden text-center">
+                            <div className="bg-white/40 backdrop-blur-3xl p-6 md:p-24 rounded-[2rem] md:rounded-[4rem] border border-amber-100 shadow-2xl relative overflow-hidden text-center">
                                 <div className="absolute top-0 right-0 p-20 opacity-[0.03] pointer-events-none -rotate-12 translate-x-32 -translate-y-32 scale-150">
                                     <Brain className="w-96 h-96" />
                                 </div>
@@ -2151,7 +2470,7 @@ export function LovPortalViewer() {
                     </motion.div>
                 ) : (activeLawId || activeReferenceId) && currentDocData ? (
                     <motion.div id="law-content-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`${isScrolled ? '' : 'space-y-6'}`}>
-                        <div className={`sticky top-20 z-40 bg-slate-50/50 backdrop-blur-md transition-all duration-500 overflow-hidden ${isScrolled ? 'p-3 px-5 rounded-2xl shadow-lg border border-slate-200 mt-2 mb-8' : 'p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm mb-6'}`}>
+                        <div className={`sticky top-20 z-40 bg-slate-50/50 backdrop-blur-md transition-all duration-500 overflow-hidden ${isScrolled ? 'p-3 px-5 rounded-2xl shadow-lg border border-slate-200 mt-2 mb-8' : 'p-4 md:p-8 rounded-2xl md:rounded-3xl border border-slate-200 shadow-sm mb-6'}`}>
                             <div className={`absolute top-0 right-0 p-8 opacity-[0.02] ${isScrolled ? 'hidden' : ''}`}><ScaleIcon className="w-24 h-24 text-slate-900" /></div>
                             <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-10">
                                 {!isScrolled && (
@@ -2213,7 +2532,7 @@ export function LovPortalViewer() {
                                 id="semantic-result-area"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-amber-950 p-8 md:p-12 rounded-[3rem] text-white shadow-2xl relative overflow-hidden mb-12"
+                                className="bg-amber-950 p-6 md:p-12 rounded-[2rem] md:rounded-[3rem] text-white shadow-2xl relative overflow-hidden mb-12"
                             >
                                 <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 pointer-events-none">
                                     <Sparkles className="w-24 h-24" />
@@ -2252,7 +2571,7 @@ export function LovPortalViewer() {
                                             const isSaved = (savedParagraphs || []).some(p => p.id === `${currentDocId}-${para.nummer.replace(/[§\s\.]/g, '-')}`);
                                             return (
                                                 <div key={pIdx} id={`para-${paraKey}`} className={`bg-white border transition-all overflow-hidden ${isExpanded ? 'rounded-[3rem] border-amber-950 shadow-2xl' : 'rounded-[2.5rem] border-amber-100 hover:border-amber-400 shadow-sm'}`}>
-                                                    <div onClick={() => { setExpandedParaKey(isExpanded ? null : paraKey); setActiveParagraphNumber(isExpanded ? null : para.nummer); if(isExpanded) setSelectedSubElement(null); }} onMouseUp={() => handleMouseUp(paraKey)} className="p-8 md:p-12 flex items-start gap-6 cursor-pointer group">
+                                                    <div onClick={() => { setExpandedParaKey(isExpanded ? null : paraKey); setActiveParagraphNumber(isExpanded ? null : para.nummer); if(isExpanded) setSelectedSubElement(null); }} onMouseUp={() => handleMouseUp(paraKey)} className="p-4 md:p-12 flex items-start gap-4 md:gap-6 cursor-pointer group">
                                                         <div className={`w-12 h-12 md:w-16 md:h-16 rounded-[2rem] flex items-center justify-center font-black serif text-xl md:text-3xl shrink-0 ${isExpanded ? 'bg-amber-950 text-white' : 'bg-amber-50 text-amber-900'}`}>{para.nummer}</div>
                                                         <div className="flex-1 min-w-0 text-base leading-relaxed font-medium text-slate-600">
                                                             <InteractiveParagraphBody 
@@ -2271,7 +2590,7 @@ export function LovPortalViewer() {
                                                             initial={{ height: 0, opacity: 0 }}
                                                             animate={{ height: 'auto', opacity: 1 }}
                                                             exit={{ height: 0, opacity: 0 }}
-                                                            className="bg-amber-50/20 border-t border-amber-50 p-8 md:p-14 space-y-12 animate-ink"
+                                                            className="bg-amber-50/20 border-t border-amber-50 p-4 md:p-14 space-y-12 animate-ink"
                                                         >
                                                             <div className="flex flex-col md:flex-row gap-6">
                                                                 <Button 
@@ -2334,7 +2653,7 @@ export function LovPortalViewer() {
                                                                 </motion.div>
                                                             )}
 
-                                                            <div className="bg-white/40 backdrop-blur-3xl p-10 md:p-14 rounded-[4rem] border border-amber-100 shadow-2xl shadow-amber-950/5 space-y-10 relative group/bib overflow-hidden">
+                                                            <div className="bg-white/40 backdrop-blur-3xl p-6 md:p-14 rounded-[2rem] md:rounded-[4rem] border border-amber-100 shadow-2xl shadow-amber-950/5 space-y-10 relative group/bib overflow-hidden">
                                                                 <div className="absolute top-0 right-0 p-14 opacity-[0.03] group-hover/bib:scale-125 group-hover/bib:rotate-6 transition-all duration-1000"><FileStack className="w-48 h-48" /></div>
                                                                 <div className="flex items-center justify-between relative z-10">
                                                                     <div className="flex items-center gap-5 text-amber-950/40">

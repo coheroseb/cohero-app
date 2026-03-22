@@ -94,6 +94,15 @@ function extractText(node: any): string {
         }
 
         // Check for common Retsinfo text containers
+        if (node.Aendring) {
+            const aendring = Array.isArray(node.Aendring) ? node.Aendring : [node.Aendring];
+            return aendring.map((a: any) => {
+                const def = a.AendringDefinition ? extractText(a.AendringDefinition).trim() : '';
+                const nyTekst = a.AendringAktion?.AendringNyTekst ? `\n\nNY TEKST:\n${extractText(a.AendringAktion.AendringNyTekst).trim()}` : '';
+                return `\n\nÆNDRING: ${def}${nyTekst}\n`;
+            }).join('');
+        }
+
         if (node.Char) {
             text += extractText(node.Char) + ' ';
         } else if (node.Linea) {

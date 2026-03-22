@@ -3,8 +3,10 @@ import { analyzeFtDocument } from './flows/analyze-ft-document-flow';
 import { analyzeLegalDecision } from './flows/analyze-legal-decision-flow';
 import { analyzeParagraph } from './flows/analyze-paragraph-flow';
 import { analyzeReformPdf } from './flows/analyze-reform-flow';
+import { generateParagraphDiffFlow } from './flows/generate-paragraph-diff-flow';
 import { analyzeStarData } from './flows/analyze-star-data-flow';
 import { analyzeTaskSchedule } from './flows/analyze-task-schedule-flow';
+import { identifyReformFlow } from './flows/identify-reform-flow';
 import { brainstormSpark } from './flows/brainstorm-spark-flow';
 import { getCareerMatch } from './flows/career-match-flow';
 import { getCaseConsequence } from './flows/case-consequence-flow';
@@ -211,4 +213,8 @@ export const allFlows: Record<string, any> = {
   "fetchVivePublications": fetchVivePublications,
   "getViveReportQaFlow": getViveReportQa,
   "getViveReportQa": getViveReportQa,
+  "identifyReformFlow": identifyReformFlow,
+  "identifyReform": identifyReformFlow,
+  "generateParagraphDiffFlow": generateParagraphDiffFlow,
+  "generateParagraphDiff": generateParagraphDiffFlow,
 };

@@ -1,4 +1,4 @@
-import { z } from 'genkit';
+import { z } from 'zod';
 
 // ==========================================
 // SHARED & BASE SCHEMAS
@@ -473,6 +473,59 @@ export const ExplainFTSagOutputSchema = z.object({
   data: ExplainFTSagDataSchema,
   usage: UsageSchema,
 });
+
+export const IdentifyReformInputSchema = z.object({
+  query: z.string().describe('Brugerens spørgsmål om en reform, f.eks. "Hvad betyder kontanthjælpsreformen?"'),
+});
+
+export const ReformCandidateSchema = z.object({
+  title: z.string().describe('Titlen på lovforslaget eller loven.'),
+  documentId: z.string().describe('Det unikke ID hos Retsinformation (f.eks. AC000123).'),
+  type: z.enum(['LF', 'LBK']).describe('LF for Lovforlag, LBK for Lovbekendtgørelse.'),
+  summary: z.string().describe('En ultrakort beskrivelse af kandidatens relevans.'),
+  xmlUrl: z.string().url().describe('Direkte XML-link fra Retsinformation.'),
+});
+
+export const IdentifyReformDataSchema = z.object({
+  candidates: z.array(ReformCandidateSchema),
+  rationale: z.string().describe('AIens begrundelse for hvorfor disse dokumenter er valgt.'),
+});
+
+export const IdentifyReformOutputSchema = z.object({
+  data: IdentifyReformDataSchema,
+  usage: UsageSchema,
+});
+
+export const ParagraphDiffSchema = z.object({
+  paragraph: z.string().describe('Paragrafnummer, f.eks. "§ 23"'),
+  oldText: z.string().describe('Teksten i den nugældende lov.'),
+  newText: z.string().describe('Den foreslåede tekst i reformen.'),
+  changeDescription: z.string().describe('Kort forklaring af hvad ændringen rent faktisk betyder.'),
+  reasoning: z.string().describe('Uddrag af bemærkningerne (henstigten bag ændringen).'),
+});
+
+export const GenerateParagraphDiffInputSchema = z.object({
+  targetLawTitle: z.string().describe('Titlen på loven der ændres.'),
+  oldLawXmlUrl: z.string().url().describe('URL til den gældende lov Xml.'),
+  newBillXmlUrl: z.string().url().describe('URL til selve lovforslaget Xml.'),
+});
+
+export const GenerateParagraphDiffDataSchema = z.object({
+  reformTitle: z.string(),
+  diffs: z.array(ParagraphDiffSchema),
+  overallImpact: z.string().describe('Overordnet opsummering af ændringernes betydning for praksis.'),
+});
+
+export const GenerateParagraphDiffOutputSchema = z.object({
+  data: GenerateParagraphDiffDataSchema,
+  usage: UsageSchema,
+});
+
+export type IdentifyReformOutput = z.infer<typeof IdentifyReformOutputSchema>;
+export type IdentifyReformData = z.infer<typeof IdentifyReformDataSchema>;
+export type ReformCandidate = z.infer<typeof ReformCandidateSchema>;
+export type GenerateParagraphDiffOutput = z.infer<typeof GenerateParagraphDiffOutputSchema>;
+export type GenerateParagraphDiffData = z.infer<typeof GenerateParagraphDiffDataSchema>;
 
 // ==========================================
 // EMAIL SCHEMAS
