@@ -87,9 +87,13 @@ import type * as Types from '@/ai/flows/types';
 async function callFirebaseFlow(flowName, data) {
   const adminSecret = process.env.CRON_SECRET || "dev-secret-123";
   const projectId = 'studio-7870211338-fe921';
+  const fallbackUrl = process.env.NODE_ENV === 'production'
+    ? `https://us-central1-${projectId}.cloudfunctions.net/runAiFlow`
+    : `http://127.0.0.1:5001/${projectId}/us-central1/runAiFlow`;
+
   const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
     ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + "/runAiFlow")
-    : ("http://127.0.0.1:5001/" + projectId + "/us-central1/runAiFlow");
+    : fallbackUrl;
 
   const response = await fetch(url, {
     method: 'POST',
