@@ -114,6 +114,19 @@ const CaseTrainerPageContent: React.FC = () => {
   const handleGenerateCase = async () => {
     if (!selectedTopic || isGenerating || !user || !firestore || !userProfile || !activeCaseRef) return;
     
+    // Limit Check for Free Tier / Group Pro
+    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
+      const lastUsage = userProfile.lastCaseTrainerUsage?.toDate();
+      const now = new Date();
+      const isNewDay = !lastUsage || lastUsage.toDateString() !== now.toDateString();
+      const count = isNewDay ? 0 : (userProfile.dailyCaseTrainerCount || 0);
+
+      if (count >= 1) {
+        setLimitError("Du har brugt dit daglige forsøg i Case-træneren. Opgrader til Kollega+ for fri adgang.");
+        return;
+      }
+    }
+    
     setIsGenerating(true);
     setError(null);
     setLimitError(null);
@@ -478,7 +491,6 @@ const CaseTrainerPageContent: React.FC = () => {
                             <PersonaCard 
                                 icon={<Scale className="w-6 h-6"/>} 
                                 title="Marianne" 
-                                description="Juridisk sagsbehandler"
                                 subtitle="Juridisk Validitet"
                                 color="bg-blue-50 text-blue-700" 
                                 feedback={finalFeedback.juridisk.feedback} 
@@ -487,7 +499,6 @@ const CaseTrainerPageContent: React.FC = () => {
                             <PersonaCard 
                                 icon={<Briefcase className="w-6 h-6"/>} 
                                 title="Erik" 
-                                description="Erfaren Socialrådgiver"
                                 subtitle="Faglig Praksis"
                                 color="bg-amber-50 text-amber-700" 
                                 feedback={finalFeedback.erfaren.feedback} 
@@ -496,7 +507,6 @@ const CaseTrainerPageContent: React.FC = () => {
                             <PersonaCard 
                                 icon={<Clock className="w-6 h-6"/>} 
                                 title="Lars" 
-                                description="Afdelingsleder"
                                 subtitle="Klarhed & Effekt"
                                 color="bg-rose-50 text-rose-700" 
                                 feedback={finalFeedback.travl.feedback} 
@@ -547,7 +557,7 @@ const CaseTrainerPage: React.FC = () => {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.replace(`/?callbackUrl=${encodeURIComponent(pathname)}`);
+            router.replace(`/?callbackUrl=${encodeURIComponent(pathname || '')}`);
         }
     }, [user, isUserLoading, router, pathname]);
 

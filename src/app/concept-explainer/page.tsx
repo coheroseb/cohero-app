@@ -114,7 +114,7 @@ function ConceptExplainerPageContent() {
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [hasCachedVideo, setHasCachedVideo] = useState(false);
 
-  const isKollegaPlus = userProfile?.membership === 'Kollega+' || userProfile?.role === 'admin';
+  const isKollegaPlus = (userProfile?.role === 'admin') || (userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership));
 
 
 
@@ -144,7 +144,7 @@ function ConceptExplainerPageContent() {
     }, 1500);
 
     // Limit Check (Free Tier)
-    if (userProfile.membership === 'Kollega') {
+    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
         const today = new Date().toDateString();
         const lastUsage = userProfile.lastConceptExplainerUsage?.toDate().toDateString();
         const count = lastUsage === today ? userProfile.dailyConceptExplainerCount || 0 : 0;

@@ -527,7 +527,7 @@ export default function SettingsPage() {
                     </Button>
                   </Link>
                 </div>
-            ) : userProfile?.membership === 'Kollega' ? (
+            ) : (userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) ? (
                 <Link href="/upgrade" className="w-full sm:w-auto">
                     <Button className="w-full sm:w-auto px-10 h-12 rounded-xl shadow-xl shadow-amber-950/10 group">
                         Opgrader til Kollega+

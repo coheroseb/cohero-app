@@ -260,6 +260,7 @@ const SecondOpinionPageContent = () => {
 
             let limitVal;
             switch (userProfile.membership) {
+                case 'Group Pro':
                 case 'Kollega':
                     limitVal = 1;
                     break;

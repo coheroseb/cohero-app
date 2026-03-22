@@ -42,7 +42,7 @@ function ReflectionLogPageContent() {
     const handleReflect = async () => {
         if (!user || !firestore || !logEntry.trim() || !userProfile || isProcessing) return;
 
-        if (userProfile.membership === 'Kollega') {
+        if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
             const getWeek = (d: Date) => {
                 const date = new Date(d.getTime());
                 date.setHours(0, 0, 0, 0);
@@ -116,7 +116,7 @@ function ReflectionLogPageContent() {
                 lastSocraticReflectionUsage: serverTimestamp()
             };
 
-            if (userProfile.membership === 'Kollega') {
+            if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
                 const getWeek = (d: Date) => {
                     const date = new Date(d.getTime());
                     date.setHours(0, 0, 0, 0);
@@ -358,7 +358,7 @@ const ReflectionLogPage = () => {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.replace(`/?callbackUrl=${encodeURIComponent(pathname)}`);
+            router.replace(`/?callbackUrl=${encodeURIComponent(pathname || '')}`);
         }
     }, [user, isUserLoading, router, pathname]);
 

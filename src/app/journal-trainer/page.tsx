@@ -106,6 +106,19 @@ const JournalTrainerPageContent: React.FC = () => {
   const handleStartTraining = async () => {
     if (!selectedTopic || isGenerating || !user || !firestore || !userProfile || !activeScenarioRef) return;
     
+    // Limit Check for Free Tier / Group Pro
+    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
+        const lastUsage = userProfile.lastJournalTrainerUsage?.toDate();
+        const now = new Date();
+        const isNewDay = !lastUsage || lastUsage.toDateString() !== now.toDateString();
+        const count = isNewDay ? 0 : (userProfile.dailyJournalTrainerCount || 0);
+        
+        if (count >= 1) {
+            setError("Du har brugt dit daglige forsøg i Journal-træneren. Opgrader til Kollega+ for fri adgang.");
+            return;
+        }
+    }
+    
     setIsGenerating(true);
     setError(null);
 
@@ -635,4 +648,27 @@ const JournalTrainerPageContent: React.FC = () => {
   );
 };
 
-export default JournalTrainerPageContent;
+const JournalTrainerPage: React.FC = () => {
+    const { user, isUserLoading } = useApp();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            router.replace(`/?callbackUrl=${encodeURIComponent(pathname || '')}`);
+        }
+    }, [user, isUserLoading, router, pathname]);
+
+    if (isUserLoading || !user) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-[#FDFCF8]">
+                <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-slate-500 font-semibold">Indlæser...</p>
+            </div>
+        );
+    }
+
+    return <JournalTrainerPageContent />;
+};
+
+export default JournalTrainerPage;

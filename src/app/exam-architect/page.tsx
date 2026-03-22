@@ -82,7 +82,7 @@ const ExamArchitectPageContent: React.FC = () => {
   const [limitError, setLimitError] = useState<string | null>(null);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
   
-  const isPremiumUser = useMemo(() => userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership), [userProfile]);
+  const isPremiumUser = useMemo(() => userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership), [userProfile]);
 
   const seminarsQuery = useMemoFirebase(() => {
     if (!user || !firestore || !semester) return null;
@@ -123,7 +123,7 @@ const ExamArchitectPageContent: React.FC = () => {
     setLimitError(null);
 
     // Limit check
-    if (userProfile.membership === 'Kollega') {
+    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
       const lastUsage = userProfile.lastExamArchitectUsage?.toDate();
       const now = new Date();
       const isNewMonth = !lastUsage || lastUsage.getMonth() !== now.getMonth() || lastUsage.getFullYear() !== now.getFullYear();
@@ -148,7 +148,7 @@ const ExamArchitectPageContent: React.FC = () => {
       const batch = writeBatch(firestore);
       const userRef = doc(firestore, 'users', user.uid);
       const userUpdates: {[key: string]: any} = { lastExamArchitectUsage: serverTimestamp() };
-      if (userProfile.membership === 'Kollega') {
+      if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
         const lastUsage = userProfile.lastExamArchitectUsage?.toDate();
         if (!lastUsage || lastUsage.getMonth() !== new Date().getMonth() || lastUsage.getFullYear() !== new Date().getFullYear()) {
           userUpdates.monthlyExamArchitectCount = 1;

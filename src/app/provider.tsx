@@ -313,7 +313,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [auth]);
 
-  const showUpgradeBanner = !isStandaloneGroups && userProfile && userProfile.membership === 'Kollega';
+  const showUpgradeBanner = !isStandaloneGroups && userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership);
 
   const contextValue = useMemo((): AppContextType => ({
     user,

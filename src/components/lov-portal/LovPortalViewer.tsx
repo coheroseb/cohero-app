@@ -865,7 +865,7 @@ export function LovPortalViewer() {
   const currentDocData = currentDocId ? docsData[currentDocId] : null;
 
   const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership), [userProfile]);
-  const isFreeTier = userProfile?.membership === 'Kollega';
+  const isFreeTier = !isPremium;
 
   const filteredSuggestions = useMemo(() => {
     // If we're in a specific law, suggest paragraphs from that law

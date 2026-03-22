@@ -347,7 +347,7 @@ export default function StarTableDetailsPage() {
     const isPremium = useMemo(() => {
         if (!userProfile) return false;
         const premiumPlans = ['Kollega+', 'Semesterpakken', 'Kollega++'];
-        return userProfile.role === 'admin' || premiumPlans.includes(userProfile.membership || '');
+        return userProfile.role === 'admin' || (userProfile.membership && premiumPlans.includes(userProfile.membership));
     }, [userProfile]);
 
     useEffect(() => {
@@ -523,7 +523,7 @@ export default function StarTableDetailsPage() {
         }
 
         // Limit check for free tier
-        if (userProfile.membership === 'Kollega') {
+        if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
             const lastUsage = userProfile.lastStarAnalysisUsage?.toDate();
             const now = new Date();
             const dailyCount = (lastUsage && lastUsage.toDateString() === now.toDateString()) ? (userProfile.dailyStarAnalysisCount || 0) : 0;

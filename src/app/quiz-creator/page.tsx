@@ -51,7 +51,7 @@ function QuizCreatorPageContent() {
         const userData = userSnap.data() || {};
         
         // Limit Check for 'Kollega'
-        if (userProfile.membership === 'Kollega') {
+        if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
             const getWeek = (d: Date) => {
                 const date = new Date(d.getTime());
                 date.setHours(0, 0, 0, 0);
@@ -100,7 +100,7 @@ function QuizCreatorPageContent() {
             lastQuizCreatorUsage: serverTimestamp()
         };
 
-        if (userProfile.membership === 'Kollega') {
+        if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
              const getWeek = (d: Date) => {
                 const date = new Date(d.getTime());
                 date.setHours(0, 0, 0, 0);

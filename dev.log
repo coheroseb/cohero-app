@@ -1,0 +1,156 @@
+
+> cohero-din-fagfalle@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1184ms
+ ○ Compiling /concept-explainer ...
+ ✓ Compiled /concept-explainer in 3s (2142 modules)
+ GET /concept-explainer?term=pastoralmagt 200 in 3285ms
+ ○ Compiling /portal ...
+ ✓ Compiled /portal in 507ms (2181 modules)
+ GET /portal 200 in 696ms
+ ✓ Compiled / in 208ms (2189 modules)
+ GET / 200 in 260ms
+ POST /portal 200 in 447ms
+ ✓ Compiled /concept-explainer in 118ms (1363 modules)
+ POST /portal 200 in 1266ms
+ POST /concept-explainer?term=DUBO 200 in 1487ms
+ POST /concept-explainer?term=DUBO 200 in 6161ms
+ POST /portal 200 in 11ms
+ POST /portal 200 in 18ms
+ POST /portal 200 in 10ms
+ POST /portal 200 in 8ms
+ ✓ Compiled in 504ms (856 modules)
+ ✓ Compiled in 295ms (856 modules)
+ GET / 200 in 198ms
+ ✓ Compiled /favicon.ico in 307ms (1395 modules)
+ GET /favicon.ico 200 in 379ms
+ POST /portal 200 in 66ms
+ POST /portal 200 in 6ms
+ POST /portal 200 in 7ms
+ POST /portal 200 in 7ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 957ms (2266 modules)
+ ✓ Compiled /admin/users in 414ms (2498 modules)
+ ✓ Compiled /admin/system in 206ms (2493 modules)
+ ✓ Compiled in 943ms (2269 modules)
+ GET /admin/users 200 in 154ms
+ ✓ Compiled /favicon.ico in 215ms (1420 modules)
+ GET /favicon.ico 200 in 281ms
+ POST /portal 200 in 65ms
+ POST /portal 200 in 10ms
+ POST /portal 200 in 7ms
+ POST /portal 200 in 7ms
+ ✓ Compiled /admin in 126ms (1429 modules)
+ ✓ Compiled in 559ms (2312 modules)
+ GET /admin/users 200 in 141ms
+ GET /favicon.ico 200 in 20ms
+ POST /portal 200 in 51ms
+ POST /portal 200 in 8ms
+ POST /portal 200 in 8ms
+ POST /portal 200 in 7ms
+ ○ Compiling /admin/surveys ...
+ ✓ Compiled /admin/surveys in 713ms (2314 modules)
+ ○ Compiling /admin/marketing ...
+ ✓ Compiled /admin/marketing in 514ms (2285 modules)
+ ✓ Compiled in 466ms (2259 modules)
+ ✓ Compiled /admin/surveys in 219ms (1373 modules)
+ ✓ Compiled in 608ms (2269 modules)
+ ○ Compiling /admin/stats ...
+ ✓ Compiled /admin/stats in 806ms (2270 modules)
+ ○ Compiling /admin/emails ...
+ ✓ Compiled /admin/emails in 626ms (2472 modules)
+ ✓ Compiled in 1291ms (2463 modules)
+ ✓ Compiled in 459ms (2463 modules)
+ ✓ Compiled /portal in 416ms (1487 modules)
+ POST /portal 200 in 99ms
+ POST /portal 200 in 7ms
+ POST /portal 200 in 7ms
+ POST /portal 200 in 7ms
+ ✓ Compiled / in 172ms (1499 modules)
+ ✓ Compiled /auth in 478ms (2502 modules)
+ ✓ Compiled in 1343ms (2476 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /portal 200 in 208ms
+ ✓ Compiled /favicon.ico in 311ms (1510 modules)
+ GET /favicon.ico 200 in 380ms
+ POST /portal 200 in 109ms
+ POST /portal 200 in 9ms
+ POST /portal 200 in 10ms
+ POST /portal 200 in 9ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 393ms (2508 modules)
+ GET /portal 200 in 391ms
+ GET /favicon.ico 200 in 28ms
+ POST /portal 200 in 62ms
+ POST /portal 200 in 9ms
+ POST /portal 200 in 7ms
+ POST /portal 200 in 8ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 814ms (2496 modules)
+ ✓ Compiled / in 224ms (1502 modules)
+ POST /portal 200 in 91ms
+ POST /portal 200 in 7ms
+ POST /portal 200 in 9ms
+ POST /portal 200 in 8ms
+ GET /portal 200 in 178ms
+ POST /portal 200 in 20ms
+ POST /portal 200 in 12ms
+ POST /portal 200 in 11ms
+ POST /portal 200 in 18ms
+ ○ Compiling /folketinget ...
+ ✓ Compiled /folketinget in 788ms (2496 modules)
+ ✓ Compiled in 666ms (2510 modules)
+ POST /folketinget 200 in 15375ms
+ POST /portal 200 in 11ms
+ POST /portal 200 in 9ms
+ POST /portal 200 in 9ms
+ POST /portal 200 in 9ms
+ POST /folketinget 200 in 11246ms
+ ✓ Compiled / in 149ms (1489 modules)
+ GET / 200 in 211ms
+ ✓ Compiled /favicon.ico in 314ms (1407 modules)
+ GET /favicon.ico 200 in 387ms
+ GET /favicon.ico 200 in 12ms
+ GET /favicon.ico 200 in 13ms
+ POST /portal 200 in 278ms
+ POST /portal 200 in 1429ms
+ POST /portal 200 in 20ms
+ POST /portal 200 in 13ms
+ ○ Compiling /upgrade ...
+ ✓ Compiled /upgrade in 767ms (2429 modules)
+ GET /favicon.ico 200 in 33ms
+ ✓ Compiled /_not-found in 221ms (2430 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 385ms
+ ✓ Compiled in 779ms (2405 modules)
+ ✓ Compiled in 219ms (1028 modules)
+ ✓ Compiled in 255ms (1028 modules)
+ GET /upgrade 200 in 257ms
+ ✓ Compiled /_not-found in 338ms (1378 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 473ms
+ ✓ Compiled /favicon.ico in 189ms (1410 modules)
+ GET /favicon.ico 200 in 268ms
+   Reload env: .env.local
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 3.9s (2450 modules)
+ GET /upgrade 200 in 1782ms
+ ✓ Compiled /_not-found in 182ms (1410 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 313ms
+ GET /favicon.ico 200 in 37ms
+ GET / 200 in 65ms
+ GET /portal 200 in 66ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1021ms (2618 modules)
+ GET /upgrade 404 in 1219ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 154ms
+ ✓ Compiled /favicon.ico in 157ms (1450 modules)
+ GET /favicon.ico 200 in 221ms
+ ✓ Compiled in 1485ms (2631 modules)
+ ✓ Compiled in 676ms (2631 modules)
+ ✓ Compiled in 352ms (1214 modules)
+   Reload env: .env.local

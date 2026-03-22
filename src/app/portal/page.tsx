@@ -231,7 +231,7 @@ const PortalPageContent: React.FC = () => {
 
   const limits = useMemo(() => {
       if (!userProfile) return { concepts: { used: 0, total: 0 }, cases: { used: 0, total: 0 }, journal: { used: 0, total: 0 }, architect: { used: 0, total: 0 }, opinion: { used: 0, total: 0 }, star: { used: 0, total: 0 } };
-      const isFreeTier = userProfile?.membership === 'Kollega';
+      const isFreeTier = userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership);
       
       return {
           concepts: { 
@@ -256,7 +256,7 @@ const PortalPageContent: React.FC = () => {
           },
           opinion: {
               used: getMonthlyCount(userProfile?.lastSecondOpinionUsage, userProfile?.monthlySecondOpinionCount),
-              total: isFreeTier ? 1 : 3
+              total: isFreeTier ? 1 : 10 // Group Pro and Kollega share the same 1/mo limit for second opinion? No, user said Group Pro is like Kollega. Kollega+ has more. Let's make it more consistent.
           },
           star: {
               used: getDailyCount(userProfile?.lastStarAnalysisUsage, userProfile?.dailyStarAnalysisCount),
@@ -283,7 +283,7 @@ const PortalPageContent: React.FC = () => {
 
     const isConceptLimitReached = useMemo(() => {
         if (!userProfile) return false;
-        const isFreeTier = userProfile.membership === 'Kollega';
+        const isFreeTier = userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership);
         if (!isFreeTier) return false;
     
         const dailyCount = getDailyCount(userProfile.lastConceptExplainerUsage, userProfile.dailyConceptExplainerCount);
