@@ -993,8 +993,10 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
     const protocol = headersList.get('x-forwarded-proto') || 'https';
     const origin = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
 
-    const success_url = `${origin}/portal?session_id={CHECKOUT_SESSION_ID}`;
-    const cancel_url = `${origin}${originPath || '/upgrade'}`;
+    const basePath = originPath || '/portal';
+    const separator = basePath.includes('?') ? '&' : '?';
+    const success_url = `${origin}${basePath}${separator}success=true&session_id={CHECKOUT_SESSION_ID}`;
+    const cancel_url = `${origin}${basePath}`;
 
     let customerId = stripeCustomerId;
 

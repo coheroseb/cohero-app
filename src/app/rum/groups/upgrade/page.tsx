@@ -105,6 +105,8 @@ export default function GroupsUpgradePage() {
       return <AuthLoadingScreen />;
   }
 
+  const isSuccess = searchParams?.get('success') === 'true';
+
   if (isCentralized) {
     return (
       <div className="bg-[#FDFCF8] min-h-screen flex items-center justify-center text-center p-6 relative overflow-hidden">
@@ -128,6 +130,38 @@ export default function GroupsUpgradePage() {
               <button
                 onClick={() => router.push('/rum/groups')}
                 className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black transition-colors shadow-2xl shadow-slate-900/20"
+              >
+                  Tilbage til Project Group
+              </button>
+          </motion.div>
+      </div>
+    );
+  }
+
+  // --- SUCCESS STATE ---
+  if (isSuccess) {
+    return (
+      <div className="bg-[#FDFCF8] min-h-screen flex items-center justify-center text-center p-6 relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-100/50 rounded-full blur-[120px] opacity-30 pointer-events-none"></div>
+          
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+            className="bg-white/80 backdrop-blur-3xl p-12 md:p-20 rounded-[4rem] border border-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] max-w-2xl relative z-10"
+          >
+               <div className="w-24 h-24 bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-inner ring-4 ring-white">
+                 <Sparkles className="w-10 h-10" />
+               </div>
+               <h1 className="text-4xl font-bold text-slate-800 tracking-tight mb-6">
+                  Betaling Gennemført!
+                </h1>
+                <p className="text-lg text-slate-500 leading-relaxed mb-12 font-medium">
+                  Tusind tak for opgraderingen! I har nu fået fuldstændig, ubegrænset adgang til alle funktioner i Project Group. Samarbejdet kan for alvor begynde.
+                </p>
+               <button
+                onClick={() => router.push('/rum/groups')}
+                className="px-10 py-5 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-500 transition-colors shadow-2xl shadow-emerald-600/20"
               >
                   Tilbage til Project Group
               </button>
