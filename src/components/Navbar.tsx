@@ -304,7 +304,12 @@ const Navbar: React.FC<NavbarProps> = ({
           {/* Desktop menu - Modern Sleek Links */}
           <div className="hidden lg:flex items-center space-x-2">
             {user ? (
-              <>
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center space-x-2"
+              >
                 <Link href="/portal" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
                   <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-amber-100 group-hover:text-amber-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
                     <Home className="w-3.5 h-3.5"/>
@@ -353,15 +358,48 @@ const Navbar: React.FC<NavbarProps> = ({
                     </Link>
                   </>
                 )}
-              </>
+              </motion.div>
             ) : (
-              <div className="flex items-center space-x-1">
-                <Link href="/hvorfor" className={`px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 transition-all ${scrolled ? 'hover:bg-slate-50 hover:text-slate-900' : 'hover:bg-white/40 hover:text-slate-900'}`}>Hvorfor Cohéro?</Link>
-                <a href="#vaerktojer" className={`px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 transition-all ${scrolled ? 'hover:bg-slate-50 hover:text-slate-900' : 'hover:bg-white/40 hover:text-slate-900'}`}>Værktøjer</a>
-                <a href="#priser" className={`px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 transition-all ${scrolled ? 'hover:bg-slate-50 hover:text-slate-900' : 'hover:bg-white/40 hover:text-slate-900'}`}>Priser</a>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center space-x-1"
+              >
+                {[
+                  { label: "Hvorfor Cohéro?", href: "/hvorfor", type: "link" },
+                  { label: "Værktøjer", href: "#vaerktojer", type: "anchor" },
+                  { label: "Priser", href: "#priser", type: "anchor" }
+                ].map((link, idx) => (
+                  <motion.div key={link.label} className="relative group overflow-hidden">
+                    {link.type === 'link' ? (
+                      <Link 
+                        href={link.href} 
+                        className={`block px-5 py-2.5 rounded-xl text-[13px] font-bold text-slate-600 transition-all relative z-10 
+                        ${scrolled ? 'hover:text-slate-950' : 'hover:text-slate-950'}
+                      `}>
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a 
+                        href={link.href} 
+                        className={`block px-5 py-2.5 rounded-xl text-[13px] font-bold text-slate-600 transition-all relative z-10
+                        ${scrolled ? 'hover:text-slate-950' : 'hover:text-slate-950'}
+                      `}>
+                        {link.label}
+                      </a>
+                    )}
+                    {/* Animated Underline */}
+                    <div className="absolute bottom-1 left-5 right-5 h-[2px] bg-amber-500 translate-y-[4px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
+                    
+                    {/* Hover Glow */}
+                    <div className="absolute inset-0 bg-amber-50/50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 rounded-xl -z-0" />
+                  </motion.div>
+                ))}
+              </motion.div>
             )}
           </div>
+
 
           {/* Right Side - Auth & Profile Area */}
           <div className="flex items-center gap-4">
