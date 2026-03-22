@@ -49,14 +49,31 @@ const BookSpine: React.FC<{
   color: string;
   tilt?: string;
   decoration?: 'bands' | 'stripes' | 'plain' | 'gold' | 'ornament';
-}> = ({ letter, height, width, color, tilt = '', decoration = 'plain' }) => (
-  <div
+  index?: number;
+}> = ({ letter, height, width, color, tilt = '', decoration = 'plain', index = 0 }) => (
+  <motion.div
+    initial={{ y: 0 }}
+    whileHover={{ 
+      y: -5, 
+      transition: { type: "spring", stiffness: 400, damping: 10 } 
+    }}
     className={`relative flex flex-col items-center justify-end ${width} ${height} ${color} 
     rounded-t-[2px] shadow-[inset_-1px_0_3px_rgba(0,0,0,0.3),inset_1px_0_2px_rgba(255,255,255,0.1),2px_0_5px_rgba(0,0,0,0.2)] 
     transition-all duration-300 ease-out
-    ${tilt} border-r border-black/10 z-10`}
+    ${tilt} border-r border-black/10 z-10 cursor-pointer group/book`}
   >
     <div className="absolute inset-0 opacity-15 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] pointer-events-none"></div>
+
+    {/* Elegant Gold Glint Effect */}
+    {decoration === 'gold' && (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div 
+          animate={{ x: ['-100%', '200%'] }}
+          transition={{ duration: 3, repeat: Infinity, repeatDelay: 4 + index }}
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]"
+        />
+      </div>
+    )}
 
     {decoration === 'bands' && (
       <>
@@ -74,18 +91,24 @@ const BookSpine: React.FC<{
       </>
     )}
     {decoration === 'ornament' && (
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-2 h-6 border border-white/10 rounded-full opacity-20"></div>
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-2 h-6 border border-white/10 rounded-full opacity-20 group-hover/book:opacity-40 transition-opacity"></div>
     )}
     {decoration === 'stripes' && (
       <div className="absolute inset-y-4 left-1/2 -translate-x-1/2 w-[2px] bg-white/5 border-x border-black/10"></div>
     )}
 
     {letter && (
-      <span className="mb-3 text-[12px] font-black text-amber-50/90 uppercase tracking-tighter select-none drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">
+      <motion.span 
+        whileHover={{ scale: 1.1 }}
+        className="mb-3 text-[12px] font-black text-amber-50/90 uppercase tracking-tighter select-none drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] z-20"
+      >
         {letter}
-      </span>
+      </motion.span>
     )}
-  </div>
+    
+    {/* Subtle Glow on Hover */}
+    <div className="absolute inset-0 bg-white/0 group-hover/book:bg-white/5 transition-colors pointer-events-none rounded-t-[2px]"></div>
+  </motion.div>
 );
 
 const NavDropdown: React.FC<{
@@ -261,20 +284,20 @@ const Navbar: React.FC<NavbarProps> = ({
               className="flex items-end -space-x-[1px]"
               aria-label="Cohéro Hjem"
             >
-              <BookSpine width="w-2 sm:w-2.5" height="h-6 sm:h-7" color="bg-stone-800" decoration="plain" tilt="-rotate-1" />
-              <BookSpine width="w-2.5 sm:w-3" height="h-9 sm:h-10" color="bg-amber-950" decoration="bands" />
-              <BookSpine width="w-1 sm:w-1.5" height="h-7 sm:h-8" color="bg-stone-700" decoration="plain" />
+              <BookSpine index={0} width="w-2 sm:w-2.5" height="h-6 sm:h-7" color="bg-stone-800" decoration="plain" tilt="-rotate-1" />
+              <BookSpine index={1} width="w-2.5 sm:w-3" height="h-9 sm:h-10" color="bg-amber-950" decoration="bands" />
+              <BookSpine index={2} width="w-1 sm:w-1.5" height="h-7 sm:h-8" color="bg-stone-700" decoration="plain" />
 
-              <BookSpine letter="C" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-amber-950" decoration="bands" />
-              <BookSpine letter="o" width="w-3.5 sm:w-4" height="h-8 sm:h-9" color="bg-amber-900" decoration="gold" />
-              <BookSpine letter="h" width="w-3.5 sm:w-4" height="h-11 sm:h-12" color="bg-amber-950" decoration="bands" tilt="-rotate-[1.5deg]" />
-              <BookSpine letter="é" width="w-3.5 sm:w-4" height="h-9 sm:h-10" color="bg-amber-800" decoration="stripes" />
-              <BookSpine letter="r" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-amber-950" decoration="bands" />
-              <BookSpine letter="o" width="w-3.5 sm:w-4" height="h-7 sm:h-8" color="bg-amber-900" decoration="gold" tilt="rotate-[1deg]" />
+              <BookSpine index={3} letter="C" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-amber-950" decoration="bands" />
+              <BookSpine index={4} letter="o" width="w-3.5 sm:w-4" height="h-8 sm:h-9" color="bg-amber-900" decoration="gold" />
+              <BookSpine index={5} letter="h" width="w-3.5 sm:w-4" height="h-11 sm:h-12" color="bg-amber-950" decoration="bands" tilt="-rotate-[1.5deg]" />
+              <BookSpine index={6} letter="é" width="w-3.5 sm:w-4" height="h-9 sm:h-10" color="bg-amber-800" decoration="stripes" />
+              <BookSpine index={7} letter="r" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-amber-950" decoration="bands" />
+              <BookSpine index={8} letter="o" width="w-3.5 sm:w-4" height="h-7 sm:h-8" color="bg-amber-900" decoration="gold" tilt="rotate-[1deg]" />
 
-              <BookSpine width="w-2 sm:w-2.5" height="h-9 sm:h-10" color="bg-stone-900" decoration="ornament" />
-              <BookSpine width="w-2.5 sm:w-3" height="h-6 sm:h-7" color="bg-amber-950" decoration="plain" tilt="rotate-2" />
-              <BookSpine width="w-2 sm:w-2.5" height="h-8 sm:h-9" color="bg-stone-800" decoration="bands" />
+              <BookSpine index={9} width="w-2 sm:w-2.5" height="h-9 sm:h-10" color="bg-stone-900" decoration="ornament" />
+              <BookSpine index={10} width="w-2.5 sm:w-3" height="h-6 sm:h-7" color="bg-amber-950" decoration="plain" tilt="rotate-2" />
+              <BookSpine index={11} width="w-2 sm:w-2.5" height="h-8 sm:h-9" color="bg-stone-800" decoration="bands" />
             </Link>
           </div>
 
