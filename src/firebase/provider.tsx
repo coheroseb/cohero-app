@@ -11,7 +11,7 @@ import {
   GoogleAuthProvider,
   type User 
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import type { Auth } from 'firebase/auth';
@@ -33,7 +33,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const getFirebaseApp = () => {
   const apps = getApps();
-  return apps.length > 0 ? apps[0] : initializeApp(firebaseConfig);
+  if (apps.length > 0) return apps[0];
+  const app = initializeApp(firebaseConfig);
+  // Mitigate Firestore Web Socket issues in Next.js development (ID: ca9 error)
+  initializeFirestore(app, { experimentalForceLongPolling: true });
+  return app;
 };
 
 interface FirebaseContextType {

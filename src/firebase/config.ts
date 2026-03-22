@@ -1,6 +1,6 @@
 import { getApps, initializeApp, type FirebaseOptions } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from "firebase/analytics";
 import { getMessaging } from 'firebase/messaging';
@@ -19,7 +19,15 @@ export const firebaseConfig: FirebaseOptions = {
 export function initializeFirebase() { 
   // Check if Firebase has already been initialized
   const apps = getApps();
-  const firebaseApp = apps.length === 0 ? initializeApp(firebaseConfig) : apps[0];
+  
+  let firebaseApp;
+  if (apps.length === 0) {
+    firebaseApp = initializeApp(firebaseConfig);
+    // Mitigate Firestore Web Socket issues in Next.js development (ID: ca9 error)
+    initializeFirestore(firebaseApp, { experimentalForceLongPolling: true });
+  } else {
+    firebaseApp = apps[0];
+  }
 
   const auth = getAuth(firebaseApp);
   const firestore = getFirestore(firebaseApp);

@@ -266,6 +266,35 @@ export async function getCaseFeedbackAction(input: { topic: string, scenario: st
     return callFirebaseFlow('getCaseFeedbackFlow', { ...input, lawContext });
 }
 
+const wrapEmailHtml = (inner: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+</head>
+<body style="font-family: 'Inter', Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; -webkit-font-smoothing: antialiased;">
+    <div style="background-color: #f8fafc; padding: 40px 20px; width: 100%; box-sizing: border-box;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);">
+            
+            <div style="background-color: #451a03; padding: 32px 40px; text-align: center;">
+                <img src="https://cohero.dk/main_logo.png" alt="Cohéro Logo" style="height: 40px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
+            </div>
+            
+            <div style="padding: 40px; font-size: 16px; line-height: 1.6; color: #334155;">
+                ${inner}
+            </div>
+            
+            <div style="background-color: #f1f5f9; padding: 32px 40px; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5;">
+                <p style="margin-bottom: 8px;">Du har modtaget denne besked som en del af platformens funktionalitet.</p>
+                <p style="margin: 0;">&copy; ${new Date().getFullYear()} Cohéro I/S. Alle rettigheder forbeholdes.</p>
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>
+`;
+
 export async function generateWelcomeEmailAction(input: { userName: string, userEmail: string }): Promise<{ success: boolean; message: string }> {
     try {
         const { data: { subject, body } } = await callFirebaseFlow('generateWelcomeEmailFlow', { userName: input.userName, userEmail: input.userEmail });
@@ -274,7 +303,7 @@ export async function generateWelcomeEmailAction(input: { userName: string, user
             from: 'Cohéro <velkommen@cohero.dk>',
             to: input.userEmail,
             subject: subject,
-            html: body,
+            html: wrapEmailHtml(body),
         });
         return { success: true, message: 'Welcome email sent.' };
     } catch (error) {
@@ -347,7 +376,7 @@ export async function generateVerificationEmailAction(input: Types.VerificationE
             // @ts-ignore
             to: input.userEmail, // Assuming userEmail is part of VerificationEmailInput
             subject: subject,
-            html: body,
+            html: wrapEmailHtml(body),
         });
         return { success: true, message: 'Verification email sent.' };
     } catch (error) {
@@ -472,7 +501,7 @@ export async function generateCaseUpdateEmailAction(input: Types.CaseUpdateEmail
             from: 'Cohéro Notifikationer <info@cohero.dk>',
             to: input.userEmail,
             subject: subject,
-            html: body,
+            html: wrapEmailHtml(body),
         });
         return { success: true, message: "Update email sent." };
     } catch (error) {
@@ -489,7 +518,7 @@ export async function sendCommentNotificationEmailAction(input: { postAuthorEmai
             from: 'Cohéro Notifikationer <info@cohero.dk>',
             to: input.postAuthorEmail,
             subject: subject,
-            html: body,
+            html: wrapEmailHtml(body),
         });
 
         // Add in-app notification
@@ -516,7 +545,7 @@ export async function sendStreakReminderEmailAction(input: { userEmail: string, 
             from: 'Cohéro Notifikationer <info@cohero.dk>',
             to: input.userEmail,
             subject: 'Hold din streak i live!',
-            html: body,
+            html: wrapEmailHtml(body),
         });
 
         // Add in-app notification
@@ -548,7 +577,7 @@ export async function sendGroupInvitationEmailAction(input: { recipientEmail: st
             from: 'Cohéro Studiegrupper <info@cohero.dk>',
             to: input.recipientEmail,
             subject: subject,
-            html: body,
+            html: wrapEmailHtml(body),
         });
         return { success: true, message: "Invitation sent." };
     } catch (error) {

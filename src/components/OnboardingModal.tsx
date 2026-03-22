@@ -230,7 +230,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                        {['Socialrådgiver', 'Pædagog', 'Lærer', 'Sygeplejerske', 'Andet'].map((prof) => (
                            <button
                               key={prof}
-                              onClick={() => { setProfession(prof); setTimeout(handleNextStep, 200); }}
+                              onClick={() => { 
+                                setProfession(prof); 
+                                setError(null);
+                                setTimeout(() => setStep(3), 200); 
+                              }}
                               className={`p-4 rounded-[1.25rem] border-2 font-bold text-sm transition-all text-left flex items-center justify-between
                                 ${profession === prof 
                                   ? 'border-amber-950 bg-amber-50 text-amber-950 shadow-sm' 

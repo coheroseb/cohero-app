@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useMemo } from 'react';
-import { Users, DollarSign, TrendingUp, Zap, PlusCircle, Mail, FileText, AlertTriangle, MessageSquare, ArrowUpRight, Activity, ShieldCheck, Clock } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Zap, PlusCircle, Mail, FileText, AlertTriangle, MessageSquare, ArrowUpRight, Activity, ShieldCheck, Clock, Crown } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, where } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
@@ -112,10 +112,11 @@ export default function AdminOverviewPage() {
 
     const stats = useMemo(() => {
         if (!users) {
-            return { totalUsers: 0, monthlyTokenCost: 0, averageRating: 0, waitlistConversion: 0 };
+            return { totalUsers: 0, monthlyTokenCost: 0, averageRating: 0, premiumUsers: 0 };
         }
         
         const totalUsers = users.length;
+        const premiumUsers = users.filter(u => u.membership && (u.membership.includes('+') || u.membership === 'Semesterpakken' || u.membership === 'Group Pro')).length;
         const costPerMillionInput = 0.35 * 6.95; 
         const costPerMillionOutput = 0.70 * 6.95; 
         const monthlyTokenCost = (users.reduce((acc, u) => acc + (u.monthlyInputTokens || 0), 0) / 1000000 * costPerMillionInput) + (users.reduce((acc, u) => acc + (u.monthlyOutputTokens || 0), 0) / 1000000 * costPerMillionOutput);
@@ -127,9 +128,9 @@ export default function AdminOverviewPage() {
 
         return {
             totalUsers,
+            premiumUsers,
             monthlyTokenCost: monthlyTokenCost.toFixed(2),
-            averageRating: averageRating.toFixed(1),
-            waitlistConversion: 68
+            averageRating: averageRating.toFixed(1)
         };
     }, [users]);
 
@@ -179,13 +180,13 @@ export default function AdminOverviewPage() {
                     href="/admin/users"
                 />
                 <StatCard 
-                    title="Waitlist Conv." 
-                    value={`${stats.waitlistConversion}%`}
-                    trend="+5%"
-                    icon={TrendingUp} 
-                    color="bg-rose-50 text-rose-700 border border-rose-100/50"
-                    loading={false}
-                    href="/admin/marketing"
+                    title="Premium Brugere" 
+                    value={stats.premiumUsers}
+                    trend="Abonnenter"
+                    icon={Crown} 
+                    color="bg-purple-50 text-purple-700 border border-purple-100/50"
+                    loading={isLoading}
+                    href="/admin/users"
                 />
             </div>
             
@@ -225,14 +226,14 @@ export default function AdminOverviewPage() {
                                  <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
                               </Link>
                               
-                              <Link href="/admin/users" className="w-full flex items-center justify-between p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white hover:text-slate-950 transition-all duration-500 group/btn">
+                              <Link href="/admin/emails" className="w-full flex items-center justify-between p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white hover:text-slate-950 transition-all duration-500 group/btn">
                                  <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover/btn:bg-slate-50 group-hover/btn:text-slate-900 transition-colors">
                                        <Mail className="w-5 h-5" />
                                     </div>
                                     <div className="text-left">
                                        <span className="block text-[13px] font-bold">Nyhedsbrev</span>
-                                       <span className="block text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Kommunikation</span>
+                                       <span className="block text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">E-mailkampagner</span>
                                     </div>
                                  </div>
                                  <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
