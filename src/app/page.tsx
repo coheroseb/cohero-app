@@ -117,15 +117,66 @@ export default function LandingPage() {
                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-900">Din nye digitale makker</span>
                 </div>
 
-                <h1 className="text-[40px] leading-[1.05] sm:text-6xl md:text-7xl xl:text-[88px] font-extrabold text-slate-900 tracking-[-0.04em] w-full max-w-[20ch] lg:max-w-none">
+                <motion.h1 
+                  animate={{ 
+                    y: [0, -8, 0],
+                  }}
+                  transition={{ 
+                    duration: 6, 
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                  }}
+                  className="text-[40px] leading-[1.05] sm:text-6xl md:text-7xl xl:text-[88px] font-extrabold text-slate-900 tracking-[-0.04em] w-full max-w-[20ch] lg:max-w-none"
+                >
                   Din intelligente <br className="hidden sm:block" />
-                  <span className="text-amber-600 relative inline-block mt-2 md:mt-4 px-2 sm:px-4 shrink-0">
-                    <span className="relative z-10">digitale kollega.</span>
-                    <svg className="absolute -bottom-1 sm:-bottom-3 left-0 w-full h-3 sm:h-5 text-amber-300 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                  <span className="relative inline-block mt-2 md:mt-4 px-2 sm:px-4 shrink-0 overflow-hidden py-2">
+                    <motion.span 
+                      animate={{ 
+                        color: ["#d97706", "#b45309", "#d97706"],
+                      }}
+                      transition={{ 
+                        duration: 4, 
+                        repeat: Infinity, 
+                        ease: "easeInOut" 
+                      }}
+                      className="relative z-10"
+                    >
+                      digitale kollega.
+                    </motion.span>
+                    
+                    {/* Continuous Underline Pulse */}
+                    <motion.svg 
+                      animate={{ 
+                        opacity: [0.8, 1, 0.8],
+                        scaleX: [1, 1.02, 1]
+                      }}
+                      transition={{ 
+                        duration: 3, 
+                        repeat: Infinity, 
+                        ease: "easeInOut" 
+                      }}
+                      className="absolute -bottom-1 sm:-bottom-3 left-0 w-full h-3 sm:h-5 text-amber-300/60 -z-10" 
+                      viewBox="0 0 100 10" 
+                      preserveAspectRatio="none"
+                    >
                         <path d="M0 5 Q 25 0, 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
-                    </svg>
+                    </motion.svg>
+                    
+                    {/* Shimmer Effect */}
+                    <motion.div 
+                      animate={{ 
+                        x: ['-100%', '200%'] 
+                      }}
+                      transition={{ 
+                        duration: 3, 
+                        repeat: Infinity, 
+                        repeatDelay: 2,
+                        ease: "easeInOut" 
+                      }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] z-20 pointer-events-none"
+                    />
                   </span>
-                </h1>
+                </motion.h1>
                 
                 <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
                   Cohéro ruster dig til at mestre juraen, etikken og det faglige skøn gennem intelligent sparring på dine cases og journaler.
