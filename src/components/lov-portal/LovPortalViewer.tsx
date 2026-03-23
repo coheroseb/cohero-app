@@ -63,9 +63,10 @@ import {
   ShieldAlert,
   Eye,
   Briefcase,
-  Menu
+  Menu,
+  ChevronUp
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { 
@@ -699,9 +700,33 @@ const ReformOracleView = ({
     isAnalyzing: boolean; 
     analysisStep: string;
     analysisProgress: number;
-    result: GenerateParagraphDiffData | null;
+    result: any | null;
     isPremium: boolean;
 }) => {
+    const [expandedDiffs, setExpandedDiffs] = useState<Record<number, boolean>>({});
+
+    const toggleDiff = (i: number) => {
+        setExpandedDiffs(prev => ({ ...prev, [i]: !prev[i] }));
+    };
+
+    const renderSummary = (text: string) => {
+        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        return (
+            <div className="space-y-4">
+                {lines.map((line, i) => {
+                    const isBullet = line.trim().startsWith('-') || line.trim().startsWith('*');
+                    return (
+                        <div key={i} className="flex items-start gap-4">
+                            {isBullet && <div className="w-2 h-2 rounded-full bg-amber-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(251,191,36,0.5)]" />}
+                            <p className={`${isBullet ? 'text-lg md:text-xl' : 'text-xl md:text-2xl font-black italic'} font-serif text-amber-50 leading-relaxed opacity-95`}>
+                                {line.replace(/^[-*]\s*/, '')}
+                            </p>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-24">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
@@ -829,14 +854,17 @@ const ReformOracleView = ({
                         <div className="max-w-4xl space-y-10 relative z-10">
                             <div className="space-y-4">
                                 <div className="inline-flex items-center gap-3 px-6 py-2 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md border border-white/5">
-                                    <Sparkles className="w-4 h-4 text-amber-400" /> Analyse Færdiggjort
+                                    <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" /> Analyse Færdiggjort
                                 </div>
-                                <h3 className="text-4xl md:text-7xl font-black serif italic tracking-tighter leading-[1.1]">{result.reformTitle}</h3>
+                                <h3 className="text-4xl md:text-7xl font-black serif italic tracking-tighter leading-[1.1] text-amber-400">{result.reformTitle}</h3>
                             </div>
                             <div className="h-px w-full bg-gradient-to-r from-white/20 to-transparent" />
-                            <div className="space-y-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-400/60">Overordnet Betydning</p>
-                                <p className="text-xl md:text-2xl font-serif text-amber-50 leading-relaxed italic opacity-90">"{result.overallImpact}"</p>
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="px-3 py-1 bg-amber-400 text-amber-950 text-[9px] font-black uppercase tracking-widest rounded-lg">Overblik</div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Hvad betyder det for dig?</p>
+                                </div>
+                                {renderSummary(result.overallImpact)}
                             </div>
                         </div>
                     </div>
@@ -848,59 +876,76 @@ const ReformOracleView = ({
                             <div className="h-px w-full bg-gradient-to-r from-amber-100 to-transparent" />
                         </div>
 
-                        <div className="grid gap-12">
+                        <div className="grid gap-8">
                             {result.diffs.map((diff, i) => (
                                 <motion.div 
                                     key={i} 
-                                    initial={{ opacity: 0, x: -20 }} 
-                                    animate={{ opacity: 1, x: 0 }} 
+                                    initial={{ opacity: 0, y: 20 }} 
+                                    animate={{ opacity: 1, y: 0 }} 
                                     transition={{ delay: i * 0.1 }}
-                                    className="bg-white rounded-[4rem] border border-amber-100 shadow-xl overflow-hidden hover:border-amber-950 transition-all group/diff"
+                                    className="bg-white rounded-[4rem] border border-amber-100 shadow-xl overflow-hidden hover:border-amber-950 transition-all group/diff relative"
                                 >
-                                    <div className="p-10 md:p-16 space-y-12">
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-                                            <div className="flex items-center gap-6">
-                                                <div className="min-w-[5rem] min-h-[5rem] px-5 py-3 bg-amber-950 text-amber-400 rounded-[2rem] flex items-center justify-center text-lg md:text-xl font-black serif shadow-2xl shadow-amber-950/20 group-hover/diff:scale-105 transition-transform text-center leading-tight">{diff.paragraph}</div>
-                                                <div>
-                                                    <h5 className="text-2xl font-black text-amber-950 serif tracking-tight">Ændring i lovtekst</h5>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1 flex items-center gap-2">
-                                                        <Clock className="w-3.5 h-3.5" /> Gældende Lov vs. Nyt Lovforslag
-                                                    </p>
+                                    <div className="p-10 md:p-14 space-y-10">
+                                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
+                                            <div className="flex items-start gap-6 max-w-2xl">
+                                                <div className="min-w-[5rem] h-[5rem] px-5 py-3 bg-amber-50 text-amber-950 rounded-[2rem] flex items-center justify-center text-lg md:text-xl font-black serif border border-amber-100 shadow-sm leading-tight text-center">{diff.paragraph}</div>
+                                                <div className="space-y-2">
+                                                    <h5 className="text-2xl md:text-3xl font-black text-amber-950 serif tracking-tight leading-tight">{diff.headline || 'Andring i lovtekst'}</h5>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="px-4 py-1.5 bg-rose-50 text-rose-700 rounded-full text-[9px] font-black uppercase tracking-widest border border-rose-100 flex items-center gap-2">
+                                                            <AlertTriangle className="w-3.5 h-3.5" /> Lovændring
+                                                        </div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Gældende Lov vs. Nyt Lovforslag</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="px-6 py-2.5 bg-rose-50 text-rose-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-100 flex items-center gap-2 shadow-sm">
-                                                <AlertTriangle className="w-3.5 h-3.5" /> Ændret Ordlyd
-                                            </div>
+                                            <button 
+                                                onClick={() => toggleDiff(i)}
+                                                className="px-6 py-3 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-100 flex items-center gap-3 transition-colors shrink-0"
+                                            >
+                                                {expandedDiffs[i] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                {expandedDiffs[i] ? 'Skjul Lovtekst' : 'Vis Lovtekst'}
+                                            </button>
                                         </div>
 
-                                        <div className="grid md:grid-cols-2 gap-10">
-                                            <div className="space-y-5">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 pl-4">Nugældende Lovtekst</p>
-                                                <div className="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 opacity-60 hover:opacity-100 transition-opacity">
-                                                    <p className="text-sm font-medium leading-relaxed text-slate-600 italic whitespace-pre-wrap">{diff.oldText}</p>
-                                                </div>
+                                        <div className="grid md:grid-cols-2 gap-8">
+                                            <div className="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 relative overflow-hidden group/imp">
+                                                <div className="absolute top-4 right-8 opacity-5"><Zap className="w-12 h-12" /></div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-800 mb-4 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Praktisk Betydning</p>
+                                                <p className="text-lg font-bold text-amber-950 leading-relaxed serif italic">"{diff.changeDescription}"</p>
                                             </div>
-                                            <div className="space-y-5">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600 pl-4">Ny Lovtekst (Forslag)</p>
-                                                <div className="p-8 bg-emerald-50/20 rounded-[2.5rem] border border-emerald-100 shadow-inner group-hover/diff:border-emerald-600/30 transition-all relative overflow-hidden">
-                                                    <div className="absolute top-4 right-8 opacity-10"><CheckCircle2 className="w-12 h-12 text-emerald-600"/></div>
-                                                    <p className="text-base font-bold leading-relaxed text-amber-950 whitespace-pre-wrap relative z-10">{diff.newText}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid md:grid-cols-5 gap-8 pt-8 border-t border-amber-50">
-                                            <div className="md:col-span-2 p-8 bg-amber-50/30 rounded-[2.5rem] border border-amber-100 relative overflow-hidden group/imp">
-                                                <div className="absolute top-4 right-8 opacity-5"><Activity className="w-12 h-12" /></div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-800 mb-4 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Hvad betyder det?</p>
-                                                <p className="text-sm font-bold text-amber-950 leading-relaxed serif italic">"{diff.changeDescription}"</p>
-                                            </div>
-                                            <div className="md:col-span-3 p-8 bg-white rounded-[2.5rem] border border-amber-100 shadow-sm relative overflow-hidden group/res">
-                                                <div className="absolute top-4 right-8 opacity-5"><HelpCircle className="w-12 h-12" /></div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><Info className="w-3.5 h-3.5" /> Hensigt & Bemærkninger</p>
+                                            <div className="p-8 bg-white rounded-[2.5rem] border border-amber-100 shadow-sm relative overflow-hidden group/res">
+                                                <div className="absolute top-4 right-8 opacity-5"><Brain className="w-12 h-12" /></div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><Brain className="w-3.5 h-3.5" /> Hensigt & Begrundelse</p>
                                                 <p className="text-sm font-medium text-slate-600 leading-relaxed italic">"{diff.reasoning}"</p>
                                             </div>
                                         </div>
+
+                                        <AnimatePresence>
+                                            {expandedDiffs[i] && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }} 
+                                                    animate={{ height: 'auto', opacity: 1 }} 
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <div className="pt-10 border-t border-slate-100 grid md:grid-cols-2 gap-8">
+                                                        <div className="space-y-4">
+                                                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 pl-4">Nugældende Ordlyd</p>
+                                                            <div className="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 opacity-60">
+                                                                <p className="text-sm font-medium leading-relaxed text-slate-600 italic whitespace-pre-wrap">{diff.oldText}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-4">
+                                                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600 pl-4">Ny Lovtekst (Forslag)</p>
+                                                            <div className="p-8 bg-emerald-50/20 rounded-[2.5rem] border border-emerald-100 shadow-inner">
+                                                                <p className="text-base font-bold leading-relaxed text-amber-950 whitespace-pre-wrap">{diff.newText}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 </motion.div>
                             ))}
@@ -1306,7 +1351,7 @@ export function LovPortalViewer() {
           const sourceList = activeCollectionId === 'all' ? savedParagraphs : savedParagraphs.filter(p => p.collectionId === activeCollectionId);
           const uniqueLawIds = Array.from(new Set(sourceList.map(p => p.lawId || 'reference')));
           
-          const missingIds = uniqueLawIds.filter(id => !docsData[id] && !bibMetadata[id]);
+          const missingIds = (uniqueLawIds as string[]).filter(id => !docsData[id] && !bibMetadata[id]);
           
           if (missingIds.length === 0) {
               setIsFetchingBibMetadata(false);
@@ -1332,7 +1377,7 @@ export function LovPortalViewer() {
                           lbk: config?.lbk || ''
                       });
                       if (res?.data) {
-                          results[id] = res.data;
+                          results[id as string] = res.data;
                           changed = true;
                       }
                   } catch (e) {
@@ -2067,10 +2112,10 @@ export function LovPortalViewer() {
                                 </div>
                                 <div>
                                     <h2 className="text-4xl font-black text-amber-950 serif tracking-tight">AI Juridisk Vurdering</h2>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-2 flex items-center gap-2 italic">
+                                    <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-2 flex items-center gap-2 italic">
                                         <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
                                         Resultat baseret på XML-scraping i realtid
-                                    </p>
+                                    </div>
                                 </div>
                             </div>
                             <Button variant="ghost" onClick={() => setSemanticResult(null)} className="rounded-2xl px-8 h-12 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-amber-950 hover:bg-amber-50 transition-all border border-transparent hover:border-amber-100">Ryd analyse</Button>

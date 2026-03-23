@@ -60,18 +60,18 @@ DIN OPGAVE er at sammenligne et lovforslag med den eksisterende lovtekst for: "{
 {{lawText}}
 
 **DINE OPGAVER:**
-1.  **EKSTREMT VIGTIGT - Identificer Præcise Paragraffer**: Find de specifikke paragraffer (f.eks. "§ 8", "§ 23, stk. 2", "§ 114") i den eksisterende lov, som lovforslaget (markeret med ÆNDRING:) foreslår at ændre. Du SKAL inkludere paragrafnummeret i 'paragraph' feltet.
+1.  **Identificer Præcise Paragraffer**: Find ændringerne (ÆNDRING:) og deres tilhørende paragraffer. Generér en **fangende overskrift** (headline) for hver ændring.
 2.  **Udfør tekstsammenligning**:
-    -   Udtræk den **gamle tekst** fra den eksisterende lov (LBK). Find den eksisterende ordlyd for den specifikke paragraf.
-    -   Udtræk den **nye tekst** fra lovforslaget (ofte under NY TEKST: sektionen).
-3.  **Find begrundelsen**: Led i lovforslagets "bemærkninger" efter årsagen til præcis denne ændring.
-4.  **Forklar impact**: Skriv en kort, letforståelig forklaring på dansk om hvad ændringen betyder i praksis.
+    -   Hent den **gamle ordlyd** for paragraffen.
+    -   Hent den **nye ordlyd** fra reformen.
+3.  **Forklar impact (KORT OG PRÆCIST)**: Skriv en letforståelig forklaring på dansk om, hvad ændringen betyder i virkeligheden for en borger eller fagperson. Hold det kort – undgå lange komplekse sætninger.
+4.  **Find årsagen**: Find hensigten bag ændringen (bemærkningerne).
+5.  **Overordnet betydning**: Lav en opsummering af hele reformens betydning. Brug gerne punktopstilling hvis muligt, så det er hurtigt at læse.
 
 **OUTPUT FORMAT:**
-Sørg for at returnere et objekt med:
-- **reformTitle**: En sigende titel (f.eks. "Ændring af kontanthjælpssatser").
-- **diffs**: En liste over hver enkelt ændret paragraf. Vær grundig og medtag alle væsentlige ændringer du finder i teksten.
-- **overallImpact**: En opsummering af hele reformens betydning.
+- **reformTitle**: En sigende titel.
+- **diffs**: En liste over hver ændret paragraf. Hver diff SKAL have en sigende 'headline'.
+- **overallImpact**: En KORT opsummering (brug gerne bullets).
 
 Svar altid på dansk.`
     });

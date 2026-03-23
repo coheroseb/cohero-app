@@ -13,8 +13,10 @@ import {
     ExplainConceptOutputSchema, 
     type ExplainConceptInput,
     type ExplainConceptOutput,
+    UsageSchema,
 } from './types';
 import { getCachedBooks } from './book-cache';
+import { getRelevantLawContext } from '../../lib/law-context-helper';
 
 
 const BookSchemaForPrompt = z.object({
@@ -83,6 +85,12 @@ Your response must be a JSON object with five keys, all in Danish. Use simple HT
         2. Filter this list to include only theorists clearly linked to the concept '{{{concept}}}' and its variations (e.g., for "Anerkendelse", also consider "anerkendende tilgange").
         3. For each theorist found, provide their 'name', 'era' (e.g., 'ca. 1950'), a brief 'contribution' summary, and a 'source' object with the 'bookTitle' and, if possible, the 'chapter'.
         4. If no theorists are found in the book list for this concept, return an empty array for this field.
+6.  **legalContext**: If the concept is a law paragraph (e.g., "§ 42"), or if you have found highly relevant legal text in the 'LEGAL CONTEXT' above, you MUST populate this field.
+    - **lawTitle**: The name of the law (e.g., "Barnets Lov").
+    - **paragraphNumber**: The paragraph number (e.g., "§ 42").
+    - **exactText**: THE LITERAL TEXT of the paragraph as found in the 'LEGAL CONTEXT'. Do not summarize this field; it must be the verbatim law text.
+    - **relevance**: A very brief (1-2 sentences) summary of why this specific paragraph is relevant to the search query.
+    - If no relevant legal context is found, you can omit this field.
 
 Always use the term "borger" instead of "klient" in your explanations and examples.
 `,
@@ -104,8 +112,16 @@ const explainConceptFlow = ai.defineFlow(
   },
   async (input) => {
     const booksForPrompt = await getCachedBooks();
+    
+    let lawContext = input.lawContext || '';
+    
+    // Automatically fetch law context if it looks like a paragraph search
+    if (!lawContext && input.concept.includes('§')) {
+      console.log(`[EXPLAIN-CONCEPT] Paragraph detected in "${input.concept}". Fetching legal context...`);
+      lawContext = await getRelevantLawContext(input.concept);
+    }
 
-    const { output, usage } = await prompt({ concept: input.concept, books: booksForPrompt, lawContext: input.lawContext });
+    const { output, usage } = await prompt({ concept: input.concept, books: booksForPrompt, lawContext });
     
     return {
       data: output!,

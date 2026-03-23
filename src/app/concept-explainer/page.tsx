@@ -483,6 +483,35 @@ function ConceptExplainerPageContent() {
                                     <div className="prose prose-invert prose-sm text-amber-100/80 italic leading-relaxed" dangerouslySetInnerHTML={{ __html: analogy }} />
                                 </motion.div>
                               )}
+
+                               {explanation.legalContext && (
+                                <motion.section 
+                                    initial={{ opacity: 0, scale: 0.98 }} 
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="bg-amber-950 p-10 md:p-12 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group"
+                                >
+                                    <ScaleIcon className="absolute top-0 right-0 w-48 h-48 text-white/5 -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform" />
+                                    <div className="relative z-10 space-y-8">
+                                        <div className="flex items-center gap-3 border-b border-white/10 pb-6">
+                                            <div className="w-8 h-8 rounded-lg bg-amber-400 flex items-center justify-center text-amber-950 shadow-lg"><ScaleIcon className="w-4 h-4" /></div>
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-amber-400">Juridisk Grundlag</h3>
+                                        </div>
+                                        <div className="space-y-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="px-4 py-1.5 bg-amber-400 text-amber-950 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl shadow-amber-400/20">{explanation.legalContext.lawTitle}</div>
+                                                <span className="text-2xl font-black serif italic text-amber-100">{explanation.legalContext.paragraphNumber}</span>
+                                            </div>
+                                            <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] italic text-sm text-amber-50/80 leading-relaxed font-serif backdrop-blur-sm">
+                                               "{explanation.legalContext.exactText}"
+                                            </div>
+                                            <div className="flex items-start gap-4 p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                                                <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0"><Zap className="w-3.5 h-3.5" /></div>
+                                                <p className="text-[11px] text-white/60 font-medium italic leading-relaxed">{explanation.legalContext.relevance}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.section>
+                               )}
                           </div>
 
                           {/* COLUMN 2: PRACTICAL RELEVANCE (The Why) */}

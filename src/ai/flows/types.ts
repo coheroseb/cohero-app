@@ -497,6 +497,7 @@ export const IdentifyReformOutputSchema = z.object({
 });
 
 export const ParagraphDiffSchema = z.object({
+  headline: z.string().describe('En kort, fangende overskrift for denne ændring (f.eks. "Højere satser for unge").'),
   paragraph: z.string().describe('Paragrafnummer, f.eks. "§ 23"'),
   oldText: z.string().describe('Teksten i den nugældende lov.'),
   newText: z.string().describe('Den foreslåede tekst i reformen.'),
@@ -636,6 +637,13 @@ export const ExplanationSchema = z.object({
       chapter: z.string().optional(),
     }).optional(),
   })).optional(),
+  legalContext: z.object({
+    lawTitle: z.string(),
+    paragraphNumber: z.string(),
+    exactText: z.string(),
+    relevance: z.string(),
+    url: z.string().optional(),
+  }).optional(),
 });
 
 export const ExplainConceptInputSchema = z.object({
