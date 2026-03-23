@@ -89,6 +89,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
 import { AnimatePresence, motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
+import { organizeEvidenceIntoSeminarAction } from '@/app/actions';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 
@@ -1172,6 +1173,98 @@ export default function GroupDetailPage() {
         toast({ title: locale === 'da' ? "Kunne ikke læse filer" : "Could not read the files", variant: "destructive" });
     } finally {
         setIsExtractingChatText(false);
+    }
+  };
+
+  const handleCreateSeminarFromEvidence = async (items: Evidence[]) => {
+    if (!items || items.length === 0 || !group || !firestore) return;
+
+    setIsAnalyzingPortfolio(true);
+    try {
+        // Prepare evidence for AI flow
+        const evidenceToAnalyze = await Promise.all(items.map(async (item) => ({
+            id: item.id,
+            title: item.title,
+            type: item.type,
+            content: await handleExtractEvidenceText(item),
+            tags: item.tags || [],
+            fileName: item.fileName
+        })));
+
+        const result = await organizeEvidenceIntoSeminarAction({
+            evidenceItems: evidenceToAnalyze,
+            groupName: group.name,
+            learningGoals: group.description,
+            numSections: 5,
+            locale
+        });
+
+        // Create portfolio entries from AI output
+        if (result.data && result.data.sections) {
+            const batch = writeBatch(firestore);
+            const portfolioRef = collection(firestore, `groups/${groupId}/portfolio`);
+            
+            // Create Forside (cover page)
+            const forsideId = doc(portfolioRef).id;
+            batch.set(doc(portfolioRef, forsideId), {
+                id: forsideId,
+                title: result.data.forsideTitel,
+                content: result.data.forsideDescription,
+                status: 'draft',
+                linkedEvidenceIds: items.map(e => e.id),
+                addedById: user?.uid,
+                addedByName: userProfile?.username || user?.displayName || 'Bruger',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                order: 0,
+                isPrivate: false
+            });
+
+            // Create sections
+            result.data.sections.forEach((section, idx) => {
+                const sectionId = doc(portfolioRef).id;
+                const linkedIds = section.suggestedEvidenceIndices
+                    .map(i => evidenceToAnalyze[i]?.id)
+                    .filter(Boolean) || [];
+                
+                batch.set(doc(portfolioRef, sectionId), {
+                    id: sectionId,
+                    title: section.title,
+                    content: `${section.startingSentence}\n\n${section.description}`,
+                    status: 'draft',
+                    linkedEvidenceIds: linkedIds,
+                    addedById: user?.uid,
+                    addedByName: userProfile?.username || user?.displayName || 'Bruger',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    order: idx + 1,
+                    isPrivate: false,
+                    metadata: {
+                        learningObjectives: section.learningObjectives,
+                        conceptsToExplore: section.conceptsToExplore
+                    }
+                });
+            });
+
+            await batch.commit();
+            
+            // Clear selection and show success
+            setSelectedEvidenceIds([]);
+            setActiveTab('portfolio');
+            toast({
+                title: locale === 'da' ? "Seminar oprettet!" : "Seminar created!",
+                description: locale === 'da' ? `Vi har oprettet ${result.data.sections.length} sektioner baseret på jeres empiri.` : `Created ${result.data.sections.length} sections from your evidence.`
+            });
+        }
+    } catch (err) {
+        console.error('Seminar creation error:', err);
+        toast({
+            variant: "destructive",
+            title: locale === 'da' ? "Fejl ved organisering" : "Organization error",
+            description: locale === 'da' ? "Prøv venligst igen med færre filer eller mindre tekst." : "Try again with fewer files or less text."
+        });
+    } finally {
+        setIsAnalyzingPortfolio(false);
     }
   };
 
@@ -2758,7 +2851,7 @@ export default function GroupDetailPage() {
                                     </div>
                                     <AnimatePresence>
                                         {selectedEvidenceIds.length > 0 && (
-                                            <motion.div initial={{ opacity: 0, scale: 0.9, x: 20 }} animate={{ opacity: 1, scale: 1, x: 0 }} exit={{ opacity: 0, scale: 0.9, x: 20 }}>
+                                            <motion.div initial={{ opacity: 0, scale: 0.9, x: 20 }} animate={{ opacity: 1, scale: 1, x: 0 }} exit={{ opacity: 0, scale: 0.9, x: 20 }} className="flex items-center gap-2">
                                                 <Button 
                                                     onClick={() => {
                                                         const selectedItems = evidence?.filter(e => selectedEvidenceIds.includes(e.id)) || [];
@@ -2767,6 +2860,15 @@ export default function GroupDetailPage() {
                                                     className="h-11 px-6 rounded-xl font-black uppercase tracking-widest text-[11px] bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg active:scale-95 transition-all flex items-center gap-2"
                                                 >
                                                     <MessageSquare className="w-4 h-4" /> {locale === 'da' ? 'Snak med valgte' : 'Chat with selected'} ({selectedEvidenceIds.length})
+                                                </Button>
+                                                <Button 
+                                                    onClick={() => {
+                                                        const selectedItems = evidence?.filter(e => selectedEvidenceIds.includes(e.id)) || [];
+                                                        handleCreateSeminarFromEvidence(selectedItems);
+                                                    }} 
+                                                    className="h-11 px-6 rounded-xl font-black uppercase tracking-widest text-[11px] bg-purple-500 hover:bg-purple-600 text-white shadow-lg active:scale-95 transition-all flex items-center gap-2"
+                                                >
+                                                    <Sparkles className="w-4 h-4" /> {locale === 'da' ? 'Organiser til seminar' : 'Organize to seminar'} 
                                                 </Button>
                                             </motion.div>
                                         )}

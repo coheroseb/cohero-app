@@ -30,6 +30,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useApp } from '@/app/provider';
 import PWAInstallGuide from '@/components/PWAInstallGuide';
 import HeroIllustration from '@/components/home/HeroIllustration';
+import SeminarArchitectVisualization from '@/components/SeminarArchitectVisualization';
 
 const Reveal = ({ children, delay = 0, className = "" }: { children: React.ReactNode, delay?: number, className?: string }) => (
   <motion.div
@@ -355,6 +356,28 @@ export default function LandingPage() {
                   </div>
                   {/* Decor */}
                   <div className="absolute top-1/2 -translate-y-1/2 right-0 w-64 h-64 bg-rose-200/20 rounded-full blur-[60px] pointer-events-none"></div>
+               </div>
+             </Reveal>
+
+             {/* Feature 4: Seminar-Arkitekten Visualization */}
+             <Reveal delay={0.1} className="lg:col-span-12">
+               <div className="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] shadow-xl relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-transparent pointer-events-none"></div>
+                  <div className="relative z-10">
+                    <div className="max-w-2xl mb-8 sm:mb-12">
+                      <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-purple-300 uppercase tracking-widest bg-purple-500/10 px-3 py-1.5 rounded-full border border-purple-400/30 mb-4">
+                        <Sparkles className="w-3.5 h-3.5" /> Visualisering
+                      </div>
+                      <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-none mb-3 sm:mb-4">Seminar-Arkitekten</h3>
+                      <p className="text-slate-300 text-[16px] sm:text-lg leading-relaxed font-medium">Opbyg intelligente seminarserier med struktureret feedback, faglige kilder og praksisnære vejledninger.</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-purple-300 font-bold uppercase text-[13px] tracking-wider sm:group-hover:translate-x-2 transition-transform">
+                      Udforsk værktøjet <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-12 sm:mt-16 -mx-8 sm:-mx-12 lg:-mx-16 px-8 sm:px-12 lg:px-16 py-8 sm:py-12 bg-gradient-to-t from-black/40 to-transparent">
+                    <SeminarArchitectVisualization />
+                  </div>
                </div>
              </Reveal>
           </div>

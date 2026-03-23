@@ -61,6 +61,7 @@ import { getSecondOpinion } from './flows/second-opinion-flow';
 import { semanticLawSearch } from './flows/semantic-law-search-flow';
 import { generateSemesterPlan } from './flows/semester-planner-flow';
 import { seminarArchitect } from './flows/seminar-architect-flow';
+import { organizeEvidenceIntoSeminarFlow } from './flows/organize-evidence-seminar';
 import { simulateFeedbackFlow } from './flows/simulate-feedback-flow';
 import { simulateNextDayFlow } from './flows/simulate-next-day-flow';
 import { simulateStartFlow } from './flows/simulate-start-flow';
@@ -193,6 +194,8 @@ export const allFlows: Record<string, any> = {
   "generateSemesterPlan": generateSemesterPlan,
   "seminarArchitectFlow": seminarArchitect,
   "seminarArchitect": seminarArchitect,
+  "organizeEvidenceIntoSeminarFlow": organizeEvidenceIntoSeminarFlow,
+  "organizeEvidenceIntoSeminar": organizeEvidenceIntoSeminarFlow,
   "simulateFeedbackFlowFlow": simulateFeedbackFlow,
   "simulateFeedbackFlow": simulateFeedbackFlow,
   "simulateNextDayFlowFlow": simulateNextDayFlow,

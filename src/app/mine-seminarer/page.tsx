@@ -811,18 +811,18 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-0 sm:top-[80px] z-[200] bg-[#FDFCF8] overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-500">
-      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-6 sm:px-10 py-5 flex items-center gap-6 shrink-0 h-24">
-        <button onClick={quizData ? () => setQuizData(null) : onClose} className="p-3 bg-slate-50 rounded-[1.25rem] text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-90 shrink-0 shadow-sm border border-slate-100"><ArrowLeft className="w-5 h-5" /></button>
+      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-3 sm:px-6 md:px-10 py-3 sm:py-5 flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0 h-14 sm:h-16 md:h-24">
+        <button onClick={quizData ? () => setQuizData(null) : onClose} className="p-2 sm:p-3 bg-slate-50 rounded-lg sm:rounded-[1.25rem] text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-90 shrink-0 shadow-sm border border-slate-100"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></button>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5"><h2 className="font-black text-slate-900 truncate text-lg serif tracking-tight">{seminar.overallTitle}</h2><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" /></div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{slides.length} slides · Oprettet {seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5"><h2 className="font-black text-slate-900 truncate text-xs sm:text-lg md:text-lg serif tracking-tight">{seminar.overallTitle}</h2><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20 flex-shrink-0" /></div>
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 line-clamp-1">{slides.length} slides · {seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
         </div>
-        <div className="flex items-center gap-4">
-          {saveStatus === 'saved' && <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Gemt</span>}
+        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 shrink-0">
+          {saveStatus === 'saved' && <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-1 whitespace-nowrap hidden sm:flex"><CheckCircle className="w-3 h-3" /> Gemt</span>}
           <div className="relative">
-            <Button size="lg" variant="outline" onClick={() => setShowSharePopover(!showSharePopover)} className={`rounded-2xl border-slate-200 h-12 px-6 flex items-center gap-2 transition-all ${seminar.isShared ? 'bg-amber-50 border-amber-200 text-amber-700' : 'hover:bg-slate-50 text-slate-600'}`}>
-              <Share2 className="w-4 h-4" />
-              <span className="font-black">DEL</span>
+            <Button size="sm" variant="outline" onClick={() => setShowSharePopover(!showSharePopover)} className={`rounded-lg sm:rounded-2xl border-slate-200 h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 flex items-center gap-1 sm:gap-2 transition-all text-[10px] sm:text-[12px] md:text-[14px] ${seminar.isShared ? 'bg-amber-50 border-amber-200 text-amber-700' : 'hover:bg-slate-50 text-slate-600'}`}>
+              <Share2 className="w-3.5 h-3.5 sm:w-4 md:w-4" />
+              <span className="font-black hidden sm:inline">DEL</span>
             </Button>
             
             <AnimatePresence>
@@ -926,10 +926,10 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
               )}
             </AnimatePresence>
           </div>
-          <Button size="lg" variant="outline" onClick={() => setShowMindmap(true)} className="rounded-2xl border-slate-200 hover:bg-slate-50 text-slate-600 h-12 px-6 hidden sm:flex items-center gap-2 transition-all"><Sparkles className="w-4 h-4" /><span className="font-black">RELATIONSKORT</span></Button>
-          <Button size="lg" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-6 shadow-xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 group">
-            {isGeneratingQuiz ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <BrainCircuit className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />}
-            <span className="font-black">TAG QUIZ</span>
+          <Button size="sm" variant="outline" onClick={() => setShowMindmap(true)} className="rounded-lg sm:rounded-2xl border-slate-200 hover:bg-slate-50 text-slate-600 h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 hidden sm:flex items-center gap-1 sm:gap-2 transition-all text-[10px] sm:text-[12px] md:text-[14px]"><Sparkles className="w-3.5 h-3.5 sm:w-4 md:w-4" /><span className="hidden md:inline">RELATIONSKORT</span></Button>
+          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-lg sm:rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 shadow-xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 group text-[10px] sm:text-[12px] md:text-[14px]">
+            {isGeneratingQuiz ? <Loader2 className="w-3 h-3 sm:w-4 md:w-4 animate-spin" /> : <BrainCircuit className="w-3.5 h-3.5 sm:w-4 md:w-4 group-hover:rotate-12 transition-transform" />}
+            <span className="hidden sm:inline md:ml-2">TAG QUIZ</span>
           </Button>
         </div>
       </header>
@@ -1044,35 +1044,35 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
   const handleSetCat = (cat: string) => { onCategorize(cat); setShowCatPicker(false); setNewCat(''); };
 
   const content = (
-    <div className="flex flex-col h-full bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-2xl transition-all p-1 group relative">
-      <div className="p-7 flex-1" onClick={onOpen}>
-        <div className="flex items-start justify-between gap-3 mb-6">
-          <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-400 shadow-xl group-hover:rotate-6 transition-transform">
-            <Presentation className="w-7 h-7" />
+    <div className="flex flex-col h-full bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm hover:shadow-2xl transition-all p-0.5 sm:p-1 group relative">
+      <div className="p-4 sm:p-5 md:p-6 lg:p-7 flex-1" onClick={onOpen}>
+        <div className="flex items-start justify-between gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-slate-900 rounded-lg sm:rounded-2xl flex items-center justify-center text-indigo-400 shadow-xl group-hover:rotate-6 transition-transform flex-shrink-0">
+            <Presentation className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             <button onClick={e => { e.stopPropagation(); setShowCatPicker(!showCatPicker); }} 
-                className={`p-2 transition-colors rounded-xl ${seminar.category ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:text-indigo-600 hover:bg-slate-50' }`}>
-                <FolderOpen className="w-4 h-4"/>
+                className={`p-1.5 sm:p-2 transition-colors rounded-lg sm:rounded-xl ${seminar.category ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:text-indigo-600 hover:bg-slate-50' }`}>
+                <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4"/>
             </button>
-            <button onClick={e => { e.stopPropagation(); onDelete(); }} className="p-2 text-slate-200 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4"/></button>
+            <button onClick={e => { e.stopPropagation(); onDelete(); }} className="p-1.5 sm:p-2 text-slate-200 hover:text-rose-500 transition-colors"><Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4"/></button>
           </div>
         </div>
-        <h3 className="text-xl font-black text-slate-900 serif leading-tight mb-2 truncate group-hover:text-indigo-800 transition-colors">{seminar.overallTitle}</h3>
+        <h3 className="text-base sm:text-lg md:text-xl font-black text-slate-900 serif leading-tight mb-2 truncate group-hover:text-indigo-800 transition-colors">{seminar.overallTitle}</h3>
         {seminar.category && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest mb-4 border border-amber-100 shadow-sm">
-                <Tags className="w-3 h-3" /> {seminar.category}
+            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 bg-amber-50 text-amber-700 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-widest mb-3 sm:mb-4 border border-amber-100 shadow-sm">
+                <Tags className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {seminar.category}
             </span>
         )}
-        <div className="flex items-center gap-4 text-[11px] font-bold text-slate-400 mt-auto">
-          <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
-          <div className="flex items-center gap-1.5 tracking-widest uppercase text-[10px]">{seminar.slides?.length || 0} Slides</div>
+        <div className="flex items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-bold text-slate-400 mt-auto">
+          <div className="flex items-center gap-1 whitespace-nowrap"><Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
+          <div className="flex items-center gap-1 tracking-widest uppercase text-[8px] sm:text-[10px] whitespace-nowrap">{seminar.slides?.length || 0} Slides</div>
         </div>
       </div>
       
-      <div className="px-7 py-5 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
-         <div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-indigo-400" /><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{totalConcepts} Begreber</span></div>
-         <div className="flex items-center gap-2 text-indigo-600 font-black text-[11px] group-hover:translate-x-1 transition-transform">ÅBEN <ChevronRight className="w-3.5 h-3.5" /></div>
+      <div className="px-4 sm:px-5 md:px-6 lg:px-7 py-3 sm:py-4 lg:py-5 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
+         <div className="flex items-center gap-1.5 sm:gap-2"><div className="w-1 h-1 rounded-full bg-indigo-400" /><span className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">{totalConcepts} Begreber</span></div>
+         <div className="flex items-center gap-1.5 sm:gap-2 text-indigo-600 font-black text-[9px] sm:text-[11px] group-hover:translate-x-1 transition-transform">ÅBEN <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" /></div>
       </div>
       
       {showCatPicker && (
@@ -1327,33 +1327,33 @@ export default function MineSeminarerPage() {
   return (
     <div className="min-h-screen bg-[#FDFCF8]">
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-[40]">
-        <div className="max-w-7xl mx-auto px-5 sm:px-10 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/portal" className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm"><ArrowLeft className="w-5 h-5" /></Link>
-            <div className="hidden sm:block"><h1 className="text-xl font-black text-slate-900 serif">Mine Seminarer</h1><p className="text-[10px] font-black uppercase text-indigo-500/60 tracking-widest mt-0.5">Vidensbibliotek</p></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-5 md:px-10 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-6 min-w-0">
+            <Link href="/portal" className="p-2.5 sm:p-3 bg-slate-50 text-slate-400 rounded-xl sm:rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm shrink-0"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></Link>
+            <div className="min-w-0"><h1 className="text-lg sm:text-xl font-black text-slate-900 serif truncate">Mine Seminarer</h1><p className="text-[9px] sm:text-[10px] font-black uppercase text-indigo-500/60 tracking-widest mt-0.5 hidden sm:block">Vidensbibliotek</p></div>
           </div>
-          <div className="flex items-center gap-4">
-             <div className="hidden lg:flex items-center gap-2 p-1.5 bg-slate-50 rounded-2xl border border-slate-100">
-                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-xl ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
-                <button onClick={() => setViewMode('list')} className={`p-2 rounded-xl ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400'}`}><List className="w-4 h-4" /></button>
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
+             <div className="flex items-center gap-1.5 p-1 sm:p-1.5 bg-slate-50 rounded-lg sm:rounded-2xl border border-slate-100">
+                <button onClick={() => setViewMode('grid')} className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400'}`}><LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
+                <button onClick={() => setViewMode('list')} className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400'}`}><List className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
              </div>
-             <Link href="/seminar-architect"><Button size="lg" className="rounded-2xl bg-slate-900 hover:bg-indigo-900 text-white h-12 px-6 shadow-xl"><Plus className="w-4 h-4 mr-2" /> Ny analyse</Button></Link>
+             <Link href="/seminar-architect" className="shrink-0"><Button size="sm" className="rounded-lg sm:rounded-2xl bg-slate-900 hover:bg-indigo-900 text-white h-9 sm:h-10 md:h-12 px-2.5 sm:px-4 md:px-6 shadow-xl text-xs sm:text-sm md:text-base"><Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0 sm:mr-2" /><span className="hidden sm:inline">Ny analyse</span></Button></Link>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-5 sm:px-10 py-10">
-        <div className="mb-12 flex flex-col md:flex-row items-baseline justify-between gap-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10">
+        <div className="mb-8 sm:mb-12 flex flex-col md:flex-row items-baseline justify-between gap-3 sm:gap-4">
             <div className="space-y-1">
-                <h1 className="text-4xl font-black text-slate-900 serif tracking-tighter">Mit Vidensbibliotek</h1>
-                <p className="text-slate-400 font-medium text-sm">Organiser, repetér og visualiser dine studier.</p>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 serif tracking-tighter">Mit Vidensbibliotek</h1>
+                <p className="text-slate-400 font-medium text-xs sm:text-sm">Organiser, repetér og visualiser dine studier.</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
                 <button 
                     onClick={() => setShowStats(!showStats)} 
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${showStats ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${showStats ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
                 >
-                    <Activity className="w-3.5 h-3.5" /> {showStats ? 'Skjul Statistik' : 'Vis Statistik'}
+                    <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> <span className="hidden sm:inline">{showStats ? 'Skjul Statistik' : 'Vis Statistik'}</span><span className="sm:hidden">{showStats ? 'Skjul' : 'Vis'}</span>
                 </button>
                 <Link href="/seminar-architect">
                     <Button className="rounded-xl bg-slate-900 hover:bg-indigo-900 text-white h-11 px-6 shadow-xl"><Plus className="w-4 h-4 mr-2" /> Ny Analyse</Button>
@@ -1362,10 +1362,10 @@ export default function MineSeminarerPage() {
         </div>
 
         {/* View Type Tabs */}
-        <div className="mb-8 flex gap-2 border-b border-slate-100 pb-4">
+        <div className="mb-8 flex gap-2 border-b border-slate-100 pb-4 overflow-x-auto">
           <button
             onClick={() => { setViewType('mine'); setSelectedSeminarForSharing(null); }}
-            className={`px-4 py-2 text-sm font-black uppercase tracking-widest rounded-lg transition-all ${
+            className={`px-3 sm:px-4 py-2 text-[11px] sm:text-sm font-black uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${
               viewType === 'mine'
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
@@ -1375,14 +1375,15 @@ export default function MineSeminarerPage() {
           </button>
           <button
             onClick={() => { setViewType('delt'); }}
-            className={`px-4 py-2 text-sm font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${
+            className={`px-3 sm:px-4 py-2 text-[11px] sm:text-sm font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
               viewType === 'delt'
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Share2 className="w-4 h-4" />
-            Administrer Deling
+            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Administrer Deling</span>
+            <span className="sm:hidden">Deling</span>
           </button>
         </div>
 
@@ -1416,45 +1417,45 @@ export default function MineSeminarerPage() {
 
         {/* Unified Filter Bar - Only show for Mine Seminarer view */}
         {viewType === 'mine' && (
-        <div className="mb-10 p-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-2">
+        <div className="mb-8 sm:mb-10 p-1.5 sm:p-2 bg-white rounded-lg sm:rounded-[2rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2">
             <div className="flex-1 relative w-full group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+                <Search className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
                 <input 
                     type="text" 
-                    placeholder="Søg i titler, begreber, noter..." 
+                    placeholder="Søg..." 
                     value={searchQuery} onChange={e => setSearchQuery(e.target.value)} 
-                    className="w-full h-14 pl-14 pr-6 bg-transparent rounded-2xl text-sm font-semibold focus:outline-none" 
+                    className="w-full h-10 sm:h-14 pl-10 sm:pl-14 pr-3 sm:pr-6 bg-transparent rounded-lg sm:rounded-2xl text-xs sm:text-sm font-semibold focus:outline-none" 
                 />
             </div>
             
-            <div className="flex items-center gap-2 mr-2">
-                <div className="h-8 w-px bg-slate-100 mx-2 hidden md:block" />
+            <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+                <div className="h-8 w-px bg-slate-100 mx-1 hidden md:block" />
                 
                 <select 
                     value={activeCategory || ''} 
                     onChange={e => setActiveCategory(e.target.value || null)} 
-                    className="h-10 px-4 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer"
+                    className="flex-1 sm:flex-none h-9 sm:h-10 px-2 sm:px-4 bg-slate-50 border-none rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer"
                 >
                     <option value="">Alle Kategorier</option>
                     {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
 
-                <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
+                <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-50 p-1 rounded-lg sm:rounded-xl">
                     {['newest', 'title'].map(s => (
                         <button 
                             key={s} onClick={() => setSortBy(s as any)} 
-                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+                            className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
                         >
                             {s === 'newest' ? 'Dato' : 'A-Z'}
                         </button>
                     ))}
                 </div>
 
-                <div className="h-8 w-px bg-slate-100 mx-2 hidden md:block" />
+                <div className="h-8 w-px bg-slate-100 mx-1 hidden md:block" />
 
                 <button 
                     onClick={() => setFilterLaws(!filterLaws)} 
-                    className={`h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLaws ? 'bg-rose-50 text-rose-600 shadow-sm' : 'text-slate-300 hover:text-slate-600' }`}
+                    className={`h-9 sm:h-10 px-2 sm:px-4 rounded-lg sm:rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLaws ? 'bg-rose-50 text-rose-600 shadow-sm' : 'text-slate-300 hover:text-slate-600' }`}
                 >
                     <Scale className="w-3.5 h-3.5" />
                 </button>
@@ -1585,7 +1586,7 @@ export default function MineSeminarerPage() {
         {/* Mine Seminarer View */}
         {viewType === 'mine' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {filtered.map(s => <SeminarCard key={s.id} seminar={s} viewMode={viewMode} onOpen={() => setOpenSeminar(s)} onDelete={() => handleDelete(s.id)} onCategorize={cat => handleCategorize(s.id, cat)} existingCategories={categories} />)}
             </div>
 

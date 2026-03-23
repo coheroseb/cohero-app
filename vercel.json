@@ -8,5 +8,17 @@
       "path": "/api/cron/check-sager",
       "schedule": "0 8 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "group.cohero.dk"
+        }
+      ],
+      "destination": "/rum/groups/:path*"
+    }
   ]
 }

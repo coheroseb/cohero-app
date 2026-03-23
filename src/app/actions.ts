@@ -1651,7 +1651,14 @@ export async function generateEvidenceTagsAction(input: any) {
     }
 }
 
-
+export async function organizeEvidenceIntoSeminarAction(input: any) {
+    try {
+        return await callFirebaseFlow('organizeEvidenceIntoSeminarFlow', input);
+    } catch (e: any) {
+        console.error("Organize evidence error:", e);
+        throw new Error(`Fejl ved organisering af evidens: ${e.message}`);
+    }
+}
 
 export async function chatWithEvidenceContentAction(input: any) {
     return callFirebaseFlow('chatWithEvidenceContentFlow', input);
