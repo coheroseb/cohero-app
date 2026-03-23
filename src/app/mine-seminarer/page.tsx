@@ -36,6 +36,8 @@ import {
   History,
   Activity,
   FileSearch,
+  Share2,
+  BookOpen,
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -157,6 +159,173 @@ const QuizView: React.FC<{ quizData: QuizData; onFinish: () => void }> = ({ quiz
         )}
       </div>
     </div>
+  );
+};
+
+const MindmapOverlay: React.FC<{
+  seminar: SavedSeminar;
+  onClose: () => void;
+}> = ({ seminar, onClose }) => {
+  const [activeSlide, setActiveSlide] = useState<number | null>(null);
+
+  // Filter slides with actual concepts
+  const conceptSlides = (seminar.slides || []).filter(s => (s.keyConcepts?.length || 0) > 0);
+  const totalConcepts = conceptSlides.reduce((acc, s) => acc + (s.keyConcepts?.length || 0), 0);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[400] bg-slate-900/60 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden"
+    >
+      <div className="absolute top-8 right-8 z-10">
+        <button onClick={onClose} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all active:scale-95 shadow-xl border border-white/10">
+           <X className="w-6 h-6" />
+        </button>
+      </div>
+
+      <motion.div 
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        className="w-full h-full max-w-7xl bg-[#FDFCF8] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-white/20 relative"
+      >
+        <div className="p-8 sm:p-12 border-b border-slate-100 flex items-center justify-between shrink-0 relative bg-white/80 backdrop-blur-xl z-20">
+            <div className="space-y-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-indigo-100 mb-2">
+                    <Share2 className="w-3 h-3" /> Relationskort
+                </div>
+                <h3 className="text-3xl font-black text-slate-900 serif tracking-tight">{seminar.overallTitle}</h3>
+                <p className="text-xs text-slate-400 font-medium italic">Visuelt overblik over {totalConcepts} begreber fordelt på {conceptSlides.length} kerneslides.</p>
+            </div>
+            
+            <div className="hidden md:flex gap-6">
+                <div className="text-right">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status</p>
+                    <p className="text-sm font-black text-emerald-500">Fuldt kortlagt</p>
+                </div>
+            </div>
+        </div>
+
+        {/* Mindmap Canvas */}
+        <div className="flex-1 relative overflow-auto custom-scrollbar flex items-center justify-center min-h-[600px] bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]">
+             <div className="relative w-[1400px] h-[1000px] flex items-center justify-center pointer-events-auto">
+                {/* SVG Connections */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                   {conceptSlides.map((slide, idx) => {
+                      const angle = (idx / conceptSlides.length) * 2 * Math.PI;
+                      const xNode = 700 + Math.cos(angle) * 320;
+                      const yNode = 500 + Math.sin(angle) * 320;
+                      
+                      return (
+                        <g key={slide.slideNumber}>
+                            <motion.line 
+                                initial={{ pathLength: 0, opacity: 0 }}
+                                animate={{ pathLength: 1, opacity: 1 }}
+                                transition={{ duration: 1, delay: idx * 0.1 }}
+                                x1="700" y1="500" x2={xNode} y2={yNode} 
+                                stroke="#e2e8f0" strokeWidth="2" strokeDasharray="6 6"
+                            />
+                            {(slide.keyConcepts || []).map((_, cIdx) => {
+                                const subAngle = angle - 0.4 + (cIdx / Math.max(1, (slide.keyConcepts?.length || 1) - 1)) * 0.8;
+                                const xSub = xNode + Math.cos(subAngle) * 160;
+                                const ySub = yNode + Math.sin(subAngle) * 160;
+                                return (
+                                    <motion.line 
+                                        key={cIdx}
+                                        initial={{ pathLength: 0, opacity: 0 }}
+                                        animate={{ pathLength: 1, opacity: 0.4 }}
+                                        transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
+                                        x1={xNode} y1={yNode} x2={xSub} y2={ySub} 
+                                        stroke="#818cf8" strokeWidth="1"
+                                    />
+                                );
+                            })}
+                        </g>
+                      );
+                   })}
+                </svg>
+
+                {/* Center Node */}
+                <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute top-[450px] left-[650px] w-24 h-24 bg-slate-900 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl z-30 border-8 border-[#FDFCF8]"
+                >
+                    <div className="absolute inset-0 bg-indigo-500 opacity-20 blur-2xl animate-pulse rounded-full" />
+                    <BookOpen className="w-10 h-10 relative z-10" />
+                </motion.div>
+
+                {/* Nodes */}
+                {conceptSlides.map((slide, idx) => {
+                    const angle = (idx / conceptSlides.length) * 2 * Math.PI;
+                    const xNode = 700 + Math.cos(angle) * 320;
+                    const yNode = 500 + Math.sin(angle) * 320;
+                    const isActive = activeSlide === slide.slideNumber;
+
+                    return (
+                        <div key={slide.slideNumber} className="contents">
+                            {/* Slide Node */}
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: idx * 0.1 }}
+                                onMouseEnter={() => setActiveSlide(slide.slideNumber)}
+                                onMouseLeave={() => setActiveSlide(null)}
+                                style={{ top: yNode - 45, left: xNode - 110 }}
+                                className={`absolute w-[220px] p-4 text-center transition-all cursor-default z-20 ${isActive ? 'scale-110' : ''}`}
+                            >
+                                <div className={`mb-3 mx-auto w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm transition-all shadow-md ${isActive ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-white text-slate-400 border border-slate-100'}`}>
+                                    {slide.slideNumber}
+                                </div>
+                                <span className={`text-[11px] font-black uppercase tracking-widest transition-colors block leading-tight ${isActive ? 'text-indigo-600 font-black' : 'text-slate-500 font-bold'}`}>
+                                    {slide.slideTitle}
+                                </span>
+                            </motion.div>
+
+                            {/* Concept Nodes */}
+                            {(slide.keyConcepts || []).map((concept: any, cIdx: number) => {
+                                const subAngle = angle - 0.4 + (cIdx / Math.max(1, (slide.keyConcepts?.length || 1) - 1)) * 0.8;
+                                const xSub = xNode + Math.cos(subAngle) * 160;
+                                const ySub = yNode + Math.sin(subAngle) * 160;
+
+                                return (
+                                    <motion.div
+                                        key={cIdx}
+                                        initial={{ opacity: 0, scale: 0 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.8 + idx * 0.05 + cIdx * 0.02 }}
+                                        style={{ top: ySub - 22, left: xSub - 60 }}
+                                        className="absolute w-[130px] z-10"
+                                    >
+                                        <Link href={`/concept-explainer?term=${encodeURIComponent(concept.term)}`}>
+                                            <div className={`group/node bg-white border rounded-xl px-3 py-2.5 shadow-sm transition-all cursor-pointer text-center ${isActive ? 'border-indigo-200 shadow-indigo-100 ring-4 ring-indigo-50/50' : 'border-slate-100 hover:border-indigo-400 hover:shadow-lg'}`}>
+                                                <p className="text-[11px] font-bold text-slate-800 truncate leading-tight group-hover/node:text-indigo-600">{concept.term}</p>
+                                            </div>
+                                        </Link>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    );
+                })}
+             </div>
+        </div>
+
+        {/* Legend */}
+        <div className="px-12 py-8 border-t border-slate-100 flex items-center justify-between text-[11px] bg-white z-20 shrink-0">
+             <div className="flex gap-8">
+                <div className="flex items-center gap-2.5 font-bold text-slate-600"><div className="w-2.5 h-2.5 rounded-full bg-slate-900" /> {seminar.overallTitle}</div>
+                <div className="flex items-center gap-2.5 font-bold text-slate-600"><div className="w-2.5 h-2.5 rounded-full bg-indigo-600 shadow-lg shadow-indigo-200" /> Slides</div>
+                <div className="flex items-center gap-2.5 font-bold text-slate-600"><div className="w-2.5 h-2.5 rounded-full bg-indigo-50 border border-indigo-200" /> Begreber</div>
+             </div>
+             <p className="text-slate-400 font-bold flex items-center gap-2">
+                <ArrowDownAZ className="w-3.5 h-3.5" />
+                Klik på et begreb for at lære mere i Begrebsguiden
+             </p>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -323,6 +492,7 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; onClose: (
   );
   const [debouncedNotes] = useDebounce(notes, 1500);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [showMindmap, setShowMindmap] = useState(false);
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [openSlides, setOpenSlides] = useState<Set<number>>(new Set([0]));
@@ -420,6 +590,12 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; onClose: (
           <button onClick={() => window.print()} className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all rounded-xl hidden sm:block">
             <FileText className="w-5 h-5" />
           </button>
+
+          <Button size="lg" variant="outline" onClick={() => setShowMindmap(true)}
+            className="rounded-2xl border-slate-200 hover:bg-slate-50 text-slate-600 h-12 px-6 hidden sm:flex items-center gap-2 transition-all">
+            <Share2 className="w-4 h-4" />
+            <span className="font-black">RELATIONSKORT</span>
+          </Button>
 
           <Button size="lg" onClick={handleStartQuiz} disabled={isGeneratingQuiz}
             className="rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-6 shadow-xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 group">
