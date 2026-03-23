@@ -623,6 +623,7 @@ export default function MineSeminarerPage() {
   const [filterLaws, setFilterLaws] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [categoryMindmapData, setCategoryMindmapData] = useState<SavedSeminar | null>(null);
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     if (!user || !firestore) return;
@@ -668,6 +669,13 @@ export default function MineSeminarerPage() {
     setCategoryMindmapData({ id: 'cat-map', overallTitle: `Relationskort: ${activeCategory}`, slides: allSlides, createdAt: { toDate: () => new Date() } } as any);
   };
 
+  const stats = useMemo(() => {
+    const totalSeminars = seminars.length;
+    const totalConcepts = seminars.reduce((acc, s) => acc + (s.slides?.reduce((a, sl) => a + (sl.keyConcepts?.length || 0), 0) || 0), 0);
+    const totalNotes = seminars.reduce((acc, s) => acc + (s.slides?.filter(sl => sl.notes).length || 0), 0);
+    return { seminars: totalSeminars, concepts: totalConcepts, notes: totalNotes };
+  }, [seminars]);
+
   if (isLoading) return <AuthLoadingScreen />;
 
   return (
@@ -688,46 +696,116 @@ export default function MineSeminarerPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-5 sm:px-10 py-12">
-        <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-indigo-100"><History className="w-3 h-3" /> Historik & Arkiv</div>
-                <h2 className="text-5xl font-black text-slate-900 serif tracking-tighter">Din faglige udvikling</h2>
-                <p className="text-slate-500 font-medium italic text-lg max-w-2xl">Et samlet overblik over al din viden.</p>
+      <main className="max-w-7xl mx-auto px-5 sm:px-10 py-10">
+        <div className="mb-12 flex flex-col md:flex-row items-baseline justify-between gap-4">
+            <div className="space-y-1">
+                <h1 className="text-4xl font-black text-slate-900 serif tracking-tighter">Mit Vidensbibliotek</h1>
+                <p className="text-slate-400 font-medium text-sm">Organiser, repetér og visualiser dine studier.</p>
             </div>
-            <div className="p-4 bg-white rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-xl serif">{seminars.length}</div>
-                <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Viden</p><p className="text-xl font-black text-slate-900 leading-none serif">Seminarer</p></div>
+            <div className="flex items-center gap-3">
+                <button 
+                    onClick={() => setShowStats(!showStats)} 
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${showStats ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                >
+                    <Activity className="w-3.5 h-3.5" /> {showStats ? 'Skjul Statistik' : 'Vis Statistik'}
+                </button>
+                <Link href="/seminar-architect">
+                    <Button className="rounded-xl bg-slate-900 hover:bg-indigo-900 text-white h-11 px-6 shadow-xl"><Plus className="w-4 h-4 mr-2" /> Ny Analyse</Button>
+                </Link>
             </div>
         </div>
 
-        <div className="mb-12 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full max-w-md group">
+        <AnimatePresence>
+            {showStats && (
+                <motion.div 
+                    initial={{ height: 0, opacity: 0 }} 
+                    animate={{ height: 'auto', opacity: 1 }} 
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden mb-12"
+                >
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm">
+                        {[
+                            { label: 'Total Viden', val: stats.seminars, sub: 'Gennemførte seminarer', icon: <Presentation className="w-5 h-5"/>, color: 'text-slate-900', bg: 'bg-slate-50' },
+                            { label: 'Faglige Begreber', val: stats.concepts, sub: 'Kortlagt i biblioteket', icon: <Tags className="w-5 h-5"/>, color: 'text-indigo-600', bg: 'bg-indigo-50/50' },
+                            { label: 'Studienoter', val: stats.notes, sub: 'Gemte refleksioner', icon: <FileText className="w-5 h-5"/>, color: 'text-emerald-600', bg: 'bg-emerald-50/50' }
+                        ].map((s, i) => (
+                            <div key={i} className="flex items-center gap-6">
+                                <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center`}>{s.icon}</div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{s.label}</p>
+                                    <p className={`text-2xl font-black serif ${s.color}`}>{s.val}</p>
+                                    <p className="text-[10px] font-medium text-slate-400">{s.sub}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+
+        {/* Unified Filter Bar */}
+        <div className="mb-10 p-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-2">
+            <div className="flex-1 relative w-full group">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
-                <input type="text" placeholder="Søg i titler, begreber, noter..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full h-16 pl-14 pr-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm text-sm font-semibold focus:ring-4 focus:ring-indigo-50 transition-all outline-none" />
+                <input 
+                    type="text" 
+                    placeholder="Søg i titler, begreber, noter..." 
+                    value={searchQuery} onChange={e => setSearchQuery(e.target.value)} 
+                    className="w-full h-14 pl-14 pr-6 bg-transparent rounded-2xl text-sm font-semibold focus:outline-none" 
+                />
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 p-1 bg-slate-50 rounded-2xl border border-slate-100 h-14 px-3">
-                    <SlidersHorizontal className="w-4 h-4 text-slate-400 mr-2" />
-                    {['newest', 'title'].map(s => <button key={s} onClick={() => setSortBy(s as any)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>{s === 'newest' ? 'Nyeste' : 'A-Z'}</button>)}
-                    <div className="w-px h-6 bg-slate-200 mx-2" />
-                    <select value={activeCategory || ''} onChange={e => setActiveCategory(e.target.value || null)} className="bg-transparent text-[10px] font-black uppercase tracking-widest text-slate-500 border-none focus:ring-0 cursor-pointer">
-                        <option value="">Alle Kategorier</option>
-                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+            
+            <div className="flex items-center gap-2 mr-2">
+                <div className="h-8 w-px bg-slate-100 mx-2 hidden md:block" />
+                
+                <select 
+                    value={activeCategory || ''} 
+                    onChange={e => setActiveCategory(e.target.value || null)} 
+                    className="h-10 px-4 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer"
+                >
+                    <option value="">Alle Kategorier</option>
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+
+                <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
+                    {['newest', 'title'].map(s => (
+                        <button 
+                            key={s} onClick={() => setSortBy(s as any)} 
+                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+                        >
+                            {s === 'newest' ? 'Dato' : 'A-Z'}
+                        </button>
+                    ))}
                 </div>
-                <button onClick={() => setFilterLaws(!filterLaws)} className={`h-14 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${filterLaws ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-sm' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50' }`}><Scale className="w-3.5 h-3.5 mr-2 inline" /> Kun Love</button>
+
+                <div className="h-8 w-px bg-slate-100 mx-2 hidden md:block" />
+
+                <button 
+                    onClick={() => setFilterLaws(!filterLaws)} 
+                    className={`h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLaws ? 'bg-rose-50 text-rose-600 shadow-sm' : 'text-slate-300 hover:text-slate-600' }`}
+                >
+                    <Scale className="w-3.5 h-3.5" />
+                </button>
             </div>
         </div>
 
         {activeCategory && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-12 p-8 bg-slate-900 rounded-[3rem] flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl overflow-hidden relative group">
-                <div className="absolute inset-0 bg-indigo-500/10 blur-3xl rounded-full scale-150 -translate-y-1/2" />
-                <div className="flex items-center gap-8 relative z-10">
-                    <div className="w-20 h-20 bg-white/10 rounded-[2rem] flex items-center justify-center text-white backdrop-blur-md group-hover:rotate-12 transition-transform duration-500"><Share2 className="w-10 h-10" /></div>
-                    <div><h4 className="text-2xl font-black text-white serif mb-1">Relationskort: {activeCategory}</h4><p className="text-indigo-200/60 font-medium italic">Vis overblik på tværs af alle {filtered.length} seminarer i denne kategori.</p></div>
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="mb-10 flex items-center justify-between p-6 bg-slate-900 rounded-[2rem] text-white shadow-xl shadow-slate-900/10 overflow-hidden relative group"
+            >
+                <div className="absolute inset-0 bg-indigo-500/10 blur-3xl opacity-50 group-hover:scale-110 transition-transform duration-1000" />
+                <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-indigo-400 backdrop-blur-md">
+                        <Share2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h4 className="text-lg font-black serif">Relationskort over {activeCategory}</h4>
+                        <p className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest opacity-60">Viser forbindelse mellem {filtered.length} seminarer</p>
+                    </div>
                 </div>
-                <Button onClick={handleOpenCatMindmap} size="lg" className="h-16 px-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-2xl shadow-indigo-600/20 active:scale-95 transition-all relative z-10">ÅBEN KATEGORI-KORT</Button>
+                <Button onClick={handleOpenCatMindmap} size="sm" className="bg-indigo-600 hover:bg-white hover:text-indigo-600 rounded-xl font-black h-10 px-6 transition-all relative z-10 active:scale-95">ÅBEN KORT</Button>
             </motion.div>
         )}
 
