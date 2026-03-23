@@ -699,7 +699,7 @@ function MineSeminarerPageContent() {
 
       <div className="min-h-screen bg-[#FDFCF8] selection:bg-indigo-100">
         {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-[100]">
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-[40]">
           <div className="max-w-7xl mx-auto px-5 sm:px-10 h-20 flex items-center justify-between gap-4">
             <div className="flex items-center gap-6">
               <Link href="/portal" className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-95 shadow-sm">

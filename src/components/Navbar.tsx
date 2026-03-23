@@ -264,7 +264,7 @@ const Navbar: React.FC<NavbarProps> = ({
       className="fixed top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/90 via-white/40 to-transparent z-[90] pointer-events-none backdrop-blur-sm"
     />
 
-    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out px-4 py-4 md:px-8 pointer-events-none`}>
+    <nav className={`fixed top-0 left-0 right-0 z-[200] transition-all duration-700 ease-in-out px-4 py-4 md:px-8 pointer-events-none`}>
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
