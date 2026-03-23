@@ -145,7 +145,10 @@ service cloud.firestore {
       match /secondOpinions/{opinionId} { allow read, write: if isOwner(userId); }
       match /tokenUsage/{usageId} { allow create: if isOwner(userId); }
       match /blueprints/{blueprintId} { allow read, write: if isOwner(userId); }
-      match /seminars/{seminarId} { allow read, write: if isOwner(userId); }
+      match /seminars/{seminarId} { 
+        allow read: if isOwner(userId) || (isSignedIn() && request.auth.uid in resource.data.get('sharedWith', []));
+        allow write: if isOwner(userId); 
+      }
       match /semesterPlans/{planId} { allow read, write: if isOwner(userId); }
       match /studySchedules/{scheduleId} { allow read, write: if isOwner(userId); }
       match /journalScenarios/{scenarioId} { allow read, write: if isOwner(userId); }
@@ -155,6 +158,9 @@ service cloud.firestore {
       match /readDocuments/{docId} { allow read, write: if isOwner(userId); }
       match /savedParagraphs/{savedId} { allow read, write: if isOwner(userId); }
       match /quizResults/{resultId} { allow read, write: if isOwner(userId); }
+    }
+    match /{path=**}/seminars/{seminarId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.get('sharedWith', []);
     }
   }
 }

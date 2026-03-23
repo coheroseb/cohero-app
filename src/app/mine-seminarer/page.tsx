@@ -1154,6 +1154,8 @@ export default function MineSeminarerPage() {
   const [showCategorySharePopover, setShowCategorySharePopover] = useState(false);
   const [collaboratorEmail, setCollaboratorEmail] = useState('');
   const [isAddingCollaborator, setIsAddingCollaborator] = useState(false);
+  const [viewType, setViewType] = useState<'mine' | 'delt'>('mine');
+  const [selectedSeminarForSharing, setSelectedSeminarForSharing] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -1172,6 +1174,20 @@ export default function MineSeminarerPage() {
   const handleCategorize = async (id: string, cat: string) => {
     if (!user || !firestore) return;
     await updateDoc(doc(firestore, 'users', user.uid, 'seminars', id), { category: cat });
+  };
+
+  const handleRemoveCollaborator = async (seminarId: string, uid: string) => {
+    if (!user || !firestore) return;
+    try {
+      const ref = doc(firestore, 'users', user.uid, 'seminars', seminarId);
+      await updateDoc(ref, {
+        sharedWith: arrayRemove(uid)
+      });
+      toast({ title: 'Adgang fjernet', description: 'Brugeren har ikke længere adgang til seminaret.' });
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Fejl', description: 'Kunne ikke fjerne adgang.', variant: 'destructive' });
+    }
   };
 
   const filtered = useMemo(() => {
@@ -1345,8 +1361,33 @@ export default function MineSeminarerPage() {
             </div>
         </div>
 
+        {/* View Type Tabs */}
+        <div className="mb-8 flex gap-2 border-b border-slate-100 pb-4">
+          <button
+            onClick={() => { setViewType('mine'); setSelectedSeminarForSharing(null); }}
+            className={`px-4 py-2 text-sm font-black uppercase tracking-widest rounded-lg transition-all ${
+              viewType === 'mine'
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            Mine Seminarer
+          </button>
+          <button
+            onClick={() => { setViewType('delt'); }}
+            className={`px-4 py-2 text-sm font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${
+              viewType === 'delt'
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <Share2 className="w-4 h-4" />
+            Administrer Deling
+          </button>
+        </div>
+
         <AnimatePresence>
-            {showStats && (
+            {showStats && viewType === 'mine' && (
                 <motion.div 
                     initial={{ height: 0, opacity: 0 }} 
                     animate={{ height: 'auto', opacity: 1 }} 
@@ -1373,7 +1414,8 @@ export default function MineSeminarerPage() {
             )}
         </AnimatePresence>
 
-        {/* Unified Filter Bar */}
+        {/* Unified Filter Bar - Only show for Mine Seminarer view */}
+        {viewType === 'mine' && (
         <div className="mb-10 p-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-2">
             <div className="flex-1 relative w-full group">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
@@ -1418,8 +1460,9 @@ export default function MineSeminarerPage() {
                 </button>
             </div>
         </div>
+        )}
 
-        {activeCategory && (
+        {activeCategory && viewType === 'mine' && (
             <motion.div 
                 initial={{ opacity: 0, scale: 0.98 }} 
                 animate={{ opacity: 1, scale: 1 }} 
@@ -1539,12 +1582,188 @@ export default function MineSeminarerPage() {
             </motion.div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filtered.map(s => <SeminarCard key={s.id} seminar={s} viewMode={viewMode} onOpen={() => setOpenSeminar(s)} onDelete={() => handleDelete(s.id)} onCategorize={cat => handleCategorize(s.id, cat)} existingCategories={categories} />)}
-        </div>
+        {/* Mine Seminarer View */}
+        {viewType === 'mine' && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                {filtered.map(s => <SeminarCard key={s.id} seminar={s} viewMode={viewMode} onOpen={() => setOpenSeminar(s)} onDelete={() => handleDelete(s.id)} onCategorize={cat => handleCategorize(s.id, cat)} existingCategories={categories} />)}
+            </div>
 
-        {!isLoading && filtered.length === 0 && (
-            <div className="py-40 text-center"><div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mx-auto mb-8"><FileSearch className="w-12 h-12"/></div><h3 className="text-2xl font-black text-slate-900 serif mb-2">Ingen resultater</h3><p className="text-slate-400 italic">Prøv en anden søgning eller kategori.</p></div>
+            {!isLoading && filtered.length === 0 && (
+                <div className="py-40 text-center"><div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mx-auto mb-8"><FileSearch className="w-12 h-12"/></div><h3 className="text-2xl font-black text-slate-900 serif mb-2">Ingen resultater</h3><p className="text-slate-400 italic">Prøv en anden søgning eller kategori.</p></div>
+            )}
+          </>
+        )}
+
+        {/* Administrer Deling View */}
+        {viewType === 'delt' && (
+          <div className="space-y-8">
+            {seminars.filter(s => s.isShared || (s.sharedWith && s.sharedWith.length > 0)).length === 0 ? (
+              <div className="py-40 text-center">
+                <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-300 mx-auto mb-8">
+                  <Share2 className="w-12 h-12" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 serif mb-2">Ingen delte seminarer</h3>
+                <p className="text-slate-400 italic mb-6">Du har endnu ikke delt nogle seminarer med andre.</p>
+                <button
+                  onClick={() => setViewType('mine')}
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all"
+                >
+                  Gå til Mine Seminarer
+                </button>
+              </div>
+            ) : (
+              seminars
+                .filter(s => s.isShared || (s.sharedWith && s.sharedWith.length > 0))
+                .map(seminar => (
+                  <motion.div
+                    key={seminar.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm hover:shadow-lg transition-all"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+                      {/* Seminar Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-400 flex-shrink-0">
+                            <Presentation className="w-8 h-8" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-xl font-black text-slate-900 serif mb-1 truncate">
+                              {seminar.overallTitle}
+                            </h3>
+                            {seminar.category && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest mb-3 border border-amber-100">
+                                <Tags className="w-3 h-3" /> {seminar.category}
+                              </span>
+                            )}
+                            <div className="flex flex-wrap gap-4 text-[10px] font-bold text-slate-400">
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {seminar.createdAt?.toDate().toLocaleDateString('da-DK')}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Presentation className="w-3.5 h-3.5" />
+                                {seminar.slides?.length || 0} Slides
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Sharing Status */}
+                        <div className="mt-6 p-4 bg-slate-50 rounded-2xl space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-black text-slate-900 text-sm mb-1">Delestatus</h4>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                {seminar.isShared && seminar.sharedWith && seminar.sharedWith.length > 0
+                                  ? `Offentlig + ${seminar.sharedWith.length} kollega(er)`
+                                  : seminar.isShared
+                                  ? 'Offentlig deling'
+                                  : seminar.sharedWith && seminar.sharedWith.length > 0
+                                  ? `Delt med ${seminar.sharedWith.length} kollega(er)`
+                                  : 'Ikke delt'}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => setSelectedSeminarForSharing(selectedSeminarForSharing === seminar.id ? null : seminar.id)}
+                              className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                            >
+                              <ChevronDown
+                                className={`w-5 h-5 transition-transform ${
+                                  selectedSeminarForSharing === seminar.id ? 'rotate-180' : ''
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          {/* Detailed Sharing Information */}
+                          <AnimatePresence>
+                            {selectedSeminarForSharing === seminar.id && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="pt-4 border-t border-slate-200 space-y-4"
+                              >
+                                {/* Public Share Status */}
+                                <div>
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                                    Offentlig Deling
+                                  </p>
+                                  <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
+                                    <div className="flex items-center gap-2">
+                                      <div
+                                        className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${
+                                          seminar.isShared
+                                            ? 'bg-emerald-100 text-emerald-600'
+                                            : 'bg-slate-100 text-slate-400'
+                                        }`}
+                                      >
+                                        {seminar.isShared ? '✓' : '−'}
+                                      </div>
+                                      <span className="text-[11px] font-bold text-slate-600">
+                                        {seminar.isShared ? 'Aktiveret' : 'Deaktiveret'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Specific Collaborators */}
+                                {seminar.sharedWith && seminar.sharedWith.length > 0 && (
+                                  <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                                      Delt med Kollegaer ({seminar.sharedWith.length})
+                                    </p>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                      {seminar.sharedWith.map(uid => (
+                                        <div
+                                          key={uid}
+                                          className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100"
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-black text-[10px]">
+                                              {uid.slice(0, 2).toUpperCase()}
+                                            </div>
+                                            <div className="min-w-0">
+                                              <p className="text-[10px] font-bold text-slate-600 truncate">
+                                                {uid.slice(0, 12)}...
+                                              </p>
+                                              <p className="text-[9px] text-slate-400">Bruger ID</p>
+                                            </div>
+                                          </div>
+                                          <button
+                                            onClick={() => handleRemoveCollaborator(seminar.id, uid)}
+                                            className="p-2 text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => setOpenSeminar(seminar)}
+                            className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-900 transition-all"
+                          >
+                            Åbn Detaljer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+            )}
+          </div>
         )}
       </main>
 

@@ -546,7 +546,14 @@ function SeminarArchitectPageContent() {
 
       const batch = writeBatch(firestore!);
       const userRef = doc(firestore!, 'users', user.uid);
-      batch.set(newSeminarRef, { ...finalAnalysis, fileName: file.name, createdAt: serverTimestamp() });
+      batch.set(newSeminarRef, { 
+        ...finalAnalysis, 
+        fileName: file.name, 
+        ownerUid: user.uid,
+        ownerName: userProfile.username || user.displayName || 'Anonym',
+        ownerEmail: user.email,
+        createdAt: serverTimestamp() 
+      });
       setSavedAnalysisId(newSeminarRef.id);
 
       const activityRef = doc(collection(firestore!, 'userActivities'));

@@ -617,6 +617,35 @@ const PortalPageContent: React.FC = () => {
       <div className="max-w-7xl mx-auto w-full px-5 sm:px-8 mt-12 mb-8 relative z-20">
         <SurveyWidget membership={userProfile?.membership || 'Kollega'} />
         
+        {/* NEWS BANNER: Mine Seminarer Sharing Management */}
+        <Link href="/mine-seminarer" className="group block mt-4 outline-none">
+          <div className="bg-gradient-to-br from-emerald-50 via-white to-teal-50/30 border border-emerald-200 p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-[0_20px_40px_rgba(16,185,129,0.15)] hover:border-emerald-300 transition-all active:scale-[0.98] relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-100/30 rounded-full blur-[60px] pointer-events-none group-hover:scale-110 transition-transform duration-500"></div>
+            <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-teal-100/20 rounded-full blur-[50px] pointer-events-none"></div>
+            
+            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6 relative z-10">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-[24px] flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:rotate-6 transition-transform flex-shrink-0">
+                <Presentation className="w-7 h-7" />
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[9px] font-black uppercase tracking-widest mb-2.5 mx-auto sm:mx-0">
+                  <Zap className="w-3 h-3 fill-current" /> Nyt
+                </div>
+                <h3 className="text-[20px] font-extrabold text-slate-900 leading-tight">
+                  Hold styr på dine PowerPoint som aldrig før
+                </h3>
+                <p className="text-[14px] text-slate-600 font-medium max-w-md mt-1.5">
+                  Administrer deling, kontrollér hvem du har delt med, og fjern adgang på få sekunder. Alt fra ét sted.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center w-full sm:w-auto h-14 px-6 bg-white border border-emerald-200 rounded-[20px] shadow-sm text-emerald-600 font-bold text-[12px] uppercase tracking-widest group-hover:bg-emerald-50 transition-colors shrink-0 relative z-10">
+              Gå til biblioteket <ArrowRight className="w-4 h-4 ml-2" />
+            </div>
+          </div>
+        </Link>
+        
         <Link href="/lov-portal" className="group block mt-4 outline-none">
           <div className="bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-[0_20px_40px_rgba(79,70,229,0.1)] hover:border-indigo-200 transition-all active:scale-[0.98]">
             <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6">
