@@ -1675,3 +1675,18 @@ export async function draftEmailAction(topic: string) {
 
 
 
+export async function getUserUidByEmailAction(email: string): Promise<{ success: boolean; uid?: string; name?: string; message?: string }> {
+    try {
+        const snap = await adminFirestore.collection('users').where('email', '==', email.toLowerCase()).limit(1).get();
+        if (snap.empty) return { success: false, message: 'Bruger ikke fundet.' };
+        const userDoc = snap.docs[0];
+        return { 
+            success: true, 
+            uid: userDoc.id, 
+            name: userDoc.data().username || userDoc.data().displayName || 'En kollega' 
+        };
+    } catch (e) {
+        console.error("Failed to lookup user:", e);
+        return { success: false, message: 'Der skete en fejl ved opslag.' };
+    }
+}

@@ -402,41 +402,59 @@ const PortalPageContent: React.FC = () => {
     return "Godaften";
   };
   
-  const toolCategories = [
-    {
-      title: "Praksis-Træning",
-      subtitle: "Værktøjer til din daglige myndighedsudøvelse",
-      icon: <Library className="w-6 h-6 text-slate-700" />,
-      items: [
-        { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
-        { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
-        { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
-      ]
-    },
-    {
-      title: "Akademisk Design",
-      subtitle: "Styrk den røde tråd i dine studier",
-      icon: <GraduationCap className="w-6 h-6 text-indigo-500" />,
-      items: [
-        { title: "Eksamens-Arkitekten", desc: "Design din opgavestruktur", icon: Layout, path: "/exam-architect", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "AI-Draft", limit: limits.architect, limitText: 'denne md.' },
-        { title: "Mundtlig Eksamenstræner", desc: "Gennemgang af dit oplæg", icon: Mic, path: "/mundtlig-eksamenstraener", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Træning", limit: limits.oralExam, limitText: 'i dag' },
-        { title: "Second Opinion", desc: "Vurdering af klagegrundlag", icon: SearchCode, path: "/second-opinion", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Klage-Tjek", limit: limits.opinion, limitText: 'denne md.' },
-        { title: "Seminar-Arkitekten", desc: "Fra slides til videnskort", icon: FileSearch, path: "/seminar-architect", color: "text-violet-600 bg-violet-50 border-violet-100", badge: "Transform" },
-        { title: "Semester-Planlægger", desc: "Intelligent planlægning", icon: CalendarDays, path: "/semester-planlaegger", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sync" }
-      ]
-    },
-    {
-      title: "Omverdenen",
-      subtitle: "Hold dig opdateret på jura, politik og data",
-      icon: <Scale className="w-6 h-6 text-rose-500" />,
-      items: [
-        { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
-        { title: "Politisk Puls", desc: "Monitorering af lovændringer", icon: Gavel, path: "/folketinget", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Live" },
-        { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
-        { title: "Faglige Tendenser", desc: "Hvad rører sig på studiet?", icon: Compass, path: "/tendenser", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Insights" }
-      ]
+  const toolCategories = useMemo(() => {
+    const categories = [
+      {
+        title: "Praksis-Træning",
+        subtitle: "Værktøjer til din daglige myndighedsudøvelse",
+        icon: <Library className="w-6 h-6 text-slate-700" />,
+        items: [
+          { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
+          { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
+          { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
+        ]
+      },
+      {
+        title: "Akademisk Design",
+        subtitle: "Styrk den røde tråd i dine studier",
+        icon: <GraduationCap className="w-6 h-6 text-indigo-500" />,
+        items: [
+          { title: "Eksamens-Arkitekten", desc: "Design din opgavestruktur", icon: Layout, path: "/exam-architect", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "AI-Draft", limit: limits.architect, limitText: 'denne md.' },
+          { title: "Mundtlig Eksamenstræner", desc: "Gennemgang af dit oplæg", icon: Mic, path: "/mundtlig-eksamenstraener", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Træning", limit: limits.oralExam, limitText: 'i dag' },
+          { title: "Second Opinion", desc: "Vurdering af klagegrundlag", icon: SearchCode, path: "/second-opinion", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Klage-Tjek", limit: limits.opinion, limitText: 'denne md.' },
+          { title: "Seminar-Arkitekten", desc: "Fra slides til videnskort", icon: FileSearch, path: "/seminar-architect", color: "text-violet-600 bg-violet-50 border-violet-100", badge: "Transform" },
+          { title: "Semester-Planlægger", desc: "Intelligent planlægning", icon: CalendarDays, path: "/semester-planlaegger", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sync" }
+        ]
+      },
+      {
+        title: "Omverdenen",
+        subtitle: "Hold dig opdateret på jura, politik og data",
+        icon: <Scale className="w-6 h-6 text-rose-500" />,
+        items: [
+          { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
+          { title: "Politisk Puls", desc: "Monitorering af lovændringer", icon: Gavel, path: "/folketinget", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Live" },
+          { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
+          { title: "Faglige Tendenser", desc: "Hvad rører sig på studiet?", icon: Compass, path: "/tendenser", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Insights" }
+        ]
+      }
+    ];
+
+    if (userProfile?.isQualified) {
+        return [
+            {
+                title: "Juridiske Værktøjer",
+                subtitle: "Sparring og monitorering til din praksis",
+                icon: <Scale className="w-6 h-6 text-rose-500" />,
+                items: [
+                    { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
+                    { title: "Politisk Puls", desc: "Monitorering af lovændringer", icon: Gavel, path: "/folketinget", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Live" },
+                    { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
+                ]
+            }
+        ];
     }
-  ];
+    return categories;
+  }, [userProfile?.isQualified, limits]);
 
   const handleTrendClick = (tag: string) => {
     if (isConceptLimitReached) return;
@@ -478,17 +496,21 @@ const PortalPageContent: React.FC = () => {
                 {getTimeOfDayGreeting()}, <br className="sm:hidden" /><span className="text-amber-500">{user?.displayName?.split(' ')[0]}</span>
               </h1>
               <p className="text-[16px] sm:text-[18px] text-slate-500 mt-3 sm:mt-5 font-medium max-w-xl mx-auto sm:mx-0 leading-relaxed text-balance">
-                Din rygdækning gennem hele socialrådgiverstudiet. Hvad er din faglige prioritet i dag?
+                {userProfile?.isQualified 
+                    ? "Din professionelle rygdækning i praksis. Hold dig opdateret på jura og politik." 
+                    : "Din rygdækning gennem hele socialrådgiverstudiet. Hvad er din faglige prioritet i dag?"}
               </p>
             </div>
 
             <div className="flex items-center justify-center gap-2 sm:gap-4 p-2 sm:p-3">
-                <Link href="/memento" passHref>
-                  <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
-                    <Brain className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-500 shrink-0"/>
-                    <span className="text-[10px] sm:text-[11px] text-slate-700">Memento</span>
-                  </Button>
-                </Link>
+                {!userProfile?.isQualified && (
+                    <Link href="/memento" passHref>
+                    <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
+                        <Brain className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-500 shrink-0"/>
+                        <span className="text-[10px] sm:text-[11px] text-slate-700">Memento</span>
+                    </Button>
+                    </Link>
+                )}
                 <Link href="/folketinget" passHref>
                   <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
                     <Building className="w-6 h-6 sm:w-7 sm:h-7 text-rose-500 shrink-0"/>
@@ -626,57 +648,59 @@ const PortalPageContent: React.FC = () => {
         <div className="lg:col-span-8 space-y-16">
           
           {/* Active Work (The Focus Card) */}
-          <section>
-             <div className="flex items-center gap-3.5 mb-8 px-2">
-                <div className="p-3 bg-amber-500 rounded-[16px] shadow-sm flex items-center justify-center">
-                   <Target className="w-5 h-5 text-white" />
-                </div>
-                <h2 className="text-[22px] sm:text-2xl font-extrabold text-slate-900 tracking-tight">Anbefalet til dig i dag</h2>
-             </div>
-             
-             <div 
-               onClick={() => router.push(recommendedTool?.path || '/portal')}
-               className="bg-slate-900 p-8 sm:p-10 md:p-12 rounded-[32px] sm:rounded-[48px] text-white shadow-[0_20px_60px_-15px_rgba(15,23,42,0.4)] relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all"
-             >
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
-                   <div className="flex-1 space-y-6 text-left">
-                      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-400 text-amber-950 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                         <Sparkles className="w-3.5 h-3.5" /> Dit næste skridt
-                      </div>
-                       {recommendedTool ? (
-                          <>
-                              <h3 className="text-[32px] sm:text-[40px] md:text-[48px] font-extrabold tracking-tight leading-[1.05]">
-                                  Styrk dit skøn med <br className="hidden lg:block"/><span className="text-amber-400">{recommendedTool.name}</span>.
-                              </h3>
-                              <p className="text-slate-300 text-[16px] sm:text-[18px] leading-relaxed font-medium max-w-md">
-                                  Det er fornuftigt at holde hjernen skarp. Dette værktøj står klar til dig lige nu.
-                              </p>
-                              <Button size="lg" className="h-14 px-8 rounded-[20px] bg-white text-slate-900 font-bold uppercase tracking-wider text-[13px] hover:bg-slate-100 shadow-xl w-full sm:w-auto mt-2">
-                                  {recommendedTool.cta}
-                                  <ArrowRight className="w-4 h-4 ml-2 opacity-70"/>
-                              </Button>
-                          </>
-                      ) : (
-                          <div className="flex items-center gap-3 py-10">
-                              <Loader2 className="w-6 h-6 animate-spin text-slate-400"/>
-                              <span className="text-slate-400 font-medium">Analyserer din brug...</span>
-                          </div>
-                      )}
-                   </div>
-                   {recommendedTool && (
-                       <div className="hidden sm:flex w-full md:w-56 h-56 bg-white/5 rounded-[32px] border border-white/10 p-6 flex-col justify-center items-center text-center group-hover:bg-white/10 transition-colors backdrop-blur-md shrink-0">
-                          <div className={`w-20 h-20 bg-white rounded-[24px] flex items-center justify-center mb-5 shadow-xl group-hover:-translate-y-2 transition-transform duration-500 ${recommendedTool.color}`}>
-                              {React.createElement(recommendedTool.icon, { className: 'w-10 h-10' })}
-                          </div>
-                          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Værktøj</p>
-                          <p className="text-[16px] font-bold text-white tracking-wide">{recommendedTool.name}</p>
-                       </div>
-                   )}
-                </div>
-                {/* Decorative mesh */}
-                <div className="absolute -top-32 -right-32 w-96 h-96 bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.15)_0,transparent_70%)] rounded-full blur-[40px] pointer-events-none"></div>
-             </div>
-          </section>
+          {!userProfile?.isQualified && (
+            <section>
+              <div className="flex items-center gap-3.5 mb-8 px-2">
+                  <div className="p-3 bg-amber-500 rounded-[16px] shadow-sm flex items-center justify-center">
+                    <Target className="w-5 h-5 text-white" />
+                  </div>
+                  <h2 className="text-[22px] sm:text-2xl font-extrabold text-slate-900 tracking-tight">Anbefalet til dig i dag</h2>
+              </div>
+              
+              <div 
+                onClick={() => router.push(recommendedTool?.path || '/portal')}
+                className="bg-slate-900 p-8 sm:p-10 md:p-12 rounded-[32px] sm:rounded-[48px] text-white shadow-[0_20px_60px_-15px_rgba(15,23,42,0.4)] relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all"
+              >
+                  <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
+                    <div className="flex-1 space-y-6 text-left">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-400 text-amber-950 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
+                          <Sparkles className="w-3.5 h-3.5" /> Dit næste skridt
+                        </div>
+                          {recommendedTool ? (
+                            <>
+                                <h3 className="text-[32px] sm:text-[40px] md:text-[48px] font-extrabold tracking-tight leading-[1.05]">
+                                    Styrk dit skøn med <br className="hidden lg:block"/><span className="text-amber-400">{recommendedTool.name}</span>.
+                                </h3>
+                                <p className="text-slate-300 text-[16px] sm:text-[18px] leading-relaxed font-medium max-w-md">
+                                    Det er fornuftigt at holde hjernen skarp. Dette værktøj står klar til dig lige nu.
+                                </p>
+                                <Button size="lg" className="h-14 px-8 rounded-[20px] bg-white text-slate-900 font-bold uppercase tracking-wider text-[13px] hover:bg-slate-100 shadow-xl w-full sm:w-auto mt-2">
+                                    {recommendedTool.cta}
+                                    <ArrowRight className="w-4 h-4 ml-2 opacity-70"/>
+                                </Button>
+                            </>
+                        ) : (
+                            <div className="flex items-center gap-3 py-10">
+                                <Loader2 className="w-6 h-6 animate-spin text-slate-400"/>
+                                <span className="text-slate-400 font-medium">Analyserer din brug...</span>
+                            </div>
+                        )}
+                    </div>
+                    {recommendedTool && (
+                        <div className="hidden sm:flex w-full md:w-56 h-56 bg-white/5 rounded-[32px] border border-white/10 p-6 flex-col justify-center items-center text-center group-hover:bg-white/10 transition-colors backdrop-blur-md shrink-0">
+                            <div className={`w-20 h-20 bg-white rounded-[24px] flex items-center justify-center mb-5 shadow-xl group-hover:-translate-y-2 transition-transform duration-500 ${recommendedTool.color}`}>
+                                {React.createElement(recommendedTool.icon, { className: 'w-10 h-10' })}
+                            </div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Værktøj</p>
+                            <p className="text-[16px] font-bold text-white tracking-wide">{recommendedTool.name}</p>
+                        </div>
+                    )}
+                  </div>
+                  {/* Decorative mesh */}
+                  <div className="absolute -top-32 -right-32 w-96 h-96 bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.15)_0,transparent_70%)] rounded-full blur-[40px] pointer-events-none"></div>
+              </div>
+            </section>
+          )}
 
           {/* Core Categories with Mobile-First Grid Stacking */}
           {toolCategories.map((category, idx) => (
@@ -739,8 +763,9 @@ const PortalPageContent: React.FC = () => {
           ))}
           
           {/* USER ARCHIVE SECTION */}
-          <section>
-             <div className="flex items-center gap-4 mb-6 px-2">
+          {!userProfile?.isQualified && (
+            <section>
+              <div className="flex items-center gap-4 mb-6 px-2">
                 <div className="p-3 bg-white border border-slate-200 rounded-[16px] shadow-sm shrink-0">
                   <Layers className="w-6 h-6 text-slate-700" />
                 </div>
@@ -767,7 +792,8 @@ const PortalPageContent: React.FC = () => {
                     </Link>
                   ))}
               </div>
-          </section>
+            </section>
+          )}
         </div>
 
         {/* RIGHT COLUMN: THE DASHBOARD RAIL */}

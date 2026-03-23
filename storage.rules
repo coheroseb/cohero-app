@@ -23,5 +23,9 @@ service firebase.storage {
     match /users/{userId}/{allPaths=**} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
+
+    match /seminar-images/{userId}/{allPaths=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
   }
 }

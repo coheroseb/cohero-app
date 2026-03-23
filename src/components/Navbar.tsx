@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   LogOut,
@@ -214,46 +214,60 @@ const Navbar: React.FC<NavbarProps> = ({
     setIsMobileMenuOpen(false);
   };
 
-  const mobileCategories = [
-    {
-      title: "Træning",
-      items: [
-        { title: "Case-træner", path: "/case-trainer", icon: <BookCopy className="w-5 h-5" /> },
-        { title: "Journal-træner", path: "/journal-trainer", icon: <FileText className="w-5 h-5" /> },
-        { title: "Ny Refleksion", path: "/refleksionslog", icon: <BookMarked className="w-5 h-5" /> },
-        { title: "Eksamens-Arkitekten", path: "/exam-architect", icon: <DraftingCompass className="w-5 h-5" /> },
-        { title: "Seminar-Arkitekten", path: "/seminar-architect", icon: <Presentation className="w-5 h-5" /> },
-        { title: "Mundtlig Eksamens-Træner", path: "/mundtlig-eksamenstraener", icon: <Mic className="w-5 h-5" /> },
-        { title: "Semester-Planlægger", path: "/semester-planlaegger", icon: <CalendarDays className="w-5 h-5" />, isPremium: true },
-        { title: "Memento", path: "/memento", icon: <Brain className="w-5 h-5" /> },
-      ]
-    },
-    {
-      title: "Viden",
-      items: [
-        { title: "Lovportal", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
-        { title: "Begrebsguide", path: "/concept-explainer", icon: <Wand2 className="w-5 h-5" /> },
-        { title: "Folketinget Direkte", path: "/folketinget", icon: <Building className="w-5 h-5" /> },
-        { title: "VIVE Indsigt", path: "/vive-indsigt", icon: <BookCopy className="w-5 h-5" /> },
-        { title: "Studieteknikker", path: "/teknikker", icon: <BrainCircuit className="w-5 h-5" /> },
-      ]
-    },
-    {
-      title: "Fællesskab",
-      items: [
-        { title: "Opslagstavle", path: "/opslagstavle", icon: <MessageSquare className="w-5 h-5" /> },
-        { title: "Studiegrupper", path: "/grupper", icon: <UserPlus className="w-5 h-5" /> },
-      ]
-    },
-    {
-      title: "Mit Arkiv",
-      items: [
-        { title: "Min Logbog", path: "/min-logbog", icon: <BookMarked className="w-5 h-5" /> },
-        { title: "Mine Byggeplaner", path: "/mine-byggeplaner", icon: <DraftingCompass className="w-5 h-5" /> },
-        { title: "Gemte Paragraffer", path: "/mine-gemte-paragraffer", icon: <Gavel className="w-5 h-5" /> },
-      ]
+  const mobileCategories = useMemo(() => {
+    const categories = [
+      {
+        title: "Træning",
+        items: [
+          { title: "Case-træner", path: "/case-trainer", icon: <BookCopy className="w-5 h-5" /> },
+          { title: "Journal-træner", path: "/journal-trainer", icon: <FileText className="w-5 h-5" /> },
+          { title: "Ny Refleksion", path: "/refleksionslog", icon: <BookMarked className="w-5 h-5" /> },
+          { title: "Eksamens-Arkitekten", path: "/exam-architect", icon: <DraftingCompass className="w-5 h-5" /> },
+          { title: "Seminar-Arkitekten", path: "/seminar-architect", icon: <Presentation className="w-5 h-5" /> },
+          { title: "Mundtlig Eksamens-Træner", path: "/mundtlig-eksamenstraener", icon: <Mic className="w-5 h-5" /> },
+          { title: "Semester-Planlægger", path: "/semester-planlaegger", icon: <CalendarDays className="w-5 h-5" />, isPremium: true },
+          { title: "Memento", path: "/memento", icon: <Brain className="w-5 h-5" /> },
+        ]
+      },
+      {
+        title: "Viden",
+        items: [
+          { title: "Lovportal", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
+          { title: "Begrebsguide", path: "/concept-explainer", icon: <Wand2 className="w-5 h-5" /> },
+          { title: "Folketinget Direkte", path: "/folketinget", icon: <Building className="w-5 h-5" /> },
+          { title: "VIVE Indsigt", path: "/vive-indsigt", icon: <BookCopy className="w-5 h-5" /> },
+          { title: "Studieteknikker", path: "/teknikker", icon: <BrainCircuit className="w-5 h-5" /> },
+        ]
+      },
+      {
+        title: "Fællesskab",
+        items: [
+          { title: "Opslagstavle", path: "/opslagstavle", icon: <MessageSquare className="w-5 h-5" /> },
+          { title: "Studiegrupper", path: "/grupper", icon: <UserPlus className="w-5 h-5" /> },
+        ]
+      },
+      {
+        title: "Mit Arkiv",
+        items: [
+          { title: "Min Logbog", path: "/min-logbog", icon: <BookMarked className="w-5 h-5" /> },
+          { title: "Mine Byggeplaner", path: "/mine-byggeplaner", icon: <DraftingCompass className="w-5 h-5" /> },
+          { title: "Gemte Paragraffer", path: "/mine-gemte-paragraffer", icon: <Gavel className="w-5 h-5" /> },
+        ]
+      }
+    ];
+
+    if (userProfile?.isQualified) {
+      // Filter Viden to only Lovportal and Folketinget
+      const viden = categories.find(c => c.title === "Viden");
+      if (viden) {
+        viden.items = viden.items.filter(i => ["Lovportal", "Folketinget Direkte"].includes(i.title));
+      }
+      // Hide Træning, Fællesskab, Arkiv
+      return categories.filter(c => c.title === "Viden");
     }
-  ];
+
+    return categories;
+  }, [userProfile?.isQualified]);
 
   return (
     <>
@@ -319,35 +333,46 @@ const Navbar: React.FC<NavbarProps> = ({
                 
                 <div className="w-[1px] h-4 bg-slate-200/50 mx-2"></div>
                 
-                <NavDropdown title="Træning" icon={<PlayCircle className="w-4 h-4 text-slate-400"/>}>
-                  <NavDropdownLink href="/case-trainer" icon={<BookCopy className="w-4 h-4"/>}>Case-træner</NavDropdownLink>
-                  <NavDropdownLink href="/journal-trainer" icon={<FileText className="w-4 h-4"/>}>Journal-træner</NavDropdownLink>
-                  <NavDropdownLink href="/refleksionslog" icon={<BookMarked className="w-4 h-4"/>}>Ny Refleksion</NavDropdownLink>
-                  <NavDropdownLink href="/exam-architect" icon={<DraftingCompass className="w-4 h-4" />}>Eksamens-Arkitekten</NavDropdownLink>
-                  <NavDropdownLink href="/seminar-architect" icon={<Presentation className="w-4 h-4" />}>Seminar-Arkitekten</NavDropdownLink>
-                  <NavDropdownLink href="/mundtlig-eksamenstraener" icon={<Mic className="w-4 h-4" />}>Mundtlig Træner</NavDropdownLink>
-                  <NavDropdownLink href="/semester-planlaegger" icon={<CalendarDays className="w-4 h-4" />} isPremium={true} userMembership={userProfile?.membership}>Semester-Planlægger</NavDropdownLink>
-                  <NavDropdownLink href="/memento" icon={<Brain className="w-4 h-4"/>}>Memento</NavDropdownLink>
-                </NavDropdown>
+                {!userProfile?.isQualified && (
+                    <>
+                    <NavDropdown title="Træning" icon={<PlayCircle className="w-4 h-4 text-slate-400"/>}>
+                    <NavDropdownLink href="/case-trainer" icon={<BookCopy className="w-4 h-4"/>}>Case-træner</NavDropdownLink>
+                    <NavDropdownLink href="/journal-trainer" icon={<FileText className="w-4 h-4"/>}>Journal-træner</NavDropdownLink>
+                    <NavDropdownLink href="/refleksionslog" icon={<BookMarked className="w-4 h-4"/>}>Ny Refleksion</NavDropdownLink>
+                    <NavDropdownLink href="/exam-architect" icon={<DraftingCompass className="w-4 h-4" />}>Eksamens-Arkitekten</NavDropdownLink>
+                    <NavDropdownLink href="/seminar-architect" icon={<Presentation className="w-4 h-4" />}>Seminar-Arkitekten</NavDropdownLink>
+                    <NavDropdownLink href="/mundtlig-eksamenstraener" icon={<Mic className="w-4 h-4" />}>Mundtlig Træner</NavDropdownLink>
+                    <NavDropdownLink href="/semester-planlaegger" icon={<CalendarDays className="w-4 h-4" />} isPremium={true} userMembership={userProfile?.membership}>Semester-Planlægger</NavDropdownLink>
+                    <NavDropdownLink href="/memento" icon={<Brain className="w-4 h-4"/>}>Memento</NavDropdownLink>
+                    </NavDropdown>
 
-                <NavDropdown title="Viden" icon={<BookOpen className="w-4 h-4 text-slate-400"/>}>
-                  <NavDropdownLink href="/lov-portal" icon={<Scale className="w-4 h-4"/>}>Lovportal</NavDropdownLink>
-                  <NavDropdownLink href="/concept-explainer" icon={<Wand2 className="w-4 h-4" />}>Begrebsguide</NavDropdownLink>
-                  <NavDropdownLink href="/folketinget" icon={<Building className="w-4 h-4" />}>Folketinget</NavDropdownLink>
-                  <NavDropdownLink href="/vive-indsigt" icon={<BookCopy className="w-4 h-4"/>}>VIVE Indsigt</NavDropdownLink>
-                  <NavDropdownLink href="/teknikker" icon={<BrainCircuit className="w-4 h-4"/>}>Studieteknikker</NavDropdownLink>
-                </NavDropdown>
+                    <NavDropdown title="Viden" icon={<BookOpen className="w-4 h-4 text-slate-400"/>}>
+                    <NavDropdownLink href="/lov-portal" icon={<Scale className="w-4 h-4"/>}>Lovportal</NavDropdownLink>
+                    <NavDropdownLink href="/concept-explainer" icon={<Wand2 className="w-4 h-4" />}>Begrebsguide</NavDropdownLink>
+                    <NavDropdownLink href="/folketinget" icon={<Building className="w-4 h-4" />}>Folketinget</NavDropdownLink>
+                    <NavDropdownLink href="/vive-indsigt" icon={<BookCopy className="w-4 h-4"/>}>VIVE Indsigt</NavDropdownLink>
+                    <NavDropdownLink href="/teknikker" icon={<BrainCircuit className="w-4 h-4"/>}>Studieteknikker</NavDropdownLink>
+                    </NavDropdown>
 
-                <NavDropdown title="Fællesskab" icon={<Users className="w-4 h-4 text-slate-400"/>}>
-                  <NavDropdownLink href="/opslagstavle" icon={<MessageSquare className="w-4 h-4"/>}>Opslagstavle</NavDropdownLink>
-                  <NavDropdownLink href="/grupper" icon={<UserPlus className="w-4 h-4"/>}>Studiegrupper</NavDropdownLink>
-                </NavDropdown>
-                
-                <NavDropdown title="Arkiv" icon={<Layers className="w-4 h-4 text-slate-400"/>}>
-                  <NavDropdownLink href="/min-logbog" icon={<BookMarked className="w-4 h-4"/>}>Min Logbog</NavDropdownLink>
-                  <NavDropdownLink href="/mine-byggeplaner" icon={<DraftingCompass className="w-4 h-4"/>}>Mine Byggeplaner</NavDropdownLink>
-                  <NavDropdownLink href="/mine-gemte-paragraffer" icon={<Gavel className="w-4 h-4"/>}>Gemte Paragraffer</NavDropdownLink>
-                </NavDropdown>
+                    <NavDropdown title="Fællesskab" icon={<Users className="w-4 h-4 text-slate-400"/>}>
+                    <NavDropdownLink href="/opslagstavle" icon={<MessageSquare className="w-4 h-4"/>}>Opslagstavle</NavDropdownLink>
+                    <NavDropdownLink href="/grupper" icon={<UserPlus className="w-4 h-4"/>}>Studiegrupper</NavDropdownLink>
+                    </NavDropdown>
+                    
+                    <NavDropdown title="Arkiv" icon={<Layers className="w-4 h-4 text-slate-400"/>}>
+                    <NavDropdownLink href="/min-logbog" icon={<BookMarked className="w-4 h-4"/>}>Min Logbog</NavDropdownLink>
+                    <NavDropdownLink href="/mine-byggeplaner" icon={<DraftingCompass className="w-4 h-4"/>}>Mine Byggeplaner</NavDropdownLink>
+                    <NavDropdownLink href="/mine-gemte-paragraffer" icon={<Gavel className="w-4 h-4"/>}>Gemte Paragraffer</NavDropdownLink>
+                    </NavDropdown>
+                    </>
+                )}
+
+                {userProfile?.isQualified && (
+                    <NavDropdown title="Viden" icon={<BookOpen className="w-4 h-4 text-slate-400"/>}>
+                        <NavDropdownLink href="/lov-portal" icon={<Scale className="w-4 h-4"/>}>Lovportal</NavDropdownLink>
+                        <NavDropdownLink href="/folketinget" icon={<Building className="w-4 h-4" />}>Folketinget</NavDropdownLink>
+                    </NavDropdown>
+                )}
 
                 {userProfile?.role === 'admin' && (
                   <>

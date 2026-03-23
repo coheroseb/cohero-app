@@ -98,6 +98,10 @@ const OnboardingContent = () => {
   };
 
   const handleSubmit = async () => {
+    if (!isQualified && !semester.trim()) {
+      setError('Vælg venligst dit nuværende semester.');
+      return;
+    }
     if (!isQualified && !institution.trim()) {
       setError('Vælg venligst din uddannelsesinstitution eller markér dig som færdiguddannet.');
       return;
@@ -330,15 +334,33 @@ const OnboardingContent = () => {
                             exit={{ opacity: 0, height: 0 }}
                             className="space-y-4 overflow-hidden"
                           >
-                             <div className="relative group">
-                                <BookOpen className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-amber-950 transition-colors" />
-                                <Input 
-                                  type="text" 
-                                  placeholder="Hvilket semester er du på? (f.eks. 3)"
-                                  value={semester}
-                                  onChange={(e) => setSemester(e.target.value)}
-                                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border-transparent rounded-[1.25rem] focus:bg-white focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 transition-all text-sm h-14 font-bold text-slate-900"
-                                />
+                             <div className="space-y-3">
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1">Vælg Semester</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                                        <button
+                                            key={num}
+                                            onClick={() => setSemester(num.toString())}
+                                            className={`h-12 rounded-xl border-2 font-black text-sm transition-all flex items-center justify-center
+                                                ${semester === num.toString() 
+                                                    ? 'border-amber-950 bg-amber-50 text-amber-950 shadow-sm' 
+                                                    : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            {num}.
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => setSemester('Andet')}
+                                        className={`h-12 rounded-xl border-2 font-bold text-[10px] uppercase tracking-tighter transition-all flex items-center justify-center
+                                            ${semester === 'Andet' 
+                                                ? 'border-amber-950 bg-amber-50 text-amber-950 shadow-sm' 
+                                                : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        Andre
+                                    </button>
+                                </div>
                              </div>
                              
                              <div className="relative group bg-slate-50 rounded-[1.25rem] focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-950/5 transition-all">

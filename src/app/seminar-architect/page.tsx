@@ -23,6 +23,7 @@ import {
   BookOpen,
   Lock,
   FileUp,
+  Trash2,
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -35,12 +36,14 @@ import { useFirestore } from '@/firebase';
 import { collection, doc, addDoc, serverTimestamp, writeBatch, increment, getDoc, updateDoc } from 'firebase/firestore';
 import { useDebounce } from 'use-debounce';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useStorage } from '@/firebase';
 
 // ---------------------------------------------------------------------------
 // File Parsers
 // ---------------------------------------------------------------------------
 
-async function extractTextFromPdf(file: File): Promise<string> {
+async function extractDataFromPdf(file: File): Promise<{ text: string, images: Record<number, Blob[]> }> {
   const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist/build/pdf.mjs');
   const pdfjsVersion = '4.10.38';
   GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
@@ -53,7 +56,7 @@ async function extractTextFromPdf(file: File): Promise<string> {
     const strings = content.items.map((item: any) => item.str || '').join(' ');
     slideTexts.push(`--- SLIDE ${i} ---\n${strings}`);
   }
-  return slideTexts.join('\n\n');
+  return { text: slideTexts.join('\n\n'), images: {} };
 }
 
 /**
@@ -61,14 +64,14 @@ async function extractTextFromPdf(file: File): Promise<string> {
  * Walks the slide XML tree to collect ALL text nodes in reading order,
  * preserving paragraph breaks and handling all text run variants.
  */
-async function extractTextFromPptx(file: File): Promise<string> {
+async function extractDataFromPptx(file: File): Promise<{ text: string, images: Record<number, Blob[]> }> {
   const PizZip = (await import('pizzip')).default;
   const buffer = await file.arrayBuffer();
   const zip = new PizZip(buffer);
 
   const slideTexts: string[] = [];
+  const slideImages: Record<number, Blob[]> = {};
 
-  // Find all slide files and sort them numerically
   const slideFiles = Object.keys(zip.files)
     .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
     .sort((a, b) => {
@@ -77,18 +80,9 @@ async function extractTextFromPptx(file: File): Promise<string> {
       return na - nb;
     });
 
-  if (slideFiles.length === 0) {
-    throw new Error('Ingen slides fundet. Er filen en gyldig .pptx?');
-  }
+  if (slideFiles.length === 0) throw new Error('Ingen slides fundet. Er filen en gyldig .pptx?');
 
-  // Also get the slide-layout order from presentation.xml if possible
-  let slideOrder: string[] = slideFiles; // fallback to file order
-  try {
-    const presXml = zip.file('ppt/presentation.xml')?.asText() || '';
-    const rIdMatches = presXml.matchAll(/r:id="(rId\d+)"/g);
-    // Map rIds to slide filenames via slide relationships
-    // This is optional — file sort order is usually correct
-  } catch { /* ignore */ }
+  let slideOrder: string[] = slideFiles;
 
   for (let si = 0; si < slideOrder.length; si++) {
     const fileName = slideOrder[si];
@@ -98,34 +92,108 @@ async function extractTextFromPptx(file: File): Promise<string> {
       const xml = zip.file(fileName)?.asText() || '';
       if (!xml) continue;
 
-      // ----------------------------------------------------------------
-      // Parse XML using native browser DOMParser (client-side only)
-      // ----------------------------------------------------------------
       const parser = new DOMParser();
       const doc = parser.parseFromString(xml, 'text/xml');
 
-      // Collect text from all paragraphs in the slide body
-      // Namespace-aware: look for a:txBody > a:p > a:r > a:t
-      const paragraphs: string[] = [];
+      // 1. Extract Images via relationships
+    const findImagesInXml = async (xmlPath: string, seen: Set<string>): Promise<Blob[]> => {
+      const xml = zip.file(xmlPath)?.asText();
+      if (!xml) return [];
+      const isSlide = xmlPath.includes('slides/');
+      const relPath = isSlide 
+        ? xmlPath.replace('slides/', 'slides/_rels/') + '.rels'
+        : xmlPath.replace('slideLayouts/', 'slideLayouts/_rels/') + '.rels';
+      
+      const rXml = zip.file(relPath)?.asText();
+      if (!rXml) return [];
 
-      // Get all shape text bodies
-      const spNodes = doc.querySelectorAll('sp, graphicFrame, pic');
-      const txBodies = doc.querySelectorAll('txBody');
-
-      const allParas: Element[] = [];
-      txBodies.forEach(tb => {
-        tb.querySelectorAll('p').forEach(p => allParas.push(p));
+      const docFragment = parser.parseFromString(xml, 'text/xml');
+      const relDocFragment = parser.parseFromString(rXml, 'text/xml');
+      const imageMap: Record<string, string> = {};
+      
+      const rels = Array.from(relDocFragment.getElementsByTagNameNS('*', 'Relationship'));
+      rels.forEach(rel => {
+        const type = rel.getAttribute('Type');
+        if (type?.includes('relationships/image')) {
+          imageMap[rel.getAttribute('Id') || ''] = rel.getAttribute('Target') || '';
+        }
       });
 
-      // Also grab any stray paragraphs
+      const slideBlobs: Blob[] = [];
+      const blips = Array.from(docFragment.getElementsByTagNameNS('*', 'blip'));
+      
+      blips.forEach(blip => {
+        const rId = blip.getAttribute('r:embed') || blip.getAttribute('r:link') ||
+                    blip.getAttribute('embed') || 
+                    blip.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed') ||
+                    blip.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'link');
+        
+        if (rId && imageMap[rId]) {
+          let target = imageMap[rId];
+          const mediaPath = target.startsWith('..') ? target.replace('..', 'ppt') : `ppt/${target}`;
+          
+          if (seen.has(mediaPath)) return;
+          if (mediaPath.endsWith('.emf') || mediaPath.endsWith('.wmf')) return;
+          
+          const mediaFile = zip.file(mediaPath);
+          if (mediaFile) {
+            seen.add(mediaPath);
+            const ext = mediaPath.split('.').pop()?.toLowerCase();
+            let mime = 'image/jpeg';
+            if (ext === 'png') mime = 'image/png';
+            else if (ext === 'gif') mime = 'image/gif';
+            else if (ext === 'svg') mime = 'image/svg+xml';
+            else if (ext === 'webp') mime = 'image/webp';
+            
+            const uint8 = mediaFile.asUint8Array();
+            slideBlobs.push(new Blob([uint8.slice().buffer], { type: mime }));
+          }
+        }
+      });
+      return slideBlobs;
+    };
+
+    // 1. Extract Images (from slide, its layout, and its charts)
+    const relFileName = fileName.replace('slides/slide', 'slides/_rels/slide') + '.rels';
+    const relXml = zip.file(relFileName)?.asText();
+    const slideSeenPaths = new Set<string>();
+    const slideImagesArray: Blob[] = await findImagesInXml(fileName, slideSeenPaths);
+    
+    // Check layout and charts for extra images
+    if (relXml) {
+      const relDoc = parser.parseFromString(relXml, 'text/xml');
+      const allRels = Array.from(relDoc.getElementsByTagNameNS('*', 'Relationship'));
+      
+      for (const rel of allRels) {
+        const type = rel.getAttribute('Type');
+        const target = rel.getAttribute('Target');
+        if (!target) continue;
+        
+        if (type?.includes('relationships/slideLayout') || type?.includes('relationships/chart')) {
+          const path = target.startsWith('..') ? target.replace('..', 'ppt') : `ppt/${target}`;
+          const subIcons = await findImagesInXml(path, slideSeenPaths);
+          slideImagesArray.push(...subIcons);
+        }
+      }
+    }
+    
+    if (slideImagesArray.length > 0) slideImages[slideNum] = slideImagesArray;
+
+      // 2. Extract Text
+      const paragraphs: string[] = [];
+      const txBodies = Array.from(doc.getElementsByTagNameNS('*', 'txBody'));
+      const allParas: Element[] = [];
+      txBodies.forEach(tb => {
+        Array.from(tb.getElementsByTagNameNS('*', 'p')).forEach(p => allParas.push(p as Element));
+      });
+
       if (allParas.length === 0) {
-        doc.querySelectorAll('p').forEach(p => allParas.push(p));
+        Array.from(doc.getElementsByTagNameNS('*', 'p')).forEach(p => allParas.push(p as Element));
       }
 
       for (const para of allParas) {
-        // Collect all text runs in this paragraph
         const runs: string[] = [];
-        const tNodes = para.querySelectorAll('t');
+        const tNodes = Array.from(para.getElementsByTagNameNS('*', 't'));
         tNodes.forEach(t => {
           const txt = t.textContent?.trim();
           if (txt) runs.push(txt);
@@ -134,7 +202,6 @@ async function extractTextFromPptx(file: File): Promise<string> {
         if (lineText) paragraphs.push(lineText);
       }
 
-      // Fallback: raw regex if DOMParser yielded nothing (e.g., namespace issues)
       if (paragraphs.length === 0) {
         const rawMatches = xml.match(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g) || [];
         rawMatches.forEach(m => {
@@ -151,39 +218,60 @@ async function extractTextFromPptx(file: File): Promise<string> {
     }
   }
 
-  if (slideTexts.length === 0) {
-    throw new Error('Ingen slides kunne udlæses fra PowerPoint-filen.');
-  }
-
-  console.log(`[PPTX] Extracted ${slideTexts.length} slides from ${file.name}`);
-  return slideTexts.join('\n\n');
+  return { text: slideTexts.join('\n\n'), images: slideImages };
 }
 
-async function extractText(file: File): Promise<string> {
+async function extractData(file: File): Promise<{ text: string, images: Record<number, Blob[]> }> {
   const isPptx = file?.name.toLowerCase().endsWith('.pptx') || file.type.includes('presentationml');
-  if (isPptx) return extractTextFromPptx(file);
-  throw new Error('Kun PowerPoint (.pptx) filer understøttes.');
+  if (isPptx) return extractDataFromPptx(file);
+  return extractDataFromPdf(file);
 }
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const SlideCard = ({ slide, notes, onNotesChange }: { slide: any; notes: string; onNotesChange: (val: string) => void }) => (
-  <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 overflow-hidden group">
-    {/* Card Header */}
-    <div className="flex items-center gap-4 p-6 sm:p-8 border-b border-slate-50">
-      <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-sm shrink-0 group-hover:bg-indigo-600 transition-colors">
-        {slide.slideNumber}
+const SlideCard = ({ slide, notes, onNotesChange, isSelected, onSelect }: { slide: any; notes: string; onNotesChange: (val: string) => void; isSelected?: boolean; onSelect?: (e: React.MouseEvent) => void }) => (
+  <div className={`bg-white rounded-[2.5rem] border transition-all duration-500 overflow-hidden group relative ${
+    isSelected ? 'ring-2 ring-indigo-500 border-indigo-500 shadow-xl' : 'border-slate-100 shadow-sm hover:shadow-lg'
+  }`}>
+    {onSelect && (
+      <button 
+        onClick={onSelect}
+        className={`absolute left-6 top-10 z-20 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center ${
+          isSelected ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-200 opacity-0 group-hover:opacity-100'
+        }`}
+      >
+        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+      </button>
+    )}
+    <div className={`${onSelect ? 'pl-8' : ''}`}>
+      {/* Card Header */}
+      <div className="flex items-center gap-4 p-6 sm:p-8 border-b border-slate-50">
+        <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-sm shrink-0 group-hover:bg-indigo-600 transition-colors">
+          {slide.slideNumber}
+        </div>
+        <h3 className="text-lg font-bold text-slate-900 leading-tight">{slide.slideTitle}</h3>
       </div>
-      <h3 className="text-lg font-bold text-slate-900 leading-tight">{slide.slideTitle}</h3>
-    </div>
 
     {/* Card Body */}
     <div className="p-6 sm:p-8 space-y-6">
-      <p className="text-slate-500 leading-relaxed text-sm italic border-l-2 border-indigo-100 pl-4">{slide.summary}</p>
+      <div className="space-y-4">
+        <p className="text-slate-500 leading-relaxed text-sm italic border-l-2 border-indigo-100 pl-4">{slide.summary}</p>
+        
+        {slide.imageUrls && slide.imageUrls.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 pb-2 pt-2">
+            {slide.imageUrls.map((url: string, i: number) => (
+              <div key={i} className="aspect-video bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 relative group/img cursor-zoom-in" onClick={() => window.open(url, '_blank')}>
+                <img src={url} alt={`Slide ${slide.slideNumber} image ${i}`} className="w-full h-full object-contain group-hover/img:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-slate-900/0 group-hover/img:bg-slate-900/5 transition-colors" />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-slate-50">
         <div className="space-y-5">
           {slide.keyConcepts?.length > 0 && (
             <div>
@@ -246,6 +334,7 @@ const SlideCard = ({ slide, notes, onNotesChange }: { slide: any; notes: string;
             />
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -325,6 +414,7 @@ const FileDropZone = ({ file, onFile, onClear }: { file: File | null; onFile: (f
 function SeminarArchitectPageContent() {
   const { user, userProfile, refetchUserProfile } = useApp();
   const firestore = useFirestore();
+  const storage = useStorage();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -337,12 +427,52 @@ function SeminarArchitectPageContent() {
   const [debouncedNotes] = useDebounce(slideNotes, 1500);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [activeTab, setActiveTab] = useState<'cards' | 'overview'>('cards');
+  const [selectedSlides, setSelectedSlides] = useState<Set<number>>(new Set());
   const isInitialMount = useRef(true);
 
   const isPremiumUser = useMemo(() =>
     !!userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership ?? ''),
     [userProfile]
   );
+  
+  const handleToggleSelect = (idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedSlides(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (!analysisResult) return;
+    if (selectedSlides.size === analysisResult.slides.length) {
+      setSelectedSlides(new Set());
+    } else {
+      setSelectedSlides(new Set(analysisResult.slides.map((_, i) => i)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (!analysisResult || selectedSlides.size === 0) return;
+    if (!confirm(`Er du sikker på at du vil slette ${selectedSlides.size} slides? Dette kan ikke fortrydes.`)) return;
+
+    const newSlides = analysisResult.slides.filter((_, i) => !selectedSlides.has(i));
+    setAnalysisResult({ ...analysisResult, slides: newSlides });
+    setSelectedSlides(new Set());
+    
+    toast({
+        title: "Slides slettet",
+        description: `${selectedSlides.size} slides er blevet fjernet fra analysen.`,
+    });
+  };
+
+  useEffect(() => {
+    if (file && !isAnalyzing && !analysisResult) {
+      handleAnalyze();
+    }
+  }, [file]);
 
   const handleAnalyze = async () => {
     if (!file || !user || !firestore || !userProfile || isAnalyzing) return;
@@ -353,38 +483,70 @@ function SeminarArchitectPageContent() {
     setSlideNotes({});
     setSavedAnalysisId(null);
 
-    // Weekly limit for free tier
+    // Total limit for free tier (1 upload in total)
     if (!isPremiumUser) {
-      const getWeek = (d: Date) => {
-        const date = new Date(d);
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-        const week1 = new Date(date.getFullYear(), 0, 4);
-        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-      };
-      const lastUsage = userProfile.lastSeminarArchitectUsage?.toDate?.();
-      const now = new Date();
-      let weeklyCount = userProfile.weeklySeminarArchitectCount || 0;
-      if (lastUsage && (getWeek(lastUsage) !== getWeek(now) || lastUsage.getFullYear() !== now.getFullYear())) weeklyCount = 0;
-      if (weeklyCount >= 1) {
-        setError('Du har brugt dit ugentlige forsøg. Opgrader til Kollega+ for ubegrænset brug.');
+      if ((userProfile.totalSeminarAnalyses || 0) >= 1) {
+        setError('Du har allerede brugt din gratis analyse. Opgrader til Kollega+ for ubegrænset brug.');
         setIsAnalyzing(false);
         return;
       }
     }
 
     try {
-      const slideText = await extractText(file);
+      const { text: slideText, images: slideImages } = await extractData(file);
       const response = await seminarArchitectAction({ slideText, semester: userProfile.semester || '1. semester' });
 
       if (!response?.data) throw new Error('Ingen data returneret fra analysen.');
 
-      setAnalysisResult(response.data);
+      const analysisData = response.data;
+      const newSeminarRef = doc(collection(firestore!, 'users', user.uid, 'seminars'));
+
+      // 1. Collect all slide numbers from both AI results and extracted images
+      const allSlideNums = Array.from(new Set([
+        ...analysisData.slides.map((s: any) => s.slideNumber),
+        ...Object.keys(slideImages).map(Number)
+      ])).sort((a, b) => a - b);
+
+      // 2. Map through all slides to ensure none are missed (and upload images)
+      const finalSlides = await Promise.all(allSlideNums.map(async (num) => {
+        let s = analysisData.slides.find((os: any) => os.slideNumber === num);
+        
+        // If AI skipped this slide (common if it has no text), create a placeholder
+        if (!s) {
+          s = {
+            slideNumber: num,
+            slideTitle: 'Billedbaseret slide',
+            summary: 'Denne slide indeholder primært visuelt indhold.',
+            keyConcepts: [],
+            legalFrameworks: [],
+            practicalTools: [],
+            imageUrls: []
+          };
+        }
+
+        const slideBlobs = slideImages[num] || [];
+        if (slideBlobs.length === 0) return s;
+
+        try {
+          const urls = await Promise.all(slideBlobs.map(async (blob, idx) => {
+            const fileName = `slide${num}_img${idx}`;
+            const storageRef = ref(storage!, `seminar-images/${user.uid}/${newSeminarRef.id}/${fileName}`);
+            await uploadBytes(storageRef, blob, { contentType: blob.type });
+            return await getDownloadURL(storageRef);
+          }));
+          return { ...s, imageUrls: urls };
+        } catch (imgErr) {
+          console.warn(`Failed to upload images for slide ${num}:`, imgErr);
+          return s;
+        }
+      }));
+
+      const finalAnalysis: SeminarAnalysis = { ...analysisData, slides: finalSlides };
+      setAnalysisResult(finalAnalysis);
 
       const batch = writeBatch(firestore!);
       const userRef = doc(firestore!, 'users', user.uid);
-      const newSeminarRef = doc(collection(firestore!, 'users', user.uid, 'seminars'));
-      batch.set(newSeminarRef, { ...response.data, fileName: file.name, createdAt: serverTimestamp() });
+      batch.set(newSeminarRef, { ...finalAnalysis, fileName: file.name, createdAt: serverTimestamp() });
       setSavedAnalysisId(newSeminarRef.id);
 
       const activityRef = doc(collection(firestore!, 'userActivities'));
@@ -395,8 +557,10 @@ function SeminarArchitectPageContent() {
         createdAt: serverTimestamp(),
       });
 
-      const userUpdates: Record<string, any> = { lastSeminarArchitectUsage: serverTimestamp() };
-      if (!isPremiumUser) userUpdates.weeklySeminarArchitectCount = increment(1);
+      const userUpdates: Record<string, any> = { 
+        lastSeminarArchitectUsage: serverTimestamp(),
+        totalSeminarAnalyses: increment(1)
+      };
       if (response.usage) {
         const totalTokens = response.usage.inputTokens + response.usage.outputTokens;
         const pts = Math.round(totalTokens * 0.05);
@@ -439,7 +603,7 @@ function SeminarArchitectPageContent() {
     return () => clearTimeout(t);
   }, [saveStatus]);
 
-  if (!isPremiumUser) {
+  if (!isPremiumUser && (userProfile?.totalSeminarAnalyses || 0) >= 1 && !analysisResult) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
         <motion.div
@@ -455,7 +619,7 @@ function SeminarArchitectPageContent() {
           </div>
           <h2 className="text-2xl font-black text-slate-900 mb-4">Seminar-Arkitekten</h2>
           <p className="text-slate-500 text-sm leading-relaxed mb-10">
-            Upload dine slides (PDF eller PowerPoint) og lad AI omdanne dem til et struktureret videnskort med begreber, jura og metoder.
+            Du har brugt din gratis analyse. Opgrader til Kollega+ for at uploade flere koherente seminar-planer og få ubegrænset adgang til Seminar-Arkitekten.
           </p>
           <Link href="/upgrade" className="w-full">
             <Button className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-700 text-white font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
@@ -525,6 +689,13 @@ function SeminarArchitectPageContent() {
                   <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
                   <span className="text-xs font-black uppercase tracking-widest text-indigo-600">AI-Vidensbehandling</span>
                 </div>
+
+                {!isPremiumUser && (userProfile?.totalSeminarAnalyses || 0) === 0 && (
+                  <div className="mb-6 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-lg">
+                    <Zap className="w-3 h-3 text-amber-600 fill-amber-600" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">1 Gratis Analyse Tilbage</span>
+                  </div>
+                )}
                 <h2 className="text-4xl sm:text-5xl font-black text-slate-900 leading-none mb-4">
                   Fra slides til<br /><span className="text-indigo-600 italic">videnskort.</span>
                 </h2>
@@ -606,7 +777,15 @@ function SeminarArchitectPageContent() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Analyse fuldført</p>
-                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900">{analysisResult.overallTitle}</h2>
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900">{analysisResult.overallTitle}</h2>
+                    <button 
+                      onClick={handleSelectAll}
+                      className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-700 transition-colors mt-2"
+                    >
+                      {selectedSlides.size === analysisResult.slides.length ? 'Fravælg alle' : 'Vælg alle'}
+                    </button>
+                  </div>
                   <p className="text-sm text-slate-400 mt-1">{analysisResult.slides.length} slides analyseret</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -637,15 +816,41 @@ function SeminarArchitectPageContent() {
               </div>
 
               {/* Slide cards */}
-              <div className="space-y-5">
-                {analysisResult.slides.map((slide) => (
+              <div className="space-y-5 relative">
+                {analysisResult.slides.map((slide, i) => (
                   <SlideCard
-                    key={slide.slideNumber}
+                    key={`${slide.slideNumber}-${i}`}
                     slide={slide}
                     notes={slideNotes[slide.slideNumber] || ''}
                     onNotesChange={(val) => setSlideNotes(prev => ({ ...prev, [slide.slideNumber]: val }))}
+                    isSelected={selectedSlides.has(i)}
+                    onSelect={(e) => handleToggleSelect(i, e)}
                   />
                 ))}
+
+                <AnimatePresence>
+                  {selectedSlides.size > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                      className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center gap-8 border border-slate-800"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valgt</span>
+                        <span className="text-xl font-black serif">{selectedSlides.size} {selectedSlides.size === 1 ? 'slide' : 'slides'}</span>
+                      </div>
+                      <div className="w-px h-10 bg-slate-800" />
+                      <button 
+                        onClick={handleDeleteSelected}
+                        className="flex items-center gap-3 px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Slet valgte
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div className="flex justify-center pb-10">

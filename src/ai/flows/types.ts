@@ -147,6 +147,7 @@ export interface UserProfile {
   monthlyTokenTimestamp?: any;
   isHighUsage?: boolean;
   streakReminderSentAt?: any;
+  totalSeminarAnalyses?: number;
   mementoLevels?: {
     theorist?: number;
     paragraph?: number;
@@ -156,6 +157,8 @@ export interface UserProfile {
   fcmTokens?: string[];
   followedViveAreas?: string[];
   recentConcepts?: string[];
+  sharedCategories?: string[];
+  sharedCategoriesPermissions?: Record<string, string[]>;
 }
 
 export interface Post {
@@ -760,6 +763,7 @@ export const SeminarAnalysisSchema = z.object({
       tool: z.string(),
       description: z.string(),
     })).optional().default([]),
+    imageUrls: z.array(z.string()).optional(),
   })),
 });
 
