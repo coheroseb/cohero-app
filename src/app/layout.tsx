@@ -3,7 +3,6 @@ import './globals.css';
 import { AppProvider } from '@/app/provider';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from "@/components/ui/toaster";
-import BugReportButton from '@/components/BugReportButton';
 import Script from 'next/script';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
