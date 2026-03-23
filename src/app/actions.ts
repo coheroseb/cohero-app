@@ -134,7 +134,10 @@ import { FieldValue } from 'firebase-admin/firestore';
 export async function syncCalendarAvailability(
     icalUrl: string,
     customRange?: { start: string, end: string }
-): Promise<Record<string, 'physical' | 'online' | 'unavailable' | null>> {
+): Promise<{ 
+    slots: Record<string, 'physical' | 'online' | 'unavailable' | null>, 
+    busyEvents: { start: string, end: string, title: string }[] 
+}> {
     const url = icalUrl.replace(/^webcal:\/\//i, 'https://');
     const response = await fetch(url);
     if (!response.ok) throw new Error('Kunne ikke hente kalenderdata.');
@@ -151,6 +154,7 @@ export async function syncCalendarAvailability(
     // Trackers
     const busyCounts: Record<string, number> = {}; // key: 'dayIndex-slot'
     const dayOccurrences: Record<number, number> = {}; // key: dayIndex (0-6)
+    const busyEvents: { start: string, end: string, title: string }[] = [];
 
     // 1. Calculate how many of each weekday exist in the range
     for (let d = new Date(startRange); d <= endRange; d.setDate(d.getDate() + 1)) {
@@ -167,6 +171,7 @@ export async function syncCalendarAvailability(
     for (const eventBlock of events) {
         const startMatch = eventBlock.match(/DTSTART[:;](?:VALUE=DATE:)?(\d{8}(?:T\d{6}Z?)?)/);
         const endMatch = eventBlock.match(/DTEND[:;](?:VALUE=DATE:)?(\d{8}(?:T\d{6}Z?)?)/);
+        const summaryMatch = eventBlock.match(/SUMMARY:(.*)/);
 
         if (!startMatch || !endMatch) continue;
 
@@ -184,9 +189,17 @@ export async function syncCalendarAvailability(
 
         const startDate = parseDate(startMatch[1]);
         const endDate = parseDate(endMatch[1]);
+        const title = summaryMatch ? summaryMatch[1].trim() : 'Optaget';
 
         // Only process events within range
         if (endDate < startRange || startDate > endRange) continue;
+
+        // Add to busyEvents for timeline
+        busyEvents.push({
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+            title: title
+        });
 
         const dayIdx = startDate.getDay();
         const startHour = startDate.getUTCHours();
@@ -211,7 +224,7 @@ export async function syncCalendarAvailability(
     }
 
     // 3. Calculate statistical availability
-    const result: Record<string, 'physical' | 'online' | 'unavailable' | null> = {};
+    const slots: Record<string, 'physical' | 'online' | 'unavailable' | null> = {};
 
     for (let dIdx = 0; dIdx < 7; dIdx++) {
         const dayId = dayNames[dIdx];
@@ -225,20 +238,20 @@ export async function syncCalendarAvailability(
             // SHARPER LOGIC:
             // If you are busy in > 30% of the days, don't promise availability
             if (busyRatio > 0.3) {
-                result[key] = 'unavailable';
+                slots[key] = 'unavailable';
             }
             // ONLY mark as physical if 100% free across the whole month on weekdays
             else if (busyRatio === 0 && dIdx !== 0 && dIdx !== 6) {
-                result[key] = 'physical';
+                slots[key] = 'physical';
             }
             // For everything else, default to null so the user has to make a conscious choice
             else {
-                result[key] = null;
+                slots[key] = null;
             }
         }
     }
 
-    return result;
+    return { slots, busyEvents };
 }
 
 // AI Actions (wrapping flows)

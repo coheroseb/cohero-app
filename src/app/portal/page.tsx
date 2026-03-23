@@ -511,6 +511,12 @@ const PortalPageContent: React.FC = () => {
                     </Button>
                     </Link>
                 )}
+                <Link href="https://group.cohero.dk" passHref>
+                  <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
+                    <Users className="w-6 h-6 sm:w-7 sm:h-7 text-amber-600 shrink-0"/>
+                    <span className="text-[10px] sm:text-[11px] text-slate-700">Grupper</span>
+                  </Button>
+                </Link>
                 <Link href="/folketinget" passHref>
                   <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
                     <Building className="w-6 h-6 sm:w-7 sm:h-7 text-rose-500 shrink-0"/>

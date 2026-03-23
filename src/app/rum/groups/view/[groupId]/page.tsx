@@ -164,6 +164,7 @@ interface MemberAvailability {
     slots: Record<string, { mode: AvailabilityMode; timeframe?: string }>; // updated to allow timeframe
     updatedAt: any;
     icalUrl?: string;
+    busyEvents?: { start: string; end: string; title: string }[];
 }
 
 
@@ -1878,25 +1879,18 @@ export default function GroupDetailPage() {
 
       setIsSyncing(true);
       try {
-          const syncedSlotsRaw = await syncCalendarAvailability(icalUrlInput.trim(), syncRange);
-          
-          // Map raw modes to new structure
-          const syncedSlots: Record<string, { mode: AvailabilityMode; timeframe?: string }> = {};
-          Object.entries(syncedSlotsRaw).forEach(([key, mode]) => {
-              syncedSlots[key] = { mode };
-          });
-
-          const userAvail = availabilities?.find(a => a.id === user.uid);
-          const mergedSlots = { ...(userAvail?.slots || {}), ...syncedSlots };
-
+          setIsSyncing(true);
+          const { slots, busyEvents } = await syncCalendarAvailability(icalUrlInput.trim(), { start: syncRange.start, end: syncRange.end });
           const availRef = doc(firestore, 'groups', groupId, 'availability', user.uid);
           await setDoc(availRef, {
-              username: userProfile.username || user.displayName || 'Anonym',
-              slots: mergedSlots,
-              icalUrl: icalUrlInput.trim(),
-              updatedAt: serverTimestamp()
+              id: user.uid,
+              username: user.displayName || user.email?.split('@')[0] || 'Unavngivet',
+              slots: slots,
+              busyEvents: busyEvents,
+              updatedAt: serverTimestamp(),
+              icalUrl: icalUrlInput.trim()
           }, { merge: true });
-
+          
           toast({ title: "Kalender synkroniseret", description: "Dine ledige tider er blevet opdateret automatisk." });
           setShowIcalInput(false);
       } catch (err: any) {
@@ -1917,16 +1911,36 @@ export default function GroupDetailPage() {
   const ganttData = useMemo(() => {
       if (!tasks) return null;
       const tasksWithDates = tasks.filter(t => t.dueDate);
-      if (tasksWithDates.length === 0) return null;
-
-      const sorted = [...tasksWithDates].sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime());
       
-      const earliestStart = Math.min(...tasks.map(t => {
-          if (t.startDate) return new Date(t.startDate).getTime();
-          return t.createdAt?.toDate?.()?.getTime() || Date.now();
-      }));
+      const allBusyEvents: { start: Date; end: Date; title: string; memberName: string; type: 'calendar' }[] = [];
+      availabilities?.forEach(avail => {
+          avail.busyEvents?.forEach(event => {
+              allBusyEvents.push({
+                  start: new Date(event.start),
+                  end: new Date(event.end),
+                  title: event.title,
+                  memberName: avail.username,
+                  type: 'calendar'
+              });
+          });
+      });
+
+      const earliestStart = Math.min(
+          ...tasks.map(t => {
+              if (t.startDate) return new Date(t.startDate).getTime();
+              return t.createdAt?.toDate?.()?.getTime() || Date.now();
+          }),
+          ...allBusyEvents.map(e => e.start.getTime())
+      );
+      
+      const latestEnd = Math.max(
+          ...tasksWithDates.map(t => new Date(t.dueDate!).getTime()),
+          ...allBusyEvents.map(e => e.end.getTime()),
+          Date.now()
+      );
+
       const start = new Date(earliestStart);
-      const end = new Date(sorted[sorted.length - 1].dueDate!);
+      const end = new Date(latestEnd);
       
       // Ensure range is at least a week
       if (end.getTime() - start.getTime() < 7 * 24 * 60 * 60 * 1000) {
@@ -1943,8 +1957,8 @@ export default function GroupDetailPage() {
           curr.setDate(curr.getDate() + 1);
       }
 
-      return { tasks: sorted, days, start, end };
-  }, [tasks]);
+      return { tasks: tasksWithDates.sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()), calendarEvents: allBusyEvents, days, start, end };
+  }, [tasks, availabilities]);
 
   const deadlineInfo = useMemo(() => {
       if (!group?.finalDeadline) return null;
