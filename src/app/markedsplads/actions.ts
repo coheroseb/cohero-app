@@ -180,3 +180,23 @@ export async function verifyAndMarkPaidAction(requestId: string, sessionId: stri
     return { success: false, error: 'Server error verifying payment' };
   }
 }
+
+/**
+ * Marks a request as completed by the citizen.
+ */
+export async function completeAssistanceRequestAction(requestId: string) {
+  try {
+    await adminFirestore.collection('assistance_requests').doc(requestId).update({
+      status: 'completed',
+      completedAt: FieldValue.serverTimestamp(),
+    });
+
+    revalidatePath('/markedsplads');
+    revalidatePath(`/raadgivning/status/${requestId}`);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error completing request:', error);
+    return { success: false, error: 'Kunne ikke markere opgaven som udført.' };
+  }
+}
