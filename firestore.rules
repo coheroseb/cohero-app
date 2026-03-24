@@ -25,7 +25,8 @@ service cloud.firestore {
     
     match /assistance_requests/{requestId} {
       allow create: if true;
-      allow read: if isSignedIn();
+      allow get: if true;
+      allow list: if isSignedIn();
       allow update: if isSignedIn();
       allow delete: if isAdmin();
     }
