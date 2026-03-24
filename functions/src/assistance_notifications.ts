@@ -115,6 +115,7 @@ export const onAssistanceRequestUpdate = functions.firestore
             <div style="margin-top: 32px; text-align: center;">
                 <a href="https://cohero.dk/raadgivning/status/${context.params.requestId}" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Gå til betaling</a>
             </div>
+            <p style="font-size: 13px; color: #64748b; margin-top: 24px; font-style: italic;">Hvis du ikke er blevet kontaktet af den studerende inden for 24 timer efter gennemført betaling, beder vi dig henvende dig til Cohéro på <a href="mailto:kontakt@cohero.dk" style="color: #451a03; font-weight: bold;">kontakt@cohero.dk</a>.</p>
           `),
         });
       } catch (err) {

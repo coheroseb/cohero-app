@@ -106,6 +106,7 @@ export async function claimAssistanceRequestAction(requestId: string, student: {
           <p>For at frigive jeres kontaktoplysninger til hinanden og starte samarbejdet, skal du nu gennemføre betalingen.</p>
           <a href="${statusUrl}" style="display: inline-block; background: #059669; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; margin: 20px 0;">Gå til betaling nu</a>
           <p>Når betalingen er gennemført, får du direkte adgang til at kontakte den studerende.</p>
+          <p style="font-size: 13px; color: #64748b; margin-top: 20px; font-style: italic;">Hvis du ikke er blevet kontaktet af den studerende inden for 24 timer efter gennemført betaling, beder vi dig henvende dig til Cohéro på <a href="mailto:kontakt@cohero.dk" style="color: #059669; font-weight: bold;">kontakt@cohero.dk</a>.</p>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
           <p style="font-size: 12px; color: #94a3b8;">Cohéro Markedsplads &ndash; hjælper borgere og studerende med at finde hinanden.</p>
         </div>
