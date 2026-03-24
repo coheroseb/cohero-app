@@ -159,6 +159,18 @@ service cloud.firestore {
       match /savedParagraphs/{savedId} { allow read, write: if isOwner(userId); }
       match /quizResults/{resultId} { allow read, write: if isOwner(userId); }
     }
+    match /site_config/chat {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /support_chats/{sessionId} {
+      allow read, write: if true; // In production, consider anonymous auth and restricting access
+      match /messages/{msgId} {
+        allow read, write: if true;
+      }
+    }
+
     match /{path=**}/seminars/{seminarId} {
       allow read: if isSignedIn() && request.auth.uid in resource.data.get('sharedWith', []);
     }

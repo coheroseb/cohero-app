@@ -7,6 +7,8 @@ import { LayoutDashboard, Users, BookOpen, Sparkles, Database, Shield, ChevronRi
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
 const navigation = [
   { id: 'overview', href: '/admin', label: 'Overblik', icon: LayoutDashboard },
@@ -17,6 +19,7 @@ const navigation = [
   { id: 'marketing', href: '/admin/marketing', label: 'Marketing & Koder', icon: Sparkles },
   { id: 'emails', href: '/admin/emails', label: 'E-mail Kampagner', icon: Mail },
   { id: 'stats', href: '/admin/stats', label: 'SaaS Statistik', icon: BarChart },
+  { id: 'chat', href: '/admin/chat', label: 'Live Chat', icon: MessageSquare },
   { id: 'system', href: '/admin/system', label: 'Aktivitetslog', icon: Database },
 ];
 
@@ -24,7 +27,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, userProfile, isUserLoading, handleLogout } = useApp();
   const router = useRouter();
   const pathname = usePathname();
+  const firestore = useFirestore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!firestore || userProfile?.role !== 'admin') return;
+    const q = query(collection(firestore, 'support_chats'), where('status', '==', 'active'), where('isReadByAdmin', '==', false));
+    return onSnapshot(q, (snapshot) => {
+        setUnreadCount(snapshot.size);
+    });
+  }, [firestore, userProfile]);
 
   useEffect(() => {
     if (!isUserLoading && (!user || userProfile?.role !== 'admin')) {
@@ -78,6 +91,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="flex items-center gap-4 relative z-10">
                   <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-amber-400' : 'text-slate-300 group-hover:text-amber-700'}`} />
                   {item.label}
+                  {item.id === 'chat' && unreadCount > 0 && (
+                    <span className="ml-2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-rose-500/20">
+                      {unreadCount}
+                    </span>
+                  )}
                 </div>
                 {isActive && (
                   <motion.div layoutId="activeNav" className="absolute inset-0 bg-amber-950 rounded-2xl -z-10 shadow-2xl shadow-amber-950/20" />
@@ -134,7 +152,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="flex items-center gap-2 pr-4 border-r border-slate-200">
                 <button className="p-2.5 text-slate-400 hover:text-amber-950 hover:bg-slate-50 rounded-xl transition-all relative">
                    <Bell className="w-5 h-5" />
-                   <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white ring-2 ring-rose-100"></span>
+                   {unreadCount > 0 && (
+                     <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white ring-2 ring-rose-100"></span>
+                   )}
                 </button>
               </div>
 

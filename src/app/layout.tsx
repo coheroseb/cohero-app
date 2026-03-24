@@ -10,6 +10,7 @@ import GoogleTagManager from '@/components/GoogleTagManager';
 import { Suspense } from 'react';
 import CookieConsent from '@/components/CookieConsent';
 import PageViewTracker from '@/components/PageViewTracker';
+import LiveChat from '@/components/LiveChat';
 
 const siteUrl = 'https://cohero.dk';
 const siteTitle = 'Cohéro (Cohero) - Din Digitale Kollega for Socialrådgiverstuderende';
@@ -143,6 +144,7 @@ export default function RootLayout({
             </Suspense>
             {children}
             <CookieConsent />
+            <LiveChat />
           </AppProvider>
         </FirebaseClientProvider>
         <Toaster />
