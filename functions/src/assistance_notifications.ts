@@ -113,7 +113,7 @@ export const onAssistanceRequestUpdate = functions.firestore
             <p>Vi kan med glæde meddele, at <strong>${studentName}</strong> har takket ja til at hjælpe dig med din opgave: <strong>"${taskTitle}"</strong>.</p>
             <p>Det næste skridt er betaling. Når din betaling er registreret, vil den studerende få adgang til dine kontaktoplysninger og kontakte dig med det samme.</p>
             <div style="margin-top: 32px; text-align: center;">
-                <a href="https://cohero.dk/bistand" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Gå til betaling</a>
+                <a href="https://cohero.dk/anmod-bistand/status/${context.params.requestId}?pay=true" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Gå til betaling</a>
             </div>
           `),
         });
