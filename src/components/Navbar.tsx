@@ -391,7 +391,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center space-x-1"
               >
                 {[
-                  { label: "Få hjælp (Borger)", href: "/anmod-bistand", type: "link", highlight: true },
+                  { label: "Rådgivning (Borger)", href: "/raadgivning", type: "link", highlight: true },
                   { label: "Hvorfor Cohéro?", href: "/hvorfor", type: "link" },
                   { label: "Værktøjer", href: "#vaerktojer", type: "anchor" },
                   { label: "Priser", href: "#priser", type: "anchor" }
@@ -582,8 +582,8 @@ const Navbar: React.FC<NavbarProps> = ({
                 ) : (
                   <ul className="space-y-4 pt-4">
                     <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.02 }}>
-                        <Link href="/anmod-bistand" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
-                            Få hjælp (Borger) <HandHelping className="w-5 h-5 text-rose-400" />
+                        <Link href="/raadgivning" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
+                            Rådgivning (Borger) <HandHelping className="w-5 h-5 text-rose-400" />
                         </Link>
                     </motion.li>
                     <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>
