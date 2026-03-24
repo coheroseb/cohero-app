@@ -92,7 +92,7 @@ export async function claimAssistanceRequestAction(requestId: string, student: {
     });
 
     // Notify creator via Resend
-    const statusUrl = `${APP_URL}/raadgivning/status/${requestId}?pay=true`;
+    const statusUrl = `${APP_URL}/raadgivning/status/${requestId}`;
 
     await resend.emails.send({
       from: 'Cohéro Markedsplads <info@cohero.dk>',
