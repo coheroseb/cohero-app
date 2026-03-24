@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -14,15 +13,25 @@ import {
   Phone,
   User,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  ArrowRight,
+  ChevronLeft
 } from 'lucide-react';
 import { createAssistanceRequestAction } from '@/app/markedsplads/actions';
 import { useRouter } from 'next/navigation';
 import { AssistanceRequest } from '@/ai/flows/types';
 
+const STEPS = [
+  { id: 1, title: 'Hvad skal du bruge hjælp til?', description: 'Vælg kategori og giv din anmodning en overskrift.' },
+  { id: 2, title: 'Fortæl os mere', description: 'Forklar din situation og hvor i landet du befinder dig.' },
+  { id: 3, title: 'Dine oplysninger', description: 'Vi skal vide hvem du er, så hjælperen kan kontakte dig.' },
+  { id: 4, title: 'Budget & Bekræft', description: 'Sæt din pris og send din anmodning afsted.' },
+];
+
 export default function PublicAssistanceRequestPage() {
   const router = useRouter();
 
+  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [requestId, setRequestId] = useState<string | null>(null);
@@ -38,6 +47,14 @@ export default function PublicAssistanceRequestPage() {
     citizenEmail: '',
     citizenPhone: '',
   });
+
+  const nextStep = () => {
+    if (currentStep < 4) setCurrentStep(currentStep + 1);
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,10 +80,18 @@ export default function PublicAssistanceRequestPage() {
     }
   };
 
+  const isStepValid = () => {
+    if (currentStep === 1) return formData.title.length > 5 && formData.category;
+    if (currentStep === 2) return formData.description.length > 20;
+    if (currentStep === 3) return formData.citizenName.length > 2 && formData.citizenEmail.includes('@');
+    if (currentStep === 4) return formData.price > 0;
+    return false;
+  };
+
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6 pb-24">
-        <div className="max-w-2xl w-full bg-white rounded-[3.5rem] shadow-2xl p-12 text-center space-y-8 animate-fade-in-up border border-emerald-100">
+        <div className="max-w-2xl w-full bg-white rounded-[3.5rem] shadow-2xl p-12 text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 border border-emerald-100">
            <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner">
               <CheckCircle2 className="w-12 h-12" />
            </div>
@@ -127,206 +152,262 @@ export default function PublicAssistanceRequestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8] selection:bg-rose-100">
+    <div className="min-h-screen bg-[#FDFCF8] selection:bg-rose-100 pb-24">
       {/* Premium Header */}
       <header className="bg-white/70 backdrop-blur-xl border-b border-amber-50 fixed top-0 left-0 right-0 z-50 px-6 py-4">
          <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
-               <div className="w-12 h-12 bg-rose-50 text-rose-700 rounded-2xl flex items-center justify-center">
-                  <HandHelping className="w-6 h-6" />
+               <div className="w-10 h-10 bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center">
+                  <HandHelping className="w-5 h-5" />
                </div>
                <div>
-                  <h1 className="text-xl font-bold text-amber-950 serif">Cohéro Bistand</h1>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Borger-forbindelse</p>
+                  <h1 className="text-sm font-bold text-amber-950 serif">Cohéro Rådgivning</h1>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic">Borger portal</p>
                </div>
             </div>
             <button 
                onClick={() => router.push('/')}
-               className="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors hidden sm:block"
+               className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-600 transition-colors"
             >
-               Tilbage til forsiden
+               Afbryd
             </button>
          </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 pt-32 pb-24">
-         <div className="mb-12 text-center sm:text-left">
-            <h2 className="text-4xl sm:text-5xl font-black text-amber-950 serif leading-tight">Få hjælp af en <br /><span className="text-rose-600">fagkyndig studerende.</span></h2>
-            <p className="text-slate-500 text-lg mt-6 font-medium leading-relaxed max-w-2xl">
-               Her kan du som almindelig borger anmode om hjælp til sociale sager, ansøgninger eller bisiddelse. Vores dygtige studerende står klar til at hjælpe.
-            </p>
+      <main className="max-w-2xl mx-auto px-6 pt-32 space-y-12">
+         {/* Step Progress */}
+         <div className="space-y-6">
+            <div className="flex justify-between items-end px-2">
+                <div>
+                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-600 mb-1">Trin {currentStep} af 4</p>
+                   <h2 className="text-2xl font-bold text-slate-900 serif">{STEPS[currentStep - 1].title}</h2>
+                </div>
+                <div className="hidden sm:flex items-center gap-1">
+                    {STEPS.map((s) => (
+                        <div 
+                            key={s.id} 
+                            className={`h-1 rounded-full transition-all duration-500 ${s.id <= currentStep ? 'w-8 bg-rose-500' : 'w-2 bg-slate-200'}`} 
+                        />
+                    ))}
+                </div>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden sm:hidden">
+                <div 
+                    className="h-full bg-rose-500 transition-all duration-500 ease-out" 
+                    style={{ width: `${(currentStep / 4) * 100}%` }}
+                />
+            </div>
          </div>
 
-         <form onSubmit={handleSubmit} className="bg-white rounded-[3rem] border border-amber-100 shadow-xl shadow-amber-900/5 overflow-hidden">
-            <div className="p-8 sm:p-12 space-y-10">
+         <div className="bg-white rounded-[3rem] border border-amber-100 shadow-2xl shadow-amber-950/5 overflow-hidden">
+            <div className="p-8 sm:p-12">
                
-               {/* Contact Person */}
-               <section className="space-y-6">
-                  <div className="flex items-center gap-3">
-                     <span className="w-8 h-8 rounded-full bg-amber-50 text-amber-900 flex items-center justify-center font-black text-xs">1</span>
-                     <h3 className="text-lg font-bold text-slate-900">Dine oplysninger</h3>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Dit Navn</label>
-                        <div className="relative">
-                           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                           <input 
-                              type="text" 
-                              placeholder="F.eks. Peter Jensen"
-                              required
-                              value={formData.citizenName}
-                              onChange={e => setFormData({...formData, citizenName: e.target.value})}
-                              className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-rose-400 focus:outline-none transition-all font-medium" 
-                           />
-                        </div>
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Din E-mail</label>
-                        <div className="relative">
-                           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                           <input 
-                              type="email" 
-                              placeholder="navn@eksempel.dk"
-                              required
-                              value={formData.citizenEmail}
-                              onChange={e => setFormData({...formData, citizenEmail: e.target.value})}
-                              className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-rose-400 focus:outline-none transition-all font-medium" 
-                           />
-                        </div>
-                     </div>
-                  </div>
-                  <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telefonnummer (valgfrit)</label>
-                      <div className="relative">
-                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                         <input 
-                            type="tel" 
-                            placeholder="+45 00 00 00 00"
-                            value={formData.citizenPhone}
-                            onChange={e => setFormData({...formData, citizenPhone: e.target.value})}
-                            className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-rose-400 focus:outline-none transition-all font-medium" 
-                         />
-                      </div>
-                   </div>
-               </section>
-
-               <div className="h-px bg-amber-50 w-full" />
-
-               {/* Task Details */}
-               <section className="space-y-6">
-                  <div className="flex items-center gap-3">
-                     <span className="w-8 h-8 rounded-full bg-amber-50 text-amber-900 flex items-center justify-center font-black text-xs">2</span>
-                     <h3 className="text-lg font-bold text-slate-900">Opgavens detaljer</h3>
-                  </div>
+               <form onSubmit={handleSubmit} className="space-y-10">
                   
-                  <div className="space-y-3">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Hvad skal du have hjælp til?</label>
-                     <div className="flex flex-wrap gap-2">
-                        {['Rådgivning', 'Ansøgning', 'Bisidder', 'Andet'].map(c => (
-                           <button 
-                              key={c}
-                              type="button"
-                              onClick={() => setFormData({...formData, category: c as any})}
-                              className={`px-6 py-3 rounded-xl text-xs font-bold transition-all ${formData.category === c ? 'bg-amber-950 text-white shadow-lg shadow-amber-900/20' : 'bg-slate-50 text-slate-500 border border-slate-100 hover:bg-amber-50'}`}
-                           >
-                              {c}
-                           </button>
-                        ))}
-                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Overskrift</label>
-                     <input 
-                        type="text" 
-                        placeholder="F.eks. Hjælp til anke over afslag på støtte"
-                        required
-                        value={formData.title}
-                        onChange={e => setFormData({...formData, title: e.target.value})}
-                        className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-rose-400 focus:outline-none transition-all font-medium" 
-                     />
-                  </div>
-
-                  <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Beskrivelse</label>
-                     <textarea 
-                        placeholder="Forklar din situation og præcis hvad du håber den studerende kan hjælpe med..."
-                        required
-                        value={formData.description}
-                        onChange={e => setFormData({...formData, description: e.target.value})}
-                        className="w-full h-48 p-6 bg-slate-50 border border-slate-100 rounded-[2rem] focus:ring-2 focus:ring-rose-400 focus:outline-none transition-all font-medium resize-none shadow-inner" 
-                     />
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Budget (DKK)</label>
-                        <div className="relative">
-                           <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                           <input 
-                              type="number" 
-                              required
-                              value={formData.price}
-                              onChange={e => setFormData({...formData, price: parseInt(e.target.value) || 0})}
-                              className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-rose-400 focus:outline-none transition-all font-bold" 
-                           />
+                  {/* STEP 1: CATEGORY & TITLE */}
+                  {currentStep === 1 && (
+                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Hvad har du brug for?</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {['Rådgivning', 'Ansøgning', 'Bisidder', 'Andet'].map(c => (
+                                    <button 
+                                        key={c}
+                                        type="button"
+                                        onClick={() => setFormData({...formData, category: c as any})}
+                                        className={`px-6 py-4 rounded-[1.5rem] text-xs font-bold transition-all border ${formData.category === c ? 'bg-amber-950 text-white border-amber-950 shadow-xl shadow-amber-950/20' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-amber-50'}`}
+                                    >
+                                        {c}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">By eller Online</label>
-                        <div className="relative">
-                           <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                           <input 
-                              type="text" 
-                              placeholder="F.eks. Aarhus C eller Online"
-                              value={formData.location}
-                              onChange={e => setFormData({...formData, location: e.target.value})}
-                              className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-rose-400 focus:outline-none transition-all font-medium" 
-                           />
+
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Giv din anmodning en kort overskrift</label>
+                            <input 
+                                type="text" 
+                                placeholder="F.eks. Hjælp til anke over afslag på støtte"
+                                required
+                                value={formData.title}
+                                onChange={e => setFormData({...formData, title: e.target.value})}
+                                className="w-full h-16 px-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-300" 
+                            />
+                            <p className="text-[10px] text-slate-400 font-medium px-2 italic">Gør den fængende, så de studerende hurtigt forstår opgaven.</p>
                         </div>
-                     </div>
-                  </div>
-               </section>
-
-               <div className="p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 space-y-4">
-                  <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-amber-900/50">
-                     <span>Platformgebyr (15%)</span>
-                     <span>-{Math.round(formData.price * 0.15)} DKK</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-4 border-t border-amber-200">
-                     <div className="flex flex-col">
-                        <span className="text-base font-black text-amber-950">Den studerende modtager</span>
-                        <span className="text-[10px] text-amber-900/60 font-medium italic">Hjælper med at tiltrække de bedste studerende</span>
-                     </div>
-                     <span className="text-2xl font-black text-amber-950 leading-none">
-                        {formData.price - Math.round(formData.price * 0.15)} DKK
-                     </span>
-                  </div>
-               </div>
-
-               {error && <p className="text-sm font-bold text-rose-600 text-center">{error}</p>}
-
-               <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black uppercase tracking-[0.15em] text-sm shadow-2xl hover:bg-slate-800 transition-all disabled:opacity-50 active:scale-[0.98] group"
-               >
-                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : (
-                     <span className="flex items-center justify-center gap-2">
-                        Send anmodning <CheckCircle2 className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                     </span>
+                    </div>
                   )}
-               </button>
 
-               <div className="flex items-start gap-4 px-4 py-6 bg-blue-50/50 rounded-3xl border border-blue-100/50">
-                  <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                  <p className="text-[11px] text-blue-800/80 font-medium leading-relaxed">
-                     Dine oplysninger bliver kun delt med den studerende der vælger at tage opgaven. Betaling foregår efter aftale med den studerende. Platformen sikrer forbindelsen og kvaliteten af de studerende.
-                  </p>
-               </div>
+                  {/* STEP 2: DESCRIPTION & LOCATION */}
+                  {currentStep === 2 && (
+                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Beskrivelse af opgaven</label>
+                            <textarea 
+                                placeholder="Forklar din situation og præcis hvad du håber den studerende kan hjælpe med..."
+                                required
+                                value={formData.description}
+                                onChange={e => setFormData({...formData, description: e.target.value})}
+                                className="w-full h-64 p-8 bg-slate-50 border border-slate-100 rounded-[2rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-medium resize-none text-slate-900 shadow-inner leading-relaxed" 
+                            />
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">By eller Online?</label>
+                            <div className="relative">
+                                <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input 
+                                    type="text" 
+                                    placeholder="F.eks. Aarhus C eller Online"
+                                    value={formData.location}
+                                    onChange={e => setFormData({...formData, location: e.target.value})}
+                                    className="w-full h-16 pl-14 pr-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                  )}
+
+                  {/* STEP 3: CONTACT INFORMATION */}
+                  {currentStep === 3 && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Dit fulde navn</label>
+                            <div className="relative">
+                                <User className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input 
+                                    type="text" 
+                                    placeholder="F.eks. Peter Jensen"
+                                    required
+                                    value={formData.citizenName}
+                                    onChange={e => setFormData({...formData, citizenName: e.target.value})}
+                                    className="w-full h-16 pl-14 pr-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900" 
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">E-mail adresse</label>
+                            <div className="relative">
+                                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input 
+                                    type="email" 
+                                    placeholder="navn@eksempel.dk"
+                                    required
+                                    value={formData.citizenEmail}
+                                    onChange={e => setFormData({...formData, citizenEmail: e.target.value})}
+                                    className="w-full h-16 pl-14 pr-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900" 
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telefonnummer (valgfrit)</label>
+                            <div className="relative">
+                                <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input 
+                                    type="tel" 
+                                    placeholder="+45 00 00 00 00"
+                                    value={formData.citizenPhone}
+                                    onChange={e => setFormData({...formData, citizenPhone: e.target.value})}
+                                    className="w-full h-16 pl-14 pr-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                  )}
+
+                  {/* STEP 4: BUDGET & CONFIRM */}
+                  {currentStep === 4 && (
+                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="space-y-6">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 text-center block">Hvor meget vil du give for hjælpen?</label>
+                            <div className="flex flex-col items-center gap-6">
+                                <div className="relative w-full max-w-[280px]">
+                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-300">kr.</div>
+                                    <input 
+                                        type="number" 
+                                        required
+                                        value={formData.price}
+                                        onChange={e => setFormData({...formData, price: parseInt(e.target.value) || 0})}
+                                        className="w-full h-24 pl-20 pr-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-black text-4xl text-slate-900 text-center" 
+                                    />
+                                </div>
+                                
+                                <div className="w-full p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 space-y-4">
+                                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-amber-900/50">
+                                     <span>Platformgebyr (15%)</span>
+                                     <span>-{Math.round(formData.price * 0.15)} DKK</span>
+                                  </div>
+                                  <div className="flex justify-between items-center pt-4 border-t border-amber-200">
+                                     <div className="flex flex-col">
+                                        <span className="text-sm font-black text-amber-950 uppercase tracking-tight leading-none mb-1">Hjælper modtager</span>
+                                        <span className="text-[9px] text-amber-900/40 font-bold italic tracking-tighter">Attraher de bedste studerende</span>
+                                     </div>
+                                     <span className="text-3xl font-black text-amber-950 leading-none">
+                                        {formData.price - Math.round(formData.price * 0.15)} kr.
+                                     </span>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 px-6 py-8 bg-blue-50/50 rounded-[2rem] border border-blue-100/50 shadow-inner">
+                           <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                           <p className="text-[11px] text-blue-800/80 font-medium leading-relaxed">
+                              Ved at sende din anmodning accepterer du, at dine kontaktoplysninger deles med den studerende der vælger din opgave. Vi beskytter dit privatliv og sikrer, at kun verificerede studerende har adgang.
+                           </p>
+                        </div>
+                    </div>
+                  )}
+
+                  {error && <p className="text-sm font-bold text-rose-600 text-center pt-4 animate-bounce">{error}</p>}
+
+                  {/* NAVIGATION BUTTONS */}
+                  <div className="flex items-center gap-4 pt-4">
+                     {currentStep > 1 && (
+                        <button 
+                            type="button"
+                            onClick={prevStep}
+                            className="h-16 px-8 bg-slate-50 text-slate-400 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] border border-slate-100 hover:text-slate-900 hover:bg-white transition-all active:scale-95 flex items-center justify-center"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                     )}
+                     
+                     {currentStep < 4 ? (
+                        <button 
+                            type="button"
+                            disabled={!isStepValid()}
+                            onClick={nextStep}
+                            className="flex-1 h-16 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-rose-900 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3"
+                        >
+                            Næste trin
+                            <ArrowRight className="w-4 h-4" />
+                        </button>
+                     ) : (
+                        <button 
+                            type="submit" 
+                            disabled={isSubmitting || !isStepValid()}
+                            className="flex-1 h-20 bg-emerald-600 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-emerald-950/20 hover:bg-emerald-700 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3 group"
+                        >
+                            {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : (
+                                <>
+                                    Send anmodning
+                                    <CheckCircle2 className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                </>
+                            )}
+                        </button>
+                     )}
+                  </div>
+
+               </form>
             </div>
-         </form>
+         </div>
+         
+         <div className="text-center">
+            <p className="text-[10px] text-slate-400 font-medium">Brug for hjælp? Kontakt <a href="mailto:support@cohero.dk" className="text-rose-400 font-bold hover:underline">support@cohero.dk</a></p>
+         </div>
       </main>
     </div>
   );
