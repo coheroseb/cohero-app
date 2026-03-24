@@ -59,20 +59,22 @@ export default function AssistanceRequestStatusPage() {
     return () => unsub();
   }, [firestore, id]);
 
-  // Check for successful payment return
+  // Check for successful payment return or auto-pay trigger
   useEffect(() => {
     const sessionId = searchParams?.get('session_id');
     const success = searchParams?.get('success');
+    const autoPay = searchParams?.get('pay') === 'true';
 
     if (success === 'true' && sessionId && id) {
       verifyAndMarkPaidAction(id, sessionId).then(res => {
         if (res.success) {
-          // Status will update via onSnapshot
           router.replace(`/anmod-bistand/status/${id}`);
         }
       });
+    } else if (autoPay && request && request.status === 'claimed' && !request.isPaid && !isProcessing) {
+        handleStripePayment();
     }
-  }, [searchParams, id, router]);
+  }, [searchParams, id, router, request, isProcessing]);
 
   const handleStripePayment = async () => {
     if (isProcessing) return;
