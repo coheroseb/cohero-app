@@ -6,10 +6,9 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, doc, deleteDoc } from 'firebase/firestore';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
-  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight
+  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import DeleteUserModal from '@/components/DeleteUserModal';
 import { useDebounce } from 'use-debounce';
@@ -26,6 +25,9 @@ interface UserProfile {
   lastActivityAt?: { toDate: () => Date };
   createdAt?: { toDate: () => Date };
   role?: 'admin' | 'user';
+  cprNumber?: string;
+  bankReg?: string;
+  bankAccount?: string;
 }
 
 const STAT_CARDS = [
@@ -280,7 +282,7 @@ const AdminUsersPage = () => {
               </Button>
             </div>
          ) : (
-           <div className="overflow-x-auto flex-1 h-full">
+            <div className="overflow-x-auto flex-1 h-full">
               <table className="w-full text-left">
                 <thead className="bg-slate-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100">
                   <tr>
@@ -320,7 +322,7 @@ const AdminUsersPage = () => {
                         <td className="px-8 py-5">
                            <div className="flex items-center gap-2 mb-2">
                               <Zap className="w-3.5 h-3.5 text-amber-500 fill-current" />
-                              <span className="text-sm font-black text-slate-800">{u.cohéroPoints || 0}</span>
+                               <span className="text-sm font-black text-slate-800">{u.cohéroPoints || 0}</span>
                            </div>
                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${u.membership === 'Kollega++' || u.membership === 'Semesterpakken' ? 'bg-amber-100 text-amber-900' : u.membership === 'Kollega+' ? 'bg-blue-100 text-blue-900' : 'bg-slate-100 text-slate-600'}`}>
                              {u.membership || 'Kollega'}
@@ -373,7 +375,15 @@ const AdminUsersPage = () => {
                                     <p className="flex justify-between pb-2"><span className="text-slate-500 font-medium">Startdato:</span> <span className="font-bold text-slate-900">{createdAt ? new Date(createdAt).toLocaleDateString('da-DK') : '-'}</span></p>
                                   </div>
                                </div>
-                               <div className="space-y-4 col-span-2 bg-white p-6 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-sm">
+                               <div className="space-y-4">
+                                   <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><CreditCard className="w-3.5 h-3.5" /> Udbetaling</h4>
+                                   <div className="text-sm space-y-2">
+                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">CPR / CVR:</span> <span className="font-bold text-slate-900">{u.cprNumber || '-'}</span></p>
+                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Reg:</span> <span className="font-bold text-slate-900">{u.bankReg || '-'}</span></p>
+                                     <p className="flex justify-between pb-2"><span className="text-slate-500 font-medium">Konto:</span> <span className="font-bold text-slate-900">{u.bankAccount || '-'}</span></p>
+                                   </div>
+                                </div>
+                               <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-sm">
                                   <div>
                                     <h4 className="text-[11px] font-black uppercase tracking-widest text-rose-800 flex items-center gap-2 mb-4"><Shield className="w-3.5 h-3.5" /> Administrative Handlinger</h4>
                                     <p className="text-xs text-slate-500 leading-relaxed mb-4">Advarsel: Sletning af en bruger er permanent. De mister alt indhold og deres abonnement annulleres, hvis det er aktivt.</p>
@@ -452,4 +462,3 @@ const AdminUsersPage = () => {
 };
 
 export default AdminUsersPage;
-

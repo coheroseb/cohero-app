@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/app/provider';
 import { useAuth, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc, writeBatch, serverTimestamp, deleteDoc, updateDoc } from 'firebase/firestore';
-import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, ChevronDown, ShieldAlert, Copy, Users2, Send, Info, Award, Sparkles, Bell, BellOff } from 'lucide-react';
+import { doc, getDoc, writeBatch, serverTimestamp, deleteDoc, updateDoc } from 'firebase/firestore';
+import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, ChevronDown, ShieldAlert, Users2, Send, Info, Award, Sparkles, Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { createPortalSession, cancelSubscription } from '@/app/actions';
+import { cancelSubscription } from '@/app/actions';
 import DeleteAccountModal from '@/components/DeleteAccountModal';
 import { deleteUser, updateProfile } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,6 @@ export default function SettingsPage() {
   const firestore = useFirestore();
   const auth = useAuth();
   const { toast } = useToast();
-
 
   // Profile state
   const [username, setUsername] = useState('');
@@ -42,7 +41,6 @@ export default function SettingsPage() {
   const [redeemStatus, setRedeemStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   // Subscription state
-  const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [partnerInstitution, setPartnerInstitution] = useState<string | null>(null);
 
@@ -287,7 +285,6 @@ export default function SettingsPage() {
     );
   }
 
-  const subscriptionIsCancelled = userProfile?.stripeSubscriptionStatus === 'cancelled';
   const subscriptionWillBeCancelled = userProfile?.stripeCancelAtPeriodEnd === true;
   const isSpecialSubscription = userProfile?.stripePriceId?.startsWith('b2b-') || userProfile?.stripePriceId?.startsWith('redeemed-');
 
@@ -401,6 +398,43 @@ export default function SettingsPage() {
               <label htmlFor="isQualified" className={`text-sm font-bold cursor-pointer ${!profession ? 'text-slate-400' : 'text-amber-950'}`}>
                   Jeg er færdiguddannet {profession ? profession.toLowerCase() : '...'}
               </label>
+          </div>
+
+          <div className="flex items-center gap-4 border-b border-amber-50 pb-6 pt-10">
+            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 shadow-inner">
+                <CreditCard className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-amber-950 serif">Finansiel Info (Udbetaling)</h2>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-8">
+            <div className="sm:col-span-1">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">CPR Nummer</label>
+                <Input 
+                    placeholder="DDMMYY-XXXX" 
+                    value={userProfile?.cprNumber || ''} 
+                    onChange={(e) => updateDoc(doc(firestore!, 'users', user!.uid), { cprNumber: e.target.value }).then(() => refetchUserProfile())}
+                    className="w-full h-12 rounded-xl"
+                />
+            </div>
+            <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Registreringsnr.</label>
+                <Input 
+                    placeholder="4 cifre" 
+                    value={userProfile?.bankReg || ''} 
+                    onChange={(e) => updateDoc(doc(firestore!, 'users', user!.uid), { bankReg: e.target.value }).then(() => refetchUserProfile())}
+                    className="w-full h-12 rounded-xl"
+                />
+            </div>
+            <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Kontonummer</label>
+                <Input 
+                    placeholder="Op til 10 cifre" 
+                    value={userProfile?.bankAccount || ''} 
+                    onChange={(e) => updateDoc(doc(firestore!, 'users', user!.uid), { bankAccount: e.target.value }).then(() => refetchUserProfile())}
+                    className="w-full h-12 rounded-xl"
+                />
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-end items-center gap-4 pt-8 border-t border-amber-50">
