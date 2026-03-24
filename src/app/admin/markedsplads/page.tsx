@@ -31,7 +31,10 @@ import {
   User,
   ShieldCheck,
   ChevronDown,
-  ArrowUpDown
+  ArrowUpDown,
+  Star,
+  Banknote,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -39,9 +42,9 @@ import { AssistanceRequest } from '@/ai/flows/types';
 
 const STAT_CARDS = [
   { label: 'Totale Opgaver', key: 'total', icon: HandHelping, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Åbne Anmodninger', key: 'open', icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { label: 'I Gang', key: 'claimed', icon: TrendingUp, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  { label: 'Gennemførte', key: 'paid', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { label: 'I Gang', key: 'claimed', icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { label: 'Betalt', key: 'paid', icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  { label: 'Afsluttet', key: 'completed', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
 ];
 
 const AdminMarkedspladsPage = () => {
@@ -49,7 +52,7 @@ const AdminMarkedspladsPage = () => {
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'claimed' | 'paid'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'claimed' | 'paid' | 'completed'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'price_desc' | 'price_asc'>('newest');
 
   const requestsQuery = useMemoFirebase(() => {
@@ -60,12 +63,13 @@ const AdminMarkedspladsPage = () => {
   const { data: requests, isLoading, error } = useCollection<AssistanceRequest>(requestsQuery);
 
   const stats = useMemo(() => {
-    if (!requests) return { total: 0, open: 0, claimed: 0, paid: 0 };
+    if (!requests) return { total: 0, open: 0, claimed: 0, paid: 0, completed: 0 };
     return {
       total: requests.length,
       open: requests.filter(r => r.status === 'open').length,
       claimed: requests.filter(r => r.status === 'claimed' && !r.isPaid).length,
-      paid: requests.filter(r => r.isPaid).length,
+      paid: requests.filter(r => r.isPaid && r.status !== 'completed').length,
+      completed: requests.filter(r => r.status === 'completed').length,
     };
   }, [requests]);
 
@@ -78,8 +82,12 @@ const AdminMarkedspladsPage = () => {
                            (req.citizenName?.toLowerCase() || '').includes(searchLower) ||
                            (req.studentName?.toLowerCase() || '').includes(searchLower);
       
-      const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'paid' ? req.isPaid : req.status === statusFilter);
+      let matchesStatus = statusFilter === 'all';
+      if (!matchesStatus) {
+        if (statusFilter === 'paid') matchesStatus = req.isPaid && req.status !== 'completed';
+        else if (statusFilter === 'completed') matchesStatus = req.status === 'completed';
+        else matchesStatus = req.status === statusFilter;
+      }
       
       return matchesSearch && matchesStatus;
     });
@@ -168,6 +176,7 @@ const AdminMarkedspladsPage = () => {
                   <option value="open">Åbne</option>
                   <option value="claimed">I Gang</option>
                   <option value="paid">Betalt</option>
+                  <option value="completed">Afsluttet</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
@@ -259,19 +268,34 @@ const AdminMarkedspladsPage = () => {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <div className="flex items-center gap-2">
-                        {req.isPaid ? (
-                          <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
-                            <CheckCircle2 className="w-3 h-3" />
+                      <div className="flex flex-col gap-1.5">
+                        {req.status === 'completed' ? (
+                          <div className="flex flex-col gap-2">
+                             <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 w-fit">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Afsluttet</span>
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star 
+                                  key={star} 
+                                  className={`w-3 h-3 ${star <= (req.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ) : req.isPaid ? (
+                          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 w-fit">
+                            <CreditCard className="w-3 h-3" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Betalt</span>
                           </div>
                         ) : req.status === 'claimed' ? (
-                          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100">
+                          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 w-fit">
                             <Clock className="w-3 h-3" />
                             <span className="text-[10px] font-black uppercase tracking-widest">I Gang</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+                          <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 w-fit">
                             <HandHelping className="w-3 h-3" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Åben</span>
                           </div>
@@ -280,6 +304,15 @@ const AdminMarkedspladsPage = () => {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {req.studentId && (
+                           <button 
+                            onClick={() => window.location.href = `/admin/users?search=${req.studentName}`}
+                            title="Se udbetalingsoplysninger"
+                            className="p-2 bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 rounded-xl transition-all"
+                          >
+                            <Banknote className="w-4 h-4" />
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleTogglePayment(req)}
                           className={`p-2 rounded-xl border transition-all ${req.isPaid ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200 hover:text-emerald-600'}`}
