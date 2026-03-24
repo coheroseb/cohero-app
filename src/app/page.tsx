@@ -279,112 +279,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3. CORE FEATURES (Mobile-First Card Layout) */}
-      <section id="vaerktojer" className="py-20 sm:py-32 bg-[#FDFBF7] px-5 sm:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="max-w-3xl mb-12 sm:mb-20 text-center lg:text-left mx-auto lg:mx-0">
-            <Reveal>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] mb-4 sm:mb-6 leading-tight">
-                Værktøjer der <span className="text-amber-500 line-through decoration-amber-200 decoration-4 sm:decoration-8">skærper</span><br/> 
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400 italic">udvikler</span> din dømmekraft.
-              </h2>
-              <p className="text-[17px] sm:text-xl text-slate-500 leading-relaxed font-medium">
-                Vores digitale økosystem er bygget 'mobile first', mod at støtte dig der, hvor teorien møder virkeligheden.
-              </p>
-            </Reveal>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8">
-             
-             {/* Feature 1: Begrebsguiden */}
-             <Reveal className="lg:col-span-8">
-               <div onClick={onStart} className="h-full bg-white border border-slate-100 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] shadow-sm relative overflow-hidden group sm:hover:shadow-2xl sm:hover:border-amber-200 transition-all cursor-pointer active:scale-[0.98]">
-                  <div className="absolute top-[-20%] right-[-10%] p-12 opacity-[0.03] sm:group-hover:scale-110 transition-transform duration-700 pointer-events-none">
-                     <Library className="w-80 h-80 -rotate-12 text-slate-900" />
-                  </div>
-                  <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-10">
-                     <div className="w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-br from-amber-100 to-amber-50 text-amber-600 rounded-[24px] sm:rounded-[32px] flex items-center justify-center flex-shrink-0 sm:group-hover:rotate-6 sm:group-hover:scale-105 transition-all shadow-sm border border-amber-200/50">
-                        <Wand2 className="w-10 h-10 sm:w-12 sm:h-12" />
-                     </div>
-                     <div className="space-y-4">
-                        <span className="inline-block px-3 py-1.5 bg-slate-50 text-slate-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full border border-slate-200">Intelligent Opslagsværk</span>
-                        <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Begrebsguiden</h3>
-                        <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium">Få pædagogiske og praksisnære forklaringer på komplekse faglige begreber direkte fra dit pensum.</p>
-                        <div className="flex items-center gap-2 text-amber-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
-                          Prøv guiden <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </div>
-                     </div>
-                  </div>
-               </div>
-             </Reveal>
-
-             {/* Feature 2: Lovportalen */}
-             <Reveal delay={0.1} className="lg:col-span-4">
-               <div onClick={onStart} className="h-full bg-slate-900 p-8 sm:p-12 rounded-[32px] sm:rounded-[48px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] text-white flex flex-col justify-between group cursor-pointer overflow-hidden relative active:scale-[0.98] transition-all">
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 to-transparent"></div>
-                  <div className="relative z-10">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 rounded-[24px] flex items-center justify-center mb-6 sm:mb-8 backdrop-blur-md sm:group-hover:bg-amber-400 sm:group-hover:text-amber-950 transition-colors border border-white/5">
-                      <Scale className="w-8 h-8 sm:w-10 sm:h-10 text-amber-300 sm:group-hover:text-amber-950 transition-colors" />
-                    </div>
-                    <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-extrabold tracking-tight mb-3">Lovportalen</h3>
-                    <p className="text-slate-300 text-[15px] sm:text-base leading-relaxed font-medium max-w-[280px]">Slå op i de mest relevante love med indbygget AI-fortolkning i øjenhøjde.</p>
-                  </div>
-                  <div className="pt-10 flex items-center justify-between border-t border-white/10 mt-auto relative z-10">
-                     <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400">Åbn Portalen</span>
-                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 sm:group-hover:bg-white sm:group-hover:text-slate-900 transition-all">
-                      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                     </div>
-                  </div>
-               </div>
-             </Reveal>
-
-             {/* Feature 3: Folketinget */}
-             <Reveal className="lg:col-span-12">
-               <div onClick={onStart} className="bg-gradient-to-br from-rose-50 to-white border border-rose-100 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-12 group sm:hover:shadow-2xl sm:hover:border-rose-200 transition-all cursor-pointer shadow-sm relative overflow-hidden active:scale-[0.98]">
-                  <div className="flex-1 space-y-4 sm:space-y-6 order-2 sm:order-1 relative z-10">
-                     <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-rose-600 uppercase tracking-widest bg-white px-3 py-1.5 rounded-full border border-rose-100 mb-2">
-                        <Zap className="w-3.5 h-3.5 fill-current" /> Sagens kerne i realtid
-                     </div>
-                     <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Folketinget Direkte</h3>
-                     <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium max-w-2xl">Overvågning af nye lovforslag med direkte analyse af betydningen for dit faglige virke som socialrådgiver.</p>
-                     <div className="flex items-center gap-2 text-rose-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
-                          Overvåg lovgivning <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                     </div>
-                  </div>
-                  <div className="w-20 h-20 sm:w-32 sm:h-32 bg-white text-rose-500 rounded-[24px] sm:rounded-[32px] flex items-center justify-center flex-shrink-0 sm:group-hover:-translate-y-2 transition-all shadow-xl border border-rose-100 order-1 sm:order-2 relative z-10">
-                     <Building className="w-10 h-10 sm:w-16 sm:h-16" />
-                  </div>
-                  {/* Decor */}
-                  <div className="absolute top-1/2 -translate-y-1/2 right-0 w-64 h-64 bg-rose-200/20 rounded-full blur-[60px] pointer-events-none"></div>
-               </div>
-             </Reveal>
-
-             {/* Feature 4: Seminar-Arkitekten Visualization */}
-             <Reveal delay={0.1} className="lg:col-span-12">
-               <div className="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] shadow-xl relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-transparent pointer-events-none"></div>
-                  <div className="relative z-10">
-                    <div className="max-w-2xl mb-8 sm:mb-12">
-                      <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-purple-300 uppercase tracking-widest bg-purple-500/10 px-3 py-1.5 rounded-full border border-purple-400/30 mb-4">
-                        <Sparkles className="w-3.5 h-3.5" /> Visualisering
-                      </div>
-                      <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-none mb-3 sm:mb-4">Seminar-Arkitekten</h3>
-                      <p className="text-slate-300 text-[16px] sm:text-lg leading-relaxed font-medium">Opbyg intelligente seminarserier med struktureret feedback, faglige kilder og praksisnære vejledninger.</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-purple-300 font-bold uppercase text-[13px] tracking-wider sm:group-hover:translate-x-2 transition-transform">
-                      Udforsk værktøjet <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                  </div>
-                  <div className="mt-12 sm:mt-16 -mx-8 sm:-mx-12 lg:-mx-16 px-8 sm:px-12 lg:px-16 py-8 sm:py-12 bg-gradient-to-t from-black/40 to-transparent">
-                    <SeminarArchitectVisualization />
-                  </div>
-               </div>
-             </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. CITIZEN ASSISTANCE SECTION (New Marketplace Promo) */}
+      {/* 3. CITIZEN ASSISTANCE SECTION (New Marketplace Promo) */}
       <section className="py-24 sm:py-40 bg-zinc-950 relative overflow-hidden px-5 sm:px-8">
         {/* Abstract Background Decor */}
         <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
@@ -504,6 +400,112 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* 4. CORE FEATURES (Mobile-First Card Layout) */}
+      <section id="vaerktojer" className="py-20 sm:py-32 bg-[#FDFBF7] px-5 sm:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mb-12 sm:mb-20 text-center lg:text-left mx-auto lg:mx-0">
+            <Reveal>
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] mb-4 sm:mb-6 leading-tight">
+                Værktøjer der <span className="text-amber-500 line-through decoration-amber-200 decoration-4 sm:decoration-8">skærper</span><br/> 
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400 italic">udvikler</span> din dømmekraft.
+              </h2>
+              <p className="text-[17px] sm:text-xl text-slate-500 leading-relaxed font-medium">
+                Vores digitale økosystem er bygget 'mobile first', mod at støtte dig der, hvor teorien møder virkeligheden.
+              </p>
+            </Reveal>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8">
+             
+             {/* Feature 1: Begrebsguiden */}
+             <Reveal className="lg:col-span-8">
+               <div onClick={onStart} className="h-full bg-white border border-slate-100 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] shadow-sm relative overflow-hidden group sm:hover:shadow-2xl sm:hover:border-amber-200 transition-all cursor-pointer active:scale-[0.98]">
+                  <div className="absolute top-[-20%] right-[-10%] p-12 opacity-[0.03] sm:group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+                     <Library className="w-80 h-80 -rotate-12 text-slate-900" />
+                  </div>
+                  <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-10">
+                     <div className="w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-br from-amber-100 to-amber-50 text-amber-600 rounded-[24px] sm:rounded-[32px] flex items-center justify-center flex-shrink-0 sm:group-hover:rotate-6 sm:group-hover:scale-105 transition-all shadow-sm border border-amber-200/50">
+                        <Wand2 className="w-10 h-10 sm:w-12 sm:h-12" />
+                     </div>
+                     <div className="space-y-4">
+                        <span className="inline-block px-3 py-1.5 bg-slate-50 text-slate-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full border border-slate-200">Intelligent Opslagsværk</span>
+                        <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Begrebsguiden</h3>
+                        <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium">Få pædagogiske og praksisnære forklaringer på komplekse faglige begreber direkte fra dit pensum.</p>
+                        <div className="flex items-center gap-2 text-amber-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
+                          Prøv guiden <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </div>
+                     </div>
+                  </div>
+               </div>
+             </Reveal>
+
+             {/* Feature 2: Lovportalen */}
+             <Reveal delay={0.1} className="lg:col-span-4">
+               <div onClick={onStart} className="h-full bg-slate-900 p-8 sm:p-12 rounded-[32px] sm:rounded-[48px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] text-white flex flex-col justify-between group cursor-pointer overflow-hidden relative active:scale-[0.98] transition-all">
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 to-transparent"></div>
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 rounded-[24px] flex items-center justify-center mb-6 sm:mb-8 backdrop-blur-md sm:group-hover:bg-amber-400 sm:group-hover:text-amber-950 transition-colors border border-white/5">
+                      <Scale className="w-8 h-8 sm:w-10 sm:h-10 text-amber-300 sm:group-hover:text-amber-950 transition-colors" />
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-extrabold tracking-tight mb-3">Lovportalen</h3>
+                    <p className="text-slate-300 text-[15px] sm:text-base leading-relaxed font-medium max-w-[280px]">Slå op i de mest relevante love med indbygget AI-fortolkning i øjenhøjde.</p>
+                  </div>
+                  <div className="pt-10 flex items-center justify-between border-t border-white/10 mt-auto relative z-10">
+                     <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400">Åbn Portalen</span>
+                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 sm:group-hover:bg-white sm:group-hover:text-slate-900 transition-all">
+                      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                     </div>
+                  </div>
+               </div>
+             </Reveal>
+
+             {/* Feature 3: Folketinget */}
+             <Reveal className="lg:col-span-12">
+               <div onClick={onStart} className="bg-gradient-to-br from-rose-50 to-white border border-rose-100 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-12 group sm:hover:shadow-2xl sm:hover:border-rose-200 transition-all cursor-pointer shadow-sm relative overflow-hidden active:scale-[0.98]">
+                  <div className="flex-1 space-y-4 sm:space-y-6 order-2 sm:order-1 relative z-10">
+                     <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-rose-600 uppercase tracking-widest bg-white px-3 py-1.5 rounded-full border border-rose-100 mb-2">
+                        <Zap className="w-3.5 h-3.5 fill-current" /> Sagens kerne i realtid
+                     </div>
+                     <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Folketinget Direkte</h3>
+                     <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium max-w-2xl">Overvågning af nye lovforslag med direkte analyse af betydningen for dit faglige virke som socialrådgiver.</p>
+                     <div className="flex items-center gap-2 text-rose-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
+                          Overvåg lovgivning <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                     </div>
+                  </div>
+                  <div className="w-20 h-20 sm:w-32 sm:h-32 bg-white text-rose-500 rounded-[24px] sm:rounded-[32px] flex items-center justify-center flex-shrink-0 sm:group-hover:-translate-y-2 transition-all shadow-xl border border-rose-100 order-1 sm:order-2 relative z-10">
+                     <Building className="w-10 h-10 sm:w-16 sm:h-16" />
+                  </div>
+                  {/* Decor */}
+                  <div className="absolute top-1/2 -translate-y-1/2 right-0 w-64 h-64 bg-rose-200/20 rounded-full blur-[60px] pointer-events-none"></div>
+               </div>
+             </Reveal>
+
+             {/* Feature 4: Seminar-Arkitekten Visualization */}
+             <Reveal delay={0.1} className="lg:col-span-12">
+               <div className="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] shadow-xl relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-transparent pointer-events-none"></div>
+                  <div className="relative z-10">
+                    <div className="max-w-2xl mb-8 sm:mb-12">
+                      <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-purple-300 uppercase tracking-widest bg-purple-500/10 px-3 py-1.5 rounded-full border border-purple-400/30 mb-4">
+                        <Sparkles className="w-3.5 h-3.5" /> Visualisering
+                      </div>
+                      <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-none mb-3 sm:mb-4">Seminar-Arkitekten</h3>
+                      <p className="text-slate-300 text-[16px] sm:text-lg leading-relaxed font-medium">Opbyg intelligente seminarserier med struktureret feedback, faglige kilder og praksisnære vejledninger.</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-purple-300 font-bold uppercase text-[13px] tracking-wider sm:group-hover:translate-x-2 transition-transform">
+                      Udforsk værktøjet <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-12 sm:mt-16 -mx-8 sm:-mx-12 lg:-mx-16 px-8 sm:px-12 lg:px-16 py-8 sm:py-12 bg-gradient-to-t from-black/40 to-transparent">
+                    <SeminarArchitectVisualization />
+                  </div>
+               </div>
+             </Reveal>
+          </div>
+        </div>
+      </section>
+
 
       {/* 4. SOCIAL PROOF */}
       <section className="py-20 sm:py-32 bg-white relative overflow-hidden px-5 sm:px-8">

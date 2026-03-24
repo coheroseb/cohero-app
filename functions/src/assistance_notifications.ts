@@ -35,11 +35,38 @@ export const onAssistanceRequestCreate = functions.firestore
     if (!data) return null;
 
     const db = admin.firestore();
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const requestId = context.params.requestId;
     const taskTitle = data.title;
     const category = data.category;
     const price = data.price;
+    const citizenEmail = data.citizenEmail;
+    const citizenName = data.citizenName || "Borger";
 
-    // Notify ALL users (or just students if they have a role)
+    // 1. Notify Citizen with Status Link
+    if (citizenEmail) {
+      try {
+        await resend.emails.send({
+          from: "Cohéro <info@platform.cohero.dk>",
+          to: citizenEmail,
+          subject: "Vi har modtaget din anmodning! 🚀",
+          html: wrapEmailHtml(`
+            <h1 style="color: #0f172a; margin-bottom: 16px;">Hej ${citizenName}</h1>
+            <p>Vi har nu modtaget din anmodning om hjælp til opgaven: <strong>"${taskTitle}"</strong>.</p>
+            <p>Din anmodning er nu lagt ud på vores markedsplads, hvor dygtige socialrådgiverstuderende kan se den. Du får en e-mail så snart en studerende har takket ja til at hjælpe dig.</p>
+            <p>Du kan løbende følge status på din sag og se næste skridt via din personlige status-side:</p>
+            <div style="margin-top: 32px; text-align: center;">
+                <a href="https://cohero.dk/raadgivning/status/${requestId}" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Gå til din status-side</a>
+            </div>
+            <p style="font-size: 13px; color: #64748b; margin-top: 24px; font-style: italic;">Har du spørgsmål til processen? Skriv til os på <a href="mailto:kontakt@cohero.dk" style="color: #451a03; font-weight: bold;">kontakt@cohero.dk</a> – vi står klar til at hjælpe dig.</p>
+          `),
+        });
+      } catch (err) {
+        console.error("Failed to send confirmation email to citizen:", err);
+      }
+    }
+
+    // 2. Notify ALL users (or just students if they have a role)
     // Let's assume we want to reach as many as possible
     try {
         const usersSnapshot = await db.collection("users").select().get();
