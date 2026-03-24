@@ -106,6 +106,8 @@ const SagViewPage = () => {
     
     const [isAnalysing, setIsAnalysing] = useState(false);
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+    const [metadata, setMetadata] = useState<{ legalFields: string[], impactSummary: string } | null>(null);
+
 
 
     // Helpers to get type/status strings
@@ -181,7 +183,22 @@ const SagViewPage = () => {
                 setSag(sagData);
                 setDokumenter(doksData);
                 setDagsordenspunkter(agendaData);
+                
+                // Fetch AI metadata if premium
+                if (isPremiumUser) {
+                    const { getFTSagMetadataAction } = await import('@/app/actions');
+                    const meta = await getFTSagMetadataAction({
+                        sagId: sagId,
+                        title: sagData.titel,
+                        resume: sagData.resume || undefined
+                    });
+                    if (meta && meta.data) {
+                        // @ts-ignore
+                        setMetadata(meta.data);
+                    }
+                }
             } catch (err: any) {
+
                 setError(err.message || "Kunne ikke hente sagsdetaljer.");
             } finally {
                 setIsLoading(false);
@@ -366,6 +383,37 @@ const SagViewPage = () => {
                                 )}
                             </div>
                         </motion.section>
+
+                        {/* AI QUICK INSIGHT */}
+                        {metadata && (
+                            <motion.section 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="bg-rose-50/30 border border-rose-100 p-8 sm:p-12 rounded-[3rem] relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none">
+                                    <Sparkles className="w-40 h-40 text-rose-500" />
+                                </div>
+                                <div className="relative z-10 space-y-6">
+                                    <div className="flex flex-wrap gap-2">
+                                        {(metadata.legalFields || []).map((field, i) => (
+                                            <span key={i} className="px-3 py-1 bg-white text-rose-600 text-[10px] font-black uppercase tracking-widest rounded-lg border border-rose-200 shadow-sm flex items-center gap-2">
+                                                <Scale className="w-3.5 h-3.5" />
+                                                {field}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-900/60">AI Impact Analyse</h4>
+                                        <p className="text-xl sm:text-2xl font-bold text-slate-800 leading-[1.3] tracking-tight">
+                                            {metadata.impactSummary}
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.section>
+                        )}
+
 
                         {/* SAGENS FORLØB (TIMELINE) */}
                         <section className="space-y-10">

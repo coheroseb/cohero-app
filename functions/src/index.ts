@@ -121,3 +121,6 @@ export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, asyn
      res.status(500).json({ error: error.message });
   }
 });
+
+import { checkFolketingetUpdates } from "./cron/check-ft-updates";
+export { checkFolketingetUpdates };

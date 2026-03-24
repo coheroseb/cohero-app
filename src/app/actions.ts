@@ -95,23 +95,32 @@ async function callFirebaseFlow(flowName, data) {
     ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + "/runAiFlow")
     : fallbackUrl;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + adminSecret
-    },
-    body: JSON.stringify({ flowName, data })
-  });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + adminSecret
+      },
+      body: JSON.stringify({ flowName, data })
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Firebase Flow call failed:", errorText);
-    throw new Error('Firebase Flow API Error: ' + response.statusText);
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Firebase Flow [${flowName}] call failed:`, errorText);
+        throw new Error(`Firebase Flow API Error (${response.status}): ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error: any) {
+    if (error.cause && error.cause.code === 'ECONNREFUSED') {
+        throw new Error(`Firebase Flow Error: Could not connect to emulator at ${url}. Ensure the emulator is running.`);
+    }
+    console.error("Firebase Flow client error:", error);
+    throw error;
   }
-
-  return response.json();
 }
+
 
 import type Stripe from 'stripe';
 
@@ -448,7 +457,41 @@ export async function generateSemesterPlanAction(input: any) { return callFireba
 export async function suggestConceptsForEventAction(input: any) { return callFirebaseFlow('suggestConceptsForEventFlow', input); }
 export async function generateStudyScheduleAction(input: any) { return callFirebaseFlow('generateStudyScheduleFlow', input); }
 export async function explainFolketingetSagAction(input: any) { return callFirebaseFlow('explainFolketingetSagFlow', input); }
+
+export async function getFTSagMetadataAction(input: { sagId: number, title: string, resume?: string }) {
+    try {
+        const docRef = adminFirestore.collection('ftCaseMetadata').doc(input.sagId.toString());
+        const snap = await docRef.get();
+        
+        if (snap.exists) {
+            return { data: snap.data(), usage: { inputTokens: 0, outputTokens: 0 } };
+        }
+        
+        // If it doesn't exist, try to generate it
+        const result = await callFirebaseFlow('generateFTSagMetadataFlow', { 
+            caseTitle: input.title, 
+            caseResume: input.resume 
+        });
+        
+        if (result && result.data) {
+            await docRef.set({
+                ...result.data,
+                lastGenerated: FieldValue.serverTimestamp()
+            });
+        }
+        
+        return result;
+    } catch (error) {
+        console.error("Failed to get/generate FT sag metadata:", error);
+        // Return null data instead of throwing to prevent 500 errors in the UI
+        return { data: null, error: true };
+    }
+}
+
+
 export async function oralExamAnalysisAction(input: any) { return callFirebaseFlow('oralExamAnalysisFlow', input); }
+
+
 
 /**
  * identifyReformAction
@@ -1460,6 +1503,72 @@ export async function fetchLatestDecisions(): Promise<any[]> {
         return [];
     }
 }
+
+export async function checkFollowedSagerUpdatesAction(userId: string, userEmail: string) {
+    try {
+        const followedSagerCol = adminFirestore.collection('followedSager');
+        const snapshot = await followedSagerCol.where('userId', '==', userId).get();
+
+        
+        if (snapshot.empty) return { updatedCount: 0 };
+        
+        let updatedCount = 0;
+        const updates: { sagId: number, title: string, oldStatusId: number, newStatusId: number }[] = [];
+
+        for (const docRef of snapshot.docs) {
+            const data = docRef.data();
+
+            const sagId = data.sagId;
+            const currentStatusId = data.statusId;
+            
+            // Fetch latest from ODA
+            const latestSag = await fetchFolketingetSagById(sagId);
+            if (latestSag && latestSag.statusid !== currentStatusId) {
+                // Status changed!
+                updatedCount++;
+                
+                // Update Firestore
+                await docRef.ref.update({
+                    statusId: latestSag.statusid,
+                    lastUpdatedAt: FieldValue.serverTimestamp()
+                });
+                
+                updates.push({
+                    sagId: sagId,
+                    title: latestSag.titel,
+                    oldStatusId: currentStatusId,
+                    newStatusId: latestSag.statusid
+                });
+
+                
+                // Send In-App Notification
+                await sendInAppNotificationAction({
+                    uid: userId,
+                    title: "Statusændring på fulgt sag! 🏛️",
+                    body: `Sagen "${latestSag.titel}" har skiftet status.`,
+                    type: 'success',
+                    link: `/folketinget/case/view/${sagId}`
+                });
+            }
+        }
+        
+        if (updatedCount > 0 && userEmail) {
+            // Optionally send a single summary email
+            await generateCaseUpdateEmailAction({
+                userEmail,
+                userName: "Bruger",
+                caseTitle: updates.length === 1 ? updates[0].title : `${updatedCount} sager`,
+                caseUrl: `https://cohero.dk/folketinget`
+            });
+        }
+
+        return { updatedCount };
+    } catch (error) {
+        console.error("Failed to check followed sager updates:", error);
+        return { updatedCount: 0, error: true };
+    }
+}
+
 
 export async function fetchPrincipmeddelelserAction(lawName: string): Promise<any[]> {
     const cleanName = lawName.replace(/bekendtgørelse af\s+/i, '').trim();

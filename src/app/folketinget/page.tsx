@@ -29,8 +29,6 @@ import {
   Star,
   Lock,
   ArrowRight,
-  ArrowUpRight,
-  MessageSquare,
   Plus
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
@@ -48,8 +46,6 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from 'framer-motion';
-
-
 
 // --- Type definitions ---
 interface Sag {
@@ -100,6 +96,7 @@ const SagItem = ({
     onHighlight,
     isHighlighted,
     isAdmin,
+    metadata,
     getStatusString, 
     getTypeString 
 }: { 
@@ -109,6 +106,7 @@ const SagItem = ({
     onHighlight: (e: React.MouseEvent, sag: Sag) => void,
     isHighlighted: boolean,
     isAdmin: boolean,
+    metadata?: { legalFields: string[], impactSummary: string, failed?: boolean },
     getStatusString: (id: number) => string, 
     getTypeString: (id: number) => string 
 }) => {
@@ -122,9 +120,7 @@ const SagItem = ({
             className={`group bg-white rounded-[2.5rem] border transition-all overflow-hidden scroll-mt-32 shadow-sm hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] active:scale-[0.99] ${isHighlighted ? 'border-amber-400 ring-4 ring-amber-400/5' : 'border-slate-100'}`}
         >
             <div className="p-8 sm:p-12 relative overflow-hidden">
-                {/* Subtle glass effect pattern */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle_at_top_right,rgba(245,245,247,0.5)_0,transparent_70%)] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                
                 <div className="relative z-10">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-8 gap-6">
                         <div className="flex flex-wrap items-center gap-3">
@@ -141,7 +137,6 @@ const SagItem = ({
                                 {getStatusString(sag.statusid)}
                             </span>
                         </div>
-                        
                         <div className="flex items-center gap-3 self-end sm:self-auto bg-slate-50/80 backdrop-blur-sm p-1.5 rounded-2xl border border-slate-100/50">
                             {isAdmin && (
                                 <TooltipProvider>
@@ -158,7 +153,6 @@ const SagItem = ({
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
-                            
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -172,19 +166,32 @@ const SagItem = ({
                                     <TooltipContent side="top" className="bg-slate-900 text-white border-slate-800"><p>{isFollowed ? 'Følger ikke længere' : 'Følg sag'}</p></TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-
                             <div className="h-6 w-[1px] bg-slate-200/50 mx-1"></div>
-
                             <div className="flex items-center gap-2 px-3 text-slate-400">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span className="text-[10px] font-bold uppercase tracking-tighter">Opdateret: {new Date(sag.opdateringsdato || Date.now()).toLocaleDateString('da-DK', { day: '2-digit', month: 'short' })}</span>
                             </div>
                         </div>
                     </div>
-
                     <h3 className="text-[22px] sm:text-[34px] font-extrabold text-slate-900 tracking-tight mb-10 leading-[1.1] line-clamp-3 sm:line-clamp-none decoration-rose-500/20 underline-offset-8 group-hover:underline transition-all">
                         {sag.titel}
                     </h3>
+                    
+                    {metadata && !metadata.failed && (
+                        <div className="mb-10 space-y-6">
+                            <div className="flex flex-wrap gap-2">
+                                {(metadata.legalFields || []).map((field, i) => (
+                                    <span key={i} className="px-3 py-1.5 bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest rounded-lg border border-rose-100 flex items-center gap-1.5">
+                                        <Scale className="w-3 h-3" />
+                                        {field}
+                                    </span>
+                                ))}
+                            </div>
+                            <p className="text-[14px] font-bold text-slate-500 leading-relaxed italic border-l-4 border-rose-200 pl-4 py-1 bg-rose-50/20 rounded-r-xl">
+                                {metadata.impactSummary}
+                            </p>
+                        </div>
+                    )}
 
                     <div className="flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-6 pt-10 border-t border-slate-50">
                         <div className="flex items-center gap-3">
@@ -196,14 +203,12 @@ const SagItem = ({
                                 <p className="text-[13px] font-bold text-slate-700">{getTypeString(sag.typeid)}</p>
                             </div>
                         </div>
-
                         <Link 
                             href={`/folketinget/case/view/${sag.id}`} 
                             className="group/btn relative h-16 px-10 rounded-[1.5rem] bg-slate-900 text-white font-black text-[11px] uppercase tracking-[0.25em] flex items-center justify-center gap-4 overflow-hidden transition-all hover:bg-black active:scale-[0.97] shadow-2xl shadow-slate-900/20"
                         >
                             <span className="relative z-10">Udforsk sag</span>
                             <ArrowRight className="w-4 h-4 relative z-10 group-hover/btn:translate-x-2 transition-transform duration-300" />
-                            {/* Animated reflection */}
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 ease-in-out"></div>
                         </Link>
                     </div>
@@ -212,7 +217,6 @@ const SagItem = ({
         </motion.div>
     );
 };
-
 
 const FolketingetPageContent: React.FC = () => {
   const { user, userProfile } = useApp();
@@ -229,13 +233,16 @@ const FolketingetPageContent: React.FC = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery] = useDebounce(searchQuery, 500);
-  const [activeTypeId, setActiveTypeId] = useState<number | null>(3); // Set default to 'Lovforslag' (ID 3)
+  const [activeTypeId, setActiveTypeId] = useState<number | null>(3); 
   const [activeStatusId, setActiveStatusId] = useState<number | null>(null);
   const [showOnlyFollowed, setShowOnlyFollowed] = useState(false);
-  
+
+  const [sagerMetadata, setSagerMetadata] = useState<Record<number, { legalFields: string[], impactSummary: string, failed?: boolean }>>({});
+
   const isPremiumUser = useMemo(() => {
-    return userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || '');
+    return !!(userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || ''));
   }, [userProfile]);
+
 
   const isAdmin = useMemo(() => userProfile?.role === 'admin', [userProfile]);
 
@@ -252,6 +259,12 @@ const FolketingetPageContent: React.FC = () => {
   );
   const { data: highlightedSager, isLoading: highlightedSagerLoading } = useCollection(highlightedSagerQuery);
   const highlightedSagerIds = useMemo(() => new Set(highlightedSager?.map(s => s.sagId)), [highlightedSager]);
+
+  useEffect(() => {
+    if (user && isPremiumUser) {
+        import('@/app/actions').then(m => m.checkFollowedSagerUpdatesAction(user.uid, user.email || ''));
+    }
+  }, [user, isPremiumUser]);
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -281,8 +294,7 @@ const FolketingetPageContent: React.FC = () => {
             return;
         }
 
-        const limit = isPremiumUser ? 20 : 5;
-
+        const limitVal = isPremiumUser ? 20 : 5;
         if (!isPremiumUser && loadMore) {
             setHasMore(false);
             setIsLoadingMore(false);
@@ -295,15 +307,10 @@ const FolketingetPageContent: React.FC = () => {
             statusId: activeStatusId,
             followedIds,
             skip: currentOffset,
-            top: limit,
+            top: limitVal,
         });
         
-        if (sagerRes.length < limit || !isPremiumUser) {
-            setHasMore(false);
-        } else {
-            setHasMore(true);
-        }
-
+        setHasMore(sagerRes.length >= limitVal && isPremiumUser);
         setSager(prev => loadMore ? [...prev, ...sagerRes] : sagerRes);
 
     } catch (error) {
@@ -318,20 +325,48 @@ const FolketingetPageContent: React.FC = () => {
     fetchSagerData(false);
   }, [debouncedSearchQuery, activeTypeId, activeStatusId, showOnlyFollowed]);
 
+  useEffect(() => {
+    if (!isPremiumUser || sager.length === 0) return;
+    
+    const sagerToFetch = sager.filter(s => !sagerMetadata[s.id]).slice(0, 5);
+    if (sagerToFetch.length === 0) return;
+
+    const fetchAllMetadata = async () => {
+        const { getFTSagMetadataAction } = await import('@/app/actions');
+        const results = await Promise.all(sagerToFetch.map(s => getFTSagMetadataAction({
+            sagId: s.id,
+            title: s.titel,
+            resume: s.resume || undefined
+        })));
+        
+        setSagerMetadata(prev => {
+            const next = { ...prev };
+            sagerToFetch.forEach((s, i) => {
+                const res = results[i];
+                if (res && res.data) {
+                    // @ts-ignore
+                    next[s.id] = res.data;
+                } else {
+                    // @ts-ignore
+                    next[s.id] = { failed: true };
+                }
+            });
+            return next;
+        });
+    };
+    fetchAllMetadata();
+  }, [sager, isPremiumUser, sagerMetadata]);
+
   const handleFollow = async (e: React.MouseEvent, sagId: number) => {
     e.stopPropagation();
     if (!user || !firestore || !userProfile) return;
-
     const isCurrentlyFollowed = followedSagerIds.has(sagId);
     const followedSagerColRef = collection(firestore, 'followedSager');
-
     try {
         if (isCurrentlyFollowed) {
             const q = query(followedSagerColRef, where('userId', '==', user.uid), where('sagId', '==', sagId));
             const querySnapshot = await getDocs(q);
-            querySnapshot.forEach(async (doc) => {
-                await deleteDoc(doc.ref);
-            });
+            querySnapshot.forEach(async (docSnap) => { await deleteDoc(docSnap.ref); });
         } else {
             const sagToFollow = sager.find(s => s.id === sagId) || highlightedSager?.find(s => s.sagId === sagId);
             if (!sagToFollow) {
@@ -343,15 +378,12 @@ const FolketingetPageContent: React.FC = () => {
                 userEmail: user.email,
                 userName: userProfile?.username || user.displayName || 'Bruger',
                 sagId: sagId,
+                statusId: sagToFollow.statusid,
                 createdAt: serverTimestamp(),
                 lastUpdatedAt: new Date(sagToFollow.opdateringsdato || Date.now()),
             });
         }
-        
-        toast({
-          title: isCurrentlyFollowed ? "Følger ikke længere sag" : "Følger sag",
-          description: `Du ${isCurrentlyFollowed ? 'følger ikke længere' : 'følger nu'} sagen.`,
-        });
+        toast({ title: isCurrentlyFollowed ? "Følger ikke længere sag" : "Følger sag", description: `Du ${isCurrentlyFollowed ? 'følger ikke længere' : 'følger nu'} sagen.` });
     } catch (error) {
         console.error("Error updating followed sager:", error);
         toast({ variant: 'destructive', title: 'Fejl', description: 'Kunne ikke opdatere dine fulgte sager.' });
@@ -361,10 +393,8 @@ const FolketingetPageContent: React.FC = () => {
   const handleHighlight = async (e: React.MouseEvent, sag: Sag) => {
     e.stopPropagation();
     if (!isAdmin || !firestore) return;
-
     const highlightRef = doc(firestore, 'highlightedSager', sag.id.toString());
     const isCurrentlyHighlighted = highlightedSagerIds.has(sag.id);
-
     try {
         if (isCurrentlyHighlighted) {
             await deleteDoc(highlightRef);
@@ -391,7 +421,6 @@ const FolketingetPageContent: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-[#FDFCF8] flex flex-col relative overflow-hidden font-sans selection:bg-rose-100 selection:text-rose-900">
-      {/* Decorative Gradients */}
       <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.03)_0,transparent_70%)] rounded-full blur-[80px] pointer-events-none z-0"></div>
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.03)_0,transparent_70%)] rounded-full blur-[80px] pointer-events-none z-0"></div>
 
@@ -447,10 +476,8 @@ const FolketingetPageContent: React.FC = () => {
                                     </div>
                                     <p className="font-bold text-lg leading-tight">Lås op for alle efterretninger</p>
                                 </div>
-                                <p className="text-sm text-slate-400 font-medium">Som Kollega+ medlem får du fuld adgang til at gennemsøge FT arkivet og opstille egne monitoreringer.</p>
-                                <Link href="/upgrade">
-                                    <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-xl mt-2 py-6">Opgrader nu</Button>
-                                </Link>
+                                <p className="text-sm text-slate-400 font-medium">Som Kollega+ medlem får du fuld adgang til at gennemsøge FT arkivet.</p>
+                                <Link href="/upgrade"><Button className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-xl mt-2 py-6">Opgrader nu</Button></Link>
                             </div>
                         </TooltipContent>
                     )}
@@ -464,193 +491,66 @@ const FolketingetPageContent: React.FC = () => {
         </div>
       </header>
 
-
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-10 lg:py-20 grid lg:grid-cols-12 gap-12 lg:gap-16 relative z-10">
-            {/* SIDEBAR - TOP ON MOBILE */}
             <aside className="lg:col-span-4 space-y-12 h-fit lg:sticky lg:top-40">
-                <motion.section 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="bg-white p-8 sm:p-10 rounded-[32px] border border-slate-100 shadow-sm"
-                >
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 px-2 flex items-center gap-3">
-                        <div className="w-7 h-7 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center text-slate-500">
-                           <Filter className="w-4 h-4"/>
-                        </div>
-                        Kontrolpanel
-                    </h3>
+                <motion.section initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white p-8 sm:p-10 rounded-[32px] border border-slate-100 shadow-sm">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 px-2 flex items-center gap-3"><div className="w-7 h-7 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center text-slate-500"><Filter className="w-4 h-4"/></div>Kontrolpanel</h3>
                     <div className="space-y-6">
                         <div className="space-y-2">
                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Kategorifilter</p>
                            <div className="relative group/select">
-                               <select 
-                                   value={activeTypeId || ''}
-                                   onChange={(e) => setActiveTypeId(e.target.value ? Number(e.target.value) : null)} 
-                                   className="w-full appearance-none pl-6 pr-12 py-4.5 bg-slate-50 border border-slate-100 rounded-2xl text-[14px] font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all shadow-sm"
-                               >
-                                   <option value="">Alle sagstyper</option>
-                                   {typer.map(t => <option key={t.id} value={t.id}>{t.type}</option>)}
-                               </select>
+                               <select value={activeTypeId || ''} onChange={(e) => setActiveTypeId(e.target.value ? Number(e.target.value) : null)} className="w-full appearance-none pl-6 pr-12 py-4.5 bg-slate-50 border border-slate-100 rounded-2xl text-[14px] font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all shadow-sm"><option value="">Alle sagstyper</option>{typer.map(t => <option key={t.id} value={t.id}>{t.type}</option>)}</select>
                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none group-focus-within/select:rotate-180 transition-transform"/>
                            </div>
                         </div>
-
                         <div className="space-y-2">
                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Statusfilter</p>
                            <div className="relative group/select">
-                                <select 
-                                   value={activeStatusId || ''}
-                                   onChange={(e) => setActiveStatusId(e.target.value ? Number(e.target.value) : null)} 
-                                   className="w-full appearance-none pl-6 pr-12 py-4.5 bg-slate-50 border border-slate-100 rounded-2xl text-[14px] font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all shadow-sm"
-                               >
-                                   <option value="">Alle statusser</option>
-                                   {statusser.map(s => <option key={s.id} value={s.id}>{s.status}</option>)}
-                               </select>
-                               <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none group-focus-within/select:rotate-180 transition-transform"/>
+                                <select value={activeStatusId || ''} onChange={(e) => setActiveStatusId(e.target.value ? Number(e.target.value) : null)} className="w-full appearance-none pl-6 pr-12 py-4.5 bg-slate-50 border border-slate-100 rounded-2xl text-[14px] font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all shadow-sm"><option value="">Alle statusser</option>{statusser.map(s => <option key={s.id} value={s.id}>{s.status}</option>)}</select>
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none group-focus-within/select:rotate-180 transition-transform"/>
                            </div>
                         </div>
 
-                        <Button 
-                            variant="outline"
-                            onClick={() => setShowOnlyFollowed(!showOnlyFollowed)} 
-                            className={`w-full justify-between h-16 rounded-2xl border-slate-100 text-[13px] font-bold px-6 active:scale-95 transition-all ${
-                                showOnlyFollowed 
-                                    ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' 
-                                    : 'bg-white hover:bg-slate-50 hover:border-slate-200'
-                            }`}
-                        >
-                            <span className="flex items-center gap-3">
-                                <Star className={`w-4 h-4 ${showOnlyFollowed ? 'fill-current' : ''}`} />
-                                Mine Fulgte Sager
-                            </span>
-                            {followedSagerIds.size > 0 && (
-                                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${showOnlyFollowed ? 'bg-amber-600' : 'bg-slate-100 text-slate-400'}`}>
-                                    {followedSagerIds.size}
-                                </span>
-                            )}
-                        </Button>
+                        <Button variant="outline" onClick={() => setShowOnlyFollowed(!showOnlyFollowed)} className={`w-full justify-between h-16 rounded-2xl border-slate-100 text-[13px] font-bold px-6 active:scale-95 transition-all ${showOnlyFollowed ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' : 'bg-white hover:bg-slate-50 hover:border-slate-200'}`}><span className="flex items-center gap-3"><Star className={`w-4 h-4 ${showOnlyFollowed ? 'fill-current' : ''}`} />Mine Fulgte Sager</span>{followedSagerIds.size > 0 && (<span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${showOnlyFollowed ? 'bg-amber-600' : 'bg-slate-100 text-slate-400'}`}>{followedSagerIds.size}</span>)}</Button>
                     </div>
                 </motion.section>
                 
-                {/* HIGHLIGHTED SAGER */}
-                <motion.section 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 px-2 flex items-center gap-3">
-                        <div className="w-7 h-7 bg-amber-50 border border-amber-100 rounded-lg flex items-center justify-center text-amber-600">
-                           <Flame className="w-4 h-4 fill-current"/>
-                        </div>
-                        Fremhævede Sager
-                    </h3>
-                    
-                    {highlightedSagerLoading ? (
-                        <div className="flex justify-center p-10"><Loader2 className="w-8 h-8 animate-spin text-slate-200"/></div>
-                    ) : (
+                <motion.section initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 px-2 flex items-center gap-3"><div className="w-7 h-7 bg-amber-50 border border-amber-100 rounded-lg flex items-center justify-center text-amber-600"><Flame className="w-4 h-4 fill-current"/></div>Fremhævede Sager</h3>
+                    {highlightedSagerLoading ? (<div className="flex justify-center p-10"><Loader2 className="w-8 h-8 animate-spin text-slate-200"/></div>) : (
                         <div className="grid grid-cols-1 gap-4">
                             {highlightedSager?.map((sag, idx) => {
                                 const isClickable = isPremiumUser;
                                 const href = isClickable ? `/folketinget/case/view/${sag.sagId}` : '/upgrade';
-                                
                                 return (
-                                    <motion.div
-                                        key={sag.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.1 + idx * 0.05 }}
-                                    >
-                                        <TooltipProvider>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <Link 
-                                                href={href} 
-                                                onClick={(e) => !isClickable && e.preventDefault()}
-                                                className={`group block p-6 bg-white border border-slate-100 rounded-3xl transition-all relative overflow-hidden ${isClickable ? 'hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.05)] hover:border-rose-100 hover:bg-rose-50/10' : 'opacity-70 grayscale-[0.5]'}`}
-                                              >
-                                                <div className="relative z-10 flex justify-between items-start gap-4">
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className={`text-[15px] font-extrabold text-slate-900 group-hover:text-rose-700 transition-colors leading-tight mb-2 ${!isClickable ? '' : ''}`}>
-                                                            {sag.alias || sag.titel}
-                                                        </p>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="px-2 py-0.5 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest rounded-md">
-                                                                {sag.nummer}
-                                                            </span>
-                                                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
-                                                                Opdateret: {new Date(sag.opdateringsdato || Date.now()).toLocaleDateString('da-DK', { day: '2-digit', month: 'short' })}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    {!isClickable ? (
-                                                        <div className="p-2 bg-amber-50 rounded-xl border border-amber-100">
-                                                            <Lock className="w-4 h-4 text-amber-600" />
-                                                        </div>
-                                                    ) : (
-                                                        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-rose-400 group-hover:translate-x-1 transition-all shrink-0 mt-1" />
-                                                    )}
-                                                </div>
-                                              </Link>
-                                            </TooltipTrigger>
-                                            {!isClickable && (
-                                              <TooltipContent side="right" className="bg-slate-900 text-white border-slate-800">
-                                                <p>Opgrader til Kollega+ for at tilgå fremhævede sager.</p>
-                                              </TooltipContent>
-                                            )}
-                                          </Tooltip>
-                                        </TooltipProvider>
+                                    <motion.div key={sag.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + idx * 0.05 }}>
+                                        <TooltipProvider><Tooltip><TooltipTrigger asChild><Link href={href} onClick={(e) => !isClickable && e.preventDefault()} className={`group block p-6 bg-white border border-slate-100 rounded-3xl transition-all relative overflow-hidden ${isClickable ? 'hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.05)] hover:border-rose-100 hover:bg-rose-50/10' : 'opacity-70 grayscale-[0.5]'}`}><div className="relative z-10 flex justify-between items-start gap-4"><div className="min-w-0 flex-1"><p className={`text-[15px] font-extrabold text-slate-900 group-hover:text-rose-700 transition-colors leading-tight mb-2`}>{sag.alias || sag.titel}</p><div className="flex items-center gap-2"><span className="px-2 py-0.5 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest rounded-md">{sag.nummer}</span><span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Opdateret: {new Date(sag.opdateringsdato || Date.now()).toLocaleDateString('da-DK', { day: '2-digit', month: 'short' })}</span></div></div>{!isClickable ? (<div className="p-2 bg-amber-50 rounded-xl border border-amber-100"><Lock className="w-4 h-4 text-amber-600" /></div>) : (<ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-rose-400 group-hover:translate-x-1 transition-all shrink-0 mt-1" />)}</div></Link></TooltipTrigger>{!isClickable && (<TooltipContent side="right" className="bg-slate-900 text-white border-slate-800"><p>Opgrader til Kollega+ for at tilgå fremhævede sager.</p></TooltipContent>)}</Tooltip></TooltipProvider>
                                     </motion.div>
                                 );
                             })}
-                            {(highlightedSager?.length === 0) && (
-                                <div className="p-12 text-center bg-slate-50/50 rounded-[32px] border border-dashed border-slate-200">
-                                    <p className="text-[12px] text-slate-400 font-medium italic">Ingen fremhævede sager lige nu.</p>
-                                </div>
-                            )}
+                            {(highlightedSager?.length === 0) && (<div className="p-12 text-center bg-slate-50/50 rounded-[32px] border border-dashed border-slate-200"><p className="text-[12px] text-slate-400 font-medium italic">Ingen fremhævede sager lige nu.</p></div>)}
                         </div>
                     )}
                 </motion.section>
 
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-slate-900 rounded-[32px] p-10 text-white relative overflow-hidden group shadow-2xl shadow-slate-900/20"
-                >
+                <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-slate-900 rounded-[32px] p-10 text-white relative overflow-hidden group shadow-2xl shadow-slate-900/20">
                     <div className="relative z-10">
                         <Sparkles className="w-8 h-8 text-amber-400 mb-6 group-hover:rotate-12 transition-transform duration-500" />
                         <h4 className="text-[20px] font-black leading-tight mb-4 tracking-tight">Vores AI analyserer løbende Folketinget for dig.</h4>
                         <p className="text-slate-400 text-sm font-medium leading-relaxed mb-8">Vi matcher lovforslag med relevante vidensnotater og principmeddelelser automatisk.</p>
-                        <Link href="/about-monitorering">
-                            <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-2xl h-14">Læs hvordan det virker</Button>
-                        </Link>
+                        <Link href="/about-monitorering"><Button className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-2xl h-14">Læs hvordan det virker</Button></Link>
                     </div>
-                    {/* Mesh Gradient */}
-                    <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-rose-500/10 rounded-full blur-[60px] pointer-events-none"></div>
                 </motion.section>
             </aside>
 
-            {/* MAIN LIST */}
             <div className="lg:col-span-8 space-y-8 min-h-[600px]">
                 <AnimatePresence mode="wait">
                     {isLoading ? (
-                      <motion.div 
-                        key="loading"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="grid gap-8"
-                      >
-                        {[...Array(3)].map((_, i) => <SagSkeleton key={i} />)}
-                      </motion.div>
+                      <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid gap-8">{[...Array(3)].map((_, i) => <SagSkeleton key={i} />)}</motion.div>
                     ) : (
-                      <motion.div 
-                        key="content"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="grid gap-8"
-                      >
+                      <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-8">
                           {sager.map((sag, idx) => (
+
                             <SagItem 
                                 key={sag.id}
                                 sag={sag}
@@ -659,48 +559,24 @@ const FolketingetPageContent: React.FC = () => {
                                 isFollowed={followedSagerIds.has(sag.id)}
                                 onHighlight={handleHighlight}
                                 isHighlighted={highlightedSagerIds.has(sag.id)}
+                                metadata={sagerMetadata[sag.id]}
                                 getStatusString={getStatusString}
                                 getTypeString={getTypeString}
                             />
                           ))}
                           
                           {sager.length === 0 && !isLoading && (
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="py-32 sm:py-40 text-center bg-white rounded-[3rem] border border-dashed border-slate-200 shadow-inner"
-                            >
-                               <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8">
-                                   <Search className="w-10 h-10 text-slate-200" />
-                               </div>
+                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-32 sm:py-40 text-center bg-white rounded-[3rem] border border-dashed border-slate-200 shadow-inner">
+                               <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8"><Search className="w-10 h-10 text-slate-200" /></div>
                                <h3 className="text-xl font-bold text-slate-900 mb-2">Ingen sager fundet</h3>
                                <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto">Prøv at justere dine filtre eller søgekriterier for at se flere resultater.</p>
-                               <Button 
-                                    variant="outline" 
-                                    onClick={() => {
-                                        setSearchQuery('');
-                                        setActiveTypeId(3);
-                                        setActiveStatusId(null);
-                                        setShowOnlyFollowed(false);
-                                    }}
-                                    className="mt-8 rounded-xl px-6 h-12 font-bold"
-                               >
-                                   Nulstil filtre
-                               </Button>
+                               <Button variant="outline" onClick={() => { setSearchQuery(''); setActiveTypeId(3); setActiveStatusId(null); setShowOnlyFollowed(false); }} className="mt-8 rounded-xl px-6 h-12 font-bold">Nulstil filtre</Button>
                             </motion.div>
                           )}
 
                           {hasMore && !isLoading && sager.length > 0 && isPremiumUser && (
                             <div className="text-center pt-8">
-                              <Button 
-                                onClick={() => fetchSagerData(true)} 
-                                variant="outline" 
-                                disabled={isLoadingMore} 
-                                className="rounded-2xl px-12 h-16 border-slate-200 text-slate-900 font-bold hover:bg-slate-50 active:scale-95 transition-all shadow-md"
-                              >
-                                {isLoadingMore ? <Loader2 className="w-5 h-5 mr-3 animate-spin"/> : null}
-                                {isLoadingMore ? 'Henter sager...' : 'Indlæs flere efterretninger'}
-                              </Button>
+                               <Button onClick={() => fetchSagerData(true)} variant="outline" disabled={isLoadingMore} className="rounded-2xl px-12 h-16 border-slate-200 text-slate-900 font-bold hover:bg-slate-50 active:scale-[0.97] shadow-md">{isLoadingMore ? <Loader2 className="w-5 h-5 mr-3 animate-spin"/> : null}{isLoadingMore ? 'Henter sager...' : 'Indlæs flere efterretninger'}</Button>
                             </div>
                           )}
                       </motion.div>
@@ -708,26 +584,15 @@ const FolketingetPageContent: React.FC = () => {
                 </AnimatePresence>
             </div>
       </main>
-
     </div>
   );
 };
 
-
 const FolketingetPage = () => {
     const { user, isUserLoading } = useApp();
     const router = useRouter();
-
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.replace('/');
-        }
-    }, [user, isUserLoading, router]);
-
-    if (isUserLoading || !user) {
-        return <AuthLoadingScreen />;
-    }
-
+    useEffect(() => { if (!isUserLoading && !user) router.replace('/'); }, [user, isUserLoading, router]);
+    if (isUserLoading || !user) return <AuthLoadingScreen />;
     return <FolketingetPageContent />;
 };
 

@@ -1,5 +1,7 @@
 // @ts-nocheck
 import { analyzeFtDocument } from './flows/analyze-ft-document-flow';
+import { generateFTSagMetadataFlow } from './flows/ft-case-metadata-flow';
+
 import { analyzeLegalDecision } from './flows/analyze-legal-decision-flow';
 import { analyzeParagraph } from './flows/analyze-paragraph-flow';
 import { analyzeReformPdf } from './flows/analyze-reform-flow';
@@ -220,4 +222,7 @@ export const allFlows: Record<string, any> = {
   "identifyReform": identifyReformFlow,
   "generateParagraphDiffFlow": generateParagraphDiffFlow,
   "generateParagraphDiff": generateParagraphDiffFlow,
+  "generateFTSagMetadataFlow": generateFTSagMetadataFlow,
+  "generateFTSagMetadata": generateFTSagMetadataFlow,
 };
+

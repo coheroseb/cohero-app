@@ -1265,7 +1265,24 @@ export const SubscriptionConfirmationEmailOutputSchema = z.object({
 export type SubscriptionConfirmationEmailInput = z.infer<typeof SubscriptionConfirmationEmailInputSchema>;
 export type SubscriptionConfirmationEmailOutput = z.infer<typeof SubscriptionConfirmationEmailOutputSchema>;
 
+
 export type PracticeGuide = z.infer<typeof PracticeGuideSchema>;
 export type ReformAnalysis = z.infer<typeof ReformAnalysisSchema>;
 export type SocraticInput = z.infer<typeof SocraticInputSchema>;
 export type SocraticOutput = z.infer<typeof SocraticOutputSchema>;
+
+export const FTSagMetadataInputSchema = z.object({
+  caseTitle: z.string(),
+  caseResume: z.string().optional(),
+});
+export const FTSagMetadataDataSchema = z.object({
+  legalFields: z.array(z.string()),
+  impactSummary: z.string(),
+});
+export const FTSagMetadataOutputSchema = z.object({
+  data: FTSagMetadataDataSchema,
+  usage: UsageSchema,
+});
+export type FTSagMetadataInput = z.infer<typeof FTSagMetadataInputSchema>;
+export type FTSagMetadataOutput = z.infer<typeof FTSagMetadataOutputSchema>;
+
