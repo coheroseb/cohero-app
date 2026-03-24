@@ -171,6 +171,7 @@ export const onAssistanceRequestUpdate = functions.firestore
                 <h1 style="color: #0f172a; margin-bottom: 16px;">Hej ${studentFirstName}</h1>
                 <p>Borgeren <strong>${citizenName}</strong> har nu gennemført betalingen for opgaven: <strong>"${taskTitle}"</strong>.</p>
                 <p>Du har nu adgang til borgerens e-mail og telefonnummer inde i portalen, så I kan aftale de nærmere detaljer.</p>
+                <p style="font-weight: bold; color: #451a03;">Vigtigt: Du skal kontakte borgeren inden for 24 timer for at starte hjælpen.</p>
                 <div style="margin-top: 32px; text-align: center;">
                     <a href="https://cohero.dk/markedsplads" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Se kontaktoplysninger</a>
                 </div>

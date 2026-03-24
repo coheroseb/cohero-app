@@ -380,28 +380,36 @@ const AssistanceMarketplaceContent = () => {
                                 <span className="text-[10px] font-black uppercase tracking-widest text-rose-900">Kontaktoplysninger</span>
                              </div>
                              {req.isPaid ? (
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                     <a href={`mailto:${req.citizenEmail}`} className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all text-sm font-black text-rose-950">
-                                        <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
-                                            <Mail className="w-5 h-5" />
-                                        </div>
-                                        {req.citizenEmail}
-                                     </a>
-                                     {req.citizenPhone && (
-                                        <a href={`tel:${req.citizenPhone}`} className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all text-sm font-black text-rose-950">
-                                            <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
-                                                <Phone className="w-5 h-5" />
-                                            </div>
-                                            {req.citizenPhone}
-                                        </a>
-                                     )}
+                                <div className="space-y-4">
+                                     <div className="grid sm:grid-cols-2 gap-4">
+                                          <a href={`mailto:${req.citizenEmail}`} className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all text-sm font-black text-rose-950">
+                                             <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
+                                                 <Mail className="w-5 h-5" />
+                                             </div>
+                                             {req.citizenEmail}
+                                          </a>
+                                          {req.citizenPhone && (
+                                             <a href={`tel:${req.citizenPhone}`} className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all text-sm font-black text-rose-950">
+                                                 <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
+                                                     <Phone className="w-5 h-5" />
+                                                 </div>
+                                                 {req.citizenPhone}
+                                             </a>
+                                          )}
+                                     </div>
+                                     <div className="p-4 bg-emerald-100/50 rounded-2xl border border-emerald-200 flex items-start gap-3">
+                                        <AlertCircle className="w-5 h-5 text-emerald-700 mt-0.5" />
+                                        <p className="text-xs font-bold text-emerald-900 leading-relaxed">
+                                            Vigtigt: Du skal kontakte borgeren inden for 24 timer efter betaling er gennemført.
+                                        </p>
+                                     </div>
                                 </div>
                              ) : (
                                 <div className="flex items-center gap-3 text-[13px] font-bold text-rose-800">
                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0">
                                       <Lock className="w-5 h-5" />
                                    </div>
-                                   Oplysninger frigives når borgeren har gennemført betalingen.
+                                   Oplysninger frigives når borgeren har gennemført betalingen. Du skal kontakte borgeren senest 24 timer efter modtagelse af kontaktoplysninger.
                                 </div>
                              )}
                         </div>
