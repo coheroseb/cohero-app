@@ -81,7 +81,7 @@ export default function PublicAssistanceRequestPage() {
   };
 
   const isStepValid = () => {
-    if (currentStep === 1) return formData.title.length > 5 && formData.category;
+    if (currentStep === 1) return formData.title.length > 0 && formData.category;
     if (currentStep === 2) return formData.description.length > 20;
     if (currentStep === 3) return formData.citizenName.length > 2 && formData.citizenEmail.includes('@');
     if (currentStep === 4) return formData.price > 0;
