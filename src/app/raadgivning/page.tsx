@@ -36,6 +36,7 @@ export default function PublicAssistanceRequestPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isConfirmed, setIsConfirmed] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -320,44 +321,74 @@ export default function PublicAssistanceRequestPage() {
                   {/* STEP 4: BUDGET & CONFIRM */}
                   {currentStep === 4 && (
                     <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
-                        <div className="space-y-6">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 text-center block">Hvor meget vil du give for hjælpen?</label>
-                            <div className="flex flex-col items-center gap-6">
-                                <div className="relative w-full max-w-[280px]">
-                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-300">kr.</div>
-                                    <input 
-                                        type="number" 
-                                        required
-                                        value={formData.price}
-                                        onChange={e => setFormData({...formData, price: parseInt(e.target.value) || 0})}
-                                        className="w-full h-24 pl-20 pr-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-black text-4xl text-slate-900 text-center" 
-                                    />
-                                </div>
-                                
-                                <div className="w-full p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 space-y-4">
-                                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-amber-900/50">
-                                     <span>Platformgebyr (15%)</span>
-                                     <span>-{Math.round(formData.price * 0.15)} DKK</span>
-                                  </div>
-                                  <div className="flex justify-between items-center pt-4 border-t border-amber-200">
-                                     <div className="flex flex-col">
-                                        <span className="text-sm font-black text-amber-950 uppercase tracking-tight leading-none mb-1">Hjælper modtager</span>
-                                        <span className="text-[9px] text-amber-900/40 font-bold italic tracking-tighter">Attraher de bedste studerende</span>
-                                     </div>
-                                     <span className="text-3xl font-black text-amber-950 leading-none">
-                                        {formData.price - Math.round(formData.price * 0.15)} kr.
-                                     </span>
-                                  </div>
+                        {!isConfirmed ? (
+                          <>
+                            <div className="space-y-6">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 text-center block">Hvor meget vil du give for hjælpen?</label>
+                                <div className="flex flex-col items-center gap-6">
+                                    <div className="relative w-full max-w-[280px]">
+                                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-300">kr.</div>
+                                        <input 
+                                            type="number" 
+                                            required
+                                            value={formData.price}
+                                            onChange={e => setFormData({...formData, price: parseInt(e.target.value) || 0})}
+                                            className="w-full h-24 pl-20 pr-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-black text-4xl text-slate-900 text-center" 
+                                        />
+                                    </div>
+                                    
+                                    <div className="w-full p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 space-y-4">
+                                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-amber-900/50">
+                                         <span>Platformgebyr (15%)</span>
+                                         <span>-{Math.round(formData.price * 0.15)} DKK</span>
+                                      </div>
+                                      <div className="flex justify-between items-center pt-4 border-t border-amber-200">
+                                         <div className="flex flex-col">
+                                            <span className="text-sm font-black text-amber-950 uppercase tracking-tight leading-none mb-1">Hjælper modtager</span>
+                                            <span className="text-[9px] text-amber-900/40 font-bold italic tracking-tighter">Attraher de bedste studerende</span>
+                                         </div>
+                                         <span className="text-3xl font-black text-amber-950 leading-none">
+                                            {formData.price - Math.round(formData.price * 0.15)} kr.
+                                         </span>
+                                      </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex items-start gap-4 px-6 py-8 bg-blue-50/50 rounded-[2rem] border border-blue-100/50 shadow-inner">
-                           <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                           <p className="text-[11px] text-blue-800/80 font-medium leading-relaxed">
-                              Ved at sende din anmodning accepterer du, at dine kontaktoplysninger deles med den studerende der vælger din opgave. Vi beskytter dit privatliv og sikrer, at kun verificerede studerende har adgang.
-                           </p>
-                        </div>
+                            <div className="flex items-start gap-4 px-6 py-8 bg-blue-50/50 rounded-[2rem] border border-blue-100/50 shadow-inner">
+                               <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                               <p className="text-[11px] text-blue-800/80 font-medium leading-relaxed">
+                                  Ved at sende din anmodning accepterer du, at dine kontaktoplysninger deles med den studerende der vælger din opgave. Vi beskytter dit privatliv og sikrer, at kun verificerede studerende har adgang.
+                               </p>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="space-y-8">
+                             <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 space-y-6">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 border-b border-slate-200 pb-4">Oversigt over din anmodning</h3>
+                                <div className="space-y-4">
+                                   <div>
+                                      <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Overskrift</p>
+                                      <p className="font-bold text-slate-900">{formData.title}</p>
+                                   </div>
+                                   <div>
+                                      <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Kategori</p>
+                                      <p className="font-bold text-slate-900">{formData.category}</p>
+                                   </div>
+                                   <div>
+                                      <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Budget</p>
+                                      <p className="font-black text-2xl text-amber-950">{formData.price} kr.</p>
+                                   </div>
+                                </div>
+                             </div>
+                             <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 flex gap-3 text-left">
+                                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                                <p className="text-[11px] text-emerald-900 font-medium leading-relaxed">
+                                   Alt ser korrekt ud. Når du trykker på bekræft, bliver din anmodning synlig for de studerende på markedspladsen.
+                                </p>
+                             </div>
+                          </div>
+                        )}
                     </div>
                   )}
 
@@ -368,7 +399,13 @@ export default function PublicAssistanceRequestPage() {
                      {currentStep > 1 && (
                         <button 
                             type="button"
-                            onClick={prevStep}
+                            onClick={() => {
+                                if (currentStep === 4 && isConfirmed) {
+                                    setIsConfirmed(false);
+                                } else {
+                                    prevStep();
+                                }
+                            }}
                             className="h-16 px-8 bg-slate-50 text-slate-400 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] border border-slate-100 hover:text-slate-900 hover:bg-white transition-all active:scale-95 flex items-center justify-center"
                         >
                             <ChevronLeft className="w-4 h-4" />
@@ -385,6 +422,16 @@ export default function PublicAssistanceRequestPage() {
                             Næste trin
                             <ArrowRight className="w-4 h-4" />
                         </button>
+                     ) : !isConfirmed ? (
+                        <button 
+                            type="button"
+                            disabled={!isStepValid()}
+                            onClick={() => setIsConfirmed(true)}
+                            className="flex-1 h-16 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-rose-900 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3"
+                        >
+                            Se oversigt
+                            <ArrowRight className="w-4 h-4" />
+                        </button>
                      ) : (
                         <button 
                             type="submit" 
@@ -393,7 +440,7 @@ export default function PublicAssistanceRequestPage() {
                         >
                             {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : (
                                 <>
-                                    Send anmodning
+                                    Bekræft & Send
                                     <CheckCircle2 className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
                                 </>
                             )}
