@@ -14,6 +14,8 @@ import { deleteUser, updateProfile } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { requestNotificationPermission } from '@/firebase/messaging';
+import { encryptData, decryptData } from '@/lib/encryption';
+
 
 export default function SettingsPage() {
   const { user, userProfile, refetchUserProfile, handleLogout, handleResendVerification } = useApp();
@@ -412,8 +414,11 @@ export default function SettingsPage() {
                 <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">CPR Nummer</label>
                 <Input 
                     placeholder="DDMMYY-XXXX" 
-                    value={userProfile?.cprNumber || ''} 
-                    onChange={(e) => updateDoc(doc(firestore!, 'users', user!.uid), { cprNumber: e.target.value }).then(() => refetchUserProfile())}
+                    value={userProfile?.cprNumber ? '••••••-••••' : ''} 
+                    onChange={async (e) => {
+                        const encrypted = await encryptData(e.target.value);
+                        updateDoc(doc(firestore!, 'users', user!.uid), { cprNumber: encrypted }).then(() => refetchUserProfile());
+                    }}
                     className="w-full h-12 rounded-xl"
                 />
             </div>
@@ -421,8 +426,11 @@ export default function SettingsPage() {
                 <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Registreringsnr.</label>
                 <Input 
                     placeholder="4 cifre" 
-                    value={userProfile?.bankReg || ''} 
-                    onChange={(e) => updateDoc(doc(firestore!, 'users', user!.uid), { bankReg: e.target.value }).then(() => refetchUserProfile())}
+                    value={userProfile?.bankReg ? '••••' : ''} 
+                    onChange={async (e) => {
+                        const encrypted = await encryptData(e.target.value);
+                        updateDoc(doc(firestore!, 'users', user!.uid), { bankReg: encrypted }).then(() => refetchUserProfile());
+                    }}
                     className="w-full h-12 rounded-xl"
                 />
             </div>
@@ -430,8 +438,11 @@ export default function SettingsPage() {
                 <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Kontonummer</label>
                 <Input 
                     placeholder="Op til 10 cifre" 
-                    value={userProfile?.bankAccount || ''} 
-                    onChange={(e) => updateDoc(doc(firestore!, 'users', user!.uid), { bankAccount: e.target.value }).then(() => refetchUserProfile())}
+                    value={userProfile?.bankAccount ? '••••••••' : ''} 
+                    onChange={async (e) => {
+                        const encrypted = await encryptData(e.target.value);
+                        updateDoc(doc(firestore!, 'users', user!.uid), { bankAccount: encrypted }).then(() => refetchUserProfile());
+                    }}
                     className="w-full h-12 rounded-xl"
                 />
             </div>

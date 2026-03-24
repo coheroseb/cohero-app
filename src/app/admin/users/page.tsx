@@ -6,12 +6,13 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, doc, deleteDoc } from 'firebase/firestore';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
-  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard
+  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import DeleteUserModal from '@/components/DeleteUserModal';
 import { useDebounce } from 'use-debounce';
+import { decryptData } from '@/lib/encryption';
 
 interface UserProfile {
   id: string;
@@ -36,6 +37,48 @@ const STAT_CARDS = [
   { label: 'Aktive (24t)', key: 'active', icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50' },
   { label: 'Plus Medlemmer', key: 'premium', icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50' },
 ];
+
+const BankRow = ({ label, value }: { label: string, value?: string }) => {
+  const [decrypted, setDecrypted] = useState<string | null>(null);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+
+  const handleToggle = async () => {
+    if (decrypted) {
+      setDecrypted(null);
+      return;
+    }
+    if (!value) return;
+    setIsDecrypting(true);
+    try {
+      const result = await decryptData(value);
+      setDecrypted(result);
+    } catch (err) {
+      setDecrypted("Fejl");
+    } finally {
+      setIsDecrypting(false);
+    }
+  };
+
+  return (
+    <p className="flex justify-between border-b border-white pb-2 group/bank">
+      <span className="text-slate-500 font-medium">{label}:</span> 
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-slate-900 font-mono">
+          {decrypted ? decrypted : value ? '••••••••' : '-'}
+        </span>
+        {value && (
+          <button 
+            onClick={handleToggle}
+            className="text-slate-300 hover:text-indigo-500 transition-colors p-1"
+            title={decrypted ? "Skjul" : "Vis"}
+          >
+            {isDecrypting ? <Loader2 className="w-3 h-3 animate-spin"/> : decrypted ? <EyeOff className="w-3 h-3"/> : <Eye className="w-3 h-3"/>}
+          </button>
+        )}
+      </div>
+    </p>
+  );
+};
 
 const AdminUsersPage = () => {
   const firestore = useFirestore();
@@ -378,9 +421,9 @@ const AdminUsersPage = () => {
                                <div className="space-y-4">
                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><CreditCard className="w-3.5 h-3.5" /> Udbetaling</h4>
                                    <div className="text-sm space-y-2">
-                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">CPR / CVR:</span> <span className="font-bold text-slate-900">{u.cprNumber || '-'}</span></p>
-                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Reg:</span> <span className="font-bold text-slate-900">{u.bankReg || '-'}</span></p>
-                                     <p className="flex justify-between pb-2"><span className="text-slate-500 font-medium">Konto:</span> <span className="font-bold text-slate-900">{u.bankAccount || '-'}</span></p>
+                                     <BankRow label="CPR / CVR" value={u.cprNumber} />
+                                     <BankRow label="Reg" value={u.bankReg} />
+                                     <BankRow label="Konto" value={u.bankAccount} />
                                    </div>
                                 </div>
                                <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-sm">
