@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   AlertCircle,
   ArrowRight,
-  ChevronLeft
+  ChevronLeft,
+  Sparkles
 } from 'lucide-react';
 import { createAssistanceRequestAction } from '@/app/markedsplads/actions';
 import { useRouter } from 'next/navigation';
@@ -197,6 +198,37 @@ export default function PublicAssistanceRequestPage() {
                     className="h-full bg-rose-500 transition-all duration-500 ease-out" 
                     style={{ width: `${(currentStep / 4) * 100}%` }}
                 />
+            </div>
+         </div>
+
+         {/* How it Works Section */}
+         <div className="bg-amber-50/50 rounded-[2rem] border border-amber-100/50 p-6 sm:p-8 space-y-6">
+            <div className="flex items-center gap-3">
+               <div className="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-4 h-4" />
+               </div>
+               <h3 className="text-sm font-black uppercase tracking-widest text-amber-900">Hvordan virker det?</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+               <div className="space-y-2">
+                  <div className="text-xl font-black text-amber-200 leading-none">01.</div>
+                  <p className="text-[11px] font-bold text-amber-900/70 leading-relaxed">
+                     <span className="text-amber-900">Beskriv din sag</span> – Udfyld formularen herunder og sæt et budget for opgaven.
+                  </p>
+               </div>
+               <div className="space-y-2">
+                  <div className="text-xl font-black text-amber-200 leading-none">02.</div>
+                  <p className="text-[11px] font-bold text-amber-900/70 leading-relaxed">
+                     <span className="text-amber-900">Bliv matchet</span> – En socialrådgiverstuderende tager din opgave på markedspladsen.
+                  </p>
+               </div>
+               <div className="space-y-2">
+                  <div className="text-xl font-black text-amber-200 leading-none">03.</div>
+                  <p className="text-[11px] font-bold text-amber-900/70 leading-relaxed">
+                     <span className="text-amber-900">Få hjælp</span> – Betal sikkert via Stripe, hvorefter I får hinandens kontaktinfo.
+                  </p>
+               </div>
             </div>
          </div>
 
