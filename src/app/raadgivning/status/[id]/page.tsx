@@ -23,7 +23,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { AssistanceRequest } from '@/ai/flows/types';
-import { createStripeCheckoutForRequestAction, verifyAndMarkPaidAction } from '@/app/bistand/actions';
+import { createStripeCheckoutForRequestAction, verifyAndMarkPaidAction } from '@/app/markedsplads/actions';
 
 export default function AssistanceRequestStatusPage() {
   const params = useParams();
@@ -68,7 +68,7 @@ export default function AssistanceRequestStatusPage() {
     if (success === 'true' && sessionId && id) {
       verifyAndMarkPaidAction(id, sessionId).then(res => {
         if (res.success) {
-          router.replace(`/anmod-bistand/status/${id}`);
+          router.replace(`/raadgivning/status/${id}`);
         }
       });
     } else if (autoPay && request && request.status === 'claimed' && !request.isPaid && !isProcessing) {

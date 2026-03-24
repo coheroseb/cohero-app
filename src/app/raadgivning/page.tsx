@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   AlertCircle
 } from 'lucide-react';
-import { createAssistanceRequestAction } from '@/app/bistand/actions';
+import { createAssistanceRequestAction } from '@/app/markedsplads/actions';
 import { useRouter } from 'next/navigation';
 import { AssistanceRequest } from '@/ai/flows/types';
 
@@ -81,13 +81,13 @@ export default function PublicAssistanceRequestPage() {
                   <div className="p-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] block w-full text-center group transition-all hover:bg-white hover:shadow-2xl hover:border-amber-100">
                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Din personlige status-side</p>
                       <p className="text-xs text-rose-600 font-bold mb-6 break-all px-4 bg-white py-3 rounded-xl border border-rose-50 select-all">
-                        {typeof window !== 'undefined' && `${window.location.origin}/anmod-bistand/status/${requestId}`}
+                        {typeof window !== 'undefined' && `${window.location.origin}/raadgivning/status/${requestId}`}
                       </p>
                       <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
                         <button 
                             onClick={() => {
                                 if (typeof window !== 'undefined') {
-                                    navigator.clipboard.writeText(`${window.location.origin}/anmod-bistand/status/${requestId}`);
+                                    navigator.clipboard.writeText(`${window.location.origin}/raadgivning/status/${requestId}`);
                                     alert('Link kopieret!');
                                 }
                             }}
@@ -96,7 +96,7 @@ export default function PublicAssistanceRequestPage() {
                             Kopiér Link
                         </button>
                         <button 
-                            onClick={() => router.push(`/anmod-bistand/status/${requestId}`)}
+                            onClick={() => router.push(`/raadgivning/status/${requestId}`)}
                             className="w-full sm:w-auto text-[10px] font-black uppercase tracking-[0.2em] bg-amber-950 text-white py-3.5 px-8 rounded-xl hover:bg-rose-900 transition-all active:scale-95 shadow-lg"
                         >
                             Gå til status-side

@@ -428,7 +428,7 @@ const PortalPageContent: React.FC = () => {
         items: [
           { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
           { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
-          { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/bistand", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Marketplace" },
+          { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Marketplace" },
           { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
         ]
       },
@@ -541,7 +541,7 @@ const PortalPageContent: React.FC = () => {
                     <span className="text-[10px] sm:text-[11px] text-slate-700">Folketing.</span>
                   </Button>
                 </Link>
-                <Link href="/bistand" passHref>
+                <Link href="/markedsplads" passHref>
                   <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-rose-50 hover:!bg-rose-100 border-rose-100 shadow-[0_4px_12px_rgba(225,29,72,0.05)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
                     <HandHelping className="w-6 h-6 sm:w-7 sm:h-7 text-rose-600 shrink-0"/>
                     <span className="text-[10px] sm:text-[11px] text-rose-900 font-extrabold">Markedsplads</span>
@@ -701,7 +701,7 @@ const PortalPageContent: React.FC = () => {
         </Link>
 
         {/* BISTAND / MARKETPLACE BANNER */}
-        <Link href="/bistand" className="group block mt-4 outline-none">
+        <Link href="/markedsplads" className="group block mt-4 outline-none">
           <div className="bg-gradient-to-br from-rose-50 via-white to-orange-50/30 border border-rose-200 p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-[0_20px_40px_rgba(225,29,72,0.15)] hover:border-rose-300 transition-all active:scale-[0.98] relative overflow-hidden">
             <div className="absolute -top-16 -right-16 w-48 h-48 bg-rose-100/30 rounded-full blur-[60px] pointer-events-none group-hover:scale-110 transition-transform duration-500"></div>
             

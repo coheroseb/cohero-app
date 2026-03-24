@@ -40,7 +40,7 @@ import {
 import { AssistanceRequest } from '@/ai/flows/types';
 import { Button } from '@/components/ui/button';
 import { encryptData, decryptData } from '@/lib/encryption';
-import { claimAssistanceRequestAction } from '@/app/bistand/actions';
+import { claimAssistanceRequestAction } from '@/app/markedsplads/actions';
 
 const PLATFORM_FEE_PERCENT = 15; // 15% platform fee
 
@@ -532,7 +532,7 @@ const AssistancePage = () => {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.replace('/auth?mode=login&callbackUrl=/bistand');
+            router.replace('/auth?mode=login&callbackUrl=/markedsplads');
         }
     }, [user, isUserLoading, router]);
 

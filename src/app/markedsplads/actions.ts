@@ -41,7 +41,7 @@ export async function createAssistanceRequestAction(formData: {
     const requestId = docRef.id;
 
     // Send confirmation email via Resend
-    const statusUrl = `${APP_URL}/anmod-bistand/status/${requestId}`;
+    const statusUrl = `${APP_URL}/raadgivning/status/${requestId}`;
 
     await resend.emails.send({
       from: 'Cohéro Markedsplads <info@cohero.dk>',
@@ -92,7 +92,7 @@ export async function claimAssistanceRequestAction(requestId: string, student: {
     });
 
     // Notify creator via Resend
-    const statusUrl = `${APP_URL}/anmod-bistand/status/${requestId}?pay=true`;
+    const statusUrl = `${APP_URL}/raadgivning/status/${requestId}?pay=true`;
 
     await resend.emails.send({
       from: 'Cohéro Markedsplads <info@cohero.dk>',
@@ -112,7 +112,7 @@ export async function claimAssistanceRequestAction(requestId: string, student: {
       `,
     });
 
-    revalidatePath('/bistand');
+    revalidatePath('/markedsplads');
     return { success: true };
   } catch (error) {
     console.error('Error in claimAssistanceRequestAction:', error);
@@ -145,8 +145,8 @@ export async function createStripeCheckoutForRequestAction(requestId: string) {
         },
       ],
       mode: 'payment',
-      success_url: `${APP_URL}/anmod-bistand/status/${requestId}?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${APP_URL}/anmod-bistand/status/${requestId}?canceled=true`,
+      success_url: `${APP_URL}/raadgivning/status/${requestId}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: `${APP_URL}/raadgivning/status/${requestId}?canceled=true`,
       customer_email: request.citizenEmail,
       metadata: {
         requestId,
