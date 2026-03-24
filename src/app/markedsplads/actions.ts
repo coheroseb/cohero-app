@@ -43,8 +43,8 @@ export async function createAssistanceRequestAction(formData: {
     // Send confirmation email via Resend
     const statusUrl = `${APP_URL}/raadgivning/status/${requestId}`;
 
-    await resend.emails.send({
-      from: 'Cohéro Markedsplads <info@cohero.dk>',
+    const emailRes = await resend.emails.send({
+      from: 'Cohéro Markedsplads <info@platform.cohero.dk>',
       to: formData.citizenEmail,
       subject: `Din anmodning: ${formData.title}`,
       html: `
@@ -63,6 +63,7 @@ export async function createAssistanceRequestAction(formData: {
         </div>
       `,
     });
+    console.log('Resend creation email result:', emailRes);
 
     return { success: true, id: requestId };
   } catch (error) {
@@ -94,13 +95,13 @@ export async function claimAssistanceRequestAction(requestId: string, student: {
     // Notify creator via Resend
     const statusUrl = `${APP_URL}/raadgivning/status/${requestId}`;
 
-    await resend.emails.send({
-      from: 'Cohéro Markedsplads <info@cohero.dk>',
+    const emailRes = await resend.emails.send({
+      from: 'Cohéro Markedsplads <info@platform.cohero.dk>',
       to: request.citizenEmail,
       subject: `En studerende har taget din opgave: ${request.title}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #1e293b;">Vi har fundet en hjælper!</h1>
+          <h1 style="color: #1e293b;">Vi have fundet en hjælper!</h1>
           <p>Hej ${request.citizenName},</p>
           <p>Gode nyheder! Den socialrådgiverstuderende <strong>${student.name}</strong> har påtaget sig din opgave: <em>"${request.title}"</em>.</p>
           <p>For at frigive jeres kontaktoplysninger til hinanden og starte samarbejdet, skal du nu gennemføre betalingen.</p>
@@ -112,6 +113,7 @@ export async function claimAssistanceRequestAction(requestId: string, student: {
         </div>
       `,
     });
+    console.log('Resend claim email result:', emailRes);
 
     revalidatePath('/markedsplads');
     return { success: true };

@@ -594,7 +594,7 @@ export async function generateCaseUpdateEmailAction(input: Types.CaseUpdateEmail
         const { subject, body } = await callFirebaseFlow('generateCaseUpdateEmailFlow', input);
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-            from: 'Cohéro Notifikationer <info@cohero.dk>',
+            from: 'Cohéro Notifikationer <info@platform.cohero.dk>',
             to: input.userEmail,
             subject: subject,
             html: wrapEmailHtml(body),
@@ -611,7 +611,7 @@ export async function sendCommentNotificationEmailAction(input: { postAuthorEmai
         const { subject, body } = await callFirebaseFlow('generateCommentNotificationEmailFlow', { ...input, postUrl: `https://cohero.dk/opslagstavle#${input.postId}` });
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-            from: 'Cohéro Notifikationer <info@cohero.dk>',
+            from: 'Cohéro Notifikationer <info@platform.cohero.dk>',
             to: input.postAuthorEmail,
             subject: subject,
             html: wrapEmailHtml(body),
@@ -638,7 +638,7 @@ export async function sendStreakReminderEmailAction(input: { userEmail: string, 
         const { subject, body } = await callFirebaseFlow('generateStreakReminderEmailFlow', { ...input });
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-            from: 'Cohéro Notifikationer <info@cohero.dk>',
+            from: 'Cohéro Notifikationer <info@platform.cohero.dk>',
             to: input.userEmail,
             subject: subject,
             html: wrapEmailHtml(body),
@@ -670,7 +670,7 @@ export async function sendGroupInvitationEmailAction(input: { recipientEmail: st
         });
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-            from: 'Cohéro Studiegrupper <info@cohero.dk>',
+            from: 'Cohéro Studiegrupper <info@platform.cohero.dk>',
             to: input.recipientEmail,
             subject: subject,
             html: wrapEmailHtml(body),
@@ -1322,7 +1322,7 @@ export async function sendEmailToConsultant(subject: string, message: string, us
     try {
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-            from: 'Cohéro Spørgsmål <info@cohero.dk>',
+            from: 'Cohéro Spørgsmål <info@platform.cohero.dk>',
             to: 'julie@cohero.dk',
             reply_to: userEmail,
             subject: `Spørgsmål fra ${userName}: ${subject}`,
