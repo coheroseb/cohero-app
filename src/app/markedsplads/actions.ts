@@ -40,30 +40,7 @@ export async function createAssistanceRequestAction(formData: {
     const docRef = await adminFirestore.collection('assistance_requests').add(requestData);
     const requestId = docRef.id;
 
-    // Send confirmation email via Resend
-    const statusUrl = `${APP_URL}/raadgivning/status/${requestId}`;
-
-    const emailRes = await resend.emails.send({
-      from: 'Cohéro Markedsplads <info@platform.cohero.dk>',
-      to: formData.citizenEmail,
-      subject: `Din anmodning: ${formData.title}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #1e293b;">Din anmodning er modtaget!</h1>
-          <p>Hej ${formData.citizenName},</p>
-          <p>Tak fordi du har oprettet en anmodning på Cohéro Markedsplads. Vi har nu lagt din opgave op til vores studerende.</p>
-          <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
-            <strong style="display: block; margin-bottom: 5px;">${formData.title}</strong>
-            <p style="margin: 0; color: #64748b;">Vi giver dig besked direkte på mail, så snart en studerende har taget din opgave.</p>
-          </div>
-          <p>Du kan altid følge med i status på din anmodning her:</p>
-          <a href="${statusUrl}" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Se status og betal senere</a>
-          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-          <p style="font-size: 12px; color: #94a3b8;">Dette er en automatisk besked fra Cohéro. Gem venligst dette link, da det er din adgang til opgaven.</p>
-        </div>
-      `,
-    });
-    console.log('Resend creation email result:', emailRes);
+    console.log('Assistance request created in Firestore:', requestId);
 
     return { success: true, id: requestId };
   } catch (error) {
@@ -92,28 +69,7 @@ export async function claimAssistanceRequestAction(requestId: string, student: {
       claimedAt: FieldValue.serverTimestamp(),
     });
 
-    // Notify creator via Resend
-    const statusUrl = `${APP_URL}/raadgivning/status/${requestId}`;
-
-    const emailRes = await resend.emails.send({
-      from: 'Cohéro Markedsplads <info@platform.cohero.dk>',
-      to: request.citizenEmail,
-      subject: `En studerende har taget din opgave: ${request.title}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #1e293b;">Vi have fundet en hjælper!</h1>
-          <p>Hej ${request.citizenName},</p>
-          <p>Gode nyheder! Den socialrådgiverstuderende <strong>${student.name}</strong> har påtaget sig din opgave: <em>"${request.title}"</em>.</p>
-          <p>For at frigive jeres kontaktoplysninger til hinanden og starte samarbejdet, skal du nu gennemføre betalingen.</p>
-          <a href="${statusUrl}" style="display: inline-block; background: #059669; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; margin: 20px 0;">Gå til betaling nu</a>
-          <p>Når betalingen er gennemført, får du direkte adgang til at kontakte den studerende.</p>
-          <p style="font-size: 13px; color: #64748b; margin-top: 20px; font-style: italic;">Hvis du ikke er blevet kontaktet af den studerende inden for 24 timer efter gennemført betaling, beder vi dig henvende dig til Cohéro på <a href="mailto:kontakt@cohero.dk" style="color: #059669; font-weight: bold;">kontakt@cohero.dk</a>.</p>
-          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-          <p style="font-size: 12px; color: #94a3b8;">Cohéro Markedsplads &ndash; hjælper borgere og studerende med at finde hinanden.</p>
-        </div>
-      `,
-    });
-    console.log('Resend claim email result:', emailRes);
+    console.log('Assistance request claimed in Firestore:', requestId);
 
     revalidatePath('/markedsplads');
     return { success: true };
