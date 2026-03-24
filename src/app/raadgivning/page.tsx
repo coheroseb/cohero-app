@@ -174,7 +174,7 @@ export default function PublicAssistanceRequestPage() {
          </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 pt-32 space-y-12">
+      <main className="max-w-2xl mx-auto px-6 pt-40 md:pt-48 space-y-12">
          {/* Step Progress */}
          <div className="space-y-6">
             <div className="flex justify-between items-end px-2">
