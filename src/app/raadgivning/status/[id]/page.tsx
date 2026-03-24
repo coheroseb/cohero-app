@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   MessageSquare,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  Star
 } from 'lucide-react';
 import { AssistanceRequest } from '@/ai/flows/types';
 import { createStripeCheckoutForRequestAction, verifyAndMarkPaidAction, completeAssistanceRequestAction } from '@/app/markedsplads/actions';
@@ -36,6 +37,7 @@ export default function AssistanceRequestStatusPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [userRating, setUserRating] = useState(5);
 
   // Load request data
   useEffect(() => {
@@ -100,7 +102,7 @@ export default function AssistanceRequestStatusPage() {
     
     setIsProcessing(true);
     try {
-      const result = await completeAssistanceRequestAction(id);
+      const result = await completeAssistanceRequestAction(id, userRating);
       if (result.success) {
         // Firebase onSnapshot will handle the state update automatically
       } else {
@@ -178,7 +180,7 @@ export default function AssistanceRequestStatusPage() {
                         {isCompleted ? 'Opgaven er afsluttet' : isPaid ? 'Opgaven er betalt' : isClaimed ? 'En studerende har taget din opgave!' : 'Venter på en studerende'}
                     </h2>
                     <p className="text-slate-500 font-medium mt-1">
-                        {isCompleted ? 'Tak fordi du brugte Cohéro. Pengene udbetales nu til din hjælper.' :
+                        {isCompleted ? `Tak fordi du brugte Cohéro. Du gav din hjælper ${request.rating || userRating} stjerner.` :
                          isPaid ? 'Du kan nu kommunikere frit med din hjælper.' : 
                          isClaimed ? 'Gennemfør betalingen for at frigive dine kontaktoplysninger.' : 
                          'Din anmodning er synlig for alle kvalificerede studerende på platformen.'}
@@ -197,8 +199,29 @@ export default function AssistanceRequestStatusPage() {
                     </div>
                     
                     <p className="text-slate-600 font-medium leading-relaxed">
-                        Når du har modtaget hjælpen fra <strong>{request.studentName || 'den studerende'}</strong>, skal du markere opgaven som udført. Dette er din bekræftelse på, at vi kan udbetale pengene til hjælperen.
+                        Når du har modtaget hjælpen fra <strong>{request.studentName || 'den studerende'}</strong>, skal du markere opgaven som udført. Bedøm også gerne oplevelsen herunder.
                     </p>
+
+                    <div className="flex flex-col items-center gap-4 py-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Giv en bedømmelse</p>
+                        <div className="flex items-center gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    onClick={() => setUserRating(star)}
+                                    className="p-1 transition-all active:scale-90"
+                                >
+                                    <Star 
+                                        className={`w-10 h-10 ${
+                                            star <= userRating 
+                                            ? 'fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]' 
+                                            : 'text-slate-200'
+                                        } transition-all duration-300`} 
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
                     <button 
                         onClick={handleComplete}

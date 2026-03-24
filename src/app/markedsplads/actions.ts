@@ -184,10 +184,11 @@ export async function verifyAndMarkPaidAction(requestId: string, sessionId: stri
 /**
  * Marks a request as completed by the citizen.
  */
-export async function completeAssistanceRequestAction(requestId: string) {
+export async function completeAssistanceRequestAction(requestId: string, rating: number) {
   try {
     await adminFirestore.collection('assistance_requests').doc(requestId).update({
       status: 'completed',
+      rating,
       completedAt: FieldValue.serverTimestamp(),
     });
 

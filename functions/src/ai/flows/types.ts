@@ -218,6 +218,7 @@ export const AssistanceRequestSchema = z.object({
   claimedAt: z.any().optional(),
   completedAt: z.any().optional(),
   location: z.string().optional().describe('Fysisk lokation eller "Online"'),
+  rating: z.number().min(1).max(5).optional().describe('Borgerens bedømmelse af hjælpen'),
 });
 
 export type AssistanceRequest = z.infer<typeof AssistanceRequestSchema>;
