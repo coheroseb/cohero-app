@@ -406,7 +406,7 @@ export default function PublicAssistanceRequestPage() {
          </div>
          
          <div className="text-center">
-            <p className="text-[10px] text-slate-400 font-medium">Brug for hjælp? Kontakt <a href="mailto:support@cohero.dk" className="text-rose-400 font-bold hover:underline">support@cohero.dk</a></p>
+            <p className="text-[10px] text-slate-400 font-medium">Brug for hjælp? Kontakt <a href="mailto:kontakt@cohero.dk" className="text-rose-400 font-bold hover:underline">kontakt@cohero.dk</a></p>
          </div>
       </main>
     </div>

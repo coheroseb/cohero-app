@@ -285,7 +285,7 @@ export default function GroupsUpgradePage() {
               <div className="h-1 w-1 rounded-full bg-slate-300 hidden md:block"></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Afmeld når du vil</span>
               <div className="h-1 w-1 rounded-full bg-slate-300 hidden md:block"></div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Support <a href="mailto:support@cohero.dk" className="underline hover:text-slate-800">her</a></span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Support <a href="mailto:kontakt@cohero.dk" className="underline hover:text-slate-800">her</a></span>
            </div>
         </footer>
     </div>

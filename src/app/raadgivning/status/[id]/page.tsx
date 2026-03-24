@@ -321,7 +321,7 @@ export default function AssistanceRequestStatusPage() {
         {/* Help / Footer */}
         <div className="text-center space-y-4 px-12">
             <p className="text-xs text-slate-400 leading-relaxed">
-                Har du spørgsmål til din anmodning? Kontakt Cohéro support på support@cohero.dk og oplys dit reference-id: <span className="font-mono">{id}</span>
+                Har du spørgsmål til din anmodning? Kontakt Cohéro support på kontakt@cohero.dk og oplys dit reference-id: <span className="font-mono">{id}</span>
             </p>
             <button onClick={() => router.push('/')} className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-600 transition-colors">Gå tilbage til Cohéro</button>
         </div>
