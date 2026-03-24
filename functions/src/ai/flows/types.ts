@@ -159,6 +159,8 @@ export interface UserProfile {
   cprNumber?: string;
   bankReg?: string;
   bankAccount?: string;
+  payoutFullName?: string;
+  payoutAddress?: string;
   isHelperEnabled?: boolean;
 }
 

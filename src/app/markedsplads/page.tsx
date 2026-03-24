@@ -55,6 +55,8 @@ const AssistanceMarketplaceContent = () => {
   const [showPayoutInfoModal, setShowPayoutInfoModal] = useState(false);
 
   const [payoutFormData, setPayoutFormData] = useState({
+    fullName: '',
+    address: '',
     cprNumber: '',
     bankReg: '',
     bankAccount: '',
@@ -73,12 +75,16 @@ const AssistanceMarketplaceContent = () => {
     async function loadPayoutInfo() {
       if (userProfile?.cprNumber && userProfile?.bankReg && userProfile?.bankAccount) {
         try {
-          const [cpr, reg, account] = await Promise.all([
+          const [cpr, reg, account, name, addr] = await Promise.all([
             decryptData(userProfile.cprNumber),
             decryptData(userProfile.bankReg),
-            decryptData(userProfile.bankAccount)
+            decryptData(userProfile.bankAccount),
+            userProfile.payoutFullName ? decryptData(userProfile.payoutFullName) : Promise.resolve(''),
+            userProfile.payoutAddress ? decryptData(userProfile.payoutAddress) : Promise.resolve('')
           ]);
           setPayoutFormData({
+            fullName: name,
+            address: addr,
             cprNumber: cpr,
             bankReg: reg,
             bankAccount: account
@@ -86,6 +92,8 @@ const AssistanceMarketplaceContent = () => {
         } catch (err) {
           console.error("Failed to decrypt payout info:", err);
           setPayoutFormData({
+            fullName: '',
+            address: '',
             cprNumber: userProfile.cprNumber || '',
             bankReg: userProfile.bankReg || '',
             bankAccount: userProfile.bankAccount || '',
@@ -178,22 +186,32 @@ const AssistanceMarketplaceContent = () => {
     e.preventDefault();
     if (!user || !firestore) return;
     
-    if (payoutFormData.cprNumber.length < 10 || payoutFormData.bankReg.length < 4 || payoutFormData.bankAccount.length < 5) {
+    if (
+        !payoutFormData.fullName || 
+        !payoutFormData.address || 
+        payoutFormData.cprNumber.length < 10 || 
+        payoutFormData.bankReg.length < 4 || 
+        payoutFormData.bankAccount.length < 5
+    ) {
         alert("Venligst udfyld alle felter korrekt.");
         return;
     }
 
     try {
-        const [encCpr, encReg, encAccount] = await Promise.all([
+        const [encCpr, encReg, encAccount, encName, encAddr] = await Promise.all([
             encryptData(payoutFormData.cprNumber),
             encryptData(payoutFormData.bankReg),
-            encryptData(payoutFormData.bankAccount)
+            encryptData(payoutFormData.bankAccount),
+            encryptData(payoutFormData.fullName),
+            encryptData(payoutFormData.address)
         ]);
 
         await updateDoc(doc(firestore, 'users', user.uid), {
             cprNumber: encCpr,
             bankReg: encReg,
             bankAccount: encAccount,
+            payoutFullName: encName,
+            payoutAddress: encAddr,
             isHelperEnabled: true,
         });
         setShowPayoutInfoModal(false);
@@ -468,6 +486,30 @@ const AssistanceMarketplaceContent = () => {
                 <form onSubmit={handleSavePayoutInfo} className="space-y-6">
                     <div className="grid gap-6">
                         <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Fulde Navn</label>
+                           <input 
+                              type="text" 
+                              required 
+                              placeholder="Dit fulde navn"
+                              value={payoutFormData.fullName}
+                              onChange={(e) => setPayoutFormData({...payoutFormData, fullName: e.target.value})}
+                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
+                           />
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Adresse</label>
+                           <input 
+                              type="text" 
+                              required 
+                              placeholder="Vejnavn, nr., postnr. og by"
+                              value={payoutFormData.address}
+                              onChange={(e) => setPayoutFormData({...payoutFormData, address: e.target.value})}
+                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
+                           />
+                        </div>
+
+                        <div className="space-y-2">
                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">CPR-Nummer</label>
                            <input 
                               type="text" 
@@ -478,6 +520,7 @@ const AssistanceMarketplaceContent = () => {
                               className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
                            />
                         </div>
+
                         <div className="grid grid-cols-3 gap-4">
                            <div className="space-y-2 col-span-1">
                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Reg.</label>
