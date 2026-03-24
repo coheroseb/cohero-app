@@ -384,6 +384,127 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 4. CITIZEN ASSISTANCE SECTION (New Marketplace Promo) */}
+      <section className="py-24 sm:py-40 bg-zinc-950 relative overflow-hidden px-5 sm:px-8">
+        {/* Abstract Background Decor */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
+            <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-rose-500 rounded-full blur-[150px]"></div>
+            <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-500 rounded-full blur-[150px]"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
+            
+            {/* Illustration Side */}
+            <div className="w-full lg:w-1/2 order-2 lg:order-1">
+                <Reveal className="relative flex items-center justify-center">
+                    <div className="relative w-full aspect-square max-w-md">
+                        {/* Center Shield */}
+                        <motion.div 
+                            animate={{ 
+                                scale: [1, 1.05, 1],
+                                rotate: [0, 2, 0, -2, 0]
+                            }}
+                            transition={{ 
+                                duration: 8, 
+                                repeat: Infinity, 
+                                ease: "easeInOut" 
+                            }}
+                            className="absolute inset-0 m-auto w-40 h-40 sm:w-56 sm:h-56 bg-gradient-to-br from-rose-500 to-rose-600 rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(244,63,94,0.5)] flex items-center justify-center border-4 border-white/20 z-20"
+                        >
+                            <ShieldCheck className="w-20 h-20 sm:w-28 sm:h-28 text-white" />
+                        </motion.div>
+
+                        {/* Orbiting Elements */}
+                        {[
+                            { icon: Heart, delay: 0, color: 'bg-amber-400', label: 'Omsorg' },
+                            { icon: Scale, delay: 2, color: 'bg-indigo-400', label: 'Retssikkerhed' },
+                            { icon: Users, delay: 4, color: 'bg-emerald-400', label: 'Bisidder' },
+                            { icon: GraduationCap, delay: 6, color: 'bg-blue-400', label: 'Ekspertise' },
+                        ].map((item, i) => (
+                            <motion.div
+                                key={i}
+                                animate={{
+                                    rotate: 360
+                                }}
+                                transition={{
+                                    duration: 15,
+                                    repeat: Infinity,
+                                    ease: "linear",
+                                    delay: -item.delay
+                                }}
+                                className="absolute inset-0 m-auto w-full h-full pointer-events-none"
+                            >
+                                <motion.div 
+                                    animate={{ rotate: -360 }}
+                                    transition={{ duration: 15, repeat: Infinity, ease: "linear", delay: -item.delay }}
+                                    className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 ${item.color} rounded-[1.5rem] shadow-2xl flex flex-col items-center justify-center gap-1 border-2 border-white/30 backdrop-blur-md pointer-events-auto`}
+                                >
+                                    <item.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                                    <span className="text-[8px] sm:text-[9px] font-black uppercase text-white/80 tracking-tighter">{item.label}</span>
+                                </motion.div>
+                            </motion.div>
+                        ))}
+
+                        {/* Connection Lines Decor */}
+                        <div className="absolute inset-0 border-2 border-white/5 rounded-full scale-110 opacity-30"></div>
+                        <div className="absolute inset-0 border-2 border-white/5 rounded-full scale-75 opacity-30"></div>
+                    </div>
+                </Reveal>
+            </div>
+
+            {/* Text Side */}
+            <div className="w-full lg:w-1/2 order-1 lg:order-2 space-y-8 text-center lg:text-left">
+                <div className="space-y-4">
+                    <Reveal>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400/10 border border-amber-400/20 rounded-full mb-4">
+                            <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-100/80">For borgere og forældre</span>
+                        </div>
+                    </Reveal>
+                    <Reveal delay={0.1}>
+                        <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-[1.05] tracking-tight">
+                            Har du brug for <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-400 italic">faglig hjælp?</span>
+                        </h2>
+                        <p className="text-xl text-amber-100/60 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 mt-6">
+                            Står du overfor en svær sag, har brug for en bisidder til et møde eller hjælp til en ansøgning? Vores studerende hjælper dig sikkert gennem systemet.
+                        </p>
+                    </Reveal>
+                </div>
+
+                <Reveal delay={0.2}>
+                    <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+                        <Link 
+                            href="/raadgivning" 
+                            className="group relative px-10 py-6 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 transition-all w-full sm:w-auto overflow-hidden active:scale-95"
+                        >
+                            <span className="relative z-10 flex items-center justify-center gap-3">
+                                Start anmodning
+                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+                            </span>
+                        </Link>
+                        <div className="flex items-center gap-4 py-2">
+                            <div className="flex -space-x-3">
+                                {[1,2,3].map(i => (
+                                    <div key={i} className="w-10 h-10 rounded-full border-2 border-zinc-950 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-300">
+                                        {['H','L','M'][i-1]}
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[10px] whitespace-nowrap font-bold text-amber-100/40 uppercase tracking-widest">Hjælp fra hele landet</p>
+                        </div>
+                    </div>
+                </Reveal>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* 4. SOCIAL PROOF */}
       <section className="py-20 sm:py-32 bg-white relative overflow-hidden px-5 sm:px-8">
         <div className="max-w-4xl mx-auto text-center">
