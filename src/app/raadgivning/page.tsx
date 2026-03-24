@@ -92,12 +92,12 @@ export default function PublicAssistanceRequestPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6 pb-24">
-        <div className="max-w-2xl w-full bg-white rounded-[3.5rem] shadow-2xl p-12 text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 border border-emerald-100">
-           <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner">
-              <CheckCircle2 className="w-12 h-12" />
+        <div className="max-w-2xl w-full bg-white rounded-[2rem] sm:rounded-[3.5rem] shadow-2xl p-6 sm:p-12 text-center space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 border border-emerald-100">
+           <div className="w-16 h-16 sm:w-24 sm:h-24 bg-emerald-50 text-emerald-600 rounded-2xl sm:rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle2 className="w-8 h-8 sm:w-12 sm:h-12" />
            </div>
-           <div className="space-y-4">
-              <h1 className="text-4xl font-black text-slate-900 serif">Anmodning modtaget!</h1>
+           <div className="space-y-3 sm:space-y-4">
+              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 serif">Anmodning modtaget!</h1>
               <p className="text-slate-500 text-lg font-medium leading-relaxed">
                 Din anmodning er nu lagt op på markedspladsen. Du hører fra os via e-mail, når en studerende har taget opgaven.
               </p>
@@ -106,7 +106,7 @@ export default function PublicAssistanceRequestPage() {
                 <div className="space-y-4 py-4">
                   <div className="p-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] block w-full text-center group transition-all hover:bg-white hover:shadow-2xl hover:border-amber-100">
                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Din personlige status-side</p>
-                      <p className="text-xs text-rose-600 font-bold mb-6 break-all px-4 bg-white py-3 rounded-xl border border-rose-50 select-all">
+                      <p className="text-[10px] sm:text-xs text-rose-600 font-bold mb-4 sm:mb-6 break-all px-3 sm:px-4 bg-white py-3 rounded-xl border border-rose-50 select-all">
                         {typeof window !== 'undefined' && `${window.location.origin}/raadgivning/status/${requestId}`}
                       </p>
                       <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
@@ -175,13 +175,13 @@ export default function PublicAssistanceRequestPage() {
          </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 pt-40 md:pt-48 space-y-12">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-28 sm:pt-48 space-y-8 sm:space-y-12">
          {/* Step Progress */}
          <div className="space-y-6">
             <div className="flex justify-between items-end px-2">
                 <div>
                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-600 mb-1">Trin {currentStep} af 4</p>
-                   <h2 className="text-2xl font-bold text-slate-900 serif">{STEPS[currentStep - 1].title}</h2>
+                   <h2 className="text-xl sm:text-2xl font-bold text-slate-900 serif leading-tight">{STEPS[currentStep - 1].title}</h2>
                 </div>
                 <div className="hidden sm:flex items-center gap-1">
                     {STEPS.map((s) => (
@@ -200,10 +200,10 @@ export default function PublicAssistanceRequestPage() {
             </div>
          </div>
 
-         <div className="bg-white rounded-[3rem] border border-amber-100 shadow-2xl shadow-amber-950/5 overflow-hidden">
-            <div className="p-8 sm:p-12">
+         <div className="bg-white rounded-[2.5rem] sm:rounded-[3rem] border border-amber-100 shadow-2xl shadow-amber-950/5 overflow-hidden">
+            <div className="p-6 sm:p-12">
                
-               <form onSubmit={handleSubmit} className="space-y-10">
+               <form onSubmit={handleSubmit} className="space-y-8 sm:space-y-10">
                   
                   {/* STEP 1: CATEGORY & TITLE */}
                   {currentStep === 1 && (
@@ -216,7 +216,7 @@ export default function PublicAssistanceRequestPage() {
                                         key={c}
                                         type="button"
                                         onClick={() => setFormData({...formData, category: c as any})}
-                                        className={`px-6 py-4 rounded-[1.5rem] text-xs font-bold transition-all border ${formData.category === c ? 'bg-amber-950 text-white border-amber-950 shadow-xl shadow-amber-950/20' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-amber-50'}`}
+                                        className={`px-4 sm:px-6 py-3 sm:py-4 rounded-2xl sm:rounded-[1.5rem] text-[11px] sm:text-xs font-bold transition-all border ${formData.category === c ? 'bg-amber-950 text-white border-amber-950 shadow-xl shadow-amber-950/20' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-amber-50'}`}
                                     >
                                         {c}
                                     </button>
@@ -232,7 +232,7 @@ export default function PublicAssistanceRequestPage() {
                                 required
                                 value={formData.title}
                                 onChange={e => setFormData({...formData, title: e.target.value})}
-                                className="w-full h-16 px-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-300" 
+                                className="w-full h-14 sm:h-16 px-6 sm:px-8 bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-300 text-sm sm:text-base" 
                             />
                             <p className="text-[10px] text-slate-400 font-medium px-2 italic">Gør den fængende, så de studerende hurtigt forstår opgaven.</p>
                         </div>
@@ -249,7 +249,7 @@ export default function PublicAssistanceRequestPage() {
                                 required
                                 value={formData.description}
                                 onChange={e => setFormData({...formData, description: e.target.value})}
-                                className="w-full h-64 p-8 bg-slate-50 border border-slate-100 rounded-[2rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-medium resize-none text-slate-900 shadow-inner leading-relaxed" 
+                                className="w-full h-48 sm:h-64 p-6 sm:p-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] sm:rounded-[2rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-medium resize-none text-slate-900 shadow-inner leading-relaxed text-sm sm:text-base" 
                             />
                         </div>
 
@@ -262,7 +262,7 @@ export default function PublicAssistanceRequestPage() {
                                     placeholder="F.eks. Aarhus C eller Online"
                                     value={formData.location}
                                     onChange={e => setFormData({...formData, location: e.target.value})}
-                                    className="w-full h-16 pl-14 pr-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900" 
+                                    className="w-full h-14 sm:h-16 pl-12 sm:pl-14 pr-6 sm:pr-8 bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900 text-sm sm:text-base" 
                                 />
                             </div>
                         </div>
@@ -311,7 +311,7 @@ export default function PublicAssistanceRequestPage() {
                                     placeholder="+45 00 00 00 00"
                                     value={formData.citizenPhone}
                                     onChange={e => setFormData({...formData, citizenPhone: e.target.value})}
-                                    className="w-full h-16 pl-14 pr-8 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900" 
+                                    className="w-full h-14 sm:h-16 pl-12 sm:pl-14 pr-6 sm:pr-8 bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900 text-sm sm:text-base" 
                                 />
                             </div>
                         </div>
@@ -333,21 +333,21 @@ export default function PublicAssistanceRequestPage() {
                                             required
                                             value={formData.price}
                                             onChange={e => setFormData({...formData, price: parseInt(e.target.value) || 0})}
-                                            className="w-full h-24 pl-20 pr-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-black text-4xl text-slate-900 text-center" 
+                                            className="w-full h-20 sm:h-24 pl-16 sm:pl-20 pr-6 sm:pr-8 bg-slate-50 border border-slate-100 rounded-3xl sm:rounded-[2.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-black text-3xl sm:text-4xl text-slate-900 text-center" 
                                         />
                                     </div>
                                     
-                                    <div className="w-full p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 space-y-4">
+                                    <div className="w-full p-6 sm:p-8 bg-amber-50 rounded-3xl sm:rounded-[2.5rem] border border-amber-100 space-y-3 sm:space-y-4">
                                       <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-amber-900/50">
                                          <span>Platformgebyr (15%)</span>
                                          <span>-{Math.round(formData.price * 0.15)} DKK</span>
                                       </div>
-                                      <div className="flex justify-between items-center pt-4 border-t border-amber-200">
+                                      <div className="flex justify-between items-center pt-3 sm:pt-4 border-t border-amber-200">
                                          <div className="flex flex-col">
-                                            <span className="text-sm font-black text-amber-950 uppercase tracking-tight leading-none mb-1">Hjælper modtager</span>
+                                            <span className="text-xs sm:text-sm font-black text-amber-950 uppercase tracking-tight leading-none mb-1">Hjælper modtager</span>
                                             <span className="text-[9px] text-amber-900/40 font-bold italic tracking-tighter">Attraher de bedste studerende</span>
                                          </div>
-                                         <span className="text-3xl font-black text-amber-950 leading-none">
+                                         <span className="text-2xl sm:text-3xl font-black text-amber-950 leading-none">
                                             {formData.price - Math.round(formData.price * 0.15)} kr.
                                          </span>
                                       </div>
@@ -395,7 +395,7 @@ export default function PublicAssistanceRequestPage() {
                   {error && <p className="text-sm font-bold text-rose-600 text-center pt-4 animate-bounce">{error}</p>}
 
                   {/* NAVIGATION BUTTONS */}
-                  <div className="flex items-center gap-4 pt-4">
+                  <div className="flex items-center gap-3 sm:gap-4 pt-4">
                      {currentStep > 1 && (
                         <button 
                             type="button"
@@ -406,7 +406,7 @@ export default function PublicAssistanceRequestPage() {
                                     prevStep();
                                 }
                             }}
-                            className="h-16 px-8 bg-slate-50 text-slate-400 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] border border-slate-100 hover:text-slate-900 hover:bg-white transition-all active:scale-95 flex items-center justify-center"
+                            className="h-14 sm:h-16 px-6 sm:px-8 bg-slate-50 text-slate-400 rounded-2xl sm:rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] border border-slate-100 hover:text-slate-900 hover:bg-white transition-all active:scale-95 flex items-center justify-center"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -417,7 +417,7 @@ export default function PublicAssistanceRequestPage() {
                             type="button"
                             disabled={!isStepValid()}
                             onClick={nextStep}
-                            className="flex-1 h-16 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-rose-900 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3"
+                            className="flex-1 h-14 sm:h-16 bg-slate-900 text-white rounded-2xl sm:rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-rose-900 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3"
                         >
                             Næste trin
                             <ArrowRight className="w-4 h-4" />
@@ -427,7 +427,7 @@ export default function PublicAssistanceRequestPage() {
                             type="button"
                             disabled={!isStepValid()}
                             onClick={() => setIsConfirmed(true)}
-                            className="flex-1 h-16 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-rose-900 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3"
+                            className="flex-1 h-14 sm:h-16 bg-slate-900 text-white rounded-2xl sm:rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-rose-900 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3"
                         >
                             Se oversigt
                             <ArrowRight className="w-4 h-4" />
@@ -436,9 +436,9 @@ export default function PublicAssistanceRequestPage() {
                         <button 
                             type="submit" 
                             disabled={isSubmitting || !isStepValid()}
-                            className="flex-1 h-20 bg-emerald-600 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-emerald-950/20 hover:bg-emerald-700 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3 group"
+                            className="flex-1 h-16 sm:h-20 bg-emerald-600 text-white rounded-2xl sm:rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-emerald-950/20 hover:bg-emerald-700 transition-all disabled:opacity-30 active:scale-[0.98] flex items-center justify-center gap-3 group"
                         >
-                            {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : (
+                            {isSubmitting ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin mx-auto" /> : (
                                 <>
                                     Bekræft & Send
                                     <CheckCircle2 className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />

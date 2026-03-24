@@ -160,25 +160,25 @@ export default function AssistanceRequestStatusPage() {
          </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 pt-32 space-y-8">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 space-y-6 sm:space-y-8">
         {/* Status Indicator Banner */}
-        <section className={`p-8 rounded-[3rem] border transition-all ${
+        <section className={`p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] border transition-all ${
             isCompleted ? 'bg-emerald-100 border-emerald-200' :
             isPaid ? 'bg-emerald-50 border-emerald-100' :
             isClaimed ? 'bg-amber-50 border-amber-100' :
             'bg-slate-50 border-slate-100'
         }`}>
             <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-                <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-inner shrink-0 ${
+                <div className={`w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-[2rem] flex items-center justify-center shadow-inner shrink-0 ${
                     isCompleted ? 'bg-emerald-200 text-emerald-700' :
                     isPaid ? 'bg-emerald-100 text-emerald-600' :
                     isClaimed ? 'bg-amber-100 text-amber-600' :
                     'bg-white text-slate-400'
                 }`}>
-                    {isCompleted ? <CheckCircle2 className="w-10 h-10" /> : isPaid ? <CheckCircle2 className="w-10 h-10" /> : isClaimed ? <Clock className="w-10 h-10 animate-pulse" /> : <Clock className="w-10 h-10" />}
+                    {isCompleted ? <CheckCircle2 className="w-7 h-7 sm:w-10 sm:h-10" /> : isPaid ? <CheckCircle2 className="w-7 h-7 sm:w-10 sm:h-10" /> : isClaimed ? <Clock className="w-7 h-7 sm:w-10 sm:h-10 animate-pulse" /> : <Clock className="w-7 h-7 sm:w-10 sm:h-10" />}
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black text-slate-900 serif">
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 serif leading-tight">
                         {isCompleted ? 'Opgaven er afsluttet' : isPaid ? 'Opgaven er betalt' : isClaimed ? 'En studerende har taget din opgave!' : 'Venter på en studerende'}
                     </h2>
                     <p className="text-slate-500 font-medium mt-1">
@@ -193,11 +193,11 @@ export default function AssistanceRequestStatusPage() {
 
         {/* Action Area: COMPLETION */}
         {isClaimed && isPaid && !isCompleted && (
-            <section className="bg-white rounded-[3rem] border-2 border-emerald-200 shadow-2xl shadow-emerald-950/10 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="p-8 sm:p-12 space-y-8">
+            <section className="bg-white rounded-[2rem] sm:rounded-[3rem] border-2 border-emerald-200 shadow-2xl shadow-emerald-950/10 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="p-6 sm:p-12 space-y-6 sm:space-y-8">
                     <div className="flex items-center gap-3">
-                        <CheckCircle2 className="w-6 h-6 text-emerald-900" />
-                        <h3 className="text-xl font-black text-emerald-950 serif uppercase tracking-tight">Afslut opgaven</h3>
+                        <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-900" />
+                        <h3 className="text-lg sm:text-xl font-black text-emerald-950 serif uppercase tracking-tight">Afslut opgaven</h3>
                     </div>
                     
                     <p className="text-slate-600 font-medium leading-relaxed">
@@ -214,7 +214,7 @@ export default function AssistanceRequestStatusPage() {
                                     className="p-1 transition-all active:scale-90"
                                 >
                                     <Star 
-                                        className={`w-10 h-10 ${
+                                        className={`w-8 h-8 sm:w-10 sm:h-10 ${
                                             star <= userRating 
                                             ? 'fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]' 
                                             : 'text-slate-200'
@@ -243,20 +243,20 @@ export default function AssistanceRequestStatusPage() {
 
         {/* Action Area: PAYMENT */}
         {isClaimed && !isPaid && !isCompleted && (
-            <section className="bg-white rounded-[3rem] border-2 border-amber-200 shadow-2xl shadow-amber-950/10 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="p-8 sm:p-12 space-y-8">
+            <section className="bg-white rounded-[2rem] sm:rounded-[3rem] border-2 border-amber-200 shadow-2xl shadow-amber-950/10 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="p-6 sm:p-12 space-y-6 sm:space-y-8">
                     <div className="flex items-center gap-3">
-                        <CreditCard className="w-6 h-6 text-amber-900" />
-                        <h3 className="text-xl font-black text-amber-950 serif uppercase tracking-tight">Gennemfør Betaling</h3>
+                        <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-amber-900" />
+                        <h3 className="text-lg sm:text-xl font-black text-amber-950 serif uppercase tracking-tight">Gennemfør Betaling</h3>
                     </div>
                     
-                    <div className="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100/50 flex flex-col items-center justify-center gap-4 text-center">
+                    <div className="p-6 sm:p-8 bg-amber-50/50 rounded-[1.5rem] sm:rounded-[2.5rem] border border-amber-100/50 flex flex-col items-center justify-center gap-3 sm:gap-4 text-center">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-2">Totalbeløb til betaling</p>
-                            <p className="text-6xl font-black text-amber-950 serif">{request.price} <span className="text-2xl">kr.</span></p>
+                            <p className="text-4xl sm:text-6xl font-black text-amber-950 serif">{request.price} <span className="text-xl sm:text-2xl">kr.</span></p>
                         </div>
-                        <div className="h-px bg-amber-200/50 w-full max-w-[200px]" />
-                        <p className="text-xs text-amber-900/60 font-medium italic">Inkluderer platform-gebyr og udbetaling til den studerende.</p>
+                        <div className="h-px bg-amber-200/50 w-full max-w-[150px] sm:max-w-[200px]" />
+                        <p className="text-[10px] sm:text-xs text-amber-900/60 font-medium italic">Inkluderer platform-gebyr og udbetaling til den studerende.</p>
                     </div>
 
                     <button 
@@ -281,14 +281,14 @@ export default function AssistanceRequestStatusPage() {
         )}
 
         {/* Task Details Audit */}
-        <section className="bg-white rounded-[3rem] border border-amber-100 overflow-hidden shadow-sm">
-            <div className="p-8 md:p-12 space-y-10">
+        <section className="bg-white rounded-[2rem] sm:rounded-[3rem] border border-amber-100 overflow-hidden shadow-sm">
+            <div className="p-6 sm:p-12 space-y-6 sm:space-y-10">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Oversigt</p>
-                        <h3 className="text-2xl font-bold text-slate-900 serif">{request.title}</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 serif leading-tight">{request.title}</h3>
                     </div>
-                    <span className="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-black uppercase tracking-widest">{request.category}</span>
+                    <span className="px-3 sm:px-4 py-1.5 bg-slate-100 text-slate-600 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest">{request.category}</span>
                 </div>
 
                 <div className="prose prose-slate max-w-none">
