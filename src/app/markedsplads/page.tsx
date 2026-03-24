@@ -492,8 +492,8 @@ const AssistanceMarketplaceContent = () => {
 
       {showPayoutInfoModal && (
         <div className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl border border-amber-100 overflow-hidden animate-in fade-in zoom-in duration-300">
-             <div className="p-8 md:p-12 space-y-8">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl border border-amber-100 overflow-hidden animate-in fade-in zoom-in duration-300">
+             <div className="p-8 md:p-10 space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-amber-950 serif">Udbetalings-info</h2>
@@ -505,7 +505,7 @@ const AssistanceMarketplaceContent = () => {
                 </div>
 
                 <form onSubmit={handleSavePayoutInfo} className="space-y-6">
-                    <div className="grid gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <div className="space-y-2">
                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Fulde Navn</label>
                            <input 
@@ -554,28 +554,30 @@ const AssistanceMarketplaceContent = () => {
                            />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                           <div className="space-y-2 col-span-1">
-                               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Reg.</label>
-                               <input 
-                                  type="text" 
-                                  required 
-                                  placeholder="1234"
-                                  value={payoutFormData.bankReg}
-                                  onChange={(e) => setPayoutFormData({...payoutFormData, bankReg: e.target.value})}
-                                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
-                               />
-                           </div>
-                           <div className="space-y-2 col-span-2">
-                               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Konto</label>
-                               <input 
-                                  type="text" 
-                                  required 
-                                  placeholder="12345678"
-                                  value={payoutFormData.bankAccount}
-                                  onChange={(e) => setPayoutFormData({...payoutFormData, bankAccount: e.target.value})}
-                                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
-                               />
+                        <div className="md:col-span-2">
+                           <div className="grid grid-cols-3 gap-4">
+                              <div className="space-y-2 col-span-1">
+                                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Reg.</label>
+                                  <input 
+                                     type="text" 
+                                     required 
+                                     placeholder="1234"
+                                     value={payoutFormData.bankReg}
+                                     onChange={(e) => setPayoutFormData({...payoutFormData, bankReg: e.target.value})}
+                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
+                                  />
+                              </div>
+                              <div className="space-y-2 col-span-2">
+                                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Konto</label>
+                                  <input 
+                                     type="text" 
+                                     required 
+                                     placeholder="12345678"
+                                     value={payoutFormData.bankAccount}
+                                     onChange={(e) => setPayoutFormData({...payoutFormData, bankAccount: e.target.value})}
+                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
+                                  />
+                              </div>
                            </div>
                         </div>
                     </div>
