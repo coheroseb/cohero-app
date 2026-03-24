@@ -165,6 +165,7 @@ export interface UserProfile {
   payoutFullName?: string;
   payoutAddress?: string;
   isHelperEnabled?: boolean;
+  phoneNumber?: string;
 }
 
 export interface Post {
@@ -212,6 +213,7 @@ export const AssistanceRequestSchema = z.object({
   citizenPhone: z.string().optional().describe('Telefonnummer til kontakt'),
   studentId: z.string().optional().describe('UID for den studerende der har taget opgaven'),
   studentName: z.string().optional().describe('Navn på den studerende'),
+  studentPhone: z.string().optional().describe('Telefonnummer på den studerende'),
   price: z.number().describe('Det fulde beløb borgeren betaler'),
   platformFee: z.number().describe('Platformens andel af betalingen'),
   studentEarnings: z.number().describe('Hvad den studerende tjener efter fee'),

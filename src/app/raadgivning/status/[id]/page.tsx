@@ -21,7 +21,9 @@ import {
   MessageSquare,
   ChevronRight,
   AlertCircle,
-  Star
+  Star,
+  Mail,
+  Phone
 } from 'lucide-react';
 import { AssistanceRequest } from '@/ai/flows/types';
 import { createStripeCheckoutForRequestAction, verifyAndMarkPaidAction, completeAssistanceRequestAction } from '@/app/markedsplads/actions';
@@ -304,13 +306,35 @@ export default function AssistanceRequestStatusPage() {
                         </div>
                     </div>
                     {isClaimed && isPaid && (
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500">
-                                <MessageSquare className="w-5 h-5" />
+                        <div className="flex flex-col gap-6 pt-6 border-t border-slate-50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500">
+                                    <ShieldCheck className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Din Hjælper</p>
+                                    <p className="text-sm font-bold text-emerald-700">{request.studentName || 'Studerende'}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Hjælper</p>
-                                <p className="text-sm font-bold text-emerald-700">{request.studentName || 'Din Hjælper'}</p>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                {request.studentPhone && (
+                                    <a href={`tel:${request.studentPhone}`} className="flex items-center gap-4 p-4 bg-emerald-50/30 rounded-2xl border border-emerald-100/50 hover:bg-emerald-50 transition-all group/contact">
+                                        <div className="w-10 h-10 bg-white text-emerald-600 rounded-xl flex items-center justify-center shadow-sm group-hover/contact:scale-110 transition-transform">
+                                            <Phone className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600/60">Telefon</p>
+                                            <p className="text-sm font-bold text-emerald-900">{request.studentPhone}</p>
+                                        </div>
+                                    </a>
+                                )}
+                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex items-start gap-3">
+                                    <AlertCircle className="w-4 h-4 text-slate-400 mt-0.5" />
+                                    <p className="text-[10px] font-bold text-slate-500 leading-relaxed">
+                                        Din hjælper kontakter dig senest 24 timer efter betaling. Du kan også selv ringe nu.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     )}

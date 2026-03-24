@@ -52,7 +52,7 @@ export async function createAssistanceRequestAction(formData: {
 /**
  * Claims an assistance request for a student.
  */
-export async function claimAssistanceRequestAction(requestId: string, student: { uid: string; name: string }) {
+export async function claimAssistanceRequestAction(requestId: string, student: { uid: string; name: string; phone?: string }) {
   try {
     const docRef = adminFirestore.collection('assistance_requests').doc(requestId);
     const docSnap = await docRef.get();
@@ -66,6 +66,7 @@ export async function claimAssistanceRequestAction(requestId: string, student: {
       status: 'claimed',
       studentId: student.uid,
       studentName: student.name,
+      studentPhone: student.phone || '',
       claimedAt: FieldValue.serverTimestamp(),
     });
 

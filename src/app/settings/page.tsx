@@ -25,6 +25,7 @@ export default function SettingsPage() {
 
   // Profile state
   const [username, setUsername] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [semester, setSemester] = useState('');
   const [institution, setInstitution] = useState('');
   const [profession, setProfession] = useState('');
@@ -65,6 +66,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (userProfile) {
       setUsername(userProfile.username || user?.displayName || '');
+      setPhoneNumber(userProfile.phoneNumber || '');
       setSemester(userProfile.semester || '');
       setInstitution(userProfile.institution || '');
       setProfession(userProfile.profession || '');
@@ -117,6 +119,7 @@ export default function SettingsPage() {
 
       batch.update(userRef, {
         username: capitalizedUsername,
+        phoneNumber: phoneNumber.trim(),
         semester: isQualified ? '' : semester,
         institution: isQualified ? '' : institution,
         profession: profession,
@@ -344,6 +347,11 @@ export default function SettingsPage() {
             <div>
                 <label htmlFor="username" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Brugernavn</label>
                 <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full h-12 rounded-xl focus:ring-amber-900/5 transition-all" />
+            </div>
+
+            <div>
+                <label htmlFor="phoneNumber" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Telefonnummer (til opgaver)</label>
+                <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full h-12 rounded-xl focus:ring-amber-900/5 transition-all" placeholder="Eks. +45 12 34 56 78" />
             </div>
 
             <div>

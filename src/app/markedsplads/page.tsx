@@ -60,6 +60,7 @@ const AssistanceMarketplaceContent = () => {
     cprNumber: '',
     bankReg: '',
     bankAccount: '',
+    phoneNumber: '',
   });
 
   const searchParams = useSearchParams();
@@ -82,23 +83,25 @@ const AssistanceMarketplaceContent = () => {
             userProfile.payoutFullName ? decryptData(userProfile.payoutFullName) : Promise.resolve(''),
             userProfile.payoutAddress ? decryptData(userProfile.payoutAddress) : Promise.resolve('')
           ]);
-          setPayoutFormData({
-            fullName: name,
-            address: addr,
-            cprNumber: cpr,
-            bankReg: reg,
-            bankAccount: account
-          });
-        } catch (err) {
-          console.error("Failed to decrypt payout info:", err);
-          setPayoutFormData({
-            fullName: '',
-            address: '',
-            cprNumber: userProfile.cprNumber || '',
-            bankReg: userProfile.bankReg || '',
-            bankAccount: userProfile.bankAccount || '',
-          });
-        }
+            setPayoutFormData({
+              fullName: name,
+              address: addr,
+              cprNumber: cpr,
+              bankReg: reg,
+              bankAccount: account,
+              phoneNumber: userProfile.phoneNumber || ''
+            });
+          } catch (err) {
+            console.error("Failed to decrypt payout info:", err);
+            setPayoutFormData({
+              fullName: '',
+              address: '',
+              cprNumber: userProfile.cprNumber || '',
+              bankReg: userProfile.bankReg || '',
+              bankAccount: userProfile.bankAccount || '',
+              phoneNumber: userProfile.phoneNumber || ''
+            });
+          }
       }
     }
     loadPayoutInfo();
@@ -158,8 +161,15 @@ const AssistanceMarketplaceContent = () => {
         return;
     }
 
-    if (!userProfile?.cprNumber || !userProfile?.bankReg || !userProfile?.bankAccount) {
+    if (!userProfile?.cprNumber || !userProfile?.bankReg || !userProfile?.bankAccount || !userProfile?.phoneNumber) {
         setShowPayoutInfoModal(true);
+        return;
+    }
+
+    // Check for max 3 active tasks
+    const activeTasks = requests?.filter(r => r.studentId === user.uid && r.status === 'claimed' && !r.isPaid) || [];
+    if (activeTasks.length >= 3) {
+        alert("Du har allerede 3 igangværende opgaver. Færdiggør dem før du tager nye.");
         return;
     }
 
@@ -168,7 +178,8 @@ const AssistanceMarketplaceContent = () => {
     try {
         const result = await claimAssistanceRequestAction(request.id, {
             uid: user.uid,
-            name: userProfile.username || user.displayName || 'Studerende'
+            name: userProfile.username || user.displayName || 'Studerende',
+            phone: userProfile.phoneNumber || ''
         });
         
         if (result.success) {
@@ -191,7 +202,8 @@ const AssistanceMarketplaceContent = () => {
         !payoutFormData.address || 
         payoutFormData.cprNumber.length < 10 || 
         payoutFormData.bankReg.length < 4 || 
-        payoutFormData.bankAccount.length < 5
+        payoutFormData.bankAccount.length < 5 ||
+        !payoutFormData.phoneNumber
     ) {
         alert("Venligst udfyld alle felter korrekt.");
         return;
@@ -212,6 +224,7 @@ const AssistanceMarketplaceContent = () => {
             bankAccount: encAccount,
             payoutFullName: encName,
             payoutAddress: encAddr,
+            phoneNumber: payoutFormData.phoneNumber,
             isHelperEnabled: true,
         });
         setShowPayoutInfoModal(false);
@@ -525,6 +538,18 @@ const AssistanceMarketplaceContent = () => {
                               placeholder="DDMMYY-XXXX"
                               value={payoutFormData.cprNumber}
                               onChange={(e) => setPayoutFormData({...payoutFormData, cprNumber: e.target.value})}
+                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
+                           />
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Telefonnummer</label>
+                           <input 
+                              type="tel" 
+                              required 
+                              placeholder="Eks. +45 12 34 56 78"
+                              value={payoutFormData.phoneNumber}
+                              onChange={(e) => setPayoutFormData({...payoutFormData, phoneNumber: e.target.value})}
                               className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
                            />
                         </div>
