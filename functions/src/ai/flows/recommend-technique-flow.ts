@@ -23,10 +23,11 @@ export type RecommendTechniqueInput = z.infer<typeof RecommendTechniqueInputSche
 const RecommendedTechniqueSchema = z.object({
     id: z.string().describe('The ID of the recommended technique.'),
     quote: z.string().describe("A short, specific quote from the technique's content that is most relevant to the user's challenge."),
+    reasoning: z.string().describe("A brief explanation of why this specific technique helps with the user's social work study challenge."),
 });
 
 const RecommendTechniqueDataSchema = z.object({
-  recommendations: z.array(RecommendedTechniqueSchema).describe('An array of recommended techniques, each with an ID and a relevant quote.'),
+  recommendations: z.array(RecommendedTechniqueSchema).describe('An array of recommended techniques, each with an ID, a relevant quote, and reasoning.'),
 });
 
 const RecommendTechniqueOutputSchema = z.object({
@@ -60,10 +61,13 @@ Content: "{{{content}}}"
 ---
 {{/each}}
 
-Based on the social work student's challenge, identify the 1-3 most relevant techniques. For each recommendation, you MUST provide a short, direct quote from its content that specifically addresses the social work student's problem.
+Based on the social work student's challenge, identify the 1-3 most relevant techniques. For each recommendation, you MUST provide:
+1. The 'id' of the technique.
+2. A short, direct 'quote' from its content that specifically addresses the student's problem.
+3. A brief 'reasoning' (in Danish) explaining why this specific technique is perfect for their current challenge (e.g., how it helps them master complex laws or case analyses).
 
-Your response MUST be a JSON object containing an array of recommendations, where each recommendation has an 'id' and a 'quote'.
-Example: \`{"recommendations": [{"id": "tech-1", "quote": "Start med at scanne indholdsfortegnelsen og konklusionen for at få et overblik."}]}\`
+Your response MUST be a JSON object containing an array of recommendations.
+Example: \`{"recommendations": [{"id": "tech-1", "quote": "Start med at scanne indholdsfortegnelsen...", "reasoning": "Dette hjælper dig med hurtigt at få overblik over tunge juridiske kapitler før du går i dybden."}]}\`
 `,
 });
 

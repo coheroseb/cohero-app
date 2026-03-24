@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Sparkles, Brain, ArrowRight, Star, Users, Heart, Zap, Compass, Quote, Baby, ShieldCheck } from 'lucide-react';
+import { Sparkles, Brain, ArrowRight, Star, Users, Heart, Zap, Compass, Quote, Baby, ShieldCheck, BookMarked } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -126,11 +126,11 @@ const PedagogueLandingContent: React.FC<PedagogueLandingContentProps> = ({ onSta
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               { 
-                icon: <Users className="w-8 h-8" />, 
-                title: "Deltagelses-log", 
-                desc: "Analysér børnegruppens dynamikker og find nye veje til inklusion gennem systemiske værktøjer.",
+                icon: <BookMarked className="w-8 h-8" />, 
+                title: "Logbog", 
+                desc: "Gense dine gemte analyser og refleksioner fra din studietid og praktikforløb.",
                 color: "bg-emerald-50 text-emerald-700",
-                link: "/refleksionslog"
+                link: "/min-logbog"
               },
               { 
                 icon: <Zap className="w-8 h-8" />, 
@@ -196,14 +196,14 @@ const PedagogueLandingContent: React.FC<PedagogueLandingContentProps> = ({ onSta
 
 
 export default function PedagoguePage() {
-  const { user, openAuthModal } = useApp();
+  const { user, openAuthPage } = useApp();
   const router = useRouter();
 
   const handleStart = () => {
     if (user) {
       router.push('/portal');
     } else {
-      openAuthModal('signup');
+      openAuthPage('signup');
     }
   };
 

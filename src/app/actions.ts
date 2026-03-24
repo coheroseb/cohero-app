@@ -640,7 +640,7 @@ export async function sendStreakReminderEmailAction(input: { userEmail: string, 
         await resend.emails.send({
             from: 'Cohéro Notifikationer <info@cohero.dk>',
             to: input.userEmail,
-            subject: 'Hold din streak i live!',
+            subject: subject,
             html: wrapEmailHtml(body),
         });
 

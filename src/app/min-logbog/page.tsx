@@ -91,14 +91,7 @@ const MinLogbogPageContent = () => {
         </div>
       </header>
       <main className="max-w-4xl mx-auto p-4 md:p-8">
-        <div className="mb-8">
-            <Link href="/refleksionslog">
-                <Button>
-                    <Plus className="w-4 h-4 mr-2"/>
-                    Skriv ny refleksion
-                </Button>
-            </Link>
-        </div>
+        {/* Link til refleksionslog fjernet */}
         {isLoading && (
             <div className="flex justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
@@ -109,7 +102,7 @@ const MinLogbogPageContent = () => {
              <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed border-amber-100">
                 <BookCopy className="w-12 h-12 text-amber-100 mx-auto mb-4" />
                 <p className="text-slate-500 font-bold">Du har ingen gemte refleksioner endnu.</p>
-                <p className="text-sm text-slate-400 mt-2">Gå til <Link href="/refleksionslog" className="underline font-semibold text-amber-700">Ny Refleksion</Link> for at skrive og gemme din første.</p>
+                <p className="text-sm text-slate-400 mt-2">Dine refleksioner vil blive gemt her, når du bruger vores AI-værktøjer.</p>
              </div>
         )}
 

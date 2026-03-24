@@ -45,13 +45,15 @@ export default function LiveChat() {
 
     // Listen to global online status
     const statusRef = doc(firestore, 'site_config', 'chat');
-    const unsubscribeStatus = onSnapshot(statusRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setIsOnline(docSnap.data().isOnline);
-      } else {
-        setIsOnline(false);
-      }
-    });
+      const unsubscribeStatus = onSnapshot(statusRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setIsOnline(!!docSnap.data().isOnline);
+        } else {
+          setIsOnline(false);
+        }
+      }, (err) => {
+        console.error('Support Chat status error:', err);
+      });
 
     // Handle Session ID
     let currentSessionId = '';

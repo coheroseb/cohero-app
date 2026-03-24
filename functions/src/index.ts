@@ -124,3 +124,6 @@ export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, asyn
 
 import { checkFolketingetUpdates } from "./cron/check-ft-updates";
 export { checkFolketingetUpdates };
+
+import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";
+export { onAssistanceRequestUpdate, onAssistanceRequestCreate };

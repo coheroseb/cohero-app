@@ -28,7 +28,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/memento',
     '/lov-portal',
     '/legal-logic-board',
-    '/refleksionslog',
     '/quiz-creator',
     '/pensum',
     '/fagligt-mycelium',

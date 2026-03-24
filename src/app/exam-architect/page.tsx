@@ -419,16 +419,26 @@ const ExamArchitectPageContent: React.FC = () => {
                         key={i} 
                         className="bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row group hover:border-indigo-200 transition-all overflow-hidden"
                       >
-                         <div className="w-full md:w-24 bg-slate-50 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-slate-100 group-hover:bg-indigo-600 group-hover:border-indigo-600 transition-all duration-300">
+                         <div className="w-full md:w-32 bg-slate-50 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-slate-100 group-hover:bg-indigo-600 group-hover:border-indigo-600 transition-all duration-300">
                             <span className="text-2xl font-black text-slate-900 group-hover:text-white leading-none">{section.weight}</span>
                             <span className="text-[9px] font-bold uppercase tracking-widest mt-1.5 text-slate-400 group-hover:text-indigo-200">Vægt</span>
+                            {section.wordCountEstimate && (
+                              <span className="mt-4 px-2 py-1 bg-white/10 rounded-lg text-[8px] font-black text-slate-400 group-hover:text-white border border-slate-200 group-hover:border-white/20 uppercase tracking-tighter">
+                                {section.wordCountEstimate}
+                              </span>
+                            )}
                          </div>
                          <div className="flex-1 p-6 sm:p-8">
-                            <div className="flex justify-between items-start mb-3">
+                            <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
                                <h4 className="font-black text-slate-900 text-lg">{i+1}. {section.title}</h4>
-                               {section.theoryLink && (
-                                 <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[9px] font-black uppercase tracking-wider">{section.theoryLink}</span>
-                               )}
+                               <div className="flex gap-2">
+                                  {section.theoryLink && (
+                                    <span className="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase tracking-wider border border-indigo-100">{section.theoryLink}</span>
+                                  )}
+                                  {section.legalFocus && (
+                                    <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-wider border border-emerald-100">⚖️ {section.legalFocus}</span>
+                                  )}
+                               </div>
                             </div>
                             <p className="text-sm text-slate-600 leading-relaxed mb-0">{section.focus}</p>
                          </div>
@@ -438,27 +448,49 @@ const ExamArchitectPageContent: React.FC = () => {
                 </div>
 
                 {/* Theoretical Scaffolding */}
-                <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 md:p-10">
-                   <h3 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8">
-                      <BookOpen className="w-4 h-4" /> Teoretisk Stillads
-                   </h3>
-                   <div className="grid md:grid-cols-3 gap-5">
-                      {blueprint.suggestedTheories.map((theory, j) => (
-                        <div key={j} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col justify-between h-full group/theory hover:bg-white hover:border-indigo-100 hover:shadow-lg transition-all">
-                           <div>
-                              <h5 className="font-black text-slate-900 mb-3 text-sm">{theory.name}</h5>
-                              <p className="text-xs text-slate-500 leading-relaxed mb-4">{theory.why}</p>
-                           </div>
-                           {theory.bookReference && (
-                              <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50/50 p-2 rounded-lg">
-                                 <Book className="w-3 h-3" />
-                                 <span className="truncate">{theory.bookReference}</span>
-                              </div>
-                           )}
-                        </div>
-                      ))}
-                   </div>
-                </section>
+                <div className="grid md:grid-cols-12 gap-8">
+                  <section className="md:col-span-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 md:p-10">
+                    <h3 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8">
+                        <BookOpen className="w-4 h-4" /> Teoretisk Stillads
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-5">
+                        {blueprint.suggestedTheories.map((theory, j) => (
+                          <div key={j} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col justify-between h-full group/theory hover:bg-white hover:border-indigo-100 hover:shadow-lg transition-all">
+                             <div>
+                                <h5 className="font-black text-slate-900 mb-3 text-sm">{theory.name}</h5>
+                                <p className="text-xs text-slate-500 leading-relaxed mb-4 italic">"{theory.why}"</p>
+                             </div>
+                             {theory.bookReference && (
+                                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50/50 p-2 rounded-lg">
+                                   <Book className="w-3 h-3" />
+                                   <span className="truncate">{theory.bookReference}</span>
+                                </div>
+                             )}
+                          </div>
+                        ))}
+                    </div>
+                  </section>
+
+                  {/* Checklist */}
+                  {blueprint.checklist && (
+                    <section className="md:col-span-4 bg-indigo-900 rounded-[2.5rem] p-8 md:p-10 text-white shadow-xl relative overflow-hidden">
+                      <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mb-16 -mr-16"></div>
+                      <h3 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-8">
+                          <CheckCircle className="w-4 h-4" /> Arkitektens Tjekliste
+                      </h3>
+                      <ul className="space-y-4">
+                        {blueprint.checklist.map((item, k) => (
+                          <li key={k} className="flex gap-4 items-start group/check">
+                            <div className="mt-1 w-5 h-5 rounded-full border border-indigo-500 flex items-center justify-center shrink-0 group-hover/check:bg-indigo-500 transition-colors">
+                               <CheckCircle className="w-3 h-3 text-indigo-300 group-hover/check:text-white" />
+                            </div>
+                            <p className="text-xs font-medium text-indigo-50 leading-relaxed">{item}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </div>
               </motion.div>
             )}
            </AnimatePresence>

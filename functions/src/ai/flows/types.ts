@@ -156,6 +156,10 @@ export interface UserProfile {
   fcmTokens?: string[];
   followedViveAreas?: string[];
   recentConcepts?: string[];
+  cprNumber?: string;
+  bankReg?: string;
+  bankAccount?: string;
+  isHelperEnabled?: boolean;
 }
 
 export interface Post {
@@ -186,6 +190,46 @@ export interface Comment {
   authorProfilePicture?: string;
   createdAt: any;
 }
+
+// ==========================================
+// ASSISTANCE MARKETPLACE SCHEMAS
+// ==========================================
+
+export const AssistanceRequestSchema = z.object({
+  id: z.string(),
+  title: z.string().describe('Titel på opgaven/anmodningen'),
+  description: z.string().describe('Uddybende beskrivelse af hvad der ønskes hjælp til'),
+  category: z.enum(['Rådgivning', 'Ansøgning', 'Bisidder', 'Andet']).describe('Kategori for anmodningen'),
+  status: z.enum(['open', 'claimed', 'completed', 'cancelled']).default('open'),
+  citizenId: z.string().optional().describe('UID for borgeren (hvis de har en bruger)'),
+  citizenName: z.string().describe('Navn på borgeren'),
+  citizenEmail: z.string().email().describe('E-mail til kontakt'),
+  citizenPhone: z.string().optional().describe('Telefonnummer til kontakt'),
+  studentId: z.string().optional().describe('UID for den studerende der har taget opgaven'),
+  studentName: z.string().optional().describe('Navn på den studerende'),
+  price: z.number().describe('Det fulde beløb borgeren betaler'),
+  platformFee: z.number().describe('Platformens andel af betalingen'),
+  studentEarnings: z.number().describe('Hvad den studerende tjener efter fee'),
+  isPaid: z.boolean().default(false).describe('Om borgeren har betalt'),
+  paymentId: z.string().optional().describe('Stripe payment ID'),
+  createdAt: z.any(),
+  claimedAt: z.any().optional(),
+  completedAt: z.any().optional(),
+  location: z.string().optional().describe('Fysisk lokation eller "Online"'),
+});
+
+export type AssistanceRequest = z.infer<typeof AssistanceRequestSchema>;
+
+export const CreateAssistanceRequestInputSchema = z.object({
+  title: z.string().min(5),
+  description: z.string().min(20),
+  category: z.enum(['Rådgivning', 'Ansøgning', 'Bisidder', 'Andet']),
+  price: z.number().min(50),
+  location: z.string().optional(),
+  citizenName: z.string().min(2),
+  citizenEmail: z.string().email(),
+  citizenPhone: z.string().optional(),
+});
 
 export const FeedbackDataSchema = z.object({
   juridisk: PersonaFeedbackSchema,
@@ -283,8 +327,10 @@ export const ExamBlueprintSchema = z.object({
     sections: z.array(z.object({
         title: z.string(),
         weight: z.string(),
+        wordCountEstimate: z.string().optional(),
         focus: z.string(),
         theoryLink: z.string().optional(),
+        legalFocus: z.string().optional(),
     })),
     suggestedTheories: z.array(z.object({
         name: z.string(),
@@ -292,6 +338,7 @@ export const ExamBlueprintSchema = z.object({
         bookReference: z.string().optional(),
     })),
     researchStrategy: z.string().optional(),
+    checklist: z.array(z.string()).optional(),
 });
 
 export const ExamArchitectOutputSchema = z.object({
@@ -620,8 +667,11 @@ export const AnalyzeStarDataOutputSchema = z.object({
 
 export const ExplanationSchema = z.object({
   definition: z.string(),
+  etymology: z.string().optional(),
   relevance: z.string(),
-  example: z.string(),
+  practicalExample: z.string(),
+  legalAnchor: z.string().optional(),
+  criticalReflection: z.string().optional(),
   suggestedLiterature: z.array(z.object({
     title: z.string(),
     author: z.string(),
@@ -637,6 +687,8 @@ export const ExplanationSchema = z.object({
       chapter: z.string().optional(),
     }).optional(),
   })).optional(),
+  relatedConcepts: z.array(z.string()).optional(),
+  socraticQuestion: z.string().optional(),
   legalContext: z.object({
     lawTitle: z.string(),
     paragraphNumber: z.string(),

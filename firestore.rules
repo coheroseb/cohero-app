@@ -23,10 +23,11 @@ service cloud.firestore {
        Global Collections
     ========================== */
     
-    // Simplest possible admin rule at top
-    match /{path=**} {
-      allow read, write: if isSignedIn() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    match /assistance_requests/{requestId} {
+      allow create: if true;
+      allow read: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     match /laws/{lawId} {
@@ -173,6 +174,12 @@ service cloud.firestore {
 
     match /{path=**}/seminars/{seminarId} {
       allow read: if isSignedIn() && request.auth.uid in resource.data.get('sharedWith', []);
+    }
+
+    // Global Admin fallback
+    match /{path=**} {
+      allow read, write: if isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }

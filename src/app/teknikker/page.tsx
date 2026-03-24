@@ -47,6 +47,7 @@ interface Technique {
   content: string;
   order: number;
   isPremium?: boolean;
+  category?: string;
 }
 
 const ConsultantContactForm = () => {
@@ -68,7 +69,7 @@ const ConsultantContactForm = () => {
             const userEmail = user.email || 'Ingen email';
             
             const result = await sendEmailToConsultant(subject, message, userName, userEmail);
-            setStatus(result);
+            setStatus({ type: result.success ? 'success' : 'error', message: result.message });
             if (result.success) {
                 setSubject('');
                 setMessage('');
@@ -126,7 +127,7 @@ const ConsultantContactForm = () => {
 };
 
 const StudyCornerPageContent: React.FC = () => {
-  const { user, userProfile, isUserLoading, openAuthModal } = useApp();
+  const { user, userProfile, isUserLoading, openAuthPage } = useApp();
   const router = useRouter();
   const firestore = useFirestore();
 
@@ -137,6 +138,8 @@ const StudyCornerPageContent: React.FC = () => {
   const [tipSearchResult, setTipSearchResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [highlightQuote, setHighlightQuote] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>('Alle');
+  const [tipReasoning, setTipReasoning] = useState<string | null>(null);
 
   const techniquesQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'techniques'), orderBy('order', 'asc')) : null),
@@ -146,14 +149,17 @@ const StudyCornerPageContent: React.FC = () => {
 
   const filteredTechniques = useMemo(() => {
     if (!techniques) return [];
-    return techniques.filter(t => 
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      t.content.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [techniques, searchQuery]);
+    return techniques.filter(t => {
+      const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           t.content.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === 'Alle' || 
+                             (t.category && t.category.toLowerCase() === activeCategory.toLowerCase());
+      return matchesSearch && matchesCategory;
+    });
+  }, [techniques, searchQuery, activeCategory]);
 
   const handleTechniqueClick = (technique: Technique) => {
-    const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership);
+    const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || '');
     
     if (technique.isPremium && !isPremiumUser) {
       router.push('/upgrade');
@@ -182,14 +188,15 @@ const StudyCornerPageContent: React.FC = () => {
             const recommendedTechnique = techniques.find(t => t.id === topRecommendation.id);
 
             if (recommendedTechnique) {
-                const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership);
+                const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || '');
                 if (recommendedTechnique.isPremium && !isPremiumUser) {
                     router.push('/upgrade');
                     return;
                 }
-                setHighlightQuote(topRecommendation.quote);
+                setHighlightQuote(topRecommendation.quote || '');
+                setTipReasoning(topRecommendation.reasoning || '');
                 setSelectedTechnique(recommendedTechnique);
-                setTipSearchResult(`Vi fandt '${recommendedTechnique.title}' som den mest relevante teknik for dig.`);
+                setTipSearchResult(`Prøv '${recommendedTechnique.title}'`);
             } else {
                 setTipSearchResult('Kunne ikke finde en specifik teknik. Prøv at søge manuelt i listen.');
             }
@@ -274,19 +281,37 @@ const StudyCornerPageContent: React.FC = () => {
             </div>
           </div>
 
-          <form onSubmit={(e) => e.preventDefault()} className="max-w-4xl mx-auto lg:mx-0 relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 via-amber-600 to-amber-400 rounded-[2rem] md:rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000 group-focus-within:opacity-50"></div>
-              <div className="relative bg-white border border-amber-100 rounded-[1.8rem] md:rounded-[2.2rem] shadow-2xl overflow-hidden transition-all duration-500 group-focus-within:scale-[1.01]">
-                <Search className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 w-5 h-5 md:w-6 md:h-6 text-slate-300 group-focus-within:text-amber-950 transition-colors" />
-                <input 
-                    type="text" 
-                    placeholder="Søg i teknikker, tips og artikler..."
-                    className="w-full py-6 md:py-8 pl-16 md:pl-20 pr-24 md:pr-32 bg-transparent text-base md:text-xl font-medium focus:outline-none placeholder:text-slate-300 text-amber-950"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+          <div className="max-w-4xl mx-auto lg:mx-0 space-y-6">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 via-amber-600 to-amber-400 rounded-[2rem] md:rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000 group-focus-within:opacity-50"></div>
+                <div className="relative bg-white border border-amber-100 rounded-[1.8rem] md:rounded-[2.2rem] shadow-2xl overflow-hidden transition-all duration-500 group-focus-within:scale-[1.01]">
+                  <Search className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 w-5 h-5 md:w-6 md:h-6 text-slate-300 group-focus-within:text-amber-950 transition-colors" />
+                  <input 
+                      type="text" 
+                      placeholder="Søg i teknikker, tips og artikler..."
+                      className="w-full py-6 md:py-8 pl-16 md:pl-20 pr-24 md:pr-32 bg-transparent text-base md:text-xl font-medium focus:outline-none placeholder:text-slate-300 text-amber-950"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
-          </form>
+
+              {/* Categories Pills */}
+              <div className="flex flex-wrap gap-2 px-2">
+                  {['Alle', 'Eksamen', 'Læsning', 'Noter', 'Planlægning', 'Tidsstyring'].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={`px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border
+                          ${activeCategory === cat 
+                            ? 'bg-amber-950 text-amber-400 border-amber-950' 
+                            : 'bg-white text-slate-400 border-amber-50 hover:border-amber-200 hover:text-slate-600'}`}
+                      >
+                        {cat}
+                      </button>
+                  ))}
+              </div>
+          </div>
         </div>
       </header>
 
@@ -331,9 +356,14 @@ const StudyCornerPageContent: React.FC = () => {
                                 </button>
                             </div>
                             {tipSearchResult && !isSearchingTip && (
-                                <p className="text-amber-100/60 text-sm md:text-base italic animate-fade-in-up">
-                                    {tipSearchResult}
-                                </p>
+                                <div className="space-y-3 animate-fade-in-up md:max-w-md">
+                                    <p className="text-amber-400 font-bold serif text-lg">{tipSearchResult}</p>
+                                    {tipReasoning && (
+                                        <p className="text-amber-100/60 text-sm italic leading-relaxed">
+                                            {tipReasoning}
+                                        </p>
+                                    )}
+                                </div>
                             )}
                         </div>
                         <div className="w-full md:w-64 h-56 md:h-64 bg-white/5 rounded-[2.5rem] md:rounded-[3rem] border border-white/10 p-8 flex flex-col justify-center items-center text-center">
@@ -417,7 +447,7 @@ const StudyCornerPageContent: React.FC = () => {
       {/* ARTICLE MODAL */}
       <AnimatePresence>
         {selectedTechnique && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                 <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

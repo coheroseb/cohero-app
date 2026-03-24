@@ -63,34 +63,21 @@ AVAILABLE BOOKS:
 ---
 {{/if}}
 
-Your response must be a JSON object with five keys, all in Danish. Use simple HTML tags like <h2>, <h3>, <ul>, <li>, and <strong> to structure the content for better readability.
+Your response must be a JSON object with the following keys, all in Danish. Use simple HTML tags like <h2>, <h3>, <ul>, <li>, and <strong> to structure the content for better readability.
 
-1.  **definition**: Provide a thorough and pedagogical definition of the concept, suitable for a studerende. If the concept is a law paragraph (e.g. "§ 32"), use the provided 'LEGAL CONTEXT' (especially any associated guidelines) to explain it accurately. Break it down into its core components and use examples where appropriate. The explanation should be detailed enough for a studerende to get a solid grasp of the concept. Use subheadings (e.g., <h3>) to structure the explanation.
-2.  **relevance**: Explain why this concept is important and relevant for a social worker's daily practice. Structure this with bullet points (<ul> and <li>).
-3.  **example**: Give a short, concrete, and fictional example of how the concept might appear or be used in a social work case. The example must be highly practice-oriented. Structure it with a brief **Situation**, followed by a snippet of **Dialog** or an **Observation**, and finally an **Analyse** that explicitly explains how the concept is demonstrated.
-4.  **suggestedLiterature**: Recommend 1-3 of the most relevant books.
-    - **CRITICAL RULE 1: HIGH RELEVANCE.** Only recommend a book if its content is *highly* relevant to the concept "{{{concept}}}". Do not recommend a book just to fill the list.
-    - **CRITICAL RULE 2: NO DUPLICATES.** Each book should appear only once in the final list.
-    - **CRITICAL RULE 3: USE PROVIDED SOURCES ONLY.** Your recommendations MUST come exclusively from the list of 'AVAILABLE BOOKS' provided. Do not invent sources.
-    - **PROCESS:**
-        1.  Carefully search the 'title', 'author', and 'Content Info' of the AVAILABLE BOOKS for "{{{concept}}}" and its grammatical variations (e.g., "magt" -> "magtanvendelse").
-        2.  For each highly relevant book you identify, create a single object.
-        3.  In the \`relevance\` field, write a short, sharp summary of why the book as a whole is relevant.
-        4.  In the \`chapters\` field, create an array of strings listing ALL specific chapter titles from that book's metadata that are relevant to the concept. If no specific chapters stand out but the book is still relevant, you can omit the \`chapters\` field.
-        5.  If no relevant books are found in the list, you MUST return an empty array for this field.
-5.  **relevantTheorists**: Identify key theorists related to '{{{concept}}}'.
-    - **CRITICAL RULE:** Your answer MUST be based exclusively on the 'AVAILABLE BOOKS' list. Do not name any theorist whose name does not appear in the provided book metadata.
-    - **PROCESS:**
-        1. Search for theorists' names within the metadata of the provided books.
-        2. Filter this list to include only theorists clearly linked to the concept '{{{concept}}}' and its variations (e.g., for "Anerkendelse", also consider "anerkendende tilgange").
-        3. For each theorist found, provide their 'name', 'era' (e.g., 'ca. 1950'), a brief 'contribution' summary, and a 'source' object with the 'bookTitle' and, if possible, the 'chapter'.
-        4. If no theorists are found in the book list for this concept, return an empty array for this field.
-6.  **legalContext**: If the concept is a law paragraph (e.g., "§ 42"), or if you have found highly relevant legal text in the 'LEGAL CONTEXT' above, you MUST populate this field.
-    - **lawTitle**: The name of the law (e.g., "Barnets Lov").
-    - **paragraphNumber**: The paragraph number (e.g., "§ 42").
-    - **exactText**: THE LITERAL TEXT of the paragraph as found in the 'LEGAL CONTEXT'. Do not summarize this field; it must be the verbatim law text.
-    - **relevance**: A very brief (1-2 sentences) summary of why this specific paragraph is relevant to the search query.
-    - If no relevant legal context is found, you can omit this field.
+1.  **definition**: Provide a thorough and pedagogical definition of the concept, suitable for a studerende. Break it down into its core components. The explanation should be detailed enough for a studerende to get a solid grasp of the concept. Use subheadings (e.g., <h3>) to structure the explanation.
+2.  **etymology**: Forklar kort begrebets oprindelse og historiske kontekst. Hvorfor hedder det, som det gør? (f.eks. for "skøn" eller "selvbestemmelse").
+3.  **relevance**: Explain why this concept is important and relevant for a social worker's daily practice. Structure this with bullet points (<ul> and <li>).
+4.  **practicalExample**: Give a concrete, practice-oriented case example. Structure it with a brief **Situation**, a snippet of **Dialog/Observation**, and an **Analyse** that explains how the concept is applied.
+5.  **legalAnchor**: Hvor finder vi dette begreb i lovgivningen? Angiv specifikke love eller paragraffer (f.eks. Barnets Lov, Serviceloven, Retssikkerhedsloven), hvor begrebet er centralt.
+6.  **criticalReflection**: Tilføj en kritisk akademisk refleksion. Hvad er de etiske dilemmaer eller begrænsninger ved dette begreb i socialt arbejde?
+7.  **suggestedLiterature**: Recommend 1-3 of the most relevant books.
+    - **CRITICAL RULE 1: HIGH RELEVANCE.** Only recommend a book if its content is *highly* relevant to the concept "{{{concept}}}".
+    - **CRITICAL RULE 2: USE PROVIDED SOURCES ONLY.** Your recommendations MUST come exclusively from the list of 'AVAILABLE BOOKS' provided.
+8.  **relevantTheorists**: Identify key theorists related to '{{{concept}}}' based on the books provided.
+9.  **relatedConcepts**: En liste over 3-4 relaterede begreber, som den studerende også bør kende til.
+10. **socraticQuestion**: Stil ét udfordrende, sokratisk spørgsmål til den studerende, der får dem til at reflektere over begrebet i deres fremtidige praksis.
+11. **legalContext**: If the concept is a law paragraph (e.g., "§ 42"), or if you have found highly relevant legal text in the 'LEGAL CONTEXT' above, you MUST populate this field with verbatim law text.
 
 Always use the term "borger" instead of "klient" in your explanations and examples.
 `,
@@ -115,9 +102,9 @@ const explainConceptFlow = ai.defineFlow(
     
     let lawContext = input.lawContext || '';
     
-    // Automatically fetch law context if it looks like a paragraph search
-    if (!lawContext && input.concept.includes('§')) {
-      console.log(`[EXPLAIN-CONCEPT] Paragraph detected in "${input.concept}". Fetching legal context...`);
+    // Automatically fetch law context for all concepts to ensure academic and legal depth
+    if (!lawContext) {
+      console.log(`[EXPLAIN-CONCEPT] Fetching legal/academic context for: "${input.concept}"...`);
       lawContext = await getRelevantLawContext(input.concept);
     }
 

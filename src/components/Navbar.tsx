@@ -34,7 +34,8 @@ import {
   Target,
   Sparkles,
   ChevronRight,
-  ArrowRight
+  ArrowRight,
+  HandHelping
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { DocumentData } from 'firebase/firestore';
@@ -221,7 +222,6 @@ const Navbar: React.FC<NavbarProps> = ({
         items: [
           { title: "Case-træner", path: "/case-trainer", icon: <BookCopy className="w-5 h-5" /> },
           { title: "Journal-træner", path: "/journal-trainer", icon: <FileText className="w-5 h-5" /> },
-          { title: "Ny Refleksion", path: "/refleksionslog", icon: <BookMarked className="w-5 h-5" /> },
           { title: "Eksamens-Arkitekten", path: "/exam-architect", icon: <DraftingCompass className="w-5 h-5" /> },
           { title: "Seminar-Arkitekten", path: "/seminar-architect", icon: <Presentation className="w-5 h-5" /> },
           { title: "Mundtlig Eksamens-Træner", path: "/mundtlig-eksamenstraener", icon: <Mic className="w-5 h-5" /> },
@@ -338,7 +338,6 @@ const Navbar: React.FC<NavbarProps> = ({
                     <NavDropdown title="Træning" icon={<PlayCircle className="w-4 h-4 text-slate-400"/>}>
                     <NavDropdownLink href="/case-trainer" icon={<BookCopy className="w-4 h-4"/>}>Case-træner</NavDropdownLink>
                     <NavDropdownLink href="/journal-trainer" icon={<FileText className="w-4 h-4"/>}>Journal-træner</NavDropdownLink>
-                    <NavDropdownLink href="/refleksionslog" icon={<BookMarked className="w-4 h-4"/>}>Ny Refleksion</NavDropdownLink>
                     <NavDropdownLink href="/exam-architect" icon={<DraftingCompass className="w-4 h-4" />}>Eksamens-Arkitekten</NavDropdownLink>
                     <NavDropdownLink href="/seminar-architect" icon={<Presentation className="w-4 h-4" />}>Seminar-Arkitekten</NavDropdownLink>
                     <NavDropdownLink href="/mundtlig-eksamenstraener" icon={<Mic className="w-4 h-4" />}>Mundtlig Træner</NavDropdownLink>
@@ -392,6 +391,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center space-x-1"
               >
                 {[
+                  { label: "Få hjælp (Borger)", href: "/anmod-bistand", type: "link", highlight: true },
                   { label: "Hvorfor Cohéro?", href: "/hvorfor", type: "link" },
                   { label: "Værktøjer", href: "#vaerktojer", type: "anchor" },
                   { label: "Priser", href: "#priser", type: "anchor" }
@@ -400,7 +400,8 @@ const Navbar: React.FC<NavbarProps> = ({
                     {link.type === 'link' ? (
                       <Link 
                         href={link.href} 
-                        className={`block px-5 py-2.5 rounded-xl text-[13px] font-bold text-slate-600 transition-all relative z-10 
+                        className={`block px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all relative z-10 
+                        ${link.highlight ? 'text-rose-600' : 'text-slate-600'}
                         ${scrolled ? 'hover:text-slate-950' : 'hover:text-slate-950'}
                       `}>
                         {link.label}
@@ -580,12 +581,12 @@ const Navbar: React.FC<NavbarProps> = ({
                   </>
                 ) : (
                   <ul className="space-y-4 pt-4">
-                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>
-                        <Link href="/hvorfor" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-[24px] text-[18px] font-extrabold text-slate-900 shadow-sm active:scale-[0.98] transition-all">
-                            Hvorfor Cohéro? <ChevronRight className="w-5 h-5 text-slate-300" />
+                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.02 }}>
+                        <Link href="/anmod-bistand" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
+                            Få hjælp (Borger) <HandHelping className="w-5 h-5 text-rose-400" />
                         </Link>
                     </motion.li>
-                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>
                         <a href="#vaerktojer" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-[24px] text-[18px] font-extrabold text-slate-900 shadow-sm active:scale-[0.98] transition-all">
                             Værktøjer <ChevronRight className="w-5 h-5 text-slate-300" />
                         </a>

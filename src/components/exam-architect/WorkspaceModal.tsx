@@ -174,8 +174,16 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ isOpen, onClose, bluepr
 
                     new Paragraph({ text: "Strukturplan", heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }),
                     ...(localBlueprint.sections?.flatMap(s => [
-                        new Paragraph({ children: [new TextRun({ text: s.title, bold: true }), new TextRun({ text: ` (${s.weight})`, color: "888888" })] }),
-                        new Paragraph({ text: s.focus, spacing: { after: 200 } }),
+                        new Paragraph({ children: [
+                            new TextRun({ text: s.title, bold: true }), 
+                            new TextRun({ text: ` (${s.weight})`, color: "888888" }),
+                            new TextRun({ text: s.wordCountEstimate ? ` [${s.wordCountEstimate}]` : "", color: "444444" })
+                        ] }),
+                        new Paragraph({ text: s.focus, spacing: { after: 100 } }),
+                        new Paragraph({ children: [
+                            new TextRun({ text: s.theoryLink ? `Teori: ${s.theoryLink}  ` : "", italics: true, size: 18 }),
+                            new TextRun({ text: s.legalFocus ? `Jura: ${s.legalFocus}` : "", italics: true, size: 18, color: "0D9488" })
+                        ], spacing: { after: 200 } }),
                     ]) || []),
 
                     new Paragraph({ text: "Teoretisk Stillads", heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }),
@@ -184,6 +192,11 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ isOpen, onClose, bluepr
                         new Paragraph({ children: [new TextRun({ text: t.why, italics: true })] }),
                         new Paragraph({ children: [new TextRun({ text: t.bookReference ? `Kilde: ${t.bookReference}` : "", size: 18 })], spacing: { after: 200 } }),
                     ]) || []),
+
+                    ...(localBlueprint.checklist ? [
+                        new Paragraph({ text: "Arkitektens Tjekliste", heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }),
+                        ...localBlueprint.checklist.map(item => new Paragraph({ text: `[ ] ${item}`, spacing: { after: 100 } }))
+                    ] : []),
                 ],
             }],
         });
@@ -255,14 +268,18 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ isOpen, onClose, bluepr
   const sectionsContent = (
     <div className="space-y-4">
       {localBlueprint.sections?.map((s, i) => (
-        <div key={i} className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-           <div className="w-12 h-12 bg-white rounded-xl border border-slate-200 flex flex-col items-center justify-center shrink-0">
-             <span className="text-sm font-black text-slate-900 leading-none">{s.weight}</span>
+        <div key={i} className="flex gap-4 p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 group hover:border-indigo-100 transition-all">
+           <div className="w-16 h-16 bg-white rounded-xl border border-slate-200 flex flex-col items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:border-indigo-600 transition-all">
+             <span className="text-sm font-black text-slate-900 group-hover:text-white leading-none">{s.weight}</span>
+             {s.wordCountEstimate && <span className="text-[8px] font-bold text-slate-400 group-hover:text-indigo-200 mt-1 uppercase tracking-tighter">{s.wordCountEstimate}</span>}
            </div>
-           <div>
-             <h5 className="font-bold text-slate-900 text-sm mb-1">{s.title}</h5>
-             <p className="text-xs text-slate-500 leading-relaxed">{s.focus}</p>
-             {s.theoryLink && <span className="inline-block mt-2 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[9px] font-black uppercase tracking-widest">{s.theoryLink}</span>}
+           <div className="flex-1">
+             <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h5 className="font-bold text-slate-900 text-sm">{i+1}. {s.title}</h5>
+                {s.legalFocus && <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[8px] font-black uppercase tracking-widest border border-emerald-100">⚖️ {s.legalFocus}</span>}
+             </div>
+             <p className="text-xs text-slate-500 leading-relaxed mb-2">{s.focus}</p>
+             {s.theoryLink && <span className="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[9px] font-black uppercase tracking-widest border border-indigo-100">{s.theoryLink}</span>}
            </div>
         </div>
       ))}

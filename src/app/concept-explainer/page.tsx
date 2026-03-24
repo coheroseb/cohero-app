@@ -114,6 +114,8 @@ function ConceptExplainerPageContent() {
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [hasCachedVideo, setHasCachedVideo] = useState(false);
 
+  const resultsRef = useRef<HTMLElement>(null);
+
   const isKollegaPlus = (userProfile?.role === 'admin') || (userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership));
 
 
@@ -131,6 +133,11 @@ function ConceptExplainerPageContent() {
     setViveArticles([]);
     setLimitError(null);
     setSearchProgress({ step: 1, label: 'Analyserer begrebets kerne...' });
+
+    // Scroll to results area automatically
+    setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
 
     let progressInterval: NodeJS.Timeout | undefined;
     // Progress simulation
@@ -162,7 +169,7 @@ function ConceptExplainerPageContent() {
 
         // Get AI Explanation
         const normalizedTerm = term.toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
-        const docRef = doc(firestore, 'conceptExplanations', normalizedTerm);
+        const docRef = doc(firestore, 'conceptExplanations-v2', normalizedTerm);
         const snap = await getDoc(docRef);
 
         let finalExplanation: Explanation;
@@ -368,7 +375,7 @@ function ConceptExplainerPageContent() {
       </div>
 
       {/* CONTENT AREA */}
-      <main className="w-full max-w-[1600px] px-6 sm:px-12 pb-40">
+      <main ref={resultsRef} className="w-full max-w-[1600px] px-6 sm:px-12 pb-40">
           <AnimatePresence mode="wait">
               {isLoading ? (
                   <motion.div 
@@ -450,16 +457,25 @@ function ConceptExplainerPageContent() {
                       {/* 360 DASHBOARD VIEW */}
                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                           
-                          {/* COLUMN 1: DEFINITION (The Core) */}
+                          {/* COLUMN 1: DEFINITION & ETYMOLOGY */}
                           <div className="lg:col-span-12 xl:col-span-5 space-y-8">
                               <section className="bg-white p-10 md:p-14 rounded-[4rem] border border-amber-100 shadow-sm relative overflow-hidden group">
                                   <div className="absolute top-0 right-0 p-12 w-48 h-48 bg-amber-50 rounded-full translate-x-1/2 -translate-y-1/2 transition-transform group-hover:scale-110" />
                                   <div className="relative z-10 space-y-8">
                                       <div className="flex items-center gap-3 border-b border-amber-50 pb-6">
                                           <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-700 shadow-inner"><Info className="w-4 h-4" /></div>
-                                          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-amber-950/40">Pedagogisk Definition</h3>
+                                          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-amber-950/40">Pædagogisk Definition</h3>
                                       </div>
                                       <div className="prose prose-amber prose-lg max-w-none text-slate-700 leading-relaxed font-medium selection:bg-amber-100" dangerouslySetInnerHTML={{ __html: explanation.definition }} />
+                                      
+                                      {explanation.etymology && (
+                                        <div className="pt-8 border-t border-amber-50">
+                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-3 flex items-center gap-2">
+                                                <History className="w-3 h-3" /> Oprindelse & Historik
+                                            </h4>
+                                            <p className="text-sm text-slate-500 italic leading-relaxed">{explanation.etymology}</p>
+                                        </div>
+                                      )}
                                   </div>
                               </section>
 
@@ -514,40 +530,64 @@ function ConceptExplainerPageContent() {
                                )}
                           </div>
 
-                          {/* COLUMN 2: PRACTICAL RELEVANCE (The Why) */}
+                          {/* COLUMN 2: RELEVANCE & REFLECTION */}
                           <div className="lg:col-span-6 xl:col-span-3 space-y-8 self-stretch">
-                              <section className="bg-slate-50/50 p-10 rounded-[3.5rem] border border-slate-100 shadow-sm relative group hover:bg-white hover:shadow-xl transition-all h-full">
+                              <section className="bg-slate-50/50 p-10 rounded-[3.5rem] border border-slate-100 shadow-sm relative group hover:bg-white hover:shadow-xl transition-all h-full flex flex-col">
                                   <div className="flex items-center gap-3 border-b border-slate-200 pb-6 mb-8">
                                       <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-slate-700 shadow-sm"><Target className="w-4 h-4" /></div>
                                       <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Socialfaglig Praksis</h3>
                                   </div>
-                                  <div className="prose prose-slate prose-sm max-w-none text-slate-600 font-medium" dangerouslySetInnerHTML={{ __html: explanation.relevance }} />
+                                  <div className="prose prose-slate prose-sm max-w-none text-slate-600 font-medium flex-grow" dangerouslySetInnerHTML={{ __html: explanation.relevance }} />
+                                  
+                                  {explanation.criticalReflection && (
+                                    <div className="mt-12 pt-8 border-t border-slate-200">
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-4 flex items-center gap-2">
+                                            <Brain className="w-3 h-3" /> Kritisk Refleksion
+                                        </h4>
+                                        <p className="text-xs text-slate-500 font-medium italic leading-relaxed">{explanation.criticalReflection}</p>
+                                    </div>
+                                  )}
                               </section>
                           </div>
 
-                          {/* COLUMN 3: CASE (The How) */}
+                          {/* COLUMN 3: CASE & JURA */}
                           <div className="lg:col-span-6 xl:col-span-4 space-y-8">
                               <section className="bg-amber-50/20 p-10 rounded-[3.5rem] border border-amber-100 shadow-sm relative group hover:shadow-xl transition-all">
                                   <div className="flex items-center gap-3 border-b border-amber-100 pb-6 mb-8">
                                       <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-900 shadow-inner"><Zap className="w-4 h-4" /></div>
                                       <h3 className="text-xs font-black uppercase tracking-[0.2em] text-amber-950/20">Virkeligheden som case</h3>
                                   </div>
-                                  <div className="prose prose-amber prose-sm max-w-none text-slate-700 font-serif leading-relaxed italic" dangerouslySetInnerHTML={{ __html: explanation.example }} />
+                                  <div className="prose prose-amber prose-sm max-w-none text-slate-700 font-serif leading-relaxed italic mb-8" dangerouslySetInnerHTML={{ __html: explanation.practicalExample }} />
+                                  
+                                  {explanation.legalAnchor && (
+                                    <div className="p-6 bg-white rounded-3xl border border-amber-100 shadow-sm flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-700"><ScaleIcon className="w-5 h-5" /></div>
+                                        <div>
+                                            <h4 className="text-[9px] font-black uppercase tracking-widest text-emerald-900/40">Juridisk Forankring</h4>
+                                            <p className="text-[11px] font-black text-emerald-950">{explanation.legalAnchor}</p>
+                                        </div>
+                                    </div>
+                                  )}
                               </section>
+                              
+                              {explanation.socraticQuestion && (
+                                <section className="p-10 bg-amber-950 rounded-[3rem] text-white shadow-xl relative overflow-hidden group">
+                                    <Sparkles className="absolute top-0 right-0 w-32 h-32 text-amber-400/10 -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform" />
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-400 mb-4">Udfordring til dig</h4>
+                                    <p className="text-sm font-medium serif italic opacity-90 leading-relaxed">"{explanation.socraticQuestion}"</p>
+                                </section>
+                              )}
 
-                                  {/* Knappen er flyttet til toppen ved siden af søgefeltet */}
-
-
-                                  <div className="grid grid-cols-2 gap-4">
-                                      <button onClick={() => window.print()} className="p-6 bg-white border border-amber-50 rounded-[2rem] flex flex-col items-center gap-3 hover:bg-amber-50 transition-all font-bold text-slate-400 group">
-                                          <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                          <span className="text-[10px] uppercase tracking-widest">Del / Print</span>
-                                      </button>
-                                      <button className="p-6 bg-white border border-amber-50 rounded-[2rem] flex flex-col items-center gap-3 hover:bg-amber-50 transition-all font-bold text-slate-400 group">
-                                          <Bookmark className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                          <span className="text-[10px] uppercase tracking-widest">Gem</span>
-                                      </button>
-                                  </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                  <button onClick={() => window.print()} className="p-6 bg-white border border-amber-50 rounded-[2rem] flex flex-col items-center gap-3 hover:bg-amber-50 transition-all font-bold text-slate-400 group">
+                                      <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                      <span className="text-[10px] uppercase tracking-widest">Del / Print</span>
+                                  </button>
+                                  <button className="p-6 bg-white border border-amber-50 rounded-[2rem] flex flex-col items-center gap-3 hover:bg-amber-50 transition-all font-bold text-slate-400 group">
+                                      <Bookmark className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                      <span className="text-[10px] uppercase tracking-widest">Gem</span>
+                                  </button>
+                              </div>
                           </div>
                       </div>
 
@@ -556,6 +596,27 @@ function ConceptExplainerPageContent() {
                           <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-950/20 mb-12 text-center">Vidensbank & Fordybelse</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                               
+                               {/* RELATED CONCEPTS */}
+                               {explanation.relatedConcepts && explanation.relatedConcepts.length > 0 && (
+                                  <section className="space-y-6">
+                                      <div className="flex items-center gap-3 px-6">
+                                          <Sparkles className="w-4 h-4 text-amber-500" />
+                                          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Relaterede Begreber</h4>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2 px-6">
+                                          {explanation.relatedConcepts.map((concept, i) => (
+                                              <button 
+                                                key={i} 
+                                                onClick={() => handleExplain(concept)}
+                                                className="px-4 py-2 bg-white border border-amber-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-amber-950 hover:bg-amber-950 hover:text-white transition-all shadow-sm"
+                                              >
+                                                  {concept}
+                                              </button>
+                                          ))}
+                                      </div>
+                                  </section>
+                               )}
+
                               {/* LITERATURE */}
                               <section className="space-y-6">
                                   <div className="flex items-center gap-3 px-6">

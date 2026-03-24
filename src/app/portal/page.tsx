@@ -50,14 +50,17 @@ import {
   ArrowRight,
   BarChart3,
   BookCheck,
-  Mic
+  Mic,
+  HandHelping,
+  CreditCard
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { processStripeSession, fetchPoliticalNews, fetchSocialMinistryNews } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit, DocumentData, Timestamp, doc, updateDoc, serverTimestamp, increment, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, DocumentData, Timestamp, doc, updateDoc, serverTimestamp, increment, getDoc, setDoc, where } from 'firebase/firestore';
+import { AssistanceRequest } from '@/ai/flows/types';
 import {
   Tooltip,
   TooltipContent,
@@ -151,6 +154,20 @@ const PortalPageContent: React.FC = () => {
   const [politicalNews, setPoliticalNews] = useState<NewsItem[]>([]);
   const [ministryNews, setMinistryNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
+
+  // Marketplace Pending Payments
+  const pendingMarketplacePaymentsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, 'assistance_requests'),
+      where('citizenId', '==', user.uid),
+      where('status', '==', 'claimed'),
+      where('isPaid', '==', false),
+      orderBy('createdAt', 'desc')
+    );
+  }, [firestore, user]);
+
+  const { data: pendingPayments } = useCollection<AssistanceRequest>(pendingMarketplacePaymentsQuery);
 
   // Fetch News
   useEffect(() => {
@@ -411,6 +428,7 @@ const PortalPageContent: React.FC = () => {
         items: [
           { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
           { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
+          { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/bistand", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Marketplace" },
           { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
         ]
       },
@@ -521,6 +539,12 @@ const PortalPageContent: React.FC = () => {
                   <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
                     <Building className="w-6 h-6 sm:w-7 sm:h-7 text-rose-500 shrink-0"/>
                     <span className="text-[10px] sm:text-[11px] text-slate-700">Folketing.</span>
+                  </Button>
+                </Link>
+                <Link href="/bistand" passHref>
+                  <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-rose-50 hover:!bg-rose-100 border-rose-100 shadow-[0_4px_12px_rgba(225,29,72,0.05)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
+                    <HandHelping className="w-6 h-6 sm:w-7 sm:h-7 text-rose-600 shrink-0"/>
+                    <span className="text-[10px] sm:text-[11px] text-rose-900 font-extrabold">Markedsplads</span>
                   </Button>
                 </Link>
                 <div className="relative group z-20">
@@ -675,7 +699,35 @@ const PortalPageContent: React.FC = () => {
             </div>
           </div>
         </Link>
+
+        {/* BISTAND / MARKETPLACE BANNER */}
+        <Link href="/bistand" className="group block mt-4 outline-none">
+          <div className="bg-gradient-to-br from-rose-50 via-white to-orange-50/30 border border-rose-200 p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-[0_20px_40px_rgba(225,29,72,0.15)] hover:border-rose-300 transition-all active:scale-[0.98] relative overflow-hidden">
+            <div className="absolute -top-16 -right-16 w-48 h-48 bg-rose-100/30 rounded-full blur-[60px] pointer-events-none group-hover:scale-110 transition-transform duration-500"></div>
+            
+            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6 relative z-10">
+              <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-orange-600 text-white rounded-[24px] flex items-center justify-center shadow-lg shadow-rose-500/30 group-hover:rotate-6 transition-transform flex-shrink-0">
+                <HandHelping className="w-7 h-7" />
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-[9px] font-black uppercase tracking-widest mb-2.5 mx-auto sm:mx-0">
+                  <Star className="w-3 h-3 fill-current" /> Markedsplads
+                </div>
+                <h3 className="text-[20px] font-extrabold text-slate-900 leading-tight">
+                  Tjen penge mens du læser
+                </h3>
+                <p className="text-[14px] text-slate-600 font-medium max-w-md mt-1.5">
+                  Brug din faglighed til at hjælpe borgere og få værdifuld erhvervserfaring til dit CV.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center w-full sm:w-auto h-14 px-6 bg-white border border-rose-200 rounded-[20px] shadow-sm text-rose-600 font-bold text-[12px] uppercase tracking-widest group-hover:bg-rose-50 transition-colors shrink-0 relative z-10">
+              Se opgaver <ArrowRight className="w-4 h-4 ml-2" />
+            </div>
+          </div>
+        </Link>
       </div>
+
 
       <main className="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-12 gap-10 lg:gap-14">
         

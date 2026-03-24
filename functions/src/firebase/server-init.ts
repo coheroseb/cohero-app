@@ -36,9 +36,9 @@ function getAdminApp() {
       }, appName);
 
     } else {
-      console.warn("[Firebase Admin] service account JSON is missing. Trying default app.");
+      console.warn("[Firebase Admin] service account JSON is missing. Trying default app with project id fallback.");
       if (admin.apps.length > 0) return admin.apps[0]!;
-      return admin.initializeApp();
+      return admin.initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'studio-7870211338-fe921' });
     }
   } catch (error: any) {
     console.error("FIREBASE ADMIN INIT ERROR:", error.message);
