@@ -1910,3 +1910,30 @@ export async function toggleMarketplaceBanAction(userId: string, isBanned: boole
         return { success: false, error: "Fejl ved opdatering af udelukkelse." };
     }
 }
+
+export async function clearUserPaymentInfoAction(userId: string, studentCardUrl?: string) {
+    try {
+        await adminFirestore.collection('users').doc(userId).update({
+            cprNumber: adminFirestore.FieldValue.delete(),
+            bankReg: adminFirestore.FieldValue.delete(),
+            bankAccount: adminFirestore.FieldValue.delete(),
+            studentCardUrl: adminFirestore.FieldValue.delete(),
+            studentCardVerification: adminFirestore.FieldValue.delete(),
+            updatedAt: adminFirestore.FieldValue.serverTimestamp()
+        });
+
+        if (studentCardUrl) {
+            try {
+                const bucket = admin.storage().bucket();
+                const file = bucket.file(studentCardUrl);
+                await file.delete();
+            } catch (err) {
+                console.warn("Storage deletion ignored:", err);
+            }
+        }
+        return { success: true };
+    } catch (e) {
+        console.error("Failed to clear payment info:", e);
+        return { success: false, error: "Fejl ved sletning af oplysninger." };
+    }
+}

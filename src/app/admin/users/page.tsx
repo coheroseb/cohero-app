@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import DeleteUserModal from '@/components/DeleteUserModal';
 import { useDebounce } from 'use-debounce';
 import { decryptData } from '@/lib/encryption';
-import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarketplaceBanAction } from '@/app/actions';
+import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarketplaceBanAction, clearUserPaymentInfoAction } from '@/app/actions';
 import { StudentCardVerification } from '@/ai/flows/types';
 
 interface UserProfile {
@@ -569,8 +569,14 @@ const AdminUsersPage = () => {
                                      <h4 className="text-[11px] font-black uppercase tracking-widest text-rose-800 flex items-center gap-2 mb-4"><Shield className="w-3.5 h-3.5" /> Administrative Handlinger</h4>
                                      <p className="text-xs text-slate-500 leading-relaxed mb-4">Advarsel: Sletning af en bruger er permanent. De mister alt indhold og deres abonnement annulleres, hvis det er aktivt.</p>
                                    </div>
-                                   <div className="flex items-center gap-3">
+                                   <div className="flex flex-wrap items-center gap-3">
                                       <Button size="sm" variant="outline" className="rounded-xl border-slate-200" disabled>Nulstil Adgangskode (Kommer snart)</Button>
+                                      <Button size="sm" variant="outline" className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50" onClick={async () => {
+                                          if (confirm(`Vil du slette ALLE udbetalingsoplysninger og studiekort for ${u.username || u.email}? Dette kan ikke fortrydes.`)) {
+                                              await clearUserPaymentInfoAction(u.id, u.studentCardUrl);
+                                              toast({ title: "Oplysninger slettet", description: "CPR, bankoplysninger og studiekort er nu fjernet." });
+                                          }
+                                      }}>Slet Udbetalingsinfo</Button>
                                       {u.isMarketplaceBanned ? (
                                           <Button size="sm" variant="outline" className="rounded-xl border-emerald-200 text-emerald-600 hover:bg-emerald-50" onClick={async () => {
                                               if (confirm(`Vil du fjerne udelukkelsen for ${u.username || u.email}?`)) {
