@@ -28,11 +28,20 @@ import { useApp } from '@/app/provider';
 import { useRouter } from 'next/navigation';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
-const ReviewSection = ({ institutionId, user }: { institutionId: string, user: any }) => {
+const ReviewSection = ({ institutionId, user, autoScroll }: { institutionId: string, user: any, autoScroll?: boolean }) => {
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
+  const sectionRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (autoScroll && sectionRef.current) {
+      setTimeout(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500);
+    }
+  }, [autoScroll]);
 
   const reviewsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -70,7 +79,7 @@ const ReviewSection = ({ institutionId, user }: { institutionId: string, user: a
   };
 
   return (
-    <div className="mt-12 pt-12 border-t border-slate-100">
+    <div ref={sectionRef} className="mt-12 pt-12 border-t border-slate-100">
       <div className="flex items-center justify-between mb-8">
         <div>
            <p className="text-[10px] font-black uppercase text-rose-600 tracking-[0.2em] mb-1">Feedback</p>
@@ -273,13 +282,13 @@ const DetailOverlay = ({ inst, user, onClose }: { inst: any, user: any, onClose:
           </div>
 
           {/* Student Reviews Section */}
-          <ReviewSection institutionId={inst.id} user={user} />
+          <ReviewSection institutionId={inst.id} user={user} autoScroll={inst.autoScroll} />
        </div>
     </motion.div>
   </motion.div>
 );
 
-const InstitutionCard = ({ inst, onSelect }: { inst: any, onSelect: () => void }) => (
+const InstitutionCard = ({ inst, onSelect }: { inst: any, onSelect: (data: any) => void }) => (
   <motion.div
     layout
     initial={{ opacity: 0, y: 20 }}
@@ -346,14 +355,14 @@ const InstitutionCard = ({ inst, onSelect }: { inst: any, onSelect: () => void }
 
       <div className="flex items-center gap-2 pt-4 border-t border-slate-50">
         <button 
-          onClick={onSelect}
+          onClick={() => onSelect({ ...inst, autoScroll: true })}
           className="flex-1 flex items-center justify-center gap-2 py-3 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-200/50"
         >
           <Star className="w-3 h-3 fill-rose-500" />
           Vurder
         </button>
         <button 
-          onClick={onSelect}
+          onClick={() => onSelect(inst)}
           className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
         >
           Detaljer
