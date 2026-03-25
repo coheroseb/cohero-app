@@ -726,19 +726,36 @@ export async function sendBulkEmailAction(input: { recipients: { email: string, 
         return { success: false, message: 'Ingen modtagere angivet.', sentCount: 0 };
     }
 
+    // Simple email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    // Filter out invalid emails
+    const validRecipients = recipients.filter(r => {
+        if (!r.email) return false;
+        const isValid = emailRegex.test(r.email.trim());
+        if (!isValid) {
+            console.warn(`Springe over ugyldig e-mail: ${r.email}`);
+        }
+        return isValid;
+    });
+
+    if (validRecipients.length === 0) {
+        return { success: false, message: 'Ingen gyldige modtagere fundet efter validering.', sentCount: 0 };
+    }
+
     try {
         const resend = new Resend(process.env.RESEND_API_KEY);
         let totalSentCount = 0;
 
         // Resend batch has a limit of 100 emails per request
         const CHUNK_SIZE = 100;
-        for (let i = 0; i < recipients.length; i += CHUNK_SIZE) {
-            const chunk = recipients.slice(i, i + CHUNK_SIZE);
+        for (let i = 0; i < validRecipients.length; i += CHUNK_SIZE) {
+            const chunk = validRecipients.slice(i, i + CHUNK_SIZE);
 
             const { data, error } = await resend.batch.send(
                 chunk.map(recipient => ({
                     from: 'Cohéro Platform <info@platform.cohero.dk>',
-                    to: recipient.email,
+                    to: recipient.email.trim(),
                     subject: subject,
                     html: htmlBody.replace(/\[Navn\]/gi, recipient.name).replace(/\{\{navn\}\}/gi, recipient.name),
                 }))
@@ -746,13 +763,15 @@ export async function sendBulkEmailAction(input: { recipients: { email: string, 
 
             if (error) {
                 console.error(`Resend batch error for chunk ${i}:`, error);
-                throw new Error(error.message);
+                // We could continue to next chunk instead of throwing, making it even more resilient
+                console.warn("Fortsætter til næste chunk trods fejl i denne.");
+                continue; 
             }
 
             totalSentCount += chunk.length;
         }
 
-        return { success: true, message: `E-mails sendt.`, sentCount: totalSentCount };
+        return { success: true, message: `E-mails sendt (${totalSentCount} af ${recipients.length}).`, sentCount: totalSentCount };
 
     } catch (error: any) {
         console.error('Failed to send bulk email:', error);
