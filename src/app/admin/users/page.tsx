@@ -4,6 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useStorage } from '@/firebase';
 import { collection, query, doc, deleteDoc } from 'firebase/firestore';
+import { ref, getDownloadURL } from 'firebase/storage';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
   Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff
@@ -98,10 +99,10 @@ const StudentCardDisplay = ({ path, userId, userName }: { path: string, userId: 
     }
 
     const fetchUrl = async () => {
-        if (!storage) return;
+        if (!storage || !path) return;
         setIsLoading(true);
+        setError(null);
         try {
-            const { ref, getDownloadURL } = require('firebase/storage');
             const fileRef = ref(storage, path);
             const downloadUrl = await getDownloadURL(fileRef);
             setUrl(downloadUrl);
