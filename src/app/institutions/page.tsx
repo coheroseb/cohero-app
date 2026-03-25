@@ -18,15 +18,81 @@ import {
   X,
   Star,
   MessageCircle,
-  ThumbsUp
+  ThumbsUp,
+  Download,
+  FileSpreadsheet,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, limit, orderBy, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { useDebounce } from 'use-debounce';
 import { useApp } from '@/app/provider';
 import { useRouter } from 'next/navigation';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
+
+const AdminExportButton = ({ userProfile }: { userProfile: any }) => {
+  const firestore = useFirestore();
+  const [isExporting, setIsExporting] = useState(false);
+
+  if (userProfile?.role !== 'admin') return null;
+
+  const handleExport = async () => {
+    if (!firestore) return;
+    setIsExporting(true);
+    
+    try {
+      const q = query(collection(firestore, 'institutions'));
+      const snapshot = await getDocs(q);
+      
+      const rows = [['Institution', 'Email', 'Telefon', 'Region']];
+      
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.E_MAIL) {
+          rows.push([
+            `"${(data.INST_NAVN || '').replace(/"/g, '""')}"`,
+            data.E_MAIL,
+            data.TLF_NR || '',
+            data.BEL_REGION_TEKST || ''
+          ]);
+        }
+      });
+
+      const csvContent = rows.map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute("href", url);
+      link.setAttribute("download", `mailliste-institutioner-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Export fejl:", error);
+      alert("Der opstod en fejl under eksporten.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <button 
+      onClick={handleExport}
+      disabled={isExporting}
+      className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-slate-800 shadow-xl shadow-slate-950/20 disabled:opacity-50"
+    >
+      {isExporting ? (
+        <Loader2 className="w-3 h-3 animate-spin" />
+      ) : (
+        <FileSpreadsheet className="w-3 h-3" />
+      )}
+      {isExporting ? 'Eksporterer...' : 'Eksporter Mailliste (Admin)'}
+    </button>
+  );
+};
 
 const ReviewSection = ({ institutionId, user, autoScroll }: { institutionId: string, user: any, autoScroll?: boolean }) => {
   const firestore = useFirestore();
@@ -383,7 +449,7 @@ const InstitutionCard = ({ inst, onSelect }: { inst: any, onSelect: (data: any) 
 );
 
 const InstitutionsPage = () => {
-  const { user, isUserLoading } = useApp();
+  const { user, userProfile, isUserLoading } = useApp();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebounce(searchTerm, 500);
@@ -602,7 +668,8 @@ const InstitutionsPage = () => {
               </h2>
            </div>
 
-           <div className="flex items-center gap-2">
+           <div className="flex items-center gap-4">
+              <AdminExportButton userProfile={userProfile} />
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-500">
                  <Layers className="w-3 h-3" />
                  Alle typer
