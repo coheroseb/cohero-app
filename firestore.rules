@@ -103,7 +103,9 @@ service cloud.firestore {
     match /posts/{postId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isSignedIn() && (request.resource.data.keys().hasOnly(['likeCount']) || request.resource.data.keys().hasOnly(['commentCount']));
+      allow update: if isSignedIn() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount', 'commentCount'])
+      );
       allow delete: if isOwner(resource.data.authorId);
       match /comments/{commentId} {
         allow read: if isSignedIn();
@@ -151,7 +153,10 @@ service cloud.firestore {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
       allow create: if isOwner(userId) && request.resource.data.get('role', 'user') == 'user';
-      allow update: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == resource.data.get('role', 'user'));
+      allow update: if isOwner(userId) && (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
+        request.resource.data.role == resource.data.get('role', 'user')
+      );
       allow delete: if isOwner(userId);
 
       match /collections/{collectionId} { allow read, write: if isOwner(userId); }

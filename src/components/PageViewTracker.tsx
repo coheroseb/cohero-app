@@ -55,8 +55,18 @@ export default function PageViewTracker() {
         });
 
         await batch.commit();
-      } catch (error) {
-        // Fail silently to not interrupt user experience
+      } catch (error: any) {
+        // Fail silently to not interrupt user experience, but emit for diagnostics
+        const { errorEmitter } = await import('@/firebase/error-emitter');
+        const { FirestorePermissionError } = await import('@/firebase/errors');
+        
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: `users/${user.uid}`,
+            operation: 'update',
+          })
+        );
         console.error("Failed to track page view or update activity:", error);
       }
     }
@@ -64,13 +74,15 @@ export default function PageViewTracker() {
 
   // Track navigation changes
   useEffect(() => {
-    trackView(pathname);
+    if (pathname) {
+      trackView(pathname);
+    }
   }, [trackView, pathname]);
-
+  
   // Track visibility changes (tab focus) to count as activity
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && pathname) {
         trackView(pathname);
       }
     };

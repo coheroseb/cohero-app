@@ -13,6 +13,8 @@ export function FirebaseErrorListener() {
 
   useEffect(() => {
     const handleError = (err: FirestorePermissionError) => {
+      // Diagnostic logging to find the source of the permission-denied error
+      console.error(`[Firestore Diagnostic] Permission Denied at path: ${err.request.path}. Operation: ${err.request.method}`);
       // Defer state update to avoid "Cannot update a component while rendering a different component"
       // This happens if the error is emitted during another component's render cycle.
       setTimeout(() => {
