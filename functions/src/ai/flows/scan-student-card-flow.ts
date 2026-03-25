@@ -19,15 +19,24 @@ const scanStudentCardFlow = ai.defineFlow(
   },
   async (input) => {
     const { imageUrl, userFullName } = input;
-    let actualUrl = imageUrl;
+    let mediaPart: any;
     if (imageUrl.startsWith('student_cards/')) {
         const bucket = admin.storage().bucket();
         const file = bucket.file(imageUrl);
-        const [signedUrl] = await file.getSignedUrl({
-            action: 'read',
-            expires: Date.now() + 15 * 60 * 1000 // 15 minutes
-        });
-        actualUrl = signedUrl;
+        const [buffer] = await file.download();
+        mediaPart = { 
+            media: {
+                data: buffer.toString('base64'), 
+                contentType: 'image/jpeg' 
+            }
+        };
+    } else {
+        mediaPart = { 
+            media: {
+                url: imageUrl, 
+                contentType: 'image/jpeg' 
+            }
+        };
     }
 
     // We use a structured prompt with the image
@@ -47,7 +56,7 @@ Please extract the following information:
 6. Your confidence score from 0.0 to 1.0 (confidence)
 
 Return the result as a JSON object.` },
-        { media: { url: actualUrl, contentType: 'image/jpeg' } } // Works for most images, Gemini handles it
+        mediaPart // Replaced { media: { url: actualUrl, ... } } with mediaPart
       ],
       output: {
         schema: ScanStudentCardOutputSchema.shape.data
