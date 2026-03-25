@@ -490,10 +490,10 @@ const InstitutionsPage = () => {
         <div className="max-w-6xl mx-auto">
           <div className="bg-white p-4 md:p-6 rounded-[3rem] shadow-2xl flex flex-col lg:flex-row gap-4 border border-amber-100/50">
             <div className="flex-1 relative group">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
+              <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500 animate-pulse" />
               <input 
                 type="text"
-                placeholder="Søg på navn..."
+                placeholder="Søg på navn eller problemstilling (f.eks. misbrug, børn, psykiatri)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 transition-all outline-none"
@@ -508,7 +508,19 @@ const InstitutionsPage = () => {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-wrap items-center gap-2 mt-2 px-2">
+              {['Misbrug', 'Psykiatri', 'Handicap', 'Børn', 'Ældre'].map(tag => (
+                <button 
+                  key={tag}
+                  onClick={() => setSearchTerm(tag)}
+                  className="px-3 py-1.5 bg-slate-50 hover:bg-amber-50 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-600 border border-slate-100 transition-all"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-4 lg:mt-0">
               <div className="sm:w-56 relative group">
                 <Filter className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
                 <select 
