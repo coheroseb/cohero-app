@@ -5,8 +5,8 @@ import React, { useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/app/provider';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
+import { collection, query, where, doc } from 'firebase/firestore';
 import { 
   Loader2, 
   ArrowLeft,
@@ -17,7 +17,9 @@ import {
   UserX,
   TrendingUp,
   BarChart,
-  Users
+  Users,
+  Facebook,
+  Link2
 } from 'lucide-react';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
@@ -42,7 +44,14 @@ const StatsPageContent = () => {
         () => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'user')) : null),
         [firestore]
     );
-    const { data: users, isLoading } = useCollection<any>(usersQuery);
+    const { data: users, isLoading: isUsersLoading } = useCollection<any>(usersQuery);
+    
+    // Fetch aggregate referral stats
+    const referralStatsRef = useMemoFirebase(
+        () => (firestore ? doc(firestore, 'stats', 'referrals') : null),
+        [firestore]
+    );
+    const { data: referralStats, isLoading: isReferralsLoading } = useDoc(referralStatsRef);
 
     const stats = useMemo(() => {
         if (!users) {
@@ -158,9 +167,13 @@ const StatsPageContent = () => {
         const churnRate30d = usersOlderThan30d.length > 0 ? (churned30d / usersOlderThan30d.length) * 100 : 0;
         const churnRate90d = usersOlderThan90d.length > 0 ? (churned90d / usersOlderThan90d.length) * 100 : 0;
 
-        const subscriptionChurnCount = allUsers.filter(u => (u.stripeSubscriptionStatus === 'canceled' || u.stripeCancelAtPeriodEnd === true) && u.membership !== 'Kollega').length;
+         const subscriptionChurnCount = allUsers.filter(u => (u.stripeSubscriptionStatus === 'canceled' || u.stripeCancelAtPeriodEnd === true) && u.membership !== 'Kollega').length;
         const totalPaidUsers = allUsers.filter(u => u.membership !== 'Kollega').length;
         const subscriptionChurnRate = totalPaidUsers > 0 ? (subscriptionChurnCount / totalPaidUsers) * 100 : 0;
+
+        // Facebook Stats
+        const fbConversions = allUsers.filter(u => u.conversionSource === 'facebook').length;
+        const fbConversionRate = totalUsers > 0 ? (fbConversions / totalUsers) * 100 : 0;
 
 
         return {
@@ -174,11 +187,14 @@ const StatsPageContent = () => {
             retentionRate7d: retentionRate7d.toFixed(1) + '%',
             churnRate30d: churnRate30d.toFixed(1) + '%',
             churnRate90d: churnRate90d.toFixed(1) + '%',
-            subscriptionChurnRate: subscriptionChurnRate.toFixed(1) + '%'
+            subscriptionChurnRate: subscriptionChurnRate.toFixed(1) + '%',
+            fbConversions,
+            fbConversionRate: fbConversionRate.toFixed(1) + '%',
+            totalFbClicks: referralStats?.totalFbClicks || 0
         };
-    }, [users]);
+    }, [users, referralStats]);
     
-    if (isLoading) {
+    if (isUsersLoading || isReferralsLoading) {
         return <div className="flex justify-center items-center h-[calc(100vh-10rem)]"><Loader2 className="w-8 h-8 animate-spin text-amber-500" /></div>;
     }
 
@@ -222,6 +238,27 @@ const StatsPageContent = () => {
                     <StatCard title="30-dages churn" value={stats.churnRate30d} description="% af brugere (ældre end 30d) der ikke har logget ind i 30 dage." />
                     <StatCard title="90-dages churn" value={stats.churnRate90d} description="% af brugere (ældre end 90d) der ikke har logget ind i 90 dage." />
                     <StatCard title="Abonnements-churn" value={stats.subscriptionChurnRate} description="% af betalende brugere der har opsagt." />
+                </div>
+            </section>
+
+            <section>
+                <h2 className="text-xl font-bold text-amber-950 serif mb-6 flex items-center gap-3"><Facebook className="w-6 h-6 text-amber-600"/>Marketing & Referrals</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <StatCard 
+                        title="Facebook Klik (Totalt)" 
+                        value={stats.totalFbClicks.toLocaleString()} 
+                        description="Samlet antal klik fra Facebook (med fbclid)." 
+                    />
+                    <StatCard 
+                        title="Facebook Konverteringer" 
+                        value={stats.fbConversions.toString()} 
+                        description="Brugere der er logget ind via et Facebook-link." 
+                    />
+                    <StatCard 
+                        title="Conversion Rate (FB)" 
+                        value={stats.fbConversionRate} 
+                        description="% af de samlede brugere der stammer fra FB." 
+                    />
                 </div>
             </section>
 
