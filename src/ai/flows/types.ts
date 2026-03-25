@@ -173,6 +173,9 @@ export interface UserProfile {
   marketplaceBannedAt?: any;
   cvUrl?: string;
   cvName?: string;
+  firstFbclid?: string;
+  conversionSource?: string;
+  convertedAt?: any;
 }
 
 export interface StudentCardVerification {
