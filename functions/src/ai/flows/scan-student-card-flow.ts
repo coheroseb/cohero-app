@@ -17,10 +17,16 @@ const scanStudentCardFlow = ai.defineFlow(
     inputSchema: ScanStudentCardInputSchema,
     outputSchema: ScanStudentCardOutputSchema,
   },
-  async (input) => {
-    console.log("ScanStudentCard Input received:", JSON.stringify(input));
-    const imageUrl = input.imageUrl || "";
+  async (input: any) => {
+    console.log("ScanStudentCard Input raw:", JSON.stringify(input));
+    
+    // Explicitly handle input being null or undefined
+    const safeInput = input || {};
+    const rawImageUrl = safeInput.imageUrl;
+    const imageUrl = typeof rawImageUrl === 'string' ? rawImageUrl : "";
+    
     if (!imageUrl) {
+        console.warn("ScanStudentCard: Missing imageUrl in input");
         return {
             data: {
                 isStudentCard: false,
@@ -35,7 +41,7 @@ const scanStudentCardFlow = ai.defineFlow(
         };
     }
 
-    const userFullName = input.userFullName || "Unknown";
+    const userFullName = typeof safeInput.userFullName === 'string' ? safeInput.userFullName : "Unknown";
     
     let mediaPart: any;
     if (imageUrl.startsWith('student_cards/')) {
