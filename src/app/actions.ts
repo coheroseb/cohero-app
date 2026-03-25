@@ -1819,3 +1819,22 @@ export async function getUserUidByEmailAction(email: string): Promise<{ success:
         return { success: false, message: 'Der skete en fejl ved opslag.' };
     }
 }
+
+export async function scanStudentCardAction(input: Types.ScanStudentCardInput): Promise<Types.ScanStudentCardOutput> {
+    return callFirebaseFlow('scanStudentCardFlow', input);
+}
+
+export async function updateStudentCardVerificationAction(userId: string, verification: any) {
+    try {
+        await adminFirestore.collection('users').doc(userId).update({
+            studentCardVerification: {
+                ...verification,
+                scannedAt: FieldValue.serverTimestamp()
+            }
+        });
+        return { success: true };
+    } catch (e) {
+        console.error("Failed to update student card verification:", e);
+        return { success: false, error: "Failed to update" };
+    }
+}

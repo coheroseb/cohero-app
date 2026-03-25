@@ -162,7 +162,54 @@ export interface UserProfile {
   payoutFullName?: string;
   payoutAddress?: string;
   isHelperEnabled?: boolean;
+  studentCardUrl?: string;
+  studentCardVerification?: StudentCardVerification;
 }
+
+export interface StudentCardVerification {
+  status: 'pending' | 'verified' | 'rejected';
+  scannedAt?: any;
+  nameOnCard?: string;
+  expiryDate?: string;
+  isStudentCard?: boolean;
+  nameMismatch?: boolean;
+  isExpired?: boolean;
+  confidence?: number;
+  error?: string;
+}
+
+export const StudentCardVerificationSchema = z.object({
+  status: z.enum(['pending', 'verified', 'rejected']),
+  scannedAt: z.any().optional(),
+  nameOnCard: z.string().optional(),
+  expiryDate: z.string().optional(),
+  isStudentCard: z.boolean().optional(),
+  nameMismatch: z.boolean().optional(),
+  isExpired: z.boolean().optional(),
+  confidence: z.number().optional(),
+  error: z.string().optional()
+});
+
+export const ScanStudentCardInputSchema = z.object({
+  imageUrl: z.string(),
+  userFullName: z.string()
+});
+
+export type ScanStudentCardInput = z.infer<typeof ScanStudentCardInputSchema>;
+
+export const ScanStudentCardOutputSchema = z.object({
+  data: z.object({
+    isStudentCard: z.boolean(),
+    nameOnCard: z.string(),
+    expiryDate: z.string().optional(),
+    isExpired: z.boolean(),
+    nameMismatch: z.boolean(),
+    confidence: z.number()
+  }),
+  usage: UsageSchema
+});
+
+export type ScanStudentCardOutput = z.infer<typeof ScanStudentCardOutputSchema>;
 
 export interface Post {
   id: string;

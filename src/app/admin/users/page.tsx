@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import DeleteUserModal from '@/components/DeleteUserModal';
 import { useDebounce } from 'use-debounce';
 import { decryptData } from '@/lib/encryption';
+import { scanStudentCardAction, updateStudentCardVerificationAction } from '@/app/actions';
+import { StudentCardVerification } from '@/ai/flows/types';
 
 interface UserProfile {
   id: string;
@@ -29,6 +31,8 @@ interface UserProfile {
   cprNumber?: string;
   bankReg?: string;
   bankAccount?: string;
+  studentCardUrl?: string;
+  studentCardVerification?: StudentCardVerification;
 }
 
 const STAT_CARDS = [
@@ -426,16 +430,88 @@ const AdminUsersPage = () => {
                                      <BankRow label="Konto" value={u.bankAccount} />
                                    </div>
                                 </div>
-                               <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-sm">
-                                  <div>
-                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-rose-800 flex items-center gap-2 mb-4"><Shield className="w-3.5 h-3.5" /> Administrative Handlinger</h4>
-                                    <p className="text-xs text-slate-500 leading-relaxed mb-4">Advarsel: Sletning af en bruger er permanent. De mister alt indhold og deres abonnement annulleres, hvis det er aktivt.</p>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                     <Button size="sm" variant="outline" className="rounded-xl border-slate-200" disabled>Nulstil Adgangskode (Kommer snart)</Button>
-                                     <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteClick(u)}>Slet Bruger permanent</Button>
-                                  </div>
-                               </div>
+                                <div className="space-y-4 lg:col-span-2 xl:col-span-1">
+                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><CreditCard className="w-3.5 h-3.5" /> Studiekort</h4>
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                                        {u.studentCardUrl ? (
+                                            <div className="space-y-4">
+                                                <div className="aspect-[3/2] bg-slate-100 rounded-xl overflow-hidden relative group">
+                                                    <img src={u.studentCardUrl} alt="Studiekort" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                                    <a href={u.studentCardUrl} target="_blank" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity">Vis fuld størrelse</a>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                                            u.studentCardVerification?.status === 'verified' ? 'bg-emerald-100 text-emerald-800' : 
+                                                            u.studentCardVerification?.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
+                                                        }`}>
+                                                            {u.studentCardVerification?.status === 'verified' ? 'Verificeret' : 
+                                                             u.studentCardVerification?.status === 'rejected' ? 'Afvist' : 'Afventer' }
+                                                        </span>
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="outline" 
+                                                            className="rounded-lg h-7 text-[9px] font-black uppercase tracking-widest px-2"
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                const btn = e.currentTarget;
+                                                                btn.disabled = true;
+                                                                const originalText = btn.innerText;
+                                                                btn.innerText = "Scanner...";
+                                                                
+                                                                try {
+                                                                    const res = await scanStudentCardAction({ imageUrl: u.studentCardUrl!, userFullName: u.username || u.email || '' });
+                                                                    const verification: any = {
+                                                                        status: res.data.isStudentCard && !res.data.nameMismatch && !res.data.isExpired ? 'verified' : 'rejected',
+                                                                        ...res.data
+                                                                    };
+                                                                    await updateStudentCardVerificationAction(u.id, verification);
+                                                                    toast({ title: 'Scanning fuldført', description: 'Studiekortet er blevet analyseret.' });
+                                                                } catch (err) {
+                                                                    toast({ title: 'Scanning fejlede', variant: 'destructive', description: err instanceof Error ? err.message : 'Ukendt fejl' });
+                                                                } finally {
+                                                                    btn.disabled = false;
+                                                                    btn.innerText = originalText;
+                                                                }
+                                                            }}
+                                                        >
+                                                            Scan Nu
+                                                        </Button>
+                                                    </div>
+                                                    
+                                                    {u.studentCardVerification && (
+                                                        <div className="space-y-2 text-[10px] border-t border-slate-50 pt-3">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-400 font-bold uppercase tracking-tight">Navn på kort</span>
+                                                                <span className={`font-black text-right ${u.studentCardVerification.nameMismatch ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                                    {u.studentCardVerification.nameOnCard || 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-400 font-bold uppercase tracking-tight">Udløb</span>
+                                                                <span className={`font-black text-right ${u.studentCardVerification.isExpired ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                                    {u.studentCardVerification.expiryDate || 'Ukendt'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-6 text-slate-400 italic text-[10px]">Intet studiekort uploadet.</div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-sm lg:col-span-2 xl:col-span-1">
+                                   <div>
+                                     <h4 className="text-[11px] font-black uppercase tracking-widest text-rose-800 flex items-center gap-2 mb-4"><Shield className="w-3.5 h-3.5" /> Administrative Handlinger</h4>
+                                     <p className="text-xs text-slate-500 leading-relaxed mb-4">Advarsel: Sletning af en bruger er permanent. De mister alt indhold og deres abonnement annulleres, hvis det er aktivt.</p>
+                                   </div>
+                                   <div className="flex items-center gap-3">
+                                      <Button size="sm" variant="outline" className="rounded-xl border-slate-200" disabled>Nulstil Adgangskode (Kommer snart)</Button>
+                                      <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteClick(u)}>Slet Bruger permanent</Button>
+                                   </div>
+                                </div>
                             </div>
                           </td>
                         </tr>
