@@ -258,21 +258,30 @@ const DetailOverlay = ({ inst, user, onClose }: { inst: any, user: any, onClose:
              </div>
 
              <div className="space-y-8">
-                <div className="aspect-square bg-slate-100 rounded-[2.5rem] border border-slate-200 overflow-hidden relative">
-                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 text-center p-8">
-                      <MapPin className="w-12 h-12 mb-4 opacity-50" />
-                      <p className="text-xs font-black uppercase tracking-widest mb-1">Geografisk Placering</p>
-                      <p className="text-[10px] font-medium opacity-70">
-                         Bredde: {inst.GEO_BREDDE_GRAD}<br/>
-                         Længde: {inst.GEO_LAENGDE_GRAD}
-                      </p>
-                   </div>
+                <div className="aspect-square bg-slate-100 rounded-[2.5rem] border border-slate-200 overflow-hidden relative shadow-inner">
+                   {inst.GEO_BREDDE_GRAD && inst.GEO_LAENGDE_GRAD ? (
+                      <iframe 
+                        width="100%" 
+                        height="100%" 
+                        frameBorder="0" 
+                        scrolling="no" 
+                        marginHeight={0} 
+                        marginWidth={0} 
+                        src={`https://maps.google.com/maps?q=${inst.GEO_BREDDE_GRAD.replace(',', '.')},${inst.GEO_LAENGDE_GRAD.replace(',', '.')}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                        className="grayscale-[20%] contrast-[110%] opacity-90"
+                      />
+                   ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 text-center p-8">
+                         <MapPin className="w-12 h-12 mb-4 opacity-50" />
+                         <p className="text-xs font-black uppercase tracking-widest mb-1">Kort ikke tilgængeligt</p>
+                      </div>
+                   )}
                    {inst.WEB_ADR && (
                       <a 
                         href={inst.WEB_ADR.startsWith('http') ? inst.WEB_ADR : `https://${inst.WEB_ADR}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="absolute bottom-8 left-8 right-8 py-4 bg-amber-950 text-white rounded-xl text-xs font-black uppercase tracking-widest text-center hover:bg-slate-900 transition-all shadow-xl shadow-slate-950/20"
+                        className="absolute bottom-6 left-6 right-6 py-4 bg-white/90 backdrop-blur-md text-slate-900 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-center hover:bg-white transition-all shadow-xl shadow-slate-950/10"
                       >
                          Besøg Hjemmeside
                       </a>
