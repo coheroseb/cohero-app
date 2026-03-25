@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useStorage } from '@/firebase';
 import { collection, query, doc, deleteDoc } from 'firebase/firestore';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
@@ -88,7 +88,7 @@ const StudentCardDisplay = ({ path, userId, userName }: { path: string, userId: 
   const [url, setUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { storage } = useFirestore() ? { storage: require('firebase/storage').getStorage() } : { storage: null }; // Workaround for storage access
+  const { storage } = { storage: useStorage() }; 
 
   useEffect(() => {
     if (!path) return;
