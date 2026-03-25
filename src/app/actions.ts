@@ -121,7 +121,6 @@ async function callFirebaseFlow(flowName, data) {
             const errorJson = await response.json();
             errorMsg = errorJson.error || errorJson.message || errorMsg;
         } catch (e) {
-            // Fallback to text if JSON fails
             const text = await response.text().catch(() => "");
             if (text) errorMsg = text;
         }
@@ -132,9 +131,26 @@ async function callFirebaseFlow(flowName, data) {
 
     return response.json();
   } catch (error: any) {
-    if (error.cause && error.cause.code === 'ECONNREFUSED') {
-        throw new Error(`Firebase Flow Error: Could not connect to emulator at ${url}. Ensure the emulator is running.`);
+    // If the emulator is not running, fail gracefully by trying the production URL in dev mode
+    if (error.cause && error.cause.code === 'ECONNREFUSED' && url.includes('127.0.0.1') && process.env.NODE_ENV !== 'production') {
+        console.warn(`[Genkit] Emulator not found at ${url}. Falling back to production flows.`);
+        
+        // Retry with production URL
+        const retryResponse = await fetch(prodUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + adminSecret
+            },
+            body: JSON.stringify({ flowName, data })
+        });
+        
+        if (!retryResponse.ok) {
+            throw new Error(`Production Fallback Failed (${retryResponse.status})`);
+        }
+        return retryResponse.json();
     }
+    
     console.error("Firebase Flow client error:", error);
     throw error;
   }
