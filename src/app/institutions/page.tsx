@@ -156,21 +156,19 @@ const InstitutionsPage = () => {
     let q = collection(firestore, 'institutions');
 
     if (debouncedSearch && debouncedSearch.length >= 2) {
-      // Case-sensitivity note: matches MUST start with exact letters (prefix search)
-      const searchStr = debouncedSearch;
+      // Case-insensitive search using proxy field
+      const searchStr = debouncedSearch.toLowerCase();
       const endStr = searchStr.replace(/.$/, c => String.fromCharCode(c.charCodeAt(0) + 1));
       
-      // Note: Prefix search requires range query and automatically orders.
-      // Combining with region filter would require composite index.
-      return query(q, where('INST_NAVN', '>=', searchStr), where('INST_NAVN', '<', endStr), limit(40));
+      return query(q, where('search_name', '>=', searchStr), where('search_name', '<', endStr), limit(40));
     }
 
     if (regionFilter !== 'Alle') {
         return query(q, where('BEL_REGION_TEKST', '==', regionFilter), limit(40));
     }
 
-    // Default sorting by name
-    return query(q, orderBy('INST_NAVN'), limit(40));
+    // Default sorting
+    return query(q, orderBy('search_name'), limit(40));
   }, [firestore, user, debouncedSearch, regionFilter]);
 
   const { data: institutions, isLoading: isQueryLoading, error } = useCollection<any>(institutionsQuery);
