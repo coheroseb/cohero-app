@@ -515,6 +515,11 @@ const AdminUsersPage = () => {
                                                                 
                                                                 try {
                                                                     const res = await scanStudentCardAction({ imageUrl: u.studentCardUrl!, userFullName: u.username || u.email || '' });
+                                                                    
+                                                                    if (!res.success) {
+                                                                        throw new Error(res.error || 'Ukendt fejl under scanning');
+                                                                    }
+
                                                                     const verification: any = {
                                                                         status: res.data.isStudentCard && !res.data.nameMismatch && !res.data.isExpired ? 'verified' : 'rejected',
                                                                         ...res.data

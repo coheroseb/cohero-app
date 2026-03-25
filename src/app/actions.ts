@@ -1825,8 +1825,18 @@ export async function getUserUidByEmailAction(email: string): Promise<{ success:
     }
 }
 
-export async function scanStudentCardAction(input: Types.ScanStudentCardInput): Promise<Types.ScanStudentCardOutput> {
-    return callFirebaseFlow('scanStudentCardFlow', input);
+export async function scanStudentCardAction(input: Types.ScanStudentCardInput): Promise<any> {
+    try {
+        const result = await callFirebaseFlow('scanStudentCardFlow', input);
+        return { success: true, ...result };
+    } catch (e: any) {
+        console.error("scanStudentCardAction failed:", e);
+        return { 
+            success: false, 
+            error: e.message || "Scanning fejlede.", 
+            details: process.env.NODE_ENV === 'development' ? e.stack : undefined 
+        };
+    }
 }
 
 export async function updateStudentCardVerificationAction(userId: string, verification: any) {
