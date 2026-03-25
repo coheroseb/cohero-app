@@ -179,49 +179,49 @@ const InstitutionsPage = () => {
             Søg på tværs af tusindvis af offentlige og private institutioner i Danmark.
           </p>
         </motion.div>
+      </header>
 
-        {/* Search Bar Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 px-6 z-20">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white p-4 md:p-6 rounded-[3rem] shadow-2xl flex flex-col md:flex-row gap-4 border border-amber-100/50">
-              <div className="flex-1 relative group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
-                <input 
-                  type="text"
-                  placeholder="Søg på navn..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 transition-all outline-none"
-                />
-                {searchTerm && (
-                  <button 
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
-              <div className="md:w-64 relative group">
-                <Filter className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
-                <select 
-                  value={regionFilter}
-                  onChange={(e) => setRegionFilter(e.target.value)}
-                  className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none"
+      {/* Search Bar Overlay - Moved outside header to prevent clipping */}
+      <div className="relative z-30 -mt-12 md:-mt-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white p-4 md:p-6 rounded-[3rem] shadow-2xl flex flex-col md:flex-row gap-4 border border-amber-100/50">
+            <div className="flex-1 relative group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
+              <input 
+                type="text"
+                placeholder="Søg på navn..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 transition-all outline-none"
+              />
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
-                  {regions.map(r => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="md:w-64 relative group">
+              <Filter className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
+              <select 
+                value={regionFilter}
+                onChange={(e) => setRegionFilter(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none"
+              >
+                {regions.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 pt-48 pb-24">
+      <main className="max-w-7xl mx-auto px-6 pt-24 pb-24">
         {error && (
             <div className="mb-12 p-6 bg-rose-50 border border-rose-200 rounded-[2rem] text-rose-700">
                 <p className="font-black uppercase tracking-widest text-[10px] mb-1">System Fejl</p>
