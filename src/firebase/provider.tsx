@@ -54,14 +54,29 @@ const FirebaseContext = createContext<FirebaseContextType>({
   storage: null,
 });
 
-export const FirebaseProvider = ({ children }: { children: React.ReactNode }) => {
-  const firebaseApp = getFirebaseApp();
-  const auth = getAuth(firebaseApp);
-  const firestore = getFirestore(firebaseApp);
-  const storage = getStorage(firebaseApp);
+interface FirebaseProviderProps {
+  children: React.ReactNode;
+  firebaseApp?: FirebaseApp | null;
+  auth?: Auth | null;
+  firestore?: Firestore | null;
+  storage?: FirebaseStorage | null;
+}
+
+export const FirebaseProvider = ({ 
+    children, 
+    firebaseApp: providedApp, 
+    auth: providedAuth, 
+    firestore: providedFirestore, 
+    storage: providedStorage 
+}: FirebaseProviderProps) => {
+  // Use provided services or initialize them if not present (fallback)
+  const firebaseApp = providedApp || getFirebaseApp();
+  const auth = providedAuth || getAuth(firebaseApp);
+  const firestore = providedFirestore || getFirestore(firebaseApp);
+  const storage = providedStorage || getStorage(firebaseApp);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && firebaseApp) {
       getAnalytics(firebaseApp);
     }
   }, [firebaseApp]);

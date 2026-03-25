@@ -1338,6 +1338,9 @@ export function LovPortalViewer() {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LawConfig[];
         setLawsConfigs(data);
         setLawsLoading(false);
+    }, (err) => {
+        console.error('[LovPortalViewer] Laws config listener error:', err);
+        setLawsLoading(false);
     });
     return () => unsubscribe();
   }, [firestore]);

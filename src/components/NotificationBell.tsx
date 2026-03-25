@@ -54,6 +54,8 @@ const NotificationBell = () => {
             const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
             setNotifications(fetched);
             setUnreadCount(fetched.filter(n => !n.read).length);
+        }, (err) => {
+            console.error('[NotificationBell] Notifications listener error:', err);
         });
 
         return () => unsub();
