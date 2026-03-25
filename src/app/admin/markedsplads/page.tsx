@@ -34,7 +34,8 @@ import {
   ArrowUpDown,
   Star,
   Banknote,
-  FileSpreadsheet
+  FileSpreadsheet,
+  UserMinus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -97,6 +98,23 @@ const AdminMarkedspladsPage = () => {
     
     return result;
   }, [requests, searchTerm, statusFilter, sortBy]);
+
+  const handleResetRequest = async (id: string) => {
+    if (!firestore || !window.confirm('Vil du nulstille denne opgave? Den studerende vil blive fjernet, og opgaven bliver åben for andre igen.')) return;
+    try {
+      await updateDoc(doc(firestore, 'assistance_requests', id), {
+        status: 'open',
+        studentId: null,
+        studentName: null,
+        studentEmail: null,
+        studentPhone: null,
+        claimedAt: null
+      });
+      toast({ title: 'Opgave nulstillet' });
+    } catch (err) {
+      toast({ title: 'Fejl ved nulstilling', variant: 'destructive' });
+    }
+  };
 
   const handleDeleteRequest = async (id: string) => {
     if (!firestore || !window.confirm('Er du sikker på du vil slette denne opgave?')) return;
@@ -311,6 +329,15 @@ const AdminMarkedspladsPage = () => {
                             className="p-2 bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 rounded-xl transition-all"
                           >
                             <Banknote className="w-4 h-4" />
+                          </button>
+                        )}
+                        {req.studentId && (
+                           <button 
+                            onClick={() => handleResetRequest(req.id)}
+                            title="Fjern studerende (Nulstil opgave)"
+                            className="p-2 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-100 rounded-xl transition-all"
+                          >
+                            <UserMinus className="w-4 h-4" />
                           </button>
                         )}
                         <button 
