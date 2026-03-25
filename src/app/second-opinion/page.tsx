@@ -216,6 +216,9 @@ const SecondOpinionPageContent = () => {
             })) as SecondOpinionRecord[];
             setPastOpinions(records.filter(r => r.id !== 'latest'));
             setIsLoadingHistory(false);
+        }, (err) => {
+            console.error('[SecondOpinion] history listener error:', err);
+            setIsLoadingHistory(false);
         });
         return () => unsubscribe();
     }, [user, firestore]);

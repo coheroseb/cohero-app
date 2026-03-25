@@ -82,6 +82,9 @@ export default function MineViveAnalyserPage() {
       const unsub = onSnapshot(q, (snapshot) => {
         setAnalyses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedViveAnalysis)));
         setIsLoading(false);
+      }, (err) => {
+        console.error('[ViveAnalyses] listener error:', err);
+        setIsLoading(false);
       });
       return () => unsub();
     }, [user, firestore]);

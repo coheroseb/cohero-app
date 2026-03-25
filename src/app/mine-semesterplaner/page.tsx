@@ -646,11 +646,16 @@ function MineSemesterplanerPage() {
             if (!selectedId && fetchedPlans.length > 0) {
                 setSelectedId(fetchedPlans[0].id);
             }
+        }, (err) => {
+            console.error('[SemesterPlans] listener error:', err);
+            setIsLoading(false);
         });
 
         const q2 = query(collection(firestore, 'users', user.uid, 'studySchedules'));
         const unsub2 = onSnapshot(q2, (snapshot) => {
             setSchedules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedStudySchedule)));
+        }, (err) => {
+            console.error('[StudySchedules] listener error:', err);
         });
 
         return () => { unsub(); unsub2(); };

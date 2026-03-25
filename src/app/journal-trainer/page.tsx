@@ -100,6 +100,8 @@ const JournalTrainerPageContent: React.FC = () => {
     return onSnapshot(q, (snapshot) => {
         const histories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setHistory(histories);
+    }, (err) => {
+        console.error('[JournalTrainer] history listener error:', err);
     });
   }, [user, firestore]);
 
