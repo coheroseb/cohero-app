@@ -24,7 +24,10 @@ import {
   Clock,
   UploadCloud,
   FilePlus,
-  Check
+  Check,
+  Zap,
+  Briefcase,
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -287,262 +290,308 @@ const AssistanceMarketplaceContent = () => {
           </div>
       );
   }
-
   return (
-    <div className="min-h-screen bg-[#FDFCF8] flex flex-col selection:bg-rose-100">
-      <header className="bg-white border-b border-amber-100 px-6 py-8 sticky top-24 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-          <div className="flex items-center gap-6">
-            <button onClick={() => router.back()} className="p-3 bg-rose-50 text-rose-900 rounded-2xl hover:bg-rose-100 transition-all border border-rose-100 shadow-sm active:scale-95">
+    <div className="min-h-screen bg-[#FDFCF8] flex flex-col selection:bg-amber-100">
+      {/* Dynamic Navigation Header */}
+      <nav className="bg-white/80 backdrop-blur-2xl border-b border-amber-50 sticky top-0 z-50 px-4 sm:px-8 py-4 sm:py-6 shadow-sm">
+        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center gap-6 md:justify-between">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <button 
+              onClick={() => router.back()} 
+              className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-amber-950 hover:text-white transition-all shadow-sm active:scale-90"
+            >
               <ArrowLeft className="w-5 h-5" />
             </button>
+            <div className="h-10 w-[1px] bg-slate-100 hidden sm:block" />
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                 <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-900/60">Samfunds-Forbindelse</span>
+              <div className="flex items-center gap-2 mb-0.5">
+                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/60 leading-none">Live Markedsplads</span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-amber-950 serif tracking-tight">Markedsplads & Opgaver</h1>
+              <h1 className="text-2xl sm:text-3xl font-black text-amber-950 serif tracking-tight flex items-center gap-3">
+                Opgaver <span className="text-slate-200 font-light italic">/</span> <span className="text-slate-400 text-lg sm:text-2xl">Find hjælp</span>
+              </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 flex-1 max-w-2xl justify-end">
-            <div className="relative flex-1 hidden md:block">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text" 
-                placeholder="Søg i opgaver, emner..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-6 py-4 bg-white border border-amber-50 rounded-[1.5rem] focus:ring-4 focus:ring-rose-400/10 focus:border-rose-400 focus:outline-none transition-all shadow-sm text-sm font-medium"
-              />
-            </div>
+          <div className="flex items-center gap-4 flex-1 max-w-xl">
+             <div className="relative flex-1 group">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-amber-600 transition-colors" />
+                <input
+                  type="text" 
+                  placeholder="Hvad leder du efter? Søg emner, ord..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] focus:bg-white focus:ring-4 focus:ring-amber-500/5 focus:border-amber-200 focus:outline-none transition-all shadow-inner text-sm font-semibold text-slate-900 placeholder:text-slate-300"
+                />
+             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <div className="max-w-7xl mx-auto w-full px-6 py-12 grid lg:grid-cols-12 gap-12">
-        <aside className="lg:col-span-3 space-y-8 lg:sticky lg:top-48 h-fit">
-          <section className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm space-y-6">
-             <div>
-                <h4 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2">
-                    <Filter className="w-3.5 h-3.5" /> Din Oversigt
+      <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-16 grid lg:grid-cols-12 gap-8 sm:gap-12">
+        {/* Modern Sidebar Navigation */}
+        <aside className="lg:col-span-3 space-y-6 lg:sticky lg:top-36 h-fit order-2 lg:order-1">
+          <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] border border-amber-100/50 shadow-2xl shadow-amber-950/5 space-y-8">
+             <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em] flex items-center gap-2">
+                    <Filter className="w-4 h-4" /> Kategorier
                 </h4>
-                <div className="grid gap-2">
+                <div className="flex flex-col gap-2">
                     {[
-                        { id: 'all', label: 'Ledige opgaver', icon: Search },
-                        { id: 'mine', label: 'Mine anmodninger', icon: HandHelping },
-                        { id: 'claimed', label: 'Mine tagne opgaver', icon: CheckCircle2 }
+                        { id: 'all', label: 'Alle Ledige', icon: Zap, count: requests?.filter(r => r.status === 'open').length || 0 },
+                        { id: 'mine', label: 'Mine Oprettede', icon: User, count: requests?.filter(r => r.citizenId === user?.uid).length || 0 },
+                        { id: 'claimed', label: 'Mine Tagne', icon: Briefcase, count: requests?.filter(r => r.studentId === user?.uid).length || 0 }
                     ].map((btn) => (
                         <button 
                             key={btn.id}
                             onClick={() => setActiveFilter(btn.id as any)}
-                            className={`w-full text-left px-5 py-4 rounded-2xl text-[11px] font-bold transition-all flex items-center gap-3 ${
-                                activeFilter === btn.id ? 'bg-amber-950 text-white shadow-xl translate-x-1' : 'bg-slate-50 border border-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-950'
+                            className={`w-full text-left px-5 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-between group/nav ${
+                                activeFilter === btn.id 
+                                ? 'bg-amber-950 text-white shadow-xl shadow-amber-950/20' 
+                                : 'text-slate-500 hover:bg-amber-50 hover:text-amber-950'
                             }`}
                         >
-                            <btn.icon className={`w-4 h-4 ${activeFilter === btn.id ? 'text-amber-400' : 'text-slate-400'}`} />
-                            {btn.label}
+                            <div className="flex items-center gap-3">
+                                <btn.icon className={`w-4 h-4 transition-transform group-hover/nav:scale-110 ${activeFilter === btn.id ? 'text-amber-400' : 'text-slate-300'}`} />
+                                {btn.label}
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-md text-[9px] ${activeFilter === btn.id ? 'bg-amber-900 text-amber-200' : 'bg-slate-100 text-slate-400'}`}>
+                                {btn.count}
+                            </span>
                         </button>
                     ))}
                 </div>
              </div>
 
-             <div className="pt-6 border-t border-slate-100">
-                <h4 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Status
-                </h4>
-                <div className={`p-4 rounded-2xl border flex items-center gap-3 ${
-                    userProfile?.isHelperEnabled ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'
+             <div className="pt-8 border-t border-slate-50">
+                <div className={`p-5 rounded-3xl border flex items-center gap-4 transition-all ${
+                    userProfile?.isHelperEnabled 
+                    ? 'bg-emerald-50/50 border-emerald-100 shadow-sm' 
+                    : 'bg-amber-50 border-amber-100 animate-pulse'
                 }`}>
-                    <div className={`w-2 h-2 rounded-full ${userProfile?.isHelperEnabled ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
-                    <span className={`text-[11px] font-bold ${userProfile?.isHelperEnabled ? 'text-emerald-900' : 'text-amber-900'}`}>
-                        {userProfile?.isHelperEnabled ? 'Klar til opgaver' : 'Mangler udbetalings-info'}
-                    </span>
+                    <div className={`w-3 h-3 rounded-full shadow-sm ${userProfile?.isHelperEnabled ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    <div className="flex flex-col">
+                        <span className={`text-[10px] font-black uppercase tracking-widest leading-none mb-1 ${userProfile?.isHelperEnabled ? 'text-emerald-900' : 'text-amber-900'}`}>
+                            {userProfile?.isHelperEnabled ? 'Verificeret' : 'Uverificeret'}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-400">
+                             {userProfile?.isHelperEnabled ? 'Klar til udbetaling' : 'Mangler bank-data'}
+                        </span>
+                    </div>
                 </div>
              </div>
-          </section>
+          </div>
 
-          <section className="p-8 bg-indigo-950 text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
-                <HandHelping className="w-24 h-24 -rotate-12" />
+          <div className="group p-8 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-transform hover:-translate-y-1">
+             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-125 transition-transform duration-700">
+                <HandHelping className="w-32 h-32 -rotate-12" />
              </div>
-             <div className="relative z-10">
-                <h4 className="text-[10px] font-black uppercase text-indigo-300 mb-3 tracking-widest">Studerende?</h4>
-                <p className="text-[13px] font-bold leading-relaxed mb-4">
-                  Tjen penge ved at hjælpe borgere med deres sociale sager. Alt foregår sikkert gennem Cohéro.
+             <div className="relative z-10 space-y-4">
+                <div className="w-10 h-10 bg-amber-400/20 text-amber-400 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                </div>
+                <h4 className="text-lg font-black serif">Socialrådgiver studerende?</h4>
+                <p className="text-[12px] font-medium text-slate-400 leading-relaxed">
+                  Tjen penge ved at hjælpe med faglige opslag, ansøgninger og meget mere. 
                 </p>
-                <div className="flex items-center gap-2 text-[10px] font-black text-amber-400 uppercase tracking-widest">
-                    <span>15% gebyr</span>
-                    <div className="w-1 h-1 rounded-full bg-indigo-700" />
-                    <span>Hurtig udbetaling</span>
+                <div className="flex items-center gap-2 pt-2">
+                    <div className="flex -space-x-2">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-800" />
+                        ))}
+                    </div>
+                    <span className="text-[9px] font-black uppercase text-amber-400 tracking-tighter">+50 aktive hjælpere</span>
                 </div>
              </div>
-          </section>
+          </div>
         </aside>
         
-        <main className="lg:col-span-9 space-y-8">
+        {/* Main Content Area */}
+        <main className="lg:col-span-9 space-y-6 sm:space-y-8 order-1 lg:order-2">
            {requestsLoading ? (
-            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-amber-900"/></div>
+             <div className="flex flex-col items-center justify-center py-32 space-y-4">
+                <Loader2 className="w-10 h-10 animate-spin text-amber-950" />
+                <p className="text-[10px] font-black uppercase text-slate-300 tracking-widest">Henter opgaver...</p>
+             </div>
            ) : (
-             <div className="grid gap-6">
+             <div className="grid gap-6 sm:gap-10">
               {filteredRequests.map(req => (
                 <div 
                   key={req.id}
-                  className="bg-white rounded-[2.5rem] border border-amber-100 overflow-hidden shadow-sm hover:shadow-md transition-all group"
+                  className="bg-white rounded-[2.5rem] sm:rounded-[3.5rem] border border-amber-100/50 overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-amber-950/5 transition-all duration-500 group relative"
                 >
-                  <div className="p-8 md:p-12 flex flex-col md:flex-row justify-between gap-10">
-                    <div className="flex-1 space-y-6">
-                      <div className="flex flex-wrap items-center gap-3">
-                         <span className="px-5 py-2 bg-slate-100 text-slate-800 text-[10px] font-black uppercase tracking-widest rounded-full border border-slate-200">
-                           {req.category}
-                         </span>
-                         {req.status === 'claimed' && (
-                            <span className={`px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-2 border ${
-                                req.studentId === user?.uid ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-slate-50 text-slate-500 border-slate-200'
-                            }`}>
-                              <CheckCircle2 className="w-3.5 h-3.5" /> 
-                              {req.studentId === user?.uid ? 'Taget af dig' : `Taget af ${req.studentName}`}
-                            </span>
-                         )}
-                         {req.isPaid && (
-                            <span className="px-5 py-2 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 flex items-center gap-2">
-                                <DollarSign className="w-3.5 h-3.5" /> Betaling gennemført
-                            </span>
-                         )}
-                      </div>
+                  {/* Category Badge Floating */}
+                  <div className="absolute top-8 right-8 flex flex-col items-end gap-3 z-10">
+                    <span className="px-5 py-2.5 bg-slate-900 text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-2xl">
+                        {req.category}
+                    </span>
+                    {req.isPaid && (
+                        <div className="bg-emerald-500 text-white p-2 rounded-xl shadow-lg animate-bounce">
+                            <Check className="w-4 h-4" />
+                        </div>
+                    )}
+                  </div>
 
-                      <h3 className="text-3xl font-extrabold text-amber-950 serif tracking-tight leading-tight group-hover:text-rose-900 transition-colors">
-                        {req.title}
-                      </h3>
-                      <p className="text-slate-600 text-[15px] leading-relaxed max-w-2xl font-medium">
-                        {req.description}
-                      </p>
+                  <div className="p-8 sm:p-14 flex flex-col md:flex-row gap-10 sm:gap-16">
+                    <div className="flex-1 space-y-8">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                           {req.status === 'claimed' && (
+                                <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-tighter flex items-center gap-2 border ${
+                                    req.studentId === user?.uid ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100'
+                                }`}>
+                                  <div className={`w-1.5 h-1.5 rounded-full ${req.studentId === user?.uid ? 'bg-indigo-500' : 'bg-slate-300'}`} />
+                                  {req.studentId === user?.uid ? 'Taget af dig' : `Optaget`}
+                                </div>
+                           )}
+                           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300">
+                             <Calendar className="w-3.5 h-3.5" />
+                             {req.createdAt?.toDate ? new Date(req.createdAt.toDate()).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) : 'Lige nu'}
+                           </div>
+                        </div>
+
+                        <h3 className="text-3xl sm:text-4xl font-black text-amber-950 serif tracking-tight leading-[1.1] max-w-xl group-hover:text-amber-900 transition-colors">
+                          {req.title}
+                        </h3>
+                        <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-lg line-clamp-3">
+                          {req.description}
+                        </p>
+                      </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t border-slate-50">
-                        <div className="flex items-center gap-3 text-slate-500 group-hover:text-slate-900 transition-colors">
-                           <div className="p-2.5 bg-slate-50 rounded-xl">
-                                <MapPin className="w-4 h-4" />
-                           </div>
-                           <span className="text-xs font-bold leading-none">{req.location}</span>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10 pt-10 border-t border-slate-50">
+                        <div className="space-y-1">
+                            <p className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Lokation</p>
+                            <div className="flex items-center gap-2 text-slate-700">
+                                <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                                <span className="text-sm font-black">{req.location}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 text-slate-500">
-                           <div className="p-2.5 bg-slate-50 rounded-xl">
-                                <Calendar className="w-4 h-4" />
-                           </div>
-                           <span className="text-xs font-bold leading-none">{req.createdAt?.toDate ? new Date(req.createdAt.toDate()).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) : 'Lige nu'}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-slate-500">
-                           <div className="p-2.5 bg-slate-50 rounded-xl">
-                                <User className="w-4 h-4" />
-                           </div>
-                           <span className="text-xs font-bold leading-none">{req.citizenName}</span>
+                        <div className="space-y-1">
+                            <p className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Fulde Navn</p>
+                            <div className="flex items-center gap-2 text-slate-700">
+                                <User className="w-3.5 h-3.5 text-amber-600" />
+                                <span className="text-sm font-bold">{req.citizenName}</span>
+                            </div>
                         </div>
                         {req.dueDate && (
-                          <div className="flex items-center gap-3 text-rose-600 group-hover:text-rose-800 transition-colors">
-                             <div className="p-2.5 bg-rose-50 rounded-xl">
-                                  <Clock className="w-4 h-4" />
+                          <div className="space-y-1">
+                             <p className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Frist</p>
+                             <div className="flex items-center gap-2 text-rose-600">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  <span className="text-sm font-black">{req.dueDate}</span>
                              </div>
-                             <span className="text-xs font-bold leading-none">Frist: {req.dueDate}</span>
                           </div>
                         )}
                       </div>
 
                       {req.status === 'claimed' && req.studentId === user?.uid && (
-                        <div className="bg-rose-50 p-6 rounded-[2rem] border border-rose-100 space-y-4 animate-in slide-in-from-bottom-2 duration-500">
-                             <div className="flex items-center gap-2 mb-2">
-                                <ShieldCheck className="w-4 h-4 text-rose-600" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-rose-900">Kontaktoplysninger</span>
+                        <div className="mt-8 bg-slate-50/80 p-8 rounded-[2.5rem] border border-slate-100 space-y-6 animate-in slide-in-from-bottom-4 duration-700 shadow-inner">
+                             <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">Kontaktoplysninger Modtaget</span>
+                                </div>
+                                {!req.isPaid && <div className="text-[10px] font-bold text-rose-600 italic">Afventer betaling...</div>}
                              </div>
+
                              {req.isPaid ? (
-                                <div className="space-y-4">
-                                     <div className="grid sm:grid-cols-2 gap-4">
-                                          <a href={`mailto:${req.citizenEmail}`} className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all text-sm font-black text-rose-950">
-                                             <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
-                                                 <Mail className="w-5 h-5" />
-                                             </div>
-                                             {req.citizenEmail}
-                                          </a>
-                                          {req.citizenPhone && (
-                                             <a href={`tel:${req.citizenPhone}`} className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all text-sm font-black text-rose-950">
-                                                 <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
-                                                     <Phone className="w-5 h-5" />
-                                                 </div>
-                                                 {req.citizenPhone}
-                                             </a>
-                                          )}
-                                     </div>
-                                     <div className="p-4 bg-emerald-100/50 rounded-2xl border border-emerald-200 flex items-start gap-3">
-                                        <AlertCircle className="w-5 h-5 text-emerald-700 mt-0.5" />
-                                        <p className="text-xs font-bold text-emerald-900 leading-relaxed">
-                                            Vigtigt: Du skal kontakte borgeren inden for 24 timer efter betaling er gennemført.
-                                        </p>
-                                     </div>
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                     <a href={`mailto:${req.citizenEmail}`} className="flex items-center gap-4 p-5 bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-sm font-black text-slate-900 border border-slate-50">
+                                        <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                                            <Mail className="w-6 h-6" />
+                                        </div>
+                                        {req.citizenEmail}
+                                     </a>
+                                     {req.citizenPhone && (
+                                        <a href={`tel:${req.citizenPhone}`} className="flex items-center gap-4 p-5 bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-sm font-black text-slate-900 border border-slate-50">
+                                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                                                <Phone className="w-6 h-6" />
+                                            </div>
+                                            {req.citizenPhone}
+                                        </a>
+                                     )}
                                 </div>
                              ) : (
-                                <div className="flex items-center gap-3 text-[13px] font-bold text-rose-800">
-                                   <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0">
-                                      <Lock className="w-5 h-5" />
+                                <div className="p-8 bg-white/50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center text-center gap-4">
+                                   <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-2xl shadow-slate-200">
+                                      <Lock className="w-8 h-8 text-slate-200" />
                                    </div>
-                                   Oplysninger frigives når borgeren har gennemført betalingen. Du skal kontakte borgeren senest 24 timer efter modtagelse af kontaktoplysninger.
+                                   <p className="text-xs font-bold text-slate-400 max-w-xs leading-relaxed">
+                                      Oplysninger frigives straks når borgeren har bekræftet hjælpen med betaling.
+                                   </p>
                                 </div>
                              )}
                         </div>
                       )}
                     </div>
 
-                    <div className="md:w-72 bg-[#FDFCF8] rounded-[2.5rem] p-8 flex flex-col justify-between items-center text-center border border-amber-100 relative group-hover:bg-amber-50/50 transition-colors">
-                        <div className="absolute -top-3 -right-3 px-4 py-1.5 bg-amber-950 text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">
-                           Fast Pris
+                    <div className="md:w-80 flex flex-col gap-6">
+                        <div className="bg-slate-50 rounded-[3rem] p-8 sm:p-10 flex flex-col items-center text-center border border-slate-100 flex-1 justify-center relative shadow-inner">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Budget</p>
+                                <div className="flex items-baseline gap-1 justify-center">
+                                    <span className="text-5xl sm:text-6xl font-black text-slate-950 serif">{req.price}</span>
+                                    <span className="text-xl font-bold text-slate-400 tracking-tighter">DKK</span>
+                                </div>
+                            </div>
+                            
+                            <div className="w-full h-[1px] bg-slate-200 my-8 relative">
+                                <div className="absolute left-1/2 -translate-x-1/2 -top-2 px-2 bg-slate-50 text-[8px] font-black uppercase text-slate-300">Optjening</div>
+                            </div>
+
+                            <div className="space-y-4 w-full">
+                                <div className="flex justify-between items-center px-4">
+                                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Du tjener</span>
+                                    <span className="text-2xl font-black text-amber-950 serif">{req.studentEarnings} kr.</span>
+                                </div>
+                                <div className="p-4 bg-white/80 rounded-2xl border border-white text-[9px] font-medium text-slate-400 italic">
+                                    Efter 15% platform-gebyr
+                                </div>
+                            </div>
                         </div>
 
-                       <div className="space-y-2 mt-4">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Borger betaler</p>
-                          <p className="text-5xl font-black text-amber-950 serif">{req.price} <span className="text-xl font-bold ml-1">kr.</span></p>
-                       </div>
-                       
-                       <div className="w-full space-y-4">
+                        <div className="space-y-4">
                             {req.status === 'open' ? (
                                 <button 
                                     onClick={() => handleClaimRequest(req)}
                                     disabled={req.citizenId === user?.uid}
-                                    className={`w-full py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] transition-all shadow-xl active:scale-95 ${
+                                    className={`w-full py-6 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] sm:text-[11px] transition-all shadow-2xl active:scale-95 ${
                                         req.citizenId === user?.uid 
-                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' 
-                                        : 'bg-amber-950 text-white hover:bg-rose-900 shadow-amber-950/20'
+                                        ? 'bg-slate-100 text-slate-300 cursor-not-allowed border border-slate-200' 
+                                        : 'bg-amber-950 text-white hover:bg-rose-950 shadow-amber-950/20'
                                     }`}
                                 >
-                                    {req.citizenId === user?.uid ? 'Din egen opgave' : 'Påtag opgave'}
+                                    {req.citizenId === user?.uid ? 'Din Egen Opgave' : 'Påtag Opgave'}
                                 </button>
                             ) : req.status === 'claimed' && req.citizenId === user?.uid && !req.isPaid ? (
                                 <button 
                                     onClick={() => handleMarkAsPaid(req.id)}
-                                    className="w-full py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-95"
+                                    className="w-full py-6 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] sm:text-[11px] bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-2xl shadow-emerald-600/20 flex items-center justify-center gap-3 active:scale-95"
                                 >
-                                    <CreditCard className="w-4 h-4" /> Gå til betaling
+                                    <CreditCard className="w-5 h-5" /> Bekræft Hjælp
                                 </button>
                             ) : (
-                                <div className={`flex items-center justify-center gap-2 p-5 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest border ${
-                                    req.isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                                <div className={`flex items-center justify-center gap-3 p-6 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm ${
+                                    req.isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-300 border-slate-100'
                                 }`}>
-                                    {req.isPaid ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                                    {req.isPaid ? 'Gennemført' : 'Under behandling'}
+                                    {req.isPaid ? <Check className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                                    {req.isPaid ? 'Gennemført' : 'Igangværende'}
                                 </div>
                             )}
-                            
-                            <div className="p-4 bg-white/50 rounded-2xl border border-amber-100/30">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Du tjener (efter gebyr)</p>
-                                <p className="text-lg font-black text-amber-900">{req.studentEarnings} kr.</p>
-                            </div>
-                       </div>
+                        </div>
                     </div>
                   </div>
                 </div>
               ))}
 
               {filteredRequests.length === 0 && (
-                <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed border-amber-100">
-                    <HandHelping className="w-12 h-12 text-amber-100 mx-auto mb-4" />
-                    <p className="text-slate-400 italic">Ingen opgaver fundet.</p>
+                <div className="py-24 sm:py-32 text-center bg-slate-50/50 rounded-[4rem] border-2 border-dashed border-slate-200/50">
+                    <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-200">
+                        <HandHelping className="w-10 h-10 text-slate-200" />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 serif mb-2">Ingen opgaver lige nu</h3>
+                    <p className="text-slate-400 font-medium max-w-xs mx-auto text-sm">Prøv at ændre din søgning eller tjek tilbage senere for nye opslag.</p>
                 </div>
               )}
              </div>
@@ -551,16 +600,22 @@ const AssistanceMarketplaceContent = () => {
       </div>
 
       {showPayoutInfoModal && (
-        <div className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-5xl shadow-2xl border border-amber-100 overflow-hidden animate-in fade-in zoom-in duration-300">
-             <div className="p-8 md:p-12 space-y-10">
-                <div className="flex justify-between items-center">
+        <div className="fixed inset-0 bg-amber-950/40 backdrop-blur-3xl z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-500">
+          <div className="bg-white/95 rounded-[3rem] w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-2xl border border-white/50 animate-in zoom-in-95 duration-500 scrollbar-hide">
+             <div className="p-8 sm:p-16 space-y-12">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                     <div>
-                        <h2 className="text-3xl font-bold text-amber-950 serif">Udbetalings-info</h2>
-                        <p className="text-slate-500 text-sm mt-1 font-medium">Tilføj dine oplysninger for at modtage betaling fra dine opgaver.</p>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-8 h-8 bg-amber-950 text-amber-400 rounded-lg flex items-center justify-center shadow-lg">
+                                <CreditCard className="w-4 h-4" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40">Erhvervs Profil</span>
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-black text-amber-950 serif tracking-tight">Udbetalingsoplysninger</h2>
+                        <p className="text-slate-400 text-sm mt-2 font-medium max-w-md">Vi har brug for dine detaljer for at kunne udbetale din indtjening sikkert og lovligt.</p>
                     </div>
-                    <button onClick={() => setShowPayoutInfoModal(false)} className="p-3 hover:bg-rose-50 rounded-2xl transition-all">
-                        <X className="w-6 h-6 text-slate-400" />
+                    <button onClick={() => setShowPayoutInfoModal(false)} className="group p-4 bg-slate-50 hover:bg-rose-50 rounded-2xl transition-all active:scale-90">
+                        <X className="w-6 h-6 text-slate-300 group-hover:text-rose-400 transition-colors" />
                     </button>
                 </div>
  
