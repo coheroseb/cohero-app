@@ -1896,3 +1896,17 @@ export async function updateStudentCardVerificationAction(userId: string, verifi
         return { success: false, error: "Failed to update" };
     }
 }
+
+export async function toggleMarketplaceBanAction(userId: string, isBanned: boolean, reason?: string) {
+    try {
+        await adminFirestore.collection('users').doc(userId).update({
+            isMarketplaceBanned: isBanned,
+            marketplaceBanReason: isBanned ? reason : null,
+            marketplaceBannedAt: adminFirestore.FieldValue.serverTimestamp()
+        });
+        return { success: true };
+    } catch (e) {
+        console.error("Failed to toggle marketplace ban:", e);
+        return { success: false, error: "Fejl ved opdatering af udelukkelse." };
+    }
+}

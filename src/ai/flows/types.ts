@@ -168,6 +168,9 @@ export interface UserProfile {
   phoneNumber?: string;
   studentCardUrl?: string;
   studentCardVerification?: StudentCardVerification;
+  isMarketplaceBanned?: boolean;
+  marketplaceBanReason?: string;
+  marketplaceBannedAt?: any;
 }
 
 export interface StudentCardVerification {

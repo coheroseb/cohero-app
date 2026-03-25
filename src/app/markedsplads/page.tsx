@@ -262,6 +262,32 @@ const AssistanceMarketplaceContent = () => {
     }
   };
 
+  if (userProfile?.isMarketplaceBanned) {
+      return (
+          <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6">
+              <div className="max-w-2xl w-full bg-white rounded-[3rem] shadow-2xl p-12 text-center space-y-8 border-2 border-rose-200 animate-in fade-in zoom-in duration-500">
+                  <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner border border-rose-100">
+                      <ShieldCheck className="w-12 h-12" />
+                  </div>
+                  <div className="space-y-4">
+                      <h1 className="text-4xl font-black text-slate-900 serif">Adgang Nægtet</h1>
+                      <p className="text-slate-500 text-lg font-medium leading-relaxed italic">
+                          Du er blevet udelukket fra Cohéro Markedspladsen af en administrator.
+                      </p>
+                      <div className="p-8 bg-rose-50/50 rounded-[2rem] border border-rose-100 text-left">
+                          <p className="text-[10px] font-black uppercase text-rose-900 tracking-widest mb-3">Begrundelse for udelukkelse</p>
+                          <p className="text-sm font-bold text-rose-800 leading-relaxed italic">"{userProfile.marketplaceBanReason}"</p>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium pt-4">
+                          Mener du dette er en fejl? Kontakt os på <a href="mailto:support@cohero.dk" className="text-rose-600 font-bold hover:underline">support@cohero.dk</a>
+                      </p>
+                  </div>
+                  <button onClick={() => router.push('/')} className="w-full py-5 bg-slate-950 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:bg-rose-950 transition-all active:scale-95">Gå til forsiden</button>
+              </div>
+          </div>
+      );
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFCF8] flex flex-col selection:bg-rose-100">
       <header className="bg-white border-b border-amber-100 px-6 py-8 sticky top-24 z-30 shadow-sm">

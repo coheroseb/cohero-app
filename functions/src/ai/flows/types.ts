@@ -164,6 +164,9 @@ export interface UserProfile {
   isHelperEnabled?: boolean;
   studentCardUrl?: string;
   studentCardVerification?: StudentCardVerification;
+  isMarketplaceBanned?: boolean;
+  marketplaceBanReason?: string;
+  marketplaceBannedAt?: any;
 }
 
 export interface StudentCardVerification {

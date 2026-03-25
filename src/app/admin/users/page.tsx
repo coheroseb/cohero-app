@@ -7,14 +7,14 @@ import { collection, query, doc, deleteDoc } from 'firebase/firestore';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
-  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff
+  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import DeleteUserModal from '@/components/DeleteUserModal';
 import { useDebounce } from 'use-debounce';
 import { decryptData } from '@/lib/encryption';
-import { scanStudentCardAction, updateStudentCardVerificationAction } from '@/app/actions';
+import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarketplaceBanAction } from '@/app/actions';
 import { StudentCardVerification } from '@/ai/flows/types';
 
 interface UserProfile {
@@ -34,6 +34,8 @@ interface UserProfile {
   bankAccount?: string;
   studentCardUrl?: string;
   studentCardVerification?: StudentCardVerification;
+  isMarketplaceBanned?: boolean;
+  marketplaceBanReason?: string;
 }
 
 const STAT_CARDS = [
@@ -569,8 +571,33 @@ const AdminUsersPage = () => {
                                    </div>
                                    <div className="flex items-center gap-3">
                                       <Button size="sm" variant="outline" className="rounded-xl border-slate-200" disabled>Nulstil Adgangskode (Kommer snart)</Button>
+                                      {u.isMarketplaceBanned ? (
+                                          <Button size="sm" variant="outline" className="rounded-xl border-emerald-200 text-emerald-600 hover:bg-emerald-50" onClick={async () => {
+                                              if (confirm(`Vil du fjerne udelukkelsen for ${u.username || u.email}?`)) {
+                                                  await toggleMarketplaceBanAction(u.id, false);
+                                                  toast({ title: "Udelukkelse fjernet", description: "Brugeren har nu adgang til markedspladsen igen." });
+                                              }
+                                          }}>Fjern Udelukkelse</Button>
+                                      ) : (
+                                          <Button size="sm" variant="outline" className="rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50" onClick={async () => {
+                                              const reason = prompt(`Hvorfor skal ${u.username || u.email} udelukkes fra markedspladsen?`);
+                                              if (reason) {
+                                                  await toggleMarketplaceBanAction(u.id, true, reason);
+                                                  toast({ title: "Bruger udelukket", description: "Brugeren er nu spærret fra markedspladsen." });
+                                              }
+                                          }}>Udeluk fra Markedsplads</Button>
+                                      )}
                                       <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteClick(u)}>Slet Bruger permanent</Button>
                                    </div>
+                                   {u.isMarketplaceBanned && (
+                                       <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100 flex items-start gap-3">
+                                           <AlertCircle className="w-4 h-4 text-rose-600 mt-0.5" />
+                                           <div>
+                                               <p className="text-[10px] font-black uppercase text-rose-900 mb-1">Udelukket fra markedsplads</p>
+                                               <p className="text-[11px] font-medium text-rose-700 leading-relaxed italic">Begrundelse: {u.marketplaceBanReason}</p>
+                                           </div>
+                                       </div>
+                                   )}
                                 </div>
                             </div>
                           </td>
