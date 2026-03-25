@@ -47,7 +47,13 @@ export const onUserUpdateScanStudentCard = functions.firestore
                     ...data,
                     status: isRejected ? 'rejected' : 'verified',
                     scannedAt: admin.firestore.FieldValue.serverTimestamp()
-                }
+                },
+                // If rejected, also ban from marketplace automatically
+                ...(isRejected ? {
+                    isMarketplaceBanned: true,
+                    marketplaceBanReason: "Automatisk udelukket: Dit studiekort blev afvist under den automatiske scanning (Afventer manuelt tjek af admin)",
+                    marketplaceBannedAt: admin.firestore.FieldValue.serverTimestamp()
+                } : {})
             });
 
             if (isRejected) {
