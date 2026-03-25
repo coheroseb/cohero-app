@@ -15,16 +15,30 @@ export const firebaseConfig: FirebaseOptions = {
   measurementId: "G-EXS2X5PXQ2"
 };
 
+let cachedFirebase: any = null;
+
 // Initialize Firebase
 export function initializeFirebase() { 
-  // Check if Firebase has already been initialized
-  const apps = getApps();
+  // Check if we already have it in window (browser only singleton for HMR)
+  if (typeof window !== 'undefined' && (window as any)._firebaseServices) {
+    return (window as any)._firebaseServices;
+  }
   
+  if (cachedFirebase) {
+    return cachedFirebase;
+  }
+
+  const apps = getApps();
   let firebaseApp;
+  
   if (apps.length === 0) {
     firebaseApp = initializeApp(firebaseConfig);
-    // Mitigate Firestore Web Socket issues in Next.js development (ID: ca9 error)
-    initializeFirestore(firebaseApp, { experimentalForceLongPolling: true });
+    // CRITICAL: initializeFirestore MUST be called before getFirestore
+    // to apply options correctly.
+    initializeFirestore(firebaseApp, { 
+      experimentalForceLongPolling: true,
+      ignoreUndefinedProperties: true
+    });
   } else {
     firebaseApp = apps[0];
   }
@@ -46,5 +60,12 @@ export function initializeFirebase() {
     }
   }
 
-  return { firebaseApp, auth, firestore, storage, analytics, messaging };
+  const services = { firebaseApp, auth, firestore, storage, analytics, messaging };
+  
+  if (typeof window !== 'undefined') {
+    (window as any)._firebaseServices = services;
+  }
+  
+  cachedFirebase = services;
+  return services;
 }

@@ -19,26 +19,7 @@ import type { Firestore } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase
-const getFirebaseApp = () => {
-  const apps = getApps();
-  if (apps.length > 0) return apps[0];
-  const app = initializeApp(firebaseConfig);
-  // Mitigate Firestore Web Socket issues in Next.js development (ID: ca9 error)
-  initializeFirestore(app, { experimentalForceLongPolling: true });
-  return app;
-};
+import { initializeFirebase } from './config';
 
 interface FirebaseContextType {
   firebaseApp: FirebaseApp | null;
@@ -70,10 +51,8 @@ export const FirebaseProvider = ({
     storage: providedStorage 
 }: FirebaseProviderProps) => {
   // Use provided services or initialize them if not present (fallback)
-  const firebaseApp = providedApp || getFirebaseApp();
-  const auth = providedAuth || getAuth(firebaseApp);
-  const firestore = providedFirestore || getFirestore(firebaseApp);
-  const storage = providedStorage || getStorage(firebaseApp);
+  const services = providedApp ? { firebaseApp: providedApp, auth: providedAuth, firestore: providedFirestore, storage: providedStorage } : initializeFirebase();
+  const { firebaseApp, auth, firestore, storage } = services;
 
   useEffect(() => {
     if (typeof window !== 'undefined' && firebaseApp) {
