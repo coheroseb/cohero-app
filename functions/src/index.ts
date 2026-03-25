@@ -130,3 +130,6 @@ export { checkFolketingetUpdates };
 
 import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";
 export { onAssistanceRequestUpdate, onAssistanceRequestCreate };
+
+import { onUserUpdateScanStudentCard } from "./users";
+export { onUserUpdateScanStudentCard };
