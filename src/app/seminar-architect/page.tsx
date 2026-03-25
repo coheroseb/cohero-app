@@ -343,18 +343,16 @@ const SlideCard = ({ slide, notes, onNotesChange, isSelected, onSelect }: { slid
 // ---------------------------------------------------------------------------
 // Drop Zone Sub-component
 // ---------------------------------------------------------------------------
-const FileDropZone = ({ file, onFile, onClear }: { file: File | null; onFile: (f: File) => void; onClear: () => void }) => {
+const FileDropZone = ({ files, onFiles, onClear }: { files: File[]; onFiles: (fs: File[]) => void; onClear: (index: number) => void }) => {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) onFile(dropped);
+    const dropped = Array.from(e.dataTransfer.files);
+    if (dropped.length > 0) onFiles(dropped);
   };
-
-  const isPptx = file?.name.endsWith('.pptx');
 
   return (
     <div
@@ -363,22 +361,38 @@ const FileDropZone = ({ file, onFile, onClear }: { file: File | null; onFile: (f
       onDrop={handleDrop}
       className={`relative transition-all duration-300 ${isDragging ? 'scale-[1.01]' : ''}`}
     >
-      {file ? (
-        <div className="flex items-center justify-between p-5 bg-indigo-50 rounded-2xl border border-indigo-100">
-          <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${isPptx ? 'bg-orange-100' : 'bg-red-100'}`}>
-              <File className={`w-6 h-6 ${isPptx ? 'text-orange-500' : 'text-red-500'}`} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-900 max-w-[220px] truncate">{file.name}</p>
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-0.5">
-                {isPptx ? 'PowerPoint' : 'PDF'} · Klar til analyse
-              </p>
-            </div>
+      {files.length > 0 ? (
+        <div className="space-y-3">
+          {files.map((f, i) => {
+            const isPptx = f.name.toLowerCase().endsWith('.pptx');
+            return (
+              <div key={i} className="flex items-center justify-between p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 hover:bg-indigo-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${isPptx ? 'bg-orange-100' : 'bg-red-100'}`}>
+                    <File className={`w-5 h-5 ${isPptx ? 'text-orange-500' : 'text-red-500'}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 max-w-[200px] truncate">{f.name}</p>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-0.5">
+                      {isPptx ? 'PowerPoint' : 'PDF'} · Fil {i + 1}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => onClear(i)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          })}
+          <div className="flex items-center justify-center p-4 border-2 border-dashed border-indigo-100 rounded-2xl cursor-pointer hover:bg-indigo-50/20 transition-all" onClick={() => inputRef.current?.click()}>
+            <p className="text-xs font-bold text-indigo-400">+ Tilføj flere filer</p>
           </div>
-          <button onClick={onClear} className="p-2 text-slate-300 hover:text-rose-500 transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="px-1 pt-1">
+             <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 rounded-full w-fit shadow-md shadow-indigo-200">
+                <Sparkles className="w-3 h-3 text-white" />
+                <span className="text-[10px] font-black text-white uppercase tracking-wider">{files.length} filer klar til analyse</span>
+             </div>
+          </div>
         </div>
       ) : (
         <label
@@ -398,8 +412,13 @@ const FileDropZone = ({ file, onFile, onClear }: { file: File | null; onFile: (f
             ref={inputRef}
             type="file"
             className="sr-only"
+            multiple
             accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
-            onChange={(e) => e.target.files && onFile(e.target.files[0])}
+            onChange={(e) => {
+                if (e.target.files) {
+                    onFiles(Array.from(e.target.files));
+                }
+            }}
           />
         </label>
       )}
@@ -418,8 +437,9 @@ function SeminarArchitectPageContent() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [processingSteps, setProcessingSteps] = useState<{name: string, status: 'pending' | 'loading' | 'completed' | 'error'}[]>([]);
   const [analysisResult, setAnalysisResult] = useState<SeminarAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [slideNotes, setSlideNotes] = useState<Record<number, string>>({});
@@ -471,19 +491,24 @@ function SeminarArchitectPageContent() {
   };
 
   useEffect(() => {
-    if (file && !isAnalyzing && !analysisResult) {
+    if (files.length === 1 && !isAnalyzing && !analysisResult) {
       handleAnalyze();
     }
-  }, [file]);
+  }, [files]);
 
   const handleAnalyze = async () => {
-    if (!file || !user || !firestore || !userProfile || isAnalyzing) return;
+    if (files.length === 0 || !user || !firestore || !userProfile || isAnalyzing) return;
 
     setIsAnalyzing(true);
     setAnalysisResult(null);
     setError(null);
     setSlideNotes({});
     setSavedAnalysisId(null);
+
+    // Initial steps
+    const initialSteps = files.map(f => ({ name: `Behandler ${f.name.slice(0, 20)}${f.name.length > 20 ? '...' : ''}`, status: 'pending' as const }));
+    initialSteps.push({ name: 'Faglig AI-analyse', status: 'pending' as const });
+    setProcessingSteps(initialSteps);
 
     // Total limit for free tier (1 upload in total)
     if (!isPremiumUser) {
@@ -495,25 +520,63 @@ function SeminarArchitectPageContent() {
     }
 
     try {
-      const { text: slideText, images: slideImages } = await extractData(file);
-      const response = await seminarArchitectAction({ slideText, semester: userProfile.semester || '1. semester' });
+      let combinedSlideText = "";
+      let currentGlobalSlideOffset = 0;
+      let allSlideImages: Record<number, Blob[]> = {};
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setProcessingSteps(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'loading' } : s));
+        
+        const { text: slideText, images: slideImages } = await extractData(file);
+        
+        // Adjust slide numbers in text if multiple files
+        const adjustedText = slideText.replace(/--- SLIDE (\d+) ---/g, (_match, p1) => {
+            const num = parseInt(p1, 10);
+            return `--- SLIDE ${num + currentGlobalSlideOffset} ---`;
+        });
+
+        combinedSlideText += (combinedSlideText ? "\n\n" : "") + adjustedText;
+        
+        // Adjust and merge images
+        Object.entries(slideImages).forEach(([numStr, blobs]) => {
+            const num = parseInt(numStr, 10);
+            allSlideImages[num + currentGlobalSlideOffset] = blobs;
+        });
+
+        // Find highest slide number in this file to update offset
+        const matches = slideText.match(/--- SLIDE (\d+) ---/g);
+        if (matches) {
+            const maxVal = Math.max(...matches.map(m => parseInt(m.match(/(\d+)/)![0], 10)));
+            currentGlobalSlideOffset += maxVal;
+        }
+
+        setProcessingSteps(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'completed' } : s));
+      }
+
+      // Step: AI Analysis
+      setProcessingSteps(prev => prev.map((s, idx) => idx === files.length ? { ...s, status: 'loading' } : s));
+
+      const response = await seminarArchitectAction({ 
+        slideText: combinedSlideText, 
+        semester: userProfile.semester || '1. semester' 
+      });
 
       if (!response?.data) throw new Error('Ingen data returneret fra analysen.');
 
       const analysisData = response.data;
       const newSeminarRef = doc(collection(firestore!, 'users', user.uid, 'seminars'));
 
-      // 1. Collect all slide numbers from both AI results and extracted images
+      // Collect all slide numbers (AI results + extracted images)
       const allSlideNums = Array.from(new Set([
         ...analysisData.slides.map((s: any) => s.slideNumber),
-        ...Object.keys(slideImages).map(Number)
+        ...Object.keys(allSlideImages).map(Number)
       ])).sort((a, b) => a - b);
 
-      // 2. Map through all slides to ensure none are missed (and upload images)
+      // Map through all slides to ensures none are missed (and upload images)
       const finalSlides = await Promise.all(allSlideNums.map(async (num) => {
         let s = analysisData.slides.find((os: any) => os.slideNumber === num);
         
-        // If AI skipped this slide (common if it has no text), create a placeholder
         if (!s) {
           s = {
             slideNumber: num,
@@ -526,7 +589,7 @@ function SeminarArchitectPageContent() {
           };
         }
 
-        const slideBlobs = slideImages[num] || [];
+        const slideBlobs = allSlideImages[num] || [];
         if (slideBlobs.length === 0) return s;
 
         try {
@@ -550,7 +613,7 @@ function SeminarArchitectPageContent() {
       const userRef = doc(firestore!, 'users', user.uid);
       batch.set(newSeminarRef, { 
         ...finalAnalysis, 
-        fileName: file.name, 
+        fileName: files.length === 1 ? files[0].name : `${files.length} filer samlet`, 
         ownerUid: user.uid,
         ownerName: userProfile.username || user.displayName || 'Anonym',
         ownerEmail: user.email,
@@ -571,7 +634,7 @@ function SeminarArchitectPageContent() {
         totalSeminarAnalyses: increment(1)
       };
       if (response.usage) {
-        const totalTokens = response.usage.inputTokens + response.usage.outputTokens;
+        const totalTokens = (response.usage.inputTokens || 0) + (response.usage.outputTokens || 0);
         const pts = Math.round(totalTokens * 0.05);
         if (pts > 0) userUpdates['cohéroPoints'] = increment(pts);
       }
@@ -579,10 +642,12 @@ function SeminarArchitectPageContent() {
       await batch.commit();
       await refetchUserProfile();
 
-      toast({ title: 'Videnskort Gemt!', description: `Analyserede ${response.data.slides.length} slides.` });
+      setProcessingSteps(prev => prev.map((s, idx) => idx === files.length ? { ...s, status: 'completed' } : s));
+      toast({ title: 'Videnskort Gemt!', description: `Analyserede ${response.data.slides.length} slides fra ${files.length} filer.` });
     } catch (err: any) {
       console.error('[SeminarArchitect]', err);
       setError(err.message || 'Der opstod en fejl under analysen. Prøv venligst igen.');
+      setProcessingSteps(prev => prev.map(s => s.status === 'loading' ? { ...s, status: 'error' } : s));
     } finally {
       setIsAnalyzing(false);
     }
@@ -739,15 +804,76 @@ function SeminarArchitectPageContent() {
                   </p>
                 </div>
 
-                <FileDropZone file={file} onFile={(f) => {
-                  const isPptx = f.name.toLowerCase().endsWith('.pptx');
-                  const isPdf = f.name.toLowerCase().endsWith('.pdf');
-                  if (!isPptx && !isPdf) {
-                    toast({ title: 'Forker filtype', description: 'Kun PowerPoint (.pptx) og PDF (.pdf) er understøttet.', variant: 'destructive' });
-                    return;
-                  }
-                  setFile(f);
-                }} onClear={() => setFile(null)} />
+                <FileDropZone 
+                  files={files} 
+                  onFiles={(newFiles) => {
+                    const validFiles = newFiles.filter(f => {
+                        const isPptx = f.name.toLowerCase().endsWith('.pptx');
+                        const isPdf = f.name.toLowerCase().endsWith('.pdf');
+                        if (!isPptx && !isPdf) {
+                            toast({ title: 'Forker filtype', description: `${f.name} blev sprunget over. Kun PPTX og PDF understøttes.`, variant: 'destructive' });
+                            return false;
+                        }
+                        return true;
+                    });
+                    setFiles(prev => [...prev, ...validFiles]);
+                  }} 
+                  onClear={(idx) => setFiles(prev => prev.filter((_, i) => i !== idx))} 
+                />
+
+                {/* Analysis Steps Visualization */}
+                {isAnalyzing && (
+                    <div className="mt-8 space-y-4 p-6 bg-slate-50 rounded-3xl border border-slate-100 animate-in fade-in slide-in-from-top-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-sm font-bold text-slate-900">Analyse-proces</h3>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest animate-pulse">Arbejder...</span>
+                                <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {processingSteps.map((step, i) => (
+                                <div key={i} className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
+                                            step.status === 'completed' ? 'bg-green-100' : 
+                                            step.status === 'loading' ? 'bg-indigo-100' : 
+                                            step.status === 'error' ? 'bg-rose-100' : 'bg-slate-100'
+                                        }`}>
+                                            {step.status === 'completed' ? (
+                                                <CheckCircle className="w-3 h-3 text-green-600" />
+                                            ) : step.status === 'loading' ? (
+                                                <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />
+                                            ) : step.status === 'error' ? (
+                                                <X className="w-3 h-3 text-rose-600" />
+                                            ) : (
+                                                <div className="w-1 h-1 bg-slate-400 rounded-full" />
+                                            )}
+                                        </div>
+                                        <span className={`font-medium ${
+                                            step.status === 'completed' ? 'text-slate-900' : 
+                                            step.status === 'loading' ? 'text-indigo-600' : 
+                                            step.status === 'error' ? 'text-rose-600' : 'text-slate-400'
+                                        }`}>
+                                            {step.name}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-300">
+                                        {step.status === 'completed' ? 'Færdig' : 
+                                         step.status === 'loading' ? 'Behandler...' : 
+                                         step.status === 'error' ? 'Fejl' : 'Venter'}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden mt-2">
+                            <div 
+                                className="bg-indigo-600 h-full transition-all duration-500" 
+                                style={{ width: `${(processingSteps.filter(s => s.status === 'completed').length / processingSteps.length) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {error && (
                   <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
@@ -758,23 +884,24 @@ function SeminarArchitectPageContent() {
 
                 <Button
                   onClick={handleAnalyze}
-                  disabled={!file || isAnalyzing}
-                  className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:scale-[1.01] active:scale-95 transition-all"
+                  disabled={files.length === 0 || isAnalyzing}
+                  className="w-full h-16 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-500/20 transition-all font-bold text-lg group overflow-hidden relative mt-8 hover:scale-[1.01] active:scale-[0.98]"
                 >
-                  {isAnalyzing
-                    ? <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Analyserer slides...</>
-                    : <><Sparkles className="w-5 h-5 mr-2" /> Generér Videnskort</>
-                  }
-                </Button>
-
-                {isAnalyzing && (
-                  <div className="flex flex-col items-center gap-3 py-4 animate-pulse">
-                    <div className="w-12 h-1.5 bg-indigo-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-400 rounded-full animate-[slide_1.5s_ease-in-out_infinite]" style={{ width: '60%' }} />
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Behandler dine slides...</p>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                  <div className="flex items-center justify-center gap-3">
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span>Analyserer {files.length} {files.length === 1 ? 'fil' : 'filer'}...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-6 h-6" />
+                        <span>Opret Videnskort fra {files.length} {files.length === 1 ? 'fil' : 'filer'}</span>
+                      </>
+                    )}
                   </div>
-                )}
+                </Button>
               </div>
 
               <div className="mt-8 grid grid-cols-3 gap-4 text-center">
@@ -842,7 +969,7 @@ function SeminarArchitectPageContent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => { setAnalysisResult(null); setFile(null); }}
+                    onClick={() => { setAnalysisResult(null); setFiles([]); }}
                     className="rounded-xl border-slate-200 text-slate-600"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" /> Ny analyse
