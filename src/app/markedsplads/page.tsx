@@ -27,7 +27,8 @@ import {
   Check,
   Zap,
   Briefcase,
-  Sparkles
+  Sparkles,
+  Award
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -72,7 +73,6 @@ const AssistanceMarketplaceContent = () => {
 
   const [studentCardFile, setStudentCardFile] = useState<File | null>(null);
   const [isUploadingCard, setIsUploadingCard] = useState(false);
-  const [isUploadingCV, setIsUploadingCV] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -266,45 +266,29 @@ const AssistanceMarketplaceContent = () => {
     }
   };
 
-  const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !firestore || !storage) return;
-
-    // Check file type (PDF, DOCX)
-    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
-    if (!allowedTypes.includes(file.type)) {
-      alert("Venligst upload et CV i PDF eller Word-format.");
-      return;
-    }
-
-    // Max 5MB
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Filen er for stor. Maks 5MB.");
-      return;
-    }
-
-    setIsUploadingCV(true);
-    try {
-      const fileName = `cv_${user.uid}_${Date.now()}_${file.name}`;
-      const fileRef = ref(storage, `cvs/${fileName}`);
-      await uploadBytes(fileRef, file);
-      const cvUrl = await getDownloadURL(fileRef);
-
-      await updateDoc(doc(firestore, 'users', user.uid), {
-        cvUrl,
-        cvName: file.name,
-        cvUpdatedAt: serverTimestamp()
-      });
-
-      await refetchUserProfile();
-      alert("Dit CV er blevet uploadet!");
-    } catch (err) {
-      console.error("Error uploading CV:", err);
-      alert("Der opstod en fejl ved upload af dit CV.");
-    } finally {
-      setIsUploadingCV(false);
-    }
-  };
+  const experienceStats = useMemo(() => {
+    if (!requests) return { total: 0, byCategory: {} as Record<string, number>, avgRating: 0 };
+    const completed = requests.filter(r => r.studentId === user?.uid && r.status === 'completed');
+    const stats = {
+        total: completed.length,
+        byCategory: {} as Record<string, number>,
+        avgRating: 0
+    };
+    
+    let totalRating = 0;
+    let ratedCount = 0;
+    
+    completed.forEach(r => {
+        stats.byCategory[r.category] = (stats.byCategory[r.category] || 0) + 1;
+        if (r.rating) {
+            totalRating += r.rating;
+            ratedCount++;
+        }
+    });
+    
+    stats.avgRating = ratedCount > 0 ? Number((totalRating / ratedCount).toFixed(1)) : 0;
+    return stats;
+  }, [requests, user?.uid]);
 
   if (userProfile?.isMarketplaceBanned) {
       return (
@@ -450,50 +434,54 @@ const AssistanceMarketplaceContent = () => {
           <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] border border-amber-100/50 shadow-2xl shadow-amber-950/5 space-y-6">
              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
-                   <FilePlus className="w-5 h-5" />
+                   <Award className="w-5 h-5" />
                 </div>
-                <h4 className="text-sm font-black uppercase tracking-widest text-amber-950">Mit CV</h4>
+                <h4 className="text-sm font-black uppercase tracking-widest text-amber-950">Mit CV (Auto-genereret)</h4>
              </div>
 
-             {userProfile?.cvUrl ? (
-                <div className="space-y-4">
-                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                         <p className="text-[10px] font-black uppercase text-slate-300 tracking-widest leading-none mb-1">Uploadet fil</p>
-                         <p className="text-xs font-bold text-slate-900 truncate">{userProfile.cvName || 'cv.pdf'}</p>
-                      </div>
-                   </div>
-                   
-                   <div className="grid grid-cols-2 gap-3">
-                      <a 
-                        href={userProfile.cvUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 py-3 bg-amber-50 text-amber-950 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all border border-amber-200/50"
-                      >
-                         Se CV
-                      </a>
-                      <label className="flex items-center justify-center gap-2 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all cursor-pointer">
-                         Skift
-                         <input type="file" className="hidden" onChange={handleCVUpload} disabled={isUploadingCV} />
-                      </label>
-                   </div>
+             <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                        <p className="text-[10px] font-black uppercase text-slate-300 tracking-widest leading-none mb-2">Erfaring</p>
+                        <p className="text-2xl font-black text-slate-900 serif">{experienceStats.total}</p>
+                        <p className="text-[9px] font-bold text-slate-400">opgaver løst</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                        <p className="text-[10px] font-black uppercase text-slate-300 tracking-widest leading-none mb-2">Rating</p>
+                        <p className="text-2xl font-black text-amber-500 serif">{experienceStats.avgRating > 0 ? experienceStats.avgRating : '—'}</p>
+                        <p className="text-[9px] font-bold text-slate-400">gns. stjerner</p>
+                    </div>
                 </div>
-             ) : (
-                <div className="space-y-4">
-                   <p className="text-xs font-medium text-slate-400 leading-relaxed italic">
-                      Upload dit CV for at gøre det nemmere for borgere at vælge dig til opgaver.
-                   </p>
-                   <label className="flex items-center justify-center gap-3 py-4 bg-amber-950 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-rose-950 shadow-xl shadow-amber-950/20 transition-all cursor-pointer active:scale-95">
-                      {isUploadingCV ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-                      {isUploadingCV ? 'Uploader...' : 'Upload CV'}
-                      <input type="file" className="hidden" onChange={handleCVUpload} disabled={isUploadingCV} />
-                   </label>
-                </div>
-             )}
+
+                {experienceStats.total > 0 ? (
+                    <div className="space-y-3">
+                        <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em]">Specialisering</p>
+                        <div className="flex flex-wrap gap-2">
+                            {Object.entries(experienceStats.byCategory).map(([cat, count]) => (
+                                <div key={cat} className="px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-lg text-[10px] font-bold text-amber-900 flex items-center gap-2">
+                                    <Check className="w-3 h-3 text-amber-500" />
+                                    {cat} ({count})
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-[11px] font-medium text-slate-400 italic leading-relaxed">
+                        Dit CV genereres automatisk efterhånden som du løser opgaver på markedspladsen.
+                    </p>
+                )}
+
+                <Button 
+                    variant="outline" 
+                    className="w-full h-12 rounded-xl border-slate-200 text-slate-900 font-bold text-xs"
+                    disabled={experienceStats.total === 0}
+                    onClick={() => {
+                        alert("Funktion til eksport af genereret CV er under udvikling. Her vil dit fulde faglige overblik blive genereret.");
+                    }}
+                >
+                    Hent CV Som PDF
+                </Button>
+             </div>
           </div>
         </aside>
         
