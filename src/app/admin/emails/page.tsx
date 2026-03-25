@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Mail, Send, Users, Loader2, CheckCircle, Info, Save, LayoutTemplate, Eye, Edit3, Plus, MousePointerClick, MessageSquareWarning, Trash2, Sparkles } from 'lucide-react';
+import { collection, query, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { Mail, Send, Users, Loader2, CheckCircle, Info, Save, LayoutTemplate, Eye, Edit3, Plus, MousePointerClick, MessageSquareWarning, Trash2, Sparkles, Building2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +23,7 @@ const ReactQuill = dynamic(
 );
 import 'react-quill/dist/quill.snow.css';
 
-type TargetGroup = 'all' | 'Socialrådgiver' | 'Pædagog' | 'Lærer' | 'Sygeplejerske' | 'premium' | 'free' | 'specific';
+type TargetGroup = 'all' | 'Socialrådgiver' | 'Pædagog' | 'Lærer' | 'Sygeplejerske' | 'premium' | 'free' | 'specific' | 'institutions';
 
 interface UserProfile {
   id: string;
@@ -31,6 +31,12 @@ interface UserProfile {
   email: string;
   profession?: string;
   membership?: string;
+}
+
+interface Institution {
+  id: string;
+  INST_NAVN: string;
+  E_MAIL: string;
 }
 
 interface EmailTemplate {
@@ -61,11 +67,15 @@ export default function AdminEmailsPage() {
     const [showAiDraft, setShowAiDraft] = useState(false);
     const [aiTopic, setAiTopic] = useState('');
     const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+    const [showNotificationFooter, setShowNotificationFooter] = useState(true);
 
     // Queries
     const usersQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'users')) : null), [firestore]);
     const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
     
+    const institutionsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'institutions'), where('E_MAIL', '!=', '')) : null), [firestore]);
+    const { data: institutions, isLoading: institutionsLoading } = useCollection<Institution>(institutionsQuery);
+
     const templatesQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'emailTemplates')) : null), [firestore]);
     const { data: templates, isLoading: templatesLoading } = useCollection<EmailTemplate>(templatesQuery);
 
@@ -74,7 +84,7 @@ export default function AdminEmailsPage() {
     }
 
     // -- WRAPPER HTML --
-    const wrapEmailHtml = (inner: string) => `
+    const wrapEmailHtml = (inner: string, showFooter: boolean) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -93,7 +103,7 @@ export default function AdminEmailsPage() {
             </div>
             
             <div style="background-color: #f1f5f9; padding: 32px 40px; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5;">
-                <p style="margin-bottom: 8px;">Du modtager denne mail fordi du har takket ja til notifikationer fra Cohéro.</p>
+                ${showFooter ? '<p style="margin-bottom: 8px;">Du modtager denne mail fordi du har takket ja til notifikationer fra Cohéro.</p>' : ''}
                 <p style="margin: 0;">&copy; ${new Date().getFullYear()} Cohéro I/S. Alle rettigheder forbeholdes.</p>
             </div>
             
@@ -107,34 +117,45 @@ export default function AdminEmailsPage() {
     const handleSendEmail = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!subject.trim() || !htmlContent.trim() || isSending || !users) return;
+        if (!subject.trim() || !htmlContent.trim() || isSending) return;
 
-        const targets = users.filter(u => {
-            if (!u.email) return false;
-            if (targetGroup === 'specific') return selectedEmails.includes(u.email);
-            if (targetGroup === 'all') return true;
-            if (targetGroup === 'premium') return ['Kollega+', 'Kollega++', 'Semesterpakken', 'Group Pro'].includes(u.membership || '');
-            if (targetGroup === 'free') return u.membership === 'Kollega' || !u.membership;
-            return u.profession === targetGroup;
-        });
+        let targets: { email: string, name: string }[] = [];
+
+        if (targetGroup === 'institutions') {
+            if (!institutions) return;
+            targets = institutions.map(i => ({
+                email: i.E_MAIL,
+                name: i.INST_NAVN || 'Institution'
+            }));
+        } else {
+            if (!users) return;
+            targets = users.filter(u => {
+                if (!u.email) return false;
+                if (targetGroup === 'specific') return selectedEmails.includes(u.email);
+                if (targetGroup === 'all') return true;
+                if (targetGroup === 'premium') return ['Kollega+', 'Kollega++', 'Semesterpakken', 'Group Pro'].includes(u.membership || '');
+                if (targetGroup === 'free') return u.membership === 'Kollega' || !u.membership;
+                return u.profession === targetGroup;
+            }).map(u => ({
+                email: u.email,
+                name: u.username || 'Kollega'
+            }));
+        }
 
         if (targets.length === 0) {
             toast({ variant: "destructive", title: "Ingen modtagere", description: "Fandt 0 modtagere." });
             return;
         }
 
-        if (!confirm(`Er du sikker på at du vil sende denne e-mail til ${targets.length} brugere?\n(Husk at trække vejret!)`)) return;
+        if (!confirm(`Er du sikker på at du vil sende denne e-mail til ${targets.length} modtagere?\n(Husk at trække vejret!)`)) return;
 
         setIsSending(true);
         try {
-            const finalHtmlBytes = wrapEmailHtml(htmlContent);
+            const finalHtmlBytes = wrapEmailHtml(htmlContent, showNotificationFooter);
             const result = await sendBulkEmailAction({
                 subject: subject.trim(),
                 htmlBody: finalHtmlBytes,
-                recipients: targets.map(t => ({
-                    email: t.email,
-                    name: t.username || 'Kollega'
-                }))
+                recipients: targets
             });
 
             if (result.success) {
@@ -272,6 +293,7 @@ export default function AdminEmailsPage() {
                                             { id: 'free', label: 'Gratis' },
                                             { id: 'Socialrådgiver', label: 'Soc.Rådg.' },
                                             { id: 'Pædagog', label: 'Pædagog' },
+                                            { id: 'institutions', label: 'Institutioner' },
                                             { id: 'specific', label: 'Specifikke Brugere' }
                                         ].map((group) => (
                                             <button
@@ -341,6 +363,10 @@ export default function AdminEmailsPage() {
                                         <button type="button" onClick={insertNamePlaceholder} className="px-4 py-2 bg-white border border-amber-200 text-amber-900 rounded-xl text-xs font-bold shadow-sm hover:bg-amber-100 flex items-center gap-2 transition-colors"><Users className="w-3 h-3"/> Modtagers Navn</button>
                                         <button type="button" onClick={insertInfoBox} className="px-4 py-2 bg-white border border-amber-200 text-amber-900 rounded-xl text-xs font-bold shadow-sm hover:bg-amber-100 flex items-center gap-2 transition-colors"><MessageSquareWarning className="w-3 h-3"/> Info Boks</button>
                                         <button type="button" onClick={insertDivider} className="px-4 py-2 bg-white border border-amber-200 text-amber-900 rounded-xl text-xs font-bold shadow-sm hover:bg-amber-100 flex items-center gap-2 transition-colors"><div className="w-4 h-[1px] bg-amber-900"></div> Linjeskift</button>
+                                        <button type="button" onClick={() => setShowNotificationFooter(prev => !prev)} className={`px-4 py-2 border rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all ${showNotificationFooter ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
+                                            {showNotificationFooter ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                                            Notifikations-fodnote
+                                        </button>
                                     </div>
 
                                     {showAiDraft && (
@@ -395,7 +421,7 @@ export default function AdminEmailsPage() {
                         {/* PREVIEW TAB */}
                         {activeTab === 'preview' && (
                             <div className="flex-1 overflow-y-auto bg-slate-800 p-8 flex justify-center items-start custom-scrollbar h-[800px]">
-                                <div className="w-full max-w-full origin-top" dangerouslySetInnerHTML={{ __html: wrapEmailHtml(htmlContent) }} />
+                                <div className="w-full max-w-full origin-top" dangerouslySetInnerHTML={{ __html: wrapEmailHtml(htmlContent, showNotificationFooter) }} />
                             </div>
                         )}
                     </div>
@@ -438,10 +464,18 @@ export default function AdminEmailsPage() {
                     </div>
 
                     {/* Stats Box */}
-                    <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 space-y-4">
-                        <div className="flex items-center gap-2 text-slate-400 font-black uppercase text-[10px] tracking-widest mb-4"><Users className="w-4 h-4" /> Modtagere i alt</div>
-                        <p className="text-4xl font-bold text-slate-700 serif italic">{usersLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : users?.filter(u => u.email).length || 0}</p>
-                        <p className="text-xs text-slate-400 font-medium leading-relaxed">Antallet af brugere i databasen med en valid e-mailadresse.</p>
+                    <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 space-y-6">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 text-slate-400 font-black uppercase text-[10px] tracking-widest"><Users className="w-4 h-4" /> Brugere i alt</div>
+                            <p className="text-4xl font-bold text-slate-700 serif italic">{usersLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : users?.filter(u => u.email).length || 0}</p>
+                        </div>
+                        
+                        <div className="space-y-4 pt-4 border-t border-slate-200/50">
+                            <div className="flex items-center gap-2 text-amber-600 font-black uppercase text-[10px] tracking-widest"><Building2 className="w-4 h-4" /> Institutioner i alt</div>
+                            <p className="text-4xl font-bold text-amber-700 serif italic">{institutionsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : institutions?.length || 0}</p>
+                        </div>
+                        
+                        <p className="text-xs text-slate-400 font-medium leading-relaxed">Antallet af unikke modtagere på tværs af platformen.</p>
                     </div>
 
                     {sendStats && (
