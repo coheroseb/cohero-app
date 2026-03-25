@@ -166,6 +166,7 @@ export interface UserProfile {
   payoutAddress?: string;
   isHelperEnabled?: boolean;
   phoneNumber?: string;
+  studentCardUrl?: string;
 }
 
 export interface Post {

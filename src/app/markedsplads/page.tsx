@@ -21,13 +21,16 @@ import {
   DollarSign,
   ShieldCheck,
   Lock,
-  Clock
+  Clock,
+  UploadCloud,
+  FilePlus,
+  Check
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { 
-  collection, 
+import { useFirestore, useCollection, useMemoFirebase, useStorage } from '@/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {   collection, 
   query, 
   where, 
   orderBy, 
@@ -47,6 +50,7 @@ const PLATFORM_FEE_PERCENT = 15; // 15% platform fee
 const AssistanceMarketplaceContent = () => {
   const { user, userProfile } = useApp();
   const firestore = useFirestore();
+  const storage = useStorage();
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,6 +66,9 @@ const AssistanceMarketplaceContent = () => {
     bankAccount: '',
     phoneNumber: '',
   });
+
+  const [studentCardFile, setStudentCardFile] = useState<File | null>(null);
+  const [isUploadingCard, setIsUploadingCard] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -196,7 +203,6 @@ const AssistanceMarketplaceContent = () => {
   const handleSavePayoutInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !firestore) return;
-    
     if (
         !payoutFormData.fullName || 
         !payoutFormData.address || 
@@ -209,7 +215,22 @@ const AssistanceMarketplaceContent = () => {
         return;
     }
 
+    if (!studentCardFile && !userProfile?.studentCardUrl) {
+        alert("Du skal uploade et billede af dit studiekort.");
+        return;
+    }
+
+    setIsUploadingCard(true);
+
     try {
+        let studentCardUrl = userProfile?.studentCardUrl || '';
+
+        if (studentCardFile && storage) {
+            const fileRef = ref(storage, `student_cards/${user.uid}_${Date.now()}_${studentCardFile.name}`);
+            const uploadResult = await uploadBytes(fileRef, studentCardFile);
+            studentCardUrl = await getDownloadURL(uploadResult.ref);
+        }
+
         const [encCpr, encReg, encAccount, encName, encAddr] = await Promise.all([
             encryptData(payoutFormData.cprNumber),
             encryptData(payoutFormData.bankReg),
@@ -225,13 +246,17 @@ const AssistanceMarketplaceContent = () => {
             payoutFullName: encName,
             payoutAddress: encAddr,
             phoneNumber: payoutFormData.phoneNumber,
+            studentCardUrl,
             isHelperEnabled: true,
         });
         setShowPayoutInfoModal(false);
+        setStudentCardFile(null);
         alert("Dine udbetalingsoplysninger er krypteret og gemt sikkert. Du kan nu tage opgaver!");
     } catch (err) {
         console.error("Error saving payout info:", err);
         alert("Der opstod en fejl ved gem af dine oplysninger.");
+    } finally {
+        setIsUploadingCard(false);
     }
   };
 
@@ -588,21 +613,77 @@ const AssistanceMarketplaceContent = () => {
                               </div>
                            </div>
                         </div>
-                    </div>
-
-                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3 italic">
+                     </div>
+ 
+                     <div className="space-y-4 pt-2">
+                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Upload Studiekort</label>
+                        <div 
+                           className={`relative border-2 border-dashed rounded-[1.5rem] p-6 text-center transition-all ${studentCardFile ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-100 bg-slate-50 hover:bg-amber-50 hover:border-amber-200'}`}
+                           onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                           onDrop={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               const file = e.dataTransfer.files?.[0];
+                               if (file && file.type.startsWith('image/')) {
+                                   setStudentCardFile(file);
+                               }
+                           }}
+                        >
+                           <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="absolute inset-0 opacity-0 cursor-pointer" 
+                              onChange={(e) => {
+                                 const file = e.target.files?.[0];
+                                 if (file) setStudentCardFile(file);
+                              }}
+                           />
+                           {studentCardFile ? (
+                              <div className="flex flex-col items-center gap-2">
+                                 <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
+                                    <Check className="w-5 h-5" />
+                                 </div>
+                                 <div>
+                                    <p className="text-xs font-bold text-emerald-900">{studentCardFile.name}</p>
+                                    <p className="text-[10px] text-emerald-600">Klik for at ændre billede</p>
+                                 </div>
+                              </div>
+                           ) : (
+                              <div className="flex flex-col items-center gap-2">
+                                 <div className="w-10 h-10 bg-slate-100 text-slate-400 rounded-lg flex items-center justify-center">
+                                    <UploadCloud className="w-5 h-5" />
+                                 </div>
+                                 <div>
+                                    <p className="text-xs font-bold text-slate-600">Klik eller træk dit studiekort her</p>
+                                    <p className="text-[10px] text-slate-400">Kun billedfiler (JPG, PNG)</p>
+                                 </div>
+                              </div>
+                           )}
+                        </div>
+                        {userProfile?.studentCardUrl && !studentCardFile && (
+                           <p className="text-[10px] text-emerald-600 font-bold italic ml-1">✓ Studiekort er allerede uploadet</p>
+                        )}
+                     </div>
+ 
+                     <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3 italic">
                         <AlertCircle className="w-5 h-5 text-blue-700 flex-shrink-0" />
                         <p className="text-[11px] text-blue-800 leading-relaxed">
                             Ved at gemme disse oplysninger accepterer du, at Cohéro indberetter din indkomst til Skattestyrelsen jf. DAC7-direktivet.
                         </p>
                     </div>
 
-                    <button 
-                        type="submit"
-                        className="w-full py-5 bg-amber-950 text-white rounded-2xl font-bold shadow-lg hover:bg-rose-900 transition-all"
-                    >
-                      Gem og fortsæt
-                    </button>
+                     <button 
+                         type="submit"
+                         disabled={isUploadingCard}
+                         className="w-full py-5 bg-amber-950 text-white rounded-2xl font-bold shadow-lg hover:bg-rose-900 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                     >
+                       {isUploadingCard ? (
+                          <>
+                             <Loader2 className="w-5 h-5 animate-spin" />
+                             Uploader...
+                          </>
+                       ) : 'Gem og fortsæt'}
+                     </button>
                 </form>
              </div>
           </div>
