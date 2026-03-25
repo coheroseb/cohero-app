@@ -450,6 +450,7 @@ const PortalPageContent: React.FC = () => {
         icon: <Scale className="w-6 h-6 text-rose-500" />,
         items: [
           { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
+          { title: "Institutionssøgning", desc: "Søg i Danmarks institutionsregister", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
           { title: "Politisk Puls", desc: "Monitorering af lovændringer", icon: Gavel, path: "/folketinget", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Live" },
           { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
           { title: "Faglige Tendenser", desc: "Hvad rører sig på studiet?", icon: Compass, path: "/tendenser", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Insights" }
@@ -465,6 +466,7 @@ const PortalPageContent: React.FC = () => {
                 icon: <Scale className="w-6 h-6 text-rose-500" />,
                 items: [
                     { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
+                    { title: "Institutionssøgning", desc: "Søg i Danmarks institutionsregister", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
                     { title: "Politisk Puls", desc: "Monitorering af lovændringer", icon: Gavel, path: "/folketinget", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Live" },
                     { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
                 ]

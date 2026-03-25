@@ -40,6 +40,10 @@ service cloud.firestore {
       allow read: if isSignedIn();
     }
 
+    match /institutions/{instId} {
+      allow read: if isSignedIn();
+    }
+
     match /explained_sager/{sagId} {
       allow read: if isSignedIn();
     }
