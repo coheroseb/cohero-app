@@ -390,15 +390,15 @@ const FileDropZone = ({ file, onFile, onClear }: { file: File | null; onFile: (f
             <FileUp className={`w-10 h-10 transition-colors ${isDragging ? 'text-orange-500' : 'text-slate-300'}`} />
           </div>
           <div className="text-center">
-            <p className="font-bold text-slate-800 mb-1">Vælg eller træk din PowerPoint-fil herover</p>
-            <p className="text-xs text-slate-400">Understøtter <strong className="text-orange-500">PowerPoint (.pptx)</strong></p>
+            <p className="font-bold text-slate-800 mb-1">Vælg eller træk din fil herover</p>
+            <p className="text-xs text-slate-400">Understøtter <strong className="text-orange-500">PowerPoint (.pptx)</strong> og <strong className="text-orange-500">PDF (.pdf)</strong></p>
           </div>
           <input
             id="file-upload"
             ref={inputRef}
             type="file"
             className="sr-only"
-            accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
             onChange={(e) => e.target.files && onFile(e.target.files[0])}
           />
         </label>
@@ -716,13 +716,15 @@ function SeminarArchitectPageContent() {
                 <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-2xl border border-orange-100">
                   <Info className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-orange-700 leading-relaxed">
-                    Upload din <strong>PowerPoint-præsentation (.pptx)</strong> direkte. Vi udtrækker automatisk al tekst og analyserer hvert enkelt slide.
+                    Upload din <strong>PowerPoint (.pptx)</strong> eller <strong>PDF (.pdf)</strong> direkte. Vi udtrækker automatisk data og analyserer indholdet.
                   </p>
                 </div>
 
                 <FileDropZone file={file} onFile={(f) => {
-                  if (!f.name.toLowerCase().endsWith('.pptx')) {
-                    toast({ title: 'Forkert filtype', description: 'Kun PowerPoint-filer (.pptx) er understøttet.', variant: 'destructive' });
+                  const isPptx = f.name.toLowerCase().endsWith('.pptx');
+                  const isPdf = f.name.toLowerCase().endsWith('.pdf');
+                  if (!isPptx && !isPdf) {
+                    toast({ title: 'Forker filtype', description: 'Kun PowerPoint (.pptx) og PDF (.pdf) er understøttet.', variant: 'destructive' });
                     return;
                   }
                   setFile(f);
@@ -756,10 +758,9 @@ function SeminarArchitectPageContent() {
                 )}
               </div>
 
-              {/* Quick Guide */}
               <div className="mt-8 grid grid-cols-3 gap-4 text-center">
                 {[  
-                  { icon: FileUp, label: 'Upload', desc: 'PowerPoint (.pptx)' },
+                  { icon: FileUp, label: 'Upload', desc: 'PPTX eller PDF' },
                   { icon: Sparkles, label: 'Analyse', desc: 'AI behandler slides' },
                   { icon: BookOpen, label: 'Videnskort', desc: 'Struktureret overblik' },
                 ].map(({ icon: Icon, label, desc }) => (
