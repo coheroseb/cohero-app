@@ -112,6 +112,7 @@ const InstitutionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebounce(searchTerm, 500);
   const [regionFilter, setRegionFilter] = useState('Alle');
+  const [isLocating, setIsLocating] = useState(false);
   const firestore = useFirestore();
 
   useEffect(() => {
@@ -119,6 +120,32 @@ const InstitutionsPage = () => {
       router.push('/portal');
     }
   }, [user, isUserLoading, router]);
+
+  // Automatisk lokation tæt på brugeren
+  useEffect(() => {
+    if ("geolocation" in navigator && regionFilter === 'Alle' && !searchTerm) {
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          // Brug DAWA (Dansk Adresse Indeks) til at finde region/postnr
+          const response = await fetch(`https://api.dataforsyningen.dk/adgangsadresser/reverse?x=${longitude}&y=${latitude}&format=json`);
+          const data = await response.json();
+          
+          if (data && data.region && data.region.navn) {
+            setRegionFilter(data.region.navn);
+          }
+        } catch (error) {
+          console.error("Kunne ikke finde lokation:", error);
+        } finally {
+          setIsLocating(false);
+        }
+      }, (error) => {
+        console.warn("Lokation afvist eller fejlet", error);
+        setIsLocating(false);
+      });
+    }
+  }, []); // Kun ved mount
 
   // Regioner fra dataen
   const regions = ['Alle', 'Region Hovedstaden', 'Region Sjælland', 'Region Syddanmark', 'Region Midtjylland', 'Region Nordjylland'];
@@ -232,8 +259,14 @@ const InstitutionsPage = () => {
         <div className="flex items-center justify-between mb-12">
            <div>
               <p className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em] mb-1">Resultater</p>
-              <h2 className="text-3xl font-black text-slate-900 serif">
+              <h2 className="text-3xl font-black text-slate-900 serif flex items-center gap-3">
                 {isLoading ? 'Henter...' : `${institutions?.length || 0} institutioner fundet`}
+                {isLocating && (
+                   <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase rounded-full animate-pulse border border-amber-100">
+                      <MapPin className="w-3 h-3" />
+                      Finder din lokation...
+                   </span>
+                )}
               </h2>
            </div>
 
