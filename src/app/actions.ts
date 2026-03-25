@@ -1323,6 +1323,40 @@ export async function sendBugReport(reportText: string, pathname: string, userna
     }
 }
 
+export async function sendTaskResetEmailAction(recipientEmail: string, taskTitle: string) {
+    try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+            from: 'Cohéro Markedsplads <info@platform.cohero.dk>',
+            to: recipientEmail,
+            subject: `Opdatering: Din opgave '${taskTitle}' er åben igen`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #f3f4f6; border-radius: 20px;">
+                    <h2 style="color: #451a03; font-family: serif;">Din opgave er lagt op på markedspladsen igen</h2>
+                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                        Hej!<br><br>
+                        Vi skriver til dig for at informere om, at din opgave <strong>"${taskTitle}"</strong> er blevet nulstillet af en administrator og nu er synlig for alle kvalificerede studerende på markedspladsen igen.
+                    </p>
+                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                        Dette sker typisk hvis den tidligere hjælper ikke længere kan løse opgaven, eller hvis vi vurderer at en anden studerende vil være et bedre match.
+                    </p>
+                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                        Du vil modtage en ny mail, så snart en anden studerende tager opgaven.
+                    </p>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-size: 12px; color: #9ca3af; text-align: center;">
+                        Med venlig hilsen<br>
+                        <strong>Cohéro Teamet</strong>
+                    </div>
+                </div>
+            `
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to send task reset email:", error);
+        return { success: false, error: "Failed to send email" };
+    }
+}
+
 export async function sendEmailToConsultant(subject: string, message: string, userName: string, userEmail: string): Promise<{ success: boolean; message: string; }> {
     try {
         const resend = new Resend(process.env.RESEND_API_KEY);

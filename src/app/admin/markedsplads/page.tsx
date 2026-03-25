@@ -40,6 +40,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { AssistanceRequest } from '@/ai/flows/types';
+import { sendTaskResetEmailAction } from '@/app/actions';
 
 const STAT_CARDS = [
   { label: 'Totale Opgaver', key: 'total', icon: HandHelping, color: 'text-amber-600', bg: 'bg-amber-50' },
@@ -99,10 +100,10 @@ const AdminMarkedspladsPage = () => {
     return result;
   }, [requests, searchTerm, statusFilter, sortBy]);
 
-  const handleResetRequest = async (id: string) => {
+  const handleResetRequest = async (req: AssistanceRequest) => {
     if (!firestore || !window.confirm('Vil du nulstille denne opgave? Den studerende vil blive fjernet, og opgaven bliver åben for andre igen.')) return;
     try {
-      await updateDoc(doc(firestore, 'assistance_requests', id), {
+      await updateDoc(doc(firestore, 'assistance_requests', req.id), {
         status: 'open',
         studentId: null,
         studentName: null,
@@ -110,7 +111,12 @@ const AdminMarkedspladsPage = () => {
         studentPhone: null,
         claimedAt: null
       });
-      toast({ title: 'Opgave nulstillet' });
+
+      if (req.citizenEmail) {
+        await sendTaskResetEmailAction(req.citizenEmail, req.title);
+      }
+
+      toast({ title: 'Opgave nulstillet og borger adviseret' });
     } catch (err) {
       toast({ title: 'Fejl ved nulstilling', variant: 'destructive' });
     }
@@ -333,7 +339,7 @@ const AdminMarkedspladsPage = () => {
                         )}
                         {req.studentId && (
                            <button 
-                            onClick={() => handleResetRequest(req.id)}
+                            onClick={() => handleResetRequest(req)}
                             title="Fjern studerende (Nulstil opgave)"
                             className="p-2 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-100 rounded-xl transition-all"
                           >
