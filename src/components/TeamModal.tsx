@@ -26,8 +26,8 @@ const TeamModal: React.FC<TeamModalProps> = ({ isOpen, onClose }) => {
   const firestore = useFirestore();
 
   const adminUsersQuery = useMemoFirebase(
-    () => firestore ? query(collection(firestore, 'users'), where('role', '==', 'admin')) : null,
-    [firestore]
+    () => (firestore && isOpen) ? query(collection(firestore, 'users'), where('role', '==', 'admin')) : null,
+    [firestore, isOpen]
   );
   const { data: adminUsers, isLoading, error } = useCollection<AdminUser>(adminUsersQuery);
 
