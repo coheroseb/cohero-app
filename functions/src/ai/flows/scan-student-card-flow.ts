@@ -20,6 +20,21 @@ const scanStudentCardFlow = ai.defineFlow(
   async (input) => {
     console.log("ScanStudentCard Input received:", JSON.stringify(input));
     const imageUrl = input.imageUrl || "";
+    if (!imageUrl) {
+        return {
+            data: {
+                isStudentCard: false,
+                nameOnCard: "Ingen fil sti",
+                expiryDate: "N/A",
+                isExpired: false,
+                nameMismatch: false,
+                confidence: 0,
+                error: "Image URL missing"
+            }, 
+            usage: { inputTokens: 0, outputTokens: 0 }
+        };
+    }
+
     const userFullName = input.userFullName || "Unknown";
     
     let mediaPart: any;
