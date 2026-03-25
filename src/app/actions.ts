@@ -87,8 +87,13 @@ import type * as Types from '@/ai/flows/types';
 async function callFirebaseFlow(flowName, data) {
   const adminSecret = process.env.CRON_SECRET || "dev-secret-123";
   const projectId = 'studio-7870211338-fe921';
+  
+  // 2nd Gen functions have a unique hash in the URL. 
+  // We prioritize the environment variable if available.
+  const prodUrl = `https://runaiflow-7pguetq4hq-uc.a.run.app`; 
+  
   const fallbackUrl = process.env.NODE_ENV === 'production'
-    ? `https://us-central1-${projectId}.cloudfunctions.net/runAiFlow`
+    ? prodUrl
     : `http://127.0.0.1:5001/${projectId}/us-central1/runAiFlow`;
 
   const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
