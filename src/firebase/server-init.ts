@@ -59,3 +59,4 @@ export const initializeServerFirebase = () => ({
   auth: adminAuth,
   storage: adminStorage
 });
+export { admin };

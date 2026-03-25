@@ -1899,10 +1899,11 @@ export async function updateStudentCardVerificationAction(userId: string, verifi
 
 export async function toggleMarketplaceBanAction(userId: string, isBanned: boolean, reason?: string) {
     try {
+        const { adminFirestore, admin } = await import('@/firebase/server-init');
         await adminFirestore.collection('users').doc(userId).update({
             isMarketplaceBanned: isBanned,
             marketplaceBanReason: isBanned ? reason : null,
-            marketplaceBannedAt: adminFirestore.FieldValue.serverTimestamp()
+            marketplaceBannedAt: admin.firestore.FieldValue.serverTimestamp()
         });
         return { success: true };
     } catch (e) {
@@ -1913,18 +1914,21 @@ export async function toggleMarketplaceBanAction(userId: string, isBanned: boole
 
 export async function clearUserPaymentInfoAction(userId: string, studentCardUrl?: string) {
     try {
+        const { adminFirestore, adminStorage, admin } = await import('@/firebase/server-init');
+        const FieldValue = admin.firestore.FieldValue;
+        
         await adminFirestore.collection('users').doc(userId).update({
-            cprNumber: adminFirestore.FieldValue.delete(),
-            bankReg: adminFirestore.FieldValue.delete(),
-            bankAccount: adminFirestore.FieldValue.delete(),
-            studentCardUrl: adminFirestore.FieldValue.delete(),
-            studentCardVerification: adminFirestore.FieldValue.delete(),
-            updatedAt: adminFirestore.FieldValue.serverTimestamp()
+            cprNumber: FieldValue.delete(),
+            bankReg: FieldValue.delete(),
+            bankAccount: FieldValue.delete(),
+            studentCardUrl: FieldValue.delete(),
+            studentCardVerification: FieldValue.delete(),
+            updatedAt: FieldValue.serverTimestamp()
         });
 
         if (studentCardUrl) {
             try {
-                const bucket = admin.storage().bucket();
+                const bucket = adminStorage.bucket();
                 const file = bucket.file(studentCardUrl);
                 await file.delete();
             } catch (err) {

@@ -572,17 +572,13 @@ const AdminUsersPage = () => {
                                    <div className="flex flex-wrap items-center gap-3">
                                       <Button size="sm" variant="outline" className="rounded-xl border-slate-200" disabled>Nulstil Adgangskode (Kommer snart)</Button>
                                       <Button size="sm" variant="outline" className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50" onClick={async () => {
-                                          if (confirm(`Vil du slette ALLE udbetalingsoplysninger og studiekort for ${u.username || u.email}? Dette kan ikke fortrydes.`)) {
-                                              await clearUserPaymentInfoAction(u.id, u.studentCardUrl);
-                                              toast({ title: "Oplysninger slettet", description: "CPR, bankoplysninger og studiekort er nu fjernet." });
-                                          }
+                                          await clearUserPaymentInfoAction(u.id, u.studentCardUrl);
+                                          toast({ title: "Oplysninger slettet", description: "CPR, bankoplysninger og studiekort er nu fjernet." });
                                       }}>Slet Udbetalingsinfo</Button>
                                       {u.isMarketplaceBanned ? (
                                           <Button size="sm" variant="outline" className="rounded-xl border-emerald-200 text-emerald-600 hover:bg-emerald-50" onClick={async () => {
-                                              if (confirm(`Vil du fjerne udelukkelsen for ${u.username || u.email}?`)) {
-                                                  await toggleMarketplaceBanAction(u.id, false);
-                                                  toast({ title: "Udelukkelse fjernet", description: "Brugeren har nu adgang til markedspladsen igen." });
-                                              }
+                                              await toggleMarketplaceBanAction(u.id, false);
+                                              toast({ title: "Udelukkelse fjernet", description: "Brugeren har nu adgang til markedspladsen igen." });
                                           }}>Fjern Udelukkelse</Button>
                                       ) : (
                                           <Button size="sm" variant="outline" className="rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50" onClick={async () => {
