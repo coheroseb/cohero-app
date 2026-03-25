@@ -345,17 +345,13 @@ const InstitutionCard = ({ inst, onSelect }: { inst: any, onSelect: () => void }
       </div>
 
       <div className="flex items-center gap-2 pt-4 border-t border-slate-50">
-        {inst.WEB_ADR && (
-          <a 
-            href={inst.WEB_ADR.startsWith('http') ? inst.WEB_ADR : `https://${inst.WEB_ADR}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-50 text-amber-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all border border-amber-200/50"
-          >
-            <Globe className="w-3 h-3" />
-            Hjemmeside
-          </a>
-        )}
+        <button 
+          onClick={onSelect}
+          className="flex-1 flex items-center justify-center gap-2 py-3 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-200/50"
+        >
+          <Star className="w-3 h-3 fill-rose-500" />
+          Vurder
+        </button>
         <button 
           onClick={onSelect}
           className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
