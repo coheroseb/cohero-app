@@ -365,7 +365,7 @@ const AssistanceMarketplaceContent = () => {
                         {req.description}
                       </p>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6 border-t border-slate-50">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t border-slate-50">
                         <div className="flex items-center gap-3 text-slate-500 group-hover:text-slate-900 transition-colors">
                            <div className="p-2.5 bg-slate-50 rounded-xl">
                                 <MapPin className="w-4 h-4" />
@@ -384,6 +384,14 @@ const AssistanceMarketplaceContent = () => {
                            </div>
                            <span className="text-xs font-bold leading-none">{req.citizenName}</span>
                         </div>
+                        {req.dueDate && (
+                          <div className="flex items-center gap-3 text-rose-600 group-hover:text-rose-800 transition-colors">
+                             <div className="p-2.5 bg-rose-50 rounded-xl">
+                                  <Clock className="w-4 h-4" />
+                             </div>
+                             <span className="text-xs font-bold leading-none">Frist: {req.dueDate}</span>
+                          </div>
+                        )}
                       </div>
 
                       {req.status === 'claimed' && req.studentId === user?.uid && (

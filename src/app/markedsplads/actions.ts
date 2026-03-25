@@ -22,6 +22,7 @@ export async function createAssistanceRequestAction(formData: {
   citizenName: string;
   citizenEmail: string;
   citizenPhone: string;
+  dueDate: string;
 }) {
   try {
     const platformFee = Math.round(formData.price * (PLATFORM_FEE_PERCENT / 100));

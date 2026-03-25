@@ -223,6 +223,7 @@ export const AssistanceRequestSchema = z.object({
   claimedAt: z.any().optional(),
   completedAt: z.any().optional(),
   location: z.string().optional().describe('Fysisk lokation eller "Online"'),
+  dueDate: z.string().optional().describe('Hvornår opgaven skal være løst'),
   rating: z.number().min(1).max(5).optional(),
 });
 
@@ -237,6 +238,7 @@ export const CreateAssistanceRequestInputSchema = z.object({
   citizenName: z.string().min(2),
   citizenEmail: z.string().email(),
   citizenPhone: z.string().optional(),
+  dueDate: z.string().optional(),
 });
 
 export const FeedbackDataSchema = z.object({

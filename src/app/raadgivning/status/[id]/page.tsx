@@ -295,7 +295,7 @@ export default function AssistanceRequestStatusPage() {
                     <p className="text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">{request.description}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-50">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-slate-50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
                             <MapPin className="w-5 h-5" />
@@ -305,6 +305,18 @@ export default function AssistanceRequestStatusPage() {
                             <p className="text-sm font-bold text-slate-700">{request.location}</p>
                         </div>
                     </div>
+                    {request.dueDate && (
+                      <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500">
+                              <Clock className="w-5 h-5" />
+                          </div>
+                          <div>
+                              <p className="text-[9px] font-black uppercase tracking-widest text-rose-400">Tidsfrist</p>
+                              <p className="text-sm font-bold text-rose-900">{request.dueDate}</p>
+                          </div>
+                      </div>
+                    )}
+                </div>
                     {isClaimed && isPaid && (
                         <div className="flex flex-col gap-6 pt-6 border-t border-slate-50">
                             <div className="flex items-center gap-3">
@@ -339,7 +351,6 @@ export default function AssistanceRequestStatusPage() {
                         </div>
                     )}
                 </div>
-            </div>
         </section>
 
         {/* Help / Footer */}

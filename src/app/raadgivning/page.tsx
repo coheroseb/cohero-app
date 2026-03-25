@@ -16,7 +16,8 @@ import {
   AlertCircle,
   ArrowRight,
   ChevronLeft,
-  Sparkles
+  Sparkles,
+  Calendar
 } from 'lucide-react';
 import { createAssistanceRequestAction } from '@/app/markedsplads/actions';
 import { useRouter } from 'next/navigation';
@@ -48,6 +49,7 @@ export default function PublicAssistanceRequestPage() {
     citizenName: '',
     citizenEmail: '',
     citizenPhone: '',
+    dueDate: '',
   });
 
   const nextStep = () => {
@@ -298,6 +300,21 @@ export default function PublicAssistanceRequestPage() {
                                 />
                             </div>
                         </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Hvornår skal det være løst?</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input 
+                                    type="text" 
+                                    placeholder="F.eks. Inden fredag eller Hurtigst muligt"
+                                    value={formData.dueDate}
+                                    onChange={e => setFormData({...formData, dueDate: e.target.value})}
+                                    className="w-full h-14 sm:h-16 pl-12 sm:pl-14 pr-6 sm:pr-8 bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[1.5rem] focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 focus:outline-none transition-all font-bold text-slate-900 text-sm sm:text-base" 
+                                />
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-medium px-2 italic">Angiv en dato eller deadline ift. din sag.</p>
+                        </div>
                     </div>
                   )}
 
@@ -407,12 +424,18 @@ export default function PublicAssistanceRequestPage() {
                                       <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Kategori</p>
                                       <p className="font-bold text-slate-900">{formData.category}</p>
                                    </div>
-                                   <div>
+                                    <div>
                                       <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Budget</p>
                                       <p className="font-black text-2xl text-amber-950">{formData.price} kr.</p>
-                                   </div>
-                                </div>
-                             </div>
+                                    </div>
+                                    {formData.dueDate && (
+                                       <div>
+                                          <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Tidsfrist</p>
+                                          <p className="font-bold text-slate-900">{formData.dueDate}</p>
+                                       </div>
+                                    )}
+                                 </div>
+                              </div>
                              <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 flex gap-3 text-left">
                                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                                 <p className="text-[11px] text-emerald-900 font-medium leading-relaxed">
