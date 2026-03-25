@@ -127,7 +127,8 @@ service cloud.firestore {
 
     match /partnerDomains/{domainId} { allow read: if isSignedIn(); }
     match /lawExplanations/{explanationId} { allow read: if true; allow create: if isSignedIn(); }
-    match /conceptExplanations/{explanationId} { allow read: if true; allow create: if isSignedIn(); }
+    match /conceptExplanations-v2/{explanationId} { allow read: if true; allow create: if isSignedIn(); }
+    match /conceptVideos/{videoId} { allow read: if true; }
     match /techniques/{techniqueId} { allow read: if true; }
     match /waitlist/{email} { allow create: if request.resource.data.email == email; }
     match /teamReflections/{reflectionId} { allow read: if true; }
