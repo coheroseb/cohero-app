@@ -15,17 +15,271 @@ import {
   Layers,
   Sparkles,
   Loader2,
-  X
+  X,
+  Star,
+  MessageCircle,
+  ThumbsUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit, orderBy } from 'firebase/firestore';
+import { collection, query, where, limit, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useDebounce } from 'use-debounce';
 import { useApp } from '@/app/provider';
 import { useRouter } from 'next/navigation';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
-const InstitutionCard = ({ inst }: { inst: any }) => (
+const ReviewSection = ({ institutionId, user }: { institutionId: string, user: any }) => {
+  const firestore = useFirestore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+
+  const reviewsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+      collection(firestore, 'institution_reviews'),
+      where('institutionId', '==', institutionId),
+      orderBy('createdAt', 'desc')
+    );
+  }, [firestore, institutionId]);
+
+  const { data: reviews, isLoading } = useCollection<any>(reviewsQuery);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firestore || !user || !reviewText.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(firestore, 'institution_reviews'), {
+        institutionId,
+        userId: user.uid,
+        userName: user.displayName || 'Anonym Studerende',
+        userPhoto: user.photoURL || '',
+        rating,
+        reviewText,
+        createdAt: serverTimestamp()
+      });
+      setReviewText('');
+      setRating(5);
+    } catch (error) {
+      console.error("Fejl ved afsendelse af anmeldelse:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-12 pt-12 border-t border-slate-100">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+           <p className="text-[10px] font-black uppercase text-rose-600 tracking-[0.2em] mb-1">Feedback</p>
+           <h3 className="text-2xl font-black text-slate-900 serif">Studerende har været her</h3>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 rounded-2xl text-rose-700 text-xs font-bold">
+           <Star className="w-4 h-4 fill-rose-500" />
+           {reviews?.length || 0} vurderinger
+        </div>
+      </div>
+
+      {/* Write a Review */}
+      <form onSubmit={handleSubmit} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-200/50 mb-12">
+         <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-4">Skriv en vurdering</p>
+         <div className="flex gap-1 mb-6">
+            {[1, 2, 3, 4, 5].map((s) => (
+               <button 
+                  key={s}
+                  type="button"
+                  onClick={() => setRating(s)}
+                  className="transition-transform hover:scale-110"
+               >
+                  <Star className={`w-6 h-6 ${s <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+               </button>
+            ))}
+         </div>
+         <textarea 
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            placeholder="Del din oplevelse i praktik..."
+            className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-rose-500 outline-none transition-all resize-none h-32 mb-4"
+         />
+         <button 
+            disabled={isSubmitting || !reviewText.trim()}
+            className="w-full py-4 bg-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-700 disabled:opacity-50 transition-all shadow-lg shadow-rose-900/20"
+         >
+            {isSubmitting ? 'Sender...' : 'Indsend vurdering'}
+         </button>
+      </form>
+
+      {/* Reviews List */}
+      <div className="space-y-6">
+         {isLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-rose-300" /></div>
+         ) : reviews?.map((review) => (
+            <div key={review.id} className="p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
+               <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                        {review.userPhoto ? <img src={review.userPhoto} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-400"><Users className="w-5 h-5" /></div>}
+                     </div>
+                     <div>
+                        <p className="text-xs font-bold text-slate-900">{review.userName}</p>
+                        <div className="flex gap-0.5">
+                           {[...Array(5)].map((_, i) => (
+                              <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                           ))}
+                        </div>
+                     </div>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400">{review.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
+               </div>
+               <p className="text-xs text-slate-600 leading-relaxed font-medium">{review.reviewText}</p>
+            </div>
+         ))}
+         {reviews?.length === 0 && (
+            <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-[2rem]">
+               <MessageCircle className="w-8 h-8 text-slate-200 mx-auto mb-3" />
+               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ingen vurderinger endnu</p>
+               <p className="text-[10px] text-slate-300 mt-1">Vær den første til at dele din oplevelse!</p>
+            </div>
+         )}
+      </div>
+    </div>
+  );
+};
+
+const DetailOverlay = ({ inst, user, onClose }: { inst: any, user: any, onClose: () => void }) => (
+  <motion.div 
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+  >
+    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+    <motion.div 
+      initial={{ scale: 0.9, opacity: 0, y: 20 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ scale: 0.9, opacity: 0, y: 20 }}
+      className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] shadow-2xl relative z-10 scrollbar-hide"
+    >
+       {/* Hero Header */}
+       <div className="relative h-64 bg-amber-950 rounded-t-[3rem] overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-amber-950/80" />
+          <button 
+            onClick={onClose}
+            className="absolute top-8 right-8 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all z-20"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <div className="absolute bottom-8 left-12 right-12">
+             <div className="flex items-center gap-2 mb-3">
+                <span className="px-3 py-1 bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-widest rounded-full">
+                   {inst.EJER_KODE_TEKST}
+                </span>
+                <span className="px-3 py-1 bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-full backdrop-blur-md">
+                   {inst.BEL_REGION_TEKST}
+                </span>
+             </div>
+             <h2 className="text-4xl font-black text-white serif leading-tight">{inst.INST_NAVN}</h2>
+          </div>
+       </div>
+
+       {/* Info Grid */}
+       <div className="p-12 lg:p-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+             <div className="space-y-8">
+                <section>
+                   <p className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em] mb-4">Kontakt Information</p>
+                   <div className="space-y-4">
+                      <div className="flex items-center gap-4 group">
+                         <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-amber-50 group-hover:text-amber-600 transition-all">
+                            <MapPin className="w-5 h-5" />
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black uppercase text-slate-400">Adresse</p>
+                            <p className="text-sm font-bold text-slate-900">{inst.INST_ADR}, {inst.POSTNR} {inst.POSTDISTRIKT}</p>
+                         </div>
+                      </div>
+                      
+                      {inst.TLF_NR && (
+                         <div className="flex items-center gap-4 group">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-amber-50 group-hover:text-amber-600 transition-all">
+                               <Phone className="w-5 h-5" />
+                            </div>
+                            <div>
+                               <p className="text-[10px] font-black uppercase text-slate-400">Telefon</p>
+                               <p className="text-sm font-bold text-slate-900">{inst.TLF_NR}</p>
+                            </div>
+                         </div>
+                      )}
+
+                      {inst.E_MAIL && (
+                         <div className="flex items-center gap-4 group">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-amber-50 group-hover:text-amber-600 transition-all">
+                               <Mail className="w-5 h-5" />
+                            </div>
+                            <div>
+                               <p className="text-[10px] font-black uppercase text-slate-400">E-mail</p>
+                               <p className="text-sm font-bold text-slate-900">{inst.E_MAIL}</p>
+                            </div>
+                         </div>
+                      )}
+                   </div>
+                </section>
+
+                <section>
+                   <p className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em] mb-4">Organisatoriske Detaljer</p>
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                         <p className="text-[9px] font-black uppercase text-slate-400 mb-1">CVR Nummer</p>
+                         <p className="text-xs font-bold text-slate-900">{inst.CVR_NR}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                         <p className="text-[9px] font-black uppercase text-slate-400 mb-1">P-Nummer</p>
+                         <p className="text-xs font-bold text-slate-900">{inst.P_NR}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 col-span-2">
+                         <p className="text-[9px] font-black uppercase text-slate-400 mb-1">Ansvarligt Ministerium</p>
+                         <p className="text-xs font-bold text-slate-900">{inst.min_KODE_TEKST}</p>
+                      </div>
+                   </div>
+                </section>
+             </div>
+
+             <div className="space-y-8">
+                <div className="aspect-square bg-slate-100 rounded-[2.5rem] border border-slate-200 overflow-hidden relative">
+                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 text-center p-8">
+                      <MapPin className="w-12 h-12 mb-4 opacity-50" />
+                      <p className="text-xs font-black uppercase tracking-widest mb-1">Geografisk Placering</p>
+                      <p className="text-[10px] font-medium opacity-70">
+                         Bredde: {inst.GEO_BREDDE_GRAD}<br/>
+                         Længde: {inst.GEO_LAENGDE_GRAD}
+                      </p>
+                   </div>
+                   {inst.WEB_ADR && (
+                      <a 
+                        href={inst.WEB_ADR.startsWith('http') ? inst.WEB_ADR : `https://${inst.WEB_ADR}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute bottom-8 left-8 right-8 py-4 bg-amber-950 text-white rounded-xl text-xs font-black uppercase tracking-widest text-center hover:bg-slate-900 transition-all shadow-xl shadow-slate-950/20"
+                      >
+                         Besøg Hjemmeside
+                      </a>
+                   )}
+                </div>
+             </div>
+          </div>
+
+          {/* Student Reviews Section */}
+          <ReviewSection institutionId={inst.id} user={user} />
+       </div>
+    </motion.div>
+  </motion.div>
+);
+
+const InstitutionCard = ({ inst, onSelect }: { inst: any, onSelect: () => void }) => (
   <motion.div
     layout
     initial={{ opacity: 0, y: 20 }}
@@ -102,7 +356,10 @@ const InstitutionCard = ({ inst }: { inst: any }) => (
             Hjemmeside
           </a>
         )}
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10">
+        <button 
+          onClick={onSelect}
+          className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
+        >
           Detaljer
           <ChevronRight className="w-3 h-3" />
         </button>
@@ -120,6 +377,7 @@ const InstitutionsPage = () => {
   const [ejerFilter, setEjerFilter] = useState('Alle');
   const [typeFilter, setTypeFilter] = useState('Alle');
   const [isLocating, setIsLocating] = useState(false);
+  const [selectedInstitution, setSelectedInstitution] = useState<any>(null);
   const firestore = useFirestore();
 
   useEffect(() => {
@@ -312,7 +570,11 @@ const InstitutionsPage = () => {
           >
             <AnimatePresence mode="popLayout">
               {institutions?.map((inst) => (
-                <InstitutionCard key={inst.id} inst={inst} />
+                <InstitutionCard 
+                  key={inst.id} 
+                  inst={inst} 
+                  onSelect={() => setSelectedInstitution(inst)} 
+                />
               ))}
             </AnimatePresence>
 
@@ -329,6 +591,7 @@ const InstitutionsPage = () => {
                         onClick={() => {
                             setSearchTerm('');
                             setRegionFilter('Alle');
+                            setEjerFilter('Alle');
                         }}
                         className="py-3 px-8 bg-amber-950 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:bg-rose-950 transition-all shadow-xl shadow-amber-950/20"
                     >
@@ -339,6 +602,16 @@ const InstitutionsPage = () => {
           </motion.div>
         )}
       </main>
+
+      <AnimatePresence>
+        {selectedInstitution && (
+           <DetailOverlay 
+              inst={selectedInstitution} 
+              user={user} 
+              onClose={() => setSelectedInstitution(null)} 
+           />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

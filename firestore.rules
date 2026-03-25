@@ -36,6 +36,12 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
+    match /institution_reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update, delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+
     match /laws/{lawId} {
       allow read: if true;
     }
