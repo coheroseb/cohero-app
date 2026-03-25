@@ -167,6 +167,8 @@ export interface UserProfile {
   isMarketplaceBanned?: boolean;
   marketplaceBanReason?: string;
   marketplaceBannedAt?: any;
+  cvUrl?: string;
+  cvName?: string;
 }
 
 export interface StudentCardVerification {

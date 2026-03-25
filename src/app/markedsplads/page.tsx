@@ -72,6 +72,7 @@ const AssistanceMarketplaceContent = () => {
 
   const [studentCardFile, setStudentCardFile] = useState<File | null>(null);
   const [isUploadingCard, setIsUploadingCard] = useState(false);
+  const [isUploadingCV, setIsUploadingCV] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -265,6 +266,46 @@ const AssistanceMarketplaceContent = () => {
     }
   };
 
+  const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !firestore || !storage) return;
+
+    // Check file type (PDF, DOCX)
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Venligst upload et CV i PDF eller Word-format.");
+      return;
+    }
+
+    // Max 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Filen er for stor. Maks 5MB.");
+      return;
+    }
+
+    setIsUploadingCV(true);
+    try {
+      const fileName = `cv_${user.uid}_${Date.now()}_${file.name}`;
+      const fileRef = ref(storage, `cvs/${fileName}`);
+      await uploadBytes(fileRef, file);
+      const cvUrl = await getDownloadURL(fileRef);
+
+      await updateDoc(doc(firestore, 'users', user.uid), {
+        cvUrl,
+        cvName: file.name,
+        cvUpdatedAt: serverTimestamp()
+      });
+
+      await refetchUserProfile();
+      alert("Dit CV er blevet uploadet!");
+    } catch (err) {
+      console.error("Error uploading CV:", err);
+      alert("Der opstod en fejl ved upload af dit CV.");
+    } finally {
+      setIsUploadingCV(false);
+    }
+  };
+
   if (userProfile?.isMarketplaceBanned) {
       return (
           <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6">
@@ -404,6 +445,55 @@ const AssistanceMarketplaceContent = () => {
                     <span className="text-[9px] font-black uppercase text-amber-400 tracking-tighter">+50 aktive hjælpere</span>
                 </div>
              </div>
+          </div>
+
+          <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] border border-amber-100/50 shadow-2xl shadow-amber-950/5 space-y-6">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                   <FilePlus className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-black uppercase tracking-widest text-amber-950">Mit CV</h4>
+             </div>
+
+             {userProfile?.cvUrl ? (
+                <div className="space-y-4">
+                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                         <p className="text-[10px] font-black uppercase text-slate-300 tracking-widest leading-none mb-1">Uploadet fil</p>
+                         <p className="text-xs font-bold text-slate-900 truncate">{userProfile.cvName || 'cv.pdf'}</p>
+                      </div>
+                   </div>
+                   
+                   <div className="grid grid-cols-2 gap-3">
+                      <a 
+                        href={userProfile.cvUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 py-3 bg-amber-50 text-amber-950 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all border border-amber-200/50"
+                      >
+                         Se CV
+                      </a>
+                      <label className="flex items-center justify-center gap-2 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all cursor-pointer">
+                         Skift
+                         <input type="file" className="hidden" onChange={handleCVUpload} disabled={isUploadingCV} />
+                      </label>
+                   </div>
+                </div>
+             ) : (
+                <div className="space-y-4">
+                   <p className="text-xs font-medium text-slate-400 leading-relaxed italic">
+                      Upload dit CV for at gøre det nemmere for borgere at vælge dig til opgaver.
+                   </p>
+                   <label className="flex items-center justify-center gap-3 py-4 bg-amber-950 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-rose-950 shadow-xl shadow-amber-950/20 transition-all cursor-pointer active:scale-95">
+                      {isUploadingCV ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                      {isUploadingCV ? 'Uploader...' : 'Upload CV'}
+                      <input type="file" className="hidden" onChange={handleCVUpload} disabled={isUploadingCV} />
+                   </label>
+                </div>
+             )}
           </div>
         </aside>
         

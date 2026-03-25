@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '@/app/provider';
 import { useAuth, useFirestore } from '@/firebase';
 import { doc, getDoc, writeBatch, serverTimestamp, deleteDoc, updateDoc } from 'firebase/firestore';
-import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, ChevronDown, ShieldAlert, Users2, Send, Info, Award, Sparkles, Bell, BellOff } from 'lucide-react';
+import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, ChevronDown, ShieldAlert, Users2, Send, Info, Award, Sparkles, Bell, BellOff, Smartphone, Navigation, Mail, Briefcase, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -14,14 +14,16 @@ import { deleteUser, updateProfile } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { requestNotificationPermission } from '@/firebase/messaging';
-import { encryptData, decryptData } from '@/lib/encryption';
-
+import { encryptData } from '@/lib/encryption';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SettingsPage() {
   const { user, userProfile, refetchUserProfile, handleLogout, handleResendVerification } = useApp();
   const firestore = useFirestore();
   const auth = useAuth();
   const { toast } = useToast();
+
+  const [activeTab, setActiveTab] = useState<'profile' | 'membership' | 'notifications' | 'security'>('profile');
 
   // Profile state
   const [username, setUsername] = useState('');
@@ -257,7 +259,6 @@ export default function SettingsPage() {
         }
     };
 
-
   const handleConfirmDelete = async () => {
     if (!user || !firestore || !auth || !auth.currentUser) {
       throw new Error("Bruger eller database er ikke tilgængelig.");
@@ -265,12 +266,7 @@ export default function SettingsPage() {
     
     const userRef = doc(firestore, 'users', user.uid);
     await deleteDoc(userRef);
-
-    // This is a security-sensitive operation and might require recent sign-in.
-    // The modal handles the specific error message for this.
     await deleteUser(auth.currentUser);
-
-    // This logs out and redirects to home
     handleLogout();
   };
   
@@ -280,12 +276,11 @@ export default function SettingsPage() {
     setIsResending(false);
   };
 
-
   if (!userProfile) {
      return (
-      <div className="flex flex-col items-center justify-center h-[60vh]">
-        <Loader2 className="w-12 h-12 animate-spin text-amber-500" />
-        <p className='text-slate-500 mt-4'>Henter indstillinger...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC]">
+        <Loader2 className="w-10 h-10 animate-spin text-amber-500 mb-4" />
+        <p className='text-sm font-bold text-slate-400 tracking-widest uppercase'>Henter indstillinger...</p>
       </div>
     );
   }
@@ -293,386 +288,448 @@ export default function SettingsPage() {
   const subscriptionWillBeCancelled = userProfile?.stripeCancelAtPeriodEnd === true;
   const isSpecialSubscription = userProfile?.stripePriceId?.startsWith('b2b-') || userProfile?.stripePriceId?.startsWith('redeemed-');
 
+  const tabs = [
+    { id: 'profile', label: 'Profil & Uddannelse', icon: User },
+    { id: 'membership', label: 'Medlemskab & Adgang', icon: CreditCard },
+    { id: 'notifications', label: 'Notifikationer', icon: Bell },
+    { id: 'security', label: 'Sikkerhed & Konto', icon: ShieldAlert },
+  ] as const;
 
   return (
-    <div className="bg-[#FDFCF8] min-h-screen selection:bg-amber-100">
-      <header className="bg-white border-b border-amber-100 px-4 sm:px-6 py-8 md:py-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 text-slate-600 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center shadow-inner">
-              <Settings className="w-8 h-8 sm:w-10 sm:h-10" />
+    <div className="bg-[#F8FAFC] min-h-screen pb-32">
+      {/* Premium Header Area */}
+      <div className="bg-white border-b border-slate-200/60 pt-28 md:pt-32 pb-10 px-6 relative overflow-hidden">
+         {/* Minimalist ambient glow */}
+         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-amber-200/20 to-transparent rounded-full blur-[80px] pointer-events-none translate-x-1/2 -translate-y-1/2" />
+         
+         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6 relative z-10">
+            <motion.div 
+               initial={{ scale: 0.9, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-800 shadow-sm shrink-0"
+            >
+               <Settings className="w-9 h-9" />
+            </motion.div>
+            <div className="text-center md:text-left">
+               <motion.h1 
+                 initial={{ y: 10, opacity: 0 }}
+                 animate={{ y: 0, opacity: 1 }}
+                 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1"
+               >
+                 Indstillinger
+               </motion.h1>
+               <motion.p 
+                 initial={{ y: 10, opacity: 0 }}
+                 animate={{ y: 0, opacity: 1 }}
+                 transition={{ delay: 0.1 }}
+                 className="text-[15px] text-slate-500 font-medium"
+               >
+                 Administrer din oplevelse og konto på Cohéro.
+               </motion.p>
             </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-amber-950 serif leading-tight tracking-tight">
-                Indstillinger
-              </h1>
-              <p className="text-sm sm:text-base text-slate-500 mt-1 italic font-medium">
-                Administrer din profil, dannelse og dit medlemskab.
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-      
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-10 sm:space-y-16 pb-32">
-        {!user?.emailVerified && (
-          <div className="bg-amber-50 border-2 border-dashed border-amber-200 text-amber-900 p-6 sm:p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm animate-ink">
-            <div className="flex items-start gap-4">
-              <ShieldAlert className="w-8 h-8 text-amber-600 flex-shrink-0 mt-1" />
-              <div className="text-center md:text-left">
-                <h3 className="font-bold text-lg">Bekræft din e-mailadresse</h3>
-                <p className="text-sm mt-1 opacity-80 leading-relaxed">
-                  For at sikre din konto og modtage vigtige opdateringer, bedes du bekræfte din e-mail.
-                </p>
-              </div>
-            </div>
-            <Button onClick={handleResendClick} disabled={isResending} variant="outline" className="w-full md:w-auto bg-white/50 h-12 px-8 rounded-xl shrink-0">
-              {isResending ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <Send className="w-4 h-4 mr-2"/>}
-              {isResending ? 'Sender...' : 'Gensend link'}
-            </Button>
-          </div>
-        )}
+         </div>
+      </div>
 
-        <form onSubmit={handleSave} className="bg-white p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border border-amber-100/60 shadow-sm space-y-10 animate-ink">
-          <div className="flex items-center gap-4 border-b border-amber-50 pb-6">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 shadow-inner">
-                <User className="w-5 h-5" />
+      <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col lg:flex-row gap-10">
+         {/* Sidebar Navigation */}
+         <aside className="lg:w-72 shrink-0">
+            <div className="lg:sticky lg:top-24 space-y-1 bg-white p-2 rounded-[1.5rem] border border-slate-200/60 shadow-sm shadow-slate-200/20 flex lg:flex-col overflow-x-auto lg:overflow-visible snap-x">
+                {tabs.map(tab => {
+                   const Icon = tab.icon;
+                   const isActive = activeTab === tab.id;
+                   return (
+                     <button 
+                       key={tab.id}
+                       onClick={() => setActiveTab(tab.id)}
+                       className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all whitespace-nowrap snap-center ${
+                         isActive 
+                           ? 'bg-amber-50 text-amber-900 border border-amber-100/50 shadow-sm' 
+                           : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
+                       }`}
+                     >
+                       <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-amber-500' : 'text-slate-400'}`} />
+                       <span className="text-sm">{tab.label}</span>
+                     </button>
+                   )
+                })}
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-amber-950 serif">Din Profil</h2>
-          </div>
+         </aside>
 
-          {error && <p className="text-sm text-rose-600 bg-rose-50 p-4 rounded-xl border border-rose-100 font-medium">{error}</p>}
-          
-          <div className="grid gap-8">
-            <div>
-                <label htmlFor="username" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Brugernavn</label>
-                <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full h-12 rounded-xl focus:ring-amber-900/5 transition-all" />
-            </div>
+         {/* Main Content Area */}
+         <main className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+               <motion.div
+                 key={activeTab}
+                 initial={{ opacity: 0, y: 15 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, y: -15 }}
+                 transition={{ duration: 0.25, ease: "easeOut" }}
+                 className="space-y-8"
+               >
 
-            <div>
-                <label htmlFor="phoneNumber" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Telefonnummer (til opgaver)</label>
-                <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full h-12 rounded-xl focus:ring-amber-900/5 transition-all" placeholder="Eks. +45 12 34 56 78" />
-            </div>
+                  {/* =========================================
+                      PROFILE TAB
+                      ========================================= */}
+                  {activeTab === 'profile' && (
+                    <div className="space-y-8">
+                       <form onSubmit={handleSave} className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm shadow-slate-200/20 overflow-hidden">
+                          <div className="p-8 border-b border-slate-100 bg-slate-50/50">
+                             <h2 className="text-xl font-bold text-slate-900">Personlig Information</h2>
+                             <p className="text-xs font-semibold text-slate-500 mt-1">Opdater dit navn og din uddannelsesstatus.</p>
+                          </div>
+                          
+                          <div className="p-8 space-y-8">
+                              {error && <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-sm font-bold flex items-center gap-2 animate-in fade-in"><ShieldAlert className="w-4 h-4" />{error}</div>}
+                              
+                              <div className="grid md:grid-cols-2 gap-8">
+                                  <div className="space-y-2">
+                                      <label htmlFor="username" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Fulde Navn</label>
+                                      <div className="relative">
+                                          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                          <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-amber-500/20" />
+                                      </div>
+                                  </div>
 
-            <div>
-                <label htmlFor="profession" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Profession</label>
-                <div className="relative group">
-                    <select id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} className="appearance-none flex h-12 w-full rounded-xl border border-input bg-background px-4 py-2 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-950/20 disabled:cursor-not-allowed disabled:opacity-50 pr-10 cursor-pointer">
-                        <option value="" disabled>Vælg profession...</option>
-                        <option value="Socialrådgiver">Socialrådgiver</option>
-                        <option value="Pædagog">Pædagog</option>
-                        <option value="Lærer">Lærer</option>
-                        <option value="Sygeplejerske">Sygeplejerske</option>
-                        <option value="Andet">Andet</option>
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-hover:text-amber-950 transition-colors" />
-                </div>
-            </div>
+                                  <div className="space-y-2">
+                                      <label htmlFor="phoneNumber" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Telefonnummer</label>
+                                      <div className="relative">
+                                          <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                          <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-amber-500/20" placeholder="+45 12 34 56 78" />
+                                      </div>
+                                  </div>
+                              </div>
 
-            {!isQualified && (
-                <div className="grid sm:grid-cols-2 gap-8">
-                    <div>
-                        <label htmlFor="semester" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Semester</label>
-                        <Input id="semester" value={semester} onChange={(e) => setSemester(e.target.value)} className="w-full h-12 rounded-xl" placeholder="f.eks. 4. semester" />
+                              <div className="w-full h-[1px] bg-slate-100" />
+
+                              <div className="grid md:grid-cols-2 gap-8">
+                                  <div className="space-y-2">
+                                      <label htmlFor="profession" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Profession / Studie</label>
+                                      <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
+                                          <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                          <select id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer">
+                                              <option value="" disabled>Vælg profession...</option>
+                                              <option value="Socialrådgiver">Socialrådgiver</option>
+                                              <option value="Pædagog">Pædagog</option>
+                                              <option value="Lærer">Lærer</option>
+                                              <option value="Sygeplejerske">Sygeplejerske</option>
+                                              <option value="Andet">Andet</option>
+                                          </select>
+                                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                      </div>
+                                  </div>
+
+                                  {!isQualified && (
+                                     <>
+                                        <div className="space-y-2">
+                                            <label htmlFor="semester" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
+                                            <div className="relative">
+                                                <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                <Input id="semester" value={semester} onChange={(e) => setSemester(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-amber-500/20" placeholder="F.eks. 4. semester" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label htmlFor="institution" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Uddannelsesinstitution</label>
+                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
+                                                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer">
+                                                    <option value="" disabled>Vælg institution...</option>
+                                                    <option value="Københavns Professionshøjskole">Københavns Professionshøjskole</option>
+                                                    <option value="VIA University College">VIA University College</option>
+                                                    <option value="UC SYD">UC SYD</option>
+                                                    <option value="UCL">UCL Erhvervsakademi og Professionshøjskole</option>
+                                                    <option value="Absalon">Professionshøjskolen Absalon</option>
+                                                    <option value="UCN">UCN</option>
+                                                    <option value="Aalborg Universitet">Aalborg Universitet</option>
+                                                    <option value="Andet">Andet</option>
+                                                </select>
+                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+                                     </>
+                                  )}
+                              </div>
+
+                              <div className="w-full p-5 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between cursor-pointer group" onClick={() => setIsQualified(!isQualified)}>
+                                  <div>
+                                      <p className="text-sm font-bold text-slate-900">Er du færdiguddannet?</p>
+                                      <p className="text-xs font-semibold text-slate-500 mt-0.5">Slå til hvis du har afsluttet dit studie.</p>
+                                  </div>
+                                  <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${isQualified ? 'bg-amber-500' : 'bg-slate-300'}`}>
+                                      <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200 ease-in-out ${isQualified ? 'translate-x-5' : 'translate-x-0'}`} />
+                                  </div>
+                              </div>
+                          </div>
+
+                          <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-4">
+                             <AnimatePresence>
+                               {success && (
+                                 <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-sm font-bold text-emerald-600">
+                                   <CheckCircle className="w-4 h-4" /> Gemt
+                                 </motion.div>
+                               )}
+                             </AnimatePresence>
+                             <Button type="submit" disabled={isLoading} className="h-11 px-8 rounded-xl bg-slate-900 text-white hover:bg-slate-800 shadow-md font-bold active:scale-[0.98] transition-all w-full md:w-auto">
+                               {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
+                               Gem Profil
+                             </Button>
+                          </div>
+                       </form>
+
+                       {/* Financial Form */}
+                       <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm shadow-slate-200/20 overflow-hidden">
+                          <div className="p-8 border-b border-slate-100 bg-slate-50/50">
+                             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-3"><WalletIcon className="w-5 h-5 text-slate-400" /> Udbetalingsinfo</h2>
+                             <p className="text-xs font-semibold text-slate-500 mt-1">Sikkert krypteret. Bruges til honorering ved opgaver.</p>
+                          </div>
+                          <div className="p-8 grid md:grid-cols-3 gap-6">
+                              <div className="space-y-2">
+                                  <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">CPR Nummer</label>
+                                  <Input placeholder="DDMMYY-XXXX" value={userProfile?.cprNumber ? '••••••-••••' : ''} onChange={async (e) => { const enc = await encryptData(e.target.value); updateDoc(doc(firestore!, 'users', user!.uid), { cprNumber: enc }).then(refetchUserProfile); }} className="w-full h-12 bg-slate-50 rounded-xl font-mono text-center tracking-widest" />
+                              </div>
+                              <div className="space-y-2">
+                                  <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Reg. Nr.</label>
+                                  <Input placeholder="4 cifre" value={userProfile?.bankReg ? '••••' : ''} onChange={async (e) => { const enc = await encryptData(e.target.value); updateDoc(doc(firestore!, 'users', user!.uid), { bankReg: enc }).then(refetchUserProfile); }} className="w-full h-12 bg-slate-50 rounded-xl font-mono text-center tracking-widest" />
+                              </div>
+                              <div className="space-y-2">
+                                  <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Kontonummer</label>
+                                  <Input placeholder="10 cifre" value={userProfile?.bankAccount ? '••••••••' : ''} onChange={async (e) => { const enc = await encryptData(e.target.value); updateDoc(doc(firestore!, 'users', user!.uid), { bankAccount: enc }).then(refetchUserProfile); }} className="w-full h-12 bg-slate-50 rounded-xl font-mono text-center tracking-widest" />
+                              </div>
+                          </div>
+                       </div>
+                       
+                       {/* Badges Section */}
+                       <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm shadow-slate-200/20 p-8">
+                           <div className="flex items-center gap-3 mb-6">
+                               <Award className="w-6 h-6 text-amber-500" />
+                               <h2 className="text-xl font-bold text-slate-900">Dine Mærkater</h2>
+                           </div>
+                           {userProfile?.badges && userProfile.badges.length > 0 ? (
+                              <div className="flex flex-wrap gap-3">
+                                  {userProfile.badges.map((b: string) => (
+                                      <div key={b} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl shadow-sm">
+                                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                          <span className="text-xs font-black uppercase tracking-widest text-amber-900">{b}</span>
+                                      </div>
+                                  ))}
+                              </div>
+                           ) : (
+                               <div className="w-full border-2 border-dashed border-slate-100 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
+                                   <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-4"><Award className="w-6 h-6 text-slate-300" /></div>
+                                   <p className="text-sm font-bold text-slate-500">Ingen mærkater endnu</p>
+                                   <p className="text-xs font-medium text-slate-400 mt-1 max-w-sm">Deltag i træningsscenarier og fuldfør opgaver for at optjene gyldne mærkater til din profil.</p>
+                               </div>
+                           )}
+                       </div>
                     </div>
-                    <div>
-                        <label htmlFor="institution" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Uddannelsesinstitution</label>
-                        <div className="relative group">
-                            <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="appearance-none flex h-12 w-full rounded-xl border border-input bg-background px-4 py-2 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-950/20 disabled:cursor-not-allowed disabled:opacity-50 pr-10 cursor-pointer">
-                                <option value="" disabled>Vælg institution...</option>
-                                <option value="Københavns Professionshøjskole">Københavns Professionshøjskole</option>
-                                <option value="VIA University College">VIA University College</option>
-                                <option value="UC SYD">UC SYD</option>
-                                <option value="UCL Erhvervsakademi og Professionshøjskole">UCL Erhvervsakademi og Professionshøjskole</option>
-                                <option value="Professionshøjskolen Absalon">Professionshøjskolen Absalon</option>
-                                <option value="UCN">UCN</option>
-                                <option value="Aalborg Universitet">Aalborg Universitet</option>
-                                <option value="Andet">Andet</option>
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-hover:text-amber-950 transition-colors" />
+                  )}
+
+                  {/* =========================================
+                      MEMBERSHIP TAB
+                      ========================================= */}
+                  {activeTab === 'membership' && (
+                    <div className="space-y-8">
+                       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2rem] p-8 sm:p-10 shadow-xl overflow-hidden relative group">
+                          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-400/10 rounded-full blur-[80px] -mr-48 -mt-48 pointer-events-none transition-transform duration-1000 group-hover:scale-110" />
+                          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-b border-white/10 pb-8 mb-8">
+                             <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400/80 mb-2 flex items-center gap-2">
+                                  <Sparkles className="w-3.5 h-3.5" /> Nuværende Plan
+                                </p>
+                                <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">{userProfile?.membership || 'Gratis Plan'}</h2>
+                                {partnerInstitution && (
+                                  <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/5 backdrop-blur-md">
+                                    <Users2 className="w-3.5 h-3.5 text-amber-300" />
+                                    <span className="text-xs font-bold text-amber-100">Studieaftale: {partnerInstitution}</span>
+                                  </div>
+                                )}
+                             </div>
+                             {userProfile?.stripeCurrentPeriodEnd && (
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-md min-w-[200px]">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                                      {isSpecialSubscription || subscriptionWillBeCancelled ? 'Adgang udløber' : 'Næste fornyelse'}
+                                    </p>
+                                    <p className="text-lg font-bold text-white">
+                                      {new Date(userProfile.stripeCurrentPeriodEnd).toLocaleDateString('da-DK', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </p>
+                                </div>
+                             )}
+                          </div>
+
+                          <div className="relative z-10 flex flex-col sm:flex-row justify-between items-center gap-4">
+                              {isSpecialSubscription ? (
+                                  <p className="text-sm font-medium text-slate-400 italic">Dette abonnement administreres centralt af din institution.</p>
+                              ) : subscriptionWillBeCancelled ? (
+                                  <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
+                                      <p className="text-sm font-bold text-rose-400 flex items-center gap-2 bg-rose-500/10 px-4 py-2 rounded-xl border border-rose-500/20">
+                                          <CheckCircle className="w-4 h-4"/> Opsagt - udløber snart
+                                      </p>
+                                      <Link href="/upgrade" className="w-full sm:w-auto ml-auto">
+                                          <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 h-11 px-8 rounded-xl font-bold">
+                                              Forny Adgang
+                                          </Button>
+                                      </Link>
+                                  </div>
+                              ) : (userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) ? (
+                                  <Link href="/upgrade" className="w-full sm:w-auto">
+                                      <Button className="w-full bg-amber-400 text-amber-950 hover:bg-amber-300 h-11 px-8 rounded-xl font-bold shadow-[0_0_20px_rgba(251,191,36,0.3)]">
+                                          Opgrader til Kollega+
+                                      </Button>
+                                  </Link>
+                              ) : (
+                                  <Button variant="outline" onClick={handleCancelSubscription} disabled={isCancelling} className="w-full sm:w-auto h-11 px-8 border-white/20 bg-transparent text-white hover:bg-white/10 rounded-xl font-bold">
+                                      {isCancelling ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
+                                      Opsig abonnement
+                                  </Button>
+                              )}
+                          </div>
+                       </div>
+
+                       {/* Redeem Code */}
+                       <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm p-8 flex flex-col md:flex-row gap-8 items-center justify-between">
+                           <div className="flex items-start gap-4 flex-1">
+                               <div className="w-12 h-12 rounded-[1.2rem] bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                                   <Gift className="w-6 h-6" />
+                               </div>
+                               <div>
+                                   <h3 className="text-lg font-bold text-slate-900 mb-1">Indløs Kampagnekode</h3>
+                                   <p className="text-sm font-medium text-slate-500 leading-relaxed mb-4">Har du modtaget en kode fra dit studie eller en kampagne? Indløs den her for øjeblikkelig premium adgang.</p>
+                                   
+                                   <form onSubmit={handleRedeemCode} className="flex flex-col sm:flex-row gap-3">
+                                       <Input 
+                                          value={redemptionCode} 
+                                          onChange={e => setRedemptionCode(e.target.value)} 
+                                          placeholder="F.eks. CAMPUS24" 
+                                          className="flex-1 h-12 bg-slate-50 border-slate-200 rounded-xl font-mono uppercase focus:ring-amber-500/20" 
+                                       />
+                                       <Button type="submit" disabled={isRedeeming || !redemptionCode} className="h-12 px-8 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800">
+                                           {isRedeeming ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Indløs'}
+                                       </Button>
+                                   </form>
+                                   {redeemStatus && (
+                                      <p className={`mt-3 text-sm font-bold flex items-center gap-2 ${redeemStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                          <Info className="w-4 h-4" /> {redeemStatus.message}
+                                      </p>
+                                   )}
+                               </div>
+                           </div>
+                       </div>
+                    </div>
+                  )}
+
+                  {/* =========================================
+                      NOTIFICATIONS TAB
+                      ========================================= */}
+                  {activeTab === 'notifications' && (
+                    <div className="space-y-8">
+                        {!user?.emailVerified && (
+                          <div className="bg-amber-50/50 border border-amber-200/60 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
+                             <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 bg-amber-100/50 rounded-2xl flex items-center justify-center shrink-0 text-amber-600">
+                                   <Mail className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-amber-950 mb-1">E-mail bekræftelse mangler</h3>
+                                    <p className="text-sm font-medium text-amber-900/60">Bekræft din mail for at modtage opdateringer om porteføljer og systemnotifikationer.</p>
+                                </div>
+                             </div>
+                             <Button onClick={handleResendClick} disabled={isResending} className="h-11 px-6 rounded-xl bg-white text-amber-900 hover:bg-amber-50 border border-amber-200 shadow-sm shrink-0 w-full sm:w-auto font-bold">
+                                {isResending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                                Gensend Link
+                             </Button>
+                          </div>
+                        )}
+
+                        <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm overflow-hidden">
+                            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
+                               <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600"><Bell className="w-5 h-5" /></div>
+                               <div>
+                                  <h2 className="text-xl font-bold text-slate-900">Push-Beskeder</h2>
+                                  <p className="text-xs font-semibold text-slate-500 mt-1">Få besked når din AI arkitekt er færdig med tunge opgaver.</p>
+                               </div>
+                            </div>
+                            <div className="p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+                                <div className="flex items-center gap-5">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-sm ${notificationStatus === 'granted' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
+                                        {notificationStatus === 'granted' ? <Bell className="w-6 h-6" /> : <BellOff className="w-6 h-6" />}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-900 mb-0.5">Notifikationer for denne enhed</h3>
+                                        <p className="text-sm font-medium text-slate-500">
+                                             {notificationStatus === 'granted' ? 'Aktiveret - Du modtager vigtige notifikationer.' : notificationStatus === 'denied' ? 'Blokeret i browserindstillingerne.' : notificationStatus === 'unsupported' ? 'Ikke understøttet i denne browser.' : 'Status ukendt / Ikke anmodet.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                {(notificationStatus === 'default' || notificationStatus === 'granted') && (
+                                    <Button onClick={handleEnableNotifications} disabled={isRequestingNotifications} className="h-11 px-8 rounded-xl font-bold shadow-sm w-full sm:w-auto">
+                                        {isRequestingNotifications ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <Bell className="w-4 h-4 mr-2" />}
+                                        {notificationStatus === 'granted' ? 'Opdater Token' : 'Forbind Enhed'}
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-4 p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
-              <input
-                  id="isQualified"
-                  type="checkbox"
-                  checked={isQualified}
-                  onChange={(e) => setIsQualified(e.target.checked)}
-                  className="h-5 w-5 rounded-lg border-amber-300 bg-white text-amber-600 focus:ring-amber-500 cursor-pointer"
-                  disabled={!profession}
-              />
-              <label htmlFor="isQualified" className={`text-sm font-bold cursor-pointer ${!profession ? 'text-slate-400' : 'text-amber-950'}`}>
-                  Jeg er færdiguddannet {profession ? profession.toLowerCase() : '...'}
-              </label>
-          </div>
-
-          <div className="flex items-center gap-4 border-b border-amber-50 pb-6 pt-10">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 shadow-inner">
-                <CreditCard className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-amber-950 serif">Finansiel Info (Udbetaling)</h2>
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-8">
-            <div className="sm:col-span-1">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">CPR Nummer</label>
-                <Input 
-                    placeholder="DDMMYY-XXXX" 
-                    value={userProfile?.cprNumber ? '••••••-••••' : ''} 
-                    onChange={async (e) => {
-                        const encrypted = await encryptData(e.target.value);
-                        updateDoc(doc(firestore!, 'users', user!.uid), { cprNumber: encrypted }).then(() => refetchUserProfile());
-                    }}
-                    className="w-full h-12 rounded-xl"
-                />
-            </div>
-            <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Registreringsnr.</label>
-                <Input 
-                    placeholder="4 cifre" 
-                    value={userProfile?.bankReg ? '••••' : ''} 
-                    onChange={async (e) => {
-                        const encrypted = await encryptData(e.target.value);
-                        updateDoc(doc(firestore!, 'users', user!.uid), { bankReg: encrypted }).then(() => refetchUserProfile());
-                    }}
-                    className="w-full h-12 rounded-xl"
-                />
-            </div>
-            <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 mb-3 px-1">Kontonummer</label>
-                <Input 
-                    placeholder="Op til 10 cifre" 
-                    value={userProfile?.bankAccount ? '••••••••' : ''} 
-                    onChange={async (e) => {
-                        const encrypted = await encryptData(e.target.value);
-                        updateDoc(doc(firestore!, 'users', user!.uid), { bankAccount: encrypted }).then(() => refetchUserProfile());
-                    }}
-                    className="w-full h-12 rounded-xl"
-                />
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-end items-center gap-4 pt-8 border-t border-amber-50">
-            {success && <div className="flex items-center gap-2 text-sm font-bold text-emerald-600"><CheckCircle className="w-4 h-4"/> Indstillinger gemt</div>}
-            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto h-12 px-10 rounded-xl shadow-lg shadow-amber-950/10 active:scale-95 transition-all">
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
-              {isLoading ? 'Gemmer...' : 'Gem ændringer'}
-            </Button>
-          </div>
-        </form>
-
-        <section className="bg-white p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border border-amber-100/60 shadow-sm space-y-10 animate-ink">
-          <div className="flex items-center gap-4 border-b border-amber-50 pb-6">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 shadow-inner">
-                <Bell className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-amber-950 serif">Notifikationer</h2>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 sm:p-8 bg-slate-50/50 rounded-[2rem] border border-slate-100">
-              <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${notificationStatus === 'granted' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                    {notificationStatus === 'granted' ? <Bell className="w-6 h-6" /> : <BellOff className="w-6 h-6" />}
-                  </div>
-                  <div className="text-center md:text-left">
-                      <h3 className="font-bold text-amber-950">Push-notifikationer</h3>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                          {notificationStatus === 'granted' 
-                            ? 'Du har slået notifikationer til på denne enhed.' 
-                            : notificationStatus === 'denied'
-                            ? 'Du har blokeret notifikationer. Tjek dine browserindstillinger.'
-                            : notificationStatus === 'unsupported'
-                            ? 'Denne browser understøtter ikke push-notifikationer.'
-                            : 'Modtag push-beskeder om nye analyser og case-opdateringer.'
-                          }
-                      </p>
-                  </div>
-              </div>
-              
-              {(notificationStatus === 'default' || notificationStatus === 'granted') && (
-                  <Button 
-                    onClick={handleEnableNotifications} 
-                    disabled={isRequestingNotifications}
-                    className="w-full md:w-auto h-12 px-8 rounded-xl shrink-0 shadow-lg active:scale-95 transition-all"
-                  >
-                      {isRequestingNotifications ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Bell className="w-4 h-4 mr-2" />}
-                      {notificationStatus === 'granted' ? 'Opdater token' : 'Slå til'}
-                  </Button>
-              )}
-          </div>
-        </section>
-
-        <section className="bg-white p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border border-amber-100/60 shadow-sm space-y-8 animate-ink">
-            <div className="flex items-center gap-4 border-b border-amber-50 pb-6">
-                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 shadow-inner">
-                    <Award className="w-5 h-5" />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-amber-950 serif">Dine Mærkater</h2>
-            </div>
-            {userProfile?.badges && userProfile.badges.length > 0 ? (
-                <div className="flex flex-wrap gap-3">
-                {userProfile.badges.map((badge: string) => (
-                    <span key={badge} className="text-[10px] font-black uppercase tracking-widest text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-xl shadow-sm">
-                    {badge}
-                    </span>
-                ))}
-                </div>
-            ) : (
-                <div className="py-10 text-center border-2 border-dashed border-amber-50 rounded-3xl">
-                    <p className="text-sm text-slate-400 italic">Du har endnu ikke modtaget nogen mærkater. <br/> Fortsæt dit arbejde i Case-træneren for at optjene dem.</p>
-                </div>
-            )}
-        </section>
-
-        <section className="bg-white p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border border-amber-100/60 shadow-sm space-y-10 animate-ink">
-          <div className="flex items-center gap-4 border-b border-amber-50 pb-6">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 shadow-inner">
-                <CreditCard className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-amber-950 serif">Dit Medlemskab</h2>
-          </div>
-
-          <div className="bg-amber-950 text-white p-8 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-             <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                <div className="text-center md:text-left">
-                    <p className="text-[10px] font-black uppercase text-amber-400 tracking-[0.2em] mb-2">Nuværende plan</p>
-                    <p className="text-3xl sm:text-4xl font-bold serif leading-none">{userProfile?.membership}</p>
-                    {partnerInstitution && (
-                      <div className="mt-4 flex items-center justify-center md:justify-start gap-2 text-amber-100/60 font-medium text-xs">
-                        <Users2 className="w-3.5 h-3.5" />
-                        <span>Aftale med {partnerInstitution}</span>
-                      </div>
-                    )}
-                </div>
-                {userProfile?.stripeCurrentPeriodEnd && (
-                    <div className="text-center md:text-right bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
-                        <p className="text-[9px] font-black uppercase text-amber-400/60 tracking-widest mb-1.5">
-                            {isSpecialSubscription || subscriptionWillBeCancelled ? 'Adgang udløber' : 'Næste fornyelse'}
-                        </p>
-                        <p className="text-base font-bold text-white">
-                            {new Date(userProfile.stripeCurrentPeriodEnd).toLocaleDateString('da-DK', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                    </div>
-                )}
-             </div>
-             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none"></div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row justify-end items-center gap-4 pt-8 border-t border-amber-50">
-            {isSpecialSubscription ? (
-                <div className="flex items-center gap-3 text-xs text-slate-400 bg-slate-50 px-4 py-2 rounded-xl italic">
-                    <Info className="w-4 h-4"/>
-                    Abonnement administreres af din uddannelsesinstitution
-                </div>
-            ) : subscriptionWillBeCancelled ? (
-                <div className="flex flex-col sm:flex-row items-center gap-6 w-full sm:w-auto">
-                  <p className="text-sm font-bold text-rose-600 flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4"/> Abonnement opsagt
-                  </p>
-                  <Link href="/upgrade" className="w-full sm:w-auto">
-                    <Button variant="default" className="w-full sm:w-auto px-8 rounded-xl h-12 shadow-lg shadow-amber-950/10 active:scale-95 group">
-                      Forny adgang
-                      <ArrowUpRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </Button>
-                  </Link>
-                </div>
-            ) : (userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) ? (
-                <Link href="/upgrade" className="w-full sm:w-auto">
-                    <Button className="w-full sm:w-auto px-10 h-12 rounded-xl shadow-xl shadow-amber-950/10 group">
-                        Opgrader til Kollega+
-                        <Sparkles className="w-4 h-4 ml-2 text-amber-400" />
-                    </Button>
-                </Link>
-             ) : (
-                <Button onClick={handleCancelSubscription} disabled={isCancelling} variant="destructive" className="w-full sm:w-auto px-8 h-12 rounded-xl active:scale-95 transition-all">
-                    {isCancelling ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
-                    Opsig abonnement
-                </Button>
-             )}
-          </div>
-        </section>
-        
-        <form onSubmit={handleRedeemCode} className="bg-white p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border border-amber-100/60 shadow-sm space-y-8 animate-ink">
-          <div className="flex items-center gap-4 border-b border-amber-50 pb-6">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 shadow-inner">
-                <Gift className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-amber-950 serif">Indløs kode</h2>
-          </div>
-
-          {redeemStatus && (
-            <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-3 animate-fade-in-up ${redeemStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
-                {redeemStatus.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
-                {redeemStatus.message}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <label htmlFor="redemption-code" className="block text-[10px] font-black uppercase tracking-widest text-amber-900/40 px-1">Kampagnekode eller Partner-kode</label>
-            <div className="flex flex-col sm:flex-row gap-4">
-                <Input 
-                    id="redemption-code" 
-                    value={redemptionCode} 
-                    onChange={(e) => setRedemptionCode(e.target.value)} 
-                    className="flex-1 h-14 rounded-2xl font-mono tracking-widest text-center sm:text-left focus:ring-amber-950/10" 
-                    placeholder="F.eks. SEMESTERSTART25" 
-                />
-                <Button type="submit" disabled={isRedeeming || !redemptionCode} className="h-14 px-10 rounded-2xl shadow-lg active:scale-95 transition-all">
-                    {isRedeeming ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Indløs'}
-                </Button>
-            </div>
-          </div>
-        </form>
-
-        <section className="bg-rose-50/50 p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border-2 border-dashed border-rose-200 shadow-sm space-y-8 animate-ink">
-            <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white text-rose-600 rounded-2xl flex items-center justify-center shadow-sm border border-rose-100">
-                    <ShieldAlert className="w-6 h-6" />
-                </div>
-                <div>
-                    <h2 className="text-2xl font-bold text-rose-950 serif">Farezone</h2>
-                    <p className="text-xs font-bold text-rose-700 uppercase tracking-widest">Sikkerheds-indstillinger</p>
-                </div>
-            </div>
-            <p className="text-sm text-rose-900/70 leading-relaxed font-medium">
-              Ved at slette din konto fjerner du permanent al din data fra Cohéro, inklusiv dine refleksioner, byggeplaner og optjente point. <strong className="text-rose-900">Dette kan ikke fortrydes.</strong>
-            </p>
-            <div className="flex justify-end pt-6 border-t border-rose-200/50">
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                      <div className="w-full sm:w-auto" tabIndex={isRecentLogin ? undefined : 0}>
-                          <Button
-                              variant="destructive"
-                              onClick={() => setIsDeleteModalOpen(true)}
-                              disabled={!isRecentLogin || isDeleting}
-                              className="w-full sm:w-auto h-12 px-8 rounded-xl active:scale-95 transition-all"
-                          >
-                              Slet min konto permanent
-                          </Button>
-                      </div>
-                  </TooltipTrigger>
-                  {!isRecentLogin && (
-                      <TooltipContent className="bg-amber-950 text-white p-4 max-w-xs" side="top">
-                          <p className="text-xs leading-relaxed">Af sikkerhedshensyn skal du have logget ind inden for de sidste 2 minutter for at slette din konto. Log venligst ud og ind igen.</p>
-                      </TooltipContent>
                   )}
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-        </section>
-      </main>
 
-       <DeleteAccountModal 
+                  {/* =========================================
+                      SECURITY TAB
+                      ========================================= */}
+                  {activeTab === 'security' && (
+                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-white p-8 rounded-[2rem] border border-rose-100 shadow-sm relative overflow-hidden">
+                           <div className="absolute top-0 left-0 w-2 h-full bg-rose-500" />
+                           <h2 className="text-2xl font-black text-slate-900 mb-2">Farezone</h2>
+                           <p className="text-sm font-medium text-slate-500 mb-8 max-w-2xl leading-relaxed">
+                               Ved at slette din konto fjerner du permanent al din data fra Cohéro (journaler, cases, studieplaner m.m.). Denne handling sletter dig og dine data øjeblikkeligt fra databasen. <strong className="text-rose-600 font-bold">Handlingen kan ikke fortrydes.</strong>
+                           </p>
+
+                           <TooltipProvider>
+                              <Tooltip delayDuration={0}>
+                                 <TooltipTrigger asChild>
+                                    <div className="inline-block" tabIndex={isRecentLogin ? undefined : 0}>
+                                       <Button 
+                                         variant="destructive" 
+                                         onClick={() => setIsDeleteModalOpen(true)}
+                                         disabled={!isRecentLogin || isDeleting}
+                                         className="h-12 px-8 rounded-xl font-bold bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all shadow-md shadow-rose-600/20"
+                                       >
+                                         <ShieldAlert className="w-4 h-4 mr-2" />
+                                         Slet min konto permanent
+                                       </Button>
+                                    </div>
+                                 </TooltipTrigger>
+                                 {!isRecentLogin && (
+                                    <TooltipContent className="bg-slate-900 text-white p-4 max-w-xs border-none shadow-xl rounded-xl" side="bottom">
+                                       <p className="text-xs font-semibold leading-relaxed text-slate-300"><span className="text-white">Sikkerhedslås:</span> Du skal have logget ind inden for de sidste 2 minutter for at slette din konto. Log af og log ind igen for at fortsætte.</p>
+                                    </TooltipContent>
+                                 )}
+                              </Tooltip>
+                           </TooltipProvider>
+                        </div>
+                     </div>
+                  )}
+
+               </motion.div>
+            </AnimatePresence>
+         </main>
+      </div>
+
+      <DeleteAccountModal 
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
         username={userProfile?.username || ''}
       />
     </div>
+  );
+}
+
+function WalletIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+      <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+      <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+    </svg>
   );
 }
