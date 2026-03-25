@@ -44,6 +44,15 @@ const nextConfig = {
   // 🔥 Ekstra: reducer unødvendig tracing (mindre bundle)
   productionBrowserSourceMaps: false,
 
+  async redirects() {
+    return [
+      {
+        source: '/rum/groups/:path*',
+        destination: 'https://group.cohero.dk/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
