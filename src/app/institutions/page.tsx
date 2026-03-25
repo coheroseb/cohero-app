@@ -495,20 +495,20 @@ const InstitutionsPage = () => {
           >
             <div className="flex flex-col lg:flex-row gap-2">
               {/* Main Search */}
-              <div className="flex-[1.5] relative group p-4 border-b lg:border-b-0 lg:border-r border-slate-50">
+              <div className="flex-[1.5] relative group p-6 border-b lg:border-b-0 lg:border-r border-slate-50">
                 <div className="flex items-center gap-4 mb-2 px-2">
-                   <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                      <Sparkles className="w-4 h-4" />
+                   <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                      <Search className="w-4 h-4" />
                    </div>
-                   <p className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em]">Hvad leder du efter?</p>
+                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Søg i registeret</p>
                 </div>
                 <div className="relative">
                   <input 
                     type="text"
-                    placeholder="Problemstilling (misbrug, børn, psykiatri) eller navn..."
+                    placeholder="Søg på navn..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-transparent border-none py-2 px-2 text-lg font-bold text-slate-900 placeholder:text-slate-300 focus:ring-0 outline-none"
+                    className="w-full bg-transparent border-none py-2 px-2 text-lg font-bold text-slate-900 placeholder:text-slate-200 focus:ring-0 outline-none"
                   />
                   {searchTerm && (
                     <button 
@@ -560,26 +560,8 @@ const InstitutionsPage = () => {
               </div>
             </div>
 
-            {/* Quick Keywords & Reset */}
-            <div className="bg-slate-50 border-t border-slate-100 px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-               <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2">Hurtige emner:</p>
-                  {['Misbrug', 'Psykiatri', 'Handicap', 'Børn', 'Ældre'].map(tag => (
-                    <button 
-                      key={tag}
-                      onClick={() => setSearchTerm(tag)}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                        searchTerm === tag 
-                        ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' 
-                        : 'bg-white text-slate-400 border-slate-100 hover:border-amber-200 hover:text-amber-600'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-               </div>
-
-               {(searchTerm || regionFilter !== 'Alle' || ejerFilter !== 'Alle') && (
+            {(searchTerm || regionFilter !== 'Alle' || ejerFilter !== 'Alle') && (
+              <div className="bg-slate-50 border-t border-slate-100 px-8 py-4 flex items-center justify-end">
                   <button 
                     onClick={() => {
                        setSearchTerm('');
@@ -591,8 +573,8 @@ const InstitutionsPage = () => {
                      <X className="w-3 h-3" />
                      Nulstil filtre
                   </button>
-               )}
-            </div>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>
