@@ -279,7 +279,7 @@ const AssistanceMarketplaceContent = () => {
                           <p className="text-sm font-bold text-rose-800 leading-relaxed italic">"{userProfile.marketplaceBanReason}"</p>
                       </div>
                       <p className="text-xs text-slate-400 font-medium pt-4">
-                          Mener du dette er en fejl? Kontakt os på <a href="mailto:support@cohero.dk" className="text-rose-600 font-bold hover:underline">support@cohero.dk</a>
+                          Mener du dette er en fejl? Kontakt os på <a href="mailto:kontakt@cohero.dk" className="text-rose-600 font-bold hover:underline">kontakt@cohero.dk</a>
                       </p>
                   </div>
                   <button onClick={() => router.push('/')} className="w-full py-5 bg-slate-950 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:bg-rose-950 transition-all active:scale-95">Gå til forsiden</button>
