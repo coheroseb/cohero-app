@@ -37,6 +37,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const q = query(collection(firestore, 'support_chats'), where('status', '==', 'active'), where('isReadByAdmin', '==', false));
     return onSnapshot(q, (snapshot) => {
         setUnreadCount(snapshot.size);
+    }, (err) => {
+        console.error('[AdminLayout] Support chat listener error:', err);
     });
   }, [firestore, userProfile]);
 

@@ -87,6 +87,8 @@ export default function LiveChat() {
       })) as Message[];
       setMessages(msgs);
       scrollToBottom();
+    }, (err) => {
+      console.error('[LiveChat] Messages listener error:', err);
     });
 
     return () => unsubscribeMessages();

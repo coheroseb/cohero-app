@@ -87,6 +87,8 @@ export default function AdminChatPage() {
       if (docSnap.exists()) {
         setIsOnline(docSnap.data().isOnline);
       }
+    }, (err) => {
+      console.error('[AdminChat] Online status listener error:', err);
     });
   }, [firestore]);
 
@@ -124,6 +126,8 @@ export default function AdminChatPage() {
         }
       }
       setLastUnreadCount(unreadCount);
+    }, (err) => {
+      console.error('[AdminChat] Sessions listener error:', err);
     });
   }, [firestore, filterStatus, lastUnreadCount]);
 
@@ -151,6 +155,8 @@ export default function AdminChatPage() {
           isReadByAdmin: true
         });
       }
+    }, (err) => {
+      console.error('[AdminChat] Messages listener error:', err);
     });
 
     return () => unsubscribe();
