@@ -18,7 +18,10 @@ const scanStudentCardFlow = ai.defineFlow(
     outputSchema: ScanStudentCardOutputSchema,
   },
   async (input) => {
-    const { imageUrl, userFullName } = input;
+    console.log("ScanStudentCard Input received:", JSON.stringify(input));
+    const imageUrl = input.imageUrl || "";
+    const userFullName = input.userFullName || "Unknown";
+    
     let mediaPart: any;
     if (imageUrl.startsWith('student_cards/')) {
         const bucket = admin.storage().bucket();
