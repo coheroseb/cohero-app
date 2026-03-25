@@ -485,69 +485,115 @@ const InstitutionsPage = () => {
         </motion.div>
       </header>
 
-      {/* Search Bar Overlay - Moved outside header to prevent clipping */}
-      <div className="relative z-30 -mt-12 md:-mt-16 px-6">
+      {/* Search & Filter Center */}
+      <div className="relative z-30 -mt-16 md:-mt-24 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white p-4 md:p-6 rounded-[3rem] shadow-2xl flex flex-col lg:flex-row gap-4 border border-amber-100/50">
-            <div className="flex-1 relative group">
-              <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500 animate-pulse" />
-              <input 
-                type="text"
-                placeholder="Søg på navn eller problemstilling (f.eks. misbrug, børn, psykiatri)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 transition-all outline-none"
-              />
-              {searchTerm && (
-                <button 
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 mt-2 px-2">
-              {['Misbrug', 'Psykiatri', 'Handicap', 'Børn', 'Ældre'].map(tag => (
-                <button 
-                  key={tag}
-                  onClick={() => setSearchTerm(tag)}
-                  className="px-3 py-1.5 bg-slate-50 hover:bg-amber-50 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-600 border border-slate-100 transition-all"
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 mt-4 lg:mt-0">
-              <div className="sm:w-56 relative group">
-                <Filter className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
-                <select 
-                  value={regionFilter}
-                  onChange={(e) => setRegionFilter(e.target.value)}
-                  className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-[11px] font-black uppercase tracking-wider text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none"
-                >
-                  {regions.map(r => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-[3.5rem] shadow-[0_32px_64px_-16px_rgba(45,21,0,0.15)] border border-amber-100/50 p-2 overflow-hidden"
+          >
+            <div className="flex flex-col lg:flex-row gap-2">
+              {/* Main Search */}
+              <div className="flex-[1.5] relative group p-4 border-b lg:border-b-0 lg:border-r border-slate-50">
+                <div className="flex items-center gap-4 mb-2 px-2">
+                   <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                      <Sparkles className="w-4 h-4" />
+                   </div>
+                   <p className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em]">Hvad leder du efter?</p>
+                </div>
+                <div className="relative">
+                  <input 
+                    type="text"
+                    placeholder="Problemstilling (misbrug, børn, psykiatri) eller navn..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-transparent border-none py-2 px-2 text-lg font-bold text-slate-900 placeholder:text-slate-300 focus:ring-0 outline-none"
+                  />
+                  {searchTerm && (
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-all"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="sm:w-56 relative group">
-                <Briefcase className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
-                <select 
-                  value={ejerFilter}
-                  onChange={(e) => setEjerFilter(e.target.value)}
-                  className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-[11px] font-black uppercase tracking-wider text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none"
-                >
-                  {ejerformer.map(e => (
-                    <option key={e} value={e}>{e === 'Alle' ? 'Ejerform: Alle' : e}</option>
-                  ))}
-                </select>
+              {/* Advanced Filters */}
+              <div className="flex-1 p-4 bg-slate-50/50">
+                 <div className="flex items-center gap-4 mb-2 px-2">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                       <Filter className="w-4 h-4" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Filtrér søgningen</p>
+                 </div>
+                 
+                 <div className="flex gap-3">
+                    <div className="flex-1 relative group">
+                      <select 
+                        value={regionFilter}
+                        onChange={(e) => setRegionFilter(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-4 pr-10 text-[11px] font-black uppercase tracking-wider text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none shadow-sm member-select"
+                      >
+                        {regions.map(r => (
+                          <option key={r} value={r}>{r === 'Alle' ? 'Alle Regioner' : r}</option>
+                        ))}
+                      </select>
+                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 rotate-90 pointer-events-none" />
+                    </div>
+
+                    <div className="flex-1 relative group">
+                      <select 
+                        value={ejerFilter}
+                        onChange={(e) => setEjerFilter(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-4 pr-10 text-[11px] font-black uppercase tracking-wider text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none shadow-sm member-select"
+                      >
+                        {ejerformer.map(e => (
+                          <option key={e} value={e}>{e === 'Alle' ? 'Alle Ejerformer' : e}</option>
+                        ))}
+                      </select>
+                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 rotate-90 pointer-events-none" />
+                    </div>
+                 </div>
               </div>
             </div>
-          </div>
+
+            {/* Quick Keywords & Reset */}
+            <div className="bg-slate-50 border-t border-slate-100 px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+               <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2">Hurtige emner:</p>
+                  {['Misbrug', 'Psykiatri', 'Handicap', 'Børn', 'Ældre'].map(tag => (
+                    <button 
+                      key={tag}
+                      onClick={() => setSearchTerm(tag)}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                        searchTerm === tag 
+                        ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' 
+                        : 'bg-white text-slate-400 border-slate-100 hover:border-amber-200 hover:text-amber-600'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+               </div>
+
+               {(searchTerm || regionFilter !== 'Alle' || ejerFilter !== 'Alle') && (
+                  <button 
+                    onClick={() => {
+                       setSearchTerm('');
+                       setRegionFilter('Alle');
+                       setEjerFilter('Alle');
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-rose-100"
+                  >
+                     <X className="w-3 h-3" />
+                     Nulstil filtre
+                  </button>
+               )}
+            </div>
+          </motion.div>
         </div>
       </div>
 
