@@ -8,7 +8,7 @@ import { useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
 
 export default function PageViewTracker() {
-  const { user } = useApp();
+  const { user, userProfile } = useApp();
   const pathname = usePathname();
   const firestore = useFirestore();
   
@@ -26,7 +26,7 @@ export default function PageViewTracker() {
         return;
     }
     
-    if (user && firestore) {
+    if (user && userProfile && firestore) {
       // Don't track admin pages to avoid noise
       if (path.startsWith('/admin')) {
         return;
@@ -70,7 +70,7 @@ export default function PageViewTracker() {
         console.error("Failed to track page view or update activity:", error);
       }
     }
-  }, [user, firestore]);
+  }, [user, userProfile, firestore]);
 
   // Track navigation changes
   useEffect(() => {

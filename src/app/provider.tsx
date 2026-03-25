@@ -339,7 +339,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const pageBackground = useMemo(() => {
     if (pathname?.includes('/lov-portal')) return 'bg-[#F9F7F2]';
-    if (pathname?.includes('/grupper') || pathname?.includes('/rum/groups')) return 'bg-[#F8FAFC]';
+    if (pathname?.includes('/rum/groups')) return 'bg-[#F8FAFC]';
     if (pathname?.includes('/memento') || pathname?.includes('/case-trainer')) return 'bg-[#FFFBF5]';
     return 'bg-white';
   }, [pathname]);
