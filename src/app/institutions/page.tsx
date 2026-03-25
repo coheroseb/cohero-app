@@ -40,13 +40,18 @@ const InstitutionCard = ({ inst }: { inst: any }) => (
     <div className="relative z-10 flex flex-col h-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-             <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-full">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+             <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-100">
                 {inst.EJER_KODE_TEKST || 'Institution'}
              </span>
-             {inst.BEL_REGION_TEKST && (
-                <span className="px-2 py-0.5 bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-full">
-                  {inst.BEL_REGION_TEKST}
+             {inst.min_KODE_TEKST && (
+                <span className="px-2 py-0.5 bg-sky-50 text-sky-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-sky-100">
+                  {inst.min_KODE_TEKST}
+                </span>
+             )}
+             {inst.inst_type_2_tekst && (
+                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-100">
+                  {inst.inst_type_2_tekst}
                 </span>
              )}
           </div>
@@ -112,6 +117,8 @@ const InstitutionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebounce(searchTerm, 500);
   const [regionFilter, setRegionFilter] = useState('Alle');
+  const [ejerFilter, setEjerFilter] = useState('Alle');
+  const [typeFilter, setTypeFilter] = useState('Alle');
   const [isLocating, setIsLocating] = useState(false);
   const firestore = useFirestore();
 
@@ -128,10 +135,8 @@ const InstitutionsPage = () => {
       navigator.geolocation.getCurrentPosition(async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          // Brug DAWA (Dansk Adresse Indeks) til at finde region/postnr
           const response = await fetch(`https://api.dataforsyningen.dk/adgangsadresser/reverse?x=${longitude}&y=${latitude}&format=json`);
           const data = await response.json();
-          
           if (data && data.region && data.region.navn) {
             setRegionFilter(data.region.navn);
           }
@@ -141,35 +146,37 @@ const InstitutionsPage = () => {
           setIsLocating(false);
         }
       }, (error) => {
-        console.warn("Lokation afvist eller fejlet", error);
         setIsLocating(false);
       });
     }
-  }, []); // Kun ved mount
+  }, []);
 
-  // Regioner fra dataen
   const regions = ['Alle', 'Region Hovedstaden', 'Region Sjælland', 'Region Syddanmark', 'Region Midtjylland', 'Region Nordjylland'];
+  const ejerformer = ['Alle', 'Kommunale', 'Selvejende', 'Statslige', 'Private'];
 
   const institutionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     
     let q = collection(firestore, 'institutions');
+    let constraints: any[] = [];
 
+    // Prioriter søgning hvis den findes (prefix søgning kan ikke kombineres med filter uden index)
     if (debouncedSearch && debouncedSearch.length >= 2) {
-      // Case-insensitive search using proxy field
       const searchStr = debouncedSearch.toLowerCase();
       const endStr = searchStr.replace(/.$/, c => String.fromCharCode(c.charCodeAt(0) + 1));
-      
       return query(q, where('search_name', '>=', searchStr), where('search_name', '<', endStr), limit(40));
     }
 
     if (regionFilter !== 'Alle') {
-        return query(q, where('BEL_REGION_TEKST', '==', regionFilter), limit(40));
+      constraints.push(where('BEL_REGION_TEKST', '==', regionFilter));
+    }
+    if (ejerFilter !== 'Alle') {
+        constraints.push(where('EJER_KODE_TEKST', '==', ejerFilter));
     }
 
     // Default sorting
-    return query(q, orderBy('search_name'), limit(40));
-  }, [firestore, user, debouncedSearch, regionFilter]);
+    return query(q, ...constraints, orderBy('search_name'), limit(40));
+  }, [firestore, user, debouncedSearch, regionFilter, ejerFilter, typeFilter]);
 
   const { data: institutions, isLoading: isQueryLoading, error } = useCollection<any>(institutionsQuery);
 
@@ -208,8 +215,8 @@ const InstitutionsPage = () => {
 
       {/* Search Bar Overlay - Moved outside header to prevent clipping */}
       <div className="relative z-30 -mt-12 md:-mt-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white p-4 md:p-6 rounded-[3rem] shadow-2xl flex flex-col md:flex-row gap-4 border border-amber-100/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white p-4 md:p-6 rounded-[3rem] shadow-2xl flex flex-col lg:flex-row gap-4 border border-amber-100/50">
             <div className="flex-1 relative group">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
               <input 
@@ -229,17 +236,32 @@ const InstitutionsPage = () => {
               )}
             </div>
 
-            <div className="md:w-64 relative group">
-              <Filter className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
-              <select 
-                value={regionFilter}
-                onChange={(e) => setRegionFilter(e.target.value)}
-                className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none"
-              >
-                {regions.map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="sm:w-56 relative group">
+                <Filter className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
+                <select 
+                  value={regionFilter}
+                  onChange={(e) => setRegionFilter(e.target.value)}
+                  className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-[11px] font-black uppercase tracking-wider text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none"
+                >
+                  {regions.map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sm:w-56 relative group">
+                <Briefcase className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-500 transition-colors" />
+                <select 
+                  value={ejerFilter}
+                  onChange={(e) => setEjerFilter(e.target.value)}
+                  className="w-full bg-slate-50 border-none rounded-2xl py-4 flex pl-16 pr-6 text-[11px] font-black uppercase tracking-wider text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none"
+                >
+                  {ejerformer.map(e => (
+                    <option key={e} value={e}>{e === 'Alle' ? 'Ejerform: Alle' : e}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
