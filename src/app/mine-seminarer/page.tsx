@@ -63,7 +63,7 @@ import { useDebounce } from 'use-debounce';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { SeminarAnalysis, QuizData } from '@/ai/flows/types';
-import { generateQuizAction, getUserUidByEmailAction } from '@/app/actions';
+import { generateQuizAction, getUserUidByEmailAction, chatWithSeminarAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -323,6 +323,151 @@ const MindmapOverlay: React.FC<{
              <p className="text-slate-400 font-bold flex items-center gap-2">
                 <ArrowDownAZ className="w-3.5 h-3.5" /> Klik på et begreb for at lære mere i Begrebsguiden
              </p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Seminar Chat Overlay
+// ---------------------------------------------------------------------------
+const SeminarChatOverlay: React.FC<{
+  title: string;
+  seminars: { title: string; slides: any[] }[];
+  onClose: () => void;
+}> = ({ title, seminars, onClose }) => {
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, isLoading]);
+
+  const handleSend = async (text: string = input) => {
+    if (!text.trim() || isLoading) return;
+    const userMsg = { role: 'user' as const, content: text };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setIsLoading(true);
+    setSuggestions([]);
+
+    try {
+      const resp = await chatWithSeminarAction({
+        seminars: seminars.map(s => ({
+            title: s.title,
+            slides: s.slides.map(sl => ({
+                slideNumber: sl.slideNumber,
+                slideTitle: sl.slideTitle,
+                summary: sl.summary
+            }))
+        })),
+        question: text,
+        chatHistory: messages
+      });
+
+      if (resp?.data) {
+        setMessages(prev => [...prev, { role: 'assistant', content: resp.data.answer }]);
+        setSuggestions(resp.data.suggestedFollowUpQuestions || []);
+      }
+    } catch (err: any) {
+       console.error(err);
+       setMessages(prev => [...prev, { role: 'assistant', content: "Beklager, der skete en fejl under chatten. Prøv venligst igen senere." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[500] bg-slate-900/60 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden">
+      <div className="absolute top-8 right-8 z-10">
+        <button onClick={onClose} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all active:scale-95 shadow-xl border border-white/10">
+           <X className="w-6 h-6" />
+        </button>
+      </div>
+
+      <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full h-full max-w-4xl bg-[#FDFCF8] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-white/20 relative">
+        <div className="p-6 sm:p-8 border-b border-slate-100 flex items-center gap-4 shrink-0 bg-white/80 backdrop-blur-xl z-20">
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
+                <BrainCircuit className="w-6 h-6" />
+            </div>
+            <div>
+                <h3 className="text-xl font-black text-slate-900 serif tracking-tight">AI Vejleder: {title}</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Spørg ind til dit materiale</p>
+            </div>
+        </div>
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-6 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]">
+            {messages.length === 0 && (
+                <div className="py-20 text-center space-y-6">
+                    <div className="w-20 h-20 bg-white border border-slate-100 rounded-3xl flex items-center justify-center text-slate-200 mx-auto shadow-sm">
+                        <Sparkles className="w-10 h-10" />
+                    </div>
+                    <div className="max-w-sm mx-auto">
+                        <h4 className="text-lg font-black text-slate-900 serif mb-2">Hvad vil du vide?</h4>
+                        <p className="text-sm text-slate-500 font-medium">Jeg har læst dit materiale og er klar til at hjælpe dig med at forstå de svære begreber eller sammenhænge.</p>
+                    </div>
+                </div>
+            )}
+
+            {messages.map((m, i) => (
+                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] p-5 sm:p-6 rounded-[2rem] shadow-sm text-sm leading-relaxed ${
+                        m.role === 'user' 
+                          ? 'bg-indigo-600 text-white rounded-tr-none' 
+                          : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none font-medium'
+                    }`}>
+                        <div dangerouslySetInnerHTML={{ __html: m.content }} />
+                    </div>
+                </div>
+            ))}
+
+            {isLoading && (
+                <div className="flex justify-start">
+                    <div className="bg-white border border-slate-100 p-6 rounded-[2rem] rounded-tl-none shadow-sm flex items-center gap-3">
+                        <div className="flex gap-1">
+                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tænker...</span>
+                    </div>
+                </div>
+            )}
+
+            {suggestions.length > 0 && !isLoading && (
+                <div className="flex flex-wrap gap-2 justify-start pt-4">
+                    {suggestions.map((s, i) => (
+                        <button key={i} onClick={() => handleSend(s)} className="px-4 py-2 bg-white/60 hover:bg-white text-indigo-600 border border-indigo-100 rounded-full text-xs font-bold transition-all hover:shadow-md">
+                            {s}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+
+        <div className="p-6 sm:p-8 bg-white border-t border-slate-100">
+            <div className="relative group">
+                <input 
+                    type="text"
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSend()}
+                    placeholder="Skriv dit spørgsmål her..."
+                    className="w-full h-14 pl-6 pr-16 bg-slate-50 border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:border-indigo-100 focus:outline-none focus:ring-4 focus:ring-indigo-50/50 transition-all placeholder:text-slate-400"
+                />
+                <button 
+                    onClick={() => handleSend()}
+                    disabled={isLoading || !input.trim()}
+                    className="absolute right-2 top-2 h-10 w-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center transition-all hover:bg-indigo-700 active:scale-90 disabled:opacity-50 disabled:grayscale"
+                >
+                    <ArrowUpAZ className="w-5 h-5 rotate-180" />
+                </button>
+            </div>
+            <p className="text-[9px] text-center text-slate-300 font-bold uppercase tracking-widest mt-4">AI kan lave fejl. Dobbelttjek vigtige informationer.</p>
         </div>
       </motion.div>
     </motion.div>
@@ -643,6 +788,7 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
   const [isAddingCollaborator, setIsAddingCollaborator] = useState(false);
   const [selectedSlides, setSelectedSlides] = useState<Set<number>>(new Set());
   const [isDeletingSlides, setIsDeletingSlides] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const isInitialMount = useRef(true);
 
   const slides = seminar.slides || [];
@@ -927,8 +1073,12 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
             </AnimatePresence>
           </div>
           <Button size="sm" variant="outline" onClick={() => setShowMindmap(true)} className="rounded-lg sm:rounded-2xl border-slate-200 hover:bg-slate-50 text-slate-600 h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 hidden sm:flex items-center gap-1 sm:gap-2 transition-all text-[10px] sm:text-[12px] md:text-[14px]"><Sparkles className="w-3.5 h-3.5 sm:w-4 md:w-4" /><span className="hidden md:inline">RELATIONSKORT</span></Button>
-          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-lg sm:rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 shadow-xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 group text-[10px] sm:text-[12px] md:text-[14px]">
-            {isGeneratingQuiz ? <Loader2 className="w-3 h-3 sm:w-4 md:w-4 animate-spin" /> : <BrainCircuit className="w-3.5 h-3.5 sm:w-4 md:w-4 group-hover:rotate-12 transition-transform" />}
+          <Button size="sm" variant="outline" onClick={() => setShowChat(true)} className="rounded-lg sm:rounded-2xl bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-600 h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 flex items-center gap-1 sm:gap-2 transition-all text-[10px] sm:text-[12px] md:text-[14px]">
+            <BrainCircuit className="w-3.5 h-3.5 sm:w-4 md:w-4" />
+            <span className="md:inline">CHAT MED AI</span>
+          </Button>
+          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-lg sm:rounded-2xl bg-slate-900 hover:bg-slate-800 text-white h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group text-[10px] sm:text-[12px] md:text-[14px]">
+            {isGeneratingQuiz ? <Loader2 className="w-3 h-3 sm:w-4 md:w-4 animate-spin" /> : <Trophy className="w-3.5 h-3.5 sm:w-4 md:w-4 group-hover:rotate-12 transition-transform" />}
             <span className="hidden sm:inline md:ml-2">TAG QUIZ</span>
           </Button>
         </div>
@@ -1026,6 +1176,13 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
                 slides={seminar.slides} 
                 onClose={() => setShowConceptList(false)} 
               />
+            )}
+            {showChat && (
+                <SeminarChatOverlay 
+                    title={seminar.overallTitle}
+                    seminars={[{ title: seminar.overallTitle, slides: seminar.slides }]}
+                    onClose={() => setShowChat(false)}
+                />
             )}
           </AnimatePresence>
     </div>
@@ -1230,6 +1387,8 @@ export default function MineSeminarerPage() {
         slides: allSlides
     });
   };
+
+  const [categoryChatData, setCategoryChatData] = useState<{ title: string; seminars: any[] } | null>(null);
 
   const stats = useMemo(() => {
     const totalSeminars = seminars.length;
@@ -1578,6 +1737,12 @@ export default function MineSeminarerPage() {
                             >
                                 <BookOpen className="w-4 h-4" /> Begreber
                             </button>
+                            <button 
+                                onClick={() => setCategoryChatData({ title: activeCategory || '', seminars: filtered })}
+                                className="flex items-center gap-2 px-6 py-3 bg-slate-700 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-lg shadow-slate-900/20 active:scale-95 transition-all"
+                            >
+                                <BrainCircuit className="w-4 h-4 text-indigo-400" /> Chat med viden
+                            </button>
                         </div>
                     </div>
             </motion.div>
@@ -1781,6 +1946,13 @@ export default function MineSeminarerPage() {
                     title={categoryConceptListData.title}
                     slides={categoryConceptListData.slides}
                     onClose={() => setCategoryConceptListData(null)}
+                />
+            )}
+            {categoryChatData && (
+                <SeminarChatOverlay 
+                    title={`Kategori: ${categoryChatData.title}`}
+                    seminars={categoryChatData.seminars}
+                    onClose={() => setCategoryChatData(null)}
                 />
             )}
           </AnimatePresence>

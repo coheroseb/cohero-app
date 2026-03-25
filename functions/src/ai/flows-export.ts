@@ -74,8 +74,10 @@ import { transcribeAudio } from './flows/transcribe-audio-flow';
 import { twistBlueprintFlow } from './flows/twist-blueprint-flow';
 import { fetchVivePublications } from './flows/vive-indsigt-flow';
 import { getViveReportQa } from './flows/vive-report-qa-flow';
-import { scanStudentCard } from './flows/scan-student-card-flow';
-import { translateSeminar } from './flows/translate-seminar-flow';
+import { scanStudentCard as scanStudentCardFlow } from './flows/scan-student-card-flow';
+import { translateSeminar as translateSeminarActionFlow } from './flows/translate-seminar-flow';
+import { chatWithSeminarContent } from './flows/seminar-chat-flow';
+import { checkVatInViesFlow } from './flows/check-vies-flow';
 
 export const allFlows: Record<string, any> = {
   "analyzeFtDocumentFlow": analyzeFtDocument,
@@ -226,9 +228,12 @@ export const allFlows: Record<string, any> = {
   "generateParagraphDiff": generateParagraphDiffFlow,
   "generateFTSagMetadataFlow": generateFTSagMetadataFlow,
   "generateFTSagMetadata": generateFTSagMetadataFlow,
-  "scanStudentCardFlow": scanStudentCard,
-  "scanStudentCard": scanStudentCard,
-  "translateSeminarFlow": translateSeminar,
-  "translateSeminar": translateSeminar,
+  "scanStudentCardFlow": scanStudentCardFlow,
+  "scanStudentCard": scanStudentCardFlow,
+  "translateSeminarFlow": translateSeminarActionFlow,
+  "translateSeminar": translateSeminarActionFlow,
+  "chatWithSeminarContentFlow": chatWithSeminarContent,
+  "chatWithSeminarContent": chatWithSeminarContent,
+  "checkVatInViesFlow": checkVatInViesFlow,
+  "checkVatInVies": checkVatInViesFlow,
 };
-

@@ -83,6 +83,11 @@ import { uploadMediaToStorage } from '@/lib/storage-utils';
 
 // Type Imports
 import type * as Types from '@/ai/flows/types';
+import {
+    SeminarArchitectInput, SeminarArchitectOutput,
+    TranslateSeminarInput, TranslateSeminarOutput,
+    SeminarChatInput, SeminarChatOutput
+} from '@/ai/flows/types';
 
 async function callFirebaseFlow(flowName, data) {
   const adminSecret = process.env.CRON_SECRET || "dev-secret-123";
@@ -466,8 +471,9 @@ export async function saveQuizResultAction(params: { userId: string, result: Omi
 
 export async function getFagligtMyceliumAction(input: any) { return callFirebaseFlow('getFagligtMyceliumFlow', input); }
 export async function analyzeReformPdfAction(input: any) { return callFirebaseFlow('analyzeReformPdfFlow', input); }
-export async function seminarArchitectAction(input: any) { return callFirebaseFlow('seminarArchitectFlow', input); }
-export async function translateSeminarAction(input: any) { return callFirebaseFlow('translateSeminarFlow', input); }
+export async function seminarArchitectAction(input: SeminarArchitectInput): Promise<SeminarArchitectOutput> { return callFirebaseFlow('seminarArchitectFlow', input); }
+export async function translateSeminarAction(input: TranslateSeminarInput): Promise<TranslateSeminarOutput> { return callFirebaseFlow('translateSeminarFlow', input); }
+export async function chatWithSeminarAction(input: SeminarChatInput): Promise<SeminarChatOutput> { return callFirebaseFlow('chatWithSeminarFlow', input); }
 export async function generateSemesterPlanAction(input: any) { return callFirebaseFlow('generateSemesterPlanFlow', input); }
 export async function suggestConceptsForEventAction(input: any) { return callFirebaseFlow('suggestConceptsForEventFlow', input); }
 export async function generateStudyScheduleAction(input: any) { return callFirebaseFlow('generateStudyScheduleFlow', input); }

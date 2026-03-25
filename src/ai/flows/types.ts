@@ -1385,3 +1385,52 @@ export type PracticeGuide = z.infer<typeof PracticeGuideSchema>;
 export type ReformAnalysis = z.infer<typeof ReformAnalysisSchema>;
 export type SocraticInput = z.infer<typeof SocraticInputSchema>;
 export type SocraticOutput = z.infer<typeof SocraticOutputSchema>;
+
+// ==========================================
+// SEMINAR TRANSLATION SCHEMAS
+// ==========================================
+export const TranslateSeminarInputSchema = z.object({
+  analysis: SeminarAnalysisSchema,
+  targetLanguage: z.enum(['da', 'en']),
+});
+
+export const TranslateSeminarOutputSchema = z.object({
+  data: SeminarAnalysisSchema,
+  usage: UsageSchema,
+});
+
+export type TranslateSeminarInput = z.infer<typeof TranslateSeminarInputSchema>;
+export type TranslateSeminarOutput = z.infer<typeof TranslateSeminarOutputSchema>;
+
+// ==========================================
+// SEMINAR CHAT SCHEMAS
+// ==========================================
+export const SeminarChatInputSchema = z.object({
+  seminars: z.array(z.object({
+    title: z.string(),
+    slides: z.array(z.object({
+        slideNumber: z.number(),
+        slideTitle: z.string(),
+        summary: z.string()
+    }))
+  })),
+  question: z.string(),
+  chatHistory: z.array(z.object({
+    role: z.string(),
+    content: z.string()
+  })).optional(),
+});
+
+export const SeminarChatDataSchema = z.object({
+  answer: z.string(),
+  suggestedFollowUpQuestions: z.array(z.string()).optional(),
+});
+
+export const SeminarChatOutputSchema = z.object({
+  data: SeminarChatDataSchema,
+  usage: UsageSchema,
+});
+
+export type SeminarChatInput = z.infer<typeof SeminarChatInputSchema>;
+export type SeminarChatData = z.infer<typeof SeminarChatDataSchema>;
+export type SeminarChatOutput = z.infer<typeof SeminarChatOutputSchema>;

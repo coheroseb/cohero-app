@@ -1399,6 +1399,39 @@ export const FTSagMetadataOutputSchema = z.object({
   data: FTSagMetadataDataSchema,
   usage: UsageSchema,
 });
-export type FTSagMetadataInput = z.infer<typeof FTSagMetadataInputSchema>;
+export type FTSagMetadataData = z.infer<typeof FTSagMetadataDataSchema>;
 export type FTSagMetadataOutput = z.infer<typeof FTSagMetadataOutputSchema>;
 
+
+// ==========================================
+// SEMINAR CHAT SCHEMAS
+// ==========================================
+export const SeminarChatInputSchema = z.object({
+  seminars: z.array(z.object({
+    title: z.string(),
+    slides: z.array(z.object({
+        slideNumber: z.number(),
+        slideTitle: z.string(),
+        summary: z.string()
+    }))
+  })),
+  question: z.string(),
+  chatHistory: z.array(z.object({
+    role: z.string(),
+    content: z.string()
+  })).optional(),
+});
+
+export const SeminarChatDataSchema = z.object({
+  answer: z.string(),
+  suggestedFollowUpQuestions: z.array(z.string()).optional(),
+});
+
+export const SeminarChatOutputSchema = z.object({
+  data: SeminarChatDataSchema,
+  usage: UsageSchema,
+});
+
+export type SeminarChatInput = z.infer<typeof SeminarChatInputSchema>;
+export type SeminarChatData = z.infer<typeof SeminarChatDataSchema>;
+export type SeminarChatOutput = z.infer<typeof SeminarChatOutputSchema>;
