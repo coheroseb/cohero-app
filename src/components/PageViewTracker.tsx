@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
-import { collection, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
+import { collection, serverTimestamp, doc, writeBatch, increment } from 'firebase/firestore';
 
 export default function PageViewTracker() {
   const { user, userProfile } = useApp();
@@ -23,12 +22,12 @@ export default function PageViewTracker() {
     if (now - lastTrackedTime.current < 1000) {
       return;
     }
-    // Prevent logging the same path consecutively
+    // Prevent logging the same path consecutively on simple navigation
     if (path === lastTrackedPath.current) {
         return;
     }
     
-    if (user && userProfile && firestore) {
+    if (firestore) {
       // Don't track admin pages to avoid noise
       if (path.startsWith('/admin')) {
         return;
@@ -40,43 +39,54 @@ export default function PageViewTracker() {
 
         const batch = writeBatch(firestore);
 
-        // 1. Log the page view event
+        // 1. Log the page view event (works for both auth and anonymous)
         const pageViewsCollection = collection(firestore, 'pageViews');
         const newViewRef = doc(pageViewsCollection);
         batch.set(newViewRef, {
-          userId: user.uid,
+          userId: user?.uid || 'anonymous',
           path: path,
           fbclid: fbclidValue || null,
           source: fbclidValue ? 'facebook' : 'direct',
           timestamp: serverTimestamp()
         });
 
-        // 2. Update user activity timestamp
-        const userRef = doc(firestore, 'users', user.uid);
-        batch.update(userRef, { 
-          lastActivityAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          // If first time from FB, store it on the user profile
-          ...(fbclidValue && !userProfile.firstFbclid ? {
-              firstFbclid: fbclidValue,
-              conversionSource: 'facebook',
-              convertedAt: serverTimestamp()
-          } : {})
-        });
+        // 2. If it's a FB referral, update aggregate stats
+        if (fbclidValue) {
+            const statsRef = doc(firestore, 'stats', 'referrals');
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            // Increment total FB clicks and daily FB clicks
+            batch.set(statsRef, {
+                totalFbClicks: increment(1),
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
+
+            const dailyStatsRef = doc(firestore, `stats/referrals/daily/${today}`);
+            batch.set(dailyStatsRef, {
+                fbClicks: increment(1),
+                date: today,
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
+        }
+
+        // 3. If user is logged in, update their activity
+        if (user && userProfile) {
+            const userRef = doc(firestore, 'users', user.uid);
+            batch.update(userRef, { 
+                lastActivityAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                // If first time from FB, store it on the user profile
+                ...(fbclidValue && !userProfile.firstFbclid ? {
+                    firstFbclid: fbclidValue,
+                    conversionSource: 'facebook',
+                    convertedAt: serverTimestamp()
+                } : {})
+            });
+        }
 
         await batch.commit();
       } catch (error: any) {
         // Fail silently to not interrupt user experience, but emit for diagnostics
-        const { errorEmitter } = await import('@/firebase/error-emitter');
-        const { FirestorePermissionError } = await import('@/firebase/errors');
-        
-        errorEmitter.emit(
-          'permission-error',
-          new FirestorePermissionError({
-            path: `users/${user.uid}`,
-            operation: 'update',
-          })
-        );
         console.error("Failed to track page view or update activity:", error);
       }
     }
