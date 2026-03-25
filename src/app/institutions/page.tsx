@@ -181,7 +181,7 @@ const InstitutionsPage = () => {
         </motion.div>
 
         {/* Search Bar Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 px-6">
+        <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 px-6 z-20">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white p-4 md:p-6 rounded-[3rem] shadow-2xl flex flex-col md:flex-row gap-4 border border-amber-100/50">
               <div className="flex-1 relative group">
@@ -221,7 +221,7 @@ const InstitutionsPage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 pt-32 pb-24">
+      <main className="max-w-7xl mx-auto px-6 pt-48 pb-24">
         {error && (
             <div className="mb-12 p-6 bg-rose-50 border border-rose-200 rounded-[2rem] text-rose-700">
                 <p className="font-black uppercase tracking-widest text-[10px] mb-1">System Fejl</p>
