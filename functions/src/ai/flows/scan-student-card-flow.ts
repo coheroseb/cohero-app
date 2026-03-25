@@ -65,7 +65,7 @@ const scanStudentCardFlow = ai.defineFlow(
 
         // We use a structured prompt with the image
         const response = await ai.generate({
-          model: 'gemini-1.5-flash-latest',
+          model: 'googleai/gemini-1.5-flash',
           prompt: [
             { text: `You are a verification assistant for Cohéro. 
     Your task is to analyze the provided image of a student card. 
