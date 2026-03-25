@@ -48,7 +48,7 @@ import { claimAssistanceRequestAction } from '@/app/markedsplads/actions';
 const PLATFORM_FEE_PERCENT = 15; // 15% platform fee
 
 const AssistanceMarketplaceContent = () => {
-  const { user, userProfile } = useApp();
+  const { user, userProfile, refetchUserProfile } = useApp();
   const firestore = useFirestore();
   const storage = useStorage();
   const router = useRouter();
@@ -250,6 +250,7 @@ const AssistanceMarketplaceContent = () => {
             studentCardUrl,
             isHelperEnabled: true,
         });
+        await refetchUserProfile(); // Refresh the profile state immediately
         setShowPayoutInfoModal(false);
         setStudentCardFile(null);
         alert("Dine udbetalingsoplysninger er krypteret og gemt sikkert. Du kan nu tage opgaver!");
