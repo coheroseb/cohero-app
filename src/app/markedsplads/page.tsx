@@ -226,9 +226,10 @@ const AssistanceMarketplaceContent = () => {
         let studentCardUrl = userProfile?.studentCardUrl || '';
 
         if (studentCardFile && storage) {
-            const fileRef = ref(storage, `student_cards/${user.uid}_${Date.now()}_${studentCardFile.name}`);
-            const uploadResult = await uploadBytes(fileRef, studentCardFile);
-            studentCardUrl = await getDownloadURL(uploadResult.ref);
+            const fileName = `${user.uid}_${Date.now()}_${studentCardFile.name}`;
+            const fileRef = ref(storage, `student_cards/${fileName}`);
+            await uploadBytes(fileRef, studentCardFile);
+            studentCardUrl = fileRef.fullPath; // Store the path instead of public download URL for better security
         }
 
         const [encCpr, encReg, encAccount, encName, encAddr] = await Promise.all([

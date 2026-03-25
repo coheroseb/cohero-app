@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { ai } from '@/ai/genkit';
+import * as admin from 'firebase-admin';
 import {
     ScanStudentCardInputSchema,
     ScanStudentCardOutputSchema,
@@ -19,7 +19,17 @@ const scanStudentCardFlow = ai.defineFlow(
   },
   async (input) => {
     const { imageUrl, userFullName } = input;
-    
+    let actualUrl = imageUrl;
+    if (imageUrl.startsWith('student_cards/')) {
+        const bucket = admin.storage().bucket();
+        const file = bucket.file(imageUrl);
+        const [signedUrl] = await file.getSignedUrl({
+            action: 'read',
+            expires: Date.now() + 15 * 60 * 1000 // 15 minutes
+        });
+        actualUrl = signedUrl;
+    }
+
     // We use a structured prompt with the image
     const response = await ai.generate({
       model: 'googleai/gemini-1.5-flash',
@@ -37,21 +47,21 @@ Please extract the following information:
 6. Your confidence score from 0.0 to 1.0 (confidence)
 
 Return the result as a JSON object.` },
-        { media: { url: imageUrl, contentType: 'image/jpeg' } } // Works for most images, Gemini handles it
+        { media: { url: actualUrl, contentType: 'image/jpeg' } } // Works for most images, Gemini handles it
       ],
       output: {
         schema: ScanStudentCardOutputSchema.shape.data
       }
     });
 
-    const result = response.output();
-    const usage = response.usage();
+    const result = response.output;
+    const usage = response.usage;
 
     return {
-      data: result,
+      data: result as any, // Cast to any to avoid complex schema mismatch issues if any
       usage: {
-        inputTokens: usage.inputTokens || 0,
-        outputTokens: usage.outputTokens || 0
+        inputTokens: usage?.inputTokens || 0,
+        outputTokens: usage?.outputTokens || 0
       }
     };
   }
