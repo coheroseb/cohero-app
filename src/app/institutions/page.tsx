@@ -31,7 +31,13 @@ import { useApp } from '@/app/provider';
 import { useRouter } from 'next/navigation';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
-const AdminExportButton = ({ userProfile }: { userProfile: any }) => {
+const AdminExportButton = ({ userProfile, searchTerm, regionFilter, ejerFilter, typeFilter }: { 
+  userProfile: any, 
+  searchTerm: string, 
+  regionFilter: string, 
+  ejerFilter: string,
+  typeFilter: string
+}) => {
   const firestore = useFirestore();
   const [isExporting, setIsExporting] = useState(false);
 
@@ -42,10 +48,21 @@ const AdminExportButton = ({ userProfile }: { userProfile: any }) => {
     setIsExporting(true);
     
     try {
-      const q = query(collection(firestore, 'institutions'));
+      let q = query(collection(firestore, 'institutions'));
+      
+      if (searchTerm) {
+        const searchStr = searchTerm.toLowerCase();
+        const endStr = searchStr + '\uf8ff';
+        q = query(q, where('search_name', '>=', searchStr), where('search_name', '<', endStr));
+      }
+      
+      if (regionFilter !== 'Alle') q = query(q, where('BEL_REGION_TEKST', '==', regionFilter));
+      if (ejerFilter !== 'Alle') q = query(q, where('EJERFORM_TEKST', '==', ejerFilter));
+      if (typeFilter !== 'Alle') q = query(q, where('inst_type_2_tekst', '==', typeFilter));
+
       const snapshot = await getDocs(q);
       
-      const rows = [['Institution', 'Email', 'Telefon', 'Region']];
+      const rows = [['Institution', 'Email', 'Telefon', 'Region', 'Type', 'Ejerform']];
       
       snapshot.docs.forEach(doc => {
         const data = doc.data();
@@ -54,7 +71,9 @@ const AdminExportButton = ({ userProfile }: { userProfile: any }) => {
             `"${(data.INST_NAVN || '').replace(/"/g, '""')}"`,
             data.E_MAIL,
             data.TLF_NR || '',
-            data.BEL_REGION_TEKST || ''
+            data.BEL_REGION_TEKST || '',
+            `"${(data.inst_type_2_tekst || '').replace(/"/g, '""')}"`,
+            data.EJERFORM_TEKST || ''
           ]);
         }
       });
@@ -65,7 +84,7 @@ const AdminExportButton = ({ userProfile }: { userProfile: any }) => {
       const url = URL.createObjectURL(blob);
       
       link.setAttribute("href", url);
-      link.setAttribute("download", `mailliste-institutioner-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute("download", `mailliste-institutioner-filtreret-${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -84,11 +103,7 @@ const AdminExportButton = ({ userProfile }: { userProfile: any }) => {
       disabled={isExporting}
       className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-slate-800 shadow-xl shadow-slate-950/20 disabled:opacity-50"
     >
-      {isExporting ? (
-        <Loader2 className="w-3 h-3 animate-spin" />
-      ) : (
-        <FileSpreadsheet className="w-3 h-3" />
-      )}
+      {isExporting ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileSpreadsheet className="w-3 h-3" />}
       {isExporting ? 'Eksporterer...' : 'Eksporter Mailliste (Admin)'}
     </button>
   );
@@ -456,6 +471,25 @@ const InstitutionsPage = () => {
   const [regionFilter, setRegionFilter] = useState('Alle');
   const [ejerFilter, setEjerFilter] = useState('Alle');
   const [typeFilter, setTypeFilter] = useState('Alle');
+
+  const instTypes = [
+    'Alle',
+    'AMU-centre',
+    'Dagbehandlingstilbud og behandlingshjem',
+    'Efterskoler',
+    'Erhvervsakademier',
+    'Grundskoler',
+    'Håndarbejdsseminarier',
+    'Lærerseminarier',
+    'Pædagogseminarier',
+    'Produktionsskoler',
+    'Professionshøjskoler',
+    'Social- og sundhedsskoler',
+    'Specialskoler for børn',
+    'Specialskoler for voksne',
+    'Universiteter',
+    'Voksenuddannelsescentre'
+  ];
   const [isLocating, setIsLocating] = useState(false);
   const [selectedInstitution, setSelectedInstitution] = useState<any>(null);
   const firestore = useFirestore();
@@ -509,7 +543,10 @@ const InstitutionsPage = () => {
       constraints.push(where('BEL_REGION_TEKST', '==', regionFilter));
     }
     if (ejerFilter !== 'Alle') {
-        constraints.push(where('EJER_KODE_TEKST', '==', ejerFilter));
+        constraints.push(where('EJERFORM_TEKST', '==', ejerFilter));
+    }
+    if (typeFilter !== 'Alle') {
+        constraints.push(where('inst_type_2_tekst', '==', typeFilter));
     }
 
     // Default sorting
@@ -622,17 +659,31 @@ const InstitutionsPage = () => {
                       </select>
                       <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 rotate-90 pointer-events-none" />
                     </div>
+
+                    <div className="flex-1 relative group">
+                      <select 
+                        value={typeFilter}
+                        onChange={(e) => setTypeFilter(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-4 pr-10 text-[11px] font-black uppercase tracking-wider text-slate-900 focus:ring-2 focus:ring-amber-500 appearance-none transition-all outline-none shadow-sm member-select"
+                      >
+                        {instTypes.map(t => (
+                          <option key={t} value={t}>{t === 'Alle' ? 'Alle Typer' : t}</option>
+                        ))}
+                      </select>
+                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 rotate-90 pointer-events-none" />
+                    </div>
                  </div>
               </div>
             </div>
 
-            {(searchTerm || regionFilter !== 'Alle' || ejerFilter !== 'Alle') && (
+            {(searchTerm || regionFilter !== 'Alle' || ejerFilter !== 'Alle' || typeFilter !== 'Alle') && (
               <div className="bg-slate-50 border-t border-slate-100 px-8 py-4 flex items-center justify-end">
                   <button 
                     onClick={() => {
                        setSearchTerm('');
                        setRegionFilter('Alle');
                        setEjerFilter('Alle');
+                       setTypeFilter('Alle');
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-rose-100"
                   >
@@ -669,7 +720,13 @@ const InstitutionsPage = () => {
            </div>
 
            <div className="flex items-center gap-4">
-              <AdminExportButton userProfile={userProfile} />
+              <AdminExportButton 
+                userProfile={userProfile} 
+                searchTerm={searchTerm}
+                regionFilter={regionFilter}
+                ejerFilter={ejerFilter}
+                typeFilter={typeFilter}
+              />
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-500">
                  <Layers className="w-3 h-3" />
                  Alle typer
