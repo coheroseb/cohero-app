@@ -34,10 +34,13 @@ export function initializeFirebase() {
   if (apps.length === 0) {
     firebaseApp = initializeApp(firebaseConfig);
     // CRITICAL: initializeFirestore MUST be called before getFirestore
-    // to apply options correctly.
+    // to apply options correctly. We must also disable fetch streams because
+    // Next.js patches `fetch`, which breaks WebChannel streaming over HMR.
     initializeFirestore(firebaseApp, { 
-      experimentalForceLongPolling: true,
-      ignoreUndefinedProperties: true
+      experimentalAutoDetectLongPolling: true,
+      ignoreUndefinedProperties: true,
+      // @ts-ignore
+      useFetchStreams: false
     });
   } else {
     firebaseApp = apps[0];
