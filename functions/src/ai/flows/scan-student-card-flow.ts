@@ -44,25 +44,24 @@ const scanStudentCardFlow = ai.defineFlow(
 
         const userFullName = typeof safeInput.userFullName === 'string' ? safeInput.userFullName : "Unknown";
         
-        let mediaPart: any;
+        let imageBuffer: Buffer;
         if (imageUrl.startsWith('student_cards/')) {
             const bucket = admin.storage().bucket();
             const file = bucket.file(imageUrl);
             const [buffer] = await file.download();
-            mediaPart = { 
-                media: {
-                    data: buffer.toString('base64'), 
-                    contentType: 'image/jpeg' 
-                }
-            };
+            imageBuffer = buffer;
         } else {
-            mediaPart = { 
-                media: {
-                    url: imageUrl, 
-                    contentType: 'image/jpeg' 
-                }
-            };
+            const res = await fetch(imageUrl);
+            if (!res.ok) throw new Error(`Kunne ikke hente billede fra URL: ${res.statusText}`);
+            imageBuffer = Buffer.from(await res.arrayBuffer());
         }
+
+        const mediaPart = { 
+            media: {
+                url: `data:image/jpeg;base64,${imageBuffer.toString('base64')}`, 
+                contentType: 'image/jpeg' 
+            }
+        };
 
         // We use a structured prompt with the image
         const response = await ai.generate({
