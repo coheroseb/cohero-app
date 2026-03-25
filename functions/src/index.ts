@@ -3,12 +3,15 @@ import * as admin from "firebase-admin";
 import * as dotenv from "dotenv";
 import * as path from "path";
 
-// Load Next.js environment variables for local emulator testing
+// Load environment variables
+dotenv.config(); // Loads .env in functions/
 dotenv.config({ path: path.resolve(process.cwd(), "../.env.local") });
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 console.log("GEMINI KEY:", !!process.env.GEMINI_API_KEY);
 
-admin.initializeApp();
+admin.initializeApp({
+  storageBucket: "studio-7870211338-fe921.firebasestorage.app"
+});
 
 export const processNotificationQueue = functions.firestore
   .document("notifications_queue/{docId}")

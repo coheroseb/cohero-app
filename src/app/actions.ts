@@ -111,9 +111,18 @@ async function callFirebaseFlow(flowName, data) {
     });
 
     if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Firebase Flow [${flowName}] call failed:`, errorText);
-        throw new Error(`Firebase Flow API Error (${response.status}): ${response.statusText}`);
+        let errorMsg = response.statusText;
+        try {
+            const errorJson = await response.json();
+            errorMsg = errorJson.error || errorJson.message || errorMsg;
+        } catch (e) {
+            // Fallback to text if JSON fails
+            const text = await response.text().catch(() => "");
+            if (text) errorMsg = text;
+        }
+        
+        console.error(`Firebase Flow [${flowName}] call failed:`, errorMsg);
+        throw new Error(`AI Scan Fejl (${response.status}): ${errorMsg}`);
     }
 
     return response.json();
