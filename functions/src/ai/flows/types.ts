@@ -878,6 +878,22 @@ export const SeminarArchitectOutputSchema = z.object({
   usage: UsageSchema,
 });
 
+export const TranslateSeminarInputSchema = z.object({
+  analysis: SeminarAnalysisSchema,
+  targetLanguage: z.enum(['da', 'en']),
+});
+
+export const TranslateSeminarOutputSchema = z.object({
+  data: SeminarAnalysisSchema,
+  usage: UsageSchema,
+});
+
+export type SeminarAnalysis = z.infer<typeof SeminarAnalysisSchema>;
+export type SeminarArchitectInput = z.infer<typeof SeminarArchitectInputSchema>;
+export type SeminarArchitectOutput = z.infer<typeof SeminarArchitectOutputSchema>;
+export type TranslateSeminarInput = z.infer<typeof TranslateSeminarInputSchema>;
+export type TranslateSeminarOutput = z.infer<typeof TranslateSeminarOutputSchema>;
+
 export const SemesterPlanSchema = z.object({
   title: z.string(),
   semesterInfo: z.string(),
@@ -1114,11 +1130,6 @@ export const LivePortfolioFeedbackOutputSchema = z.object({
 
 export type LivePortfolioFeedbackInput = z.infer<typeof LivePortfolioFeedbackInputSchema>;
 export type LivePortfolioFeedbackOutput = z.infer<typeof LivePortfolioFeedbackOutputSchema>;
-export type ReviseJournalEntryInput = z.infer<typeof ReviseJournalEntryInputSchema>;
-export type ReviseJournalEntryOutput = z.infer<typeof ReviseJournalEntryOutputSchema>;
-export type SeminarArchitectInput = z.infer<typeof SeminarArchitectInputSchema>;
-export type SeminarAnalysis = z.infer<typeof SeminarAnalysisSchema>;
-export type SeminarArchitectOutput = z.infer<typeof SeminarArchitectOutputSchema>;
 export type SemesterPlannerInput = z.infer<typeof SemesterPlannerInputSchema>;
 export type SemesterPlannerOutput = z.infer<typeof SemesterPlannerOutputSchema>;
 export type SuggestConceptsForEventInput = z.infer<typeof SuggestConceptsForEventInputSchema>;

@@ -75,6 +75,7 @@ import { twistBlueprintFlow } from './flows/twist-blueprint-flow';
 import { fetchVivePublications } from './flows/vive-indsigt-flow';
 import { getViveReportQa } from './flows/vive-report-qa-flow';
 import { scanStudentCard } from './flows/scan-student-card-flow';
+import { translateSeminar } from './flows/translate-seminar-flow';
 
 export const allFlows: Record<string, any> = {
   "analyzeFtDocumentFlow": analyzeFtDocument,
@@ -227,5 +228,7 @@ export const allFlows: Record<string, any> = {
   "generateFTSagMetadata": generateFTSagMetadataFlow,
   "scanStudentCardFlow": scanStudentCard,
   "scanStudentCard": scanStudentCard,
+  "translateSeminarFlow": translateSeminar,
+  "translateSeminar": translateSeminar,
 };
 

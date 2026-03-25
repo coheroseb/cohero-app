@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { seminarArchitectAction } from '@/app/actions';
+import { seminarArchitectAction, translateSeminarAction } from '@/app/actions';
 import type { SeminarAnalysis } from '@/ai/flows/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -428,6 +428,8 @@ function SeminarArchitectPageContent() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [activeTab, setActiveTab] = useState<'cards' | 'overview'>('cards');
   const [selectedSlides, setSelectedSlides] = useState<Set<number>>(new Set());
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<'da' | 'en'>('da');
   const isInitialMount = useRef(true);
 
   const isPremiumUser = useMemo(() =>
@@ -583,6 +585,23 @@ function SeminarArchitectPageContent() {
       setError(err.message || 'Der opstod en fejl under analysen. Prøv venligst igen.');
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleTranslate = async (lang: 'da' | 'en') => {
+    if (!analysisResult || isTranslating) return;
+    setIsTranslating(true);
+    setCurrentLanguage(lang);
+    try {
+        const response = await translateSeminarAction({ analysis: analysisResult, targetLanguage: lang });
+        if (response?.data) {
+            setAnalysisResult(response.data);
+            toast({ title: 'Oversat!', description: `Seminaret er nu på ${lang === 'da' ? 'dansk' : 'engelsk'}.` });
+        }
+    } catch (err: any) {
+        toast({ title: 'Oversættelse fejlede', description: err.message, variant: 'destructive' });
+    } finally {
+        setIsTranslating(false);
     }
   };
 
@@ -797,6 +816,29 @@ function SeminarArchitectPageContent() {
                   <p className="text-sm text-slate-400 mt-1">{analysisResult.slides.length} slides analyseret</p>
                 </div>
                 <div className="flex items-center gap-3">
+                  <div className="flex bg-white p-1 rounded-xl border border-slate-100 shadow-sm mr-2">
+                    <button 
+                        onClick={() => handleTranslate('da')}
+                        disabled={isTranslating || currentLanguage === 'da'}
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                            currentLanguage === 'da' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                    >
+                        DK
+                    </button>
+                    <button 
+                        onClick={() => handleTranslate('en')}
+                        disabled={isTranslating || currentLanguage === 'en'}
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                            currentLanguage === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                    >
+                        EN
+                    </button>
+                  </div>
+
+                  {isTranslating && <Loader2 className="w-4 h-4 animate-spin text-indigo-500 mr-2" />}
+
                   <Button
                     variant="outline"
                     size="sm"
