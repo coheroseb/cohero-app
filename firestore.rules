@@ -32,15 +32,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /institutions/{document=**} {
+      allow read: if request.auth != null;
+    }
+
     match /laws/{lawId} {
       allow read: if true;
     }
 
     match /leaderboard/{userId} {
-      allow read: if isSignedIn();
-    }
-
-    match /institutions/{instId} {
       allow read: if isSignedIn();
     }
 

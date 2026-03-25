@@ -1,0 +1,51 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "institutions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "BEL_REGION_TEKST",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "search_name",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "institutions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "EJER_KODE_TEKST",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "search_name",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "institutions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "BEL_REGION_TEKST",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "EJER_KODE_TEKST",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "search_name",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
