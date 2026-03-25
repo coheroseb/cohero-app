@@ -522,168 +522,191 @@ const AssistanceMarketplaceContent = () => {
         </main>
       </div>
 
-
       {showPayoutInfoModal && (
         <div className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl border border-amber-100 overflow-hidden animate-in fade-in zoom-in duration-300">
-             <div className="p-8 md:p-10 space-y-6">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-5xl shadow-2xl border border-amber-100 overflow-hidden animate-in fade-in zoom-in duration-300">
+             <div className="p-8 md:p-12 space-y-10">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-bold text-amber-950 serif">Udbetalings-info</h2>
-                        <p className="text-slate-500 text-sm mt-1">Lovpligtig info for at modtage betaling (DAC7)</p>
+                        <h2 className="text-3xl font-bold text-amber-950 serif">Udbetalings-info</h2>
+                        <p className="text-slate-500 text-sm mt-1 font-medium">Tilføj dine oplysninger for at modtage betaling fra dine opgaver.</p>
                     </div>
-                    <button onClick={() => setShowPayoutInfoModal(false)} className="p-2 hover:bg-rose-50 rounded-xl transition-all">
-                        <X className="w-5 h-5 text-slate-400" />
+                    <button onClick={() => setShowPayoutInfoModal(false)} className="p-3 hover:bg-rose-50 rounded-2xl transition-all">
+                        <X className="w-6 h-6 text-slate-400" />
                     </button>
                 </div>
-
-                <form onSubmit={handleSavePayoutInfo} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Fulde Navn</label>
-                           <input 
-                              type="text" 
-                              required 
-                              placeholder="Dit fulde navn"
-                              value={payoutFormData.fullName}
-                              onChange={(e) => setPayoutFormData({...payoutFormData, fullName: e.target.value})}
-                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
-                           />
-                        </div>
-
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Adresse</label>
-                           <input 
-                              type="text" 
-                              required 
-                              placeholder="Vejnavn, nr., postnr. og by"
-                              value={payoutFormData.address}
-                              onChange={(e) => setPayoutFormData({...payoutFormData, address: e.target.value})}
-                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
-                           />
-                        </div>
-
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">CPR-Nummer</label>
-                           <input 
-                              type="text" 
-                              required 
-                              placeholder="DDMMYY-XXXX"
-                              value={payoutFormData.cprNumber}
-                              onChange={(e) => setPayoutFormData({...payoutFormData, cprNumber: e.target.value})}
-                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
-                           />
-                        </div>
-
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Telefonnummer</label>
-                           <input 
-                              type="tel" 
-                              required 
-                              placeholder="Eks. +45 12 34 56 78"
-                              value={payoutFormData.phoneNumber}
-                              onChange={(e) => setPayoutFormData({...payoutFormData, phoneNumber: e.target.value})}
-                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
-                           />
-                        </div>
-
-                        <div className="md:col-span-2">
-                           <div className="grid grid-cols-3 gap-4">
-                              <div className="space-y-2 col-span-1">
-                                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Reg.</label>
-                                  <input 
-                                     type="text" 
-                                     required 
-                                     placeholder="1234"
-                                     value={payoutFormData.bankReg}
-                                     onChange={(e) => setPayoutFormData({...payoutFormData, bankReg: e.target.value})}
-                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
-                                  />
-                              </div>
-                              <div className="space-y-2 col-span-2">
-                                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Konto</label>
-                                  <input 
-                                     type="text" 
-                                     required 
-                                     placeholder="12345678"
-                                     value={payoutFormData.bankAccount}
-                                     onChange={(e) => setPayoutFormData({...payoutFormData, bankAccount: e.target.value})}
-                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
-                                  />
-                              </div>
-                           </div>
-                        </div>
-                     </div>
  
-                     <div className="space-y-4 pt-2">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Upload Studiekort</label>
-                        <div 
-                           className={`relative border-2 border-dashed rounded-[1.5rem] p-6 text-center transition-all ${studentCardFile ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-100 bg-slate-50 hover:bg-amber-50 hover:border-amber-200'}`}
-                           onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                           onDrop={(e) => {
-                               e.preventDefault();
-                               e.stopPropagation();
-                               const file = e.dataTransfer.files?.[0];
-                               if (file && file.type.startsWith('image/')) {
-                                   setStudentCardFile(file);
-                               }
-                           }}
-                        >
-                           <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="absolute inset-0 opacity-0 cursor-pointer" 
-                              onChange={(e) => {
-                                 const file = e.target.files?.[0];
-                                 if (file) setStudentCardFile(file);
-                              }}
-                           />
-                           {studentCardFile ? (
-                              <div className="flex flex-col items-center gap-2">
-                                 <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
-                                    <Check className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-xs font-bold text-emerald-900">{studentCardFile.name}</p>
-                                    <p className="text-[10px] text-emerald-600">Klik for at ændre billede</p>
-                                 </div>
-                              </div>
-                           ) : (
-                              <div className="flex flex-col items-center gap-2">
-                                 <div className="w-10 h-10 bg-slate-100 text-slate-400 rounded-lg flex items-center justify-center">
-                                    <UploadCloud className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-xs font-bold text-slate-600">Klik eller træk dit studiekort her</p>
-                                    <p className="text-[10px] text-slate-400">Kun billedfiler (JPG, PNG)</p>
-                                 </div>
-                              </div>
-                           )}
+                <form onSubmit={handleSavePayoutInfo} className="space-y-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        {/* PERSONAL INFORMATION SECTION */}
+                        <div className="space-y-8">
+                            <div>
+                               <h3 className="text-[10px] font-black uppercase text-amber-950/30 tracking-widest mb-6 border-b border-amber-50 pb-2">Personlige Oplysninger</h3>
+                               <div className="space-y-5">
+                                    <div className="space-y-2">
+                                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Fulde Navn</label>
+                                       <input 
+                                          type="text" 
+                                          required 
+                                          placeholder="Dit fulde navn"
+                                          value={payoutFormData.fullName}
+                                          onChange={(e) => setPayoutFormData({...payoutFormData, fullName: e.target.value})}
+                                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all font-bold text-slate-900"
+                                       />
+                                    </div>
+            
+                                    <div className="space-y-2">
+                                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Adresse</label>
+                                       <input 
+                                          type="text" 
+                                          required 
+                                          placeholder="Vejnavn, nr., postnr. og by"
+                                          value={payoutFormData.address}
+                                          onChange={(e) => setPayoutFormData({...payoutFormData, address: e.target.value})}
+                                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all font-bold text-slate-900"
+                                       />
+                                    </div>
+            
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">CPR-Nummer</label>
+                                           <input 
+                                              type="text" 
+                                              required 
+                                              placeholder="DDMMYY-XXXX"
+                                              value={payoutFormData.cprNumber}
+                                              onChange={(e) => setPayoutFormData({...payoutFormData, cprNumber: e.target.value})}
+                                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all font-bold text-slate-900"
+                                           />
+                                        </div>
+                
+                                        <div className="space-y-2">
+                                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Telefonnummer</label>
+                                           <input 
+                                              type="tel" 
+                                              required 
+                                              placeholder="+45 12 34 56 78"
+                                              value={payoutFormData.phoneNumber}
+                                              onChange={(e) => setPayoutFormData({...payoutFormData, phoneNumber: e.target.value})}
+                                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all font-bold text-slate-900"
+                                           />
+                                        </div>
+                                    </div>
+                               </div>
+                            </div>
                         </div>
-                        {userProfile?.studentCardUrl && !studentCardFile && (
-                           <p className="text-[10px] text-emerald-600 font-bold italic ml-1">✓ Studiekort er allerede uploadet</p>
-                        )}
-                     </div>
- 
-                     <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3 italic">
-                        <AlertCircle className="w-5 h-5 text-blue-700 flex-shrink-0" />
-                        <p className="text-[11px] text-blue-800 leading-relaxed">
-                            Ved at gemme disse oplysninger accepterer du, at Cohéro indberetter din indkomst til Skattestyrelsen jf. DAC7-direktivet.
-                        </p>
+
+                        {/* BANK & ID SECTION */}
+                        <div className="space-y-8">
+                            <div>
+                               <h3 className="text-[10px] font-black uppercase text-amber-950/30 tracking-widest mb-6 border-b border-amber-50 pb-2">Bank & Studiekort</h3>
+                               <div className="space-y-6">
+                                    <div className="grid grid-cols-4 gap-4">
+                                       <div className="space-y-2 col-span-1">
+                                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Reg.</label>
+                                           <input 
+                                              type="text" 
+                                              required 
+                                              placeholder="1234"
+                                              value={payoutFormData.bankReg}
+                                              onChange={(e) => setPayoutFormData({...payoutFormData, bankReg: e.target.value})}
+                                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all font-bold text-slate-900 text-center"
+                                           />
+                                       </div>
+                                       <div className="space-y-2 col-span-3">
+                                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Konto</label>
+                                           <input 
+                                              type="text" 
+                                              required 
+                                              placeholder="12345678"
+                                              value={payoutFormData.bankAccount}
+                                              onChange={(e) => setPayoutFormData({...payoutFormData, bankAccount: e.target.value})}
+                                              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all font-bold text-slate-900"
+                                           />
+                                       </div>
+                                    </div>
+            
+                                    <div className="space-y-4">
+                                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Upload Studiekort</label>
+                                       <div 
+                                          className={`relative border-2 border-dashed rounded-[2rem] p-8 text-center transition-all ${studentCardFile ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-100 bg-slate-50 hover:bg-amber-50 hover:border-amber-200'}`}
+                                          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                          onDrop={(e) => {
+                                              e.preventDefault();
+                                              e.stopPropagation();
+                                              const file = e.dataTransfer.files?.[0];
+                                              if (file && file.type.startsWith('image/')) {
+                                                  setStudentCardFile(file);
+                                              }
+                                          }}
+                                       >
+                                          <input 
+                                             type="file" 
+                                             accept="image/*" 
+                                             className="absolute inset-0 opacity-0 cursor-pointer" 
+                                             onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) setStudentCardFile(file);
+                                             }}
+                                          />
+                                          {studentCardFile ? (
+                                             <div className="flex flex-col items-center gap-2">
+                                                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                                                   <Check className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                   <p className="text-xs font-bold text-emerald-900">{studentCardFile.name}</p>
+                                                   <p className="text-[10px] text-emerald-600">Klik for at ændre billede</p>
+                                                </div>
+                                             </div>
+                                          ) : (
+                                             <div className="flex flex-col items-center gap-3">
+                                                <div className="w-12 h-12 bg-white text-slate-400 rounded-xl flex items-center justify-center shadow-sm">
+                                                   <UploadCloud className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                   <p className="text-xs font-bold text-slate-600">Træk dit studiekort her</p>
+                                                   <p className="text-[10px] text-slate-400">Kun billedfiler (JPG, PNG)</p>
+                                                </div>
+                                             </div>
+                                          )}
+                                       </div>
+                                       {userProfile?.studentCardUrl && !studentCardFile && (
+                                          <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                             <span className="text-[11px] text-emerald-900 font-bold italic">Studiekort er allerede uploadet</span>
+                                          </div>
+                                       )}
+                                    </div>
+                               </div>
+                            </div>
+                        </div>
                     </div>
-
-                     <button 
-                         type="submit"
-                         disabled={isUploadingCard}
-                         className="w-full py-5 bg-amber-950 text-white rounded-2xl font-bold shadow-lg hover:bg-rose-900 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
-                     >
-                       {isUploadingCard ? (
-                          <>
-                             <Loader2 className="w-5 h-5 animate-spin" />
-                             Uploader...
-                          </>
-                       ) : 'Gem og fortsæt'}
-                     </button>
+ 
+                    <div className="space-y-6">
+                        <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-[2rem] flex gap-4">
+                            <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                            <div className="space-y-1">
+                                <p className="text-xs font-bold text-blue-900">Juridisk Note (DAC7)</p>
+                                <p className="text-[11px] text-blue-800/70 leading-relaxed">
+                                    Ved at gemme disse oplysninger accepterer du, at Cohéro indberetter din indkomst til Skattestyrelsen jf. DAC7-direktivet. Dine oplysninger er krypteret og gemt sikkert.
+                                </p>
+                            </div>
+                        </div>
+    
+                        <button 
+                            type="submit"
+                            disabled={isUploadingCard}
+                            className="w-full py-6 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-amber-950/20 hover:bg-rose-900 transition-all disabled:opacity-50 flex items-center justify-center gap-3 active:scale-[0.98]"
+                        >
+                          {isUploadingCard ? (
+                             <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Uploader Informationer...
+                             </>
+                          ) : 'Bekræft og Gem Oplysninger'}
+                        </button>
+                    </div>
                 </form>
              </div>
           </div>
