@@ -12,7 +12,9 @@ import {
   Target,
   FileText,
   UserCheck,
-  Briefcase
+  Briefcase,
+  Building2,
+  Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -66,7 +68,7 @@ const PREP_STEPS = [
   }
 ];
 
-export const InternshipPrepTool = () => {
+export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitution?: any }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
 
@@ -76,7 +78,29 @@ export const InternshipPrepTool = () => {
     );
   };
 
-  const progress = Math.round((completedTasks.length / PREP_STEPS.reduce((acc, step) => acc + step.tasks.length, 0)) * 100);
+  const currentSteps = selectedInstitution ? PREP_STEPS.map(step => {
+     if (step.id === 'research' && selectedInstitution.EJER_KODE_TEKST) {
+        return {
+           ...step,
+           tasks: [
+              ...step.tasks,
+              { id: 101, text: `Undersøg hvad det betyder for din retssikkerhed at være på en ${selectedInstitution.EJER_KODE_TEKST.toLowerCase()} institution.` }
+           ]
+        };
+     }
+     if (step.id === 'practical' && selectedInstitution.TLF_NR) {
+        return {
+           ...step,
+           tasks: [
+              ...step.tasks,
+              { id: 102, text: `Ring evt. direkte til ${selectedInstitution.TLF_NR} hvis du er i tvivl om mødested.` }
+           ]
+        };
+     }
+     return step;
+  }) : PREP_STEPS;
+
+  const progress = Math.round((completedTasks.length / currentSteps.reduce((acc, step) => acc + step.tasks.length, 0)) * 100);
 
   return (
     <div className="max-w-6xl mx-auto space-y-12">
@@ -109,7 +133,7 @@ export const InternshipPrepTool = () => {
          </div>
 
          <div className="w-full md:w-5/12 grid grid-cols-2 gap-4 relative z-10">
-            {PREP_STEPS.map((step, idx) => (
+            {currentSteps.map((step, idx) => (
                 <button 
                   key={step.id}
                   onClick={() => setActiveStep(idx)}
@@ -126,10 +150,43 @@ export const InternshipPrepTool = () => {
          </div>
       </header>
 
+      {selectedInstitution && (
+         <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-amber-50 border border-amber-200 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6"
+         >
+            <div className="flex items-center gap-6">
+               <div className="w-16 h-16 bg-amber-400 text-amber-950 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-400/20 shrink-0">
+                  <Building2 className="w-8 h-8" />
+               </div>
+               <div className="space-y-1 text-center md:text-left">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Du forbereder praktik hos:</p>
+                  <h3 className="text-xl font-black text-amber-950 serif">{selectedInstitution.INST_NAVN}</h3>
+                  <p className="text-sm text-amber-800/60 font-medium">
+                     {selectedInstitution.INST_ADR}, {selectedInstitution.POSTNR} {selectedInstitution.POSTDISTRIKT}
+                  </p>
+               </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center justify-center gap-3">
+               <div className="px-5 py-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-amber-200 text-amber-900 font-bold text-xs">
+                  {selectedInstitution.EJER_KODE_TEKST}
+               </div>
+               {selectedInstitution.INST_LEDER && (
+                  <div className="px-5 py-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-amber-200 text-amber-900 font-bold text-xs flex items-center gap-2">
+                     <Users className="w-4 h-4 opacity-40" />
+                     {selectedInstitution.INST_LEDER}
+                  </div>
+               )}
+            </div>
+         </motion.div>
+      )}
+
       {/* Active Step Content */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
          <div className="md:col-span-4 space-y-4">
-            {PREP_STEPS.map((step, idx) => (
+            {currentSteps.map((step, idx) => (
                <button 
                   key={step.id}
                   onClick={() => setActiveStep(idx)}
@@ -164,12 +221,12 @@ export const InternshipPrepTool = () => {
                   className="space-y-8 flex-grow"
                >
                   <div className="space-y-2">
-                     <h3 className="text-2xl sm:text-3xl font-black text-slate-900 serif leading-none">{PREP_STEPS[activeStep].title}</h3>
-                     <p className="text-slate-500 font-medium">{PREP_STEPS[activeStep].description}</p>
+                     <h3 className="text-2xl sm:text-3xl font-black text-slate-900 serif leading-none">{currentSteps[activeStep].title}</h3>
+                     <p className="text-slate-500 font-medium">{currentSteps[activeStep].description}</p>
                   </div>
 
                   <div className="space-y-4 pt-6">
-                     {PREP_STEPS[activeStep].tasks.map((task) => (
+                     {currentSteps[activeStep].tasks.map((task) => (
                         <label 
                            key={task.id}
                            className={`flex items-center gap-5 p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer group ${completedTasks.includes(task.id) 
@@ -208,16 +265,14 @@ export const InternshipPrepTool = () => {
                
                <button 
                   onClick={() => {
-                     if (activeStep < PREP_STEPS.length - 1) {
+                     if (activeStep < currentSteps.length - 1) {
                         setActiveStep(prev => prev + 1);
-                     } else {
-                        // Success vibration or animation could go here
                      }
                   }}
                   className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all
-                    ${activeStep === PREP_STEPS.length - 1 ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-500/20' : 'bg-slate-900 text-white shadow-xl shadow-slate-950/20 hover:bg-rose-900'}`}
+                    ${activeStep === currentSteps.length - 1 ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-500/20' : 'bg-slate-900 text-white shadow-xl shadow-slate-950/20 hover:bg-rose-900'}`}
                >
-                  {activeStep === PREP_STEPS.length - 1 ? (
+                  {activeStep === currentSteps.length - 1 ? (
                     <>Færdig <CheckCircle2 className="w-4 h-4" /></>
                   ) : (
                     <>Næste Trin <ArrowRight className="w-4 h-4" /></>

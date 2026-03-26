@@ -226,7 +226,7 @@ const ReviewSection = ({ institutionId, user, autoScroll }: { institutionId: str
   );
 };
 
-const DetailOverlay = ({ inst, user, onClose }: { inst: any, user: any, onClose: () => void }) => (
+const DetailOverlay = ({ inst, user, onClose, onSetForPrep }: { inst: any, user: any, onClose: () => void, onSetForPrep: (inst: any) => void }) => (
   <motion.div 
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -250,6 +250,16 @@ const DetailOverlay = ({ inst, user, onClose }: { inst: any, user: any, onClose:
           >
             <X className="w-6 h-6" />
           </button>
+
+          <div className="absolute top-8 left-8 z-20">
+             <button 
+                onClick={() => onSetForPrep(inst)}
+                className="flex items-center gap-3 px-6 py-3 bg-amber-400 text-amber-950 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-amber-950/20 hover:bg-white transition-all active:scale-95 group"
+             >
+                <ClipboardCheck className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                Forbered praktik her
+             </button>
+          </div>
 
           <div className="absolute bottom-8 left-12 right-12">
              <div className="flex items-center gap-2 mb-3">
@@ -473,6 +483,7 @@ const InstitutionsPage = () => {
   const [typeFilter, setTypeFilter] = useState('Alle');
   const [isLocating, setIsLocating] = useState(false);
   const [selectedInstitution, setSelectedInstitution] = useState<any>(null);
+  const [selectedForPrep, setSelectedForPrep] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'search' | 'prep'>('search');
   const firestore = useFirestore();
 
@@ -768,13 +779,18 @@ const InstitutionsPage = () => {
               inst={selectedInstitution} 
               user={user} 
               onClose={() => setSelectedInstitution(null)} 
+              onSetForPrep={(inst) => {
+                 setSelectedForPrep(inst);
+                 setActiveTab('prep');
+                 setSelectedInstitution(null);
+              }}
            />
         )}
       </AnimatePresence>
       </>
       ) : (
         <div className="py-24 px-6 relative z-10 bg-[#FDFCF8]">
-           <InternshipPrepTool />
+           <InternshipPrepTool selectedInstitution={selectedForPrep} />
         </div>
       )}
     </div>
