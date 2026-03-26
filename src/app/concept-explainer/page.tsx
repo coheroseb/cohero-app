@@ -185,6 +185,15 @@ function ConceptExplainerPageContent() {
         // Update User Activity
         const batch = writeBatch(firestore);
         const recent = [term, ...(userProfile.recentConcepts || [])].filter((t, i, self) => self.indexOf(t) === i).slice(0, 10);
+        
+        const activitiesCol = collection(firestore, 'userActivities');
+        batch.set(doc(activitiesCol), {
+            userId: user.uid,
+            userName: userProfile?.username || user.displayName || 'Anonym bruger',
+            actionText: `slog begrebet "${term}" op.`,
+            createdAt: serverTimestamp(),
+        });
+
         batch.update(doc(firestore, 'users', user.uid), {
             lastConceptExplainerUsage: serverTimestamp(),
             dailyConceptExplainerCount: increment(1),

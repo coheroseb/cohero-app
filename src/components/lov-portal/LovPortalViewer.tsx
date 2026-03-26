@@ -1483,6 +1483,17 @@ export function LovPortalViewer() {
   const handleAnalyzeParagraph = async (para: any, lawData: LawContentType, paraKey: string) => {
     if (!isPremium) return;
     setIsAnalysingPara(prev => ({ ...prev, [paraKey]: true }));
+    
+    // Record Activity
+    if (user && firestore) {
+        addDoc(collection(firestore, 'userActivities'), {
+            userId: user.uid,
+            userName: userProfile?.username || user.displayName || 'Anonym bruger',
+            actionText: `slog ${para.nummer} i ${lawData.forkortelse || lawData.titel} op.`,
+            createdAt: serverTimestamp(),
+        }).catch(err => console.error("Failed to record activity:", err));
+    }
+
     try {
         const response = await analyzeParagraphAction({ 
             lovTitel: lawData.titel || '', 
@@ -1556,12 +1567,18 @@ export function LovPortalViewer() {
     
     try {
         const result = await semanticLawSearchAction(query, activeLawId || activeReferenceId || undefined, currentDocData || undefined);
+        
+        if (result.error) {
+            toast({ variant: 'destructive', title: "Søgefejl", description: result.message || "Der opstod en uventet fejl." });
+            return;
+        }
+
         setSemanticResult(result.data);
         setSearchQuery(query); // Sync search query for UI visibility
         setSemanticSearchQuery(query); // Sync both
-    } catch (error) {
-        console.error("Semantic search failed:", error);
-        toast({ variant: 'destructive', title: "Søgefejl", description: "Der opstod en fejl under den AI-baserede søgning." });
+    } catch (error: any) {
+        console.error("Semantic search failed call:", error);
+        toast({ variant: 'destructive', title: "Søgefejl", description: "Der opstod en teknisk fejl ved forbindelsen til serveren." });
     } finally {
         setIsSearchingSemantic(false);
     }

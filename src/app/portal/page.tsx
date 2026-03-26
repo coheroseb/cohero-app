@@ -59,7 +59,7 @@ import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { processStripeSession, fetchPoliticalNews, fetchSocialMinistryNews } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit, DocumentData, Timestamp, doc, updateDoc, serverTimestamp, increment, getDoc, setDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, DocumentData, Timestamp, doc, updateDoc, serverTimestamp, increment, getDoc, setDoc, where, addDoc } from 'firebase/firestore';
 import { AssistanceRequest } from '@/ai/flows/types';
 import {
   Tooltip,
@@ -315,23 +315,29 @@ const PortalPageContent: React.FC = () => {
     const { data: globalActivities } = useCollection<DocumentData>(globalActivitiesQuery);
 
     const trendingTerms = useMemo(() => {
-        if (!globalActivities) return ['§ 81', 'Relationskompetence', 'Tavshedspligt', 'VUM 2.0'];
+        if (!globalActivities || globalActivities.length === 0) return ['§ 81', 'Relationskompetence', 'Tavshedspligt', 'VUM 2.0'];
         
-        const terms: string[] = [];
+        const termCounts: Record<string, number> = {};
         const conceptRegex = /slog begrebet "([^"]+)" op/;
         const lawRegex = /slog (§ .+? i .+?) op/;
 
         globalActivities.forEach(act => {
             const text = act.actionText || '';
-            const conceptMatch = text.match(conceptRegex);
-            if (conceptMatch) terms.push(conceptMatch[1]);
+            const match = text.match(conceptRegex) || text.match(lawRegex);
             
-            const lawMatch = text.match(lawRegex);
-            if (lawMatch) terms.push(lawMatch[1]);
+            if (match && match[1]) {
+                const term = match[1];
+                termCounts[term] = (termCounts[term] || 0) + 1;
+            }
         });
 
-        const uniqueTerms = Array.from(new Set(terms)).slice(0, 5);
-        return uniqueTerms.length > 0 ? uniqueTerms : ['§ 81', 'Relationskompetence', 'Tavshedspligt', 'VUM 2.0'];
+        // Convert to array of {term, count}, sort by count desc, and take top 5
+        const sortedTerms = Object.entries(termCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([term]) => term)
+            .slice(0, 5);
+
+        return sortedTerms.length > 0 ? sortedTerms : ['§ 81', 'Relationskompetence', 'Tavshedspligt', 'VUM 2.0'];
     }, [globalActivities]);
 
   useEffect(() => {
@@ -382,6 +388,17 @@ const PortalPageContent: React.FC = () => {
     if (e) e.preventDefault();
     const term = overrideTerm || searchQuery.trim();
     if (term && !isConceptLimitReached) {
+      // Record Activity
+      if (user && firestore) {
+        const isLawTerm = term.includes('§') || term.toLowerCase().includes('lov');
+        addDoc(collection(firestore, 'userActivities'), {
+            userId: user.uid,
+            userName: userProfile?.username || user.displayName || 'Anonym bruger',
+            actionText: isLawTerm ? `slog ${term} op.` : `slog begrebet "${term}" op.`,
+            createdAt: serverTimestamp(),
+        }).catch(err => console.error("Failed to record activity:", err));
+      }
+
       const isLaw = term.includes('§') || 
                     /(\d+)/.test(term) || 
                     term.toLowerCase().includes('lov') || 

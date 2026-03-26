@@ -605,44 +605,56 @@ export async function analyzeStarDataAction(input: Types.AnalyzeStarDataInput): 
 
 export async function analyzeLegalDecisionAction(input: any) { return callFirebaseFlow('analyzeLegalDecisionFlow', input); }
 
-export async function semanticLawSearchAction(query: string, lawId?: string, documentData?: any): Promise<Types.SemanticLawSearchOutput> {
+export async function semanticLawSearchAction(query: string, lawId?: string, documentData?: any): Promise<any> {
     try {
         let context = '';
-        
         console.log(`[SemanticSearch] starting search for query: "${query}", lawId: ${lawId}`);
 
         if (lawId && lawId !== 'reference') {
-            // Scope to specific law
             console.log(`[SemanticSearch] fetching law doc for ${lawId}`);
-            const snapshot = await adminFirestore.collection('laws').doc(lawId).get();
-            if (snapshot.exists) {
-                console.log(`[SemanticSearch] law doc exists, calling getSpecificLawContextFlow`);
-                const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: lawId, ...snapshot.data() } as any);
-                context = fetchRes.data;
-            } else {
-                console.warn(`[SemanticSearch] law doc ${lawId} NOT found in firestore`);
+            try {
+                const snapshot = await adminFirestore.collection('laws').doc(lawId).get();
+                if (snapshot.exists) {
+                    console.log(`[SemanticSearch] law doc exists, calling getSpecificLawContextFlow`);
+                    const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: lawId, ...snapshot.data() } as any);
+                    context = fetchRes.data;
+                } else {
+                    console.warn(`[SemanticSearch] law doc ${lawId} NOT found in firestore`);
+                }
+            } catch (firestoreErr: any) {
+                console.error("[SemanticSearch] Firestore scoped lookup failed, falling back to global:", firestoreErr.message);
+                // We proceed to fallback below
             }
         } else if (lawId === 'reference' && documentData) {
-            // Scope to reference document (which we already have data for)
             context = `[REFERENCE-DOKUMENT: ${documentData.titel}]\n${documentData.rawText}\n\n`;
         }
 
-        // Fallback or global search if no specific context built
         if (!context) {
             console.log(`[SemanticSearch] falling back to global search`);
-            const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: query });
-            context = fetchRes.data;
+            try {
+                const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: query });
+                context = fetchRes.data;
+            } catch (flowErr: any) {
+                console.error("[SemanticSearch] Global context fetch failed:", flowErr.message);
+                return { data: null, error: true, message: "Kunne ikke hente juridisk kontekst for din søgning." };
+            }
         }
         
         console.log(`[SemanticSearch] calling semanticLawSearchFlow`);
         const result = await callFirebaseFlow('semanticLawSearchFlow', { query, legalContext: context });
         return result;
     } catch (error: any) {
-        console.error("CRITICAL ERROR in semanticLawSearchAction:", error);
-        // Log to a file we can definitely read
-        const logMsg = `[${new Date().toISOString()}] Semantic Search Error: ${error.message}\nStack: ${error.stack}\n`;
-        require('fs').appendFileSync(path.join(process.cwd(), 'server-errors.log'), logMsg);
-        throw error;
+        console.error("CRITICAL ERROR in semanticLawSearchAction:", error.message);
+        try {
+            const logMsg = `[${new Date().toISOString()}] Semantic Search Error: ${error.message}\nStack: ${error.stack}\n`;
+            require('fs').appendFileSync(path.join(process.cwd(), 'server-errors.log'), logMsg);
+        } catch(e) {}
+        
+        return { 
+            data: null, 
+            error: true, 
+            message: error.message || 'Der opstod en fejl under søgningen. Prøv igen senere.' 
+        };
     }
 }
 
