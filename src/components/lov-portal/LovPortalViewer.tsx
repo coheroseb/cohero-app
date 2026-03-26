@@ -57,7 +57,6 @@ import {
   Save,
   RotateCcw,
   HelpCircle,
-  Wand2,
   Stethoscope,
   Coins,
   ShieldAlert,
@@ -99,7 +98,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { semanticLawSearchAction } from '@/app/actions';
 import { LiveStatusBadge } from './LiveStatusBadge';
 import LawQuizModal from './LawQuizModal';
 import ReadingGuideModal from './ReadingGuideModal';
@@ -1095,23 +1093,6 @@ export function LovPortalViewer() {
   const [paraAnalysis, setParaAnalysis] = useState<Record<string, ParagraphAnalysisData>>({});
   const [isAnalysingPara, setIsAnalysingPara] = useState<Record<string, boolean>>({});
 
-  // Semantic Search States
-  const [isSemanticMode, setIsSemanticMode] = useState(true);
-  const [semanticSearchQuery, setSemanticSearchQuery] = useState('');
-  const [semanticResult, setSemanticResult] = useState<{ summary: string, relevantLaws: any[] } | null>(null);
-  const [isSearchingSemantic, setIsSearchingSemantic] = useState(false);
-  const [searchProgress, setSearchProgress] = useState(0);
-
-  useEffect(() => {
-    if (isSearchingSemantic) {
-      setSearchProgress(0);
-      const timer = setInterval(() => {
-        setSearchProgress(prev => (prev < 3 ? prev + 1 : prev));
-      }, 3500);
-      return () => clearInterval(timer);
-    }
-  }, [isSearchingSemantic]);
-
   // Sagsindsigt States
   const [timeline, setTimeline] = useState<any[]>([]);
   const [relatedDocs, setRelatedDocs] = useState<any[]>([]);
@@ -1175,10 +1156,10 @@ export function LovPortalViewer() {
         .slice(0, 6);
     }
 
-    if (!searchQuery.trim()) return SEARCH_SUGGESTIONS.slice(0, 5).map(s => s);
+    if (!searchQuery.trim()) return SEARCH_SUGGESTIONS.slice(0, isFreeTier ? 2 : 5).map(s => s);
     return SEARCH_SUGGESTIONS.filter(q => 
       q.toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, 5);
+    ).slice(0, isFreeTier ? 2 : 5);
   }, [searchQuery, currentDocData]);
 
   const loadDocumentContent = useCallback(async (lawId: string, docIdentifier: string, forceXmlUrl?: string) => {
@@ -1551,37 +1532,6 @@ export function LovPortalViewer() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSemanticMode && !(activeLawId || activeReferenceId)) {
-        handleSemanticSearch(e);
-    }
-  };
-
-  const handleSemanticSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = isSemanticMode ? semanticSearchQuery : searchQuery;
-    if (!query.trim() || isSearchingSemantic) return;
-    
-    setIsSearchingSemantic(true);
-    setSemanticResult(null);
-    setViewMode('laws'); 
-    
-    try {
-        const result = await semanticLawSearchAction(query, activeLawId || activeReferenceId || undefined, currentDocData || undefined);
-        
-        if (result.error) {
-            toast({ variant: 'destructive', title: "Søgefejl", description: result.message || "Der opstod en uventet fejl." });
-            return;
-        }
-
-        setSemanticResult(result.data);
-        setSearchQuery(query); // Sync search query for UI visibility
-        setSemanticSearchQuery(query); // Sync both
-    } catch (error: any) {
-        console.error("Semantic search failed call:", error);
-        toast({ variant: 'destructive', title: "Søgefejl", description: "Der opstod en teknisk fejl ved forbindelsen til serveren." });
-    } finally {
-        setIsSearchingSemantic(false);
-    }
   };
 
   const citations = useMemo(() => {
@@ -1929,44 +1879,17 @@ export function LovPortalViewer() {
       <main ref={mainScrollRef} className="flex-1 min-w-0 h-screen overflow-y-auto relative pt-0 custom-scrollbar pb-32 lg:pb-0">
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-0 z-20">
             <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
-                {!(activeLawId || activeReferenceId) && (
-                    <div className="flex bg-amber-950 rounded-2xl p-1 shadow-lg border border-amber-800">
-                        <div className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">
-                            <Wand2 className="w-3 h-3" /> AI Søgning Aktiveret
-                        </div>
-                    </div>
-                )}
                 <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-950 transition-colors" />
                     <input 
                         type="text" 
-                        placeholder={(activeLawId || activeReferenceId) ? `Søg i ${currentDocData?.forkortelse || (lawsConfigs || []).find(l => l.id === activeLawId)?.abbreviation || 'denne lov'}...` : (isSemanticMode ? "Spørg AI'en om jura (f.eks. 'Hvad er reglerne for...') " : "Søg i lovportalen...")}
-                        value={(activeLawId || activeReferenceId) ? searchQuery : (isSemanticMode ? semanticSearchQuery : searchQuery)} 
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            if (activeLawId || activeReferenceId) {
-                                setSearchQuery(val);
-                                setSemanticSearchQuery(val); // Sync just in case they switch, but focus on filter
-                            } else {
-                                if (isSemanticMode) setSemanticSearchQuery(val);
-                                else setSearchQuery(val);
-                            }
-                        }} 
+                        placeholder={(activeLawId || activeReferenceId) ? `Søg i ${currentDocData?.forkortelse || (lawsConfigs || []).find(l => l.id === activeLawId)?.abbreviation || 'denne lov'}...` : "Søg i lovportalen..."}
+                        value={searchQuery} 
+                        onChange={(e) => setSearchQuery(e.target.value)} 
                         onFocus={() => setIsSearchFocused(true)}
                         onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                         className="w-full pl-12 pr-4 py-3 bg-slate-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-amber-950 focus:bg-white transition-all" 
                     />
-                    
-                    {isSemanticMode && !(activeLawId || activeReferenceId) && (
-                        <button 
-                            type="submit"
-                            disabled={isSearchingSemantic || !semanticSearchQuery.trim()}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-4 bg-amber-950 text-amber-400 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                        >
-                            {isSearchingSemantic ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
-                            Søg AI
-                        </button>
-                    )}
                     
                     <AnimatePresence>
                         {isSearchFocused && filteredSuggestions.length > 0 && (
@@ -2060,173 +1983,7 @@ export function LovPortalViewer() {
                 </motion.div>
             )}
             <AnimatePresence mode="wait">
-                {isSearchingSemantic ? (
-                    <motion.div 
-                        key="searching-state"
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="mb-12 bg-white p-6 md:p-24 rounded-[2rem] md:rounded-[4rem] border border-amber-100 shadow-2xl flex flex-col items-center justify-center text-center space-y-12 overflow-hidden relative"
-                    >
-                        <div className="absolute top-0 inset-x-0 h-1 bg-amber-50">
-                            <motion.div 
-                                className="h-full bg-amber-500"
-                                initial={{ width: "0%" }}
-                                animate={{ width: `${(searchProgress + 1) * 25}%` }}
-                                transition={{ duration: 3.5, ease: "linear" }}
-                            />
-                        </div>
-
-                        <div className="relative">
-                            <div className="w-32 h-32 bg-amber-50 rounded-[3rem] flex items-center justify-center text-amber-950">
-                                <Brain className="w-16 h-16 animate-pulse" />
-                            </div>
-                            <div className="absolute -inset-6 border-2 border-dashed border-amber-200 rounded-[4rem] animate-spin-slow opacity-40" />
-                        </div>
-
-                        <div className="max-w-xl mx-auto space-y-10">
-                            <div className="space-y-4">
-                                <h3 className="text-4xl font-bold text-amber-950 serif tracking-tight">AI'en arbejder for dig...</h3>
-                                <p className="text-slate-400 font-medium italic text-lg">Vi finder den præcise jura i realtid.</p>
-                            </div>
-
-                            <div className="grid gap-4 text-left">
-                                {[
-                                    { text: "Analyserer dit spørgsmål...", icon: <Zap className="w-4 h-4" /> },
-                                    { text: "Identificerer relevante love...", icon: <Target className="w-4 h-4" /> },
-                                    { text: "Henter og scraper kildetekster...", icon: <Library className="w-4 h-4" /> },
-                                    { text: "Udarbejder juridisk vurdering...", icon: <ScaleIcon className="w-4 h-4" /> }
-                                ].map((step, i) => (
-                                    <motion.div 
-                                        key={i}
-                                        initial={{ opacity: 0.3, x: -10 }}
-                                        animate={{ 
-                                            opacity: searchProgress >= i ? 1 : 0.3,
-                                            x: searchProgress >= i ? 0 : -10,
-                                            color: searchProgress >= i ? "#0f172a" : "#94a3b8"
-                                        }}
-                                        className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 font-bold text-sm"
-                                    >
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${searchProgress > i ? "bg-emerald-500 text-white" : searchProgress === i ? "bg-amber-950 text-white shadow-lg animate-bounce" : "bg-white text-slate-300"}`}>
-                                            {searchProgress > i ? <CheckCircle2 className="w-5 h-5"/> : step.icon}
-                                        </div>
-                                        {step.text}
-                                        {searchProgress === i && <Loader2 className="w-4 h-4 animate-spin ml-auto text-amber-500" />}
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </div>
-                    </motion.div>
-                ) : (semanticResult && !activeLawId && !activeReferenceId) ? (
-                    <motion.div 
-                        key="search-results"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
-                        className="mb-20 space-y-16"
-                    >
-                        <div className="flex items-center justify-between border-b border-amber-100/50 pb-10">
-                            <div className="flex items-center gap-8">
-                                <div className="w-16 h-16 bg-amber-950 rounded-3xl flex items-center justify-center text-amber-400 shadow-2xl shadow-amber-950/20 rotate-3">
-                                    <Sparkles className="w-8 h-8" />
-                                </div>
-                                <div>
-                                    <h2 className="text-4xl font-black text-amber-950 serif tracking-tight">AI Juridisk Vurdering</h2>
-                                    <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-2 flex items-center gap-2 italic">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
-                                        Resultat baseret på XML-scraping i realtid
-                                    </div>
-                                </div>
-                            </div>
-                            <Button variant="ghost" onClick={() => setSemanticResult(null)} className="rounded-2xl px-8 h-12 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-amber-950 hover:bg-amber-50 transition-all border border-transparent hover:border-amber-100">Ryd analyse</Button>
-                        </div>
-
-                        <div className="grid lg:grid-cols-5 gap-16">
-                            <div className="lg:col-span-3 space-y-12">
-                                <section className="bg-white p-6 md:p-16 rounded-[2rem] md:rounded-[3.5rem] border border-amber-100 shadow-2xl shadow-amber-950/5 relative overflow-hidden group/res">
-                                    <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/res:scale-125 transition-transform duration-1000">
-                                        <Quote className="w-48 h-48" />
-                                    </div>
-                                    <div className="flex items-center gap-4 text-amber-700/60 mb-8 relative z-10">
-                                        <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700"><Bookmark className="w-4 h-4" /></div>
-                                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Resumé</span>
-                                    </div>
-                                    <div className="prose prose-slate prose-amber max-w-none relative z-10">
-                                        <p className="text-xl md:text-2xl text-amber-950 font-medium leading-relaxed font-serif italic">
-                                            "{semanticResult.summary}"
-                                        </p>
-                                    </div>
-                                </section>
-
-                                <div className="space-y-6">
-                                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-4">Anvendte Lovhjemler</h3>
-                                    <div className="grid gap-6">
-                                        {semanticResult.relevantLaws.map((law: any) => (
-                                            <div 
-                                                key={law.id} 
-                                                onClick={() => router.push(`/lov-portal/view/${law.id}`)}
-                                                className="bg-white p-8 rounded-[2.5rem] border border-amber-100 hover:border-amber-950 transition-all shadow-sm hover:shadow-xl cursor-pointer group/law"
-                                            >
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <h4 className="text-xl font-bold text-amber-950 serif group-hover/law:text-amber-800 transition-colors">{law.title}</h4>
-                                                    <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-950 group-hover/law:bg-amber-950 group-hover/law:text-white transition-all shadow-sm">
-                                                        <ArrowRight className="w-5 h-5" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-wrap gap-3 mb-6">
-                                                    {law.paragraphs.map((p: string, j: number) => (
-                                                        <span key={j} className="px-3 py-1 bg-amber-950 text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg">{p}</span>
-                                                    ))}
-                                                </div>
-                                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center gap-2">
-                                                        <Info className="w-3 h-3" /> Relevans
-                                                    </p>
-                                                    <p className="text-sm text-slate-600 leading-relaxed italic">{law.relevance}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <aside className="space-y-8">
-                                <div className="bg-amber-950 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
-                                     <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none rotate-12">
-                                         <Gavel className="w-20 h-20" />
-                                     </div>
-                                     <h3 className="text-lg font-bold serif mb-6 tracking-tight">Om denne søgning</h3>
-                                     <p className="text-amber-100/60 text-sm leading-relaxed mb-8 italic">
-                                         AI'en har her gennemgået de specifikke XML-kilder for samtlige love i din portefølje for at uddrage de mest præcise regler for din sag.
-                                     </p>
-                                     <div className="space-y-4">
-                                         <div className="flex items-center gap-4">
-                                             <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400"><CheckCircle2 className="w-4 h-4"/></div>
-                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">Scrapet XML</span>
-                                         </div>
-                                         <div className="flex items-center gap-4">
-                                             <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400"><ScaleIcon className="w-4 h-4"/></div>
-                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">Juridisk Valideret</span>
-                                         </div>
-                                         <div className="flex items-center gap-4">
-                                             <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400"><Navigation className="w-4 h-4"/></div>
-                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">Styrende Præcedens</span>
-                                         </div>
-                                     </div>
-                                </div>
-
-                                <div className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm">
-                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Mangler der noget?</h3>
-                                    <p className="text-xs text-slate-500 leading-relaxed italic mb-6">
-                                        Forsøg at være mere specifik i dit spørgsmål, eller søg direkte i en specifik lov for flere detaljer.
-                                    </p>
-                                    <Button variant="outline" onClick={() => setIsSemanticMode(false)} className="w-full rounded-xl h-12">Tilbage til nøgleord</Button>
-                                </div>
-                            </aside>
-                        </div>
-                    </motion.div>
-                ) : (
-                  lawsLoading || isLoadingDoc ? (
+                {lawsLoading || isLoadingDoc ? (
                     <motion.div key="loading-main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-96 flex flex-col items-center justify-center space-y-6"><Loader2 className="w-10 h-10 animate-spin text-amber-200" /><p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Indlæser indhold</p></motion.div>
                 ) : viewMode === 'reforms' ? (
                     <ReformOracleView 
@@ -2423,74 +2180,7 @@ export function LovPortalViewer() {
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-16 pb-20">
                         
 
-                        {/* 1. SEMANTIC SEARCH PROMINENT START */}
-                        <section className="space-y-12">
-                            <div className="bg-white/40 backdrop-blur-3xl p-6 md:p-24 rounded-[2rem] md:rounded-[4rem] border border-amber-100 shadow-2xl relative overflow-hidden text-center">
-                                <div className="absolute top-0 right-0 p-20 opacity-[0.03] pointer-events-none -rotate-12 translate-x-32 -translate-y-32 scale-150">
-                                    <Brain className="w-96 h-96" />
-                                </div>
-                                
-                                <div className="max-w-3xl mx-auto space-y-16 relative z-10">
-                                    <div className="space-y-6">
-                                        <div className="inline-flex items-center gap-2.5 px-6 py-2 bg-amber-950 text-amber-400 rounded-full text-[10px] font-black uppercase tracking-[0.25em] shadow-xl shadow-amber-900/40">
-                                            <Sparkles className="w-4 h-4 animate-pulse" /> AI-DREVEN JURIDISK SØGNING
-                                        </div>
-                                        <h2 className="text-4xl md:text-6xl font-black text-amber-950 serif tracking-tighter leading-tight italic">Hvad leder du efter svar på?</h2>
-                                        <p className="text-slate-500 text-xl font-medium max-w-xl mx-auto leading-relaxed">Vi gennemsøger alle retsakter, vejledninger og etiske grundlag for dig på få sekunder.</p>
-                                    </div>
-
-                                    <form 
-                                        onSubmit={handleSemanticSearch}
-                                        className="relative group max-w-2xl mx-auto scale-105"
-                                    >
-                                        <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-7 h-7 text-slate-300 group-focus-within:text-amber-600 transition-all duration-500" />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Spørg om regler, frister eller dine rettigheder..."
-                                            value={semanticSearchQuery}
-                                            onChange={(e) => setSemanticSearchQuery(e.target.value)}
-                                            className="w-full pl-20 pr-48 py-8 bg-white border-2 border-amber-100 rounded-[3rem] text-xl focus:ring-8 focus:ring-amber-950/5 focus:bg-white focus:border-amber-950 transition-all shadow-2xl shadow-amber-900/10 placeholder:text-slate-300 placeholder:italic"
-                                        />
-                                        <button 
-                                            type="submit"
-                                            disabled={isSearchingSemantic || !semanticSearchQuery.trim()}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 h-16 px-10 bg-amber-950 text-amber-400 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-amber-950/40 flex items-center gap-3 group/btn"
-                                        >
-                                            {isSearchingSemantic ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 group-hover/btn:scale-125 transition-transform" />}
-                                            Spørg AI
-                                        </button>
-                                    </form>
-
-                                    <div className="space-y-8">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 flex items-center justify-center gap-4">
-                                            <span className="h-px w-10 bg-slate-200"></span>
-                                            Populære forespørgsler
-                                            <span className="h-px w-10 bg-slate-200"></span>
-                                        </p>
-                                        <div className="flex flex-wrap items-center justify-center gap-3">
-                                            {SEARCH_SUGGESTIONS.slice(0, 4).map((suggestion, i) => (
-                                                <button 
-                                                    key={i}
-                                                    onClick={() => {
-                                                        setSemanticSearchQuery(suggestion);
-                                                        const event = { preventDefault: () => {} } as React.FormEvent;
-                                                        handleSemanticSearch(event);
-                                                    }}
-                                                    className="px-6 py-4 bg-white/60 backdrop-blur-md border border-amber-100 rounded-2xl text-[11px] font-bold text-amber-900/60 hover:border-amber-950 hover:text-amber-950 hover:bg-white hover:scale-105 transition-all shadow-sm hover:shadow-xl hover:shadow-amber-900/5 flex items-center gap-3"
-                                                >
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
-                                                    {suggestion}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-
-
-                        <div className="pt-24 border-t border-slate-100">
+                        <div className="pt-8 md:pt-16">
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
                                 <div className="space-y-4">
                                     <h2 className="text-4xl font-bold text-amber-950 serif tracking-tight">Komplet Lovsamling</h2>
@@ -2592,38 +2282,6 @@ export function LovPortalViewer() {
                         </div>
                         {isScrolled && <div className="h-24 hidden md:block" />}
 
-                        {semanticResult && (
-                            <motion.div 
-                                id="semantic-result-area"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-amber-950 p-6 md:p-12 rounded-[2rem] md:rounded-[3rem] text-white shadow-2xl relative overflow-hidden mb-12"
-                            >
-                                <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 pointer-events-none">
-                                    <Sparkles className="w-24 h-24" />
-                                </div>
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-amber-400">
-                                        <Brain className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold serif">AI Analyse af din søgning</h3>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-400/60">Baseret på denne lov og dens vejledninger</p>
-                                    </div>
-                                    <button 
-                                        onClick={() => setSemanticResult(null)} 
-                                        className="ml-auto p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                </div>
-                                <div className="prose prose-invert max-w-none">
-                                    <p className="text-lg md:text-xl font-medium leading-relaxed font-serif italic text-amber-50">
-                                        "{semanticResult.summary}"
-                                    </p>
-                                </div>
-                            </motion.div>
-                        )}
 
                         <div className={`space-y-16 pb-32 transition-all duration-500 ${isFocusMode ? 'max-w-full' : 'max-w-4xl mx-auto'}`}>
                             {filteredDocData?.kapitler.map((chapter, cIdx) => (
@@ -2782,7 +2440,6 @@ export function LovPortalViewer() {
                             ))}
                         </div>
                     </motion.div>
-                  )
                 )}
             </AnimatePresence>
         </div>
@@ -2822,8 +2479,12 @@ export function LovPortalViewer() {
                       ) : (
                           <div className="space-y-10 pb-10">
                               <div className="space-y-6">
-                                  <div className="flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 hover:border-amber-950 transition-all shadow-sm" onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}>
-                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950"><Clock className="w-5 h-5 text-amber-700" /> Tidslinje</div>
+                               <div className={`flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 transition-all shadow-sm ${isFreeTier ? 'opacity-50 cursor-not-allowed' : 'hover:border-amber-950'}`} onClick={() => !isFreeTier && setIsTimelineExpanded(!isTimelineExpanded)}>
+                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950">
+                                        <Clock className="w-5 h-5 text-amber-700" /> 
+                                        Tidslinje 
+                                        {isFreeTier && <Lock className="w-3 h-3 text-amber-500 ml-2" />}
+                                      </div>
                                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${isTimelineExpanded ? 'bg-amber-950 text-white rotate-180' : 'bg-amber-50 text-amber-950'}`}>
                                         <ChevronDown className="h-4 w-4" />
                                       </div>
@@ -2842,8 +2503,12 @@ export function LovPortalViewer() {
                               </div>
                               
                               <div className="space-y-6">
-                                  <div className="flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 hover:border-emerald-600 transition-all shadow-sm" onClick={() => setIsRetsakterExpanded(!isRetsakterExpanded)}>
-                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950"><Library className="w-5 h-5 text-emerald-700" /> Relaterede Retsakter</div>
+                                  <div className={`flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 transition-all shadow-sm ${isFreeTier ? 'opacity-50 cursor-not-allowed' : 'hover:border-emerald-600'}`} onClick={() => !isFreeTier && setIsRetsakterExpanded(!isRetsakterExpanded)}>
+                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950">
+                                        <Library className="w-5 h-5 text-emerald-700" /> 
+                                        Relaterede Retsakter
+                                        {isFreeTier && <Lock className="w-3 h-3 text-amber-500 ml-2" />}
+                                      </div>
                                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${isRetsakterExpanded ? 'bg-emerald-700 text-white rotate-180' : 'bg-emerald-50 text-emerald-700'}`}>
                                         <ChevronDown className="h-4 w-4" />
                                       </div>
@@ -2865,8 +2530,12 @@ export function LovPortalViewer() {
                               </div>
 
                               <div className="space-y-6">
-                                  <div className="flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 hover:border-blue-700 transition-all shadow-sm" onClick={() => setIsAfgørelserExpanded(!isAfgørelserExpanded)}>
-                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950"><Gavel className="w-5 h-5 text-blue-700" /> Afgørelser & Praksis</div>
+                                  <div className={`flex items-center justify-between cursor-pointer group/header bg-white/60 backdrop-blur-md p-5 rounded-3xl border border-amber-100 transition-all shadow-sm ${isFreeTier ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-700'}`} onClick={() => !isFreeTier && setIsAfgørelserExpanded(!isAfgørelserExpanded)}>
+                                      <div className="flex items-center gap-4 font-black text-xs uppercase tracking-widest text-amber-950">
+                                        <Gavel className="w-5 h-5 text-blue-700" /> 
+                                        Afgørelser & Praksis
+                                        {isFreeTier && <Lock className="w-3 h-3 text-amber-500 ml-2" />}
+                                      </div>
                                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${isAfgørelserExpanded ? 'bg-blue-700 text-white rotate-180' : 'bg-blue-50 text-blue-700'}`}>
                                         <ChevronDown className="h-4 w-4" />
                                       </div>

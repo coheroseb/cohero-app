@@ -253,31 +253,31 @@ const PortalPageContent: React.FC = () => {
       return {
           concepts: { 
               used: getDailyCount(userProfile?.lastConceptExplainerUsage, userProfile?.dailyConceptExplainerCount), 
-              total: isFreeTier ? 3 : Infinity 
+              total: isFreeTier ? 1 : Infinity 
           },
           cases: { 
               used: getDailyCount(userProfile?.lastCaseTrainerUsage, userProfile?.dailyCaseTrainerCount), 
-              total: isFreeTier ? 3 : Infinity 
+              total: isFreeTier ? 1 : Infinity 
           },
           journal: { 
               used: getDailyCount(userProfile?.lastJournalTrainerUsage, userProfile?.dailyJournalTrainerCount), 
-              total: isFreeTier ? 1 : Infinity 
+              total: isFreeTier ? 0 : Infinity 
           },
           architect: { 
               used: getMonthlyCount(userProfile?.lastExamArchitectUsage, userProfile?.monthlyExamArchitectCount), 
-              total: isFreeTier ? 2 : Infinity 
+              total: isFreeTier ? 1 : Infinity 
           },
           oralExam: {
               used: getDailyCount(userProfile?.lastOralExamUsage, userProfile?.dailyOralExamCount),
-              total: isFreeTier ? 2 : Infinity
+              total: isFreeTier ? 1 : Infinity
           },
           opinion: {
               used: getMonthlyCount(userProfile?.lastSecondOpinionUsage, userProfile?.monthlySecondOpinionCount),
-              total: isFreeTier ? 1 : 10 // Group Pro and Kollega share the same 1/mo limit for second opinion? No, user said Group Pro is like Kollega. Kollega+ has more. Let's make it more consistent.
+              total: isFreeTier ? 0 : 10
           },
           star: {
               used: getDailyCount(userProfile?.lastStarAnalysisUsage, userProfile?.dailyStarAnalysisCount),
-              total: isFreeTier ? 3 : Infinity
+              total: isFreeTier ? 1 : Infinity
           }
       };
   }, [userProfile]);

@@ -286,7 +286,7 @@ const FolketingetPageContent: React.FC = () => {
             return;
         }
 
-        const limitVal = isPremiumUser ? 20 : 5;
+        const limitVal = isPremiumUser ? 20 : 2;
         if (!isPremiumUser && loadMore) {
             setHasMore(false);
             setIsLoadingMore(false);
