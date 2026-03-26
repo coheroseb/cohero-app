@@ -1,0 +1,22 @@
+{
+  "name": "Cohéro Project Group",
+  "short_name": "Project Group",
+  "description": "Professionalisér jeres studiegruppe med Cohéro",
+  "start_url": "/rum/groups",
+  "display": "standalone",
+  "background_color": "#FDFCF8",
+  "theme_color": "#451a03",
+  "icons": [
+    {
+      "src": "/App_Icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/App_Icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "placeholderImages": [
+    {
+      "id": "1",
+      "description": "Abstract flowing lines",
+      "imageUrl": "https://images.unsplash.com/photo-1635189540552-4289d0f0971d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMGZsb3d8ZW58MHx8fHwxNzY4NjY3NjI5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract flow"
+    },
+    {
+      "id": "2",
+      "description": "Grid of content cards",
+      "imageUrl": "https://images.unsplash.com/photo-1767327837618-e5007ecb2ae8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb250ZW50JTIwZ3JpZHxlbnwwfHx8fDE3Njg3Mjg4NzJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "content grid"
+    },
+    {
+      "id": "3",
+      "description": "People interacting with social media",
+      "imageUrl": "https://images.unsplash.com/photo-1724862936518-ae7fcfc052c1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzb2NpYWwlMjBtZWRpYXxlbnwwfHx8fDE3Njg2ODUwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "social media"
+    },
+    {
+      "id": "4",
+      "description": "Magnifying glass over data",
+      "imageUrl": "https://images.unsplash.com/photo-1743796055664-3473eedab36e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkYXRhJTIwc2VhcmNofGVufDB8fHx8MTc2ODY1OTA1MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "data search"
+    },
+    {
+      "id": "5",
+      "description": "Futuristic AI brain graphic",
+      "imageUrl": "https://images.unsplash.com/photo-1680783954745-3249be59e527?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlfGVufDB8fHx8MTc2ODY5NTM4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "artificial intelligence"
+    },
+    {
+      "id": "6",
+      "description": "A vibrant and colorful abstract painting",
+      "imageUrl": "https://images.unsplash.com/photo-1604871000636-074fa5117945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjBhcnR8ZW58MHx8fHwxNzY4NjUzMDUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract art"
+    },
+    {
+      "id": "7",
+      "description": "A modern building with clean lines",
+      "imageUrl": "https://images.unsplash.com/photo-1543071293-d91175a68672?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtb2Rlcm4lMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzY4NzEwMDUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern architecture"
+    },
+    {
+      "id": "8",
+      "description": "A peaceful landscape with mountains and a lake",
+      "imageUrl": "https://images.unsplash.com/photo-1611657291636-c141ee8cf7ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxuYXR1cmUlMjBsYW5kc2NhcGV8ZW58MHx8fHwxNzY4NjYzMzQ2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "nature landscape"
+    },
+    {
+      "id": "9",
+      "description": "A bustling cityscape at night",
+      "imageUrl": "https://images.unsplash.com/photo-1588312744377-2adfb7b8578a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjaXR5JTIwbmlnaHR8ZW58MHx8fHwxNzY4NjM3OTQwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "city night"
+    },
+    {
+      "id": "10",
+      "description": "A person working on a laptop in a cafe",
+      "imageUrl": "https://images.unsplash.com/photo-1616531770192-6eaea74c2456?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyZW1vdGUlMjB3b3JrfGVufDB8fHx8MTc2ODY3MzU1OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "remote work"
+    },
+    {
+      "id": "11",
+      "description": "Team Cohéro - Nanna og Julie",
+      "imageUrl": "/nan_jul.jpg",
+      "imageHint": "social workers"
+    }
+  ]
+}

@@ -232,6 +232,7 @@ const Navbar: React.FC<NavbarProps> = ({
       {
         title: "Viden",
         items: [
+          { title: "Lovportal", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
           { title: "Begrebsguide", path: "/concept-explainer", icon: <Wand2 className="w-5 h-5" /> },
           { title: "Folketinget Direkte", path: "/folketinget", icon: <Building className="w-5 h-5" /> },
           { title: "VIVE Indsigt", path: "/vive-indsigt", icon: <BookCopy className="w-5 h-5" /> },
@@ -345,6 +346,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     </NavDropdown>
 
                     <NavDropdown title="Viden" icon={<BookOpen className="w-4 h-4 text-slate-400"/>}>
+                    <NavDropdownLink href="/lov-portal" icon={<Scale className="w-4 h-4"/>}>Lovportal</NavDropdownLink>
                     <NavDropdownLink href="/concept-explainer" icon={<Wand2 className="w-4 h-4" />}>Begrebsguide</NavDropdownLink>
                     <NavDropdownLink href="/folketinget" icon={<Building className="w-4 h-4" />}>Folketinget</NavDropdownLink>
                     <NavDropdownLink href="/vive-indsigt" icon={<BookCopy className="w-4 h-4"/>}>VIVE Indsigt</NavDropdownLink>
@@ -366,6 +368,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
                 {userProfile?.isQualified && (
                     <NavDropdown title="Viden" icon={<BookOpen className="w-4 h-4 text-slate-400"/>}>
+                        <NavDropdownLink href="/lov-portal" icon={<Scale className="w-4 h-4"/>}>Lovportal</NavDropdownLink>
                         <NavDropdownLink href="/folketinget" icon={<Building className="w-4 h-4" />}>Folketinget</NavDropdownLink>
                     </NavDropdown>
                 )}

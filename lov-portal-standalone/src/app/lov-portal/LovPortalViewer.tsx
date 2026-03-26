@@ -1,1 +1,0 @@
-export { LovPortalViewer as default } from '@/components/lov-portal/LovPortalViewer';

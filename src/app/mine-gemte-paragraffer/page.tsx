@@ -38,7 +38,7 @@ import { collection, query, orderBy, doc, deleteDoc, onSnapshot, addDoc, serverT
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LiveStatusBadge } from '@/components/LiveStatusBadge';
+import { LiveStatusBadge } from '@/components/lov-portal/LiveStatusBadge';
 
 interface SavedParagraph {
   id: string;

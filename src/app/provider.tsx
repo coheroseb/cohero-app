@@ -86,6 +86,7 @@ const MobileTabNavigation = () => {
     const mainTabs = [
         { label: 'Hjem', icon: Home, path: '/portal' },
         { label: 'Værktøjer', icon: Compass, path: '/pensum' },
+        { label: 'Jura', icon: BookOpen, path: '/lov-portal' },
         { label: 'Grupper', icon: MessageSquare, path: '/rum/groups' },
         { label: 'Profil', icon: UserIcon, path: '/settings' },
     ];
@@ -137,7 +138,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [mounted, setMounted] = useState(false);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
   const isRaadgivning = useMemo(() => pathname?.startsWith('/raadgivning'), [pathname]);
-  const isChat = useMemo(() => pathname === '/chat', [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -339,6 +339,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
 
   const pageBackground = useMemo(() => {
+    if (pathname?.includes('/lov-portal')) return 'bg-[#F9F7F2]';
     if (pathname?.includes('/rum/groups')) return 'bg-[#F8FAFC]';
     if (pathname?.includes('/memento') || pathname?.includes('/case-trainer')) return 'bg-[#FFFBF5]';
     return 'bg-white';
@@ -352,14 +353,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     <AppContext.Provider
       value={contextValue}
     >
-      <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''} ${isChat ? 'overflow-hidden h-[100dvh]' : ''}`}>
+      <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
         {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
             <Navbar onAuth={() => openAuthPage()} user={user} userProfile={userProfile} onLogout={handleLogout} />
           </>
         )}
-        <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isChat) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'}`}>
+        <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'}`}>
             {/* Soft top gradient to blend with navbar when scrolling */}
             {!isNativeApp && !isStandaloneGroups && !isRaadgivning && (
                 <div className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-inherit to-transparent pointer-events-none z-10`} />
@@ -374,7 +375,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isChat && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && <Footer />}
         
         {mounted && isNativeApp && user && <MobileTabNavigation />}
 
