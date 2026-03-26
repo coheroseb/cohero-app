@@ -14,9 +14,12 @@ import {
   UserCheck,
   Briefcase,
   Building2,
-  Users
+  Users,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LAW_METADATA } from '@/lib/law-metadata';
+import Link from 'next/link';
 
 const PREP_STEPS = [
   {
@@ -250,6 +253,42 @@ export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitutio
                         </label>
                      ))}
                   </div>
+
+                  {currentSteps[activeStep].id === 'law' && (
+                     <div className="mt-12 space-y-6">
+                        <div className="flex items-center gap-3">
+                           <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                              <ShieldCheck className="w-4 h-4" />
+                           </div>
+                           <h4 className="text-sm font-black uppercase tracking-widest text-slate-900">Anbefalede Love fra Lovportalen</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           {Object.values(LAW_METADATA).map((law) => {
+                              const isRelevant = selectedInstitution?.INST_NAVN?.toLowerCase().includes('børn') || 
+                                                selectedInstitution?.inst_type_2_tekst?.toLowerCase().includes('børn') ||
+                                                law.id === 'forvaltningsloven' || law.id === 'retssikkerhedsloven';
+                              
+                              return (
+                                 <Link 
+                                    key={law.id}
+                                    href={`/lov-portal`}
+                                    className={`p-6 rounded-3xl border transition-all group ${isRelevant ? 'bg-amber-50/50 border-amber-200 shadow-lg shadow-amber-900/5' : 'bg-white border-slate-100 hover:border-slate-200'}`}
+                                 >
+                                    <div className="flex items-start justify-between mb-3">
+                                       <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">{law.id.replace('-', ' ')}</span>
+                                       {isRelevant && <Sparkles className="w-3.5 h-3.5 text-amber-500" />}
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-900 leading-tight mb-2 group-hover:text-amber-700">{law.description}</p>
+                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-900">
+                                       Gå til portal <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                                    </div>
+                                 </Link>
+                              );
+                           })}
+                        </div>
+                     </div>
+                  )}
                </motion.div>
             </AnimatePresence>
 
