@@ -77,7 +77,7 @@ const UpgradePageContent: React.FC = () => {
   const handleSubscription = async (priceId: string | undefined) => {
     if (!priceId) {
         console.error('Subscription error: Price ID is missing. Current config:', { PRICE_IDS });
-        setError('Pris-ID er ikke tilgængeligt. Prøv venligst igen senere.');
+        setError('(v2) Pris-ID er ikke tilgængeligt. Prøv venligst igen senere.');
         return;
     }
     if (!user || !userProfile || !firestore) {
