@@ -32,6 +32,13 @@ const stripePromise = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_S
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) 
   : Promise.resolve(null);
 
+// Price IDs with hardcoded fallbacks to ensure the UI always works even if build environment varies
+const PRICE_IDS = {
+  PLUS: process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID || 'price_1SvHSKPzEHK36eTSIFYtGJxD',
+  SEMESTER: process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID || 'price_1SvHTOPzEHK36eTSoiTu8m3C',
+  PLUS_PLUS: process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || 'price_1SvHUKPzEHK36eTSO6fRLHli',
+};
+
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
@@ -61,6 +68,7 @@ const UpgradePageContent: React.FC = () => {
 
   const handleSubscription = async (priceId: string | undefined) => {
     if (!priceId) {
+        console.error('Subscription error: Price ID is missing. Current config:', { PRICE_IDS });
         setError('Pris-ID er ikke tilgængeligt. Prøv venligst igen senere.');
         return;
     }
@@ -270,7 +278,7 @@ const UpgradePageContent: React.FC = () => {
               <div className="absolute -inset-1 bg-gradient-to-t from-amber-400/50 to-amber-200/50 rounded-[3rem] blur-lg opacity-40 group-hover:opacity-70 transition duration-1000"></div>
               
               <div 
-                  onClick={() => handleSubscription(process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID)}
+                  onClick={() => handleSubscription(PRICE_IDS.PLUS)}
                   className="absolute inset-0 bg-slate-900 rounded-[2.5rem] p-8 lg:p-10 shadow-2xl border border-slate-700/50 flex flex-col cursor-pointer overflow-hidden transition-transform group-hover:-translate-y-2 duration-500"
               >
                   <div className="absolute -right-8 -top-8 text-slate-800 group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
@@ -320,7 +328,7 @@ const UpgradePageContent: React.FC = () => {
           {/* Semesteret (Pack) */}
           <motion.div 
             variants={fadeIn}
-            onClick={() => handleSubscription(process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID)}
+            onClick={() => handleSubscription(PRICE_IDS.SEMESTER)}
             className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 lg:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all flex flex-col h-[600px] relative overflow-hidden group cursor-pointer hover:-translate-y-2 duration-500"
           >
              <div className="absolute top-6 right-8 bg-slate-900 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
@@ -364,7 +372,7 @@ const UpgradePageContent: React.FC = () => {
           {/* Kollega++ (Coach) */}
           <motion.div 
             variants={fadeIn}
-            onClick={() => handleSubscription(process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID)}
+            onClick={() => handleSubscription(PRICE_IDS.PLUS_PLUS)}
             className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 lg:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-all flex flex-col h-[600px] relative overflow-hidden group cursor-pointer hover:-translate-y-2 duration-500"
           >
              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-400 to-indigo-500"></div>
