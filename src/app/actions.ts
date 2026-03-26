@@ -527,6 +527,9 @@ export async function getFTSagMetadataAction(input: { sagId: number, title: stri
 
 
 export async function oralExamAnalysisAction(input: any) { return callFirebaseFlow('oralExamAnalysisFlow', input); }
+export async function unifiedChatAction(input: Types.UnifiedChatInput): Promise<Types.UnifiedChatOutput> { 
+    return callFirebaseFlow('unifiedChatFlow', input); 
+}
 
 
 

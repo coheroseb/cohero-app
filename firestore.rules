@@ -148,7 +148,8 @@ service cloud.firestore {
     match /reforms/{reformId} { allow read: if isSignedIn(); }
     match /teamMembers/{memberId} { allow read: if true; }
     match /highlightedSager/{sagId} { allow read: if isSignedIn(); }
-    match /pageViews/{viewId} { allow create: if isOwner(request.resource.data.userId); }
+    match /pageViews/{viewId} { allow create: if true; }
+    match /stats/{document=**} { allow read, write: if isSignedIn(); }
 
     match /qr_tables/{tableId} {
         allow read: if true;
@@ -192,6 +193,10 @@ service cloud.firestore {
       match /quizResults/{resultId} { allow read, write: if isOwner(userId); }
       match /notifications/{notificationId} { allow read, write: if isOwner(userId); }
       match /viveAnalyses/{analysisId} { allow read, write: if isOwner(userId); }
+      match /conversations/{conversationId} { 
+        allow read, write: if isOwner(userId); 
+        match /messages/{messageId} { allow read, write: if isOwner(userId); }
+      }
 
     }
     match /site_config/chat {

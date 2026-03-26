@@ -1,115 +1,176 @@
-import type { Metadata } from 'next';
-import React from 'react';
-import { Scale, BrainCircuit, Shield, UserCheck, CheckSquare, AlertCircle } from 'lucide-react';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Etik og Faglighed',
-  description: 'Forstå de etiske principper bag Cohéro. Lær hvordan du bruger AI som et redskab til at styrke din egen faglige dømmekraft og dit ansvar som kommende socialrådgiver.',
-};
+import React from 'react';
+import { 
+    Scale, 
+    BrainCircuit, 
+    Shield, 
+    UserCheck, 
+    CheckSquare, 
+    AlertCircle, 
+    ArrowLeft,
+    Zap,
+    Quote,
+    CheckCircle2,
+    Lock
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+
+const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+        {children}
+    </motion.div>
+);
+
+const EthicsCard = ({ icon: Icon, title, children, delay }: { icon: any, title: string, children: React.ReactNode, delay: number }) => (
+    <Reveal delay={delay}>
+        <div className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-900/5 hover:-translate-y-1 transition-all">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                <Icon className="w-7 h-7" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 mb-4 tracking-tight uppercase tracking-widest text-[13px]">{title}</h2>
+            <div className="space-y-4 text-slate-600 leading-relaxed font-medium">
+                {children}
+            </div>
+        </div>
+    </Reveal>
+);
 
 export default function EthicsPage() {
-  return (
-    <div className="bg-[#FDFCF8] min-h-screen">
-      <header className="bg-white border-b border-amber-100/50">
-        <div className="max-w-7xl mx-auto py-8 px-4 md:px-8">
-           <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
-            <Scale className="w-8 h-8" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-amber-950 serif mb-3">
-            Etik & Faglighed: Brug AI med Omtanke
-          </h1>
-          <p className="text-base text-slate-500 max-w-3xl">
-            Som kommende socialrådgiver er din dømmekraft dit vigtigste redskab. Cohéro er designet til at skærpe den – ikke erstatte den. Her er principperne for fagligt forsvarlig brug af vores platform.
-          </p>
+    return (
+        <div className="bg-[#fafafa] min-h-screen selection:bg-amber-500/10 selection:text-amber-600">
+            {/* HEADER */}
+            <header className="relative pt-32 pb-20 px-6 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full -z-10">
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-100/30 blur-[120px] rounded-full" />
+                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-rose-50/30 blur-[120px] rounded-full" />
+                </div>
+
+                <div className="max-w-4xl mx-auto text-center space-y-8">
+                    <Reveal>
+                        <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all mb-8">
+                            <ArrowLeft className="w-3 h-3" /> Tilbage til forsiden
+                        </Link>
+                    </Reveal>
+                    
+                    <Reveal delay={0.1}>
+                        <div className="flex justify-center mb-6">
+                            <div className="w-20 h-20 bg-amber-900 text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-amber-900/20">
+                                <Scale className="w-10 h-10" />
+                            </div>
+                        </div>
+                        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-950 tracking-[-0.03em] serif">
+                            Etik & Faglighed: <br /> <span className="text-amber-600 italic">Brug AI med Omtanke</span>
+                        </h1>
+                        <p className="max-w-2xl mx-auto text-xl text-slate-500 font-medium leading-relaxed mt-10">
+                            Som pædagog- eller socialrådgiverstuderende er din dømmekraft dit vigtigste redskab. Cohéro er designet til at skærpe den – ikke erstatte den.
+                        </p>
+                    </Reveal>
+                </div>
+            </header>
+
+            <main className="max-w-6xl mx-auto px-6 pb-40">
+                <div className="grid md:grid-cols-2 gap-8">
+                    
+                    <EthicsCard icon={BrainCircuit} title="AI er en Assistent, ikke et Facit" delay={0.2}>
+                        <p>
+                            Betragt Cohéros AI-værktøjer som en avanceret lommeregner for fagligt arbejde. Den kan udføre komplekse analyser og finde mønstre i lovtekster, men den kan ikke udøve et <span className="text-slate-900 font-bold">fagligt skøn</span>.
+                        </p>
+                        <p>
+                            Et fagligt skøn kræver empati og situationsfornemmelse – alt det, der adskiller dig fra en algoritme. AI'ens output er derfor altid et forslag, aldrig et facit.
+                        </p>
+                        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex gap-4 mt-6">
+                            <Quote className="w-5 h-5 text-amber-500 shrink-0" />
+                            <p className="text-xs font-bold text-slate-500 italic uppercase tracking-wider leading-relaxed">
+                                Brug AI-feedback til at opdage blinde pletter i din argumentation – men lad aldrig AI'en tænke for dig.
+                            </p>
+                        </div>
+                    </EthicsCard>
+
+                    <EthicsCard icon={UserCheck} title="Dit Personlige Ansvar" delay={0.3}>
+                        <p>
+                            Ethvert ord, du afleverer i en opgave, og enhver beslutning, du træffer i en case, er dit ansvar. Når du anvender output fra Cohéro, er det din opgave at validere, redigere og fagligt begrunde det.
+                        </p>
+                        <p>
+                            Spørg altid dig selv: <span className="italic">"Hvordan ville jeg forsvare denne analyse over for en borger eller en vejleder med mine egne ord?"</span>
+                        </p>
+                    </EthicsCard>
+
+                    <EthicsCard icon={Shield} title="Dataetik: Beskyt Borgeren" delay={0.4}>
+                        <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 mb-6">
+                            <Lock className="w-5 h-5 text-rose-500" />
+                            <p className="text-[10px] font-black text-rose-700 uppercase tracking-widest leading-relaxed">
+                                DU MÅ ALDRIG INDTASTE PERSONFØLSOMME OPLYSNINGER OM VIRKELIGE PERSONER.
+                            </p>
+                        </div>
+                        <p>
+                            Alle cases, journalnotater og eksempler, du indtaster, skal være 100% anonymiserede og fiktionaliserede. At bruge AI til at behandle rigtige borgerdata er et alvorligt brud på din lovpligtige <span className="font-bold">tavshedspligt</span>.
+                        </p>
+                    </EthicsCard>
+
+                    <EthicsCard icon={AlertCircle} title="AI løser ikke dilemmaer" delay={0.5}>
+                        <p>
+                            Etisk refleksion er kernen i dit fremtidige arbejde. Cohéro kan give dig information om lovgivning og teori, der kan <span className="font-bold">oplyse</span> dit dilemma, men den kan aldrig løse det for dig.
+                        </p>
+                        <p>
+                            Brug platformen til at få overblik over de faglige rammer, og tag derefter den svære dialog med medstuderende eller din praktikvejleder.
+                        </p>
+                    </EthicsCard>
+                </div>
+
+                {/* PRINCIPLES SECTION */}
+                <Reveal delay={0.6}>
+                    <div className="mt-20 bg-slate-900 rounded-[3rem] p-12 md:p-20 text-white relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 blur-[100px] -z-1" />
+                        
+                        <div className="relative z-10 max-w-3xl mx-auto">
+                            <div className="flex items-center gap-4 mb-8">
+                                <CheckSquare className="w-8 h-8 text-amber-400" />
+                                <h2 className="text-3xl font-black uppercase tracking-widest text-[14px]">Principper for Ansvarlig AI</h2>
+                            </div>
+                            
+                            <div className="grid gap-6">
+                                {[
+                                    "Brug AI som en sparringspartner – ikke som en erstatning for din hjerne.",
+                                    "Validér altid alle kilder og lovhenvisninger, AI'en præsenterer.",
+                                    "Hold alle cases 100% anonyme og fiktive.",
+                                    "Vær kritisk over for eventuelle biases og systemfejl i AI-outputtet.",
+                                    "Brug AI til at bygge selvtillid, ikke til at finde genveje."
+                                ].map((step, i) => (
+                                    <div key={i} className="flex items-start gap-4 p-6 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+                                        <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                                        <p className="text-lg font-medium text-slate-300">{step}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-16 pt-12 border-t border-white/10 text-center">
+                                <p className="text-slate-400 text-sm italic">
+                                    "Den sande læring sker i det refleksive mellemrum – i din kritiske bearbejdning af det materiale, AI'en præsenterer."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </Reveal>
+            </main>
+
+            {/* FOOTER BADGE */}
+            <footer className="fixed bottom-0 left-0 right-0 p-8 z-[90] pointer-events-none flex justify-center">
+                <div className="px-6 py-2 bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl flex items-center gap-3">
+                    <div className="flex -space-x-1 items-end h-3">
+                        <div className="w-0.5 h-full bg-amber-400 rounded-full" />
+                        <div className="w-0.5 h-4 bg-amber-500 rounded-full" />
+                        <div className="w-0.5 h-full bg-amber-600 rounded-full" />
+                    </div>
+                    <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.3em]">Etisk Faglighed</span>
+                </div>
+            </footer>
         </div>
-      </header>
-      <main className="max-w-3xl mx-auto p-4 md:p-8">
-        <div className="prose prose-sm md:prose-base text-slate-700 leading-relaxed space-y-12">
-
-          <div>
-            <h2 className="flex items-center gap-3">
-              <BrainCircuit className="w-6 h-6 text-amber-600" />
-              AI er et Værktøj, ikke en Færdig Løsning
-            </h2>
-            <p>
-              Betragt Cohéros AI-værktøjer som en avanceret lommeregner for socialfagligt arbejde. Den kan udføre komplekse analyser, finde mønstre i lovtekster og generere velformulerede forslag. Men den kan ikke udøve et <span className="font-bold">fagligt skøn</span>.
-            </p>
-            <p>
-              Et fagligt skøn kræver empati, situationsfornemmelse, forståelse for nonverbal kommunikation og levet erfaring – alt det, der adskiller en professionel socialrådgiver fra en algoritme. AI'ens output er derfor altid et <span className="italic">forslag</span> eller en <span className="italic">hypotese</span>, aldrig et facit. Det er dit ansvar at vurdere, om forslaget er relevant, etisk forsvarligt og anvendeligt i den specifikke kontekst.
-            </p>
-            <blockquote>
-              Brug AI-feedback til at se nye vinkler, opdage blinde pletter i din argumentation og få inspiration – men lad aldrig AI'en tænke for dig.
-            </blockquote>
-          </div>
-
-          <div>
-             <h2 className="flex items-center gap-3">
-              <UserCheck className="w-6 h-6 text-amber-600" />
-              Dit Ansvar som Fagperson
-            </h2>
-            <p>
-              Ethvert ord, du afleverer i en opgave, og enhver beslutning, du træffer i en case, er dit ansvar. Når du anvender output fra Cohéro, er det din opgave at validere, redigere og fagligt begrunde det. Du er den kommende professionelle; AI'en er din fagligt oplyste assistent. At bruge platformen korrekt er en øvelse i kritisk kildevurdering og faglig autonomi.
-            </p>
-            <p>
-              Stil altid dig selv disse spørgsmål, når du arbejder med AI'ens output:
-            </p>
-            <ul>
-              <li>Hvordan ville jeg forsvare denne analyse eller handleplan over for en borger, en kollega, eller i Ankestyrelsen?</li>
-              <li>Hvilke menneskelige, sociale eller kontekstuelle nuancer har AI'en overset?</li>
-              <li>Er dette det mest etisk forsvarlige skridt, eller blot det mest teoretisk "korrekte"?</li>
-              <li>Hvordan sikrer jeg, at jeg ikke blot kopierer en løsning, men forstår og kan begrunde den fra bunden med egne ord?</li>
-            </ul>
-          </div>
-          
-           <div>
-             <h2 className="flex items-center gap-3">
-                <Shield className="w-6 h-6 text-amber-600" />
-                Dataetik: Beskyt Borgeren – Altid
-            </h2>
-            <p>
-              Dette er det vigtigste etiske princip på platformen: <strong>Du må ALDRIG indtaste personfølsomme oplysninger om virkelige, identificerbare personer.</strong> Dette gælder navne, adresser, CPR-numre, specifikke sagsdetaljer eller enhver anden information, der kan føre tilbage til en virkelig borger.
-            </p>
-             <p>
-               Alle cases, journalnotater og eksempler, du indtaster, skal være 100% anonymiserede og fiktionaliserede. At bruge AI til at behandle rigtige borgerdata er ikke kun et brud på vores betingelser, men også et alvorligt brud på din lovpligtige <span className="font-bold">tavshedspligt</span> (Straffelovens § 152) og databeskyttelsesforordningen (GDPR). Det er en fundamental test af din professionelle etik, allerede inden du træder ind på arbejdsmarkedet. Cohéro er en træningsbane – ikke en arbejdsstation til rigtige sager.
-           </p>
-           </div>
-
-          <div>
-             <h2 className="flex items-center gap-3">
-                <AlertCircle className="w-6 h-6 text-amber-600" />
-                AI'en løser ikke etiske dilemmaer
-            </h2>
-            <p>
-              Etisk refleksion er kernen i socialt arbejde. Cohéro kan give dig information om lovgivning og teori, der kan <strong>oplyse</strong> dit etiske dilemma, men platformen kan og må <strong>aldrig</strong> bruges til at løse det.
-            </p>
-            <p>
-                Et etisk dilemma indebærer en afvejning af værdier, hensyn og mulige konsekvenser for virkelige mennesker. Dette kræver menneskelig empati, situationsfornemmelse og faglig dømmekraft. En AI kan analysere tekst, men den kan ikke føle, erfare eller tage et personligt, moralsk ansvar.
-            </p>
-            <blockquote>
-              Brug platformen til at få overblik over de faglige og juridiske rammer, der er på spil. Brug derefter dette overblik som et input til din egen etiske refleksion, din sparring med medstuderende og din dialog med dine undervisere eller praktikvejleder. Den endelige beslutning – og ansvaret – er altid dit.
-            </blockquote>
-          </div>
-
-            <div>
-             <h2 className="flex items-center gap-3">
-                <CheckSquare className="w-6 h-6 text-amber-600" />
-                Formålet med Cohéro: At Bygge Refleksion
-            </h2>
-            <p>
-               Formålet med Cohéro er ikke at give dig hurtige svar, men at udvikle din evne til at <span className="italic">finde</span> og <span className="italic">skabe</span> gode svar. Den sande læring sker i det refleksive mellemrum – i din kritiske bearbejdning af det materiale, AI'en præsenterer.
-            </p>
-            <p>
-               Se AI'en som en, der leverer råmaterialerne (lovtekst, teoretiske perspektiver, strukturelle forslag). Du er håndværkeren, der udvælger, bearbejder og sammensætter materialerne til et færdigt, professionelt og fagligt velfunderet produkt. Det er i dén proces, din faglige dømmekraft udvikles.
-           </p>
-           </div>
-           
-           <div className="border-t border-amber-100 pt-8 text-center">
-            <p className="font-bold">
-                Brug Cohéro til at bygge selvtillid, ikke til at finde genveje. Den sande læring sker i din refleksion over det, AI'en præsenterer for dig.
-            </p>
-           </div>
-        </div>
-      </main>
-    </div>
-  );
+    );
 }

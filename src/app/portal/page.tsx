@@ -286,6 +286,7 @@ const PortalPageContent: React.FC = () => {
         if (!userProfile) return null;
 
         const tools = [
+            { name: 'Kollega Chat', usage: 0, path: '/chat', icon: Sparkles, cta: 'Spørg din digitale kollega', color: 'text-emerald-500' },
             { name: 'Journal-træner', usage: getDailyCount(userProfile.lastJournalTrainerUsage, userProfile.dailyJournalTrainerCount), path: '/journal-trainer', icon: FileText, cta: 'Træn din journalføring', color: 'text-emerald-500' },
             { name: 'Case-træner', usage: getDailyCount(userProfile.lastCaseTrainerUsage, userProfile.dailyCaseTrainerCount), path: '/case-trainer', icon: Zap, cta: 'Test dit skøn', color: 'text-amber-500' },
             { name: 'Begrebsguide', usage: getDailyCount(userProfile.lastConceptExplainerUsage, userProfile.dailyConceptExplainerCount), path: '/concept-explainer', icon: Book, cta: 'Slå et begreb op', color: 'text-blue-500' },
@@ -426,6 +427,7 @@ const PortalPageContent: React.FC = () => {
         subtitle: "Værktøjer til din daglige myndighedsudøvelse",
         icon: <Library className="w-6 h-6 text-slate-700" />,
         items: [
+          { title: "Kollega Chat", desc: "Spørg om alt fra jura til metode", icon: Sparkles, path: "/chat", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "GPT-4", limit: Infinity },
           { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
           { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
           { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Marketplace" },
