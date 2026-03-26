@@ -3,14 +3,9 @@
 
 import React from 'react';
 import { 
-  Menu, 
   X, 
-  BookOpen, 
-  ChevronRight, 
-  Search, 
   List,
-  Target,
-  FileText
+  Target
 } from 'lucide-react';
 import { LawContentType } from '@/ai/flows/types';
 
@@ -29,7 +24,7 @@ export const LawContextSidebar = ({
 }: LawContextSidebarProps) => {
 
   return (
-    <aside className="w-80 bg-white/40 backdrop-blur-3xl border-l border-amber-100 flex flex-col sticky top-0 h-screen z-30 transition-all duration-700 hidden xl:flex">
+    <aside className="w-80 bg-white/40 backdrop-blur-3xl border-l border-amber-100 flex flex-col sticky top-0 h-screen z-30 transition-all duration-700 hidden lg:flex">
       <div className="p-10 flex items-center justify-between border-b border-amber-50/50">
           <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-950 shadow-sm border border-amber-100/50"><List className="w-5 h-5" /></div>
@@ -57,7 +52,9 @@ export const LawContextSidebar = ({
                       >
                           <div className={`mt-1 w-2 h-2 rounded-full shrink-0 transition-all ${isActive ? 'bg-amber-500 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-slate-200 group-hover:bg-amber-300'}`} />
                           <div className="flex-1 min-w-0">
-                             <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Kapitel {chapter.nummer || (idx + 1)}</p>
+                             <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">
+                                {chapter.nummer?.toLowerCase().includes('kapitel') ? chapter.nummer : `Kapitel ${chapter.nummer || (idx + 1)}`}
+                             </p>
                              <h4 className={`text-xs font-bold serif leading-tight truncate ${isActive ? 'font-black' : ''}`}>{chapter.titel}</h4>
                           </div>
                       </button>
@@ -67,7 +64,7 @@ export const LawContextSidebar = ({
                               {chapter.paragraffer.map((p, pIdx) => (
                                   <button 
                                       key={pIdx}
-                                      onClick={() => onChapterClick(idx)} // Should ideally scroll to specific para
+                                      onClick={() => onChapterClick(idx)}
                                       className={`w-full text-left text-[11px] font-bold transition-all truncate hover:text-amber-950 ${activeParagraphNumber === p.nummer ? 'text-amber-600' : 'text-slate-400'}`}
                                   >
                                       {p.nummer}

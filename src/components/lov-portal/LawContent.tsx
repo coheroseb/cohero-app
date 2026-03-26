@@ -97,7 +97,9 @@ export const LawContent = ({
                 </div>
                 <div>
                    <h2 className="text-2xl md:text-3xl font-black text-amber-950 serif italic tracking-tight">{chapter.titel}</h2>
-                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/30 mt-2">Kapitel {chapter.nummer || (cIdx + 1)}</p>
+                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/30 mt-2">
+                      {chapter.nummer?.toLowerCase().includes('kapitel') ? chapter.nummer : `Kapitel ${chapter.nummer || (cIdx + 1)}`}
+                   </p>
                 </div>
             </div>
 
@@ -332,7 +334,7 @@ const ParagraphAnalysisView = ({ analysis }: { analysis: ParagraphAnalysisData }
               <div className="p-8 bg-amber-50 rounded-[2rem] border border-amber-100">
                  <h5 className="text-[10px] font-black uppercase tracking-widest text-amber-700/60 mb-6 font-black uppercase tracking-widest">Kernebegreber</h5>
                  <div className="flex flex-wrap gap-2">
-                    {analysis.keyTerms.map((term, i) => (
+                    {analysis.keyTerms?.map((term, i) => (
                        <span key={i} className="px-4 py-2 bg-white text-amber-950 rounded-xl text-xs font-bold border border-amber-200/50 shadow-sm">{term}</span>
                     ))}
                  </div>
