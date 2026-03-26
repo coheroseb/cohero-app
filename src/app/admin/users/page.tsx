@@ -36,6 +36,7 @@ interface UserProfile {
   studentCardVerification?: StudentCardVerification;
   isMarketplaceBanned?: boolean;
   marketplaceBanReason?: string;
+  isQualified?: boolean;
 }
 
 const STAT_CARDS = [
@@ -422,8 +423,13 @@ const AdminUsersPage = () => {
                            </div>
                         </td>
                         <td className="px-8 py-5">
-                           <p className="text-sm font-bold text-slate-800">{u.institution || 'Ej angivet'}</p>
-                           <p className="text-xs text-slate-400 capitalize font-medium">{u.semester || 'Manglende info'}</p>
+                           <div className="flex items-center gap-2 mb-1">
+                             <p className="text-sm font-bold text-slate-800">{u.institution || 'Ej angivet'}</p>
+                             {u.isQualified && (
+                               <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase tracking-widest rounded-md">Færdiguddannet</span>
+                             )}
+                           </div>
+                           <p className="text-xs text-slate-400 capitalize font-medium">{u.semester || (u.isQualified ? 'Færdiguddannet' : 'Manglende info')}</p>
                         </td>
                         <td className="px-8 py-5">
                            <div className="flex items-center gap-2 mb-2">
@@ -474,10 +480,11 @@ const AdminUsersPage = () => {
                                   </div>
                                </div>
                                <div className="space-y-4">
-                                  <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Briefcase className="w-3.5 h-3.5" /> Adgang</h4>
+                                  <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Briefcase className="w-3.5 h-3.5" /> Adgang / Status</h4>
                                   <div className="text-sm space-y-2">
                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Rolle:</span> <span className="font-bold text-slate-900 capitalize">{u.role || 'Bruger'}</span></p>
                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Plan:</span> <span className="font-bold text-slate-900">{u.membership || 'Kollega (Gratis)'}</span></p>
+                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Uddannet:</span> <span className={`font-bold ${u.isQualified ? 'text-emerald-600' : 'text-slate-400'}`}>{u.isQualified ? 'Ja' : 'Nej'}</span></p>
                                     <p className="flex justify-between pb-2"><span className="text-slate-500 font-medium">Startdato:</span> <span className="font-bold text-slate-900">{createdAt ? new Date(createdAt).toLocaleDateString('da-DK') : '-'}</span></p>
                                   </div>
                                </div>
