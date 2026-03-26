@@ -37,6 +37,7 @@ interface UserProfile {
   isMarketplaceBanned?: boolean;
   marketplaceBanReason?: string;
   isQualified?: boolean;
+  profession?: string;
 }
 
 const STAT_CARDS = [
@@ -429,7 +430,10 @@ const AdminUsersPage = () => {
                                <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase tracking-widest rounded-md">Færdiguddannet</span>
                              )}
                            </div>
-                           <p className="text-xs text-slate-400 capitalize font-medium">{u.semester || (u.isQualified ? 'Færdiguddannet' : 'Manglende info')}</p>
+                           <div className="flex flex-col gap-0.5">
+                             <p className="text-xs text-slate-400 capitalize font-medium">{u.semester || (u.isQualified ? 'Færdiguddannet' : 'Manglende info')}</p>
+                             {u.profession && <p className="text-[10px] text-slate-300 font-bold">{u.profession}</p>}
+                           </div>
                         </td>
                         <td className="px-8 py-5">
                            <div className="flex items-center gap-2 mb-2">
@@ -476,6 +480,7 @@ const AdminUsersPage = () => {
                                   <div className="text-sm space-y-2">
                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Username:</span> <span className="font-bold text-slate-900">{u.username}</span></p>
                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Email:</span> <span className="font-bold text-slate-900">{u.email}</span></p>
+                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Profession:</span> <span className="font-bold text-slate-900">{u.profession || '-'}</span></p>
                                     <p className="flex justify-between pb-2"><span className="text-slate-500 font-medium">UID:</span> <span className="text-xs font-mono text-slate-400 bg-white px-2 py-0.5 rounded">{u.id}</span></p>
                                   </div>
                                </div>
