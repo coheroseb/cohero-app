@@ -86,7 +86,6 @@ const MobileTabNavigation = () => {
     const mainTabs = [
         { label: 'Hjem', icon: Home, path: '/portal' },
         { label: 'Værktøjer', icon: Compass, path: '/pensum' },
-        { label: 'Jura', icon: BookOpen, path: '/lov-portal' },
         { label: 'Grupper', icon: MessageSquare, path: '/rum/groups' },
         { label: 'Profil', icon: UserIcon, path: '/settings' },
     ];
@@ -339,7 +338,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
 
   const pageBackground = useMemo(() => {
-    if (pathname?.includes('/lov-portal')) return 'bg-[#F9F7F2]';
     if (pathname?.includes('/rum/groups')) return 'bg-[#F8FAFC]';
     if (pathname?.includes('/memento') || pathname?.includes('/case-trainer')) return 'bg-[#FFFBF5]';
     return 'bg-white';
