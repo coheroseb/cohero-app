@@ -1136,9 +1136,9 @@ export async function fetchFolketingetSagByLovnummer(lovnummer: string, dato: st
 }
 
 // Stripe and other Server Actions
-export async function createCheckoutSession(params: { priceId: string, userId: string, userEmail?: string, userName?: string, stripeCustomerId?: string | null, originPath?: string, trialDays?: number }): Promise<{ sessionId: string, stripeCustomerId: string }> {
+export async function createCheckoutSession(params: { priceId: string, userId: string, userEmail?: string, userName?: string, stripeCustomerId?: string | null, originPath?: string, trialDays?: number }): Promise<{ success: boolean, sessionId?: string, stripeCustomerId?: string, error?: string }> {
     if (!isStripeConfigured) {
-        throw new Error('Betalingssystemet er ikke konfigureret korrekt på serveren (mangler API-nøgle).');
+        return { success: false, error: 'Betalingssystemet er ikke konfigureret korrekt på serveren (mangler API-nøgle).' };
     }
 
     const { priceId, userId, userEmail, userName, stripeCustomerId, originPath, trialDays } = params;
@@ -1167,14 +1167,14 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
             customerId = customer.id;
         } catch (e: any) {
             console.error('Error creating Stripe customer:', e);
-            throw new Error('Kunne ikke oprette kunde i betalingssystemet.');
+            return { success: false, error: `Kunne ikke oprette kunde i Stripe: ${e.message}` };
         }
     }
 
     try {
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            customer: customerId,
+            customer: customerId || undefined,
             client_reference_id: userId,
             line_items: [
                 {
@@ -1192,13 +1192,13 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
         });
 
         if (!session.id) {
-            throw new Error('Stripe session ID is missing');
+            return { success: false, error: 'Stripe session ID mangler efter oprettelse.' };
         }
 
-        return { sessionId: session.id, stripeCustomerId: customerId };
+        return { success: true, sessionId: session.id, stripeCustomerId: customerId || undefined };
     } catch (error: any) {
-        console.error('Stripe error:', error);
-        throw new Error(`Fejl ved oprettelse af betalingslink: ${error.message}`);
+        console.error('Stripe session creation error:', error);
+        return { success: false, error: `Stripe fejl: ${error.message}` };
     }
 }
 

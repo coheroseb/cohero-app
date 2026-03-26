@@ -92,7 +92,7 @@ const UpgradePageContent: React.FC = () => {
         const currentStripeCustomerId = userProfile.stripeCustomerId || undefined;
         const originPath = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ''}`;
 
-        const { sessionId, stripeCustomerId: newStripeCustomerId } = await createCheckoutSession({
+        const result = await createCheckoutSession({
             priceId,
             userId: user.uid,
             userEmail: user.email || undefined,
@@ -100,6 +100,14 @@ const UpgradePageContent: React.FC = () => {
             stripeCustomerId: currentStripeCustomerId,
             originPath: originPath,
         });
+
+        if (!result.success) {
+            setError(`Der opstod en fejl: ${result.error}`);
+            setIsSubscribing(null);
+            return;
+        }
+
+        const { sessionId, stripeCustomerId: newStripeCustomerId } = result;
 
         if (newStripeCustomerId && newStripeCustomerId !== currentStripeCustomerId) {
             const userRef = doc(firestore, 'users', user.uid);
@@ -111,7 +119,7 @@ const UpgradePageContent: React.FC = () => {
             throw new Error('Stripe.js er ikke indlæst.');
         }
 
-        const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+        const { error: stripeError } = await stripe.redirectToCheckout({ sessionId: sessionId! });
 
         if (stripeError) {
             console.error('Stripe redirectToCheckout error:', stripeError);
