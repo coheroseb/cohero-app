@@ -45,13 +45,14 @@ const AdminExportButton = ({ userProfile }: { userProfile: any }) => {
       const q = query(collection(firestore, 'institutions'));
       const snapshot = await getDocs(q);
       
-      const rows = [['Institution', 'Email', 'Telefon', 'Region']];
+      const rows = [['Institution', 'Leder', 'Email', 'Telefon', 'Region']];
       
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         if (data.E_MAIL) {
           rows.push([
             `"${(data.INST_NAVN || '').replace(/"/g, '""')}"`,
+            `"${(data.INST_LEDER || '').replace(/"/g, '""')}"`,
             data.E_MAIL,
             data.TLF_NR || '',
             data.BEL_REGION_TEKST || ''
@@ -298,6 +299,18 @@ const DetailOverlay = ({ inst, user, onClose }: { inst: any, user: any, onClose:
                             <div>
                                <p className="text-[10px] font-black uppercase text-slate-400">E-mail</p>
                                <p className="text-sm font-bold text-slate-900">{inst.E_MAIL}</p>
+                            </div>
+                         </div>
+                      )}
+
+                      {inst.INST_LEDER && (
+                         <div className="flex items-center gap-4 group">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-amber-50 group-hover:text-amber-600 transition-all">
+                               <Users className="w-5 h-5" />
+                            </div>
+                            <div>
+                               <p className="text-[10px] font-black uppercase text-slate-400">Leder</p>
+                               <p className="text-sm font-bold text-slate-900">{inst.INST_LEDER}</p>
                             </div>
                          </div>
                       )}
