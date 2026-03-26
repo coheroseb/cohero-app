@@ -149,7 +149,10 @@ service cloud.firestore {
     match /teamMembers/{memberId} { allow read: if true; }
     match /highlightedSager/{sagId} { allow read: if isSignedIn(); }
     match /pageViews/{viewId} { allow create: if true; }
-    match /stats/{document=**} { allow read, write: if isSignedIn(); }
+    match /stats/{document=**} { 
+      allow read: if isSignedIn();
+      allow write: if true; 
+    }
 
     match /qr_tables/{tableId} {
         allow read: if true;
