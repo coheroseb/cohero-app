@@ -10,18 +10,19 @@ async function callFirebaseFlow(flowName: string, data: any) {
   const adminSecret = process.env.CRON_SECRET || "dev-secret-123";
   const projectId = 'studio-7870211338-fe921';
   
-  const prodUrl = `https://runaiflow-7pguetq4hq-uc.a.run.app`; 
+  const prodBaseUrl = `https://runaiflow-7pguetq4hq-uc.a.run.app`; 
+  const flowPath = "/runAiFlow";
   
   const fallbackUrl = process.env.NODE_ENV === 'production'
-    ? prodUrl
+    ? (prodBaseUrl + flowPath)
     : `http://127.0.0.1:5001/${projectId}/us-central1/runAiFlow`;
 
   const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
-    ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + "/runAiFlow")
+    ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + flowPath)
     : fallbackUrl;
 
-  try {
-    const response = await fetch(url, {
+  const performFetch = async (targetUrl: string) => {
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,36 +33,37 @@ async function callFirebaseFlow(flowName: string, data: any) {
 
     if (!response.ok) {
         let errorMsg = response.statusText;
-        try {
-            const errorJson = await response.json();
-            errorMsg = errorJson.error || errorJson.message || errorMsg;
-        } catch (e) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            try {
+                const errorJson = await response.json();
+                errorMsg = errorJson.error || errorJson.message || errorMsg;
+            } catch (e) {}
+        } else {
             const text = await response.text().catch(() => "");
             if (text) errorMsg = text;
         }
         
-        console.error(`Firebase Flow [${flowName}] call failed:`, errorMsg);
+        console.error(`Firebase Flow [${flowName}] call failed at ${targetUrl}:`, errorMsg);
         throw new Error(`AI Scan Fejl (${response.status}): ${errorMsg}`);
     }
 
     return response.json();
+  };
+
+  try {
+    return await performFetch(url);
   } catch (error: any) {
-    if (error.cause && error.cause.code === 'ECONNREFUSED' && url.includes('127.0.0.1') && process.env.NODE_ENV !== 'production') {
-        console.warn(`[Genkit] Emulator not found at ${url}. Falling back to production flows.`);
-        const retryResponse = await fetch(prodUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + adminSecret
-            },
-            body: JSON.stringify({ flowName, data })
-        });
-        
-        if (!retryResponse.ok) {
-            throw new Error(`Production Fallback Failed (${retryResponse.status})`);
-        }
-        return retryResponse.json();
+    const isConnRefused = error.cause && error.cause.code === 'ECONNREFUSED';
+    const isTargetingLocal = url.includes('127.0.0.1') || url.includes('localhost');
+
+    if (isConnRefused && isTargetingLocal && process.env.NODE_ENV !== 'production') {
+        const prodUrl = prodBaseUrl + flowPath;
+        console.warn(`[Genkit) Emulator NOT found at ${url}. Falling back to production flows at ${prodUrl}.`);
+        return await performFetch(prodUrl);
     }
+    
+    console.error("Firebase Flow client error:", error);
     throw error;
   }
 }

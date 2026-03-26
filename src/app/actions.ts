@@ -95,18 +95,19 @@ async function callFirebaseFlow(flowName, data) {
   
   // 2nd Gen functions have a unique hash in the URL. 
   // We prioritize the environment variable if available.
-  const prodUrl = `https://runaiflow-7pguetq4hq-uc.a.run.app`; 
+  const prodBaseUrl = `https://runaiflow-7pguetq4hq-uc.a.run.app`; 
+  const flowPath = "/runAiFlow";
   
   const fallbackUrl = process.env.NODE_ENV === 'production'
-    ? prodUrl
+    ? (prodBaseUrl + flowPath)
     : `http://127.0.0.1:5001/${projectId}/us-central1/runAiFlow`;
 
   const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
-    ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + "/runAiFlow")
+    ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + flowPath)
     : fallbackUrl;
 
-  try {
-    const response = await fetch(url, {
+  const performFetch = async (targetUrl) => {
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -117,38 +118,37 @@ async function callFirebaseFlow(flowName, data) {
 
     if (!response.ok) {
         let errorMsg = response.statusText;
-        try {
-            const errorJson = await response.json();
-            errorMsg = errorJson.error || errorJson.message || errorMsg;
-        } catch (e) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            try {
+                const errorJson = await response.json();
+                errorMsg = errorJson.error || errorJson.message || errorMsg;
+            } catch (e) {
+                // Ignore json parse error if we already tried it
+            }
+        } else {
             const text = await response.text().catch(() => "");
             if (text) errorMsg = text;
         }
         
-        console.error(`Firebase Flow [${flowName}] call failed:`, errorMsg);
+        console.error(`Firebase Flow [${flowName}] call failed at ${targetUrl}:`, errorMsg);
         throw new Error(`AI Scan Fejl (${response.status}): ${errorMsg}`);
     }
 
     return response.json();
+  };
+
+  try {
+    return await performFetch(url);
   } catch (error: any) {
     // If the emulator is not running, fail gracefully by trying the production URL in dev mode
-    if (error.cause && error.cause.code === 'ECONNREFUSED' && url.includes('127.0.0.1') && process.env.NODE_ENV !== 'production') {
-        console.warn(`[Genkit] Emulator not found at ${url}. Falling back to production flows.`);
-        
-        // Retry with production URL
-        const retryResponse = await fetch(prodUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + adminSecret
-            },
-            body: JSON.stringify({ flowName, data })
-        });
-        
-        if (!retryResponse.ok) {
-            throw new Error(`Production Fallback Failed (${retryResponse.status})`);
-        }
-        return retryResponse.json();
+    const isConnRefused = error.cause && error.cause.code === 'ECONNREFUSED';
+    const isTargetingLocal = url.includes('127.0.0.1') || url.includes('localhost');
+
+    if (isConnRefused && isTargetingLocal && process.env.NODE_ENV !== 'production') {
+        const prodUrl = prodBaseUrl + flowPath;
+        console.warn(`[Genkit] Emulator NOT found at ${url}. Falling back to production flows at ${prodUrl}.`);
+        return await performFetch(prodUrl);
     }
     
     console.error("Firebase Flow client error:", error);
@@ -606,27 +606,44 @@ export async function analyzeStarDataAction(input: Types.AnalyzeStarDataInput): 
 export async function analyzeLegalDecisionAction(input: any) { return callFirebaseFlow('analyzeLegalDecisionFlow', input); }
 
 export async function semanticLawSearchAction(query: string, lawId?: string, documentData?: any): Promise<Types.SemanticLawSearchOutput> {
-    let context = '';
-    
-    if (lawId && lawId !== 'reference') {
-        // Scope to specific law
-        const snapshot = await adminFirestore.collection('laws').doc(lawId).get();
-        if (snapshot.exists) {
-            const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: lawId, ...snapshot.data() } as any);
+    try {
+        let context = '';
+        
+        console.log(`[SemanticSearch] starting search for query: "${query}", lawId: ${lawId}`);
+
+        if (lawId && lawId !== 'reference') {
+            // Scope to specific law
+            console.log(`[SemanticSearch] fetching law doc for ${lawId}`);
+            const snapshot = await adminFirestore.collection('laws').doc(lawId).get();
+            if (snapshot.exists) {
+                console.log(`[SemanticSearch] law doc exists, calling getSpecificLawContextFlow`);
+                const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: lawId, ...snapshot.data() } as any);
+                context = fetchRes.data;
+            } else {
+                console.warn(`[SemanticSearch] law doc ${lawId} NOT found in firestore`);
+            }
+        } else if (lawId === 'reference' && documentData) {
+            // Scope to reference document (which we already have data for)
+            context = `[REFERENCE-DOKUMENT: ${documentData.titel}]\n${documentData.rawText}\n\n`;
+        }
+
+        // Fallback or global search if no specific context built
+        if (!context) {
+            console.log(`[SemanticSearch] falling back to global search`);
+            const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: query });
             context = fetchRes.data;
         }
-    } else if (lawId === 'reference' && documentData) {
-        // Scope to reference document (which we already have data for)
-        context = `[REFERENCE-DOKUMENT: ${documentData.titel}]\n${documentData.rawText}\n\n`;
+        
+        console.log(`[SemanticSearch] calling semanticLawSearchFlow`);
+        const result = await callFirebaseFlow('semanticLawSearchFlow', { query, legalContext: context });
+        return result;
+    } catch (error: any) {
+        console.error("CRITICAL ERROR in semanticLawSearchAction:", error);
+        // Log to a file we can definitely read
+        const logMsg = `[${new Date().toISOString()}] Semantic Search Error: ${error.message}\nStack: ${error.stack}\n`;
+        require('fs').appendFileSync(path.join(process.cwd(), 'server-errors.log'), logMsg);
+        throw error;
     }
-
-    // Fallback or global search if no specific context built
-    if (!context) {
-        const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: query });
-        context = fetchRes.data;
-    }
-    
-    return callFirebaseFlow('semanticLawSearchFlow', { query, legalContext: context });
 }
 
 export async function generateCaseUpdateEmailAction(input: Types.CaseUpdateEmailInput): Promise<{ success: boolean; message: string; }> {

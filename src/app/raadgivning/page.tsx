@@ -163,8 +163,8 @@ export default function PublicAssistanceRequestPage() {
       <header className="bg-white/70 backdrop-blur-xl border-b border-amber-50 fixed top-0 left-0 right-0 z-50 px-6 py-4">
          <div className="max-w-7xl mx-auto flex items-center justify-between">
             <Link href="/" className="flex items-center gap-4 group transition-all">
-               <div className="w-10 h-10 bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center overflow-hidden border border-amber-900/20 group-hover:scale-105 transition-transform">
-                  <img src="/main_logo.png" alt="Cohéro logo" className="w-full h-full object-cover" />
+               <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center overflow-hidden border border-slate-800 group-hover:scale-105 transition-transform">
+                  <img src="/main_logo.png" alt="Cohéro logo" className="w-full h-full object-cover grayscale brightness-0 invert opacity-90" />
                </div>
                <div>
                   <h1 className="text-sm font-bold text-amber-950 serif">Cohéro Rådgivning</h1>

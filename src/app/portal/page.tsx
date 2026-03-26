@@ -286,7 +286,7 @@ const PortalPageContent: React.FC = () => {
         if (!userProfile) return null;
 
         const tools = [
-            { name: 'Kollega Chat', usage: 0, path: '/chat', icon: Sparkles, cta: 'Spørg din digitale kollega', color: 'text-emerald-500' },
+
             { name: 'Journal-træner', usage: getDailyCount(userProfile.lastJournalTrainerUsage, userProfile.dailyJournalTrainerCount), path: '/journal-trainer', icon: FileText, cta: 'Træn din journalføring', color: 'text-emerald-500' },
             { name: 'Case-træner', usage: getDailyCount(userProfile.lastCaseTrainerUsage, userProfile.dailyCaseTrainerCount), path: '/case-trainer', icon: Zap, cta: 'Test dit skøn', color: 'text-amber-500' },
             { name: 'Begrebsguide', usage: getDailyCount(userProfile.lastConceptExplainerUsage, userProfile.dailyConceptExplainerCount), path: '/concept-explainer', icon: Book, cta: 'Slå et begreb op', color: 'text-blue-500' },
@@ -427,7 +427,7 @@ const PortalPageContent: React.FC = () => {
         subtitle: "Værktøjer til din daglige myndighedsudøvelse",
         icon: <Library className="w-6 h-6 text-slate-700" />,
         items: [
-          { title: "Kollega Chat", desc: "Spørg om alt fra jura til metode", icon: Sparkles, path: "/chat", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "GPT-4", limit: Infinity },
+
           { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
           { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
           { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Marketplace" },
@@ -840,10 +840,18 @@ const PortalPageContent: React.FC = () => {
                     </div>
 
                     {item.limit && item.limit.used >= item.limit.total && (
-                        <div className="absolute inset-0 bg-slate-50/50 backdrop-blur-[1px] flex items-center justify-center p-6 text-center z-20">
-                            <div className="bg-white/95 backdrop-blur-xl px-5 py-3 rounded-[20px] shadow-xl border border-slate-200 flex flex-col items-center gap-2">
-                                <Lock className="w-5 h-5 text-amber-500 mb-1" />
-                                <span className="text-[11px] font-black uppercase tracking-widest text-slate-900">Grænse nået</span>
+                        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-center z-20 group-hover:bg-slate-900/30 transition-colors">
+                            <div className="bg-white px-6 py-6 rounded-[32px] shadow-2xl flex flex-col items-center gap-3 max-w-[220px] border border-white/20 animate-in fade-in zoom-in duration-300">
+                                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center shadow-inner mb-1">
+                                  <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <p className="text-[14px] font-black text-slate-900 leading-tight tracking-tight">Lås op for alt</p>
+                                  <p className="text-[11px] font-medium text-slate-500 leading-snug">Opgrader til Kollega+ og få ubegrænset brug af {item.title}.</p>
+                                </div>
+                                <div className="mt-2 w-full py-2.5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl group-hover:bg-black transition-all shadow-lg shadow-slate-900/10">
+                                  Opgrader nu
+                                </div>
                             </div>
                         </div>
                     )}
@@ -890,6 +898,25 @@ const PortalPageContent: React.FC = () => {
         {/* RIGHT COLUMN: THE DASHBOARD RAIL */}
         <aside className="lg:col-span-4 space-y-8 lg:space-y-10">
           
+          {/* Upgrade Incentive Card for free users */}
+          {(userProfile?.membership === 'Kollega' || !userProfile?.membership) && (
+            <section className="bg-slate-900 p-8 sm:p-10 rounded-[32px] sm:rounded-[48px] text-white shadow-2xl relative overflow-hidden group">
+               <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-400/20 rounded-full blur-[60px] group-hover:scale-125 transition-transform duration-700"></div>
+               <div className="relative z-10 flex flex-col gap-6">
+                  <div className="w-16 h-16 bg-amber-400 text-amber-950 rounded-2xl flex items-center justify-center shadow-[0_0_30px_-5px_rgba(251,191,36,0.5)] group-hover:rotate-6 transition-transform">
+                      <Zap className="w-8 h-8 fill-current" />
+                  </div>
+                  <div className="space-y-3">
+                      <h3 className="text-[22px] font-extrabold text-white leading-tight">Gå efter toppen med Kollega+</h3>
+                      <p className="text-[14px] text-slate-300 font-medium">Lås op for ubegrænset brug, personligt arkiv og prioriteret support.</p>
+                  </div>
+                  <Link href="/upgrade" className="w-full h-14 bg-white text-slate-900 rounded-[20px] font-black uppercase tracking-widest text-[12px] flex items-center justify-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all shadow-xl">
+                      Prøv gratis i 7 dage <ArrowRight className="w-4 h-4" />
+                  </Link>
+               </div>
+            </section>
+          )}
+
           <BriefingReport 
              title="Nyt fra Borgen" 
              icon={Gavel} 

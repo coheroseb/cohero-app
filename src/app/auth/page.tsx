@@ -175,19 +175,7 @@ const AuthPage = () => {
 
         <div className="w-full max-w-md space-y-8 relative z-10 pt-8 sm:pt-0">
           
-          <div className="text-center sm:text-left flex flex-col items-center sm:items-start">
-            <Link href="/" className="inline-block mb-6 active:scale-95 transition-transform">
-              <div className="w-12 h-12 bg-slate-900 rounded-[16px] text-white flex items-center justify-center shadow-lg shadow-slate-900/10 mb-2">
-                 <Sparkles className="w-6 h-6" />
-              </div>
-            </Link>
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              Velkommen <br className="hidden sm:block" />til Cohéro.
-            </h1>
-            <p className="mt-4 text-slate-500 font-medium text-[16px] sm:text-[17px] leading-relaxed text-center sm:text-left max-w-xs sm:max-w-none">
-              {mode === 'login' ? t.loginSubtext : t.signupSubtext}
-            </p>
-          </div>
+
 
           <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-10 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100">
             

@@ -35,7 +35,8 @@ import {
   Sparkles,
   ChevronRight,
   ArrowRight,
-  HandHelping
+  HandHelping,
+  Star
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { DocumentData } from 'firebase/firestore';
@@ -59,9 +60,9 @@ const BookSpine: React.FC<{
       transition: { type: "spring", stiffness: 400, damping: 10 } 
     }}
     className={`relative flex flex-col items-center justify-end ${width} ${height} ${color} 
-    rounded-t-[2px] shadow-[inset_-1px_0_3px_rgba(0,0,0,0.3),inset_1px_0_2px_rgba(255,255,255,0.1),2px_0_5px_rgba(0,0,0,0.2)] 
+    rounded-t-[2px] shadow-[inset_-1px_0_3px_rgba(0,0,0,0.1),2px_0_5px_rgba(0,0,0,0.05)] 
     transition-all duration-300 ease-out
-    ${tilt} border-r border-black/10 z-10 cursor-pointer group/book`}
+    ${tilt} border border-black/20 z-10 cursor-pointer group/book`}
   >
     <div className="absolute inset-0 opacity-15 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] pointer-events-none"></div>
 
@@ -78,30 +79,30 @@ const BookSpine: React.FC<{
 
     {decoration === 'bands' && (
       <>
-        <div className="absolute top-3 w-full h-[1px] bg-black/30"></div>
-        <div className="absolute top-4 w-full h-[1px] bg-white/10"></div>
-        <div className="absolute bottom-8 w-full h-[2px] bg-black/20"></div>
-        <div className="absolute bottom-10 w-full h-[1px] bg-black/20"></div>
+        <div className="absolute top-3 w-full h-[1px] bg-black/20"></div>
+        <div className="absolute top-4 w-full h-[1px] bg-black/5"></div>
+        <div className="absolute bottom-8 w-full h-[2px] bg-black/10"></div>
+        <div className="absolute bottom-10 w-full h-[1px] bg-black/10"></div>
       </>
     )}
     {decoration === 'gold' && (
       <>
-        <div className="absolute top-2 w-[80%] h-[1px] bg-amber-200/40 shadow-[0_0_8px_rgba(252,211,77,0.4)]"></div>
-        <div className="absolute top-4 w-[60%] h-[1px] bg-amber-200/20"></div>
-        <div className="absolute bottom-6 w-[80%] h-[1px] bg-amber-200/30"></div>
+        <div className="absolute top-2 w-[80%] h-[1px] bg-black/10"></div>
+        <div className="absolute top-4 w-[60%] h-[1px] bg-black/5"></div>
+        <div className="absolute bottom-6 w-[80%] h-[1px] bg-black/10"></div>
       </>
     )}
     {decoration === 'ornament' && (
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-2 h-6 border border-white/10 rounded-full opacity-20 group-hover/book:opacity-40 transition-opacity"></div>
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-2 h-6 border border-black/10 rounded-full opacity-20 group-hover/book:opacity-40 transition-opacity"></div>
     )}
     {decoration === 'stripes' && (
-      <div className="absolute inset-y-4 left-1/2 -translate-x-1/2 w-[2px] bg-white/5 border-x border-black/10"></div>
+      <div className="absolute inset-y-4 left-1/2 -translate-x-1/2 w-[2px] bg-black/5 border-x border-black/5"></div>
     )}
 
     {letter && (
       <motion.span 
         whileHover={{ scale: 1.1 }}
-        className="mb-3 text-[12px] font-black text-amber-50/90 uppercase tracking-tighter select-none drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] z-20"
+        className="mb-3 text-[12px] font-black text-black/80 uppercase tracking-tighter select-none z-20"
       >
         {letter}
       </motion.span>
@@ -298,20 +299,20 @@ const Navbar: React.FC<NavbarProps> = ({
               className="flex items-end -space-x-[1px]"
               aria-label="Cohéro Hjem"
             >
-              <BookSpine index={0} width="w-2 sm:w-2.5" height="h-6 sm:h-7" color="bg-stone-800" decoration="plain" tilt="-rotate-1" />
-              <BookSpine index={1} width="w-2.5 sm:w-3" height="h-9 sm:h-10" color="bg-amber-950" decoration="bands" />
-              <BookSpine index={2} width="w-1 sm:w-1.5" height="h-7 sm:h-8" color="bg-stone-700" decoration="plain" />
+              <BookSpine index={0} width="w-2 sm:w-2.5" height="h-6 sm:h-7" color="bg-white" decoration="plain" tilt="-rotate-1" />
+              <BookSpine index={1} width="w-2.5 sm:w-3" height="h-9 sm:h-10" color="bg-white" decoration="bands" />
+              <BookSpine index={2} width="w-1 sm:w-1.5" height="h-7 sm:h-8" color="bg-white" decoration="plain" />
 
-              <BookSpine index={3} letter="C" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-amber-950" decoration="bands" />
-              <BookSpine index={4} letter="o" width="w-3.5 sm:w-4" height="h-8 sm:h-9" color="bg-amber-900" decoration="gold" />
-              <BookSpine index={5} letter="h" width="w-3.5 sm:w-4" height="h-11 sm:h-12" color="bg-amber-950" decoration="bands" tilt="-rotate-[1.5deg]" />
-              <BookSpine index={6} letter="é" width="w-3.5 sm:w-4" height="h-9 sm:h-10" color="bg-amber-800" decoration="stripes" />
-              <BookSpine index={7} letter="r" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-amber-950" decoration="bands" />
-              <BookSpine index={8} letter="o" width="w-3.5 sm:w-4" height="h-7 sm:h-8" color="bg-amber-900" decoration="gold" tilt="rotate-[1deg]" />
+              <BookSpine index={3} letter="C" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-white" decoration="bands" />
+              <BookSpine index={4} letter="o" width="w-3.5 sm:w-4" height="h-8 sm:h-9" color="bg-white" decoration="gold" />
+              <BookSpine index={5} letter="h" width="w-3.5 sm:w-4" height="h-11 sm:h-12" color="bg-white" decoration="bands" tilt="-rotate-[1.5deg]" />
+              <BookSpine index={6} letter="é" width="w-3.5 sm:w-4" height="h-9 sm:h-10" color="bg-white" decoration="stripes" />
+              <BookSpine index={7} letter="r" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-white" decoration="bands" />
+              <BookSpine index={8} letter="o" width="w-3.5 sm:w-4" height="h-7 sm:h-8" color="bg-white" decoration="gold" tilt="rotate-[1deg]" />
 
-              <BookSpine index={9} width="w-2 sm:w-2.5" height="h-9 sm:h-10" color="bg-stone-900" decoration="ornament" />
-              <BookSpine index={10} width="w-2.5 sm:w-3" height="h-6 sm:h-7" color="bg-amber-950" decoration="plain" tilt="rotate-2" />
-              <BookSpine index={11} width="w-2 sm:w-2.5" height="h-8 sm:h-9" color="bg-stone-800" decoration="bands" />
+              <BookSpine index={9} width="w-2 sm:w-2.5" height="h-9 sm:h-10" color="bg-white" decoration="ornament" />
+              <BookSpine index={10} width="w-2.5 sm:w-3" height="h-6 sm:h-7" color="bg-white" decoration="plain" tilt="rotate-2" />
+              <BookSpine index={11} width="w-2 sm:w-2.5" height="h-8 sm:h-9" color="bg-white" decoration="bands" />
             </Link>
           </div>
 
@@ -431,6 +432,13 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-3">
+                {/* Upgrade CTA for free users */}
+                {(userProfile?.membership === 'Kollega' || !userProfile?.membership) && (
+                  <Link href="/upgrade" className="hidden lg:flex items-center gap-2 px-4 py-2 bg-amber-500 text-amber-950 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10 active:scale-95 whitespace-nowrap">
+                    <Star className="w-3.5 h-3.5 fill-current" />
+                    Opgrader
+                  </Link>
+                )}
                 <NotificationBell />
                 <div className="text-right hidden sm:block">
                   <p className="text-[10px] font-black uppercase text-amber-500 tracking-widest leading-none mb-1">

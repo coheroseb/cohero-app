@@ -21,8 +21,8 @@ export default function RaadgivningTermsPage() {
                Tilbage
             </button>
             <Link href="/" className="flex items-center gap-3 active:scale-95 transition-all outline-none group">
-               <div className="w-8 h-8 bg-amber-950 text-amber-500 rounded-lg flex items-center justify-center overflow-hidden border border-amber-900/20 group-hover:scale-105 transition-transform">
-                  <img src="/main_logo.png" alt="Cohéro logo" className="w-full h-full object-cover" />
+               <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center overflow-hidden border border-slate-800 group-hover:scale-105 transition-transform">
+                  <img src="/main_logo.png" alt="Cohéro logo" className="w-full h-full object-cover grayscale brightness-0 invert opacity-90" />
                </div>
                <h1 className="text-sm font-bold text-amber-950 serif">Vilkår & Betingelser</h1>
             </Link>
