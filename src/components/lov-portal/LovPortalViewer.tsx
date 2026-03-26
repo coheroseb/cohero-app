@@ -1,110 +1,97 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ChevronUp,
+  Scale
+} from 'lucide-react';
+import { getLawContentAction, analyzeParagraphAction, semanticLawSearchAction } from '@/app/actions';
+import { LawConfig, LawContentType, SavedParagraph, QuizResult, ParagraphAnalysisData } from '@/ai/flows/types';
+import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { 
-  collection, 
-  query, 
-  orderBy, 
-  doc, 
-  deleteDoc, 
-  updateDoc, 
-  onSnapshot, 
-  addDoc, 
-  serverTimestamp, 
-  setDoc, 
-  writeBatch 
-} from 'firebase/firestore';
-import { useDebounce } from 'use-debounce';
-import { 
-    getLawContentAction, 
-    analyzeParagraphAction,
-    semanticLawSearchAction 
-} from '@/app/actions';
-import { useToast } from '@/hooks/use-toast';
+import { collection, query, orderBy, doc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-// New Modular Components
+// Modular Components
 import { LawSidebar } from './LawSidebar';
-import { LawSearchHeader } from './LawSearchHeader';
 import { LawDashboard } from './LawDashboard';
 import { LawContent } from './LawContent';
 import { LawContextSidebar } from './LawContextSidebar';
-import { MobileBottomNav } from './MobileBottomNav';
+import { LawSearchHeader } from './LawSearchHeader';
 import LawQuizModal from './LawQuizModal';
 import ReadingGuideModal from './ReadingGuideModal';
+import { MobileBottomNav } from './MobileBottomNav';
 
-// Types
-import type { LawContentType, ParagraphAnalysisData, CollectionData, SavedParagraph, QuizResult, LawConfig } from '@/ai/flows/types';
+interface LovPortalViewerProps {
+  lawsConfigs: LawConfig[];
+  activeLawId?: string;
+  activeReferenceId?: string;
+  isPremium: boolean;
+  lawsLoading: boolean;
+}
 
-export function LovPortalViewer() {
-  const { user, userProfile } = useApp();
+export default function LovPortalViewer({
+  lawsConfigs,
+  activeLawId,
+  activeReferenceId,
+  isPremium,
+  lawsLoading
+}: LovPortalViewerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const params = useParams();
-  const { toast } = useToast();
+  const { user, userProfile } = useApp();
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const mainScrollRef = useRef<HTMLDivElement>(null);
 
-  // --- CORE STATE ---
-  const [lawsConfigs, setLawsConfigs] = useState<LawConfig[]>([]);
-  const [lawsLoading, setLawsLoading] = useState(true);
+  // --- STATE ---
+  const [viewMode, setViewMode] = useState<'laws' | 'decisions' | 'saved' | 'training' | 'reforms'>('laws');
   const [docsData, setDocsData] = useState<Record<string, LawContentType>>({});
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
-  const [viewMode, setViewMode] = useState<'laws' | 'decisions' | 'saved' | 'training' | 'reforms'>('laws');
-  const [isContextSidebarOpen, setIsContextSidebarOpen] = useState(true);
-  const [isFocusMode, setIsFocusMode] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [semanticSearchQuery, setSemanticSearchQuery] = useState('');
-  const [isSearchingSemantic, setIsSearchingSemantic] = useState(false);
-  const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [activeParagraphNumber, setActiveParagraphNumber] = useState<string | null>(null);
   const [expandedParaKey, setExpandedParaKey] = useState<string | null>(null);
-  const [selectedSubElement, setSelectedSubElement] = useState<string | null>(null);
-  const [selectedParentStk, setSelectedParentStk] = useState<string | null>(null);
-  const [selectedParentNr, setSelectedParentNr] = useState<string | null>(null);
-  const [paraAnalysis, setParaAnalysis] = useState<Record<string, ParagraphAnalysisData>>({});
+  
+  // Search & Filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // Analyses
   const [isAnalysingPara, setIsAnalysingPara] = useState<Record<string, boolean>>({});
-  const [semanticResult, setSemanticResult] = useState<any | null>(null);
+  const [paraAnalysis, setParaAnalysis] = useState<Record<string, ParagraphAnalysisData>>({});
+  
+  // UI States
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [isReadingGuideOpen, setIsReadingGuideOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isContextSidebarOpen, setIsContextSidebarOpen] = useState(true);
+  const [selectedSubElement, setSelectedSubElement] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [searchProgress, setSearchProgress] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
-  const mainScrollRef = useRef<HTMLElement>(null);
-  const activeLawId = useMemo(() => params?.lawId as string || searchParams?.get('lawId'), [params, searchParams]);
-  const activeReferenceId = useMemo(() => searchParams?.get('refId')?.toString(), [searchParams]);
-  const currentDocId = activeReferenceId || activeLawId;
-  const currentDocData = currentDocId ? docsData[currentDocId] : null;
-  const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership), [userProfile]);
+  // --- DERIVED ---
+  const currentDocId = activeReferenceId || activeLawId || '';
+  const currentDocData = docsData[currentDocId];
 
-  // --- DATA FETCHING ---
-  useEffect(() => {
-    if (!firestore) return;
-    const q = query(collection(firestore, 'laws'), orderBy('name', 'asc'));
-    return onSnapshot(q, (snapshot) => {
-        setLawsConfigs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LawConfig[]);
-        setLawsLoading(false);
-    });
-  }, [firestore]);
-
-  const loadDocumentContent = useCallback(async (lawId: string, docIdentifier: string, forceXmlUrl?: string) => {
-    if (docsData[docIdentifier]) return;
-    const config = (lawsConfigs || []).find(l => l.id === lawId);
-    const xmlUrl = forceXmlUrl || config?.xmlUrl;
-    if (!xmlUrl) return;
+  // --- DATA LOADING ---
+  const loadDocumentContent = useCallback(async (id: string, docIdentifier: string, forceUrl?: string) => {
+    if (docsData[docIdentifier] || isLoadingDoc) return;
     setIsLoadingDoc(true);
+    const config = lawsConfigs.find(l => l.id === id);
+    const xmlUrl = forceUrl || config?.xmlUrl;
+    if (!xmlUrl) { setIsLoadingDoc(false); return; }
+
     try {
         const result = await getLawContentAction({ 
             documentId: docIdentifier, xmlUrl,
             name: config?.name || 'Dokument', abbreviation: config?.abbreviation || 'DOK', lbk: config?.lbk || ''
         });
         if (result?.data) setDocsData(prev => ({ ...prev, [docIdentifier]: result.data }));
-    } finally { setIsSearchingSemantic(false); setIsLoadingDoc(false); }
-  }, [lawsConfigs, docsData]);
+    } finally { setIsLoadingDoc(false); }
+  }, [lawsConfigs, docsData, isLoadingDoc]);
 
   useEffect(() => {
     if (lawsLoading) return;
@@ -121,6 +108,7 @@ export function LovPortalViewer() {
   const { data: quizResults } = useCollection<QuizResult>(quizResultsQuery);
   const savedParagraphsQuery = useMemoFirebase(() => (user && firestore ? query(collection(firestore, 'users', user.uid, 'savedParagraphs'), orderBy('savedAt', 'desc')) : null), [user, firestore]);
   const { data: savedParagraphs = [] } = useCollection<SavedParagraph>(savedParagraphsQuery);
+  const safeSavedParagraphs = savedParagraphs || [];
 
   const trainingStats = useMemo(() => {
       if (!quizResults || quizResults.length === 0) return null;
@@ -140,7 +128,7 @@ export function LovPortalViewer() {
     if (!user || !isPremium) return;
     const savedId = `${currentDocId}-${para.nummer.replace(/[§\s\.]/g, '-')}`;
     const docRef = doc(firestore!, 'users', user.uid, 'savedParagraphs', savedId);
-    if (savedParagraphs.some(p => p.id === savedId)) {
+    if (safeSavedParagraphs.some(p => p.id === savedId)) {
         await deleteDoc(docRef); toast({ title: "Fjernet fra gemte" });
     } else {
          await setDoc(docRef, { 
@@ -164,16 +152,25 @@ export function LovPortalViewer() {
     } finally { setIsAnalysingPara(prev => ({ ...prev, [paraKey]: false })); }
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = isPremium ? semanticSearchQuery : searchQuery;
-    if (!query.trim() || isSearchingSemantic || activeLawId) return;
-    setIsSearchingSemantic(true); setSemanticResult(null); setViewMode('laws');
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query.trim() || isSearching) return;
+    setIsSearching(true);
     try {
-        const result = await semanticLawSearchAction(query);
-        setSemanticResult(result.data);
-    } finally { setIsSearchingSemantic(false); }
-  };
+        // Enkel søgning i titler for demo, kunne være semantisk
+        const results = lawsConfigs.filter(l => 
+          l.name.toLowerCase().includes(query.toLowerCase()) || 
+          l.abbreviation.toLowerCase().includes(query.toLowerCase())
+        );
+        setSearchResults(results.map(r => ({ ...r, title: r.name })));
+    } finally { setIsSearching(false); }
+  }, [lawsConfigs, isSearching]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.length > 2) handleSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, handleSearch]);
 
   const scrollToChapter = (idx: number) => {
     const element = document.getElementById(`chapter-${idx}`);
@@ -183,32 +180,43 @@ export function LovPortalViewer() {
     }
   };
 
+  const handleSearchResultClick = (res: any) => {
+    setSearchQuery('');
+    router.push(`/lov-portal/view/${res.id}`);
+  };
+
+  // Scroll detection
+  useEffect(() => {
+    const scrollArea = mainScrollRef.current;
+    if (!scrollArea) return;
+    const handleScroll = () => setShowScrollTop(scrollArea.scrollTop > 500);
+    scrollArea.addEventListener('scroll', handleScroll);
+    return () => scrollArea.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // --- RENDER ---
   return (
-    <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 overflow-x-hidden">
+    <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-950 font-sans selection:bg-amber-200 overflow-x-hidden">
       
       <LawSidebar 
-        viewMode={viewMode} setViewMode={setViewMode} activeLawId={activeLawId} 
+        viewMode={viewMode} setViewMode={setViewMode} activeLawId={activeLawId || null} 
         lawsConfigs={lawsConfigs} isPremium={isPremium} user={user} userProfile={userProfile}
         onLawClick={(id) => { setViewMode('laws'); router.push(`/lov-portal/view/${id}`); }}
         onDashboardClick={() => { setViewMode('laws'); router.push('/lov-portal'); }}
       />
 
-      <main ref={mainScrollRef} className="flex-1 min-w-0 h-screen overflow-y-auto relative pt-0 custom-scrollbar pb-32 lg:pb-0">
+      <main ref={mainScrollRef} className="flex-1 min-w-0 h-screen overflow-y-auto relative pt-0 custom-scrollbar pb-32 lg:pb-0 scroll-smooth">
         <LawSearchHeader 
-           handleSearch={handleSearch} isSemanticMode={true} activeLawId={activeLawId} activeReferenceId={activeReferenceId}
-           currentDocData={currentDocData} lawsConfigs={lawsConfigs} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-           semanticSearchQuery={semanticSearchQuery} setSemanticSearchQuery={setSemanticSearchQuery}
-           isSearchingSemantic={isSearchingSemantic} isSearchFocused={isSearchFocused} setIsSearchFocused={setIsSearchFocused}
-           filteredSuggestions={[]} onSuggestionClick={() => {}}
-           setIsReadingGuideOpen={setIsReadingGuideOpen} isFocusMode={isFocusMode} setIsFocusMode={setIsFocusMode}
-           setIsQuizModalOpen={setIsQuizModalOpen} isContextSidebarOpen={isContextSidebarOpen} setIsContextSidebarOpen={setIsContextSidebarOpen}
+           searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
+           isSearching={isSearching} searchResults={searchResults}
+           onSearchOpen={() => {}} isSearchVisible={false} setIsSearchVisible={() => {}}
+           onResultClick={handleSearchResultClick} isPremium={isPremium}
         />
 
-        <div className={`p-4 md:p-12 mx-auto pt-8 md:pt-12 transition-all duration-700 ${isFocusMode ? 'max-w-4xl pt-24' : (activeLawId ? 'max-w-full' : 'max-w-7xl')}`}>
+        <div className={`mx-auto transition-all duration-1000 ${isFocusMode ? 'max-w-4xl p-12 pt-24' : (activeLawId ? 'max-w-full' : 'max-w-full')}`}>
             <AnimatePresence mode="wait">
                 {activeLawId && currentDocData ? (
-                   <div className="flex gap-12">
+                   <div className="flex flex-col lg:flex-row gap-12 xl:gap-24 px-8 md:px-16">
                       <div className="flex-1 min-w-0">
                          <LawContent 
                             docData={currentDocData} lawId={activeLawId}
@@ -216,10 +224,10 @@ export function LovPortalViewer() {
                             activeParagraphNumber={activeParagraphNumber} setActiveParagraphNumber={setActiveParagraphNumber}
                             isAnalysingPara={isAnalysingPara} paraAnalysis={paraAnalysis}
                             onAnalyze={handleAnalyzeParagraph} onToggleSave={handleToggleSave}
-                            isSaved={(id) => savedParagraphs.some(p => p.id === id)}
+                            isSaved={(id) => safeSavedParagraphs.some(p => p.id === id)}
                             onCopy={(text, id) => { navigator.clipboard.writeText(text); setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); }}
                             copiedId={copiedId} isPremium={isPremium}
-                            onSubElementClick={(sub, stk, nr) => { setSelectedSubElement(sub); setSelectedParentStk(stk); setSelectedParentNr(nr); }}
+                            onSubElementClick={(sub) => { setSelectedSubElement(sub); }}
                             selectedSubElement={selectedSubElement} onMouseUp={() => {}}
                          />
                       </div>
@@ -238,10 +246,31 @@ export function LovPortalViewer() {
                 )}
             </AnimatePresence>
         </div>
+
+        {/* Floating Utility Hub */}
+        <AnimatePresence>
+            {showScrollTop && (
+                <motion.button 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    onClick={() => mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="fixed bottom-12 right-12 w-16 h-16 bg-white border border-slate-100 rounded-full flex items-center justify-center text-slate-950 shadow-2xl hover:scale-110 active:scale-95 z-50 transition-all group"
+                >
+                    <ChevronUp className="w-8 h-8 group-hover:-translate-y-1 transition-transform" />
+                </motion.button>
+            )}
+        </AnimatePresence>
       </main>
 
       <LawQuizModal isOpen={isQuizModalOpen} onClose={() => setIsQuizModalOpen(false)} lawId={activeLawId || ''} lawTitle={currentDocData?.titel || ''} />
       <ReadingGuideModal isOpen={isReadingGuideOpen} onClose={() => setIsReadingGuideOpen(false)} />
+            <MobileBottomNav 
+           viewMode={viewMode}
+           onTabChange={(mode) => setViewMode(mode)}
+           activeLawId={activeLawId}
+           activeReferenceId={activeReferenceId}
+        />
     </div>
   );
 }
