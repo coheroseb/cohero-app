@@ -32,11 +32,19 @@ const stripePromise = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_S
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) 
   : Promise.resolve(null);
 
+// Robust Price ID resolution helper
+const getPriceId = (envValue: string | undefined, fallback: string) => {
+  if (!envValue || envValue === 'undefined' || envValue === 'null' || envValue.trim() === '') {
+    return fallback;
+  }
+  return envValue;
+};
+
 // Price IDs with hardcoded fallbacks to ensure the UI always works even if build environment varies
 const PRICE_IDS = {
-  PLUS: process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID || 'price_1SvHSKPzEHK36eTSIFYtGJxD',
-  SEMESTER: process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID || 'price_1SvHTOPzEHK36eTSoiTu8m3C',
-  PLUS_PLUS: process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || 'price_1SvHUKPzEHK36eTSO6fRLHli',
+  PLUS: getPriceId(process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID, 'price_1SvHSKPzEHK36eTSIFYtGJxD'),
+  SEMESTER: getPriceId(process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID, 'price_1SvHTOPzEHK36eTSoiTu8m3C'),
+  PLUS_PLUS: getPriceId(process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID, 'price_1SvHUKPzEHK36eTSO6fRLHli'),
 };
 
 const fadeIn = {
