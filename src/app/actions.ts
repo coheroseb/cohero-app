@@ -74,7 +74,7 @@ if (!Promise.withResolvers) {
 
 
 
-import { adminFirestore, adminAuth } from '@/firebase/server-init';
+import { adminFirestore } from '@/firebase/server-init';
 import { uploadMediaToStorage } from '@/lib/storage-utils';
 
 
@@ -539,17 +539,6 @@ export async function unifiedChatAction(input: Types.UnifiedChatInput): Promise<
  */
 export async function identifyReformAction(query: string): Promise<Types.IdentifyReformOutput> {
     return callFirebaseFlow('identifyReformFlow', { query });
-}
-
-export async function generateGroupSsoTokenAction(uid: string) {
-    if (!uid) throw new Error('UID is required');
-    try {
-        const token = await adminAuth.createCustomToken(uid);
-        return { success: true, token };
-    } catch (error) {
-        console.error('SSO Token Error:', error);
-        return { success: false, error: 'Could not generate token' };
-    }
 }
 
 /**
