@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ArrowLeft, ShieldCheck, FileText, AlertTriangle, Scale, Lock } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function RaadgivningTermsPage() {
@@ -19,12 +20,12 @@ export default function RaadgivningTermsPage() {
                <ArrowLeft className="w-4 h-4" />
                Tilbage
             </button>
-            <div className="flex items-center gap-3">
-               <div className="w-8 h-8 bg-amber-950 text-amber-500 rounded-lg flex items-center justify-center">
-                  <Scale className="w-4 h-4" />
+            <Link href="/" className="flex items-center gap-3 active:scale-95 transition-all outline-none group">
+               <div className="w-8 h-8 bg-amber-950 text-amber-500 rounded-lg flex items-center justify-center overflow-hidden border border-amber-900/20 group-hover:scale-105 transition-transform">
+                  <img src="/main_logo.png" alt="Cohéro logo" className="w-full h-full object-cover" />
                </div>
                <h1 className="text-sm font-bold text-amber-950 serif">Vilkår & Betingelser</h1>
-            </div>
+            </Link>
             <div className="w-20"></div> {/* Spacer for symmetry */}
          </div>
       </header>
