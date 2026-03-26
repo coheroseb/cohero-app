@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Linkedin, Instagram, MapPin, Facebook, ArrowUpRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { Mail, Linkedin, Instagram, MapPin, Facebook, ArrowUpRight, Sparkles, ShieldCheck, Music } from 'lucide-react';
 import Link from 'next/link';
 
 const Footer: React.FC = () => {
@@ -39,7 +39,8 @@ const Footer: React.FC = () => {
               {[
                 { icon: <Linkedin className="w-5 h-5" />, href: "https://linkedin.com/company/coherois/" },
                 { icon: <Instagram className="w-5 h-5" />, href: "https://www.instagram.com/cohero_is" },
-                { icon: <Facebook className="w-5 h-5" />, href: "https://www.facebook.com/profile.php?id=61586618395097" }
+                { icon: <Facebook className="w-5 h-5" />, href: "https://www.facebook.com/profile.php?id=61586618395097" },
+                { icon: <Music className="w-5 h-5" />, href: "https://www.tiktok.com/@cohro" }
               ].map((social, i) => (
                 <a 
                   key={i}

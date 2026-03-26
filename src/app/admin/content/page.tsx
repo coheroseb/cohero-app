@@ -2,13 +2,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Gavel, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, FolderSync } from 'lucide-react';
+import { BookOpen, Gavel, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, FolderSync, MessageCircle } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { listInternalDocsAction, processInternalDocAction, queueNotificationAction } from '@/app/actions';
+import { deleteReviewAction, getReviewsAction } from '@/app/praktik-rating/actions';
 
 interface LawConfig {
   id: string;
@@ -354,7 +355,7 @@ const DilemmaManager = () => {
             });
 
             await queueNotificationAction({
-                title: "Nyt Ugens Dilemma! 🤔",
+                title: "Nyt Ugens Dilemma! ",
                 body: `Uge ${newDilemma.weekNumber}: ${newDilemma.title}. Test dit faglige skøn nu!`,
                 recipientUids: [],
                 targetGroup: 'all',
@@ -414,14 +415,97 @@ const DilemmaManager = () => {
     );
 };
 
-const AdminContentPage = () => {
-  return (
-    <div className="space-y-8 animate-ink">
-       <LawManager />
-       <KnowledgeSyncManager />
-       <DilemmaManager />
-    </div>
-  );
+const ReviewManager = () => {
+    const { toast } = useToast();
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getReviewsAction().then(setReviews).finally(() => setIsLoading(false));
+    }, []);
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Vil du slette denne anmeldelse permanent?')) return;
+        const res = await deleteReviewAction(id);
+        if (res.success) {
+            setReviews(reviews.filter(r => r.id !== id));
+            toast({ title: "Anmeldelse slettet" });
+        } else {
+            toast({ variant: 'destructive', title: "Fejl", description: res.error });
+        }
+    };
+
+    return (
+        <section className="bg-white p-10 rounded-[3.5rem] border border-amber-100 shadow-sm">
+            <div className="flex items-center justify-between mb-10">
+                <div>
+                  <h3 className="text-xl font-bold text-amber-950 serif flex items-center gap-3"><MessageCircle className="w-5 h-5 text-rose-500"/>Praktik-anmeldelser</h3>
+                  <p className="text-xs text-slate-400 mt-1">Administrér de indsendte bedømmelser af praktiksteder.</p>
+                </div>
+            </div>
+
+            {isLoading ? (
+                <div className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-200" /></div>
+            ) : (
+                <div className="grid gap-6">
+                    {reviews.map(review => (
+                        <div key={review.id} className="p-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] group hover:border-amber-200 transition-all flex flex-col md:flex-row justify-between gap-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex gap-0.5">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Sparkles key={i} className={`w-3 h-3 ${i < review.rating ? 'text-amber-500 fill-current' : 'text-slate-200'}`} />
+                                        ))}
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        Indsendt {review.createdAt ? new Date(review.createdAt).toLocaleDateString('da-DK') : 'Ukendt dato'}
+                                    </span>
+                                </div>
+                                
+                                <blockquote className="text-slate-700 italic text-sm leading-relaxed">
+                                    "{review.reviewText}"
+                                </blockquote>
+
+                                <div className="flex flex-wrap gap-4 items-center">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-100 rounded-full">
+                                        <Building className="w-3 h-3 text-slate-400" />
+                                        <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{review.institutionName}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-100 rounded-full">
+                                        <Hash className="w-3 h-3 text-slate-400" />
+                                        <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{review.userName} {review.isAnonymous ? '(Anonym)' : ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-start">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => handleDelete(review.id)}
+                                    className="text-rose-500 hover:bg-rose-50 bg-white border-rose-100"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" /> Slet anmeldelse
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                    {reviews.length === 0 && <p className="text-center py-20 text-slate-400 italic">Ingen anmeldelser fundet.</p>}
+                </div>
+            )}
+        </section>
+    );
 };
 
-export default AdminContentPage;
+const AdminContentPage = () => {
+    return (
+      <div className="space-y-8 animate-ink">
+         <LawManager />
+         <KnowledgeSyncManager />
+         <DilemmaManager />
+         <ReviewManager />
+      </div>
+    );
+  };
+  
+  export default AdminContentPage;

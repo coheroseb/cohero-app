@@ -24,13 +24,15 @@ import {
   Heart,
   Users,
   GraduationCap,
-  Download
+  Download,
+  Music
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import PWAInstallGuide from '@/components/PWAInstallGuide';
 import HeroIllustration from '@/components/home/HeroIllustration';
 import SeminarArchitectVisualization from '@/components/SeminarArchitectVisualization';
+import TikTokFeed from '@/components/home/TikTokFeed';
 
 const Reveal = ({ children, delay = 0, className = "" }: { children: React.ReactNode, delay?: number, className?: string }) => (
   <motion.div
@@ -527,6 +529,65 @@ export default function LandingPage() {
           </Reveal>
         </div>
         <div className="absolute top-1/2 left-[-10%] sm:left-0 w-64 h-64 bg-amber-100/30 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none"></div>
+      </section>
+      {/* 4.5 TIKTOK FEED SECTION */}
+      <section className="py-24 sm:py-40 bg-[#FDFBF7] relative overflow-hidden px-5 sm:px-8 border-t border-slate-100/50">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(251,191,36,0.08)_0%,transparent_100%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
+            <div className="flex-1 space-y-8 text-center lg:text-left">
+              <Reveal>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200/50 rounded-full mb-4">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-900">Live fra TikTok</span>
+                </div>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <h2 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 tracking-[-0.04em] leading-[1.05]">
+                  Følg rejsen <br className="hidden sm:block" />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-rose-500 italic">bag facaden.</span>
+                </h2>
+                <p className="text-xl text-slate-500 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed mt-6">
+                  Vi deler dagligt tips, tricks og faglige indsigter direkte til din feed. Bliv en del af vores fællesskab på TikTok.
+                </p>
+              </Reveal>
+              <Reveal delay={0.2}>
+                <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+                  <a 
+                    href="https://www.tiktok.com/@cohro" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="group relative px-10 py-6 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 transition-all w-full sm:w-auto overflow-hidden active:scale-95"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-3">
+                      Se flere videoer
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+                    </span>
+                  </a>
+                  <div className="flex items-center gap-3 py-2 opacity-50">
+                    <Music className="w-4 h-4 text-slate-400" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Opdateres hver uge</span>
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+
+            <div className="w-full lg:w-5/12 flex justify-center">
+              <Reveal delay={0.3} className="relative">
+                {/* Decorative background elements for the video holder */}
+                <div className="absolute -inset-4 bg-gradient-to-tr from-amber-200/20 to-rose-200/20 blur-3xl opacity-50 -z-10 animate-pulse" />
+                <div className="absolute -top-12 -right-12 w-24 h-24 bg-rose-100/50 rounded-full blur-2xl -z-10" />
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-100/50 rounded-full blur-2xl -z-10" />
+                
+                {/* TikTok Feed Component */}
+                <TikTokFeed />
+              </Reveal>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* 5. PRICING SECTION */}
