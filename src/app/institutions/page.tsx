@@ -561,31 +561,31 @@ const InstitutionsPage = () => {
           <h1 className="text-5xl md:text-7xl font-black text-white serif tracking-tight mb-6">
             Find <span className="text-amber-500">Institutionen</span>
           </h1>
-          <p className="max-w-2xl mx-auto text-amber-100/60 text-lg md:text-xl font-medium leading-relaxed">
+          <p className="max-w-2xl mx-auto text-amber-100/60 text-lg md:text-xl font-medium leading-relaxed mb-10">
             Søg på tværs af tusindvis af offentlige og private institutioner i Danmark.
           </p>
+
+          {/* Tab Switcher - Inside Hero for better layout */}
+          <div className="max-w-md mx-auto relative z-20">
+             <div className="bg-white/10 backdrop-blur-xl p-1.5 rounded-full border border-white/20 shadow-2xl flex items-center justify-between overflow-hidden">
+                <button 
+                   onClick={() => setActiveTab('search')}
+                   className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'search' ? 'bg-amber-400 text-amber-950 shadow-xl' : 'text-white/60 hover:text-white'}`}
+                >
+                   <Building2 className="w-4 h-4" />
+                   Søg Institution
+                </button>
+                <button 
+                   onClick={() => setActiveTab('prep')}
+                   className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prep' ? 'bg-amber-400 text-amber-950 shadow-xl' : 'text-white/60 hover:text-white'}`}
+                >
+                   <ClipboardCheck className="w-4 h-4" />
+                   Praktik-Forbereder
+                </button>
+             </div>
+          </div>
         </motion.div>
       </header>
-
-      {/* Tab Switcher */}
-      <div className="relative z-40 max-w-xl mx-auto -mt-10 mb-2 px-6">
-         <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-full border border-amber-100/50 shadow-xl flex items-center justify-between overflow-hidden">
-            <button 
-               onClick={() => setActiveTab('search')}
-               className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'search' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-900'}`}
-            >
-               <Building2 className="w-4 h-4" />
-               Søg Institution
-            </button>
-            <button 
-               onClick={() => setActiveTab('prep')}
-               className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'prep' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-900'}`}
-            >
-               <ClipboardCheck className="w-4 h-4" />
-               Praktik-Forbereder
-            </button>
-         </div>
-      </div>
 
       {activeTab === 'search' ? (
         <>
