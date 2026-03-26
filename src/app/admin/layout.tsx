@@ -19,7 +19,6 @@ const navigation = [
   { id: 'marketing', href: '/admin/marketing', label: 'Marketing & Koder', icon: Sparkles },
   { id: 'emails', href: '/admin/emails', label: 'E-mail Kampagner', icon: Mail },
   { id: 'stats', href: '/admin/stats', label: 'SaaS Statistik', icon: BarChart },
-  { id: 'chat', href: '/admin/chat', label: 'Live Chat', icon: MessageSquare },
   { id: 'markedsplads', href: '/admin/markedsplads', label: 'Markedsplads', icon: HandHelping },
   { id: 'system', href: '/admin/system', label: 'Aktivitetslog', icon: Database },
 ];
@@ -32,15 +31,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    if (!firestore || userProfile?.role !== 'admin') return;
-    const q = query(collection(firestore, 'support_chats'), where('status', '==', 'active'), where('isReadByAdmin', '==', false));
-    return onSnapshot(q, (snapshot) => {
-        setUnreadCount(snapshot.size);
-    }, (err) => {
-        console.error('[AdminLayout] Support chat listener error:', err);
-    });
-  }, [firestore, userProfile]);
 
   useEffect(() => {
     if (!isUserLoading && (!user || userProfile?.role !== 'admin')) {
@@ -94,11 +84,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="flex items-center gap-4 relative z-10">
                   <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-amber-400' : 'text-slate-300 group-hover:text-amber-700'}`} />
                   {item.label}
-                  {item.id === 'chat' && unreadCount > 0 && (
-                    <span className="ml-2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-rose-500/20">
-                      {unreadCount}
-                    </span>
-                  )}
                 </div>
                 {isActive && (
                   <motion.div layoutId="activeNav" className="absolute inset-0 bg-amber-950 rounded-2xl -z-10 shadow-2xl shadow-amber-950/20" />
@@ -155,9 +140,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="flex items-center gap-2 pr-4 border-r border-slate-200">
                 <button className="p-2.5 text-slate-400 hover:text-amber-950 hover:bg-slate-50 rounded-xl transition-all relative">
                    <Bell className="w-5 h-5" />
-                   {unreadCount > 0 && (
-                     <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white ring-2 ring-rose-100"></span>
-                   )}
                 </button>
               </div>
 

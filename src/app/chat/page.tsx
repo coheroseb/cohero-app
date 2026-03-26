@@ -25,7 +25,6 @@ import {
   ArrowRight,
   PanelLeftClose,
   PanelLeftOpen,
-  LayoutGrid
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -77,7 +76,11 @@ const personas = [
 ];
 
 const UnifiedChatPage: React.FC = () => {
-  const { user, userProfile, isUserLoading } = useApp();
+  const app = useApp();
+  const user = app?.user;
+  const userProfile = app?.userProfile;
+  const isUserLoading = app?.isUserLoading;
+  
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -96,10 +99,13 @@ const UnifiedChatPage: React.FC = () => {
 
   // --- Auth Redirect ---
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!isUserLoading && !user && mounted) {
       router.replace('/');
     }
   }, [user, isUserLoading, router]);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   // --- Fetch Conversations ---
   useEffect(() => {
@@ -114,7 +120,7 @@ const UnifiedChatPage: React.FC = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const convs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Conversation));
       setConversations(convs);
-    });
+    }, (err) => console.error("Snapshot error:", err));
 
     return unsubscribe;
   }, [user, firestore]);
@@ -134,7 +140,7 @@ const UnifiedChatPage: React.FC = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Message));
       setMessages(msgs);
-    });
+    }, (err) => console.error("Msg snapshot error:", err));
 
     return unsubscribe;
   }, [user, firestore, activeConversationId]);
@@ -212,7 +218,6 @@ const UnifiedChatPage: React.FC = () => {
     }
   };
 
-  // --- Handle New Chat ---
   const startNewChat = () => {
     setActiveConversationId(null);
     setMessages([]);
@@ -220,27 +225,28 @@ const UnifiedChatPage: React.FC = () => {
     inputRef.current?.focus();
   };
 
-  // --- Handle Delete Conversation ---
   const deleteConversation = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user || !firestore || !window.confirm('Vil du slette denne samtale?')) return;
     
     try {
       await deleteDoc(doc(firestore, 'users', user.uid, 'conversations', id));
-      if (id === activeConversationId) {
-        startNewChat();
-      }
+      if (id === activeConversationId) startNewChat();
       toast({ title: "Slettet", description: "Samtalen er fjernet fra historikken." });
     } catch (err) {
       console.error(err);
     }
   };
 
-  if (isUserLoading || !user) {
+  if (!mounted || isUserLoading) {
     return <AuthLoadingScreen />;
   }
 
-  const activePersonaInfo = personas.find(p => p.id === activePersona)!;
+  if (!user) {
+    return <div className="h-screen flex items-center justify-center p-10 text-center animate-pulse">Omdirigerer...</div>;
+  }
+
+  const activePersonaInfo = personas.find(p => p.id === activePersona) || personas[0];
 
   return (
     <div className="flex h-[100dvh] pt-24 md:pt-32 bg-[#FAFAF7] overflow-hidden text-slate-900 font-sans selection:bg-amber-100">
@@ -267,36 +273,40 @@ const UnifiedChatPage: React.FC = () => {
                 <div className="text-center py-12 px-6">
                     <p className="text-[11px] text-slate-300 font-medium italic">Ingen tidligere samtaler endnu.</p>
                 </div>
-            ) : conversations.map(conv => (
-              <div 
-                key={conv.id}
-                onClick={() => { setActiveConversationId(conv.id); setIsMobileSidebarOpen(false); }}
-                className={`group flex items-center gap-3 p-4 rounded-2xl cursor-pointer transition-all ${activeConversationId === conv.id ? 'bg-amber-50 border border-amber-100' : 'hover:bg-slate-50'}`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${activeConversationId === conv.id ? 'bg-white shadow-sm text-amber-600' : 'bg-slate-50 text-slate-400 group-hover:bg-white transition-colors'}`}>
-                  {personas.find(p => p.id === conv.persona)?.icon ? React.createElement(personas.find(p => p.id === conv.persona)!.icon, { className: 'w-5 h-5' }) : <MessageCircle className="w-5 h-5" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-black truncate leading-tight ${activeConversationId === conv.id ? 'text-amber-950' : 'text-slate-600'}`}>{conv.title}</p>
-                  <p className="text-[10px] text-slate-400 truncate mt-1">{conv.lastMessage}</p>
-                </div>
-                <button 
-                  onClick={(e) => deleteConversation(conv.id, e)}
-                  className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 transition-all active:scale-90"
+            ) : conversations.map(conv => {
+              const pInfo = personas.find(p => p.id === conv.persona) || personas[0];
+              const Icon = pInfo.icon;
+              return (
+                <div 
+                  key={conv.id}
+                  onClick={() => { setActiveConversationId(conv.id); setIsMobileSidebarOpen(false); }}
+                  className={`group flex items-center gap-3 p-4 rounded-2xl cursor-pointer transition-all ${activeConversationId === conv.id ? 'bg-amber-50 border border-amber-100' : 'hover:bg-slate-50'}`}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${activeConversationId === conv.id ? 'bg-white shadow-sm text-amber-600' : 'bg-slate-50 text-slate-400 group-hover:bg-white transition-colors'}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-[13px] font-black truncate leading-tight ${activeConversationId === conv.id ? 'text-amber-950' : 'text-slate-600'}`}>{conv.title}</p>
+                    <p className="text-[10px] text-slate-400 truncate mt-1">{conv.lastMessage}</p>
+                  </div>
+                  <button 
+                    onClick={(e) => deleteConversation(conv.id, e)}
+                    className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 transition-all active:scale-90"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           <div className="pt-6 border-t border-amber-950/5 mt-auto">
             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
               <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 font-black text-sm">
-                {user?.displayName?.charAt(0)}
+                {user?.displayName?.charAt(0) || '?'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-black text-amber-950 truncate">{user?.displayName?.split(' ')[0]}</p>
+                <p className="text-xs font-black text-amber-950 truncate">{user?.displayName?.split(' ')[0] || 'Bruger'}</p>
                 <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{userProfile?.membership || 'Kollega'}</p>
               </div>
               <Settings className="w-4 h-4 text-slate-300 cursor-pointer hover:text-slate-500" />
@@ -353,7 +363,7 @@ const UnifiedChatPage: React.FC = () => {
         <div className="flex-1 overflow-y-auto px-6 py-8 md:px-12 lg:px-20 custom-scrollbar relative z-10 scroll-smooth">
           <div className="max-w-4xl mx-auto space-y-12">
             
-            {messages.length === 0 && (
+            {(messages.length === 0) && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center text-center py-20 space-y-10">
                 <div className="w-24 h-24 bg-gradient-to-br from-amber-900 to-amber-950 rounded-[2.5rem] flex items-center justify-center text-amber-400 shadow-2xl relative">
                   <Bot className="w-12 h-12" />
@@ -369,20 +379,23 @@ const UnifiedChatPage: React.FC = () => {
                     { q: "Giv mig sparring på et etisk dilemma om magtanvendelse", p: 'kollega' },
                     { q: "Hvad er de vigtigste principper i VUM?", p: 'social_work' },
                     { q: "Hvordan opbygger jeg en stærk pædagogisk observation?", p: 'case' }
-                  ].map((suggestion, i) => (
-                    <button 
-                        key={i} 
-                        onClick={() => { setActivePersona(suggestion.p as any); setInput(suggestion.q); }}
-                        className="bg-white p-6 rounded-[2rem] border border-slate-100 text-left hover:border-amber-200 hover:shadow-xl hover:-translate-y-1 transition-all group active:scale-95"
-                    >
-                      <p className="text-sm font-bold text-slate-700 group-hover:text-amber-950 leading-relaxed mb-3">"{suggestion.q}"</p>
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          {personas.find(p => p.id === suggestion.p)?.icon && React.createElement(personas.find(p => p.id === suggestion.p)!.icon, { className: 'w-3.5 h-3.5' })}
-                          <span>Prøv denne</span>
-                          <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </button>
-                  ))}
+                  ].map((suggestion, i) => {
+                    const SIcon = personas.find(p => p.id === suggestion.p)?.icon || MessageCircle;
+                    return (
+                      <button 
+                          key={i} 
+                          onClick={() => { setActivePersona(suggestion.p as any); setInput(suggestion.q); }}
+                          className="bg-white p-6 rounded-[2rem] border border-slate-100 text-left hover:border-amber-200 hover:shadow-xl hover:-translate-y-1 transition-all group active:scale-95"
+                      >
+                        <p className="text-sm font-bold text-slate-700 group-hover:text-amber-950 leading-relaxed mb-3">"{suggestion.q}"</p>
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <SIcon className="w-3.5 h-3.5" />
+                            <span>Prøv denne</span>
+                            <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               </motion.div>
             )}
@@ -408,12 +421,6 @@ const UnifiedChatPage: React.FC = () => {
                     <div className={`p-6 md:p-8 rounded-[2rem] shadow-sm leading-[1.8] font-medium text-lg whitespace-pre-wrap ${m.role === 'user' ? 'bg-amber-950 text-amber-50 rounded-tr-none' : 'bg-white border border-amber-950/5 text-slate-800 rounded-tl-none'}`}>
                       {m.content}
                     </div>
-                    {m.role === 'assistant' && (
-                        <div className="flex items-center gap-4 mt-4 px-4">
-                             <button className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-amber-600 transition-colors">Kopiér</button>
-                             <button className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-600 transition-colors">Rapportér</button>
-                        </div>
-                    )}
                   </div>
                 </motion.div>
               ))}
@@ -430,7 +437,7 @@ const UnifiedChatPage: React.FC = () => {
                     <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-amber-700 rounded-full" />
                     <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
                   </div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Analyserer forespørgsel...</p>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Analyserer...</p>
                 </div>
               </motion.div>
             )}
@@ -460,7 +467,7 @@ const UnifiedChatPage: React.FC = () => {
                       handleSend();
                     }
                   }}
-                  placeholder={`Spørg din ${activePersonaInfo.name.toLowerCase()}... (Skift til ${input.length % 2 === 0 ? 'Lovgiver' : 'Kollega'} i toppen)`}
+                  placeholder={`Spørg din ${activePersonaInfo.name.toLowerCase()}...`}
                   rows={1}
                   className="w-full bg-transparent border-none focus:ring-0 text-amber-950 font-medium text-lg min-h-[56px] py-4 px-4 resize-none leading-relaxed placeholder:text-slate-300 placeholder:italic"
                   style={{ height: 'auto', minHeight: '56px', maxHeight: '200px' }}
@@ -484,30 +491,12 @@ const UnifiedChatPage: React.FC = () => {
                   </Button>
                 </div>
               </div>
-              
-              <div className="mt-4 flex items-center justify-center gap-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Skift perspektiv:</p>
-                <div className="flex gap-4">
-                    {personas.map(p => (
-                        <button 
-                            key={p.id}
-                            onClick={() => setActivePersona(p.id as any)}
-                            className={`flex items-center gap-2 group transition-all ${activePersona === p.id ? 'opacity-100' : 'opacity-40 hover:opacity-100'}`}
-                        >
-                            <div className={`p-1.5 rounded-lg ${p.bg} ${p.color} border ${p.border}`}>
-                                <p.icon className="w-3 h-3" />
-                            </div>
-                            <span className={`text-[9px] font-black uppercase tracking-widest ${activePersona === p.id ? 'text-amber-950' : 'text-slate-400'}`}>{p.name.split(' ')[0]}</span>
-                        </button>
-                    ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* MOBILE SIDEBAR OVERLAY */}
+      {/* MOBILE SIDEBAR */}
       <AnimatePresence>
         {isMobileSidebarOpen && (
           <>
@@ -533,32 +522,25 @@ const UnifiedChatPage: React.FC = () => {
                     </button>
                   </div>
                   
-                  <Button 
-                    onClick={startNewChat}
-                    className="w-full h-14 bg-amber-950 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[11px] mb-8"
-                  >
+                  <Button onClick={startNewChat} className="w-full h-14 bg-amber-950 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase text-[11px] mb-8">
                     <Plus className="w-4 h-4" /> Ny Samtale
                   </Button>
 
-                  <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-                    {conversations.map(conv => (
-                        <div 
-                            key={conv.id}
-                            onClick={() => { setActiveConversationId(conv.id); setIsMobileSidebarOpen(false); }}
-                            className={`p-4 rounded-2x flex items-center justify-between gap-3 ${activeConversationId === conv.id ? 'bg-amber-50 border border-amber-100' : 'bg-slate-50'}`}
-                        >
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shrink-0 shadow-sm">
-                                    {personas.find(p => p.id === conv.persona)?.icon && React.createElement(personas.find(p => p.id === conv.persona)!.icon, { className: 'w-5 h-5' })}
+                  <div className="flex-1 overflow-y-auto space-y-2">
+                    {conversations.map(conv => {
+                         const PIcon = personas.find(p => p.id === conv.persona)?.icon || MessageCircle;
+                         return (
+                            <div key={conv.id} onClick={() => { setActiveConversationId(conv.id); setIsMobileSidebarOpen(false); }} className={`p-4 rounded-2xl flex items-center justify-between gap-3 ${activeConversationId === conv.id ? 'bg-amber-50' : 'bg-slate-50'}`}>
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                        <PIcon className="w-5 h-5 text-amber-600" />
+                                    </div>
+                                    <span className="text-xs font-black truncate">{conv.title}</span>
                                 </div>
-                                <span className="text-xs font-black text-amber-950 truncate">{conv.title}</span>
+                                <Trash2 onClick={(e) => deleteConversation(conv.id, e)} className="w-4 h-4 text-slate-300" />
                             </div>
-                            <Trash2 
-                                onClick={(e) => deleteConversation(conv.id, e)} 
-                                className="w-4 h-4 text-slate-300 hover:text-rose-500 shrink-0" 
-                            />
-                        </div>
-                    ))}
+                         )
+                    })}
                   </div>
                </div>
             </motion.div>
@@ -567,19 +549,9 @@ const UnifiedChatPage: React.FC = () => {
       </AnimatePresence>
 
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(69, 26, 3, 0.05);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(69, 26, 3, 0.1);
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(69, 26, 3, 0.05); border-radius: 10px; }
       `}</style>
     </div>
   );

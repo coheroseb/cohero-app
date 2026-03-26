@@ -242,7 +242,7 @@ const Navbar: React.FC<NavbarProps> = ({
         title: "Fællesskab",
         items: [
           { title: "Opslagstavle", path: "/opslagstavle", icon: <MessageSquare className="w-5 h-5" /> },
-          { title: "Studiegrupper", path: "https://group.cohero.dk", icon: <UserPlus className="w-5 h-5" /> },
+          { title: "Studiegrupper", path: "/portal/groups", icon: <UserPlus className="w-5 h-5" /> },
         ]
       },
       {
@@ -353,7 +353,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
                     <NavDropdown title="Fællesskab" icon={<Users className="w-4 h-4 text-slate-400"/>}>
                     <NavDropdownLink href="/opslagstavle" icon={<MessageSquare className="w-4 h-4"/>}>Opslagstavle</NavDropdownLink>
-                    <NavDropdownLink href="https://group.cohero.dk" icon={<UserPlus className="w-4 h-4"/>}>Studiegrupper</NavDropdownLink>
+                    <NavDropdownLink href="/portal/groups" icon={<UserPlus className="w-4 h-4"/>}>Studiegrupper</NavDropdownLink>
                     </NavDropdown>
                     
                     <NavDropdown title="Arkiv" icon={<Layers className="w-4 h-4 text-slate-400"/>}>
