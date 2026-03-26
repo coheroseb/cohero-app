@@ -39,6 +39,7 @@ export default function PublicAssistanceRequestPage() {
   const [requestId, setRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -88,7 +89,7 @@ export default function PublicAssistanceRequestPage() {
     if (currentStep === 1) return formData.title.length > 0 && formData.category;
     if (currentStep === 2) return formData.description.length > 20;
     if (currentStep === 3) return formData.citizenName.length > 2 && formData.citizenEmail.includes('@');
-    if (currentStep === 4) return formData.price > 0;
+    if (currentStep === 4) return formData.price > 0 && (!isConfirmed || termsAccepted);
     return false;
   };
 
@@ -452,6 +453,21 @@ export default function PublicAssistanceRequestPage() {
                                 <p className="text-[11px] text-emerald-900 font-medium leading-relaxed">
                                    Alt ser korrekt ud. Når du trykker på bekræft, bliver din anmodning synlig for de studerende på markedspladsen.
                                 </p>
+                             </div>
+
+                             <div className="px-2 flex items-start gap-3">
+                                <div className="pt-1">
+                                    <input 
+                                        type="checkbox" 
+                                        id="terms"
+                                        checked={termsAccepted}
+                                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                                        className="w-4 h-4 rounded border-slate-200 text-amber-950 focus:ring-amber-950/20 transition-all cursor-pointer"
+                                    />
+                                </div>
+                                <label htmlFor="terms" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none">
+                                    Jeg bekræfter, at jeg har læst og accepteret <a href="/raadgivning/vilkaar" target="_blank" className="text-amber-950 font-black underline hover:text-rose-600 transition-colors">Vilkår & Betingelser</a> for brug af Cohéro Rådgivning, herunder ansvarsfraskrivelsen.
+                                </label>
                              </div>
                           </div>
                         )}
