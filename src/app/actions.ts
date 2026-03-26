@@ -641,7 +641,10 @@ export async function semanticLawSearchAction(query: string, lawId?: string, doc
         }
         
         console.log(`[SemanticSearch] calling semanticLawSearchFlow`);
-        const result = await callFirebaseFlow('semanticLawSearchFlow', { query, legalContext: context });
+        const result = await callFirebaseFlow('semanticLawSearchFlow', { 
+            query, 
+            legalContext: context || '' 
+        });
         return result;
     } catch (error: any) {
         console.error("CRITICAL ERROR in semanticLawSearchAction:", error.message);
