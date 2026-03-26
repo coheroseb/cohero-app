@@ -21,7 +21,8 @@ import {
   ThumbsUp,
   Download,
   FileSpreadsheet,
-  Lock
+  Lock,
+  ClipboardCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -30,6 +31,7 @@ import { useDebounce } from 'use-debounce';
 import { useApp } from '@/app/provider';
 import { useRouter } from 'next/navigation';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
+import { InternshipPrepTool } from './InternshipPrepTool';
 
 const AdminExportButton = ({ userProfile }: { userProfile: any }) => {
   const firestore = useFirestore();
@@ -471,6 +473,7 @@ const InstitutionsPage = () => {
   const [typeFilter, setTypeFilter] = useState('Alle');
   const [isLocating, setIsLocating] = useState(false);
   const [selectedInstitution, setSelectedInstitution] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'search' | 'prep'>('search');
   const firestore = useFirestore();
 
   useEffect(() => {
@@ -564,6 +567,28 @@ const InstitutionsPage = () => {
         </motion.div>
       </header>
 
+      {/* Tab Switcher */}
+      <div className="relative z-40 max-w-xl mx-auto -mt-10 mb-2 px-6">
+         <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-full border border-amber-100/50 shadow-xl flex items-center justify-between overflow-hidden">
+            <button 
+               onClick={() => setActiveTab('search')}
+               className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'search' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-900'}`}
+            >
+               <Building2 className="w-4 h-4" />
+               Søg Institution
+            </button>
+            <button 
+               onClick={() => setActiveTab('prep')}
+               className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'prep' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-900'}`}
+            >
+               <ClipboardCheck className="w-4 h-4" />
+               Praktik-Forbereder
+            </button>
+         </div>
+      </div>
+
+      {activeTab === 'search' ? (
+        <>
       {/* Search & Filter Center */}
       <div className="relative z-30 -mt-16 md:-mt-24 px-6">
         <div className="max-w-6xl mx-auto">
@@ -746,6 +771,12 @@ const InstitutionsPage = () => {
            />
         )}
       </AnimatePresence>
+      </>
+      ) : (
+        <div className="py-24 px-6 relative z-10 bg-[#FDFCF8]">
+           <InternshipPrepTool />
+        </div>
+      )}
     </div>
   );
 };
