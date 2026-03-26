@@ -18,7 +18,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LAW_METADATA } from '@/lib/law-metadata';
+import { useLawRecommendations } from '@/lib/law-engine';
 import Link from 'next/link';
 
 const PREP_STEPS = [
@@ -255,39 +255,7 @@ export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitutio
                   </div>
 
                   {currentSteps[activeStep].id === 'law' && (
-                     <div className="mt-12 space-y-6">
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
-                              <ShieldCheck className="w-4 h-4" />
-                           </div>
-                           <h4 className="text-sm font-black uppercase tracking-widest text-slate-900">Anbefalede Love fra Lovportalen</h4>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                           {Object.values(LAW_METADATA).map((law) => {
-                              const isRelevant = selectedInstitution?.INST_NAVN?.toLowerCase().includes('børn') || 
-                                                selectedInstitution?.inst_type_2_tekst?.toLowerCase().includes('børn') ||
-                                                law.id === 'forvaltningsloven' || law.id === 'retssikkerhedsloven';
-                              
-                              return (
-                                 <Link 
-                                    key={law.id}
-                                    href={`/lov-portal`}
-                                    className={`p-6 rounded-3xl border transition-all group ${isRelevant ? 'bg-amber-50/50 border-amber-200 shadow-lg shadow-amber-900/5' : 'bg-white border-slate-100 hover:border-slate-200'}`}
-                                 >
-                                    <div className="flex items-start justify-between mb-3">
-                                       <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">{law.id.replace('-', ' ')}</span>
-                                       {isRelevant && <Sparkles className="w-3.5 h-3.5 text-amber-500" />}
-                                    </div>
-                                    <p className="text-xs font-bold text-slate-900 leading-tight mb-2 group-hover:text-amber-700">{law.description}</p>
-                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-900">
-                                       Gå til portal <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                                    </div>
-                                 </Link>
-                              );
-                           })}
-                        </div>
-                     </div>
+                     <LawSuggestions instName={selectedInstitution?.INST_NAVN} instType={selectedInstitution?.inst_type_2_tekst} />
                   )}
                </motion.div>
             </AnimatePresence>
@@ -358,4 +326,45 @@ export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitutio
       </div>
     </div>
   );
+};
+
+const LawSuggestions = ({ instName, instType }: { instName?: string, instType?: string }) => {
+   const recommendedLaws = useLawRecommendations(instName, instType);
+   
+   return (
+      <div className="mt-12 space-y-6">
+         <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+               <ShieldCheck className="w-4 h-4" />
+            </div>
+            <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 tracking-wider">Målrettede Love fra Lovportalen</h4>
+         </div>
+         
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {recommendedLaws.length > 0 ? (
+               recommendedLaws.map((law) => (
+                  <Link 
+                     key={law.id}
+                     href={`/lov-portal/view/${law.id}`}
+                     className="p-6 rounded-[2rem] border border-amber-200 bg-amber-50/30 hover:bg-white hover:border-amber-950 transition-all group shadow-sm hover:shadow-xl"
+                  >
+                     <div className="flex items-start justify-between mb-3">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">{law.abbreviation}</span>
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                     </div>
+                     <p className="text-sm font-black text-slate-900 leading-tight mb-2 group-hover:text-amber-950 serif italic">{law.name}</p>
+                     <p className="text-[10px] text-slate-500 leading-relaxed mb-4 line-clamp-2">{law.description}</p>
+                     <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-amber-950 transition-colors">
+                        Studér denne lov <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                     </div>
+                  </Link>
+               ))
+            ) : (
+               <div className="col-span-2 p-8 border-2 border-dashed border-slate-100 rounded-[2.5rem] text-center">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Søg efter en institution for at få konkrete anbefalinger</p>
+               </div>
+            )}
+         </div>
+      </div>
+   );
 };
