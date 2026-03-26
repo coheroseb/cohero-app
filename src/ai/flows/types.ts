@@ -528,10 +528,6 @@ export const ParagraphAnalysisDataSchema = z.object({
   subjekt: z.string(),
   handling: z.string(),
   betingelser: z.string(),
-  interpretation: z.string().optional().describe('Forklaring af paragraffen i et lettere sprog.'),
-  keyTerms: z.array(z.string()).optional().describe('Vigtige juridiske begreber i paragraffen.'),
-  application: z.string().optional().describe('Hvordan paragraffen typisk anvendes i praksis af en socialrådgiver.'),
-  relatedPrinciples: z.array(z.string()).optional().describe('Andre relevante love eller principper.'),
 });
 
 export const AnalyzeParagraphOutputSchema = z.object({

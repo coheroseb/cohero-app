@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { lawEngine } from './core';
 import { LawReference, LawSituation } from './types';
 
@@ -21,4 +21,23 @@ export const useSituationLaws = (situationId?: string) => {
 
 export const useLawEngine = () => {
     return lawEngine;
+};
+
+export const useParagraph = (lawId?: string, paragraphNumber?: string) => {
+    const [para, setPara] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchPara = async () => {
+            if (!lawId || !paragraphNumber) return;
+            setLoading(true);
+            const { lawFetcher } = await import('./fetcher');
+            const result = await lawFetcher.getParagraph(lawId, paragraphNumber);
+            setPara(result);
+            setLoading(false);
+        };
+        fetchPara();
+    }, [lawId, paragraphNumber]);
+
+    return { paragraph: para, loading };
 };
