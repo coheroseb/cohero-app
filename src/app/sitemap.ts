@@ -24,7 +24,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/etik',
     '/tendenser',
     '/samarbejde',
-    '/gdpr',
     '/memento',
     '/lov-portal',
     '/legal-logic-board',

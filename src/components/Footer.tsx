@@ -88,7 +88,6 @@ const Footer: React.FC = () => {
                   { name: 'Betingelser', href: '/terms-of-service' },
                   { name: 'Privatliv', href: '/privacy-policy' },
                   { name: 'Cookiepolitik', href: '/cookie-policy' },
-                  { name: 'GDPR status', href: '/gdpr' },
                   { name: 'Etiske regler', href: '/etik' }
                 ].map(link => (
                   <li key={link.name}>
