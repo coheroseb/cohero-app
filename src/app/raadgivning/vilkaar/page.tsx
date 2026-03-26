@@ -51,7 +51,10 @@ export default function RaadgivningTermsPage() {
                </div>
                <div className="space-y-4 text-slate-600 leading-relaxed font-medium text-sm sm:text-base pl-16">
                   <p>
-                     Hjælpen på Cohéro Rådgivningsportal ydes af <strong>socialrådgiverstuderende</strong> eller studerende fra relevante professionsuddannelser. De er <strong>ikke</strong> færdiguddannede socialrådgivere, jurister eller autoriserede rådgivere.
+                     Hjælpen på Cohéro Rådgivningsportal ydes eksklusivt af <strong>socialrådgiverstuderende</strong>. De er <strong>ikke</strong> færdiguddannede socialrådgivere, jurister eller autoriserede rådgivere.
+                  </p>
+                  <p>
+                    For at sikre kvaliteten på platformen verificerer Cohéro manuelt alle hjælperes <strong>studiekort</strong>, før de får lov til at tage opgaver på markedspladsen.
                   </p>
                   <p className="bg-rose-50 p-6 rounded-2xl border border-rose-100 text-rose-900 font-bold italic">
                      Hjælpen er vejledende og kan ikke sidestilles med juridisk bindende rådgivning. Cohéro påtager sig intet ansvar for udfaldet af din sag eller konsekvenserne af den vejledning, du modtager.

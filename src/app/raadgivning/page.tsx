@@ -205,13 +205,24 @@ export default function PublicAssistanceRequestPage() {
          </div>
 
          {/* Complex Case Advisory */}
-         <div className="bg-blue-50/50 rounded-2xl border border-blue-100/50 p-6 flex gap-4 items-start shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-            <AlertCircle className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-               <p className="text-xs font-black uppercase tracking-widest text-blue-900">Brug for en ekspert?</p>
-               <p className="text-xs text-blue-900/70 font-medium leading-relaxed italic">
-                  Hvis din sag er meget kompleks eller kompliceret, anbefaler vi altid, at du kontakter en færdiguddannet socialrådgiver eller advokat for juridisk bindende rådgivning.
-               </p>
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-blue-50/50 rounded-2xl border border-blue-100/50 p-6 flex gap-4 items-start shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                <AlertCircle className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                <p className="text-xs font-black uppercase tracking-widest text-blue-900">Brug for en ekspert?</p>
+                <p className="text-xs text-blue-900/70 font-medium leading-relaxed italic">
+                    Ved komplekse sager anbefaler vi altid juridisk bindende rådgivning fra en færdiguddannet socialrådgiver eller advokat.
+                </p>
+                </div>
+            </div>
+            <div className="bg-emerald-50/50 rounded-2xl border border-emerald-100/50 p-6 flex gap-4 items-start shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-900">Verificeret Hjælp</p>
+                <p className="text-xs text-emerald-900/70 font-medium leading-relaxed italic">
+                    Hjælpen ydes kun af socialrådgiverstuderende. Vi verificerer deres uddannelsesstatus via studiekort før de får adgang.
+                </p>
+                </div>
             </div>
          </div>
 
