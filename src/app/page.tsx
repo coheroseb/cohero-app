@@ -137,7 +137,7 @@ export default function LandingPage() {
                   }}
                   className="text-[40px] leading-[1.05] sm:text-6xl md:text-7xl xl:text-[88px] font-extrabold text-slate-900 tracking-[-0.04em] w-full max-w-[20ch] lg:max-w-none"
                 >
-                  Din intelligente <br className="hidden sm:block" />
+                  Alt hvad du skal <br className="hidden sm:block" />
                   <span className="relative inline-block mt-2 md:mt-4 px-2 sm:px-4 shrink-0 overflow-hidden py-2">
                     <motion.span 
                       animate={{ 
@@ -150,7 +150,7 @@ export default function LandingPage() {
                       }}
                       className="relative z-10"
                     >
-                      digitale kollega.
+                      bruge som studerende.
                     </motion.span>
                     
                     {/* Continuous Underline Pulse */}
@@ -188,7 +188,7 @@ export default function LandingPage() {
                 </motion.h1>
                 
                 <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
-                  Cohéro ruster dig til at mestre juraen, etikken og det faglige skøn gennem intelligent sparring på dine cases og journaler.
+                  Fra dybdegående indblik i praktikpladser til Danmarks bedste studierelevante markedsplads. Alt hvad du skal bruge til studiet, samlet ét sted.
                 </p>
               </motion.div>
             </AnimatePresence>
