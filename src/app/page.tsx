@@ -33,6 +33,7 @@ import PWAInstallGuide from '@/components/PWAInstallGuide';
 import HeroIllustration from '@/components/home/HeroIllustration';
 import SeminarArchitectVisualization from '@/components/SeminarArchitectVisualization';
 import TikTokFeed from '@/components/home/TikTokFeed';
+import ReviewMarquee from '@/components/home/ReviewMarquee';
 
 const Reveal = ({ children, delay = 0, className = "" }: { children: React.ReactNode, delay?: number, className?: string }) => (
   <motion.div
@@ -93,9 +94,12 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col selection:bg-amber-200 selection:text-amber-950 overflow-x-hidden bg-[#FDFBF7] font-sans antialiased">
+      <div className="pt-20 sm:pt-24 lg:pt-28">
+         <ReviewMarquee />
+      </div>
       
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[100dvh] flex flex-col justify-center pt-32 sm:pt-40 md:pt-48 pb-16 px-5 sm:px-8 overflow-hidden">
+      <section className="relative min-h-[100dvh] flex flex-col justify-center pb-16 px-5 sm:px-8 overflow-hidden">
         {/* Dynamic Mobile-First Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#FFFDF9] via-[#FAF6EC]/60 to-[#FDFBF7] -z-20"></div>
         <div className="absolute top-[-10%] sm:top-0 right-[-10%] sm:left-1/2 sm:-translate-x-1/2 w-[120%] sm:w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(251,191,36,0.12)_0%,transparent_60%)] -z-10"></div>
