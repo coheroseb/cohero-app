@@ -139,7 +139,9 @@ async function callFirebaseFlow(flowName, data) {
   };
 
   try {
-    return await performFetch(url);
+    const result = await performFetch(url);
+    // Sanitize to ensure POJO for Next.js Client boundary
+    return JSON.parse(JSON.stringify(result));
   } catch (error: any) {
     // If the emulator is not running, fail gracefully by trying the production URL in dev mode
     const isConnRefused = error.cause && error.cause.code === 'ECONNREFUSED';
@@ -501,7 +503,7 @@ export async function getFTSagMetadataAction(input: { sagId: number, title: stri
         const snap = await docRef.get();
         
         if (snap.exists) {
-            return { data: snap.data(), usage: { inputTokens: 0, outputTokens: 0 } };
+            return { data: JSON.parse(JSON.stringify(snap.data())), usage: { inputTokens: 0, outputTokens: 0 } };
         }
         
         // If it doesn't exist, try to generate it
@@ -555,7 +557,7 @@ export async function generateReformAnalysisAction(bill: Types.ReformCandidate, 
     const cacheDoc = await adminFirestore.collection('reformAnalyses').doc(cacheKey).get();
     
     if (cacheDoc.exists) {
-        return { data: cacheDoc.data() as Types.GenerateParagraphDiffData, usage: { inputTokens: 0, outputTokens: 0 } };
+        return { data: JSON.parse(JSON.stringify(cacheDoc.data())) as Types.GenerateParagraphDiffData, usage: { inputTokens: 0, outputTokens: 0 } };
     }
 
     const result = await callFirebaseFlow('generateParagraphDiffFlow', {
