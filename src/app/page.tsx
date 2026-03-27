@@ -556,17 +556,15 @@ export default function LandingPage() {
               </Reveal>
               <Reveal delay={0.2}>
                 <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
-                  <a 
-                    href="https://www.tiktok.com/@cohro" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="group relative px-10 py-6 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 transition-all w-full sm:w-auto overflow-hidden active:scale-95"
+                  <Link 
+                    href="/tiktok" 
+                    className="group relative px-10 py-6 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 transition-all w-full sm:w-auto overflow-hidden active:scale-95 text-center"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-3">
-                      Se flere videoer
+                      Se arkivet
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
                     </span>
-                  </a>
+                  </Link>
                   <div className="flex items-center gap-3 py-2 opacity-50">
                     <Music className="w-4 h-4 text-slate-400" />
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Opdateres hver uge</span>

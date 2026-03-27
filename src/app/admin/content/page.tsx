@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Gavel, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, FolderSync, MessageCircle } from 'lucide-react';
+import { BookOpen, Gavel, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, FolderSync, MessageCircle, Play } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -497,6 +497,130 @@ const ReviewManager = () => {
     );
 };
 
+const TikTokManager = () => {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isAdding, setIsAdding] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [newVideo, setNewVideo] = useState({
+        videoId: '',
+        handle: 'cohro',
+        title: '',
+        isFeatured: false
+    });
+
+    const videosQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'tiktokVideos'), orderBy('createdAt', 'desc')) : null), [firestore]);
+    const { data: videos, isLoading } = useCollection<any>(videosQuery);
+
+    const handleAddVideo = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!firestore || isSaving) return;
+        setIsSaving(true);
+        try {
+            if (newVideo.isFeatured) {
+                const featuredVideos = videos?.filter(v => v.isFeatured) || [];
+                for (const fv of featuredVideos) {
+                    await updateDoc(doc(firestore, 'tiktokVideos', fv.id), { isFeatured: false });
+                }
+            }
+
+            await addDoc(collection(firestore, 'tiktokVideos'), {
+                ...newVideo,
+                createdAt: serverTimestamp()
+            });
+
+            setNewVideo({ videoId: '', handle: 'cohro', title: '', isFeatured: false });
+            setIsAdding(false);
+            toast({ title: "Video tilføjet!" });
+        } catch (err) {
+            toast({ variant: 'destructive', title: "Fejl" });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const toggleFeatured = async (video: any) => {
+        if (!firestore) return;
+        try {
+            if (!video.isFeatured) {
+                const featuredVideos = videos?.filter(v => v.isFeatured) || [];
+                for (const fv of featuredVideos) {
+                    await updateDoc(doc(firestore, 'tiktokVideos', fv.id), { isFeatured: false });
+                }
+            }
+            await updateDoc(doc(firestore, 'tiktokVideos', video.id), { isFeatured: !video.isFeatured });
+            toast({ title: video.isFeatured ? "Fjernet fra forsiden" : "Sat som forsidevideo" });
+        } catch (err) {
+            toast({ variant: 'destructive', title: "Fejl" });
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!firestore || !window.confirm('Slet video?')) return;
+        await deleteDoc(doc(firestore, 'tiktokVideos', id));
+        toast({ title: "Slettet" });
+    };
+
+    return (
+        <section className="bg-white p-10 rounded-[3.5rem] border border-amber-100 shadow-sm">
+            <div className="flex items-center justify-between mb-10">
+                <h3 className="text-xl font-bold text-amber-950 serif flex items-center gap-3"><Play className="w-5 h-5 text-rose-500 fill-rose-500"/>TikTok Administration</h3>
+                <Button onClick={() => setIsAdding(!isAdding)} variant={isAdding ? "ghost" : "default"}>
+                    {isAdding ? <X className="w-4 h-4 mr-2"/> : <Plus className="w-4 h-4 mr-2"/>}
+                    {isAdding ? 'Annuller' : 'Tilføj Video'}
+                </Button>
+            </div>
+
+            {isAdding && (
+                <form onSubmit={handleAddVideo} className="mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input placeholder="Video ID (fra URL)" value={newVideo.videoId} onChange={e => setNewVideo({...newVideo, videoId: e.target.value})} required />
+                        <Input placeholder="Handle (uden @)" value={newVideo.handle} onChange={e => setNewVideo({...newVideo, handle: e.target.value})} required />
+                    </div>
+                    <Input placeholder="Titel / Beskrivelse" value={newVideo.title} onChange={e => setNewVideo({...newVideo, title: e.target.value})} required />
+                    <div className="flex items-center gap-2">
+                        <input type="checkbox" id="isFeatured" checked={newVideo.isFeatured} onChange={e => setNewVideo({...newVideo, isFeatured: e.target.checked})} className="w-4 h-4 rounded border-slate-300" />
+                        <label htmlFor="isFeatured" className="text-sm font-medium text-slate-700">Vis på forsiden</label>
+                    </div>
+                    <Button type="submit" disabled={isSaving} className="w-full">
+                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Gem Video'}
+                    </Button>
+                </form>
+            )}
+
+            <div className="space-y-4">
+                {isLoading ? <Loader2 className="animate-spin mx-auto"/> : videos?.map((v: any) => (
+                    <div key={v.id} className="p-6 border rounded-2xl flex justify-between items-center bg-white hover:border-amber-200 transition-all">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400">
+                                <Play className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-slate-900">{v.title || 'Uden titel'}</p>
+                                <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">{v.videoId} • @{v.handle}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Button 
+                                variant={v.isFeatured ? "default" : "outline"} 
+                                size="sm" 
+                                onClick={() => toggleFeatured(v)}
+                                className={v.isFeatured ? "bg-amber-500 hover:bg-amber-600" : ""}
+                            >
+                                {v.isFeatured ? <Sparkles className="w-3.5 h-3.5 mr-2 fill-current"/> : null}
+                                {v.isFeatured ? 'Forsidevideo' : 'Sæt som forside'}
+                            </Button>
+                            <button onClick={() => handleDelete(v.id)} className="text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
 const AdminContentPage = () => {
     return (
       <div className="space-y-8 animate-ink">
@@ -504,6 +628,7 @@ const AdminContentPage = () => {
          <KnowledgeSyncManager />
          <DilemmaManager />
          <ReviewManager />
+         <TikTokManager />
       </div>
     );
   };

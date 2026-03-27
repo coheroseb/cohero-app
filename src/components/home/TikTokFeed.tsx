@@ -3,6 +3,8 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Heart, MessageCircle, Share2, ExternalLink } from 'lucide-react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit } from 'firebase/firestore';
 
 interface TikTokFeedProps {
   videoId?: string;
@@ -10,9 +12,22 @@ interface TikTokFeedProps {
 }
 
 export default function TikTokFeed({
-  videoId = "7613638591465458966",
-  handle = "cohro"
+  videoId: initialVideoId = "7621885463804103958",
+  handle: initialHandle = "cohro"
 }: TikTokFeedProps) {
+  const firestore = useFirestore();
+  const featuredQuery = useMemoFirebase(() => (
+    firestore ? query(
+      collection(firestore, 'tiktokVideos'), 
+      where('isFeatured', '==', true),
+      limit(1)
+    ) : null
+  ), [firestore]);
+  
+  const { data: featuredData, isLoading } = useCollection<any>(featuredQuery);
+  
+  const videoId = featuredData?.[0]?.videoId || initialVideoId;
+  const handle = featuredData?.[0]?.handle || initialHandle;
 
   useEffect(() => {
     // Load TikTok embed script
