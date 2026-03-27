@@ -52,12 +52,15 @@ import {
   BookCheck,
   Mic,
   HandHelping,
-  CreditCard
+  CreditCard,
+  Command
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { processStripeSession, fetchPoliticalNews, fetchSocialMinistryNews } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, DocumentData, Timestamp, doc, updateDoc, serverTimestamp, increment, getDoc, setDoc, where, addDoc } from 'firebase/firestore';
 import { AssistanceRequest } from '@/ai/flows/types';
@@ -67,7 +70,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
 import SurveyWidget from '@/components/SurveyWidget';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -89,38 +91,47 @@ function BriefingReport({ title, icon: Icon, isLoading, news, link, color }: {
   color: string;
 }) {
   return (
-    <section className="bg-white p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-xl transition-all active:scale-[0.98]">
-      <div className={`absolute -top-4 -right-4 p-6 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity`}>
-        <Icon className="w-24 h-24 sm:w-32 sm:h-32 -rotate-12" />
+    <section className="bg-white/70 backdrop-blur-xl p-8 rounded-[40px] border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.02)] relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:bg-white transition-all duration-500">
+      <div className={`absolute top-0 right-0 p-10 opacity-[0.02] group-hover:opacity-[0.06] group-hover:-translate-y-2 group-hover:translate-x-2 transition-all duration-700`}>
+        <Icon className="w-32 h-32 -rotate-12" />
       </div>
       <div className="relative z-10 flex flex-col h-full">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-extrabold text-slate-800 flex items-center gap-2.5 text-[13px] sm:text-[14px] uppercase tracking-widest">
-            <div className={`w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center`}>
-              <Icon className={`w-4 h-4 ${color}`} />
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-[14px] bg-white shadow-sm border border-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+              <Icon className={`w-5 h-5 ${color}`} />
             </div>
-            {title}
-          </h3>
-          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100/50 shadow-sm">Live</span>
+            <h3 className="font-black text-slate-950 text-[11px] uppercase tracking-[0.2em]">
+              {title}
+            </h3>
+          </div>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100/30">
+             <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> Live
+          </div>
         </div>
         
         {isLoading ? (
-          <div className="flex justify-center items-center py-12">
+          <div className="flex flex-col justify-center items-center py-12 gap-3">
             <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Opdaterer kilder...</span>
           </div>
         ) : news.length === 0 ? (
-          <p className="text-[13px] text-slate-400 font-medium text-center py-8">Afventer nye efterretninger...</p>
+          <div className="text-center py-10">
+            <p className="text-[14px] text-slate-400 font-medium italic">Afventer nye efterretninger...</p>
+          </div>
         ) : (
-          <ul className="space-y-4 flex-grow">
+          <ul className="space-y-2 flex-grow">
             {news.slice(0, 3).map((item, index) => (
-              <li key={index} className="group/item outline-none">
-                <a href={item.link} target="_blank" rel="noopener noreferrer" className="block p-4 rounded-[20px] hover:bg-slate-50 active:bg-slate-100 transition-colors -mx-4">
-                  <p className="text-[14px] sm:text-[15px] font-bold text-slate-700 group-hover/item:text-slate-900 leading-snug line-clamp-2">
+              <li key={index} className="group/item">
+                <a href={item.link} target="_blank" rel="noopener noreferrer" className="block p-4 rounded-[24px] hover:bg-slate-50/80 active:scale-[0.98] transition-all -mx-4">
+                  <p className="text-[15px] font-bold text-slate-800 group-hover/item:text-slate-950 leading-snug line-clamp-2 transition-colors">
                     {item.title}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-2 opacity-50 text-slate-500 group-hover/item:opacity-80 transition-opacity">
-                     <Clock className="w-3 h-3" />
-                     <p className="text-[10px] font-bold uppercase tracking-wider">{new Date(item.pubDate).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}</p>
+                  <div className="flex items-center gap-2 mt-2.5">
+                     <div className="w-1.5 h-1.5 bg-slate-200 rounded-full group-hover/item:bg-slate-400 transition-colors" />
+                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                       {new Date(item.pubDate).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
+                     </p>
                   </div>
                 </a>
               </li>
@@ -128,15 +139,15 @@ function BriefingReport({ title, icon: Icon, isLoading, news, link, color }: {
           </ul>
         )}
         
-        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-          <a href={link} target="_blank" rel="noopener noreferrer" className="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-800 flex items-center gap-2 group-hover:translate-x-1 transition-all py-2">
+        <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
+          <a href={link} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-950 flex items-center gap-2 transition-all group-hover:gap-3">
             Se fuldt arkiv <ArrowUpRight className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>
     </section>
   );
-};
+}
 
 const PortalPageContent: React.FC = () => {
   const { user, userProfile, isUserLoading: isAppLoading, refetchUserProfile } = useApp();
@@ -413,6 +424,27 @@ const PortalPageContent: React.FC = () => {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        const searchInput = document.getElementById('portal-search-input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
@@ -514,151 +546,134 @@ const PortalPageContent: React.FC = () => {
     <div className="bg-[#FDFBF7] min-h-[100dvh] selection:bg-amber-200 selection:text-amber-950 font-sans pb-12">
       
       {/* SMART COMMAND HEADER - Mobile First Premium Look */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-5 sm:px-8 py-8 md:py-16 relative overflow-visible z-10 transition-all rounded-b-[32px] sm:rounded-b-[48px] shadow-sm">
+      <header className="bg-white/90 backdrop-blur-2xl border-b border-slate-200/50 px-5 sm:px-8 py-10 md:py-20 relative overflow-visible z-30 transition-all rounded-b-[48px] sm:rounded-b-[72px] shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
         {/* Dynamic mesh effect */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.1)_0,transparent_60%)] pointer-events-none"></div>
-        <div className="absolute top-0 left-0 w-64 h-64 bg-[radial-gradient(circle_at_top_left,rgba(15,23,42,0.03)_0,transparent_60%)] pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.08)_0,transparent_70%)] pointer-events-none -z-10 animate-pulse transition-all duration-1000"></div>
+        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle_at_top_left,rgba(79,70,229,0.03)_0,transparent_70%)] pointer-events-none -z-10 animate-pulse delay-700"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-10 md:mb-16">
-            <div className="text-center sm:text-left flex flex-col items-center sm:items-start">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 mb-5">
-                <span className="px-3 sm:px-4 py-1.5 bg-slate-100 text-slate-800 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),0_2px_4px_rgba(0,0,0,0.05)] border border-slate-200/50 flex items-center gap-1.5">
-                   <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-12 md:mb-20">
+            <div className="text-center sm:text-left flex flex-col items-center sm:items-start max-w-2xl">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-8">
+                <span className="px-4 py-2 bg-slate-950 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-800 flex items-center gap-2 group cursor-default">
+                   <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
                    {userProfile?.membership || 'Kollega'} Medlem
                 </span>
-                <div className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-rose-50 text-rose-600 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-rose-100 shadow-[inset_0_1px_1px_rgba(255,255,255,0.7)]">
+                <div className="flex items-center gap-2 px-4 py-2 bg-white text-rose-600 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border border-rose-100 shadow-sm">
                    <Flame className="w-3.5 h-3.5 fill-current" /> {userProfile?.dailyChallengeStreak || 0} Dages dannelse
                 </div>
               </div>
-              <h1 className="text-[34px] sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                {getTimeOfDayGreeting()}, <br className="sm:hidden" /><span className="text-amber-500">{user?.displayName?.split(' ')[0]}</span>
+              <h1 className="text-[38px] sm:text-6xl md:text-7xl font-extrabold text-slate-950 tracking-[-0.03em] leading-[0.95]">
+                {getTimeOfDayGreeting()}, <br className="sm:hidden" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">{user?.displayName?.split(' ')[0]}</span>
               </h1>
-              <p className="text-[16px] sm:text-[18px] text-slate-500 mt-3 sm:mt-5 font-medium max-w-xl mx-auto sm:mx-0 leading-relaxed text-balance">
+              <p className="text-[17px] sm:text-xl text-slate-500 mt-6 font-medium max-w-xl mx-auto sm:mx-0 leading-relaxed text-balance">
                 {userProfile?.isQualified 
-                    ? "Din professionelle rygdækning i praksis. Hold dig opdateret på jura og politik." 
-                    : "Din rygdækning gennem hele socialrådgiverstudiet. Hvad er din faglige prioritet i dag?"}
+                    ? "Din strategiske partner i myndighedsarbejdet. Hold dig opdateret på de nyeste tendenser." 
+                    : "Alt hvad du skal bruge til socialrådgiverstudiet, samlet ét sted. Klar til dagens udfordringer?"}
               </p>
+              
+              {/* Premium Search Experience */}
+              <div className="relative w-full max-w-xl mt-12 group">
+                  <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none z-10">
+                      <Search className="w-6 h-6 text-slate-400 group-focus-within:text-amber-500 group-focus-within:scale-110 transition-all duration-300" />
+                  </div>
+                  <Input 
+                      id="portal-search-input"
+                      type="text" 
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Søg i din viden, paragraffer og værktøjer..." 
+                      className="h-20 pl-16 pr-24 bg-slate-50 border-slate-200/60 rounded-[32px] focus:ring-0 focus:border-amber-400 focus:bg-white text-slate-950 placeholder:text-slate-400 placeholder:font-semibold transition-all duration-500 shadow-[0_4px_20px_rgba(0,0,0,0.03)] group-focus-within:shadow-[0_20px_50px_rgba(0,0,0,0.08)] group-focus-within:-translate-y-1 text-lg font-medium"
+                  />
+                  <div className="absolute inset-y-0 right-6 flex items-center gap-3">
+                      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-200/50 rounded-xl text-[10px] font-black text-slate-500 tracking-widest border border-slate-300/30">
+                        <Command className="w-3 h-3" /> K
+                      </div>
+                      <button 
+                        onClick={() => handleSearch()}
+                        className="w-10 h-10 bg-amber-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20 hover:bg-amber-600 active:scale-95 transition-all"
+                      >
+                         <ArrowRight className="w-5 h-5" />
+                      </button>
+                  </div>
+
+                  {/* Suggestions Dropdown for the new search experience */}
+                  <AnimatePresence>
+                    {showSuggestions && suggestions.length > 0 && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute top-full left-0 right-0 mt-4 bg-white border border-slate-200 rounded-[32px] shadow-2xl z-50 p-6 overflow-hidden"
+                        >
+                            <p className="px-5 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-3">Søgninger der hitter</p>
+                            <div className="grid grid-cols-1 gap-2">
+                                {suggestions.map((s, i) => (
+                                    <button 
+                                        key={i} 
+                                        type="button"
+                                        onClick={() => handleSuggestionClick(s)} 
+                                        className="w-full text-left px-5 py-4 hover:bg-slate-50 rounded-[20px] transition-all flex items-center gap-4 text-[16px] font-bold text-slate-600 hover:text-slate-950 group/item"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center group-hover/item:bg-amber-100 transition-colors">
+                                            <Sparkles className="w-5 h-5 text-amber-500" /> 
+                                        </div>
+                                        {s}
+                                        <ArrowUpRight className="w-4 h-4 ml-auto opacity-0 group-hover/item:opacity-40 transition-opacity" />
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                  </AnimatePresence>
+              </div>
+
+              {/* Popular Trends Integrated Under Search */}
+              <div className="mt-8 flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 hidden sm:inline-block mr-1">Populært:</span>
+                {trendingTerms.map((tag: string) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleTrendClick(tag)}
+                      className="px-5 py-2.5 bg-slate-100/50 text-slate-600 rounded-full text-[11px] font-bold border border-slate-200/50 hover:bg-white hover:text-slate-950 hover:border-amber-200 hover:shadow-sm transition-all uppercase tracking-wider whitespace-nowrap active:scale-95"
+                    >
+                      <TrendingUp className="w-3.5 h-3.5 inline-block mr-2 -mt-0.5 text-amber-500" />
+                      {tag}
+                    </button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex items-center justify-center gap-2 sm:gap-4 p-2 sm:p-3">
+            <div className="flex items-center justify-center gap-3 sm:gap-5 p-4 sm:p-6 bg-slate-50/50 backdrop-blur-md rounded-[40px] border border-slate-100 shadow-inner shrink-0">
                 {!userProfile?.isQualified && (
                     <Link href="/memento" passHref>
-                    <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
-                        <Brain className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-500 shrink-0"/>
-                        <span className="text-[10px] sm:text-[11px] text-slate-700">Memento</span>
-                    </Button>
+                        <Button variant="outline" className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-500 shrink-0 group-hover:scale-110 transition-transform"/>
+                            <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest">Memento</span>
+                        </Button>
                     </Link>
                 )}
                 <Link href="https://group.cohero.dk" passHref>
-                  <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
-                    <Users className="w-6 h-6 sm:w-7 sm:h-7 text-amber-600 shrink-0"/>
-                    <span className="text-[10px] sm:text-[11px] text-slate-700">Grupper</span>
+                  <Button variant="outline" className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Users className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600 shrink-0 group-hover:scale-110 transition-transform"/>
+                    <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest">Grupper</span>
                   </Button>
                 </Link>
-                <Link href="/folketinget" passHref>
-                  <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-white hover:!bg-slate-50 border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
-                    <Building className="w-6 h-6 sm:w-7 sm:h-7 text-rose-500 shrink-0"/>
-                    <span className="text-[10px] sm:text-[11px] text-slate-700">Folketing.</span>
-                  </Button>
-                </Link>
-                <Link href="/markedsplads" passHref>
-                  <Button variant="outline" className="h-[72px] w-[88px] sm:h-20 sm:w-28 flex-col gap-1.5 text-center font-bold !bg-rose-50 hover:!bg-rose-100 border-rose-100 shadow-[0_4px_12px_rgba(225,29,72,0.05)] rounded-[20px] sm:rounded-[24px] active:scale-[0.96] transition-transform z-20">
-                    <HandHelping className="w-6 h-6 sm:w-7 sm:h-7 text-rose-600 shrink-0"/>
-                    <span className="text-[10px] sm:text-[11px] text-rose-900 font-extrabold">Markedsplads</span>
-                  </Button>
-                </Link>
-                <div className="relative group z-20">
-                  <Link href="/settings" passHref>
-                    <div className="h-[72px] w-[72px] sm:w-20 sm:h-20 rounded-[24px] bg-slate-900 text-white flex items-center justify-center font-extrabold text-[28px] sm:text-[32px] shadow-[0_8px_20px_rgba(15,23,42,0.15)] active:scale-[0.96] transition-transform cursor-pointer border-2 border-slate-900">
+                <div className="hidden md:block w-px h-16 bg-slate-200/50 mx-2" />
+                <Link href="/settings" passHref>
+                  <div className="relative group cursor-pointer transition-all duration-500 hover:rotate-2">
+                    <div className="h-[80px] w-[80px] sm:w-24 sm:h-24 rounded-[32px] sm:rounded-[40px] bg-slate-950 text-white flex items-center justify-center font-black text-[32px] sm:text-4xl shadow-2xl shadow-slate-950/20 active:scale-[0.94] transition-all border-[3px] border-white group-hover:border-amber-400 group-hover:shadow-amber-500/20">
                       {user?.displayName?.charAt(0)}
                     </div>
-                  </Link>
-                  <div className="absolute -top-1.5 -right-1.5 w-5 h-5 sm:w-6 sm:h-6 bg-emerald-400 rounded-full border-[3px] border-white shadow-sm pointer-events-none"></div>
-               </div>
+                    <div className="absolute -top-1 -right-1 w-6 h-6 sm:w-8 sm:h-8 bg-emerald-400 rounded-full border-[4px] border-white shadow-lg pointer-events-none group-hover:scale-110 transition-transform"></div>
+                    <div className="absolute bottom-0 inset-x-0 h-1 bg-amber-400 rounded-full scale-x-0 group-hover:scale-x-50 transition-transform origin-center translate-y-4" />
+                  </div>
+                </Link>
             </div>
-          </div>
-
-          <TooltipProvider>
-              <Tooltip open={isConceptLimitReached ? undefined : false}>
-                  <TooltipTrigger asChild>
-                      <form onSubmit={handleSearch} className="max-w-4xl mx-auto sm:mx-0 relative w-full px-1">
-                          <div className={`relative bg-slate-100/50 border border-slate-200/80 rounded-[28px] md:rounded-[36px] overflow-visible focus-within:bg-white focus-within:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] focus-within:border-transparent focus-within:ring-4 focus-within:ring-slate-900/5 transition-all duration-300 ${isConceptLimitReached ? 'bg-slate-50 opacity-70 cursor-not-allowed' : ''}`}>
-                             <Search className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 focus-within:text-slate-900 transition-colors pointer-events-none" />
-                             <input 
-                                 type="text" 
-                                 placeholder={isConceptLimitReached ? "Daglige opslag brugt..." : "Slå et begreb eller en paragraf op..."}
-                                 className={`w-full py-6 md:py-8 pl-14 md:pl-20 pr-28 md:pr-36 bg-transparent text-[16px] md:text-[20px] font-bold focus:outline-none placeholder:text-slate-400 placeholder:font-medium text-slate-900 ${isConceptLimitReached ? 'cursor-not-allowed text-slate-500' : ''}`}
-                                 value={searchQuery}
-                                 onFocus={() => {
-                                   setIsSearchFocused(true);
-                                   if (searchQuery.length > 1) setShowSuggestions(true);
-                                 }}
-                                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                 onChange={handleSearchChange}
-                                 disabled={isConceptLimitReached}
-                             />
-                             <div className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2">
-                                 <Button type="submit" size="sm" className="h-12 md:h-16 px-5 md:px-8 rounded-[20px] md:rounded-[24px] font-black uppercase text-[11px] md:text-[13px] tracking-widest gap-2.5 bg-slate-900 text-white shadow-lg active:scale-[0.96] transition-transform" disabled={isConceptLimitReached || !searchQuery.trim()}>
-                                     <span className="hidden sm:inline">Søg via AI</span>
-                                     <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
-                                 </Button>
-                             </div>
-
-                             {/* Suggestions Dropdown */}
-                             <AnimatePresence>
-                               {showSuggestions && suggestions.length > 0 && (
-                                   <motion.div 
-                                       initial={{ opacity: 0, y: -10 }}
-                                       animate={{ opacity: 1, y: 0 }}
-                                       exit={{ opacity: 0, y: -10 }}
-                                       className="absolute top-full left-0 right-0 mt-3 bg-white border border-slate-200 rounded-[24px] shadow-2xl z-50 p-4 overflow-hidden"
-                                   >
-                                       <p className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-2">Anbefalede søgninger</p>
-                                       {suggestions.map((s, i) => (
-                                           <button 
-                                               key={i} 
-                                               type="button"
-                                               onClick={() => handleSuggestionClick(s)} 
-                                               className="w-full text-left px-4 py-3.5 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-4 text-[15px] font-bold text-slate-600 hover:text-slate-900 group/item"
-                                           >
-                                               <Sparkles className="w-4 h-4 text-amber-300 group-hover/item:text-amber-500 transition-colors" /> 
-                                               {s}
-                                           </button>
-                                       ))}
-                                   </motion.div>
-                               )}
-                             </AnimatePresence>
-                          </div>
-                       </form>
-                  </TooltipTrigger>
-                  {isConceptLimitReached && (
-                      <TooltipContent className="bg-slate-900 text-white border-slate-800 p-4 rounded-[16px] shadow-2xl" side="bottom">
-                          <Link href="/upgrade" className="flex items-center gap-3">
-                              <Lock className="w-4 h-4 text-amber-400"/>
-                              <div>
-                                  <p className="font-bold">Daglige opslag opbrugt</p>
-                                  <p className="text-[11px] font-medium text-slate-300 hover:text-white transition-colors">Opgrader for at slå flere begreber op i dag.</p>
-                              </div>
-                          </Link>
-                      </TooltipContent>
-                  )}
-              </Tooltip>
-          </TooltipProvider>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 px-2 w-full">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 hidden sm:inline-block mr-2">Populært nu:</span>
-            {trendingTerms.map((tag: string) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => handleTrendClick(tag)}
-                  className="px-4 py-2 bg-white text-slate-600 rounded-[14px] text-[11px] font-bold border border-slate-200 shadow-sm active:scale-95 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all uppercase tracking-wider whitespace-nowrap"
-                >
-                  <TrendingUp className="w-3 h-3 inline-block mr-1.5 -mt-0.5 text-slate-400" />
-                  {tag}
-                </button>
-            ))}
           </div>
         </div>
       </header>
@@ -670,29 +685,36 @@ const PortalPageContent: React.FC = () => {
         
         {/* NEWS BANNER: Mine Seminarer Sharing Management */}
         <Link href="/mine-seminarer" className="group block mt-4 outline-none">
-          <div className="bg-gradient-to-br from-emerald-50 via-white to-teal-50/30 border border-emerald-200 p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-[0_20px_40px_rgba(16,185,129,0.15)] hover:border-emerald-300 transition-all active:scale-[0.98] relative overflow-hidden">
+          <div className="bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#1e293b] border border-slate-800 p-8 sm:p-12 rounded-[48px] sm:rounded-[64px] flex flex-col md:flex-row items-center justify-between gap-10 hover:shadow-[0_40px_80px_rgba(0,0,0,0.3)] transition-all duration-500 active:scale-[0.98] relative overflow-hidden">
             {/* Background decoration */}
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-100/30 rounded-full blur-[60px] pointer-events-none group-hover:scale-110 transition-transform duration-500"></div>
-            <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-teal-100/20 rounded-full blur-[50px] pointer-events-none"></div>
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-700"></div>
+            <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none"></div>
             
-            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6 relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-[24px] flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:rotate-6 transition-transform flex-shrink-0">
-                <Presentation className="w-7 h-7" />
+            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-10 relative z-10 w-full sm:w-auto">
+              <div className="w-20 h-20 bg-emerald-500 text-black rounded-[28px] flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.3)] group-hover:rotate-6 group-hover:scale-110 transition-all duration-500 flex-shrink-0">
+                <Presentation className="w-10 h-10" />
               </div>
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[9px] font-black uppercase tracking-widest mb-2.5 mx-auto sm:mx-0">
-                  <Zap className="w-3 h-3 fill-current" /> Nyt
+              <div className="space-y-4">
+                <div className="flex items-center justify-center sm:justify-start gap-2.5">
+                   <div className="px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-inner mb-2 lg:mb-0">
+                      Personligt Bibliotek
+                   </div>
+                   <div className="px-3.5 py-1.5 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] mb-2 lg:mb-0">
+                      Privat
+                   </div>
                 </div>
-                <h3 className="text-[20px] font-extrabold text-slate-900 leading-tight">
-                  Hold styr på dine PowerPoint som aldrig før
-                </h3>
-                <p className="text-[14px] text-slate-600 font-medium max-w-md mt-1.5">
-                  Administrer deling, kontrollér hvem du har delt med, og fjern adgang på få sekunder. Alt fra ét sted.
-                </p>
+                <div>
+                  <h3 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight tracking-tight">
+                    Dit faglige univers, <span className="text-emerald-400">helt privat.</span>
+                  </h3>
+                  <p className="text-lg text-slate-400 font-medium max-w-lg mt-3 leading-relaxed">
+                    Organisér dine PowerPoint-slides, find svære faglige begreber øjeblikkeligt og bevar kontrollen over din viden.
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-center w-full sm:w-auto h-14 px-6 bg-white border border-emerald-200 rounded-[20px] shadow-sm text-emerald-600 font-bold text-[12px] uppercase tracking-widest group-hover:bg-emerald-50 transition-colors shrink-0 relative z-10">
-              Gå til biblioteket <ArrowRight className="w-4 h-4 ml-2" />
+            <div className="flex items-center justify-center w-full sm:w-auto h-16 px-10 bg-white text-slate-950 rounded-[28px] font-black text-[13px] uppercase tracking-[0.2em] hover:bg-emerald-400 transition-all shadow-2xl shrink-0 relative z-10">
+              Udforsk bibliotek <ArrowRight className="w-5 h-5 ml-3" />
             </div>
           </div>
         </Link>
@@ -758,54 +780,60 @@ const PortalPageContent: React.FC = () => {
           {/* Active Work (The Focus Card) */}
           {!userProfile?.isQualified && (
             <section>
-              <div className="flex items-center gap-3.5 mb-8 px-2">
-                  <div className="p-3 bg-amber-500 rounded-[16px] shadow-sm flex items-center justify-center">
-                    <Target className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-4 mb-8 px-2">
+                  <div className="w-12 h-12 bg-amber-500 rounded-2xl shadow-[0_8px_20px_rgba(245,158,11,0.2)] flex items-center justify-center text-white">
+                    <Target className="w-6 h-6" />
                   </div>
-                  <h2 className="text-[22px] sm:text-2xl font-extrabold text-slate-900 tracking-tight">Anbefalet til dig i dag</h2>
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">Anbefalet til dig</h2>
+                    <p className="text-[13px] text-slate-500 font-bold uppercase tracking-widest mt-1">Dagens faglige fokus</p>
+                  </div>
               </div>
               
               <div 
                 onClick={() => router.push(recommendedTool?.path || '/portal')}
-                className="bg-slate-900 p-8 sm:p-10 md:p-12 rounded-[32px] sm:rounded-[48px] text-white shadow-[0_20px_60px_-15px_rgba(15,23,42,0.4)] relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all"
+                className="bg-[#0f172a] p-10 sm:p-12 md:p-16 rounded-[48px] sm:rounded-[64px] text-white shadow-[0_30px_100px_-20px_rgba(15,23,42,0.4)] relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all duration-700 border border-white/5"
               >
-                  <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
-                    <div className="flex-1 space-y-6 text-left">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-400 text-amber-950 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                          <Sparkles className="w-3.5 h-3.5" /> Dit næste skridt
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-amber-500/10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
+                  <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-amber-400/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 animate-pulse" />
+
+                  <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-12">
+                    <div className="flex-1 space-y-8 text-left">
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-amber-400 text-amber-950 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-amber-400/20">
+                          <Sparkles className="w-4 h-4" /> AI-Anbefaling
                         </div>
                           {recommendedTool ? (
-                            <>
-                                <h3 className="text-[32px] sm:text-[40px] md:text-[48px] font-extrabold tracking-tight leading-[1.05]">
-                                    Styrk dit skøn med <br className="hidden lg:block"/><span className="text-amber-400">{recommendedTool.name}</span>.
+                            <div className="space-y-6">
+                                <h3 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1] text-balance">
+                                    Styrk dit faglige skøn med <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">{recommendedTool.name}</span>.
                                 </h3>
-                                <p className="text-slate-300 text-[16px] sm:text-[18px] leading-relaxed font-medium max-w-md">
-                                    Det er fornuftigt at holde hjernen skarp. Dette værktøj står klar til dig lige nu.
+                                <p className="text-slate-400 text-lg sm:text-xl leading-relaxed font-medium max-w-lg">
+                                    Vi har analyseret dine seneste aktiviteter. Dette værktøj vil give dig mest værdi lige nu.
                                 </p>
-                                <Button size="lg" className="h-14 px-8 rounded-[20px] bg-white text-slate-900 font-bold uppercase tracking-wider text-[13px] hover:bg-slate-100 shadow-xl w-full sm:w-auto mt-2">
-                                    {recommendedTool.cta}
-                                    <ArrowRight className="w-4 h-4 ml-2 opacity-70"/>
-                                </Button>
-                            </>
+                                <div className="pt-4">
+                                  <Button size="lg" className="h-16 px-10 rounded-[28px] bg-white text-slate-950 font-black uppercase tracking-[0.2em] text-[14px] hover:bg-amber-400 hover:scale-105 shadow-2xl w-full sm:w-auto transition-all duration-300">
+                                      {recommendedTool.cta}
+                                      <ArrowRight className="w-5 h-5 ml-3" />
+                                  </Button>
+                                </div>
+                            </div>
                         ) : (
-                            <div className="flex items-center gap-3 py-10">
-                                <Loader2 className="w-6 h-6 animate-spin text-slate-400"/>
-                                <span className="text-slate-400 font-medium">Analyserer din brug...</span>
+                            <div className="flex items-center gap-4 py-16">
+                                <Loader2 className="w-8 h-8 animate-spin text-amber-400"/>
+                                <span className="text-slate-400 text-xl font-bold uppercase tracking-widest">Opdaterer din profil...</span>
                             </div>
                         )}
                     </div>
                     {recommendedTool && (
-                        <div className="hidden sm:flex w-full md:w-56 h-56 bg-white/5 rounded-[32px] border border-white/10 p-6 flex-col justify-center items-center text-center group-hover:bg-white/10 transition-colors backdrop-blur-md shrink-0">
-                            <div className={`w-20 h-20 bg-white rounded-[24px] flex items-center justify-center mb-5 shadow-xl group-hover:-translate-y-2 transition-transform duration-500 ${recommendedTool.color}`}>
-                                {React.createElement(recommendedTool.icon, { className: 'w-10 h-10' })}
+                        <div className="hidden lg:flex w-72 h-72 bg-white/5 backdrop-blur-3xl rounded-[48px] border border-white/10 p-10 flex-col justify-center items-center text-center group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-700 shrink-0 shadow-inner">
+                            <div className={`w-28 h-28 bg-white rounded-[32px] flex items-center justify-center mb-6 shadow-[0_20px_50px_rgba(255,255,255,0.1)] group-hover:-translate-y-3 transition-transform duration-700 ${recommendedTool.color}`}>
+                                {React.createElement(recommendedTool.icon, { className: 'w-12 h-12' })}
                             </div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Værktøj</p>
-                            <p className="text-[16px] font-bold text-white tracking-wide">{recommendedTool.name}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Fokusområde</p>
+                            <p className="text-[20px] font-black text-white tracking-tight">{recommendedTool.name}</p>
                         </div>
                     )}
                   </div>
-                  {/* Decorative mesh */}
-                  <div className="absolute -top-32 -right-32 w-96 h-96 bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.15)_0,transparent_70%)] rounded-full blur-[40px] pointer-events-none"></div>
               </div>
             </section>
           )}
@@ -813,61 +841,61 @@ const PortalPageContent: React.FC = () => {
           {/* Core Categories with Mobile-First Grid Stacking */}
           {toolCategories.map((category, idx) => (
             <section key={idx}>
-              <div className="flex items-center gap-4 mb-6 px-2">
-                <div className="p-3 bg-white border border-slate-200 rounded-[16px] shadow-sm shrink-0">
+              <div className="flex items-center gap-4 mb-8 px-2">
+                <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center shrink-0">
                   {category.icon}
                 </div>
                 <div>
-                  <h3 className="text-[20px] sm:text-[22px] font-extrabold text-slate-900 tracking-tight">{category.title}</h3>
-                  <p className="text-[13px] sm:text-[14px] text-slate-500 font-medium mt-0.5">{category.subtitle}</p>
+                  <h3 className="text-2xl font-black text-slate-950 tracking-tight">{category.title}</h3>
+                  <p className="text-[14px] text-slate-500 font-medium mt-0.5">{category.subtitle}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
                 {category.items.map((item, i) => (
                     <Link
                         key={i}
                         href={item.limit && item.limit.used >= item.limit.total ? '/upgrade' : item.path}
-                        className={`group p-6 sm:p-8 rounded-[32px] border bg-white outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-[220px] sm:h-[240px] ${
+                        className={`group p-8 rounded-[40px] border bg-white outline-none focus-visible:ring-4 focus-visible:ring-slate-900/5 transition-all duration-500 relative overflow-hidden flex flex-col justify-between h-[260px] sm:h-[280px] ${
                             item.limit && item.limit.used >= item.limit.total 
-                              ? 'opacity-70 border-slate-200 cursor-not-allowed' 
-                              : 'active:scale-[0.98] lg:hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.05)] border-slate-100 lg:hover:border-slate-300 cursor-pointer shadow-sm'
+                              ? 'opacity-80 border-slate-200 cursor-not-allowed shadow-none' 
+                              : 'active:scale-[0.98] lg:hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] border-slate-100 lg:hover:border-slate-300 lg:hover:-translate-y-1 cursor-pointer shadow-sm shadow-slate-200/50'
                         }`}
                     >
                     <div className="relative z-10 flex justify-between items-start">
-                         <div className={`w-14 h-14 rounded-[20px] border flex items-center justify-center shadow-sm ${item.color} ${item.limit && item.limit.used >= item.limit.total ? 'grayscale opacity-50' : 'group-hover:scale-105 transition-transform'}`}>
-                          {React.createElement(item.icon, { className: 'w-6 h-6' })}
+                         <div className={`w-16 h-16 rounded-[22px] border flex items-center justify-center shadow-sm ${item.color} ${item.limit && item.limit.used >= item.limit.total ? 'grayscale opacity-30' : 'group-hover:scale-110 group-hover:rotate-3 transition-all duration-500'}`}>
+                           {React.createElement(item.icon, { className: 'w-7 h-7' })}
                         </div>
                         {item.limit && item.limit.total !== Infinity && (
                              <div className="text-right flex flex-col items-end">
-                                <div className="flex items-baseline gap-1 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                                   <p className="font-extrabold text-[16px] leading-none text-slate-800">{item.limit.used}</p>
-                                   <p className="font-bold text-[12px] leading-none text-slate-400">/{item.limit.total}</p>
+                                <div className="flex items-baseline gap-1 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 group-hover:bg-white group-hover:border-slate-200 transition-colors">
+                                   <p className="font-black text-lg leading-none text-slate-950">{item.limit.used}</p>
+                                   <p className="font-bold text-[13px] leading-none text-slate-400">/{item.limit.total}</p>
                                 </div>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1.5 mr-1">{item.limitText}</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2 mr-1">{item.limitText}</p>
                             </div>
                         )}
                     </div>
                     
                     <div className="relative z-10 mt-auto">
-                        <div className="flex items-center gap-2 mb-2">
-                           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2.5 py-1 rounded-md">{item.badge}</span>
+                        <div className="flex items-center gap-2.5 mb-3">
+                           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 group-hover:bg-slate-100 group-hover:text-slate-600 transition-colors">{item.badge}</span>
                         </div>
-                        <h4 className="text-[18px] sm:text-[20px] font-bold text-slate-900 leading-tight tracking-tight">{item.title}</h4>
-                        <p className="text-[13px] text-slate-500 mt-2 font-medium leading-relaxed line-clamp-2">{item.desc}</p>
+                        <h4 className="text-[22px] font-black text-slate-950 leading-tight tracking-tight group-hover:text-black transition-colors">{item.title}</h4>
+                        <p className="text-[15px] text-slate-500 mt-2.5 font-medium leading-relaxed line-clamp-2">{item.desc}</p>
                     </div>
 
                     {item.limit && item.limit.used >= item.limit.total && (
-                        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-center z-20 group-hover:bg-slate-900/30 transition-colors">
-                            <div className="bg-white px-6 py-6 rounded-[32px] shadow-2xl flex flex-col items-center gap-3 max-w-[220px] border border-white/20 animate-in fade-in zoom-in duration-300">
-                                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center shadow-inner mb-1">
-                                  <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[4px] flex items-center justify-center p-8 z-20 group-hover:bg-slate-950/30 transition-all duration-500">
+                            <div className="bg-white p-8 rounded-[40px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col items-center gap-4 max-w-[240px] border border-white/20 scale-100 group-hover:scale-105 transition-all duration-500">
+                                <div className="w-14 h-14 bg-amber-400 text-amber-950 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-400/20 mb-1">
+                                  <Star className="w-7 h-7 fill-current" />
                                 </div>
-                                <div className="space-y-1.5">
-                                  <p className="text-[14px] font-black text-slate-900 leading-tight tracking-tight">Lås op for alt</p>
-                                  <p className="text-[11px] font-medium text-slate-500 leading-snug">Opgrader til Kollega+ og få ubegrænset brug af {item.title}.</p>
+                                <div className="space-y-2">
+                                  <p className="text-[16px] font-black text-slate-950 leading-none">Limit nået</p>
+                                  <p className="text-[12px] font-medium text-slate-500 leading-snug">Opgrader og få ubegrænset brug af {item.title}.</p>
                                 </div>
-                                <div className="mt-2 w-full py-2.5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl group-hover:bg-black transition-all shadow-lg shadow-slate-900/10">
-                                  Opgrader nu
+                                <div className="mt-2 w-full py-4 bg-slate-950 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-black transition-all shadow-xl shadow-slate-900/10">
+                                  Lås op nu
                                 </div>
                             </div>
                         </div>
@@ -881,30 +909,30 @@ const PortalPageContent: React.FC = () => {
           {/* USER ARCHIVE SECTION */}
           {!userProfile?.isQualified && (
             <section>
-              <div className="flex items-center gap-4 mb-6 px-2">
-                <div className="p-3 bg-white border border-slate-200 rounded-[16px] shadow-sm shrink-0">
+              <div className="flex items-center gap-4 mb-8 px-2">
+                <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center shrink-0">
                   <Layers className="w-6 h-6 text-slate-700" />
                 </div>
                 <div>
-                  <h3 className="text-[20px] sm:text-[22px] font-extrabold text-slate-900 tracking-tight">Mit Arkiv</h3>
-                  <p className="text-[13px] sm:text-[14px] text-slate-500 font-medium mt-0.5">Gense dine gemte analyser og byggeplaner</p>
+                  <h3 className="text-2xl font-black text-slate-950 tracking-tight">Mit Arkiv</h3>
+                  <p className="text-[14px] text-slate-500 font-medium mt-0.5">Dine personlige viden-skatte</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8">
                   {[
-                    { title: "Logbog", desc: "Refleksioner", icon: BookMarked, path: "/min-logbog" },
-                    { title: "Byggeplaner", desc: "Forberedelse", icon: DraftingCompass, path: "/mine-byggeplaner" },
-                    { title: "Seminarer", desc: "Dine oplæg", icon: Presentation, path: "/mine-seminarer" },
-                    { title: "Artikler", desc: "Vidensindsigter", icon: Bookmark, path: "/mine-gemte-artikler" },
-                    { title: "Paragraffer", desc: "Jura-opslag", icon: Gavel, path: "/mine-gemte-paragraffer" },
-                    { title: "Kalender", desc: "Semester", icon: CalendarDays, path: "/mine-semesterplaner" }
+                    { title: "Logbog", desc: "Refleksioner", icon: BookMarked, path: "/min-logbog", color: "text-amber-600 bg-amber-50" },
+                    { title: "Byggeplaner", desc: "Forberedelse", icon: DraftingCompass, path: "/mine-byggeplaner", color: "text-indigo-600 bg-indigo-50" },
+                    { title: "Seminarer", desc: "Bibliotek", icon: Presentation, path: "/mine-seminarer", color: "text-emerald-600 bg-emerald-50" },
+                    { title: "Artikler", desc: "Indsigter", icon: Bookmark, path: "/mine-gemte-artikler", color: "text-rose-600 bg-rose-50" },
+                    { title: "Paragraffer", desc: "Jura-opslag", icon: Scale, path: "/mine-gemte-paragraffer", color: "text-sky-600 bg-sky-50" },
+                    { title: "Kalender", desc: "Overblik", icon: CalendarDays, path: "/mine-semesterplaner", color: "text-violet-600 bg-violet-50" }
                   ].map((item, i) => (
-                    <Link key={i} href={item.path} className="group p-5 sm:p-6 rounded-[28px] border border-slate-100 bg-white hover:border-slate-300 hover:shadow-lg transition-all active:scale-[0.98] outline-none flex flex-col items-center justify-center text-center shadow-sm h-36 sm:h-44">
-                        <div className="w-12 h-12 rounded-[18px] bg-slate-50 border border-slate-100 text-slate-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 transition-transform">
-                          {React.createElement(item.icon, { className: 'w-5 h-5' })}
+                    <Link key={i} href={item.path} className="group p-8 rounded-[40px] border border-slate-100 bg-white hover:border-slate-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-500 active:scale-[0.98] outline-none flex flex-col items-center justify-center text-center shadow-sm h-48 sm:h-56">
+                        <div className={`w-16 h-16 rounded-[24px] border border-slate-50 ${item.color} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-2 transition-all duration-500 shadow-sm`}>
+                          {React.createElement(item.icon, { className: 'w-7 h-7' })}
                         </div>
-                        <h4 className="text-[14px] sm:text-[15px] font-bold text-slate-900 leading-tight">{item.title}</h4>
-                        <p className="text-[9px] text-slate-400 mt-1.5 uppercase font-bold tracking-widest">{item.desc}</p>
+                        <h4 className="text-[17px] font-black text-slate-950 leading-tight group-hover:text-black transition-colors">{item.title}</h4>
+                        <p className="text-[10px] text-slate-400 mt-2 uppercase font-black tracking-[0.2em]">{item.desc}</p>
                     </Link>
                   ))}
               </div>

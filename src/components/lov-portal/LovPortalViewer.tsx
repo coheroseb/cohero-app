@@ -584,7 +584,7 @@ function HighlightText({ text, highlight, userHighlights = [], onRemoveHighlight
   return <>{result}</>;
 }
 
-const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats }: { law: LawConfig, isLocked: boolean, router: any, idx: number, trainingStats: any }) => {
+const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats, searchQuery }: { law: LawConfig, isLocked: boolean, router: any, idx: number, trainingStats: any, searchQuery: string }) => {
     const [metadata, setMetadata] = useState<LawContentType | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -614,7 +614,12 @@ const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats }: { law: L
     return (
         <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-            onClick={() => { if (!isLocked) router.push(href); }}
+            onClick={() => { 
+                if (!isLocked) {
+                    const finalHref = searchQuery.trim() ? `${href}?search=${encodeURIComponent(searchQuery)}` : href;
+                    router.push(finalHref); 
+                }
+            }}
             className={`group bg-white/40 backdrop-blur-3xl p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[300px] md:min-h-[360px] ${isLocked ? 'opacity-50 border-slate-200 grayscale cursor-not-allowed shadow-none' : 'border-amber-100/50 hover:border-amber-950/20 shadow-sm hover:shadow-2xl hover:bg-white active:scale-[0.98]'}`}
         >
             <div className={`absolute top-0 right-0 p-10 opacity-[0.03] group-hover:scale-125 transition-transform duration-1000 group-hover:opacity-10 ${isLocked ? 'hidden' : ''}`}>
@@ -1137,6 +1142,8 @@ export function LovPortalViewer() {
   const isFreeTier = !isPremium;
 
   const filteredSuggestions = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    
     // If we're in a specific law, suggest paragraphs from that law
     if (currentDocData) {
       const allParagraphs = currentDocData.kapitler.flatMap(c => 
@@ -1146,21 +1153,43 @@ export function LovPortalViewer() {
         }))
       );
 
-      if (!searchQuery.trim()) return allParagraphs.slice(0, 6);
+      if (!q) return allParagraphs.slice(0, 6);
       
       return allParagraphs
         .filter(p => 
-          p.value.toLowerCase().includes(searchQuery.toLowerCase()) || 
-          p.display.toLowerCase().includes(searchQuery.toLowerCase())
+          p.value.toLowerCase().includes(q) || 
+          p.display.toLowerCase().includes(q)
         )
         .slice(0, 6);
     }
 
-    if (!searchQuery.trim()) return SEARCH_SUGGESTIONS.slice(0, isFreeTier ? 2 : 5).map(s => s);
-    return SEARCH_SUGGESTIONS.filter(q => 
-      q.toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, isFreeTier ? 2 : 5);
-  }, [searchQuery, currentDocData]);
+    if (!q) return SEARCH_SUGGESTIONS.slice(0, isFreeTier ? 2 : 5).map(s => s);
+    
+    const results: (string | { display: string; value: string; isNavigation?: boolean })[] = SEARCH_SUGGESTIONS.filter(s => 
+      s.toLowerCase().includes(q)
+    );
+
+    // Dynamic paragraph navigation if no law is selected
+    if (q.includes('§') || (/\d+/.test(q) && q.length < 5)) {
+        const paraNum = q.includes('§') ? q : `§ ${q}`;
+        const topLaws = [
+            { id: 'barnets-lov', abbreviation: 'BL', name: 'Barnets Lov' },
+            { id: 'serviceloven', abbreviation: 'SL', name: 'Serviceloven' },
+            { id: 'forvaltningsloven', abbreviation: 'FVAL', name: 'Forvaltningsloven' },
+            { id: 'aktivloven', abbreviation: 'AL', name: 'Aktivloven' }
+        ];
+        
+        topLaws.forEach(law => {
+            results.unshift({
+                display: `Gå til ${paraNum} i ${law.name} (${law.abbreviation})`,
+                value: `/lov-portal/view/${law.id}?para=${encodeURIComponent(paraNum)}`,
+                isNavigation: true
+            });
+        });
+    }
+
+    return results.slice(0, isFreeTier ? 5 : 10);
+  }, [searchQuery, currentDocData, isFreeTier]);
 
   const loadDocumentContent = useCallback(async (lawId: string, docIdentifier: string, forceXmlUrl?: string) => {
     if (docsData[docIdentifier]) return;
@@ -1230,6 +1259,14 @@ export function LovPortalViewer() {
     const paraFromUrl = searchParams?.get('para');
     if (paraFromUrl) {
         setActiveParagraphNumber(decodeURIComponent(paraFromUrl));
+    }
+  }, [searchParams]);
+
+  // Sync searchQuery from URL
+  useEffect(() => {
+    const searchFromUrl = searchParams?.get('search');
+    if (searchFromUrl) {
+        setSearchQuery(decodeURIComponent(searchFromUrl));
     }
   }, [searchParams]);
 
@@ -1396,6 +1433,42 @@ export function LovPortalViewer() {
       await batch.commit();
       if (activeCollectionId === id) setActiveCollectionId('all');
   };
+
+  const filteredLaws = useMemo(() => {
+    if (!searchQuery.trim() || activeLawId || activeReferenceId) return lawsConfigs;
+    const q = searchQuery.toLowerCase();
+    
+    // Check if it's a paragraph search (contains § or just a number)
+    const isParaSearch = q.includes('§') || (/\d+/.test(q) && q.length < 5);
+    
+    // Extract potential law names/ids from query if it's a combined query (e.g. "§ 81 Barnets Lov")
+    const searchTerms = q.split(/\s+/).filter(t => t.length > 1 && !t.includes('§') && !/\d+/.test(t));
+    
+    const matches = lawsConfigs.filter(l => {
+        const name = l.name.toLowerCase();
+        const abbr = l.abbreviation.toLowerCase();
+        
+        // 1. Direct match on name or abbreviation
+        if (name.includes(q) || abbr.includes(q) || l.id.toLowerCase().includes(q)) return true;
+        
+        // 2. Combined search (e.g. "§ 81 Barnets Lov" should match "Barnets Lov")
+        if (searchTerms.length > 0 && searchTerms.every(term => name.includes(term) || abbr.includes(term))) return true;
+        
+        return false;
+    });
+
+    // Strategy for paragraph-only search (no law matches found)
+    if (matches.length === 0 && isParaSearch) {
+        // Return most common laws for quick selection
+        const priorityIds = ['barnets-lov', 'serviceloven', 'aktivloven', 'retssikkerhedsloven', 'forvaltningsloven'];
+        const priorityLaws = lawsConfigs.filter(l => priorityIds.includes(l.id));
+        
+        // If we found priority laws, return them, otherwise return everything
+        return priorityLaws.length > 0 ? priorityLaws : lawsConfigs;
+    }
+
+    return matches;
+  }, [searchQuery, lawsConfigs, activeLawId, activeReferenceId]);
 
   const handleUnsave = async (e: React.MouseEvent, id: string) => {
       e.preventDefault(); e.stopPropagation();
@@ -1598,8 +1671,14 @@ export function LovPortalViewer() {
   const filteredDocData = useMemo(() => {
       if (!currentDocData || !debouncedSearchQuery.trim()) return currentDocData;
       const q = debouncedSearchQuery.toLowerCase();
+      const cleanQ = q.replace('§', '').trim();
+      
       const filteredChapters = currentDocData.kapitler.map(chapter => {
-          const matchingParas = chapter.paragraffer.filter(p => p.nummer.toLowerCase().includes(q) || p.tekst.toLowerCase().includes(q));
+          const matchingParas = chapter.paragraffer.filter(p => 
+            p.nummer.toLowerCase().includes(q) || 
+            (cleanQ && p.nummer.toLowerCase().includes(cleanQ)) ||
+            p.tekst.toLowerCase().includes(q)
+          );
           if (matchingParas.length > 0 || chapter.titel.toLowerCase().includes(q) || chapter.nummer.toLowerCase().includes(q)) return { ...chapter, paragraffer: matchingParas };
           return null;
       }).filter((c): c is any => c !== null);
@@ -1607,23 +1686,14 @@ export function LovPortalViewer() {
   }, [currentDocData, debouncedSearchQuery]);
 
   const groupedLaws = useMemo(() => {
+    const list = filteredLaws || [];
     const groups: Record<string, LawConfig[]> = {
-      "Børn, Unge & Familie": [],
-      "Generel Forvaltning": [],
-      "Beskæftigelse": [],
-      "Social Støtte & Handicap": [],
-      "Sundhed & Andet": []
+      "Social- & Barnets Ret": list.filter(l => ['barnets-lov', 'serviceloven', 'aktivloven', 'retssikkerhedsloven', 'vum-2.0', 'støtte-til-voksne'].some(id => l.id.includes(id))),
+      "Forvaltningsret": list.filter(l => ['forvaltningsloven', 'offentlighedsloven', 'persondataloven'].some(id => l.id.includes(id))),
+      "Anden Lovgivning": list.filter(l => !['barnets-lov', 'serviceloven', 'aktivloven', 'retssikkerhedsloven', 'vum-2.0', 'forvaltningsloven', 'offentlighedsloven', 'persondataloven'].some(id => l.id.includes(id)))
     };
-    (lawsConfigs || []).forEach(law => {
-      const name = law.name.toLowerCase();
-      if (name.includes('barn') || name.includes('forældreansvar') || name.includes('skole')) groups["Børn, Unge & Familie"].push(law);
-      else if (name.includes('forvaltningslov') || name.includes('offentlighed')) groups["Generel Forvaltning"].push(law);
-      else if (name.includes('aktiv') || name.includes('beskæftigelse')) groups["Beskæftigelse"].push(law);
-      else if (name.includes('social service')) groups["Social Støtte & Handicap"].push(law);
-      else groups["Sundhed & Andet"].push(law);
-    });
     return groups;
-  }, [lawsConfigs]);
+  }, [filteredLaws]);
 
   const bibliographyTextResult = useMemo(() => {
       if (!filteredParagraphsData || filteredParagraphsData.length === 0) return "";
@@ -1905,25 +1975,30 @@ export function LovPortalViewer() {
                                         type="button"
                                         onClick={() => {
                                             if (typeof suggestion === 'object') {
-                                                setSearchQuery(suggestion.value);
+                                                if (suggestion.isNavigation) {
+                                                    router.push(suggestion.value);
+                                                } else {
+                                                    setSearchQuery(suggestion.value);
+                                                }
                                             } else {
                                                 setSearchQuery(suggestion);
                                             }
                                             setIsSearchFocused(false);
                                             
-                                            // Scroll to content
-                                            setTimeout(() => {
-                                                if (mainScrollRef.current) {
-                                                    const contentElement = document.getElementById('law-content-section') || document.getElementById('semantic-result-area');
-                                                    if (contentElement) {
-                                                        const top = contentElement.getBoundingClientRect().top + mainScrollRef.current.scrollTop - 100;
-                                                        mainScrollRef.current.scrollTo({ top, behavior: 'smooth' });
-                                                    } else {
-                                                        // Fallback scroll if IDs not found
-                                                        mainScrollRef.current.scrollTo({ top: 400, behavior: 'smooth' });
+                                            // Scroll to content if not navigating
+                                            if (typeof suggestion === 'string' || !suggestion.isNavigation) {
+                                                setTimeout(() => {
+                                                    if (mainScrollRef.current) {
+                                                        const contentElement = document.getElementById('law-content-section') || document.getElementById('semantic-result-area');
+                                                        if (contentElement) {
+                                                            const top = contentElement.getBoundingClientRect().top + mainScrollRef.current.scrollTop - 100;
+                                                            mainScrollRef.current.scrollTo({ top, behavior: 'smooth' });
+                                                        } else {
+                                                            mainScrollRef.current.scrollTo({ top: 400, behavior: 'smooth' });
+                                                        }
                                                     }
-                                                }
-                                            }, 100);
+                                                }, 100);
+                                            }
                                         }}
                                         className="w-full text-left px-4 py-3 hover:bg-amber-50 rounded-xl transition-colors flex items-center gap-3 group/item"
                                     >
@@ -2183,7 +2258,9 @@ export function LovPortalViewer() {
                         <div className="pt-8 md:pt-16">
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
                                 <div className="space-y-4">
-                                    <h2 className="text-4xl font-bold text-amber-950 serif tracking-tight">Komplet Lovsamling</h2>
+                                    <h2 className="text-4xl font-bold text-amber-950 serif tracking-tight">
+                                        {searchQuery.trim() ? 'Søgeresultater' : 'Komplet Lovsamling'}
+                                    </h2>
                                     <div className="h-1.5 w-24 bg-amber-400 rounded-full"></div>
                                     <p className="text-slate-500 font-medium italic">Navigér i de fulde retsakter og kapitler på tværs af social- og forvaltningsret.</p>
                                 </div>
@@ -2214,6 +2291,7 @@ export function LovPortalViewer() {
                                                 router={router} 
                                                 idx={idx} 
                                                 trainingStats={trainingStats}
+                                                searchQuery={searchQuery}
                                             />
                                         ))}
                                       </div>
@@ -2436,6 +2514,7 @@ export function LovPortalViewer() {
                                     router={router} 
                                     idx={idx} 
                                     trainingStats={trainingStats}
+                                    searchQuery={searchQuery}
                                 />
                             ))}
                         </div>

@@ -108,15 +108,28 @@ const Footer: React.FC = () => {
           <div className="lg:col-span-3 space-y-12">
             <div className="bg-white p-8 rounded-[3rem] border border-amber-100 shadow-sm space-y-8 relative overflow-hidden group">
               <Sparkles className="absolute top-0 right-0 p-8 w-24 h-24 text-amber-50 opacity-50 group-hover:rotate-12 transition-transform" />
-              <h4 className="font-black text-amber-950 uppercase tracking-[0.3em] text-[10px] relative z-10">Kontakt kollegiet</h4>
+              <h4 className="font-black text-amber-950 uppercase tracking-[0.3em] text-[10px] relative z-10">Kontakt & Virksomhed</h4>
               <div className="space-y-6 relative z-10">
                 <a href="mailto:kontakt@cohero.dk" className="flex items-center gap-4 group">
                   <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700 group-hover:bg-amber-950 group-hover:text-amber-400 transition-colors"><Mail className="w-4 h-4" /></div>
-                  <span className="text-sm font-bold text-slate-600 group-hover:text-amber-950 transition-colors">kontakt@cohero.dk</span>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black uppercase text-amber-600/60 leading-none mb-1">Email</span>
+                    <span className="text-sm font-bold text-slate-600 group-hover:text-amber-950 transition-colors">kontakt@cohero.dk</span>
+                  </div>
                 </a>
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700"><MapPin className="w-4 h-4" /></div>
-                  <span className="text-sm font-medium text-slate-500">2450 København SV</span>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black uppercase text-amber-600/60 leading-none mb-1">Lokation</span>
+                    <span className="text-sm font-medium text-slate-500">Ben Websters Vej 14<br/>2450 København SV</span>
+                  </div>
+                </div>
+                <div className="pt-6 border-t border-amber-50">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black uppercase text-amber-600/60 leading-none mb-1">Virksomhed</span>
+                    <span className="text-sm font-bold text-amber-950">Cohéro I/S</span>
+                    <span className="text-[10px] text-slate-400 font-medium tracking-tight">CVR: 46181425</span>
+                  </div>
                 </div>
               </div>
             </div>
