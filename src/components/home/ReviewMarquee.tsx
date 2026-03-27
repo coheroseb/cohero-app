@@ -17,8 +17,8 @@ export default function ReviewMarquee() {
 
     useEffect(() => {
         getReviewsAction().then(res => {
-            // Filter to only show reviews with text and rating >= 3
-            let filtered = res.filter((r: any) => r.reviewText && r.rating >= 3).slice(0, 20);
+            // Fetch all reviews with text
+            let filtered = res.filter((r: any) => r.reviewText).slice(0, 30);
             
             // If no data, use fallbacks
             if (filtered.length === 0) {
