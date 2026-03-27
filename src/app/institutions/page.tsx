@@ -13,10 +13,13 @@ import {
     Search,
     MapPin,
     Zap,
-    Users
+    Users,
+    Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getTopRatedInstitutionsAction } from '@/app/praktik-rating/actions';
+import InstitutionSearch from '@/app/praktik-rating/InstitutionSearch';
+import { InternshipPrepTool } from './InternshipPrepTool';
 
 interface TopRatedInst {
     id: string;
@@ -40,6 +43,7 @@ function InstitutionsContent() {
     const [institutions, setInstitutions] = useState<TopRatedInst[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedInstitution, setSelectedInstitution] = useState<any>(null);
 
     useEffect(() => {
         getTopRatedInstitutionsAction().then(setInstitutions).finally(() => setIsLoading(false));
@@ -78,30 +82,60 @@ function InstitutionsContent() {
                 <div className="absolute top-1/4 left-0 w-96 h-96 bg-rose-50/50 blur-[120px] rounded-full -z-10" />
                 <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-amber-50/50 blur-[120px] rounded-full -z-10" />
 
+                {/* GLOBAL SEARCH */}
+                <Reveal delay={0.1}>
+                    <div className="max-w-3xl mx-auto mb-20">
+                        <div className="text-center mb-10">
+                            <h2 className="text-2xl font-black text-slate-900 serif">Nationalt Institutionsregister</h2>
+                            <p className="text-sm text-slate-500 font-medium">Søg i alle godkendte praktiksteder i Danmark</p>
+                        </div>
+                        <InstitutionSearch onSelect={setSelectedInstitution} />
+                    </div>
+                </Reveal>
+
+                {/* PREP TOOL (Visible when selected) */}
+                <AnimatePresence>
+                    {selectedInstitution && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mb-32 overflow-hidden"
+                        >
+                            <InternshipPrepTool selectedInstitution={selectedInstitution} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div className="w-full h-px bg-slate-100 my-20" />
+
+                {/* ELITE LIST SECTION */}
                 <div className="text-center space-y-4 mb-16">
                     <Reveal>
-                        <p className="text-[11px] font-black uppercase text-slate-400 tracking-[0.4em] mb-4">Elite Praktiksteder</p>
-                        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-950 tracking-[-0.03em] serif leading-tight">
-                            Hvor er det <br /> <span className="text-rose-500 italic">bedst at lære?</span>
-                        </h1>
-                        <p className="max-w-xl mx-auto text-lg text-slate-500 font-medium leading-relaxed mt-6">
-                            Se hvilke institutioner studerende har bedømt som de stærkeste inden for vejledning og arbejdsmiljø.
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-100 rounded-full text-amber-600 text-[10px] font-black uppercase tracking-widest mb-4">
+                            <Sparkles className="w-3.5 h-3.5" /> Fællesskabets favoritter
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-extrabold text-slate-950 tracking-tight serif">
+                             De bedst <span className="text-rose-500 italic">anmeldte.</span>
+                        </h2>
+                        <p className="max-w-xl mx-auto text-base text-slate-500 font-medium mt-4">
+                            Se hvilke steder der topper listen baseret på dine medstuderendes oplevelser.
                         </p>
                     </Reveal>
                 </div>
 
-                {/* SEARCH BAR */}
+                {/* FILTER FOR ELITE LIST */}
                 <Reveal delay={0.2}>
-                    <div className="max-w-2xl mx-auto relative mb-20 group">
-                        <div className="absolute inset-y-0 left-8 flex items-center text-slate-300 pointer-events-none transition-colors group-focus-within:text-rose-500">
-                            <Search className="w-5 h-5" />
+                    <div className="max-w-xl mx-auto relative mb-12 group">
+                        <div className="absolute inset-y-0 left-6 flex items-center text-slate-300 pointer-events-none group-focus-within:text-rose-500">
+                            <Search className="w-4 h-4" />
                         </div>
                         <input 
                             type="text" 
-                            placeholder="Søg i de bedst ratede..." 
+                            placeholder="Filtrér i top-listen..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white border border-slate-100 rounded-full py-6 pl-16 pr-8 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-rose-500/5 focus:border-rose-300 transition-all shadow-xl shadow-slate-950/5"
+                            className="w-full bg-white border border-slate-100 rounded-full py-4 pl-14 pr-8 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-rose-500/5 focus:border-rose-300 transition-all"
                         />
                     </div>
                 </Reveal>
