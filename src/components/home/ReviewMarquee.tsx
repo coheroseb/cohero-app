@@ -40,7 +40,7 @@ export default function ReviewMarquee() {
                 <motion.div 
                     animate={{ x: [0, -100 * reviews.length / 2 + '%'] }}
                     transition={{ 
-                        duration: 45, 
+                        duration: 100, 
                         repeat: Infinity, 
                         ease: "linear" 
                     }}
