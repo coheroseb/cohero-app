@@ -25,7 +25,8 @@ import {
   Users,
   GraduationCap,
   Download,
-  Music
+  Music,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -614,14 +615,19 @@ export default function LandingPage() {
                  <div className="text-4xl sm:text-5xl font-black text-slate-900 mb-8 sm:mb-10 tracking-tight">0 kr. <span className="text-[15px] sm:text-base font-medium text-slate-400 tracking-normal text-balance">/mdr</span></div>
                  <ul className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 flex-grow">
                    {[
-                     "3 daglige opslag i Guiden",
-                     "3 daglige STAR-tolkninger",
+                     "1 dagligt opslag i Guiden",
+                     "1 daglig STAR-analyse",
                      "Begrænset Lovportal",
-                     "1 daglig Journal-træning"
+                     "Låst Journal-træner",
+                     "Låst Case-Analytiker"
                    ].map(item => (
-                     <li key={item} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-600 font-medium">
-                       <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                       <span>{item}</span>
+                     <li key={item} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-600 font-medium leading-tight">
+                       {item.startsWith('Låst') ? (
+                         <Lock className="w-4 h-4 text-slate-300 shrink-0 mt-0.5" />
+                       ) : (
+                         <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                       )}
+                       <span className={item.startsWith('Låst') ? 'text-slate-400' : ''}>{item}</span>
                      </li>
                    ))}
                  </ul>
@@ -652,21 +658,21 @@ export default function LandingPage() {
                   </div>
 
                   <ul className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 flex-grow relative z-10">
-                    {[
-                      "Ubegrænset Lovportal-adgang",
-                      "Fuld Folketingsovervågning",
-                      "Ubegrænsede opslag i Guiden",
-                      "Ubegrænset STAR-tolkning",
-                      "Personligt arkiv over analyser",
-                      "Prioriteret support"
-                    ].map(item => (
-                      <li key={item} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-200 font-medium">
-                        <div className="bg-amber-500/20 rounded-full p-0.5 shrink-0 mt-1">
-                            <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
-                        </div>
-                        <span className="leading-snug">{item}</span>
-                      </li>
-                    ))}
+                     {[
+                       "Ubegrænset Case-Analytiker",
+                       "Ubegrænset Lovportal-adgang",
+                       "Ubegrænset Journal-træner",
+                       "Ubegrænset STAR-analyse",
+                       "Ubegrænsede opslag i Guiden",
+                       "Personligt arkiv over analyser"
+                     ].map(item => (
+                       <li key={item} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-200 font-medium leading-tight">
+                         <div className="bg-amber-500/20 rounded-full p-0.5 shrink-0 mt-1">
+                             <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                         </div>
+                         <span className="leading-snug">{item}</span>
+                       </li>
+                     ))}
                   </ul>
                   <button className="relative z-10 w-full py-4 sm:py-5 bg-white text-slate-900 rounded-[20px] font-black uppercase text-[13px] tracking-wider sm:hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/10">Start gratis prøve</button>
                </div>

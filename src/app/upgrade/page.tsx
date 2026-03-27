@@ -266,16 +266,20 @@ const UpgradePageContent: React.FC = () => {
                 
                 <ul className="space-y-4 mb-auto">
                  {[
-                   "3 daglige opslag i Guiden",
-                   "3 daglige STAR-tolkninger",
+                   "1 dagligt opslag i Guiden",
+                   "1 daglig STAR-analyse",
+                   "1 månedlig Arkitekt-opgave",
+                   "1 ugentlig Journal-træning",
                    "Begrænset Lovportal",
-                   "1 ugentlig Refleksionslog",
-                   "1 daglig Journal-træning",
-                   "1 månedlig Arkitekt-opgave"
+                   "Låst Case-Analytiker"
                  ].map((item, i) => (
                    <li key={i} className="flex items-start gap-3 text-sm text-slate-600 font-medium leading-tight">
-                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                     <span>{item}</span>
+                     {item.startsWith('Låst') ? (
+                       <Lock className="w-4 h-4 text-slate-300 shrink-0 mt-0.5" />
+                     ) : (
+                       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                     )}
+                     <span className={item.startsWith('Låst') ? 'text-slate-400' : ''}>{item}</span>
                    </li>
                  ))}
                </ul>
@@ -318,12 +322,12 @@ const UpgradePageContent: React.FC = () => {
                       
                       <ul className="space-y-4 mb-auto">
                           {[
+                          "Ubegrænset Case-Analytiker",
                           "Ubegrænset Lovportal-adgang",
-                          "Fuld overvågning af Folketinget",
+                          "Ubegrænset Journal-træner",
+                          "Ubegrænset STAR-analyse",
                           "Ubegrænsede opslag i Guiden",
-                          "Ubegrænset STAR-tolkning",
-                          "Ubegrænset Journal-træning",
-                          "3 månedlige opgaver i Arkitekten",
+                          "Overvågning af Folketinget",
                           "Personligt arkiv over analyser"
                           ].map((item, i) => (
                           <li key={i} className="flex items-start gap-4 text-sm text-slate-300 font-medium leading-tight">
