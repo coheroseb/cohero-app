@@ -67,6 +67,7 @@ import { generateQuizAction, getUserUidByEmailAction, chatWithSeminarAction } fr
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -1202,6 +1203,8 @@ export default function MineSeminarerPage() {
         title: `${activeCategory} - Samlet Begrebsoverblik`,
         slides: allSlides
     });
+  };
+
   const stats = useMemo(() => {
     const totalSeminars = seminars.length;
     const totalConcepts = seminars.reduce((acc, s) => acc + (s.slides?.reduce((a, sl) => a + (sl.keyConcepts?.length || 0), 0) || 0), 0);
@@ -1409,5 +1412,4 @@ export default function MineSeminarerPage() {
           </AnimatePresence>
     </div>
   );
-}
 }
