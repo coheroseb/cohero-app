@@ -136,7 +136,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
   const router = useRouter();
   const pathname = usePathname();
-  const [hasAuthHint, setHasAuthHint] = useState(false);
+  const [hasAuthHint, setHasAuthHint] = useState(() => {
+    if (typeof window !== 'undefined') {
+        return Object.keys(localStorage).some(key => key.startsWith('firebase:authUser'));
+    }
+    return false;
+  });
 
   const [mounted, setMounted] = useState(false);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);

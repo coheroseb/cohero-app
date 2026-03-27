@@ -52,7 +52,14 @@ export default function LandingPage() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
+  const [hasAuthHint, setHasAuthHint] = useState(() => {
+    if (typeof window !== 'undefined') {
+       return Object.keys(localStorage).some(key => key.startsWith('firebase:authUser'));
+    }
+    return false;
+  });
   
+  const { isUserLoading, user } = useApp();
   const activeTrack = 'social';
 
   useEffect(() => {
@@ -91,6 +98,8 @@ export default function LandingPage() {
       setDeferredPrompt(null);
     }
   };
+
+  if (isUserLoading && hasAuthHint) return null;
 
   return (
     <div className="flex flex-col selection:bg-amber-200 selection:text-amber-950 overflow-x-hidden bg-[#FDFBF7] font-sans antialiased">
