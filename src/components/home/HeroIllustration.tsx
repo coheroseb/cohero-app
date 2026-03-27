@@ -1,182 +1,234 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Star, 
   ShoppingBag, 
   Brain, 
   Sparkles, 
-  Zap,
-  Layout,
-  MessageSquare,
-  Search,
-  Users
+  BookOpen,
+  CheckCircle2,
+  ArrowRight,
+  TrendingUp,
+  Clock
 } from 'lucide-react';
 
 const HeroIllustration = () => {
+    const [activeTab, setActiveTab] = useState(0);
+    const tabs = [
+        { id: 'ai', title: 'AI Sparring', color: 'indigo' },
+        { id: 'market', title: 'Markedsplads', color: 'cyan' },
+        { id: 'praktik', title: 'Praktik-Arkiv', color: 'amber' }
+    ];
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setActiveTab((prev) => (prev + 1) % tabs.length);
+        }, 5000);
+        return () => clearInterval(timer);
+    }, []);
+
     return (
-        <div className="relative w-full h-[500px] lg:h-[650px] flex items-center justify-center">
-            {/* Background Atmosphere */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.05)_0,transparent_70%)] pointer-events-none" />
+        <div className="relative w-full h-[500px] lg:h-[600px] flex items-center justify-center pt-8">
+            {/* Ambient Background */}
             <motion.div 
                 animate={{ 
-                    scale: [1, 1.1, 1],
-                    opacity: [0.3, 0.5, 0.3]
+                    opacity: [0.3, 0.5, 0.3],
+                    scale: [1, 1.05, 1]
                 }}
-                transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[400px] bg-amber-500/5 blur-[120px] rounded-full -z-10"
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[350px] bg-amber-500/5 blur-[100px] rounded-full -z-10"
             />
 
-            <div className="relative w-full max-w-lg aspect-square">
-                {/* Central Core - The Cohéro Portal */}
+            <div className="relative w-full max-w-2xl px-4 sm:px-0">
+                {/* Main Dashboard Container */}
                 <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="relative bg-white/40 backdrop-blur-3xl border border-white/60 rounded-[40px] shadow-[0_32px_80px_rgba(0,0,0,0.06)] overflow-hidden min-h-[400px]"
                 >
-                    <div className="relative group">
-                        <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                        <div className="relative w-48 h-48 sm:w-64 sm:h-64 bg-white/40 backdrop-blur-3xl border border-white/60 rounded-[48px] sm:rounded-[64px] shadow-2xl flex flex-col items-center justify-center gap-4 overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent" />
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                                className="absolute inset-0 opacity-[0.03]"
-                                style={{ 
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20L0 0M20 20L40 0M20 20L40 40M20 20L0 40' stroke='%23000' stroke-width='0.5' fill='none'/%3E%3C/svg%3E")` 
-                                }}
-                            />
-                            
-                            <motion.div 
-                                animate={{ 
-                                    scale: [1, 1.1, 1],
-                                    rotate: [0, 5, -5, 0]
-                                }}
-                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                                className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-950 rounded-[20px] sm:rounded-[28px] flex items-center justify-center shadow-xl shadow-slate-900/20 z-10"
-                            >
-                                <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400" />
-                            </motion.div>
-                            <div className="text-center z-10 px-4">
-                                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-900/40 mb-1">Ecosytem</h3>
-                                <p className="text-[14px] sm:text-[16px] font-black text-slate-800 tracking-tight">Cohéro v4.0</p>
-                            </div>
+                    {/* Interior Gradient Glow */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
+                    
+                    {/* Header/Tabs */}
+                    <div className="relative z-10 p-8 border-b border-slate-200/40 flex items-center justify-between">
+                        <div className="flex gap-4 sm:gap-6">
+                            {tabs.map((tab, idx) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(idx)}
+                                    className={`relative py-1 text-[11px] sm:text-[13px] font-black uppercase tracking-widest transition-colors ${activeTab === idx ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    {tab.title}
+                                    {activeTab === idx && (
+                                        <motion.div 
+                                            layoutId="activeTab"
+                                            className="absolute -bottom-2 left-0 right-0 h-1 bg-amber-500 rounded-full"
+                                        />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="hidden sm:flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live System</span>
+                        </div>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="relative p-8 h-[300px]">
+                        <AnimatePresence mode="wait">
+                            {activeTab === 0 && (
+                                <motion.div
+                                    key="ai"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.4 }}
+                                    className="flex flex-col gap-6"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                            <Brain className="w-7 h-7 text-white" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-bold text-slate-900 tracking-tight">AI Sparring & Feedback</h4>
+                                            <p className="text-slate-500 text-sm font-medium">Få faglig rygdækning på dine journaler i realtid.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100 flex flex-col gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                                <Sparkles className="w-4 h-4 text-indigo-600" />
+                                            </div>
+                                            <div className="h-4 w-2/3 bg-slate-200 rounded-full animate-pulse" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="h-3 w-full bg-slate-100 rounded-full" />
+                                            <div className="h-3 w-4/5 bg-slate-100 rounded-full" />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {activeTab === 1 && (
+                                <motion.div
+                                    key="market"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.4 }}
+                                    className="flex flex-col gap-6"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 bg-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                                            <ShoppingBag className="w-7 h-7 text-white" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-bold text-slate-900 tracking-tight">Studie-Markedsplads</h4>
+                                            <p className="text-slate-500 text-sm font-medium">Køb og sælg Danmarks bedste studiemateriale.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {[1, 2].map(i => (
+                                            <div key={i} className="bg-white rounded-[24px] p-4 border border-slate-100 shadow-sm flex flex-col gap-3">
+                                                <div className="w-full aspect-video bg-slate-50 rounded-xl flex items-center justify-center text-slate-200">
+                                                    <BookOpen className="w-6 h-6" />
+                                                </div>
+                                                <div className="h-3 w-3/4 bg-slate-100 rounded-full" />
+                                                <div className="flex justify-between items-center">
+                                                    <div className="h-3 w-8 bg-emerald-50 rounded-full" />
+                                                    <ArrowRight className="w-3 h-3 text-slate-300" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {activeTab === 2 && (
+                                <motion.div
+                                    key="praktik"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.4 }}
+                                    className="flex flex-col gap-6"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20">
+                                            <Star className="w-7 h-7 fill-white text-white" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-bold text-slate-900 tracking-tight">Faglige Praktik-Indblik</h4>
+                                            <p className="text-slate-500 text-sm font-medium">Se ratings og læs anmeldelser fra studerende i praktik.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm flex flex-col gap-5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-slate-100 rounded-full" />
+                                                <div>
+                                                    <div className="h-3 w-20 bg-slate-200 rounded-full mb-1" />
+                                                    <div className="flex gap-0.5">
+                                                        {[1,2,3,4,5].map(s => <Star key={s} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="px-3 py-1 bg-amber-50 rounded-full text-[9px] font-black text-amber-600 uppercase tracking-widest">Verificeret</div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="h-3 w-full bg-slate-50 rounded-full" />
+                                            <div className="h-3 w-2/3 bg-slate-50 rounded-full" />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Bottom Status Bar */}
+                    <div className="relative z-10 p-6 bg-slate-50/50 border-t border-slate-200/40 flex items-center justify-around">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sikkert miljø</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-300">|</div>
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-slate-400" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Support dygnet rundt</span>
                         </div>
                     </div>
                 </motion.div>
 
-                {/* Satellite 1: Praktik & Indsigt (Top Left) */}
+                {/* Subtle Floating Elements to add depth */}
                 <motion.div
-                    initial={{ x: -50, y: -50, opacity: 0 }}
-                    animate={{ x: -140, y: -160, opacity: 1 }}
-                    transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
-                    whileHover={{ scale: 1.05 }}
-                    className="absolute top-1/2 left-1/2 z-30"
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -top-12 -right-8 w-16 h-16 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl flex items-center justify-center border border-white/50 z-30"
                 >
-                    <div className="group relative">
-                        <div className="absolute -inset-4 bg-amber-500/5 blur-xl group-hover:bg-amber-500/10 transition-all" />
-                        <div className="relative p-5 sm:p-7 bg-white/90 backdrop-blur-md rounded-[32px] sm:rounded-[40px] shadow-xl border border-white/50 flex flex-col gap-3 min-w-[200px] sm:min-w-[240px]">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-50 rounded-2xl flex items-center justify-center shadow-inner">
-                                    <Star className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 fill-amber-500" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-amber-900/40 uppercase tracking-widest">Studerende siger</p>
-                                    <h4 className="text-[13px] sm:text-[15px] font-black text-slate-800">Praktik-indsigt</h4>
-                                </div>
-                            </div>
-                            <p className="text-[11px] sm:text-[12px] text-slate-500 font-medium italic leading-relaxed">
-                                "Vejledningen her var helt unik..."
-                            </p>
-                            <div className="flex items-center gap-1">
-                                {[1,2,3,4,5].map(s => <Star key={s} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />)}
-                            </div>
-                        </div>
-                    </div>
+                    <TrendingUp className="w-8 h-8 text-emerald-500" />
                 </motion.div>
 
-                {/* Satellite 2: Markedsplads (Mid Right) */}
                 <motion.div
-                    initial={{ x: 50, y: 0, opacity: 0 }}
-                    animate={{ x: 150, y: -20, opacity: 1 }}
-                    transition={{ delay: 0.7, type: "spring", stiffness: 100 }}
-                    whileHover={{ scale: 1.05 }}
-                    className="absolute top-1/2 left-1/2 z-30"
+                    animate={{ y: [0, 10, 0] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    className="absolute -bottom-8 -left-8 w-20 h-20 bg-white/80 backdrop-blur-md rounded-3xl shadow-xl flex items-center justify-center border border-white/50 z-30"
                 >
-                    <div className="group relative">
-                        <div className="absolute -inset-4 bg-cyan-500/5 blur-xl group-hover:bg-cyan-500/10 transition-all" />
-                        <div className="relative p-5 sm:p-7 bg-white/90 backdrop-blur-md rounded-[32px] sm:rounded-[40px] shadow-xl border border-white/50 flex items-center gap-4 min-w-[180px] sm:min-w-[220px]">
-                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-cyan-50 rounded-2xl flex items-center justify-center shadow-inner shrink-0">
-                                <ShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 text-cyan-600" />
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                                <p className="text-[10px] font-black text-cyan-900/30 uppercase tracking-widest">Resources</p>
-                                <h4 className="text-[13px] sm:text-[15px] font-black text-slate-800">Markedsplads</h4>
-                                <div className="mt-1 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    <span className="text-[9px] font-bold text-slate-400">800+ dokumenter</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="relative">
+                        <Sparkles className="w-10 h-10 text-amber-500" />
+                        <motion.div 
+                            animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full"
+                        />
                     </div>
                 </motion.div>
-
-                {/* Satellite 3: AI Sparring (Bottom Center) */}
-                <motion.div
-                    initial={{ x: 0, y: 50, opacity: 0 }}
-                    animate={{ x: -100, y: 140, opacity: 1 }}
-                    transition={{ delay: 0.9, type: "spring", stiffness: 100 }}
-                    whileHover={{ scale: 1.05 }}
-                    className="absolute top-1/2 left-1/2 z-30"
-                >
-                    <div className="group relative">
-                        <div className="absolute -inset-4 bg-indigo-500/5 blur-xl group-hover:bg-indigo-500/10 transition-all" />
-                        <div className="relative p-5 sm:p-7 bg-slate-900 rounded-[32px] sm:rounded-[40px] shadow-2xl border border-slate-700/30 flex flex-col gap-4 min-w-[200px] sm:min-w-[260px] overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-10">
-                                <Zap className="w-16 h-16 text-white -rotate-12" />
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/20">
-                                    <Brain className="w-5 h-5 text-indigo-400" />
-                                </div>
-                                <div>
-                                    <p className="text-[9px] font-black text-indigo-300/40 uppercase tracking-widest">Intelligent</p>
-                                    <h4 className="text-[13px] sm:text-[15px] font-black text-white">AI Studiepartner</h4>
-                                </div>
-                            </div>
-                            
-                            <div className="flex flex-col gap-2">
-                                <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                                     <motion.div 
-                                        animate={{ width: ["0%", "85%", "85%", "0%"] }}
-                                        transition={{ duration: 4, repeat: Infinity, times: [0, 0.3, 0.8, 1] }}
-                                        className="h-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" 
-                                     />
-                                </div>
-                                <div className="flex justify-between items-center px-1">
-                                    <span className="text-[8px] font-black text-slate-500 tracking-wider">ANALYSERER CASE...</span>
-                                    <Sparkles className="w-2.5 h-2.5 text-indigo-400 animate-pulse" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Connecting Lines (Subtle SVG) */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.03]" viewBox="0 0 600 600">
-                    <motion.path 
-                        initial={{ pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ duration: 1.5, delay: 1 }}
-                        d="M300 300 L160 140 M300 300 L450 280 M300 300 L200 440" 
-                        stroke="black" 
-                        strokeWidth="2" 
-                        strokeDasharray="4 4" 
-                        fill="none" 
-                    />
-                </svg>
             </div>
         </div>
     );
