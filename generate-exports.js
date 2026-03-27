@@ -18,16 +18,21 @@ for (const file of files) {
         const flowName = match[1];
         const baseName = file.replace('.ts', '');
         imports += `import { ${flowName} } from './flows/${baseName}';\n`;
+        exportsMap += `  '${flowName}Flow': ${flowName},\n`;
         exportsMap += `  '${flowName}': ${flowName},\n`;
     }
 }
 
 // Special case for sokratisk-refleksion/flow.ts
-const sokratiskContent = fs.readFileSync(path.join(flowsDir, 'sokratisk-refleksion/flow.ts'), 'utf-8');
-let sokMatch = sokratiskContent.match(/export async function ([a-zA-Z0-9_]+)\s*\(/);
-if(sokMatch) {
-    imports += `import { ${sokMatch[1]} } from './flows/sokratisk-refleksion/flow';\n`;
-    exportsMap += `  '${sokMatch[1]}': ${sokMatch[1]},\n`;
+const devPath = path.join(flowsDir, 'sokratisk-refleksion/flow.ts');
+if (fs.existsSync(devPath)) {
+    const sokratiskContent = fs.readFileSync(devPath, 'utf-8');
+    let sokMatch = sokratiskContent.match(/export async function ([a-zA-Z0-9_]+)\s*\(/);
+    if(sokMatch) {
+        imports += `import { ${sokMatch[1]} } from './flows/sokratisk-refleksion/flow';\n`;
+        exportsMap += `  '${sokMatch[1]}Flow': ${sokMatch[1]},\n`;
+        exportsMap += `  '${sokMatch[1]}': ${sokMatch[1]},\n`;
+    }
 }
 
 exportsMap += '};\n';

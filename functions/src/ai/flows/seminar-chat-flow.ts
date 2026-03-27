@@ -8,7 +8,7 @@ import {
     type SeminarChatOutput 
 } from './types';
 
-export async function chatWithSeminarContent(input: SeminarChatInput): Promise<SeminarChatOutput> {
+export async function seminarChat(input: SeminarChatInput): Promise<SeminarChatOutput> {
   return seminarChatFlow(input);
 }
 
