@@ -159,6 +159,7 @@ export interface UserProfile {
   recentConcepts?: string[];
   sharedCategories?: string[];
   sharedCategoriesPermissions?: Record<string, string[]>;
+  categoryChatHistory?: Record<string, { role: 'user' | 'assistant'; content: string }[]>;
   cprNumber?: string;
   bankReg?: string;
   bankAccount?: string;

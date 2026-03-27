@@ -79,6 +79,7 @@ interface SavedSeminar extends DocumentData {
   sharedWith?: string[];
   slides: (SeminarAnalysis['slides'][number] & { notes?: string })[];
   createdAt: { toDate: () => Date };
+  chatHistory?: { role: 'user' | 'assistant'; content: string }[];
 }
 
 // ---------------------------------------------------------------------------
@@ -336,12 +337,21 @@ const SeminarChatOverlay: React.FC<{
   title: string;
   seminars: { title: string; slides: any[] }[];
   onClose: () => void;
-}> = ({ title, seminars, onClose }) => {
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  initialMessages?: { role: 'user' | 'assistant'; content: string }[];
+  onSave?: (messages: { role: 'user' | 'assistant'; content: string }[]) => void;
+}> = ({ title, seminars, onClose, initialMessages = [], onSave }) => {
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Sync with Firestore on every message update
+  useEffect(() => {
+    if (messages.length > 0 && onSave) {
+        onSave(messages);
+    }
+  }, [messages, onSave]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -1182,6 +1192,14 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
                     title={seminar.overallTitle}
                     seminars={[{ title: seminar.overallTitle, slides: seminar.slides }]}
                     onClose={() => setShowChat(false)}
+                    initialMessages={seminar.chatHistory || []}
+                    onSave={async (msgs) => {
+                        if (!user || !firestore) return;
+                        try {
+                            const ref = doc(firestore, 'users', user.uid, 'seminars', seminar.id);
+                            await updateDoc(ref, { chatHistory: msgs });
+                        } catch (e) { console.error('Error saving chat:', e); }
+                    }}
                 />
             )}
           </AnimatePresence>
@@ -1955,6 +1973,16 @@ export default function MineSeminarerPage() {
                     title={`Kategori: ${categoryChatData.title}`}
                     seminars={categoryChatData.seminars}
                     onClose={() => setCategoryChatData(null)}
+                    initialMessages={userProfile?.categoryChatHistory?.[categoryChatData.title] || []}
+                    onSave={async (msgs) => {
+                        if (!user || !firestore) return;
+                        try {
+                            const ref = doc(firestore, 'users', user.uid);
+                            await updateDoc(ref, { 
+                                [`categoryChatHistory.${categoryChatData.title}`]: msgs 
+                            });
+                        } catch (e) { console.error('Error saving category chat:', e); }
+                    }}
                 />
             )}
           </AnimatePresence>
