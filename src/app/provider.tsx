@@ -136,12 +136,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
   const router = useRouter();
   const pathname = usePathname();
-  const [hasAuthHint, setHasAuthHint] = useState(() => {
-    if (typeof window !== 'undefined') {
-        return Object.keys(localStorage).some(key => key.startsWith('firebase:authUser'));
-    }
-    return false;
-  });
 
   const [mounted, setMounted] = useState(false);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
@@ -152,12 +146,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     // Check if running as PWA
     const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || document.referrer.includes('android-app://'));
     setIsNativeApp(isStandalone);
-
-    // Check for auth hint
-    if (typeof window !== 'undefined') {
-        const hint = Object.keys(localStorage).some(key => key.startsWith('firebase:authUser'));
-        setHasAuthHint(hint);
-    }
   }, []);
 
   const dailyChallengeGameType: GameType = useMemo(() => {
@@ -264,17 +252,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const needsVerification = isPartnerUser && !user.emailVerified;
 
     if (!needsOnboarding && !needsVerification) {
-      if (pathname === '/') {
-        if (typeof window !== 'undefined') {
-          const urlParams = new URLSearchParams(window.location.search);
-          const callbackUrl = urlParams.get('callbackUrl');
-          if (callbackUrl) {
-            router.push(callbackUrl);
-          } else {
-            router.push('/portal');
-          }
-        }
-      }
+        // We've removed the auto-redirect to portal from landing page
+        // Users can now explore the homepage and use the navbar to enter the portal
     }
   }, [user, isUserLoading, userProfile, pathname, router, isStandaloneGroups, isNativeApp]);
 
@@ -361,11 +340,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   if (IS_PRE_LAUNCH) {
     return <ComingSoon />;
-  }
-
-  // Show premium loading screen if we are on landing page and likely have a user session pending
-  if (mounted && pathname === '/' && isUserLoading && hasAuthHint) {
-    return <AuthLoadingScreen />;
   }
 
   return (
