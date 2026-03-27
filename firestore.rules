@@ -145,6 +145,7 @@ service cloud.firestore {
     match /waitlist/{email} { allow create: if request.resource.data.email == email; }
     match /teamReflections/{reflectionId} { allow read: if true; }
     match /books/{bookId} { allow read: if true; }
+    match /tiktokVideos/{videoId} { allow read: if true; }
     match /reforms/{reformId} { allow read: if isSignedIn(); }
     match /teamMembers/{memberId} { allow read: if true; }
     match /highlightedSager/{sagId} { allow read: if isSignedIn(); }
