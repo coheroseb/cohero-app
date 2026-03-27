@@ -211,13 +211,21 @@ export default function LandingPage() {
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                   </button>
                   
-                  <button
-                      onClick={handleInstallClick}
-                      className="flex justify-center items-center gap-2.5 px-6 sm:px-8 py-5 sm:py-6 bg-white/80 backdrop-blur-md border border-slate-200 text-slate-800 rounded-[20px] sm:rounded-2xl font-bold text-[15px] sm:text-[13px] uppercase sm:tracking-widest active:scale-[0.98] sm:hover:bg-slate-50 transition-all shadow-sm w-full sm:w-auto will-change-transform"
-                  >
-                      <Download className="w-5 h-5 sm:w-4 sm:h-4 text-slate-500" />
-                      Hent App
-                  </button>
+                   <Link
+                       href="/praktik-rating"
+                       className="flex justify-center items-center gap-2.5 px-6 sm:px-8 py-5 sm:py-6 bg-amber-500 text-white rounded-[20px] sm:rounded-2xl font-bold text-[15px] sm:text-[13px] uppercase sm:tracking-widest active:scale-[0.98] sm:hover:bg-amber-600 transition-all shadow-lg w-full sm:w-auto will-change-transform"
+                   >
+                       <Star className="w-5 h-5 sm:w-4 sm:h-4 fill-current" />
+                       Praktik-Rating
+                   </Link>
+
+                   <button
+                       onClick={handleInstallClick}
+                       className="flex justify-center items-center gap-2.5 px-6 sm:px-8 py-5 sm:py-6 bg-white/80 backdrop-blur-md border border-slate-200 text-slate-800 rounded-[20px] sm:rounded-2xl font-bold text-[15px] sm:text-[13px] uppercase sm:tracking-widest active:scale-[0.98] sm:hover:bg-slate-50 transition-all shadow-sm w-full sm:w-auto will-change-transform"
+                   >
+                       <Download className="w-5 h-5 sm:w-4 sm:h-4 text-slate-500" />
+                       Hent App
+                   </button>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 mt-4 opacity-90">

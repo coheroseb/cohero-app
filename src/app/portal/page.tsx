@@ -294,6 +294,10 @@ const PortalPageContent: React.FC = () => {
           star: {
               used: getDailyCount(userProfile?.lastStarAnalysisUsage, userProfile?.dailyStarAnalysisCount),
               total: isFreeTier ? 1 : Infinity
+          },
+          caseAnalyser: {
+              used: 0,
+              total: isFreeTier ? 0 : Infinity
           }
       };
   }, [userProfile]);
@@ -483,7 +487,7 @@ const PortalPageContent: React.FC = () => {
         items: [
 
           { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
-          { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse" },
+          { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse", limit: limits.caseAnalyser },
           { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
           { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Marketplace" },
           { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
@@ -577,6 +581,21 @@ const PortalPageContent: React.FC = () => {
                     ? "Din strategiske partner i myndighedsarbejdet. Hold dig opdateret på de nyeste tendenser." 
                     : "Alt hvad du skal bruge til socialrådgiverstudiet, samlet ét sted. Klar til dagens udfordringer?"}
               </p>
+
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-8">
+                  <Button asChild className="h-14 px-8 bg-amber-500 text-white rounded-[20px] font-bold hover:bg-amber-600 transition-all shadow-lg hover:scale-105 active:scale-95 border-none">
+                      <Link href="/praktik-rating" className="flex items-center gap-2.5">
+                        <Star className="w-5 h-5 fill-current" />
+                        <span className="uppercase tracking-widest text-[12px]">Praktik-Rating</span>
+                      </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-14 px-8 border-slate-200 text-slate-600 rounded-[20px] font-bold hover:bg-slate-50 transition-all hover:border-slate-300">
+                      <Link href="/institutions" className="flex items-center gap-2.5">
+                        <Users className="w-5 h-5" />
+                        <span className="uppercase tracking-widest text-[12px]">Find Praktikplads</span>
+                      </Link>
+                  </Button>
+              </div>
               
               {/* Premium Search Experience */}
               <div className="relative w-full max-w-xl mt-12 group">
