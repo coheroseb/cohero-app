@@ -680,32 +680,6 @@ export async function generateCaseUpdateEmailAction(input: Types.CaseUpdateEmail
     }
 }
 
-export async function sendCommentNotificationEmailAction(input: { postAuthorEmail: string, postAuthorName: string, commenterName: string, postTitle: string, postId: string, authorId: string }): Promise<{ success: boolean; message: string; }> {
-    try {
-        const { subject, body } = await callFirebaseFlow('generateCommentNotificationEmailFlow', { ...input, postUrl: `https://cohero.dk/opslagstavle#${input.postId}` });
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        await resend.emails.send({
-            from: 'Cohéro Notifikationer <info@platform.cohero.dk>',
-            to: input.postAuthorEmail,
-            subject: subject,
-            html: wrapEmailHtml(body),
-        });
-
-        // Add in-app notification
-        await sendInAppNotificationAction({
-            uid: input.authorId,
-            title: "Ny kommentar! 💬",
-            body: `${input.commenterName} svarede på dit opslag: "${input.postTitle}"`,
-            type: 'info',
-            link: `/opslagstavle#${input.postId}`
-        });
-
-        return { success: true, message: "Notification sent." };
-    } catch (error) {
-        console.error('Failed to send comment notification:', error);
-        return { success: false, message: "Failed to notification." };
-    }
-}
 
 export async function sendStreakReminderEmailAction(input: { userEmail: string, userName: string, streakCount: number, userId: string }): Promise<{ success: boolean; message: string; }> {
     try {

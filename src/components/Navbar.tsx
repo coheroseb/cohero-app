@@ -55,8 +55,17 @@ const BookSpine: React.FC<{
 }> = ({ letter, height, width, color, tilt = '', decoration = 'plain', index = 0 }) => (
   <motion.div
     initial={{ y: 0 }}
+    animate={{ 
+      y: [0, -3, 0],
+    }}
+    transition={{
+      duration: 4,
+      repeat: Infinity,
+      ease: "easeInOut",
+      delay: index * 0.2
+    }}
     whileHover={{ 
-      y: -5, 
+      y: -8, 
       transition: { type: "spring", stiffness: 400, damping: 10 } 
     }}
     className={`relative flex flex-col items-center justify-end ${width} ${height} ${color} 
@@ -243,7 +252,6 @@ const Navbar: React.FC<NavbarProps> = ({
       {
         title: "Fællesskab",
         items: [
-          { title: "Opslagstavle", path: "/opslagstavle", icon: <MessageSquare className="w-5 h-5" /> },
           { title: "Studiegrupper", path: "https://group.cohero.dk", icon: <UserPlus className="w-5 h-5" /> },
         ]
       },
@@ -355,7 +363,6 @@ const Navbar: React.FC<NavbarProps> = ({
                     </NavDropdown>
 
                     <NavDropdown title="Fællesskab" icon={<Users className="w-4 h-4 text-slate-400"/>}>
-                    <NavDropdownLink href="/opslagstavle" icon={<MessageSquare className="w-4 h-4"/>}>Opslagstavle</NavDropdownLink>
                     <NavDropdownLink href="https://group.cohero.dk" icon={<UserPlus className="w-4 h-4"/>}>Studiegrupper</NavDropdownLink>
                     </NavDropdown>
                     

@@ -176,12 +176,7 @@ export default function PensumPage() {
                                     </div>
                                     
                                     <div className="flex items-center gap-3">
-                                        <Link href={`/opslagstavle?bookId=${book.id}&bookTitle=${encodeURIComponent(book.title)}&bookAuthor=${encodeURIComponent(book.author)}`} className="w-full md:w-auto">
-                                            <button className="w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-slate-50 text-slate-900 rounded-2xl border border-slate-100 text-[10px] font-black uppercase tracking-widest hover:bg-amber-900 hover:text-white hover:border-amber-900 hover:scale-105 active:scale-95 transition-all shadow-sm">
-                                                <HelpCircle className="w-4 h-4" />
-                                                Stil spørgsmål
-                                            </button>
-                                        </Link>
+                                        {/* Opslagstavle fjernet */}
                                     </div>
                                 </motion.div>
                             ))}

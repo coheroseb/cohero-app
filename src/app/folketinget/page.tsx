@@ -466,10 +466,6 @@ const FolketingetPageContent: React.FC = () => {
                     </div>
                 )}
             </div>
-            <Link href="/opslagstavle" className="h-14 px-8 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-black transition-all flex items-center gap-3 w-full sm:w-auto justify-center shadow-lg shadow-slate-900/10 active:scale-95">
-              <Plus className="w-4 h-4" />
-              Nyt opslag
-            </Link>
           </div>
         </div>
       </header>

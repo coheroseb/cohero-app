@@ -30,7 +30,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/quiz-creator',
     '/pensum',
     '/fagligt-mycelium',
-    '/opslagstavle',
     '/folketinget',
     '/reform-radar',
     '/seminar-architect',
