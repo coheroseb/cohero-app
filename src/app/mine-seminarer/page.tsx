@@ -1357,9 +1357,11 @@ export default function MineSeminarerPage() {
     if (activeCategory) res = res.filter(s => s.category === activeCategory);
     
     res.sort((a, b) => {
-      if (sortBy === 'newest') return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
-      if (sortBy === 'oldest') return a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime();
-      return a.overallTitle.localeCompare(b.overallTitle);
+      const timeA = a.createdAt?.toDate?.()?.getTime() || 0;
+      const timeB = b.createdAt?.toDate?.()?.getTime() || 0;
+      if (sortBy === 'newest') return timeB - timeA;
+      if (sortBy === 'oldest') return timeA - timeB;
+      return (a.overallTitle || '').localeCompare(b.overallTitle || '');
     });
     return res;
   }, [seminars, searchQuery, sortBy, filterLaws, activeCategory]);

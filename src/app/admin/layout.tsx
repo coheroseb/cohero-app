@@ -20,7 +20,7 @@ const navigation = [
   { id: 'emails', href: '/admin/emails', label: 'E-mail Kampagner', icon: Mail },
   { id: 'stats', href: '/admin/stats', label: 'SaaS Statistik', icon: BarChart },
   { id: 'markedsplads', href: '/admin/markedsplads', label: 'Markedsplads', icon: HandHelping },
-  { id: 'system', href: '/admin/system', label: 'Aktivitetslog', icon: Database },
+  { id: 'system', href: '/admin/system', label: 'System & Fejllogs', icon: Database },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

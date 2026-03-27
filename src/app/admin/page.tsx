@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useMemo } from 'react';
-import { Users, DollarSign, TrendingUp, Zap, PlusCircle, Mail, FileText, AlertTriangle, MessageSquare, ArrowUpRight, Activity, ShieldCheck, Clock, Crown } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Zap, PlusCircle, Mail, FileText, AlertTriangle, MessageSquare, ArrowUpRight, Activity, ShieldCheck, Clock, Crown, Bell } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, where } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
@@ -242,11 +242,24 @@ export default function AdminOverviewPage() {
                               <Link href="/admin/notifications" className="w-full flex items-center justify-between p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white hover:text-slate-950 transition-all duration-500 group/btn">
                                  <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover/btn:bg-slate-50 group-hover/btn:text-slate-900 transition-colors">
-                                       <AlertTriangle className="w-5 h-5" />
+                                       <Bell className="w-5 h-5" />
                                     </div>
                                     <div className="text-left">
                                        <span className="block text-[13px] font-bold">Push Varsel</span>
-                                       <span className="block text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">System</span>
+                                       <span className="block text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Kommunikation</span>
+                                    </div>
+                                 </div>
+                                 <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                              </Link>
+
+                              <Link href="/admin/system" className="w-full flex items-center justify-between p-5 bg-rose-500/10 border border-rose-500/20 rounded-2xl hover:bg-rose-500 hover:text-white transition-all duration-500 group/btn">
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-rose-500/20 rounded-xl flex items-center justify-center group-hover/btn:bg-white group-hover/btn:text-rose-600 transition-colors">
+                                       <AlertTriangle className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                       <span className="block text-[13px] font-bold">Systemfejl</span>
+                                       <span className="block text-[10px] text-rose-300/60 uppercase font-black tracking-widest mt-0.5">Logs & Nedbrud</span>
                                     </div>
                                  </div>
                                  <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />

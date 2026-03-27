@@ -19,6 +19,7 @@ import Footer from '@/components/Footer';
 import ComingSoon from '@/components/ComingSoon';
 import TeamModal from '@/components/TeamModal';
 import { useUser, useAuth, useFirestore } from '@/firebase';
+import { ErrorLogger } from '@/components/ErrorLogger';
 import { 
   signOut, 
   User, 
@@ -384,6 +385,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         </Suspense>
         {!isStandaloneGroups && showOnboardingModal && <OnboardingModal onComplete={refetchUserProfile} />}
         {isTeamModalOpen && <TeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />}
+        <ErrorLogger user={user} userProfile={userProfile} />
       </div>
     </AppContext.Provider>
   );
