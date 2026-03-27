@@ -52,23 +52,27 @@ const BookSpine: React.FC<{
   tilt?: string;
   decoration?: 'bands' | 'stripes' | 'plain' | 'gold' | 'ornament';
   index?: number;
-}> = ({ letter, height, width, color, tilt = '', decoration = 'plain', index = 0 }) => (
-  <motion.div
-    initial={{ y: 0 }}
-    animate={{ 
-      y: [0, -10, 0],
-    }}
-    transition={{
-      duration: 1.5,
-      repeat: Infinity,
-      repeatDelay: 3,
-      ease: [0.34, 1.56, 0.64, 1], // Bouncy Cubic Bezier (Spring-like)
-      delay: index * 0.12
-    }}
-    whileHover={{ 
-      y: -12, 
-      transition: { type: "spring", stiffness: 400, damping: 10 } 
-    }}
+}> = ({ letter, height, width, color, tilt = '', decoration = 'plain', index = 0 }) => {
+  const randomDelay = useMemo(() => Math.random() * 15, []);
+  const randomRepeatDelay = useMemo(() => 10 + Math.random() * 20, []);
+
+  return (
+    <motion.div
+      initial={{ y: 0 }}
+      animate={{ 
+        y: [0, -10, 0],
+      }}
+      transition={{
+        duration: 1.2,
+        repeat: Infinity,
+        repeatDelay: randomRepeatDelay,
+        ease: [0.34, 1.56, 0.64, 1], 
+        delay: randomDelay
+      }}
+      whileHover={{ 
+        y: -12, 
+        transition: { type: "spring", stiffness: 400, damping: 10 } 
+      }}
     className={`relative flex flex-col items-center justify-end ${width} ${height} ${color} 
     rounded-t-[2px] shadow-[inset_-1px_0_3px_rgba(0,0,0,0.1),2px_0_5px_rgba(0,0,0,0.05)] 
     transition-all duration-300 ease-out
@@ -120,8 +124,9 @@ const BookSpine: React.FC<{
     
     {/* Subtle Glow on Hover */}
     <div className="absolute inset-0 bg-white/0 group-hover/book:bg-white/5 transition-colors pointer-events-none rounded-t-[2px]"></div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 const NavDropdown: React.FC<{
   title: string;
