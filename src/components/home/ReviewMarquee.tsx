@@ -10,8 +10,8 @@ export default function ReviewMarquee() {
 
     useEffect(() => {
         getReviewsAction().then(res => {
-            // Filter to only show reviews with text and rating >= 4
-            const filtered = res.filter((r: any) => r.reviewText && r.rating >= 4).slice(0, 10);
+            // Filter to only show reviews with text and rating >= 3
+            const filtered = res.filter((r: any) => r.reviewText && r.rating >= 3).slice(0, 20);
             // Double the array for seamless scrolling
             setReviews([...filtered, ...filtered]);
         });
@@ -20,35 +20,42 @@ export default function ReviewMarquee() {
     if (reviews.length === 0) return null;
 
     return (
-        <div className="relative w-full bg-slate-900 overflow-hidden py-3 border-y border-white/5">
+        <div className="relative w-full bg-slate-900 overflow-hidden py-4 border-y border-white/5">
             <div className="flex whitespace-nowrap">
                 <motion.div 
                     animate={{ x: [0, -100 * reviews.length / 2 + '%'] }}
                     transition={{ 
-                        duration: 30, 
+                        duration: 45, 
                         repeat: Infinity, 
                         ease: "linear" 
                     }}
-                    className="flex items-center gap-12 sm:gap-20 px-10"
+                    className="flex items-center gap-16 sm:gap-24 px-10"
                 >
                     {reviews.map((review, idx) => (
-                        <div key={`${review.id}-${idx}`} className="flex items-center gap-4 sm:gap-6 shrink-0 group">
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-full border border-white/10 group-hover:border-amber-400/30 transition-colors">
-                                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                                <span className="text-[10px] font-black text-white/90 uppercase tracking-widest">{review.rating}/5</span>
+                        <div key={`${review.id}-${idx}`} className="flex items-center gap-6 sm:gap-8 shrink-0 group">
+                            <div className="flex items-center gap-3">
+                                <div className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-full">
+                                   <span className="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em]">Praktik-indblik</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full border border-white/10 group-hover:border-amber-400/30 transition-colors">
+                                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                    <span className="text-[10px] font-black text-white/90 uppercase tracking-widest">{review.rating}</span>
+                                </div>
                             </div>
                             
-                            <div className="flex items-center gap-3">
-                                <Quote className="w-3 h-3 text-rose-500/40 rotate-180" />
-                                <p className="text-xs sm:text-sm font-bold text-slate-400 group-hover:text-white transition-colors tracking-tight italic">
-                                    "{review.reviewText.length > 80 ? review.reviewText.substring(0, 80) + '...' : review.reviewText}"
+                            <div className="flex items-center gap-4">
+                                <Quote className="w-3.5 h-3.5 text-rose-500/30 rotate-180 shrink-0" />
+                                <p className="text-xs sm:text-[15px] font-bold text-slate-300 group-hover:text-white transition-colors tracking-tight italic">
+                                    "{review.reviewText.length > 100 ? review.reviewText.substring(0, 100) + '...' : review.reviewText}"
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-2 text-slate-500 group-hover:text-slate-300 transition-colors">
-                                <span className="w-1 h-1 rounded-full bg-slate-700" />
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">{review.userName || 'Anonym'}</span>
-                                <span className="text-[9px] font-bold opacity-30">@{review.institutionName?.substring(0, 15)}...</span>
+                            <div className="flex items-center gap-3 text-slate-500 group-hover:text-slate-300 transition-colors">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{review.userName || 'Anonym'}</span>
+                                    <span className="text-[9px] font-bold text-rose-500/50 uppercase tracking-widest">{review.institutionName || 'Ukendt sted'}</span>
+                                </div>
                             </div>
                         </div>
                     ))}
