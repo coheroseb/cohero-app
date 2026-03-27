@@ -188,7 +188,7 @@ export default function LandingPage() {
                 </motion.h1>
                 
                 <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
-                  Din komplette platform til socialrådgiverstudiet. Fra intelligens i opgavebygningen til Danmarks største praktik-arkiv og markedsplads. 
+                  Din komplette platform til socialrådgiverstudiet. Fra AI-sparring på dine journalnotater til direkte borger-rådgivning og eksamens-værktøjer. 
                 </p>
               </motion.div>
             </AnimatePresence>
