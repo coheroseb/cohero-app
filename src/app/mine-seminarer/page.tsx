@@ -358,11 +358,11 @@ const SeminarChatOverlay: React.FC<{
     try {
       const resp = await chatWithSeminarAction({
         seminars: seminars.map(s => ({
-            title: s.title,
-            slides: s.slides.map(sl => ({
+            title: s.title || (s as any).overallTitle || 'Seminar',
+            slides: (s.slides || []).map(sl => ({
                 slideNumber: sl.slideNumber,
-                slideTitle: sl.slideTitle,
-                summary: sl.summary
+                slideTitle: sl.slideTitle || 'Slide',
+                summary: sl.summary || ''
             }))
         })),
         question: text,
