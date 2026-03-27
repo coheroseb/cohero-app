@@ -68,10 +68,6 @@ function PraktikRatingContent() {
 
     const handleRatingSelect = (s: number) => {
         setRating(s);
-        // Small delay to let the user see the star they clicked
-        setTimeout(() => {
-            setStep(3);
-        }, 300);
     };
 
     const handleSubmit = async () => {
@@ -182,14 +178,14 @@ function PraktikRatingContent() {
                 <div className="absolute top-1/4 left-0 w-96 h-96 bg-amber-100/30 blur-[100px] rounded-full -z-10" />
                 <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-rose-50/30 blur-[100px] rounded-full -z-10" />
 
-                <AnimatePresence mode="wait">
+                <AnimatePresence>
                     {/* STEP 1: SELECT INSTITUTION */}
                     {step === 1 && (
                         <motion.div 
                             key="step1"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+                            exit={{ opacity: 0, y: -20 }}
                             className="w-full text-center space-y-12"
                         >
                             <div className="space-y-6">
@@ -296,7 +292,7 @@ function PraktikRatingContent() {
                             key="step3"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+                            exit={{ opacity: 0, y: -20 }}
                             className="w-full space-y-12"
                         >
                             <div className="text-center space-y-4">
@@ -350,7 +346,7 @@ function PraktikRatingContent() {
                             key="step4"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+                            exit={{ opacity: 0, y: -20 }}
                             className="w-full space-y-12"
                         >
                             <div className="text-center space-y-4">
