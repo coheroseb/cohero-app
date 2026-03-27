@@ -56,16 +56,17 @@ const BookSpine: React.FC<{
   <motion.div
     initial={{ y: 0 }}
     animate={{ 
-      y: [0, -3, 0],
+      y: [0, -10, 0],
     }}
     transition={{
-      duration: 4,
+      duration: 1.5,
       repeat: Infinity,
-      ease: "easeInOut",
-      delay: index * 0.2
+      repeatDelay: 3,
+      ease: [0.34, 1.56, 0.64, 1], // Bouncy Cubic Bezier (Spring-like)
+      delay: index * 0.12
     }}
     whileHover={{ 
-      y: -8, 
+      y: -12, 
       transition: { type: "spring", stiffness: 400, damping: 10 } 
     }}
     className={`relative flex flex-col items-center justify-end ${width} ${height} ${color} 
