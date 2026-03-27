@@ -10,17 +10,6 @@ import Navbar from '@/components/Navbar';
 import { useApp } from '@/app/provider';
 
 function TikTokCard({ video, index }: { video: any; index: number }) {
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://www.tiktok.com/embed.js";
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      // We don't necessarily want to remove the script if multiple cards exist, 
-      // but the TikTok script is idempotent usually.
-    };
-  }, []);
-
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -29,16 +18,13 @@ function TikTokCard({ video, index }: { video: any; index: number }) {
       className="group bg-white rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all border border-slate-100 flex flex-col h-full"
     >
       <div className="aspect-[9/16] w-full bg-slate-50 relative overflow-hidden flex-shrink-0">
-        <blockquote
-          className="tiktok-embed w-full h-full"
-          cite={`https://www.tiktok.com/@${video.handle}/video/${video.videoId}`}
-          data-video-id={video.videoId}
-          style={{ maxWidth: '100%', minWidth: '100%', height: '100%', margin: 0, padding: 0 }}
-        >
-          <section className="flex items-center justify-center h-full">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-200" />
-          </section>
-        </blockquote>
+        <iframe
+          src={`https://www.tiktok.com/embed/v2/${video.videoId}`}
+          className="w-full h-full border-none"
+          allowFullScreen
+          scrolling="no"
+          allow="encrypted-media;"
+        />
       </div>
       <div className="p-6 bg-white border-t border-slate-50 flex items-center justify-between mt-auto">
         <div className="min-w-0">
