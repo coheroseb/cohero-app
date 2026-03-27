@@ -146,33 +146,30 @@ function PraktikRatingContent() {
                     animate={{ width: `${(step / 4) * 100}%` }}
                     className="h-full bg-rose-500 rounded-r-full shadow-[0_0_15px_rgba(244,63,94,0.4)]"
                 />
-            </div>
-
-            {/* HEADER / NAVIGATION */}
-            <header className="fixed top-0 left-0 right-0 p-8 z-[90] pointer-events-none">
+            </div>            {/* HEADER / NAVIGATION */}
+            <header className="fixed top-0 left-0 right-0 p-4 md:p-8 z-[90] pointer-events-none">
                 <div className="max-w-7xl mx-auto flex items-center justify-between pointer-events-auto">
                     <button 
                         onClick={() => step > 1 ? setStep(step - 1) : window.location.href = '/'}
-                        className="w-12 h-12 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full flex items-center justify-center text-slate-900 shadow-sm hover:scale-110 active:scale-95 transition-all"
+                        className="w-10 h-10 md:w-12 md:h-12 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full flex items-center justify-center text-slate-900 shadow-sm hover:scale-110 active:scale-95 transition-all"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     
-                    <div className="flex items-center gap-3 md:gap-4 px-6 py-2 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full shadow-sm">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Trin {step} af 4</span>
-                        <div className="flex gap-1">
+                    <div className="flex items-center gap-2 md:gap-4 px-4 md:px-6 py-2 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full shadow-sm">
+                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Trin {step}/4</span>
+                        <div className="flex gap-1 md:gap-1.5">
                             {[1,2,3,4].map(s => (
-                                <div key={s} className={`w-2 h-2 rounded-full transition-all duration-500 ${step >= s ? 'bg-rose-500' : 'bg-slate-200'}`} />
+                                <div key={s} className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-500 ${step >= s ? 'bg-rose-500' : 'bg-slate-200'}`} />
                             ))}
                         </div>
                     </div>
-
-                    <div className="hidden md:block"></div>
+                    <div className="hidden md:block w-12" />
                 </div>
             </header>
 
             {/* MAIN CONTENT AREA */}
-            <main className="flex-1 flex flex-col items-center pt-32 pb-40 px-6 max-w-5xl mx-auto w-full relative">
+            <main className="flex-1 flex flex-col items-center pt-24 md:pt-32 pb-32 md:pb-40 px-4 md:px-6 max-w-5xl mx-auto w-full relative overflow-x-hidden">
                 
                 {/* Decorative Elements */}
                 <div className="absolute top-1/4 left-0 w-96 h-96 bg-amber-100/30 blur-[100px] rounded-full -z-10" />
@@ -196,9 +193,9 @@ function PraktikRatingContent() {
                                     </div>
                                 </Reveal>
                                 <Reveal delay={0.1}>
-                                    <h1 className="text-[40px] leading-[1.05] sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-[-0.04em] serif">
+                                    <h1 className="text-[34px] leading-[1.1] sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-[-0.04em] serif">
                                         Bedøm dit <br />
-                                        <span className="text-rose-500">praktiksted.</span>
+                                        <span className="text-rose-500 italic">praktiksted.</span>
                                     </h1>
                                 </Reveal>
                                 <Reveal delay={0.2}>
@@ -232,7 +229,7 @@ function PraktikRatingContent() {
                         >
                             <div className="space-y-4">
                                 <p className="text-[11px] font-black uppercase text-slate-400 tracking-[0.3em]">{selectedInst?.INST_NAVN}</p>
-                                <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] serif">
+                                <h1 className="text-[32px] md:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] serif leading-tight">
                                     Hvordan var din <br /> <span className="text-rose-500 italic">oplevelse?</span>
                                 </h1>
                             </div>
@@ -248,15 +245,15 @@ function PraktikRatingContent() {
                                         onClick={() => handleRatingSelect(s)}
                                         className="relative"
                                     >
-                                        <div className={`w-16 h-16 sm:w-24 sm:h-24 bg-white rounded-[2rem] flex items-center justify-center transition-all shadow-xl border-2 ${s <= (hoverRating || rating) ? 'border-amber-400 text-amber-400' : 'border-slate-50 text-slate-200'}`}>
-                                            <Star className={`w-8 h-8 sm:w-12 sm:h-12 ${s <= (hoverRating || rating) ? 'fill-current' : ''}`} />
+                                        <div className={`w-14 h-14 xs:w-16 xs:h-16 sm:w-24 sm:h-24 bg-white rounded-2xl sm:rounded-[2rem] flex items-center justify-center transition-all shadow-xl border-2 ${s <= (hoverRating || rating) ? 'border-amber-400 text-amber-400' : 'border-slate-50 text-slate-200'}`}>
+                                            <Star className={`w-7 h-7 sm:w-12 sm:h-12 ${s <= (hoverRating || rating) ? 'fill-current' : ''}`} />
                                         </div>
                                         {s === (hoverRating || rating) && (
                                             <motion.div 
                                                 layoutId="label"
-                                                className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap"
+                                                className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap"
                                             >
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 shadow-sm">
+                                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 shadow-sm">
                                                     {['Dårlig', 'Rimelig', 'God', 'Rigtig god', 'Fremragende'][s-1]}
                                                 </span>
                                             </motion.div>
@@ -321,7 +318,7 @@ function PraktikRatingContent() {
                                             value={reviewText}
                                             onChange={(e) => setReviewText(e.target.value)}
                                             placeholder="Hvordan var vejledningen? Hvad lærte du?..."
-                                            className="w-full bg-white border-2 border-slate-100 rounded-[2.5rem] p-12 text-lg font-medium text-slate-800 placeholder:text-slate-300 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-400 outline-none transition-all resize-none h-64 shadow-2xl shadow-slate-950/5"
+                                            className="w-full bg-white border-2 border-slate-100 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 text-base md:text-lg font-medium text-slate-800 placeholder:text-slate-300 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-400 outline-none transition-all resize-none h-64 shadow-2xl shadow-slate-950/5"
                                         />
                                     </div>
                                 </div>
@@ -357,7 +354,7 @@ function PraktikRatingContent() {
                                 <p className="text-lg text-slate-500 font-medium">Vi bruger dit navn til at verificere din bedømmelse.</p>
                             </div>
 
-                            <div className="max-w-xl mx-auto space-y-6 bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col">
+                            <div className="max-w-xl mx-auto space-y-6 bg-white p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col">
                                 
                                 <button 
                                     onClick={() => setIsAnonymous(!isAnonymous)}
@@ -443,8 +440,8 @@ function PraktikRatingContent() {
             </main>
 
             {/* FOOTER BADGE */}
-            <footer className="fixed bottom-0 left-0 right-0 p-8 z-[90] pointer-events-none flex justify-center">
-                <div className="px-6 py-2 bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl flex items-center gap-3">
+            <footer className="fixed bottom-0 left-0 right-0 p-6 md:p-8 z-[90] pointer-events-none flex justify-center">
+                <div className="px-5 md:px-6 py-2 bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl flex items-center gap-2.5 md:gap-3">
                     <div className="flex -space-x-1 items-end h-3">
                         <div className="w-0.5 h-full bg-amber-400 rounded-full" />
                         <div className="w-0.5 h-4 bg-amber-500 rounded-full" />

@@ -49,14 +49,14 @@ export default function InstitutionSearch({ onSelect, selectedId }: InstitutionS
             animate={{ opacity: 1, scale: 1 }}
             className="p-6 bg-amber-50 border border-amber-200 rounded-[2rem] flex items-center justify-between shadow-xl shadow-amber-900/5 group"
         >
-            <div className="flex items-center gap-5">
-                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-amber-600 shadow-sm border border-amber-100 group-hover:rotate-6 transition-transform">
-                    <Building2 className="w-7 h-7" />
+            <div className="flex items-center gap-3 sm:gap-5">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-600 shadow-sm border border-amber-100 group-hover:rotate-6 transition-transform">
+                    <Building2 className="w-6 h-6 sm:w-7 sm:h-7" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase text-amber-500 tracking-widest mb-1">Valgt institution</p>
-                   <h3 className="text-lg font-black text-slate-900 serif leading-tight">{selectedInst.INST_NAVN}</h3>
-                   <div className="flex items-center gap-2 text-slate-400 text-xs mt-1">
+                   <p className="text-[9px] sm:text-[10px] font-black uppercase text-amber-500 tracking-widest mb-0.5 sm:mb-1">Valgt institution</p>
+                   <h3 className="text-base sm:text-lg font-black text-slate-900 serif leading-tight line-clamp-1">{selectedInst.INST_NAVN}</h3>
+                   <div className="flex items-center gap-2 text-slate-400 text-[10px] sm:text-xs mt-0.5">
                       <MapPin className="w-3 h-3" />
                       {selectedInst.POSTDISTRIKT}
                    </div>
@@ -99,14 +99,14 @@ export default function InstitutionSearch({ onSelect, selectedId }: InstitutionS
                 onClick={() => handleSelect(inst)}
                 className="w-full p-4 flex items-center gap-4 hover:bg-amber-50 rounded-2xl transition-all text-left group"
               >
-                <div className="w-12 h-12 bg-slate-50 group-hover:bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-amber-600 transition-colors shadow-sm">
-                    <Building2 className="w-6 h-6" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-50 group-hover:bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-amber-600 transition-colors shadow-sm shrink-0">
+                    <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div className="flex-1">
-                   <p className="text-sm font-black text-slate-900 leading-tight mb-0.5">{inst.INST_NAVN}</p>
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                   <p className="text-[13px] sm:text-sm font-black text-slate-900 leading-tight mb-0.5 line-clamp-1">{inst.INST_NAVN}</p>
+                   <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 line-clamp-1">
                       <MapPin className="w-3 h-3" />
-                      {inst.INST_ADR}, {inst.POSTNR} {inst.POSTDISTRIKT}
+                      {inst.POSTDISTRIKT}
                    </p>
                 </div>
                 <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-200 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-all">
