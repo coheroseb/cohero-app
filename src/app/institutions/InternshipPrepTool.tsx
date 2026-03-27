@@ -15,7 +15,8 @@ import {
   Briefcase,
   Building2,
   Users,
-  Sparkles
+  Sparkles,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLawRecommendations } from '@/lib/law-engine';
@@ -78,6 +79,7 @@ export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitutio
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const [reviewsData, setReviewsData] = useState<{ reviews: any[], average: number, count: number }>({ reviews: [], average: 0, count: 0 });
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
 
   React.useEffect(() => {
     if (selectedInstitution?.id) {
@@ -317,12 +319,12 @@ export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitutio
                               </div>
                            ))}
                            {reviewsData.reviews.length > 3 && (
-                              <Link 
-                                 href={`/institutions`}
-                                 className="text-center py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors"
+                              <button 
+                                 onClick={() => setIsReviewsModalOpen(true)}
+                                 className="w-full text-center py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors"
                               >
-                                 Se alle anmeldelser i top-listen
-                              </Link>
+                                 Læs alle {reviewsData.count} bedømmelser
+                              </button>
                            )}
                         </div>
                      </div>
@@ -394,6 +396,67 @@ export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitutio
             </div>
          </div>
       </div>
+
+      <AnimatePresence>
+         {isReviewsModalOpen && (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+               <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsReviewsModalOpen(false)}
+                  className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+               />
+               <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="relative bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden max-h-[80vh] flex flex-col border border-slate-100"
+               >
+                  <div className="p-8 border-b border-slate-50 flex items-center justify-between shrink-0 bg-white">
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                           <Star className="w-6 h-6 fill-current" />
+                        </div>
+                        <div>
+                           <h3 className="text-xl font-black text-slate-900 serif leading-tight">Bedømmelser</h3>
+                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{selectedInstitution?.INST_NAVN}</p>
+                        </div>
+                     </div>
+                     <button 
+                        onClick={() => setIsReviewsModalOpen(false)}
+                        className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-all"
+                     >
+                        <X className="w-5 h-5" />
+                     </button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/20">
+                     {reviewsData.reviews.map((review) => (
+                        <div key={review.id} className="p-8 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
+                           <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-1">
+                                 {[...Array(5)].map((_, i) => (
+                                    <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-amber-400 fill-current' : 'text-slate-100'}`} />
+                                 ))}
+                              </div>
+                              <p className="text-[10px] font-bold text-slate-300">{new Date(review.createdAt).toLocaleDateString('da-DK')}</p>
+                           </div>
+                           <p className="text-base text-slate-700 font-medium leading-relaxed italic mb-6">"{review.reviewText}"</p>
+                           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">— {review.userName}</p>
+                        </div>
+                     ))}
+                  </div>
+
+                  <div className="p-8 bg-white border-t border-slate-50 text-center shrink-0">
+                     <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-relaxed">
+                        Alle bedømmelser er indsendt af studerende og afspejler deres personlige oplevelse.
+                     </p>
+                  </div>
+               </motion.div>
+            </div>
+         )}
+      </AnimatePresence>
     </div>
   );
 };
