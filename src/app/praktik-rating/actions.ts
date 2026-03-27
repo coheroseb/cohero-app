@@ -121,3 +121,25 @@ export async function getTopRatedInstitutionsAction() {
     return [];
   }
 }
+export async function getInstitutionReviewsAction(id: string) {
+  try {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    const snapshot = await adminFirestore.collection('institution_reviews')
+      .where('institutionId', '==', id)
+      .orderBy('createdAt', 'desc')
+      .get();
+      
+    const reviews = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate()?.toISOString()
+    }));
+    
+    const average = reviews.length > 0 ? (reviews.reduce((acc, r: any) => acc + (r.rating || 0), 0) / reviews.length).toFixed(1) : 0;
+    
+    return { reviews, average: Number(average), count: reviews.length };
+  } catch (error) {
+    console.error("Error fetching institution reviews:", error);
+    return { reviews: [], average: 0, count: 0 };
+  }
+}

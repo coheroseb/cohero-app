@@ -20,6 +20,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLawRecommendations } from '@/lib/law-engine';
 import Link from 'next/link';
+import { getInstitutionReviewsAction } from '@/app/praktik-rating/actions';
+import { Star } from 'lucide-react';
 
 const PREP_STEPS = [
   {
@@ -74,6 +76,15 @@ const PREP_STEPS = [
 export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitution?: any }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
+  const [reviewsData, setReviewsData] = useState<{ reviews: any[], average: number, count: number }>({ reviews: [], average: 0, count: 0 });
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+
+  React.useEffect(() => {
+    if (selectedInstitution?.id) {
+       setIsLoadingReviews(true);
+       getInstitutionReviewsAction(selectedInstitution.id).then(setReviewsData).finally(() => setIsLoadingReviews(false));
+    }
+  }, [selectedInstitution?.id]);
 
   const toggleTask = (taskId: number) => {
     setCompletedTasks(prev => 
@@ -157,32 +168,50 @@ export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitutio
          <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-amber-50 border border-amber-200 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6"
+            className="group relative"
          >
-            <div className="flex items-center gap-6">
-               <div className="w-16 h-16 bg-amber-400 text-amber-950 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-400/20 shrink-0">
-                  <Building2 className="w-8 h-8" />
-               </div>
-               <div className="space-y-1 text-center md:text-left">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Du forbereder praktik hos:</p>
-                  <h3 className="text-xl font-black text-amber-950 serif">{selectedInstitution.INST_NAVN}</h3>
-                  <p className="text-sm text-amber-800/60 font-medium">
-                     {selectedInstitution.INST_ADR}, {selectedInstitution.POSTNR} {selectedInstitution.POSTDISTRIKT}
-                  </p>
-               </div>
-            </div>
-            
-            <div className="flex flex-wrap items-center justify-center gap-3">
-               <div className="px-5 py-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-amber-200 text-amber-900 font-bold text-xs">
-                  {selectedInstitution.EJER_KODE_TEKST}
-               </div>
-               {selectedInstitution.INST_LEDER && (
-                  <div className="px-5 py-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-amber-200 text-amber-900 font-bold text-xs flex items-center gap-2">
-                     <Users className="w-4 h-4 opacity-40" />
-                     {selectedInstitution.INST_LEDER}
+            <div className="bg-amber-50 border border-amber-200 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+               {/* Rating Badge */}
+               {reviewsData.count > 0 && (
+                  <div className="absolute top-0 right-10 bg-white border border-amber-200 border-t-0 px-4 py-2 rounded-b-2xl shadow-sm flex items-center gap-2">
+                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                     <span className="text-xs font-black text-amber-950">{reviewsData.average} <span className="text-slate-400 font-bold ml-1">({reviewsData.count})</span></span>
                   </div>
                )}
+
+               <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-amber-400 text-amber-950 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-400/20 shrink-0 group-hover:rotate-3 transition-transform">
+                     <Building2 className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-1 text-center md:text-left">
+                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Du forbereder praktik hos:</p>
+                     <h3 className="text-xl font-black text-amber-950 serif">{selectedInstitution.INST_NAVN}</h3>
+                     <p className="text-sm text-amber-800/60 font-medium">
+                        {selectedInstitution.INST_ADR}, {selectedInstitution.POSTNR} {selectedInstitution.POSTDISTRIKT}
+                     </p>
+                  </div>
+               </div>
+               
+               <div className="flex flex-wrap items-center justify-center gap-3">
+                  <div className="px-5 py-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-amber-200 text-amber-900 font-bold text-xs shadow-sm">
+                     {selectedInstitution.EJER_KODE_TEKST}
+                  </div>
+                  {selectedInstitution.INST_LEDER && (
+                     <div className="px-5 py-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-amber-200 text-amber-900 font-bold text-xs flex items-center gap-2 shadow-sm">
+                        <Users className="w-4 h-4 opacity-40" />
+                        {selectedInstitution.INST_LEDER}
+                     </div>
+                  )}
+               </div>
             </div>
+
+            {/* Link to rate */}
+            <Link 
+               href={`/praktik-rating?id=${selectedInstitution.id}`}
+               className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-6 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-full opacity-0 group-hover:opacity-100 group-hover:-bottom-5 transition-all shadow-xl"
+            >
+               Giv en bedømmelse
+            </Link>
          </motion.div>
       )}
 
@@ -256,6 +285,47 @@ export const InternshipPrepTool = ({ selectedInstitution }: { selectedInstitutio
 
                   {currentSteps[activeStep].id === 'law' && (
                      <LawSuggestions instName={selectedInstitution?.INST_NAVN} instType={selectedInstitution?.inst_type_2_tekst} />
+                  )}
+
+                  {activeStep === 0 && reviewsData.reviews.length > 0 && (
+                     <div className="mt-12 pt-12 border-t border-slate-100">
+                        <div className="flex items-center justify-between mb-8">
+                           <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+                                 <Star className="w-5 h-5 fill-current" />
+                              </div>
+                              <h4 className="text-sm font-black uppercase tracking-widest text-slate-900">Bedømmelser fra medstuderende</h4>
+                           </div>
+                           <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{reviewsData.count} anmeldelser</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                           {reviewsData.reviews.slice(0, 3).map((review) => (
+                              <div key={review.id} className="p-6 bg-slate-50/50 border border-slate-100 rounded-3xl relative overflow-hidden group">
+                                 <div className="flex items-center gap-1 mb-3">
+                                    {[...Array(5)].map((_, i) => (
+                                       <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'text-amber-400 fill-current' : 'text-slate-200'}`} />
+                                    ))}
+                                 </div>
+                                 <p className="text-sm text-slate-600 font-medium leading-relaxed italic mb-4 line-clamp-3 group-hover:line-clamp-none transition-all">
+                                    "{review.reviewText}"
+                                 </p>
+                                 <div className="flex items-center justify-between">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">— {review.userName}</p>
+                                    <p className="text-[9px] font-bold text-slate-300">{new Date(review.createdAt).toLocaleDateString('da-DK')}</p>
+                                 </div>
+                              </div>
+                           ))}
+                           {reviewsData.reviews.length > 3 && (
+                              <Link 
+                                 href={`/institutions`}
+                                 className="text-center py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors"
+                              >
+                                 Se alle anmeldelser i top-listen
+                              </Link>
+                           )}
+                        </div>
+                     </div>
                   )}
                </motion.div>
             </AnimatePresence>
