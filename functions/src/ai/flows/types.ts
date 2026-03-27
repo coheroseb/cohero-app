@@ -1386,6 +1386,42 @@ export const SubscriptionConfirmationEmailOutputSchema = z.object({
 export type SubscriptionConfirmationEmailInput = z.infer<typeof SubscriptionConfirmationEmailInputSchema>;
 export type SubscriptionConfirmationEmailOutput = z.infer<typeof SubscriptionConfirmationEmailOutputSchema>;
 
+// ==========================================
+// CASE ANALYSER SCHEMAS
+// ==========================================
+export const CaseAnalysisSchema = z.object({
+  personer: z.array(z.object({
+    navn: z.string(),
+    rolle: z.string(),
+    beskrivelse: z.string()
+  })).describe('Liste over personer nævnt i casen, deres roller og en kort beskrivelse.'),
+  lokationer: z.array(z.string()).describe('Vigtige lokationer eller steder nævnt i casen.'),
+  socialeProblemer: z.array(z.string()).describe('Sociale problemer eller udfordringer identificeret i casen (f.eks. misbrug, hjemløshed, omsorgssvigt).'),
+  tidslinje: z.array(z.object({
+    dato: z.string(),
+    hændelse: z.string()
+  })).describe('Kronologisk tidslinje over hændelser i casen.'),
+  relevanteParagraffer: z.array(z.object({
+    lov: z.string(),
+    paragraf: z.string(),
+    relevans: z.string()
+  })).describe('Forslag til relevante lovparagraffer og deres betydning for casen.'),
+  sammenfatning: z.string().describe('En kort faglig opsummering af casen.'),
+});
+
+export const AnalyzeCasePdfInputSchema = z.object({
+  caseText: z.string(),
+});
+
+export const AnalyzeCasePdfOutputSchema = z.object({
+  data: CaseAnalysisSchema,
+  usage: UsageSchema,
+});
+
+export type CaseAnalysis = z.infer<typeof CaseAnalysisSchema>;
+export type AnalyzeCasePdfInput = z.infer<typeof AnalyzeCasePdfInputSchema>;
+export type AnalyzeCasePdfOutput = z.infer<typeof AnalyzeCasePdfOutputSchema>;
+
 
 export type PracticeGuide = z.infer<typeof PracticeGuideSchema>;
 export type ReformAnalysis = z.infer<typeof ReformAnalysisSchema>;

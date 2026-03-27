@@ -1,4 +1,5 @@
 import { analyzeFtDocument } from './flows/analyze-ft-document-flow';
+import { analyzeCasePdf } from './flows/analyze-case-pdf-flow';
 import { analyzeLegalDecision } from './flows/analyze-legal-decision-flow';
 import { analyzeParagraph } from './flows/analyze-paragraph-flow';
 import { analyzeReformPdf } from './flows/analyze-reform-flow';
@@ -78,6 +79,8 @@ import { getSocraticReflection } from './flows/sokratisk-refleksion/flow';
 export const allFlows: Record<string, any> = {
   'analyzeFtDocumentFlow': analyzeFtDocument,
   'analyzeFtDocument': analyzeFtDocument,
+  'analyzeCasePdfFlow': analyzeCasePdf,
+  'analyzeCasePdf': analyzeCasePdf,
   'analyzeLegalDecisionFlow': analyzeLegalDecision,
   'analyzeLegalDecision': analyzeLegalDecision,
   'analyzeParagraphFlow': analyzeParagraph,

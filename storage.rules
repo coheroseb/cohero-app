@@ -28,6 +28,10 @@ service firebase.storage {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
+    match /case-analyses/{userId}/{allPaths=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
     match /student_cards/{fileName} {
       allow read: if isSignedIn() && (request.auth.uid == fileName.split('_')[0] || firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin');
       allow write: if isSignedIn() && fileName.matches(request.auth.uid + "_.*");

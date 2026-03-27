@@ -86,7 +86,8 @@ import type * as Types from '@/ai/flows/types';
 import {
     SeminarArchitectInput, SeminarArchitectOutput,
     TranslateSeminarInput, TranslateSeminarOutput,
-    SeminarChatInput, SeminarChatOutput
+    SeminarChatInput, SeminarChatOutput,
+    AnalyzeCasePdfInput, AnalyzeCasePdfOutput
 } from '@/ai/flows/types';
 
 async function callFirebaseFlow(flowName, data) {
@@ -596,6 +597,9 @@ export async function simulateFeedbackAction(input: { cases: any[], inbox: any[]
 }
 
 export async function analyzeFtDocumentAction(input: any) { return callFirebaseFlow('analyzeFtDocumentFlow', input); }
+export async function analyzeCasePdfAction(input: AnalyzeCasePdfInput): Promise<AnalyzeCasePdfOutput> { 
+    return callFirebaseFlow('analyzeCasePdfFlow', input); 
+}
 export async function fetchVivePublicationsAction(input: any) { return callFirebaseFlow('fetchVivePublicationsFlow', input); }
 export async function textToSpeechAction(input: any) { return callFirebaseFlow('textToSpeechFlow', input); }
 export async function getViveReportQaAction(input: any) { return callFirebaseFlow('getViveReportQaFlow', input); }

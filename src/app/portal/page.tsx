@@ -229,6 +229,11 @@ const PortalPageContent: React.FC = () => {
       firestore && user ? query(collection(firestore, 'users', user.uid, 'semesterPlans'), orderBy('createdAt', 'desc'), limit(1)) : null
   ), [firestore, user]);
   const { data: semesterPlans, isLoading: plansLoading } = useCollection<DocumentData>(semesterPlanQuery);
+
+  const recentCasesQuery = useMemoFirebase(() => (
+      firestore && user ? query(collection(firestore, 'users', user.uid, 'caseAnalyses'), orderBy('createdAt', 'desc'), limit(3)) : null
+  ), [firestore, user]);
+  const { data: recentCases, isLoading: casesLoading } = useCollection<DocumentData>(recentCasesQuery);
   
   const nextEvent = useMemo(() => {
       if (!semesterPlans || semesterPlans.length === 0) return null;
@@ -478,6 +483,7 @@ const PortalPageContent: React.FC = () => {
         items: [
 
           { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
+          { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse" },
           { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
           { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Marketplace" },
           { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
@@ -959,6 +965,55 @@ const PortalPageContent: React.FC = () => {
                </div>
             </section>
           )}
+
+          {/* Recent Case Analyses */}
+          <section className="bg-white p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-8">
+               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Seneste Sagsanalyser</h3>
+               <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+                 <History className="w-4 h-4 text-amber-500" />
+               </div>
+            </div>
+            
+            <div className="space-y-4 relative z-10 w-full">
+                {casesLoading ? (
+                    <div className="flex justify-center items-center py-8"><Loader2 className="w-6 h-6 animate-spin text-slate-300"/></div>
+                ) : recentCases && recentCases.length > 0 ? (
+                    <div className="space-y-3">
+                        {recentCases.map((item, i) => (
+                            <Link key={i} href="/case-analyser" className="block p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-amber-200 hover:bg-white transition-all cursor-pointer group/item">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover/item:bg-amber-50 transition-colors">
+                                        <FileText className="w-5 h-5 text-amber-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-bold text-slate-900 truncate">{item.fileName}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">
+                                            {item.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover/item:translate-x-1 transition-transform" />
+                                </div>
+                            </Link>
+                        ))}
+                        <Button 
+                            variant="ghost" 
+                            onClick={() => router.push('/case-analyser')} 
+                            className="w-full text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl py-6"
+                        >
+                            Se alle cases
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="text-center py-10 px-4 border-2 border-dashed border-slate-200 rounded-[24px] bg-slate-50/50">
+                        <p className="text-[14px] text-slate-500 font-medium mb-5">Ingen analyserede cases endnu.</p>
+                        <Button variant="outline" onClick={() => router.push('/case-analyser')} className="h-12 rounded-[16px] border-slate-300 text-slate-700 bg-white hover:bg-slate-50 font-bold px-6 shadow-sm">
+                           Start Analyse
+                        </Button>
+                    </div>
+                )}
+            </div>
+          </section>
 
           <BriefingReport 
              title="Nyt fra Borgen" 
