@@ -9,6 +9,7 @@ import { updateProfile } from 'firebase/auth';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { INSTITUTIONS, PROFESSION_OPTIONS } from '@/lib/constants';
+import { calculateStudyStarted } from '@/lib/education';
 
 interface OnboardingModalProps {
   onComplete: () => void;
@@ -43,39 +44,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
     return s.charAt(0).toUpperCase() + s.slice(1);
   };
 
-  const calculateStudyStarted = (semStr: string) => {
-    const sem = parseInt(semStr.match(/\d+/)?.[0] || '1');
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth(); 
-    
-    let startMonth = 1; // Default to Feb
-    let startYear = currentYear;
-    
-    if (currentMonth >= 8) { // September or later
-      startMonth = 8;
-    } else if (currentMonth >= 1) { // February or later
-      startMonth = 1;
-    } else {
-      // January belongs to the previous year's Fall semester
-      startMonth = 8;
-      startYear = currentYear - 1;
-    }
-    
-    let currentStart = new Date(startYear, startMonth, 1);
-    
-    // Subtract 6-month intervals
-    for (let i = 1; i < sem; i++) {
-        if (currentStart.getMonth() === 8) {
-            currentStart.setMonth(1);
-        } else {
-            currentStart.setMonth(8);
-            currentStart.setFullYear(currentStart.getFullYear() - 1);
-        }
-    }
-    
-    return currentStart.toISOString().split('T')[0];
-  };
 
   const handleNextStep = () => {
     setError(null);

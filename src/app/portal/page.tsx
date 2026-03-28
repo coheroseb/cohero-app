@@ -53,7 +53,8 @@ import {
   Mic,
   HandHelping,
   CreditCard,
-  Command
+  Command,
+  Briefcase
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -217,7 +218,12 @@ const SemesterFocusView = ({ institution, semester, profession, studyStarted }: 
                         <h2 className="text-3xl md:text-4xl font-black text-slate-900 serif leading-tight">
                             Dit fokus på <span className="text-blue-600">{semester}</span>
                         </h2>
-                        <p className="text-slate-500 mt-2 font-bold text-lg">{activeModule.name}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                             <p className="text-slate-500 font-bold text-lg">{activeModule.name}</p>
+                             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[9px] font-black uppercase tracking-widest border border-emerald-100/50">
+                                <CheckCircle2 className="w-3 h-3" /> Tilpasset din årgang
+                             </div>
+                        </div>
                     </div>
                     
                     <div className="grid sm:grid-cols-2 gap-8 pt-4 border-t border-blue-50">
@@ -243,6 +249,60 @@ const SemesterFocusView = ({ institution, semester, profession, studyStarted }: 
                             </p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+const CareerTransitionView = ({ semester }: { semester: string }) => {
+    const semNum = parseInt(semester.replace(/\D/g, ''));
+    if (isNaN(semNum) || semNum < 6) return null;
+
+    const isLastSem = semNum >= 7;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-[48px] p-8 sm:p-12 relative overflow-hidden group shadow-2xl border border-white/5"
+        >
+            <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-700">
+                <Briefcase className="w-48 h-48 text-amber-500 -rotate-12" />
+            </div>
+            
+            <div className="relative z-10">
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                    <span className="px-3 py-1 bg-amber-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20">
+                         Karriere-Fokus
+                    </span>
+                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> {isLastSem ? 'Klar til dimission' : 'Forberedelse til job'}
+                    </span>
+                </div>
+
+                <h2 className="text-3xl md:text-4xl font-black text-white serif leading-tight max-w-xl">
+                    Det er snart tid til at bytte <span className="text-amber-500 italic">loven</span> ud med <span className="text-amber-500 italic">jobbet</span>
+                </h2>
+                
+                <p className="text-slate-400 mt-4 font-medium text-lg max-w-2xl leading-relaxed">
+                    Du nærmer dig afslutningen på din uddannelse. Vi har låst op for dine personlige karriere-værktøjer for at hjælpe dig sikkert i mål.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
+                    {[
+                        { title: 'AI-drevet CV Tjek', icon: FileText, desc: 'Optimér dit CV til socialrådgiver-stillinger.' },
+                        { title: 'Jobsimulering', icon: MessageSquare, desc: 'Træn din ansættelsessamtale med AI-sparring.' },
+                        { title: 'LinkedIn-Guide', icon: Compass, desc: 'Gør din profil synlig for kommunale ledere.' }
+                    ].map((tool, i) => (
+                        <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-[32px] hover:bg-white/10 transition-all cursor-pointer group/card active:scale-95">
+                            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform">
+                                <tool.icon className="w-5 h-5 text-amber-500" />
+                            </div>
+                            <h4 className="text-white font-bold mb-1">{tool.title}</h4>
+                            <p className="text-slate-400 text-xs leading-relaxed">{tool.desc}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
         </motion.div>
@@ -901,13 +961,36 @@ const PortalPageContent: React.FC = () => {
         <div className="lg:col-span-8 space-y-16">
           
           {/* Automatic Semester Insight - Identifying based on uploaded Curriculums */}
-          {!userProfile?.isQualified && userProfile?.institution && userProfile?.semester && userProfile?.profession && (
-            <SemesterFocusView 
-              institution={userProfile.institution as string} 
-              semester={userProfile.semester as string} 
-              profession={userProfile.profession as string}
-              studyStarted={userProfile.studyStarted as string}
-            />
+          {!userProfile?.isQualified && (
+            <div className="space-y-12">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <BriefingReport 
+                  title="Politiske Efterretninger" 
+                  icon={Gavel} 
+                  isLoading={newsLoading} 
+                  news={politicalNews}
+                  link="https://www.ft.dk/da/dokumenter/dokumentlister/lovforslag"
+                  color="text-rose-500"
+                />
+                <BriefingReport 
+                  title="Social- & Boligministeriet" 
+                  icon={ShieldCheck} 
+                  isLoading={newsLoading} 
+                  news={ministryNews}
+                  link="https://sm.dk/nyheder"
+                  color="text-emerald-600"
+                />
+              </div>
+
+              <CareerTransitionView semester={userProfile?.semester || ''} />
+
+              <SemesterFocusView 
+                institution={userProfile?.institution as string} 
+                semester={userProfile?.semester as string} 
+                profession={userProfile?.profession as string}
+                studyStarted={userProfile?.studyStarted as string}
+              />
+            </div>
           )}
           
           {/* Active Work (The Focus Card) */}

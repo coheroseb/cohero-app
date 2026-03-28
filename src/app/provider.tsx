@@ -29,6 +29,7 @@ import {
 import { doc, getDoc, setDoc, DocumentData, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { sendStreakReminderEmailAction } from '@/app/actions';
 import { UserProfile } from '@/ai/flows/types';
+import { calculateStudyStarted } from '@/lib/education';
 import { Home, Compass, BookOpen, User as UserIcon, MessageSquare, QrCode, Sparkles, Presentation, Scale, Shield } from 'lucide-react';
 
 type GameType = 'theorist' | 'paragraph' | 'method';
@@ -226,6 +227,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setHasPlayedDailyChallenge(false);
     }
   }, [userProfile]);
+  useEffect(() => {
+    const fixMissingStartDate = async () => {
+        if (user && userProfile && !userProfile.isQualified && userProfile.semester && !userProfile.studyStarted && firestore) {
+            const startDate = calculateStudyStarted(userProfile.semester);
+            console.log(`Auto-calculating study start date for ${user.uid}: ${startDate}`);
+            try {
+                await updateDoc(doc(firestore, 'users', user.uid), {
+                    studyStarted: startDate
+                });
+                refetchUserProfile();
+            } catch (err) {
+                console.error("Failed to auto-update study start date:", err);
+            }
+        }
+    };
+    fixMissingStartDate();
+  }, [user, userProfile, firestore, refetchUserProfile]);
 
 
   useEffect(() => {

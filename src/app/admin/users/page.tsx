@@ -16,6 +16,8 @@ import { useDebounce } from 'use-debounce';
 import { decryptData } from '@/lib/encryption';
 import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarketplaceBanAction, clearUserPaymentInfoAction } from '@/app/actions';
 import { StudentCardVerification } from '@/ai/flows/types';
+import { calculateStudyStarted } from '@/lib/education';
+import { writeBatch, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 interface UserProfile {
   id: string;
@@ -38,6 +40,7 @@ interface UserProfile {
   marketplaceBanReason?: string;
   isQualified?: boolean;
   profession?: string;
+  studyStarted?: string;
 }
 
 const STAT_CARDS = [
@@ -160,6 +163,7 @@ const AdminUsersPage = () => {
   // Filters & Sorting
   const [roleFilter, setRoleFilter] = useState('all');
   const [membershipFilter, setMembershipFilter] = useState('all');
+  const [semesterFilter, setSemesterFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest'); 
   
   // Pagination
@@ -221,6 +225,15 @@ const AdminUsersPage = () => {
       }
     }
 
+    // Semester
+    if (semesterFilter !== 'all') {
+      if (semesterFilter === 'qualified') {
+        result = result.filter(user => user.isQualified);
+      } else {
+        result = result.filter(user => user.semester?.toString().includes(semesterFilter));
+      }
+    }
+
     // Sort
     result.sort((a, b) => {
         const dateA = a.createdAt?.toDate()?.getTime() || 0;
@@ -241,12 +254,12 @@ const AdminUsersPage = () => {
     });
 
     return result;
-  }, [users, debouncedSearchTerm, roleFilter, membershipFilter, sortBy]);
+  }, [users, debouncedSearchTerm, roleFilter, membershipFilter, semesterFilter, sortBy]);
 
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, roleFilter, membershipFilter, sortBy]);
+  }, [debouncedSearchTerm, roleFilter, membershipFilter, semesterFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedUsers.length / itemsPerPage));
   const paginatedUsers = filteredAndSortedUsers.slice(
@@ -278,13 +291,67 @@ const AdminUsersPage = () => {
     }
   };
 
+  const [isBulkLoading, setIsBulkLoading] = useState(false);
+  const handleBulkCalculateStartDates = async () => {
+    if (!users || !firestore) return;
+    setIsBulkLoading(true);
+    const batch = writeBatch(firestore);
+    let count = 0;
+
+    users.forEach(u => {
+        if (!u.isQualified && u.semester && !u.studyStarted) {
+            const startDate = calculateStudyStarted(u.semester);
+            batch.update(doc(firestore, 'users', u.id), { studyStarted: startDate });
+            count++;
+        }
+    });
+
+    if (count === 0) {
+        toast({ title: "Intet at beregne", description: "Alle brugere har allerede deres startdatoer." });
+        setIsBulkLoading(false);
+        return;
+    }
+
+    try {
+        await batch.commit();
+        toast({ title: "Beregning fuldført", description: `${count} brugere fik opdateret deres startdato.` });
+    } catch (err) {
+        console.error(err);
+        toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke gennemføre bulk opdatering." });
+    } finally {
+        setIsBulkLoading(false);
+    }
+  };
+
+  const handleCalculateStartDate = async (userId: string, sem: string) => {
+    if (!firestore) return;
+    const startDate = calculateStudyStarted(sem);
+    try {
+        await updateDoc(doc(firestore, 'users', userId), { studyStarted: startDate });
+        toast({ title: "Beregnet", description: `Startdato sat til ${startDate}` });
+    } catch (err) {
+        toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke opdatere startdato." });
+    }
+  };
+
   return (
     <>
     <div className="space-y-8 animate-ink">
       {/* Header sections */}
-      <div>
-        <h3 className="text-3xl font-bold text-slate-900 serif">Brugeradministration</h3>
-        <p className="text-sm text-slate-500 mt-1 font-medium italic">Få indsigt i brugeraktivitet og håndtér profiler på platformen.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h3 className="text-3xl font-bold text-slate-900 serif">Brugeradministration</h3>
+          <p className="text-sm text-slate-500 mt-1 font-medium italic">Få indsigt i brugeraktivitet og håndtér profiler på platformen.</p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={handleBulkCalculateStartDates}
+          disabled={isBulkLoading}
+          className="rounded-2xl bg-amber-50 border-amber-100 text-amber-900 font-bold text-xs h-11 px-6 shadow-sm hover:bg-amber-100 transition-all"
+        >
+          {isBulkLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Calendar className="w-4 h-4 mr-2" />}
+          Beregner manglende startdatoer
+        </Button>
       </div>
 
       {/* Stats Overview */}
@@ -357,6 +424,22 @@ const AdminUsersPage = () => {
                   </div>
 
                   <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <select 
+                      value={semesterFilter} 
+                      onChange={(e) => setSemesterFilter(e.target.value)}
+                      className="pl-10 pr-8 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 appearance-none hover:border-slate-300 transition-all shadow-sm focus:ring-4 focus:ring-slate-100 outline-none"
+                    >
+                      <option value="all">Alle Semestre</option>
+                      {[1, 2, 3, 4, 5, 6, 7].map(num => (
+                        <option key={num} value={num.toString()}>{num}. semester</option>
+                      ))}
+                      <option value="qualified">Færdiguddannet</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+
+                  <div className="relative">
                     <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <select 
                       value={sortBy} 
@@ -385,7 +468,7 @@ const AdminUsersPage = () => {
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">Ingen brugere fundet</h3>
               <p className="text-slate-400 text-sm max-w-sm">Der er ingen brugere, der matcher dine aktuelle søge- eller filterkriterier.</p>
-              <Button onClick={() => { setSearchTerm(''); setRoleFilter('all'); setMembershipFilter('all'); }} variant="outline" className="mt-6 rounded-2xl">
+              <Button onClick={() => { setSearchTerm(''); setRoleFilter('all'); setMembershipFilter('all'); setSemesterFilter('all'); }} variant="outline" className="mt-6 rounded-2xl">
                  Ryd Filtre
               </Button>
             </div>
@@ -430,10 +513,16 @@ const AdminUsersPage = () => {
                                <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase tracking-widest rounded-md">Færdiguddannet</span>
                              )}
                            </div>
-                           <div className="flex flex-col gap-0.5">
-                             <p className="text-xs text-slate-400 capitalize font-medium">{u.semester || (u.isQualified ? 'Færdiguddannet' : 'Manglende info')}</p>
-                             {u.profession && <p className="text-[10px] text-slate-300 font-bold">{u.profession}</p>}
-                           </div>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                              <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[9px] font-black uppercase tracking-widest rounded-md border border-indigo-100">
+                                {u.semester || (u.isQualified ? 'Afsluttet' : 'N/A')}
+                              </span>
+                              {u.profession && (
+                                <span className="px-2 py-0.5 bg-slate-50 text-slate-500 text-[9px] font-bold rounded-md border border-slate-100 uppercase tracking-tighter">
+                                    {u.profession}
+                                </span>
+                              )}
+                            </div>
                         </td>
                         <td className="px-8 py-5">
                            <div className="flex items-center gap-2 mb-2">
@@ -490,7 +579,23 @@ const AdminUsersPage = () => {
                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Rolle:</span> <span className="font-bold text-slate-900 capitalize">{u.role || 'Bruger'}</span></p>
                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Plan:</span> <span className="font-bold text-slate-900">{u.membership || 'Kollega (Gratis)'}</span></p>
                                     <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Uddannet:</span> <span className={`font-bold ${u.isQualified ? 'text-emerald-600' : 'text-slate-400'}`}>{u.isQualified ? 'Ja' : 'Nej'}</span></p>
-                                    <p className="flex justify-between pb-2"><span className="text-slate-500 font-medium">Startdato:</span> <span className="font-bold text-slate-900">{createdAt ? new Date(createdAt).toLocaleDateString('da-DK') : '-'}</span></p>
+                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Oprettet:</span> <span className="font-bold text-slate-900">{createdAt ? new Date(createdAt).toLocaleDateString('da-DK') : '-'}</span></p>
+                                    {!u.isQualified && (
+                                      <p className="flex justify-between pb-2">
+                                        <span className="text-slate-500 font-medium">Studie Start:</span> 
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-bold text-slate-900">{u.studyStarted || '-'}</span>
+                                          {!u.studyStarted && u.semester && (
+                                            <button 
+                                              onClick={() => handleCalculateStartDate(u.id, u.semester!)}
+                                              className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded transition-colors hover:bg-amber-200"
+                                            >
+                                              Beregn
+                                            </button>
+                                          )}
+                                        </div>
+                                      </p>
+                                    )}
                                   </div>
                                </div>
                                <div className="space-y-4">

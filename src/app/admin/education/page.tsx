@@ -90,6 +90,12 @@ export default function EducationStatsPage() {
         
         // Profession distribution
         const profMap: Record<string, number> = {};
+        
+        // Study start distribution
+        const cohortMap: Record<string, number> = {};
+        
+        // Graduation distribution
+        const gradCohortMap: Record<string, number> = {};
 
         users.forEach(u => {
             // Profession
@@ -118,6 +124,27 @@ export default function EducationStatsPage() {
             // Institution
             const inst = u.institution || 'Ikke angivet';
             instMap[inst] = (instMap[inst] || 0) + 1;
+
+            // Study start cohorts
+            if (u.studyStarted) {
+                const date = new Date(u.studyStarted);
+                const year = date.getFullYear();
+                const month = date.getMonth() >= 8 ? 'Efterår' : 'Forår';
+                const cohort = `${month} ${year}`;
+                cohortMap[cohort] = (cohortMap[cohort] || 0) + 1;
+
+                // Graduation forecast (Approx 3.5 years / 7 semesters later)
+                // If started in Sept (Efterår), graduation is typically Feb (month 1) of year + 4
+                // If started in Feb (Forår), graduation is typically July (month 6) of year + 3
+                const isSpring = date.getMonth() < 6;
+                const gradYear = isSpring ? year + 3 : year + 4;
+                const gradMonthName = isSpring ? 'Juni' : 'Januar';
+                const gradKey = `${gradMonthName} ${gradYear}`;
+                gradCohortMap[gradKey] = (gradCohortMap[gradKey] || 0) + 1;
+            } else if (!u.isQualified) {
+                cohortMap['Uvist'] = (cohortMap['Uvist'] || 0) + 1;
+                gradCohortMap['Uvist'] = (gradCohortMap['Uvist'] || 0) + 1;
+            }
         });
 
         // Sorted semester data
@@ -145,7 +172,9 @@ export default function EducationStatsPage() {
             avgMonths,
             semesterData,
             topInst,
-            profMap
+            profMap,
+            cohortMap,
+            gradCohortMap
         };
     }, [users]);
 
@@ -269,6 +298,124 @@ export default function EducationStatsPage() {
                     </div>
                 </div>
 
+                {/* Study Start Distribution */}
+                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-900 serif">Optagelses-fordeling</h3>
+                            <p className="text-xs font-bold text-slate-400 mt-0.5">Hvornår startede de studerende?</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-2xl text-slate-400">
+                            <Calendar className="w-5 h-5" />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-6 flex-grow">
+                        {Object.entries(stats.cohortMap)
+                            .sort((a, b) => {
+                                if (a[0] === 'Uvist') return 1;
+                                if (b[0] === 'Uvist') return -1;
+                                // Sort by year desc, then month
+                                const partsA = a[0].split(' ');
+                                const partsB = b[0].split(' ');
+                                const yearA = parseInt(partsA[1]);
+                                const yearB = parseInt(partsB[1]);
+                                if (yearA !== yearB) return yearB - yearA;
+                                return a[0].includes('Efterår') ? -1 : 1;
+                            })
+                            .slice(0, 5)
+                            .map(([cohort, count]) => (
+                                <DistributionBar 
+                                    key={cohort} 
+                                    label={cohort} 
+                                    count={count} 
+                                    total={stats.studentCount} 
+                                    color="bg-emerald-500"
+                                />
+                            ))}
+                    </div>
+                </div>
+
+            </div>
+
+            {/* Graduation Timeline Forecast Charts */}
+            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+                <div className="flex items-center justify-between mb-10">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 serif tracking-tight">Dimissions-prognose</h3>
+                        <p className="text-sm font-medium text-slate-500 mt-1">Hvornår forventer vi et boom af færdiguddannede socialrådgivere?</p>
+                    </div>
+                    <div className="px-5 py-2.5 bg-amber-50 rounded-2xl text-amber-700 text-xs font-black uppercase tracking-widest border border-amber-100 shadow-sm flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4" /> Prognose-værktøj
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                     <div className="lg:col-span-2 space-y-6">
+                        {Object.entries(stats.gradCohortMap)
+                            .filter(([key]) => key !== 'Uvist')
+                            .sort((a, b) => {
+                                const yearA = parseInt(a[0].split(' ')[1]);
+                                const yearB = parseInt(b[0].split(' ')[1]);
+                                if (yearA !== yearB) return yearA - yearB;
+                                return a[0].includes('Januar') ? -1 : 1;
+                            })
+                            .map(([gradKey, count]) => (
+                                <DistributionBar 
+                                    key={gradKey} 
+                                    label={gradKey} 
+                                    count={count} 
+                                    total={stats.studentCount} 
+                                    color="bg-slate-900"
+                                />
+                            ))}
+                     </div>
+                     <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 flex flex-col justify-between">
+                         <div>
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Strategisk Indsigt</h4>
+                            <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                                Ved at kortlægge hvornår de studerende afslutter, kan vi:
+                            </p>
+                            <ul className="mt-4 space-y-3">
+                                {[
+                                    'Planlægge jobsøgningsmøder',
+                                    'Prioritere studieordnings-match',
+                                    'Lave målrettet annoncering overfor arbejdsgivere',
+                                    'Sende automatiske "tillykke" flows'
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-xs font-bold text-slate-700">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5" />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                         </div>
+                         <div className="mt-10 p-5 bg-white rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
+                             <div className="relative z-10 flex items-center justify-between">
+                                 <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Næste Bølge</p>
+                                    <h5 className="text-xl font-black text-slate-900 serif mt-1">
+                                        {Object.entries(stats.gradCohortMap)
+                                            .filter(([k]) => k !== 'Uvist')
+                                            .sort((a,b) => {
+                                                const ya = parseInt(a[0].split(' ')[1]);
+                                                const yb = parseInt(b[0].split(' ')[1]);
+                                                if (ya !== yb) return ya - yb;
+                                                return a[0].includes('Januar') ? -1 : 1;
+                                            })[0]?.[0] || 'Ingen data'}
+                                    </h5>
+                                 </div>
+                                 <motion.div 
+                                    animate={{ scale: [1, 1.1, 1] }} 
+                                    transition={{ repeat: Infinity, duration: 2 }}
+                                    className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white"
+                                 >
+                                    <Calendar className="w-5 h-5" />
+                                 </motion.div>
+                             </div>
+                         </div>
+                     </div>
+                </div>
             </div>
 
             {/* Graduation Timeline Forecast */}
@@ -304,7 +451,7 @@ export default function EducationStatsPage() {
                                 <th className="px-8 py-4">Navn</th>
                                 <th className="px-8 py-4">Uddannelse</th>
                                 <th className="px-8 py-4">Semester</th>
-                                <th className="px-8 py-4">Senioritet</th>
+                                <th className="px-8 py-4">Forventet Afsluttet</th>
                                 <th className="px-8 py-4 text-right">Potentiale</th>
                             </tr>
                         </thead>
@@ -327,7 +474,17 @@ export default function EducationStatsPage() {
                                             {u.isQualified ? 'Færdig' : u.semester || 'Hovedmenu'}
                                         </span>
                                     </td>
-                                    <td className="px-8 py-5 text-sm font-bold text-slate-400">{u.semestersWithCohero || 1} sem.</td>
+                                    <td className="px-8 py-5 text-sm font-bold text-slate-700">
+                                        {u.studyStarted ? (
+                                            (() => {
+                                                const d = new Date(u.studyStarted);
+                                                const isSpring = d.getMonth() < 6;
+                                                const gradYear = isSpring ? d.getFullYear() + 3 : d.getFullYear() + 4;
+                                                const gradMonth = isSpring ? 'Juni' : 'Januar';
+                                                return `${gradMonth} ${gradYear}`;
+                                            })()
+                                        ) : 'Uvist'}
+                                    </td>
                                     <td className="px-8 py-5 text-right">
                                         <div className="flex items-center justify-end gap-1 text-amber-600 font-black text-xs">
                                             {u.cohéroPoints || 0} <Layers className="w-3 h-3" />
