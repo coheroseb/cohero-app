@@ -106,26 +106,23 @@ import { Progress } from "@/components/ui/progress";
 import type { LawContentType, ParagraphAnalysisData, CollectionData, SavedParagraph, QuizResult, LawConfig, GenerateParagraphDiffData } from '@/ai/flows/types';
 import { MobileBottomNav } from './MobileBottomNav';
 
+// --- ENGINE: LOCAL CACHE (15 MIN) ---
+const lovCache: Record<string, { data: LawContentType; timestamp: number }> = {};
+const CACHE_DURATION = 15 * 60 * 1000;
+
+const getCachedLaw = (id: string) => {
+    const entry = lovCache[id];
+    if (entry && Date.now() - entry.timestamp < CACHE_DURATION) return entry.data;
+    return null;
+};
+
+const setCachedLaw = (id: string, data: LawContentType) => {
+    lovCache[id] = { data, timestamp: Date.now() };
+};
+
 // --- CONSTANTS ---
 
-const SEARCH_SUGGESTIONS = [
-  "Hvornår har man underretningspligt?",
-  "Betingelser for anbringelse uden samtykke",
-  "Hvad er mindsteindgrebets princip?",
-  "Regler for støtte i hjemmet (§ 32)",
-  "Hvordan fungerer partshøring?",
-  "Socialpædagogisk bistand til voksne (§ 85)",
-  "Regler for ledsageordning (§ 97)",
-  "Hvornår må man videregive oplysninger?",
-  "Borgerrådgiverens rolle",
-  "Tvangsmæssig behandling af voksne",
-  "Hjælp til stofmisbrugere",
-  "Vejledningspligt efter forvaltningsloven § 7",
-  "Aktindsigt for parter",
-  "Hvad betyder barnets bedste?",
-  "Merudgiftsydelse til voksne",
-  "Regler for botilbud (§ 107/108)"
-];
+// --- HELPER COMPONENTS ---
 
 const SITUATIONS = [
   {
@@ -590,6 +587,14 @@ const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats, searchQuer
 
     useEffect(() => {
         if (isLocked) return;
+        
+        // Motor: Check Cache First
+        const cached = getCachedLaw(law.id);
+        if (cached) {
+            setMetadata(cached);
+            return;
+        }
+
         setLoading(true);
         getLawContentAction({
             documentId: law.id,
@@ -598,7 +603,10 @@ const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats, searchQuer
             abbreviation: law.abbreviation,
             lbk: law.lbk
         }).then(res => {
-            if (res?.data) setMetadata(res.data);
+            if (res?.data) {
+                setMetadata(res.data);
+                setCachedLaw(law.id, res.data); // Store in cache
+            }
         }).finally(() => setLoading(false));
     }, [law, isLocked]);
 
@@ -637,7 +645,7 @@ const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats, searchQuer
                         <LiveStatusBadge xmlUrl={law.xmlUrl} />
                     )}
                 </div>
-                <h4 className="text-3xl font-black text-amber-950 serif leading-tight mb-8 group-hover:text-amber-800 transition-colors">
+                <h4 className="text-3xl font-black text-amber-950 serif-premium leading-tight mb-8 group-hover:text-amber-800 transition-colors">
                     {metadata?.titel || law.name}
                 </h4>
                 
@@ -1141,58 +1149,16 @@ export function LovPortalViewer() {
   const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership), [userProfile]);
   const isFreeTier = !isPremium;
 
-  const filteredSuggestions = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    
-    // If we're in a specific law, suggest paragraphs from that law
-    if (currentDocData) {
-      const allParagraphs = currentDocData.kapitler.flatMap(c => 
-        c.paragraffer.map(p => ({
-          display: `${p.nummer}: ${p.tekst.substring(0, 60)}${p.tekst.length > 60 ? '...' : ''}`,
-          value: p.nummer
-        }))
-      );
-
-      if (!q) return allParagraphs.slice(0, 6);
-      
-      return allParagraphs
-        .filter(p => 
-          p.value.toLowerCase().includes(q) || 
-          p.display.toLowerCase().includes(q)
-        )
-        .slice(0, 6);
-    }
-
-    if (!q) return SEARCH_SUGGESTIONS.slice(0, isFreeTier ? 2 : 5).map(s => s);
-    
-    const results: (string | { display: string; value: string; isNavigation?: boolean })[] = SEARCH_SUGGESTIONS.filter(s => 
-      s.toLowerCase().includes(q)
-    );
-
-    // Dynamic paragraph navigation if no law is selected
-    if (q.includes('§') || (/\d+/.test(q) && q.length < 5)) {
-        const paraNum = q.includes('§') ? q : `§ ${q}`;
-        const topLaws = [
-            { id: 'barnets-lov', abbreviation: 'BL', name: 'Barnets Lov' },
-            { id: 'serviceloven', abbreviation: 'SL', name: 'Serviceloven' },
-            { id: 'forvaltningsloven', abbreviation: 'FVAL', name: 'Forvaltningsloven' },
-            { id: 'aktivloven', abbreviation: 'AL', name: 'Aktivloven' }
-        ];
-        
-        topLaws.forEach(law => {
-            results.unshift({
-                display: `Gå til ${paraNum} i ${law.name} (${law.abbreviation})`,
-                value: `/lov-portal/view/${law.id}?para=${encodeURIComponent(paraNum)}`,
-                isNavigation: true
-            });
-        });
-    }
-
-    return results.slice(0, isFreeTier ? 5 : 10);
-  }, [searchQuery, currentDocData, isFreeTier]);
+  // Removed filteredSuggestions
 
   const loadDocumentContent = useCallback(async (lawId: string, docIdentifier: string, forceXmlUrl?: string) => {
-    if (docsData[docIdentifier]) return;
+    // Motor: Cache Check
+    const cached = getCachedLaw(docIdentifier);
+    if (cached) {
+        setDocsData(prev => ({ ...prev, [docIdentifier]: cached }));
+        return;
+    }
+
     const config = (lawsConfigs || []).find(l => l.id === lawId);
     const xmlUrl = forceXmlUrl || config?.xmlUrl;
     if (!xmlUrl) return;
@@ -1205,7 +1171,10 @@ export function LovPortalViewer() {
             abbreviation: config?.abbreviation || 'DOK',
             lbk: config?.lbk || ''
         });
-        if (result?.data) setDocsData(prev => ({ ...prev, [docIdentifier]: result.data }));
+        if (result?.data) {
+            setDocsData(prev => ({ ...prev, [docIdentifier]: result.data }));
+            setCachedLaw(docIdentifier, result.data);
+        }
     } catch (e) {
         console.error(e);
     } finally {
@@ -1737,7 +1706,18 @@ export function LovPortalViewer() {
   }, [isLoadingDoc, viewMode, activeLawId]);
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 overflow-x-hidden">
+    <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 overflow-x-hidden selection:text-amber-950">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
+        .serif-premium { font-family: 'Playfair Display', serif; }
+        .ink-flow {
+          animation: ink-flow 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes ink-flow {
+          from { opacity: 0; filter: blur(10px); transform: translateY(20px); }
+          to { opacity: 1; filter: blur(0); transform: translateY(0); }
+        }
+      ` }} />
       
       {/* MOBILE BOTTOM NAVIGATION (Premium Experience) */}
       <MobileBottomNav 
@@ -1757,7 +1737,7 @@ export function LovPortalViewer() {
           <div className="w-8 h-8 bg-amber-950 rounded-lg flex items-center justify-center text-amber-400 shadow-xl shrink-0">
             <ScaleIcon className="w-4 h-4" />
           </div>
-          <span className="text-base font-black text-amber-950 serif tracking-tighter">Lovportal</span>
+          <span className="text-base font-black text-amber-950 serif-premium tracking-tighter">Lovportal</span>
         </div>
         
         <div className="flex items-center gap-3">
@@ -1795,7 +1775,7 @@ export function LovPortalViewer() {
                     <Folders className="w-5 h-5" />
                   </div>
                   <div>
-                    <h1 className="text-lg font-black text-amber-950 serif tracking-tight">Vælg kilde</h1>
+                    <h1 className="text-lg font-black text-amber-950 serif-premium tracking-tight">Vælg kilde</h1>
                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Hurtigskift</p>
                   </div>
                 </div>
@@ -1814,7 +1794,7 @@ export function LovPortalViewer() {
                             className={`w-full text-left p-6 rounded-[2rem] transition-all flex flex-col gap-2 relative overflow-hidden group/nav ${isActive ? 'bg-amber-950 text-white shadow-xl shadow-amber-950/20' : 'bg-amber-50/30 border border-transparent hover:border-amber-200'} ${isLocked ? 'opacity-50' : ''}`}
                         >
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{law.abbreviation}</span>
-                            <span className="text-base font-black serif leading-tight">{law.name}</span>
+                            <span className="text-base font-black serif-premium leading-tight">{law.name}</span>
                             {isLocked ? <Lock className="w-3 h-3 text-amber-500 absolute top-6 right-6" /> : isActive && <ArrowRight className="w-5 h-5 text-amber-400 absolute bottom-6 right-6" />}
                         </button>
                     )
@@ -1847,19 +1827,6 @@ export function LovPortalViewer() {
                 />
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forslag</h4>
-              {SEARCH_SUGGESTIONS.slice(0, 5).map((s, i) => (
-                <button 
-                  key={i}
-                  onClick={() => { setSearchQuery(s); handleSearch({ preventDefault: () => {} } as any); setIsSearching(false); }}
-                  className="w-full text-left p-4 bg-white border border-amber-50 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all"
-                >
-                  <span className="text-sm font-bold text-amber-950">{s}</span>
-                  <ArrowUpRight className="w-4 h-4 text-slate-200" />
-                </button>
-              ))}
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1869,7 +1836,7 @@ export function LovPortalViewer() {
         <div className="p-10 flex items-center gap-4 border-b border-amber-50/50">
             <div className="w-14 h-14 bg-amber-950 rounded-[1.5rem] flex items-center justify-center text-amber-400 shadow-2xl shadow-amber-950/40 rotate-1 flex-shrink-0 animate-ink"><ScaleIcon className="w-8 h-8" /></div>
             <div>
-                <h1 className="text-2xl font-black text-amber-950 serif tracking-tighter leading-none">Lovportal</h1>
+                <h1 className="text-2xl font-black text-amber-950 serif-premium tracking-tighter leading-none">Lovportal</h1>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/30 mt-1.5 flex items-center gap-2 italic">
                     <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
                     Premium Edition
@@ -1960,57 +1927,6 @@ export function LovPortalViewer() {
                         onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                         className="w-full pl-12 pr-4 py-3 bg-slate-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-amber-950 focus:bg-white transition-all" 
                     />
-                    
-                    <AnimatePresence>
-                        {isSearchFocused && filteredSuggestions.length > 0 && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="absolute top-full left-0 right-0 mt-2 bg-white border border-amber-100 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden"
-                            >
-                                {filteredSuggestions.map((suggestion, i) => (
-                                    <button
-                                        key={i}
-                                        type="button"
-                                        onClick={() => {
-                                            if (typeof suggestion === 'object') {
-                                                if (suggestion.isNavigation) {
-                                                    router.push(suggestion.value);
-                                                } else {
-                                                    setSearchQuery(suggestion.value);
-                                                }
-                                            } else {
-                                                setSearchQuery(suggestion);
-                                            }
-                                            setIsSearchFocused(false);
-                                            
-                                            // Scroll to content if not navigating
-                                            if (typeof suggestion === 'string' || !suggestion.isNavigation) {
-                                                setTimeout(() => {
-                                                    if (mainScrollRef.current) {
-                                                        const contentElement = document.getElementById('law-content-section') || document.getElementById('semantic-result-area');
-                                                        if (contentElement) {
-                                                            const top = contentElement.getBoundingClientRect().top + mainScrollRef.current.scrollTop - 100;
-                                                            mainScrollRef.current.scrollTo({ top, behavior: 'smooth' });
-                                                        } else {
-                                                            mainScrollRef.current.scrollTo({ top: 400, behavior: 'smooth' });
-                                                        }
-                                                    }
-                                                }, 100);
-                                            }
-                                        }}
-                                        className="w-full text-left px-4 py-3 hover:bg-amber-50 rounded-xl transition-colors flex items-center gap-3 group/item"
-                                    >
-                                        <Sparkles className="w-3.5 h-3.5 text-amber-200 group-hover/item:text-amber-500 transition-colors" />
-                                        <span className="text-xs sm:text-sm font-medium text-slate-600 group-hover/item:text-amber-950">
-                                            {typeof suggestion === 'object' ? suggestion.display : suggestion}
-                                        </span>
-                                    </button>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
             </form>
             <div className="flex items-center gap-4 ml-8">
@@ -2256,22 +2172,67 @@ export function LovPortalViewer() {
                         
 
                         <div className="pt-8 md:pt-16">
-                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-                                <div className="space-y-4">
-                                    <h2 className="text-4xl font-bold text-amber-950 serif tracking-tight">
-                                        {searchQuery.trim() ? 'Søgeresultater' : 'Komplet Lovsamling'}
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 px-4">
+                                <div className="space-y-6">
+                                    <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-amber-950 text-amber-400 rounded-full text-[9px] font-black uppercase tracking-[0.3em] shadow-xl shadow-amber-950/20">
+                                        <ScaleIcon className="w-3.5 h-3.5" /> Det Juridiske Fakultet
+                                    </div>
+                                    <h2 className="text-5xl md:text-7xl font-black text-amber-950 serif-premium tracking-tight leading-[0.9]">
+                                        {searchQuery.trim() ? 'Søgeresultater' : 'Lovportalens'} <br/>
+                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">Arkiv</span>
                                     </h2>
-                                    <div className="h-1.5 w-24 bg-amber-400 rounded-full"></div>
-                                    <p className="text-slate-500 font-medium italic">Navigér i de fulde retsakter og kapitler på tværs af social- og forvaltningsret.</p>
+                                    <p className="text-xl text-slate-400 font-medium italic max-w-2xl leading-relaxed">
+                                        Navigér i de fulde retsakter og kapitler på tværs af både velfærdsloven og forvaltningsret.
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-4 bg-amber-50 px-6 py-4 rounded-3xl border border-amber-100">
-                                    <div className="p-3 bg-amber-950 text-amber-400 rounded-2xl shadow-xl"><Library className="w-6 h-6" /></div>
+                                <div className="hidden lg:flex items-center gap-6 bg-white p-8 rounded-[3.5rem] border border-amber-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] transition-all group/stat">
+                                    <div className="p-4 bg-amber-50 text-amber-600 rounded-3xl group-hover/stat:bg-amber-950 group-hover/stat:text-amber-400 transition-all duration-700 shadow-inner group-hover/stat:rotate-6">
+                                        <Library className="w-8 h-8" />
+                                    </div>
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Alle tilgængelige</p>
-                                        <p className="text-xl font-bold text-amber-950 serif">{(lawsConfigs || []).length} Retsakter</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Bibliotek</p>
+                                        <p className="text-3xl font-black text-amber-950 serif-premium">{(lawsConfigs || []).length} Love</p>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* ZEN JOURNEY: SITUATION GUIDES */}
+                            <section className="space-y-10">
+                                <div className="flex items-center gap-6 px-4">
+                                    <div className="w-3 h-3 bg-orange-500 rounded-full shadow-lg shadow-orange-500/20"></div>
+                                    <h3 className="text-[13px] font-black uppercase tracking-[0.4em] text-amber-950/40 whitespace-nowrap">Situation-baserede guides</h3>
+                                    <div className="h-px w-full bg-gradient-to-r from-amber-100 to-transparent" />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-2">
+                                    {SITUATIONS.slice(0, 4).map((s, i) => (
+                                        <motion.div 
+                                            key={s.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: i * 0.1 }}
+                                            onClick={() => setActiveSituationId(s.id)}
+                                            className="group bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm hover:shadow-2xl hover:border-amber-950 cursor-pointer transition-all duration-700 relative overflow-hidden active:scale-95"
+                                        >
+                                            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-150 transition-transform duration-1000">{s.icon}</div>
+                                            <div className={`w-12 h-12 rounded-2xl ${s.color} flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 transition-transform`}>
+                                                {React.cloneElement(s.icon as React.ReactElement, { className: "w-6 h-6" })}
+                                            </div>
+                                            <h4 className="text-xl font-black text-amber-950 serif-premium mb-2">{s.title}</h4>
+                                            <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic pr-4">{s.description}</p>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {activeSituationId && (
+                                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                                    <div className="absolute inset-0 bg-amber-950/40 backdrop-blur-md" onClick={() => setActiveSituationId(null)}></div>
+                                    <div className="relative bg-[#FDFCF8] w-full max-w-4xl rounded-[4rem] shadow-[0_50px_100px_rgba(0,0,0,0.3)] overflow-hidden p-10 md:p-20 border border-white/20">
+                                        <button onClick={() => setActiveSituationId(null)} className="absolute top-10 right-10 p-4 rounded-full hover:bg-amber-50 text-slate-300 hover:text-amber-950 transition-all"><X className="w-8 h-8" /></button>
+                                        <DecisionTreeFlow situation={SITUATIONS.find(s => s.id === activeSituationId)} onCancel={() => setActiveSituationId(null)} />
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="space-y-24">
                                 {Object.entries(groupedLaws).map(([category, laws], groupIdx) => (
@@ -2340,7 +2301,7 @@ export function LovPortalViewer() {
                                             )}
                                         </div>
                                     )}
-                                    <h2 className={`font-bold text-slate-800 serif tracking-tight leading-tight ${isScrolled ? 'text-lg' : 'text-xl md:text-2xl'}`}>
+                                    <h2 className={`font-black text-slate-950 serif-premium tracking-tight leading-tight ink-flow ${isScrolled ? 'text-lg' : 'text-3xl md:text-5xl'}`}>
                                         {currentDocData?.titel}
                                     </h2>
                                     {!isScrolled && (

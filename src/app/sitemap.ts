@@ -29,7 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/legal-logic-board',
     '/quiz-creator',
     '/pensum',
-    '/fagligt-mycelium',
+    '/vive-indsigt',
     '/folketinget',
     '/reform-radar',
     '/seminar-architect',
@@ -37,6 +37,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/paedagog',
     '/proev-begrebsguiden',
     '/star-indsigt',
+    '/mine-gemte-artikler',
   ];
   
   const uniqueStaticRoutes = [...new Set(staticRoutes)];

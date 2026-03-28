@@ -15,7 +15,6 @@ export default function robots(): MetadataRoute.Robots {
         '/settings/',
         '/upgrade/',
         '/admin/second-opinions/',
-        '/min-logbog/',
         '/mine-byggeplaner/',
         '/mine-seminarer/',
         '/mine-semesterplaner/',
