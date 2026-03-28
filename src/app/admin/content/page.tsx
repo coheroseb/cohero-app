@@ -659,7 +659,8 @@ const CurriculumManager = () => {
                 // We'll use a server action that handles the extraction
                 const result = await processStudyRegulationAction({
                     pdfBase64: base64,
-                    institution: institution
+                    institution: institution,
+                    profession: profession
                 });
 
                 if (result) {
