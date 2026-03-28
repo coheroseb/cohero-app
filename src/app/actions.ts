@@ -456,7 +456,7 @@ export async function explainConceptAction(input: { concept: string }): Promise<
 export async function explainConceptWithAnalogyAction(input: any) { return callFirebaseFlow('explainConceptWithAnalogyFlow', input); }
 export async function getCaseConsequenceAction(input: any) { return callFirebaseFlow('getCaseConsequenceFlow', input); }
 
-export async function generateQuizAction(input: { topic: string, numQuestions: number, lawId?: string, contextText?: string }): Promise<Types.QuizGeneratorOutput> {
+export async function generateQuizAction(input: { topic: string, numQuestions: number, difficulty?: 'easy' | 'medium' | 'hard', lawId?: string, contextText?: string }): Promise<Types.QuizGeneratorOutput> {
     let lawContext = '';
     if (input.lawId) {
         // This helper fetches both the main law and all its associated guidelines
@@ -468,6 +468,7 @@ export async function generateQuizAction(input: { topic: string, numQuestions: n
     return callFirebaseFlow('generateQuizFlow', {
         topic: input.topic,
         numQuestions: input.numQuestions,
+        difficulty: input.difficulty || 'medium',
         lawContext: lawContext || undefined,
         contextText: input.contextText
     });

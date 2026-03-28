@@ -30,7 +30,7 @@ import { doc, getDoc, setDoc, DocumentData, serverTimestamp, updateDoc } from 'f
 import { sendStreakReminderEmailAction } from '@/app/actions';
 import { UserProfile } from '@/ai/flows/types';
 import { calculateStudyStarted } from '@/lib/education';
-import { Home, Compass, BookOpen, User as UserIcon, MessageSquare, QrCode, Sparkles, Presentation, Scale, Shield } from 'lucide-react';
+import { Home, Compass, BookOpen, User as UserIcon, MessageSquare, QrCode, Sparkles, Presentation, Scale, Shield, CalendarDays } from 'lucide-react';
 
 type GameType = 'theorist' | 'paragraph' | 'method';
 
@@ -88,9 +88,9 @@ const MobileTabNavigation = ({ userProfile }: { userProfile: any }) => {
 
     const mainTabs = [
         { label: 'Hjem', icon: Home, path: '/portal' },
-        { label: 'Slides', icon: Presentation, path: '/mine-seminarer' },
+        { label: 'Semester', icon: CalendarDays, path: '/mit-semester' },
         { label: 'Jura', icon: Scale, path: '/lov-portal' },
-        { label: 'Profil', icon: UserIcon, path: '/settings' },
+        { label: 'Grupper', icon: MessageSquare, path: '/rum/groups' },
     ];
 
     if (userProfile?.role === 'admin') {

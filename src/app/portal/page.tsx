@@ -27,8 +27,7 @@ import {
   FileText,
   Compass,
   GraduationCap,
-  History,
-  MessageSquare,
+    MessageSquare,
   Library,
   BookOpen,
   Scale,
@@ -54,7 +53,15 @@ import {
   HandHelping,
   CreditCard,
   Command,
-  Briefcase
+  Briefcase,
+  Database,
+  Network,
+  Play,
+  FolderOpen,
+  ScrollText,
+  Trophy,
+  History as HistoryIcon,
+  Quote
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -641,61 +648,58 @@ const PortalPageContent: React.FC = () => {
   const toolCategories = useMemo(() => {
     const categories = [
       {
-        title: "Praksis-Træning",
+        title: "Praksis & Myndighed",
         subtitle: "Værktøjer til din daglige myndighedsudøvelse",
-        icon: <Library className="w-6 h-6 text-slate-700" />,
+        icon: <Gavel className="w-6 h-6 text-slate-700" />,
         items: [
-
           { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
           { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse", limit: limits.caseAnalyser },
           { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
-          { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Marketplace" },
+          { title: "Second Opinion", desc: "Vurdering af klagegrundlag", icon: SearchCode, path: "/second-opinion", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Klage-Tjek", limit: limits.opinion, limitText: 'denne md.' },
+          { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Job" },
+        ]
+      },
+      {
+        title: "Vidensportalen",
+        subtitle: "Dyk ned i jura, forskning og data",
+        icon: <Scale className="w-6 h-6 text-rose-500" />,
+        items: [
+          { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
+          { title: "VIVE Indsigt", desc: "Dansk velfærdsforskning", icon: Building, path: "/vive-indsigt", color: "text-cyan-600 bg-cyan-50 border-cyan-100", badge: "Forskning" },
+          { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
+          { title: "Politisk Puls", desc: "Seneste nyt fra Folketinget", icon: Gavel, path: "/folketinget", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Live" },
           { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
         ]
       },
       {
-        title: "Akademisk Design",
-        subtitle: "Styrk den røde tråd i dine studier",
+        title: "Akademisk & Studieværktøjer",
+        subtitle: "Styrk den røde tråd i dit studie",
         icon: <GraduationCap className="w-6 h-6 text-indigo-500" />,
         items: [
           { title: "Eksamens-Arkitekten", desc: "Design din opgavestruktur", icon: Layout, path: "/exam-architect", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "AI-Draft", limit: limits.architect, limitText: 'denne md.' },
           { title: "Mundtlig Eksamenstræner", desc: "Gennemgang af dit oplæg", icon: Mic, path: "/mundtlig-eksamenstraener", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Træning", limit: limits.oralExam, limitText: 'i dag' },
-          { title: "Second Opinion", desc: "Vurdering af klagegrundlag", icon: SearchCode, path: "/second-opinion", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Klage-Tjek", limit: limits.opinion, limitText: 'denne md.' },
           { title: "Seminar-Arkitekten", desc: "Fra slides til videnskort", icon: FileSearch, path: "/seminar-architect", color: "text-violet-600 bg-violet-50 border-violet-100", badge: "Transform" },
+          { title: "Kilde-Generator", desc: "Perfekte kildehenvisninger", icon: Quote, path: "/kilde-generator", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Ref" },
+          { title: "Pensum", desc: "Oversigt over din litteratur", icon: BookMarked, path: "/pensum", color: "text-slate-600 bg-slate-50 border-slate-100", badge: "Bøger" },
+          { title: "Quiz-Creator", desc: "Test din viden med AI-quiz", icon: Play, path: "/quiz-creator", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Test" },
+          { title: "Mit Semester", desc: "Dybdegående semesteroverblik", icon: Layers, path: "/mit-semester", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Ny" },
           { title: "Semester-Planlægger", desc: "Intelligent planlægning", icon: CalendarDays, path: "/semester-planlaegger", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sync" }
         ]
       },
       {
-        title: "Omverdenen",
-        subtitle: "Hold dig opdateret på jura, politik og data",
-        icon: <Scale className="w-6 h-6 text-rose-500" />,
+        title: "Karriere & Netværk",
+        subtitle: "Forbered dig på arbejdslivet",
+        icon: <Compass className="w-6 h-6 text-amber-500" />,
         items: [
-          { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
-          { title: "Institutionssøgning", desc: "Søg i Danmarks institutionsregister", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
-          { title: "Politisk Puls", desc: "Monitorering af lovændringer", icon: Gavel, path: "/folketinget", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Live" },
-          { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
+          { title: "Institutionssøgning", desc: "Find din næste praktikplads", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
+          { title: "Praktik-Rating", desc: "Se andres erfaringer i praktik", icon: Star, path: "/praktik-rating", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Reviews" },
           { title: "Faglige Tendenser", desc: "Hvad rører sig på studiet?", icon: Compass, path: "/tendenser", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Insights" }
         ]
       }
     ];
 
-    if (userProfile?.isQualified) {
-        return [
-            {
-                title: "Juridiske Værktøjer",
-                subtitle: "Sparring og monitorering til din praksis",
-                icon: <Scale className="w-6 h-6 text-rose-500" />,
-                items: [
-                    { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
-                    { title: "Institutionssøgning", desc: "Søg i Danmarks institutionsregister", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
-                    { title: "Politisk Puls", desc: "Monitorering af lovændringer", icon: Gavel, path: "/folketinget", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Live" },
-                    { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
-                ]
-            }
-        ];
-    }
     return categories;
-  }, [userProfile?.isQualified, limits]);
+  }, [limits]);
 
   const handleTrendClick = (tag: string) => {
     if (isConceptLimitReached) return;
@@ -963,25 +967,6 @@ const PortalPageContent: React.FC = () => {
           {/* Automatic Semester Insight - Identifying based on uploaded Curriculums */}
           {!userProfile?.isQualified && (
             <div className="space-y-12">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <BriefingReport 
-                  title="Politiske Efterretninger" 
-                  icon={Gavel} 
-                  isLoading={newsLoading} 
-                  news={politicalNews}
-                  link="https://www.ft.dk/da/dokumenter/dokumentlister/lovforslag"
-                  color="text-rose-500"
-                />
-                <BriefingReport 
-                  title="Social- & Boligministeriet" 
-                  icon={ShieldCheck} 
-                  isLoading={newsLoading} 
-                  news={ministryNews}
-                  link="https://sm.dk/nyheder"
-                  color="text-emerald-600"
-                />
-              </div>
-
               <CareerTransitionView semester={userProfile?.semester || ''} />
 
               <SemesterFocusView 
@@ -1183,7 +1168,7 @@ const PortalPageContent: React.FC = () => {
             <div className="flex items-center justify-between mb-8">
                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Seneste Sagsanalyser</h3>
                <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
-                 <History className="w-4 h-4 text-amber-500" />
+                 <HistoryIcon className="w-4 h-4 text-amber-500" />
                </div>
             </div>
             

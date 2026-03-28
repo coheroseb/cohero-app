@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Gavel, Plus, Copy, Trash2, Link as LinkIcon, Loader2, BookCopy, AlertTriangle, Book, Check } from 'lucide-react';
+import { Gavel, Plus, Copy, Trash2, Link as LinkIcon, Loader2, BookCopy, AlertTriangle, Book, Check, MessageSquare } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,13 +13,23 @@ import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
 import { writeBatch, doc, serverTimestamp, increment, collection } from 'firebase/firestore';
 
-type SourceType = 'lov' | 'bekendtgørelse' | 'vejledning' | 'principmeddelelse' | 'databeskyttelsesforordning' | 'bog' | 'kapitel-i-bog';
+type SourceType = 'lov' | 'bekendtgørelse' | 'vejledning' | 'principmeddelelse' | 'databeskyttelsesforordning' | 'bog' | 'kapitel-i-bog' | 'hjemmeside' | 'rapport' | 'tidsskrift' | 'video-podcast';
+
+interface SourceEntry {
+    id: string;
+    type: SourceType;
+    formatted: string;
+    inText: string;
+    sortKey: string;
+    createdAt: number;
+}
 
 interface SourceData {
     // Common fields
     titel: string;
     nummer?: string;
     dato?: string;
+    url?: string;
     // Amendment fields
     senestÆndretNummer?: string;
     senestÆndretDato?: string;
@@ -26,33 +37,32 @@ interface SourceData {
     lovbekendtgørelseNummer?: string;
     lovbekendtgørelseDato?: string;
     forkortelse?: string;
-    // Book fields
+    // Academic fields
     author?: string;
     year?: string;
     publisher?: string;
-    // Chapter in book fields
+    organization?: string;
+    // Chapter / Journal fields
     chapterTitle?: string;
     bookEditor?: string;
     pageRange?: string;
+    journalTitle?: string;
+    volume?: string;
+    issue?: string;
+    doi?: string;
 }
 
 const formatDateForCitation = (dateString?: string): string => {
     if (!dateString) return '';
-    // Handles dd.mm.åååå, dd/mm/åååå, and dd.m.åå formats
     const parts = dateString.split(/[\.\/]/);
-    if (parts.length !== 3) return dateString; // Return original if format is unexpected
+    if (parts.length !== 3) return dateString;
     const [day, month, year] = parts;
     const monthNames = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
     const monthIndex = parseInt(month, 10) - 1;
-
     if (isNaN(monthIndex) || monthIndex < 0 || monthIndex > 11) return dateString;
-    
-    // Ensure year is 4 digits
     const fullYear = year.length === 2 ? `20${year}` : year;
-
     return `${parseInt(day, 10)}. ${monthNames[monthIndex]} ${fullYear}`;
 };
-
 
 const formatBibliographyAuthors = (authorsInput: string = ''): string => {
     if (!authorsInput) return '';
@@ -74,7 +84,6 @@ const formatInTextAuthors = (authorsInput: string = ''): string => {
 const formatEditorNamesForCitation = (namesInput: string = ''): string => {
     if (!namesInput) return '';
     const names = namesInput.split(';').map(n => n.trim()).filter(Boolean);
-    
     const reorderedNames = names.map(name => {
         const parts = name.split(',').map(p => p.trim());
         if (parts.length === 2) {
@@ -83,26 +92,38 @@ const formatEditorNamesForCitation = (namesInput: string = ''): string => {
         }
         return name;
     });
-
     if (reorderedNames.length === 0) return '';
     if (reorderedNames.length === 1) return reorderedNames[0];
-    
     const last = reorderedNames.pop();
     return `${reorderedNames.join(', ')} & ${last}`;
 };
 
-
-// Main component
 function KildeGeneratorPageContent() {
     const { user, userProfile } = useApp();
     const firestore = useFirestore();
     const [sourceType, setSourceType] = useState<SourceType>('lov');
     const [currentSource, setCurrentSource] = useState<Partial<SourceData>>({titel: '', forkortelse: ''});
-    const [sourceList, setSourceList] = useState<string[]>([]);
+    const [sourceList, setSourceList] = useState<SourceEntry[]>([]);
     const [copiedField, setCopiedField] = useState<string | null>(null);
-    const [url, setUrl] = useState('');
+    const [urlInput, setUrlInput] = useState('');
     const [isFetchingUrl, setIsFetchingUrl] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
+
+    // Persist list to local storage
+    useEffect(() => {
+        const saved = localStorage.getItem('cohero-citation-list');
+        if (saved) {
+            try {
+                setSourceList(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to load source list", e);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('cohero-citation-list', JSON.stringify(sourceList));
+    }, [sourceList]);
 
     const copyToClipboard = (text: string, field: string) => {
         if(!text) return;
@@ -112,7 +133,12 @@ function KildeGeneratorPageContent() {
     };
 
     const formatSource = () => {
-        const { titel, nummer, dato, senestÆndretNummer, senestÆndretDato, lovbekendtgørelseNummer, lovbekendtgørelseDato, author, year, publisher, chapterTitle, bookEditor, pageRange } = currentSource;
+        const { 
+            titel, nummer, dato, senestÆndretNummer, senestÆndretDato, 
+            lovbekendtgørelseNummer, lovbekendtgørelseDato, author, 
+            year, publisher, chapterTitle, bookEditor, pageRange,
+            url, organization, journalTitle, volume, issue, doi
+        } = currentSource;
         
         let base = '';
         
@@ -132,19 +158,11 @@ function KildeGeneratorPageContent() {
                 break;
             case 'bekendtgørelse':
                 if (!titel || !nummer || !dato) return '';
-                base = `<em>${titel}</em>, jf. bkg. nr. ${nummer} af ${formatDateForCitation(dato)}`;
-                if (senestÆndretNummer && senestÆndretDato) {
-                     base += `, som senest ændret ved bkg. nr. ${senestÆndretNummer} af ${formatDateForCitation(senestÆndretDato)}`;
-                }
-                 base += '.';
+                base = `<em>${titel}</em>, jf. bkg. nr. ${nummer} af ${formatDateForCitation(dato)}.`;
                 break;
             case 'vejledning':
                 if (!titel || !nummer || !dato) return '';
-                base = `<em>${titel}</em>, jf. vejl. nr. ${nummer} af ${formatDateForCitation(dato)}`;
-                if (senestÆndretNummer && senestÆndretDato) {
-                    base += `, som senest ændret ved vejl. nr. ${senestÆndretNummer} af ${formatDateForCitation(senestÆndretDato)}`;
-                }
-                base += '.';
+                base = `<em>${titel}</em>, jf. vejl. nr. ${nummer} af ${formatDateForCitation(dato)}.`;
                 break;
             case 'principmeddelelse':
                 if (!titel) return '';
@@ -155,14 +173,27 @@ function KildeGeneratorPageContent() {
                 break;
             case 'bog':
                 if (!author || !year || !titel || !publisher) return '';
-                const formattedBookAuthors = formatBibliographyAuthors(author);
-                base = `${formattedBookAuthors}. (${year}). <em>${titel}</em>. ${publisher}.`;
+                base = `${formatBibliographyAuthors(author)}. (${year}). <em>${titel}</em>. ${publisher}.`;
                 break;
             case 'kapitel-i-bog':
                 if (!author || !year || !chapterTitle || !bookEditor || !titel || !pageRange || !publisher) return '';
-                const chapterAuthors = formatBibliographyAuthors(author);
-                const formattedEditors = formatEditorNamesForCitation(bookEditor);
-                base = `${chapterAuthors}. (${year}). ${chapterTitle}. I ${formattedEditors} (Red.), <em>${titel}</em> (s. ${pageRange}). ${publisher}.`;
+                base = `${formatBibliographyAuthors(author)}. (${year}). ${chapterTitle}. I ${formatEditorNamesForCitation(bookEditor)} (Red.), <em>${titel}</em> (s. ${pageRange}). ${publisher}.`;
+                break;
+            case 'hjemmeside':
+                if (!author || !year || !titel || !url) return '';
+                base = `${formatBibliographyAuthors(author)}. (${year}). <em>${titel}</em>. Hentet fra ${url}`;
+                break;
+            case 'rapport':
+                if (!author || !year || !titel || !organization) return '';
+                base = `${formatBibliographyAuthors(author)}. (${year}). <em>${titel}</em>. ${organization}.${url ? ` Hentet fra ${url}` : ''}`;
+                break;
+            case 'tidsskrift':
+                if (!author || !year || !titel || !journalTitle || !volume) return '';
+                base = `${formatBibliographyAuthors(author)}. (${year}). ${titel}. <em>${journalTitle}</em>, <em>${volume}</em>${issue ? `(${issue})` : ''}${pageRange ? `, ${pageRange}` : ''}.${doi ? ` https://doi.org/${doi}` : ''}`;
+                break;
+            case 'video-podcast':
+                if (!author || !year || !titel || !url) return '';
+                base = `${formatBibliographyAuthors(author)}. (${year}). <em>${titel}</em> [Video/Podcast]. Hentet fra ${url}`;
                 break;
         }
         return base;
@@ -178,18 +209,16 @@ function KildeGeneratorPageContent() {
             case 'vejledning':
                 return `(vejl. nr. ${nummer || 'XXXX'} af ${formatDateForCitation(dato)}, pkt. xx)`;
             case 'principmeddelelse':
-                if (!titel) return 'Ankestyrelsens principmeddelelse XX-XX';
-                // Remove potential surrounding text to just get the number if necessary, but here we assume 'titel' is the ID
-                return `Ankestyrelsens principmeddelelse ${titel}`;
+                return `Ankestyrelsens principmeddelelse ${titel || 'XX-XX'}`;
             case 'databeskyttelsesforordning':
                 return `(DBF, art. xx)`;
             case 'bog':
             case 'kapitel-i-bog':
-                {
-                    if (!author || !year) return `(Forfatter, Årstal)`;
-                    const inTextAuthors = formatInTextAuthors(author);
-                    return `(${inTextAuthors}, ${year})`;
-                }
+            case 'hjemmeside':
+            case 'rapport':
+            case 'tidsskrift':
+            case 'video-podcast':
+                return `(${formatInTextAuthors(author)}, ${year})`;
             default:
                 return '';
         }
@@ -197,29 +226,26 @@ function KildeGeneratorPageContent() {
 
     const handleAddSource = () => {
         const formatted = formatSource();
+        const inText = generateInTextCitation();
+        
         if (formatted) {
-            setSourceList(prev => [...prev, formatted]);
-            setCurrentSource({
-                titel: '',
-                nummer: '',
-                dato: '',
-                lovbekendtgørelseNummer: '',
-                lovbekendtgørelseDato: '',
-                senestÆndretNummer: '',
-                senestÆndretDato: '',
-                forkortelse: '',
-                author: '',
-                year: '',
-                publisher: '',
-                chapterTitle: '',
-                bookEditor: '',
-                pageRange: '',
-            });
+            const entry: SourceEntry = {
+                id: Math.random().toString(36).substr(2, 9),
+                type: sourceType,
+                formatted,
+                inText,
+                sortKey: (currentSource.author || currentSource.titel || '').toLowerCase().trim(),
+                createdAt: Date.now()
+            };
+
+            setSourceList(prev => [...prev, entry].sort((a, b) => a.sortKey.localeCompare(b.sortKey)));
+            setCurrentSource({ titel: '', forkortelse: '' });
+            setUrlInput('');
         }
     }
     
     const handleFetchFromUrl = async () => {
-        if (!url.trim() || !url.startsWith("https://www.retsinformation.dk")) {
+        if (!urlInput.trim() || !urlInput.startsWith("https://www.retsinformation.dk")) {
             setFetchError("Indtast venligst en gyldig URL fra Retsinformation.dk.");
             return;
         }
@@ -228,13 +254,13 @@ function KildeGeneratorPageContent() {
         setFetchError(null);
 
         try {
-            const result = await extractLawInfoAction({ url });
+            const result = await extractLawInfoAction({ url: urlInput });
             const { titel, nummer, dato, lovbekendtgørelseNummer, lovbekendtgørelseDato, sourceType: extractedType } = result.data;
             
             if (extractedType) {
                 setSourceType(extractedType);
             } else {
-                setSourceType('lov'); // Fallback to 'lov'
+                setSourceType('lov'); 
             }
 
             setCurrentSource({
@@ -243,8 +269,6 @@ function KildeGeneratorPageContent() {
                 dato,
                 lovbekendtgørelseNummer,
                 lovbekendtgørelseDato,
-                senestÆndretNummer: '',
-                senestÆndretDato: '',
             });
 
             if (user && firestore && result.usage) {
@@ -277,11 +301,8 @@ function KildeGeneratorPageContent() {
                     createdAt: serverTimestamp(),
                 };
                 batch.set(doc(activitiesCol), activityData);
-
-
                 await batch.commit();
             }
-
         } catch (err: any) {
             console.error(err);
             setFetchError("Kunne ikke hente eller fortolke oplysninger fra URL'en. Prøv at indtaste manuelt.");
@@ -296,11 +317,11 @@ function KildeGeneratorPageContent() {
         };
 
         const renderAmendmentFields = () => (
-            <div className="space-y-2 pt-4 mt-4 border-t border-dashed border-amber-200">
-                <p className="text-xs font-bold text-slate-400">Valgfri: Seneste ændring</p>
+            <div className="space-y-4 pt-6 mt-6 border-t border-dashed border-amber-100">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valgfri: Seneste ændring</p>
                 <div className="grid md:grid-cols-2 gap-4">
-                    <Input placeholder="Ændringslov nr." value={currentSource.senestÆndretNummer || ''} onChange={handleInputChange('senestÆndretNummer')} />
-                    <Input placeholder="Dato (dd.mm.åååå)" value={currentSource.senestÆndretDato || ''} onChange={handleInputChange('senestÆndretDato')} />
+                    <Input placeholder="Ændringslov nr." value={currentSource.senestÆndretNummer || ''} onChange={handleInputChange('senestÆndretNummer')} className="bg-white/50" />
+                    <Input placeholder="Dato (dd.mm.åååå)" value={currentSource.senestÆndretDato || ''} onChange={handleInputChange('senestÆndretDato')} className="bg-white/50" />
                 </div>
             </div>
         );
@@ -315,7 +336,7 @@ function KildeGeneratorPageContent() {
                             <Input placeholder="Lovbekendtgørelse nr." value={currentSource.lovbekendtgørelseNummer || ''} onChange={handleInputChange('lovbekendtgørelseNummer')} />
                             <Input placeholder="Dato (dd.mm.åååå)" value={currentSource.lovbekendtgørelseDato || ''} onChange={handleInputChange('lovbekendtgørelseDato')} />
                         </div>
-                         <p className="text-xs text-center text-slate-400">ELLER (hvis det er originalloven)</p>
+                         <p className="text-[10px] font-black uppercase tracking-widest text-center text-slate-400 py-2">ELLER (hvis det er originalloven)</p>
                         <div className="grid md:grid-cols-2 gap-4">
                             <Input placeholder="Lov nr." value={currentSource.nummer || ''} onChange={handleInputChange('nummer')} />
                             <Input placeholder="Dato (dd.mm.åååå)" value={currentSource.dato || ''} onChange={handleInputChange('dato')} />
@@ -325,42 +346,66 @@ function KildeGeneratorPageContent() {
                 );
             case 'bekendtgørelse':
             case 'vejledning':
-                 return (
+                  return (
                     <div className="space-y-4">
                         <Input placeholder="Fulde titel..." value={currentSource.titel || ''} onChange={handleInputChange('titel')} required />
                         <div className="grid md:grid-cols-2 gap-4">
                             <Input placeholder="Nr." value={currentSource.nummer || ''} onChange={handleInputChange('nummer')} required />
                             <Input placeholder="Dato (dd.mm.åååå)" value={currentSource.dato || ''} onChange={handleInputChange('dato')} required />
                         </div>
-                         {renderAmendmentFields()}
                     </div>
                 );
             case 'principmeddelelse':
                 return <Input placeholder="Principmeddelelse nr. (f.eks. 158-12)" value={currentSource.titel || ''} onChange={handleInputChange('titel')} required />;
             case 'databeskyttelsesforordning':
-                return <p className="text-center text-sm text-slate-500 p-4 bg-slate-50 rounded-lg">Denne kilde er standardiseret og kræver ikke yderligere input.</p>;
+                return <p className="text-center text-sm text-slate-500 p-6 bg-slate-50/50 rounded-2xl border border-slate-100 italic">Denne kilde er standardiseret og kræver ikke yderligere input.</p>;
             case 'bog':
+            case 'hjemmeside':
+            case 'rapport':
+            case 'video-podcast':
                 return (
                     <div className="space-y-4">
-                        <Input placeholder="Forfatter(e)" value={currentSource.author || ''} onChange={handleInputChange('author')} required />
-                        <p className="text-xs text-slate-400 -mt-2 pl-1">Efternavn, Initialer. Adskil flere med semikolon (;).</p>
-                        <Input placeholder="Udgivelsesår (f.eks. 2023)" value={currentSource.year || ''} onChange={handleInputChange('year')} required />
-                        <Input placeholder="Titel" value={currentSource.titel || ''} onChange={handleInputChange('titel')} required />
-                        <Input placeholder="Forlag" value={currentSource.publisher || ''} onChange={handleInputChange('publisher')} required />
+                        <Input placeholder="Forfatter(e) (Efternavn, Initialer; Efternavn, Initialer)" value={currentSource.author || ''} onChange={handleInputChange('author')} required />
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <Input placeholder="Årstal (f.eks. 2024)" value={currentSource.year || ''} onChange={handleInputChange('year')} required />
+                            <Input placeholder="Titel" value={currentSource.titel || ''} onChange={handleInputChange('titel')} required />
+                        </div>
+                        {sourceType === 'bog' && <Input placeholder="Forlag" value={currentSource.publisher || ''} onChange={handleInputChange('publisher')} required />}
+                        {sourceType === 'rapport' && <Input placeholder="Organisation / Udgiver" value={currentSource.organization || ''} onChange={handleInputChange('organization')} required />}
+                        {(sourceType === 'hjemmeside' || sourceType === 'rapport' || sourceType === 'video-podcast') && <Input placeholder="URL (https://...)" value={currentSource.url || ''} onChange={handleInputChange('url')} required />}
                     </div>
                 );
             case 'kapitel-i-bog':
-                 return (
+                  return (
                     <div className="space-y-4">
                         <Input placeholder="Kapitlets forfatter(e)" value={currentSource.author || ''} onChange={handleInputChange('author')} required />
-                        <p className="text-xs text-slate-400 -mt-2 pl-1">Efternavn, Initialer. Adskil flere med semikolon (;).</p>
-                        <Input placeholder="Udgivelsesår" value={currentSource.year || ''} onChange={handleInputChange('year')} required />
-                        <Input placeholder="Kapitlets titel" value={currentSource.chapterTitle || ''} onChange={handleInputChange('chapterTitle')} required />
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <Input placeholder="Udgivelsesår" value={currentSource.year || ''} onChange={handleInputChange('year')} required />
+                            <Input placeholder="Kapitlets titel" value={currentSource.chapterTitle || ''} onChange={handleInputChange('chapterTitle')} required />
+                        </div>
                         <Input placeholder="Bogens redaktør(er)" value={currentSource.bookEditor || ''} onChange={handleInputChange('bookEditor')} required />
-                        <p className="text-xs text-slate-400 -mt-2 pl-1">Efternavn, Initialer. Adskil flere med semikolon (;).</p>
                         <Input placeholder="Bogens titel" value={currentSource.titel || ''} onChange={handleInputChange('titel')} required />
-                        <Input placeholder="Sideinterval (f.eks. 47-71)" value={currentSource.pageRange || ''} onChange={handleInputChange('pageRange')} required />
-                        <Input placeholder="Forlag" value={currentSource.publisher || ''} onChange={handleInputChange('publisher')} required />
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <Input placeholder="Sideinterval (f.eks. 47-71)" value={currentSource.pageRange || ''} onChange={handleInputChange('pageRange')} required />
+                            <Input placeholder="Forlag" value={currentSource.publisher || ''} onChange={handleInputChange('publisher')} required />
+                        </div>
+                    </div>
+                );
+            case 'tidsskrift':
+                return (
+                    <div className="space-y-4">
+                        <Input placeholder="Forfatter(e)" value={currentSource.author || ''} onChange={handleInputChange('author')} required />
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <Input placeholder="Årstal" value={currentSource.year || ''} onChange={handleInputChange('year')} required />
+                            <Input placeholder="Artiklens titel" value={currentSource.titel || ''} onChange={handleInputChange('titel')} required />
+                        </div>
+                        <Input placeholder="Tidsskriftets navn" value={currentSource.journalTitle || ''} onChange={handleInputChange('journalTitle')} required />
+                        <div className="grid md:grid-cols-3 gap-4">
+                            <Input placeholder="Årgang (vol)" value={currentSource.volume || ''} onChange={handleInputChange('volume')} required />
+                            <Input placeholder="Nr. (issue)" value={currentSource.issue || ''} onChange={handleInputChange('issue')} />
+                            <Input placeholder="Sider" value={currentSource.pageRange || ''} onChange={handleInputChange('pageRange')} />
+                        </div>
+                        <Input placeholder="DOI (valgfri)" value={currentSource.doi || ''} onChange={handleInputChange('doi')} />
                     </div>
                 );
             default:
@@ -368,144 +413,229 @@ function KildeGeneratorPageContent() {
         }
     };
 
-
-    const formattedSourcePreview = formatSource();
-    const inTextCitationPreview = generateInTextCitation();
-    const isLegalSource = sourceType !== 'bog' && sourceType !== 'kapitel-i-bog';
+    const formattedPreview = formatSource();
+    const inTextPreview = generateInTextCitation();
 
     return (
-    <>
-        <div className="bg-[#FDFCF8] min-h-screen">
-        <header className="bg-white border-b border-amber-100/50">
-            <div className="max-w-7xl mx-auto py-8 px-4 md:px-8 flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-lime-50 text-lime-600 rounded-2xl flex items-center justify-center mb-4">
-                <Gavel className="w-8 h-8" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-amber-950 serif mb-3">
-                Kildegenerator
-            </h1>
-            <p className="text-base text-slate-500 max-w-2xl">
-                Opret korrekte kildehenvisninger til bøger og juridiske kilder efter APA 7-standarden.
-            </p>
+    <div className="bg-[#FDFCF8] min-h-screen">
+        <header className="bg-white border-b border-amber-100/50 sticky top-0 z-50 backdrop-blur-md">
+            <div className="max-w-7xl mx-auto py-6 px-4 md:px-8 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-lime-50 text-lime-600 rounded-2xl flex items-center justify-center">
+                        <BookCopy className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-black text-amber-950 uppercase tracking-tighter">Kildegenerator</h1>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">APA 7 & Juridisk Standard</p>
+                    </div>
+                </div>
+                {sourceList.length > 0 && (
+                    <div className="flex items-center gap-2">
+                         <Button variant="ghost" size="sm" onClick={() => { if(confirm('Slet hele kildelisten?')) setSourceList([]); }} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl font-bold text-xs">
+                            <Trash2 className="w-4 h-4 mr-2"/> Ryd alt
+                        </Button>
+                    </div>
+                )}
             </div>
         </header>
 
-        <main className="max-w-7xl mx-auto p-4 md:p-8 grid lg:grid-cols-2 gap-12 items-start">
-            <section>
-                <h2 className="text-2xl font-bold text-amber-950 serif mb-6">Tilføj kilde</h2>
-                <div className="bg-white p-8 rounded-[2rem] border border-amber-100/60 shadow-sm space-y-8">
-                    
-                    <div>
-                        <label className="block text-sm font-bold text-amber-950 mb-4">Udfyld automatisk fra Retsinformation.dk</label>
-                        <div className="flex gap-2">
-                            <div className="relative flex-grow">
-                                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <Input 
-                                    value={url}
-                                    onChange={(e) => { setUrl(e.target.value); setFetchError(null); }}
-                                    placeholder="Indsæt URL til lovtekst..."
-                                    className="pl-10"
-                                    disabled={isFetchingUrl}
-                                />
+        <main className="max-w-7xl mx-auto p-4 md:p-8 grid lg:grid-cols-12 gap-8 items-start pb-32">
+            <div className="lg:col-span-12 xl:col-span-7 space-y-8">
+                {/* AUTO FETCH CARD */}
+                <motion.section 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white p-8 rounded-[2.5rem] border border-amber-100/60 shadow-xl shadow-amber-900/5 space-y-6"
+                >
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-sky-50 rounded-xl">
+                            <LinkIcon className="w-5 h-5 text-sky-600" />
+                        </div>
+                        <h2 className="text-lg font-black text-amber-950 uppercase tracking-tighter">Hent fra Retsinformation</h2>
+                    </div>
+                    <div className="flex gap-2">
+                        <div className="relative flex-grow group">
+                            <Input 
+                                value={urlInput}
+                                onChange={(e) => { setUrlInput(e.target.value); setFetchError(null); }}
+                                placeholder="Indsæt URL til lovtekst eller bekendtgørelse..."
+                                className="pl-4 h-14 bg-slate-50/50 border-slate-100 rounded-2xl focus:bg-white transition-all text-sm"
+                                disabled={isFetchingUrl}
+                            />
+                        </div>
+                        <Button 
+                            onClick={handleFetchFromUrl} 
+                            disabled={isFetchingUrl || !urlInput} 
+                            className="h-14 px-8 bg-slate-900 text-white hover:bg-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-slate-900/20 active:scale-95 transition-all"
+                        >
+                            {isFetchingUrl ? <Loader2 className="w-5 h-5 animate-spin"/> : "Hent Data"}
+                        </Button>
+                    </div>
+                    {fetchError && <p className="text-xs font-bold text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100 animate-pulse">{fetchError}</p>}
+                </motion.section>
+
+                {/* MANUAL ENTRY CARD */}
+                <motion.section 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white p-8 rounded-[2.5rem] border border-amber-100/60 shadow-xl shadow-amber-900/5 space-y-8"
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-50 rounded-xl">
+                                <Plus className="w-5 h-5 text-amber-600" />
                             </div>
-                            <Button onClick={handleFetchFromUrl} disabled={isFetchingUrl} className="w-24">
-                                {isFetchingUrl ? <Loader2 className="w-4 h-4 animate-spin"/> : "Hent"}
-                            </Button>
-                        </div>
-                        {fetchError && <p className="text-xs text-red-500 mt-2">{fetchError}</p>}
-                        <p className="text-xs text-slate-400 mt-2">Denne funktion virker bedst med love og lovbekendtgørelser.</p>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                        <hr className="flex-grow border-amber-100/80"/>
-                        <span className="text-center text-slate-400 font-bold text-sm">ELLER</span>
-                        <hr className="flex-grow border-amber-100/80"/>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-amber-950 mb-4">Udfyld manuelt</label>
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                            {(['lov', 'bekendtgørelse', 'vejledning', 'principmeddelelse', 'bog', 'kapitel-i-bog'] as SourceType[]).map(type => (
-                                <Button key={type} variant={sourceType === type ? "secondary" : "outline"} onClick={() => { setSourceType(type); setCurrentSource({titel: '', forkortelse: ''}); }} className="capitalize justify-center h-12">
-                                    {(type === 'bog' || type === 'kapitel-i-bog') && <Book className="w-4 h-4 mr-2" />}
-                                    {type.replace(/-/g, ' ')}
-                                </Button>
-                            ))}
+                            <h2 className="text-lg font-black text-amber-950 uppercase tracking-tighter">Manuel Indtastning</h2>
                         </div>
                     </div>
 
-                    <div className="border-t border-amber-100/50 pt-8">
+                    <div className="flex flex-wrap gap-2">
+                        {(['lov', 'bekendtgørelse', 'vejledning', 'principmeddelelse', 'bog', 'kapitel-i-bog', 'hjemmeside', 'rapport', 'tidsskrift', 'video-podcast'] as SourceType[]).map(type => (
+                            <button 
+                                key={type} 
+                                onClick={() => { setSourceType(type); setCurrentSource({titel: '', forkortelse: ''}); }}
+                                className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                                    ${sourceType === type 
+                                        ? 'bg-amber-950 text-amber-400 border-amber-950 shadow-lg shadow-amber-900/20' 
+                                        : 'bg-white text-slate-500 border-slate-100 hover:border-amber-200 hover:text-amber-900 hover:bg-amber-50'
+                                    }`}
+                            >
+                                {type.replace(/-/g, ' ')}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="pt-4">
                         {renderFormFields()}
                     </div>
-                    
-                    {formattedSourcePreview && (
-                        <div className="border-t border-amber-100/50 pt-8 space-y-6">
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <h4 className="flex items-center gap-2 text-sm font-bold text-amber-950">
-                                        Til litteraturlisten
-                                    </h4>
-                                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(formattedSourcePreview.replace(/<em>/g, '_').replace(/<\/em>/g, '_'), 'full')}>
-                                        {copiedField === 'full' ? <Check className="w-4 h-4 text-green-600"/> : <Copy className="w-4 h-4"/>}
+                </motion.section>
+
+                {/* PREVIEW CARD */}
+                {formattedPreview && (
+                    <motion.section 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-amber-50/50 p-8 rounded-[2.5rem] border border-amber-100 space-y-8"
+                    >
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Litteraturliste</h4>
+                                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(formattedPreview.replace(/<em>/g, '').replace(/<\/em>/g, ''), 'full')} className="h-8 w-8 p-0 rounded-lg hover:bg-white">
+                                        {copiedField === 'full' ? <Check className="w-4 h-4 text-green-600"/> : <Copy className="w-4 h-4 text-amber-900/40"/>}
                                     </Button>
                                 </div>
-                                <div className="bg-slate-50/50 p-4 rounded-lg text-xs text-slate-700 font-mono" dangerouslySetInnerHTML={{ __html: formattedSourcePreview }}>
+                                <div className="bg-white p-5 rounded-2xl border border-amber-200/50 shadow-sm min-h-[80px] flex flex-col justify-center">
+                                    <p className="text-sm text-slate-800 leading-relaxed font-serif" dangerouslySetInnerHTML={{ __html: formattedPreview }} />
                                 </div>
                             </div>
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <h4 className="flex items-center gap-2 text-sm font-bold text-amber-950">
-                                        Henvisning i teksten
-                                    </h4>
-                                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(inTextCitationPreview, 'in-text')}>
-                                       {copiedField === 'in-text' ? <Check className="w-4 h-4 text-green-600"/> : <Copy className="w-4 h-4"/>}
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">I teksten</h4>
+                                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(inTextPreview, 'in-text')} className="h-8 w-8 p-0 rounded-lg hover:bg-white">
+                                        {copiedField === 'in-text' ? <Check className="w-4 h-4 text-green-600"/> : <Copy className="w-4 h-4 text-amber-900/40"/>}
                                     </Button>
                                 </div>
-                                <div className="bg-slate-50/50 p-4 rounded-lg text-xs text-slate-700 font-mono">
-                                    {inTextCitationPreview}
+                                <div className="bg-white p-5 rounded-2xl border border-amber-200/50 shadow-sm min-h-[80px] flex flex-col justify-center">
+                                    <p className="text-sm font-bold text-slate-900 font-mono tracking-tight">{inTextPreview}</p>
                                 </div>
-                                <p className="text-xs text-slate-400 mt-2 italic">
-                                  {isLegalSource 
-                                      ? (sourceType === 'principmeddelelse' ? "Henvisninger til principmeddelelser skrives direkte i teksten som vist ovenfor." : "Første gang en lov nævnes, skrives den fulde titel efterfulgt af forkortelsen i parentes, f.eks.: Lov om social service (SEL). Ved efterfølgende henvisninger bruges kun forkortelsen.")
-                                      : "Bøger og kapitler følger APA 7-standarden. Ved citat tilføjes sidetal, f.eks.: (Husted, 2013, s. 220)."
-                                  }
-                                </p>
                             </div>
                         </div>
-                    )}
-                    
-                    <div className="flex justify-end items-center pt-6 border-t border-amber-100/50">
-                    <Button onClick={handleAddSource} disabled={!formattedSourcePreview} className="group">
-                        <Plus className="w-4 h-4 mr-2" /> Tilføj til liste
-                    </Button>
-                    </div>
-                </div>
-            </section>
+                        <Button 
+                            onClick={handleAddSource} 
+                            className="w-full h-14 bg-amber-950 text-amber-400 hover:bg-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-amber-900/20 active:scale-95 transition-all"
+                        >
+                            <Plus className="w-4 h-4 mr-2" /> Gem kilde til listen
+                        </Button>
+                    </motion.section>
+                )}
+            </div>
             
-            <section className="lg:sticky lg:top-24">
-                <h2 className="text-2xl font-bold text-amber-950 serif mb-6">Din Kildeliste ({sourceList.length})</h2>
-                <div className="bg-white p-8 rounded-[2rem] border border-amber-100/60 shadow-sm space-y-6 min-h-[400px] flex flex-col">
-                    <Textarea
-                        readOnly
-                        value={sourceList.map(s => s.replace(/<em>/g, '_').replace(/<\/em>/g, '_')).join('\n\n')}
-                        className="flex-grow bg-slate-50/50 border-slate-100 text-sm leading-relaxed"
-                        rows={15}
-                        placeholder="Din genererede kildeliste vil blive vist her..."
-                    />
-                    <div className="flex justify-between items-center pt-6 border-t border-amber-100/50">
-                        <Button onClick={() => setSourceList([])} variant="ghost" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50">
-                            <Trash2 className="w-4 h-4 mr-2"/> Ryd liste
-                        </Button>
-                        <Button onClick={() => copyToClipboard(sourceList.map(s => s.replace(/<em>|<\/em>/g, '')).join('\n\n'), 'fulllist')} disabled={sourceList.length === 0}>
-                            <Copy className="w-4 h-4 mr-2"/> {copiedField === 'fulllist' ? 'Kopieret!' : 'Kopier liste'}
-                        </Button>
+            <div className="lg:col-span-12 xl:col-span-5">
+                <motion.section 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-white p-8 rounded-[2.5rem] border border-amber-100/60 shadow-xl shadow-amber-900/5 lg:sticky lg:top-28"
+                >
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-lime-50 rounded-xl">
+                                <BookCopy className="w-5 h-5 text-lime-600" />
+                            </div>
+                            <h2 className="text-lg font-black text-amber-950 uppercase tracking-tighter">Din Litteraturliste</h2>
+                        </div>
+                        <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            {sourceList.length} kilder
+                        </span>
                     </div>
-                </div>
-            </section>
+
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                        <AnimatePresence mode="popLayout">
+                            {sourceList.length === 0 ? (
+                                <div className="py-20 text-center space-y-4">
+                                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-200">
+                                        <Book className="w-8 h-8" />
+                                    </div>
+                                    <p className="text-sm text-slate-400 font-bold">Ingen gemte kilder endnu...</p>
+                                </div>
+                            ) : (
+                                sourceList.map((source, index) => (
+                                    <motion.div 
+                                        key={source.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        className="group relative bg-slate-50/50 p-5 rounded-2xl border border-slate-100 hover:bg-white hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all"
+                                    >
+                                        <div className="pr-10">
+                                            <p className="text-sm text-slate-800 leading-relaxed font-serif" dangerouslySetInnerHTML={{ __html: source.formatted }} />
+                                            <div className="mt-3 flex items-center gap-4">
+                                                <button 
+                                                    onClick={() => copyToClipboard(source.formatted.replace(/<em>|<\/em>/g, ''), `list-full-${source.id}`)}
+                                                    className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-600 transition-colors flex items-center gap-1.5"
+                                                >
+                                                    <Copy className="w-3 h-3" /> {copiedField === `list-full-${source.id}` ? 'Kopieret' : 'Fuld kilde'}
+                                                </button>
+                                                <button 
+                                                    onClick={() => copyToClipboard(source.inText, `list-text-${source.id}`)}
+                                                    className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-sky-600 transition-colors flex items-center gap-1.5"
+                                                >
+                                                    <MessageSquare className="w-3 h-3" /> {copiedField === `list-text-${source.id}` ? 'Kopieret' : 'I teksten'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => setSourceList(prev => prev.filter(s => s.id !== source.id))}
+                                            className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all active:scale-95"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </motion.div>
+                                ))
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {sourceList.length > 0 && (
+                        <div className="pt-8 mt-4 border-t border-amber-100 flex flex-col gap-3">
+                            <Button 
+                                onClick={() => {
+                                    const fullText = sourceList.map(s => s.formatted.replace(/<em>|<\/em>/g, '')).join('\n\n');
+                                    copyToClipboard(fullText, 'full_list_copy');
+                                }}
+                                className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold text-sm tracking-tight shadow-md hover:bg-black transition-all"
+                            >
+                                <Copy className="w-4 h-4 mr-2" /> {copiedField === 'full_list_copy' ? 'Kopieret alt!' : 'Kopier komplet liste'}
+                            </Button>
+                        </div>
+                    )}
+                </motion.section>
+            </div>
         </main>
-        </div>
-        
-    </>
+    </div>
     );
 }
 
@@ -523,7 +653,7 @@ const KildeGeneratorPage = () => {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-[#FDFCF8]">
                 <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="mt-4 text-slate-500 font-semibold">Indlæser...</p>
+                <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">Autentificerer...</p>
             </div>
         );
     }

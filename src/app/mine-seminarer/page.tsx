@@ -63,7 +63,7 @@ import { useDebounce } from 'use-debounce';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { SeminarAnalysis, QuizData } from '@/ai/flows/types';
-import { generateQuizAction, getUserUidByEmailAction, chatWithSeminarAction } from '@/app/actions';
+import { generateQuizAction, getUserUidByEmailAction, chatWithSeminarAction, saveQuizResultAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -86,27 +86,53 @@ interface SavedSeminar extends DocumentData {
 // ---------------------------------------------------------------------------
 // Quiz Component
 // ---------------------------------------------------------------------------
-const QuizView: React.FC<{ quizData: QuizData; onFinish: () => void }> = ({ quizData, onFinish }) => {
+const QuizView: React.FC<{ quizData: QuizData; onFinish: () => void; userId: string; topic: string }> = ({ quizData, onFinish, userId, topic }) => {
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [userResults, setUserResults] = useState<any[]>([]);
 
   const q = quizData.questions[idx];
   const progress = ((idx + 1) / quizData.questions.length) * 100;
 
   const handleAnswer = (i: number) => {
     if (answered) return;
+    const isCorrect = i === q.correctOptionIndex;
     setSelected(i);
     setAnswered(true);
-    if (i === q.correctOptionIndex) setScore(s => s + 1);
+    if (isCorrect) setScore(s => s + 1);
+
+    setUserResults(prev => [...prev, {
+      question: q.question,
+      options: q.options,
+      correctOptionIndex: q.correctOptionIndex,
+      explanation: q.explanation,
+      userAnswerIndex: i
+    }]);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (idx < quizData.questions.length - 1) {
       setIdx(i => i + 1); setSelected(null); setAnswered(false);
-    } else { setDone(true); }
+    } else { 
+      setDone(true); 
+      
+      // Save results
+      saveQuizResultAction({
+        userId,
+        result: {
+          id: crypto.randomUUID(),
+          lawId: '',
+          lawTitle: '',
+          topic: topic,
+          score,
+          totalQuestions: quizData.questions.length,
+          results: userResults
+        }
+      });
+    }
   };
 
   const getBtnClass = (i: number) => {
@@ -117,17 +143,17 @@ const QuizView: React.FC<{ quizData: QuizData; onFinish: () => void }> = ({ quiz
   };
 
   if (done) return (
-    <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
+    <div className="flex flex-col items-center justify-center py-20 px-8 text-center animate-in fade-in zoom-in-95 duration-500">
       <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-indigo-500/30">
         <Trophy className="w-12 h-12 text-white" />
       </div>
-      <h3 className="text-3xl font-black text-slate-900 mb-3">Quiz Fuldført!</h3>
+      <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tighter uppercase serif">Quiz Fuldført!</h3>
       <p className="text-slate-500 text-lg mb-10">
-        Du fik <span className="font-black text-indigo-600">{score}</span> ud af <span className="font-bold">{quizData.questions.length}</span> rigtige.
+        Din præstation er nu gemt i dit dashboard. Du fik <span className="font-black text-indigo-600 underline decoration-indigo-200 decoration-4">{score}</span> ud af <span className="font-bold">{quizData.questions.length}</span> rigtige.
       </p>
       <div className="flex flex-col gap-3 w-full max-w-xs">
-        <Button size="lg" onClick={onFinish} className="w-full bg-slate-900 hover:bg-slate-800 rounded-2xl h-14 font-black">Afslut</Button>
-        <Button variant="outline" className="rounded-2xl h-14 font-bold" onClick={() => { setIdx(0); setSelected(null); setAnswered(false); setScore(0); setDone(false); }}>Prøv igen</Button>
+        <Button size="lg" onClick={onFinish} className="w-full bg-slate-900 hover:bg-slate-800 rounded-2xl h-14 font-black shadow-xl shadow-slate-900/10">Afslut</Button>
+        <Button variant="outline" className="rounded-2xl h-14 font-bold border-slate-200" onClick={() => { setIdx(0); setSelected(null); setAnswered(false); setScore(0); setDone(false); setUserResults([]); }}>Prøv igen</Button>
       </div>
     </div>
   );
@@ -910,7 +936,7 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
       </header>
       <AnimatePresence mode="wait">
         {quizData ? (
-          <motion.div key="quiz" className="flex-1 overflow-y-auto bg-white"><QuizView quizData={quizData} onFinish={() => setQuizData(null)} /></motion.div>
+          <motion.div key="quiz" className="flex-1 overflow-y-auto bg-white"><QuizView userId={user.uid} topic={seminar.overallTitle} quizData={quizData} onFinish={() => setQuizData(null)} /></motion.div>
         ) : (
           <motion.div key="feed" className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="max-w-4xl mx-auto px-4 sm:px-8 py-10">

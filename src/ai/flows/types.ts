@@ -825,6 +825,7 @@ export const FagligtMyceliumOutputSchema = z.object({
 export const QuizGeneratorInputSchema = z.object({
   topic: z.string(),
   numQuestions: z.number(),
+  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   lawContext: z.string().optional(),
   contextText: z.string().optional(),
 });

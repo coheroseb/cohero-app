@@ -237,9 +237,9 @@ const Navbar: React.FC<NavbarProps> = ({
         title: "Hovedmenu",
         items: [
           { title: "Hjem", path: "/portal", icon: <Home className="w-5 h-5" /> },
+          { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
-          { title: "Profil", path: "/settings", icon: <Users className="w-5 h-5" /> },
         ]
       }
     ];
@@ -321,11 +321,11 @@ const Navbar: React.FC<NavbarProps> = ({
                   <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-sky-950 transition-colors">Jura</span>
                 </Link>
 
-                <Link href="/settings" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
-                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
-                    <Users className="w-3.5 h-3.5"/>
+                <Link href="/mit-semester" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
+                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-amber-100 group-hover:text-amber-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
+                    <CalendarDays className="w-3.5 h-3.5"/>
                   </div>
-                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-indigo-950 transition-colors">Profil</span>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-amber-950 transition-colors">Mit Semester</span>
                 </Link>
                 
                 {userProfile?.role === 'admin' && (

@@ -112,6 +112,7 @@ const LawQuizModal: React.FC<LawQuizModalProps> = ({ isOpen, onClose, lawId, law
           await saveQuizResultAction({
               userId: user.uid,
               result: {
+                  id: crypto.randomUUID(),
                   lawId,
                   lawTitle,
                   topic: finalTopic,
