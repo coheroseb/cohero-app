@@ -149,6 +149,106 @@ function BriefingReport({ title, icon: Icon, isLoading, news, link, color }: {
   );
 }
 
+const SemesterFocusView = ({ institution, semester, profession, studyStarted }: { institution: string; semester: string; profession: string; studyStarted?: string }) => {
+    const firestore = useFirestore();
+    const curriculumsQuery = useMemoFirebase(() => {
+        if (!firestore || !institution || !profession) return null;
+        return query(
+            collection(firestore, 'curriculums'), 
+            where('institution', '==', institution),
+            where('profession', '==', profession)
+        );
+    }, [firestore, institution, profession]);
+    
+    const { data: curriculums } = useCollection<any>(curriculumsQuery);
+    
+    const activeModule = useMemo(() => {
+        if (!curriculums || curriculums.length === 0 || !semester || !studyStarted) return null;
+        
+        // Find the curriculum where studyStarted falls within [validFrom, validTo)
+        const curr = curriculums.find((c: any) => {
+            const start = c.validFrom;
+            const end = c.validTo;
+            if (!start) return false;
+            if (studyStarted < start) return false;
+            if (end && studyStarted >= end) return false;
+            return true;
+        });
+
+        if (!curr) return null;
+        
+        // Extract semester number (e.g. from "4. semester" -> 4)
+        const semNum = semester.match(/\d+/)?.[0];
+        if (!semNum) return null;
+
+        // Find module that matches the semester number
+        return curr.modules.find((m: any) => 
+            m.id.includes(semNum) || 
+            (m.name && m.name.toLowerCase().includes(semNum))
+        );
+    }, [curriculums, semester, studyStarted]);
+
+    if (!activeModule) return null;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/40 backdrop-blur-xl border border-blue-100 rounded-[48px] p-8 sm:p-12 relative overflow-hidden group shadow-[0_8px_40px_rgba(59,130,246,0.03)]"
+        >
+            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+                <GraduationCap className="w-40 h-40 text-blue-600 -rotate-12" />
+            </div>
+            
+            <div className="relative z-10 flex flex-col md:flex-row gap-10 items-start">
+                <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 shrink-0">
+                    <Layers className="w-10 h-10" />
+                </div>
+                <div className="space-y-6 flex-1">
+                    <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                            <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border border-blue-100">
+                                Studieordnings-Indsigt
+                            </span>
+                            <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border border-slate-200">
+                                {institution}
+                            </span>
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-black text-slate-900 serif leading-tight">
+                            Dit fokus på <span className="text-blue-600">{semester}</span>
+                        </h2>
+                        <p className="text-slate-500 mt-2 font-bold text-lg">{activeModule.name}</p>
+                    </div>
+                    
+                    <div className="grid sm:grid-cols-2 gap-8 pt-4 border-t border-blue-50">
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                <Target className="w-3 h-3 text-blue-500" /> Kerne-læringsmål
+                            </h4>
+                            <div className="space-y-2.5">
+                                {activeModule.learningGoals?.slice(0, 3).map((goal: string, idx: number) => (
+                                    <div key={idx} className="flex gap-3 items-start group/item">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 group-hover/item:scale-150 transition-transform" />
+                                        <p className="text-[13px] font-medium text-slate-600 leading-snug">{goal}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                <Gavel className="w-3 h-3 text-blue-500" /> Eksamen & Metode
+                            </h4>
+                            <p className="text-[13px] font-medium text-slate-600 leading-relaxed bg-blue-50/30 p-4 rounded-2xl border border-blue-100/30 italic">
+                                "{activeModule.examForm || 'Prøveform ikke angivet i systemet endnu.'}"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 const PortalPageContent: React.FC = () => {
   const { user, userProfile, isUserLoading: isAppLoading, refetchUserProfile } = useApp();
   const router = useRouter();
@@ -799,6 +899,16 @@ const PortalPageContent: React.FC = () => {
         
         {/* LEFT COLUMN: THE WORKSPACE */}
         <div className="lg:col-span-8 space-y-16">
+          
+          {/* Automatic Semester Insight - Identifying based on uploaded Curriculums */}
+          {!userProfile?.isQualified && userProfile?.institution && userProfile?.semester && userProfile?.profession && (
+            <SemesterFocusView 
+              institution={userProfile.institution as string} 
+              semester={userProfile.semester as string} 
+              profession={userProfile.profession as string}
+              studyStarted={userProfile.studyStarted as string}
+            />
+          )}
           
           {/* Active Work (The Focus Card) */}
           {!userProfile?.isQualified && (

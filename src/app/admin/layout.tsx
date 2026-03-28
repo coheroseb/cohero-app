@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, BookOpen, Sparkles, Database, Shield, ChevronRight, Search, Mail, BarChart, Menu, X, MessageSquare, Bell, HandHelping } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, Sparkles, Database, Shield, ChevronRight, Search, Mail, BarChart, Menu, X, MessageSquare, Bell, HandHelping, GraduationCap } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,6 +13,7 @@ import { useFirestore } from '@/firebase';
 const navigation = [
   { id: 'overview', href: '/admin', label: 'Overblik', icon: LayoutDashboard },
   { id: 'users', href: '/admin/users', label: 'Brugerstyring', icon: Users },
+  { id: 'education', href: '/admin/education', label: 'Uddannelses-Indsigt', icon: GraduationCap },
   { id: 'surveys', href: '/admin/surveys', label: 'Bruger-Indsigt', icon: MessageSquare },
   { id: 'notifications', href: '/admin/notifications', label: 'Push Beskeder', icon: Bell },
   { id: 'content', href: '/admin/content', label: 'Indhold & AI', icon: BookOpen },

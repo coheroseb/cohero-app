@@ -241,7 +241,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const needsOnboarding = userProfile === null || (userProfile && !userProfile.isQualified && (!userProfile.institution || !userProfile.semester));
+    const needsOnboarding = userProfile === null || (userProfile && !userProfile.isQualified && (!userProfile.institution || !userProfile.semester || !userProfile.studyStarted));
 
     if (isStandaloneGroups) {
         if (needsOnboarding && !pathname?.includes('/onboarding')) {
@@ -264,7 +264,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (isUserLoading || userProfile === undefined || !user || isStandaloneGroups || pathname === '/') {
         return false;
     }
-    return userProfile === null || (!userProfile.isQualified && (!userProfile.institution || !userProfile.semester));
+    return userProfile === null || (!userProfile.isQualified && (!userProfile.institution || !userProfile.semester || !userProfile.studyStarted));
   }, [isUserLoading, userProfile, user, isStandaloneGroups, pathname]);
 
   const openAuthPage = (mode: 'login' | 'signup' = 'signup', priceId?: string) => {

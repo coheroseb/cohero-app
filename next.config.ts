@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-slot', '@radix-ui/react-toast', '@radix-ui/react-tooltip'],
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
   logging: {
     fetches: {

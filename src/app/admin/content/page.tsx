@@ -2,14 +2,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Gavel, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, FolderSync, MessageCircle, Play } from 'lucide-react';
+import { BookOpen, Gavel, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, FolderSync, MessageCircle, Play, ChevronDown } from 'lucide-react';
+import { INSTITUTIONS, PROFESSION_OPTIONS } from '@/lib/constants';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { listInternalDocsAction, processInternalDocAction, queueNotificationAction } from '@/app/actions';
+import { listInternalDocsAction, processInternalDocAction, queueNotificationAction, processStudyRegulationAction } from '@/app/actions';
 import { deleteReviewAction, getReviewsAction } from '@/app/praktik-rating/actions';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LawConfig {
   id: string;
@@ -621,9 +623,298 @@ const TikTokManager = () => {
     );
 };
 
+const CurriculumManager = () => {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [institution, setInstitution] = useState('');
+    const [profession, setProfession] = useState('');
+    const [validFromDate, setValidFromDate] = useState(new Date().toISOString().split('T')[0]);
+    const [validToDate, setValidToDate] = useState('');
+    const [curriculums, setCurriculums] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [processingStatus, setProcessingStatus] = useState('');
+    const [selectedCurriculum, setSelectedCurriculum] = useState<any>(null);
+
+    const curriculumsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'curriculums'), orderBy('updatedAt', 'desc')) : null), [firestore]);
+    const { data: curriculumData, isLoading: isCurriculumLoading } = useCollection<any>(curriculumsQuery);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !institution || !profession || !validFromDate) {
+            toast({ variant: 'destructive', title: "Angiv venligst institution, uddannelse og startdato" });
+            return;
+        }
+
+        setIsProcessing(true);
+        setProcessingStatus('Indlæser PDF-dokument...');
+        try {
+            // Read file as base64
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64 = (reader.result as string).split(',')[1];
+                
+                setProcessingStatus(`Gemini analyserer studieordning for ${profession}...`);
+                // We'll use a server action that handles the extraction
+                const result = await processStudyRegulationAction({
+                    pdfBase64: base64,
+                    institution: institution
+                });
+
+                if (result) {
+                    setProcessingStatus('Strukturerer moduler og læringsmål...');
+                    // Save to Firestore
+                    await addDoc(collection(firestore!, 'curriculums'), {
+                        institution: result.institution,
+                        profession: profession,
+                        title: result.title,
+                        validFrom: validFromDate,
+                        validTo: validToDate || null,
+                        updatedAt: serverTimestamp(),
+                        modules: result.modules
+                    });
+                    
+                    toast({ title: "Studieordning indlæst!", description: `${result.modules.length} moduler identificeret for ${profession}` });
+                    setProcessingStatus('');
+                    setIsProcessing(false);
+                } else {
+                    throw new Error("Kunne ikke behandle dokumentet.");
+                }
+            };
+            reader.onerror = () => {
+                throw new Error("Fejl ved læsning af filen.");
+            };
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: "Fejl ved behandling", description: err.message });
+            setProcessingStatus('');
+            setIsProcessing(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!firestore || !window.confirm('Slet denne studieordning?')) return;
+        await deleteDoc(doc(firestore, 'curriculums', id));
+        toast({ title: "Slettet" });
+    };
+
+    return (
+        <section className="bg-white p-10 rounded-[3.5rem] border border-amber-100 shadow-sm relative overflow-hidden">
+            {/* Processing Overlay */}
+            {isProcessing && (
+                <div className="absolute inset-0 z-50 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center p-10 text-center animate-in fade-in duration-500">
+                    <div className="w-24 h-24 bg-amber-50 rounded-[2rem] flex items-center justify-center mb-6 relative">
+                        <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+                        <div className="absolute inset-0 rounded-[2rem] border-4 border-amber-200 border-t-amber-500 animate-spin" style={{ animationDuration: '3s' }} />
+                    </div>
+                    <h4 className="text-xl font-bold text-amber-950 serif mb-2">Behandler studieordning</h4>
+                    <p className="text-sm font-medium text-slate-500 max-w-xs">{processingStatus}</p>
+                    <div className="w-48 h-1.5 bg-slate-100 rounded-full mt-6 overflow-hidden">
+                        <motion.div 
+                            className="h-full bg-amber-500"
+                            initial={{ width: "0%" }}
+                            animate={{ width: "100%" }}
+                            transition={{ duration: 15, ease: "linear" }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            <div className="flex items-center justify-between mb-10">
+                <div>
+                   <h3 className="text-xl font-bold text-amber-950 serif flex items-center gap-3"><Building className="w-5 h-5 text-indigo-500"/>Studieordnings-AI</h3>
+                   <p className="text-xs text-slate-400 mt-1">Upload PDF-studieordninger for at lade AI analysere semester-fokus.</p>
+                </div>
+            </div>
+
+            <div className="grid lg:grid-cols-5 gap-6 mb-10 items-end">
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Uddannelsested</label>
+                    <div className="relative group bg-slate-50 rounded-xl focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-200 transition-all border border-slate-200">
+                        <select
+                            value={institution}
+                            onChange={(e) => setInstitution(e.target.value)}
+                            className="w-full appearance-none pl-4 pr-10 py-3 bg-transparent border-none rounded-xl focus:outline-none text-sm font-bold text-slate-900 cursor-pointer"
+                        >
+                            <option value="" disabled className="text-slate-400">Vælg institution</option>
+                            {INSTITUTIONS.map(inst => (
+                                <option key={inst} value={inst}>{inst}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Uddannelse</label>
+                    <div className="relative group bg-slate-50 rounded-xl focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-200 transition-all border border-slate-200">
+                        <select
+                            value={profession}
+                            onChange={(e) => setProfession(e.target.value)}
+                            className="w-full appearance-none pl-4 pr-10 py-3 bg-transparent border-none rounded-xl focus:outline-none text-sm font-bold text-slate-900 cursor-pointer"
+                        >
+                            <option value="" disabled className="text-slate-400">Vælg uddannelse</option>
+                            {PROFESSION_OPTIONS.map(prof => (
+                                <option key={prof} value={prof}>{prof}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Gælder for optag fra</label>
+                    <Input 
+                        type="date"
+                        value={validFromDate} 
+                        onChange={e => setValidFromDate(e.target.value)}
+                        className="bg-slate-50 rounded-xl h-11"
+                    />
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Til og med optag (Valgfrit)</label>
+                    <Input 
+                        type="date"
+                        value={validToDate} 
+                        onChange={e => setValidToDate(e.target.value)}
+                        className="bg-slate-50 rounded-xl h-11"
+                    />
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Upload PDF</label>
+                    <div className="relative">
+                        <input 
+                            type="file" 
+                            accept=".pdf" 
+                            onChange={handleFileUpload}
+                            disabled={isProcessing || !institution || !profession}
+                            className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                        />
+                        <div className={`h-11 border-2 border-dashed rounded-xl flex items-center justify-center gap-3 transition-all ${isProcessing ? 'border-amber-200 bg-amber-50' : 'border-slate-200 hover:border-amber-400'}`}>
+                            {isProcessing ? (
+                                <><Loader2 className="w-4 h-4 animate-spin text-amber-500" /><span className="text-[11px] font-bold text-amber-600">Behandler...</span></>
+                            ) : (
+                                <><Plus className="w-4 h-4 text-slate-400" /><span className="text-[11px] font-bold text-slate-500">{ (institution && profession) ? 'Vælg fil' : 'Udfyld detaljer'}</span></>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                {isCurriculumLoading ? (
+                    <Loader2 className="animate-spin mx-auto text-amber-200" />
+                ) : curriculumData?.map((curr: any) => (
+                    <div 
+                        key={curr.id} 
+                        onClick={() => setSelectedCurriculum(curr)}
+                        className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] flex flex-col md:flex-row justify-between gap-6 group hover:border-amber-200 transition-all cursor-pointer"
+                    >
+                        <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md border border-emerald-100 flex items-center gap-1.5">
+                                    <Calendar className="w-3 h-3" />
+                                    {curr.validFrom} {curr.validTo ? `→ ${curr.validTo}` : '→ nu'}
+                                </span>
+                                <span className="text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md border border-indigo-100">{curr.profession}</span>
+                                <h4 className="font-bold text-slate-900 ml-1">{curr.institution}</h4>
+                            </div>
+                            <p className="text-xs font-medium text-slate-500">{curr.title}</p>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                                {curr.modules?.slice(0, 4).map((m: any, idx: number) => (
+                                    <span key={idx} className="text-[9px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{m.id}</span>
+                                ))}
+                                {curr.modules?.length > 4 && <span className="text-[9px] font-bold text-slate-400">+{curr.modules.length - 4} flere</span>}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(curr.id);
+                                }} 
+                                className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <AnimatePresence>
+                {selectedCurriculum && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedCurriculum(null)}
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+                        />
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            <div className="p-10 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-[10px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 px-2 py-1 rounded-md">{selectedCurriculum.profession}</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest bg-slate-200 text-slate-600 px-2 py-1 rounded-md">{selectedCurriculum.institution}</span>
+                                    </div>
+                                    <h3 className="text-2xl font-black text-slate-900 serif leading-none">{selectedCurriculum.title}</h3>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setSelectedCurriculum(null)} className="rounded-full">
+                                    <X className="w-5 h-5" />
+                                </Button>
+                            </div>
+                            
+                            <div className="p-10 overflow-y-auto space-y-6">
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    {selectedCurriculum.modules?.map((m: any, idx: number) => (
+                                        <div key={idx} className="p-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] hover:border-amber-200 transition-all flex flex-col gap-4">
+                                            <div className="flex items-start justify-between">
+                                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-xs font-black text-amber-600 shrink-0 border border-amber-50">
+                                                    {m.id || (idx + 1)}
+                                                </div>
+                                                {m.ects && <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-3 py-1 rounded-full">{m.ects} ECTS</span>}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-slate-900 leading-tight mb-2 text-lg">{m.name}</h4>
+                                                <p className="text-sm font-medium text-slate-500 leading-relaxed line-clamp-4">
+                                                    {m.about || m.description || 'Ingen yderligere beskrivelse.'}
+                                                </p>
+                                            </div>
+                                            <div className="mt-auto pt-4 flex gap-1.5 flex-wrap">
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Identificeret modul</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {(!selectedCurriculum.modules || selectedCurriculum.modules.length === 0) && (
+                                    <div className="text-center py-20 grayscale opacity-40">
+                                        <FileCode className="w-12 h-12 mx-auto mb-4" />
+                                        <p className="font-bold">Ingen moduler identificeret</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </section>
+    );
+};
+
 const AdminContentPage = () => {
     return (
       <div className="space-y-8 animate-ink">
+         <CurriculumManager />
          <LawManager />
          <KnowledgeSyncManager />
          <DilemmaManager />

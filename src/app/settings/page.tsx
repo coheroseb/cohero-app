@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { requestNotificationPermission } from '@/firebase/messaging';
 import { encryptData } from '@/lib/encryption';
 import { motion, AnimatePresence } from 'framer-motion';
+import { INSTITUTIONS, PROFESSION_OPTIONS } from '@/lib/constants';
 
 export default function SettingsPage() {
   const { user, userProfile, refetchUserProfile, handleLogout, handleResendVerification } = useApp();
@@ -115,6 +116,40 @@ export default function SettingsPage() {
 
     const capitalizedUsername = capitalize(username.trim());
 
+    // Automatically calculate studyStarted from semester
+    const calculateStudyStarted = (semStr: string) => {
+        const sem = parseInt(semStr.match(/\d+/)?.[0] || '1');
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); 
+        
+        let startMonth = 1; // Feb
+        let startYear = currentYear;
+        
+        if (currentMonth >= 8) { // Sept or later
+          startMonth = 8;
+        } else if (currentMonth >= 1) { // Feb or later
+          startMonth = 1;
+        } else {
+          // Jan belongs to previous year's Fall sem
+          startMonth = 8;
+          startYear = currentYear - 1;
+        }
+        
+        let currentStart = new Date(startYear, startMonth, 1);
+        for (let i = 1; i < sem; i++) {
+            if (currentStart.getMonth() === 8) {
+                currentStart.setMonth(1);
+            } else {
+                currentStart.setMonth(8);
+                currentStart.setFullYear(currentStart.getFullYear() - 1);
+            }
+        }
+        return currentStart.toISOString().split('T')[0];
+    };
+
+    const studyStarted = isQualified ? '' : calculateStudyStarted(semester);
+
     try {
       const batch = writeBatch(firestore);
       const userRef = doc(firestore, 'users', user.uid);
@@ -125,6 +160,7 @@ export default function SettingsPage() {
         semester: isQualified ? '' : semester,
         institution: isQualified ? '' : institution,
         profession: profession,
+        studyStarted: isQualified ? '' : studyStarted,
         isQualified,
       });
 
@@ -408,11 +444,9 @@ export default function SettingsPage() {
                                           <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                           <select id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer">
                                               <option value="" disabled>Vælg profession...</option>
-                                              <option value="Socialrådgiver">Socialrådgiver</option>
-                                              <option value="Pædagog">Pædagog</option>
-                                              <option value="Lærer">Lærer</option>
-                                              <option value="Sygeplejerske">Sygeplejerske</option>
-                                              <option value="Andet">Andet</option>
+                                              {PROFESSION_OPTIONS.map(prof => (
+                                                  <option key={prof} value={prof}>{prof}</option>
+                                              ))}
                                           </select>
                                           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                       </div>
@@ -420,6 +454,10 @@ export default function SettingsPage() {
 
                                   {!isQualified && (
                                      <>
+                                        <div className="space-y-2">
+
+                                        </div>
+
                                         <div className="space-y-2">
                                             <label htmlFor="semester" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
                                             <div className="relative">
@@ -434,14 +472,9 @@ export default function SettingsPage() {
                                                 <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                                 <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer">
                                                     <option value="" disabled>Vælg institution...</option>
-                                                    <option value="Københavns Professionshøjskole">Københavns Professionshøjskole</option>
-                                                    <option value="VIA University College">VIA University College</option>
-                                                    <option value="UC SYD">UC SYD</option>
-                                                    <option value="UCL">UCL Erhvervsakademi og Professionshøjskole</option>
-                                                    <option value="Absalon">Professionshøjskolen Absalon</option>
-                                                    <option value="UCN">UCN</option>
-                                                    <option value="Aalborg Universitet">Aalborg Universitet</option>
-                                                    <option value="Andet">Andet</option>
+                                                    {INSTITUTIONS.map(inst => (
+                                                        <option key={inst} value={inst}>{inst}</option>
+                                                    ))}
                                                 </select>
                                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                             </div>

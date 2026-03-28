@@ -52,7 +52,7 @@ import { getMythBusterResponse } from './flows/myth-buster-flow';
 import { oralExamAnalysis } from './flows/oral-exam-analysis-flow';
 import { organizeEvidenceIntoSeminarFlow } from './flows/organize-evidence-seminar';
 import { processExamRegulations } from './flows/process-exam-regulations-flow';
-import { processStudyRegulation } from './flows/process-study-regulation-flow';
+import { processStudyRegulationFlow } from './flows/process-study-regulation-flow';
 import { generateQuiz } from './flows/quiz-generator-flow';
 import { recommendTaskAssignee } from './flows/recommend-task-assignee-flow';
 import { recommendTechnique } from './flows/recommend-technique-flow';
@@ -185,8 +185,8 @@ export const allFlows: Record<string, any> = {
   'organizeEvidenceIntoSeminarFlow': organizeEvidenceIntoSeminarFlow,
   'processExamRegulationsFlow': processExamRegulations,
   'processExamRegulations': processExamRegulations,
-  'processStudyRegulationFlow': processStudyRegulation,
-  'processStudyRegulation': processStudyRegulation,
+  'processStudyRegulationFlow': processStudyRegulationFlow,
+  'processStudyRegulation': processStudyRegulationFlow,
   'generateQuizFlow': generateQuiz,
   'generateQuiz': generateQuiz,
   'recommendTaskAssigneeFlow': recommendTaskAssignee,

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { updateProfile } from 'firebase/auth';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { INSTITUTIONS, PROFESSION_OPTIONS } from '@/lib/constants';
 
 interface OnboardingModalProps {
   onComplete: () => void;
@@ -42,6 +43,40 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
     return s.charAt(0).toUpperCase() + s.slice(1);
   };
 
+  const calculateStudyStarted = (semStr: string) => {
+    const sem = parseInt(semStr.match(/\d+/)?.[0] || '1');
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); 
+    
+    let startMonth = 1; // Default to Feb
+    let startYear = currentYear;
+    
+    if (currentMonth >= 8) { // September or later
+      startMonth = 8;
+    } else if (currentMonth >= 1) { // February or later
+      startMonth = 1;
+    } else {
+      // January belongs to the previous year's Fall semester
+      startMonth = 8;
+      startYear = currentYear - 1;
+    }
+    
+    let currentStart = new Date(startYear, startMonth, 1);
+    
+    // Subtract 6-month intervals
+    for (let i = 1; i < sem; i++) {
+        if (currentStart.getMonth() === 8) {
+            currentStart.setMonth(1);
+        } else {
+            currentStart.setMonth(8);
+            currentStart.setFullYear(currentStart.getFullYear() - 1);
+        }
+    }
+    
+    return currentStart.toISOString().split('T')[0];
+  };
+
   const handleNextStep = () => {
     setError(null);
     if (step === 1 && !username.trim()) {
@@ -65,6 +100,10 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       setError('Vælg venligst din uddannelsesinstitution eller markér dig som færdiguddannet.');
       return;
     }
+    if (!isQualified && !semester.trim()) {
+        setError('Indtast venligst hvilket semester du er på.');
+        return;
+    }
     if (!user || !firestore) {
       setError('Bruger ikke fundet. Prøv at logge ind igen.');
       return;
@@ -74,6 +113,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
     setError(null);
     
     const capitalizedUsername = capitalize(username.trim());
+    const studyStarted = isQualified ? null : calculateStudyStarted(semester);
 
     try {
       const batch = writeBatch(firestore);
@@ -84,6 +124,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
         semester: isQualified ? '' : semester,
         institution: isQualified ? '' : institution,
         profession: profession,
+        studyStarted,
         isQualified,
         updatedAt: serverTimestamp(),
       }, { merge: true });
@@ -94,7 +135,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
           await updateProfile(user, { displayName: capitalizedUsername });
       }
       
-      onComplete(); // Refreshes app state
+      onComplete();
     } catch (err) {
       console.error(err);
       setError('Der skete en fejl. Prøv venligst igen.');
@@ -148,7 +189,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
         </div>
 
         <div className="p-8 sm:p-12 flex-grow flex flex-col">
-            {/* Header Area */}
             <div className="flex items-center justify-between mb-8">
                <button 
                   onClick={handlePrevStep} 
@@ -161,13 +201,12 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                     Trin {step} af {totalSteps}
                  </span>
                </div>
-               <div className="w-9" /> {/* Spacer */}
+               <div className="w-9" />
             </div>
 
             <div className="flex-grow flex flex-col justify-center relative">
               <AnimatePresence mode="wait" custom={1}>
                 
-                {/* STEP 1: Name */}
                 {step === 1 && (
                   <motion.div
                     key="step1"
@@ -205,7 +244,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                   </motion.div>
                 )}
 
-                {/* STEP 2: Profession */}
                 {step === 2 && (
                   <motion.div
                     key="step2"
@@ -227,19 +265,19 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                       </p>
                     </div>
                     <div className="w-full max-w-sm grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                       {['Socialrådgiver', 'Pædagog', 'Lærer', 'Sygeplejerske', 'Andet'].map((prof) => (
+                       {PROFESSION_OPTIONS.map((prof) => (
                            <button
-                              key={prof}
-                              onClick={() => { 
-                                setProfession(prof); 
-                                setError(null);
-                                setTimeout(() => setStep(3), 200); 
-                              }}
-                              className={`p-4 rounded-[1.25rem] border-2 font-bold text-sm transition-all text-left flex items-center justify-between
-                                ${profession === prof 
-                                  ? 'border-amber-950 bg-amber-50 text-amber-950 shadow-sm' 
-                                  : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50'
-                                }`}
+                               key={prof}
+                               onClick={() => { 
+                                 setProfession(prof); 
+                                 setError(null);
+                                 setTimeout(() => setStep(3), 200); 
+                               }}
+                               className={`p-4 rounded-[1.25rem] border-2 font-bold text-sm transition-all text-left flex items-center justify-between
+                                 ${profession === prof 
+                                   ? 'border-amber-950 bg-amber-50 text-amber-950 shadow-sm' 
+                                   : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50'
+                                 }`}
                            >
                               {prof}
                               {profession === prof && <CheckCircle2 className="w-4 h-4 text-amber-950" />}
@@ -249,7 +287,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                   </motion.div>
                 )}
 
-                {/* STEP 3: Education Details */}
                 {step === 3 && (
                   <motion.div
                     key="step3"
@@ -272,7 +309,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                     </div>
 
                     <div className="w-full max-w-sm space-y-4 text-left mt-2">
-                      {/* Færdiguddannet Toggle */}
                       <div 
                          onClick={() => setIsQualified(!isQualified)}
                          className={`p-4 rounded-[1.25rem] border-2 cursor-pointer transition-all flex items-center gap-4 select-none
@@ -318,14 +354,9 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                                     className="w-full appearance-none pl-12 pr-10 py-4 bg-transparent border-transparent rounded-[1.25rem] focus:outline-none text-sm h-14 font-bold text-slate-900 cursor-pointer"
                                 >
                                     <option value="" disabled className="text-slate-400">Vælg institution (Valgfrit)</option>
-                                    <option value="Københavns Professionshøjskole">Københ. Professionshøjskole</option>
-                                    <option value="VIA University College">VIA University College</option>
-                                    <option value="UC SYD">UC SYD</option>
-                                    <option value="UCL">UCL Erhvervsakademi</option>
-                                    <option value="Absalon">Professionshøjskolen Absalon</option>
-                                    <option value="UCN">UCN</option>
-                                    <option value="Aalborg Universitet">Aalborg Universitet</option>
-                                    <option value="Andet">Andet</option>
+                                    {INSTITUTIONS.map(inst => (
+                                        <option key={inst} value={inst}>{inst}</option>
+                                    ))}
                                 </select>
                                 <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
                              </div>
@@ -339,7 +370,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
               </AnimatePresence>
             </div>
 
-            {/* ERROR DISPLAY */}
             {error && (
                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
                  <p className="text-xs text-rose-600 font-bold bg-rose-50 px-4 py-3 rounded-xl border border-rose-100 flex items-center justify-center gap-2">
@@ -348,7 +378,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                </motion.div>
             )}
 
-            {/* FOOTER ACTIONS */}
             <div className="mt-10 pt-6 border-t border-slate-100 w-full flex items-center justify-center">
                 {step < totalSteps ? (
                    <button 
@@ -380,4 +409,3 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
 };
 
 export default OnboardingModal;
-

@@ -126,7 +126,8 @@ export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, asyn
 });
 
 import { checkFolketingetUpdates } from "./cron/check-ft-updates";
-export { checkFolketingetUpdates };
+import { incrementUserSemesters } from "./cron/semester-increment";
+export { checkFolketingetUpdates, incrementUserSemesters };
 
 import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";
 export { onAssistanceRequestUpdate, onAssistanceRequestCreate };
