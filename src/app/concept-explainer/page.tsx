@@ -574,7 +574,7 @@ function ConceptExplainerPageContent() {
                                         <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-700"><ScaleIcon className="w-5 h-5" /></div>
                                         <div>
                                             <h4 className="text-[9px] font-black uppercase tracking-widest text-emerald-900/40">Juridisk Forankring</h4>
-                                            <p className="text-[11px] font-black text-emerald-950">{explanation.legalAnchor}</p>
+                                            <div className="text-[11px] font-black text-emerald-950" dangerouslySetInnerHTML={{ __html: explanation.legalAnchor }} />
                                         </div>
                                     </div>
                                   )}
