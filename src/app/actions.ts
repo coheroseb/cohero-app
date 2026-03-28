@@ -794,15 +794,30 @@ export async function sendBulkEmailAction(input: { recipients: { email: string, 
     }
 }
 
-export async function processStudyRegulationAction(input: any) { return callFirebaseFlow('processStudyRegulationFlow', input); }
+export async function processStudyRegulationAction(input: any) { 
+    try {
+        return await callFirebaseFlow('processStudyRegulationFlow', input); 
+    } catch (e: any) {
+        console.error("Study Regulation Action Error:", e);
+        throw new Error(e.message || "Fejl ved behandling af studieordning.");
+    }
+}
 
 export async function listInternalDocsAction(): Promise<string[]> {
     const docsDir = path.join(process.cwd(), 'docs');
     try {
+        // Robust check for directory existence before trying to read it
+        try {
+            await fs.access(docsDir);
+        } catch (accessError) {
+            console.warn(`Internal docs directory not found at: ${docsDir}`);
+            return [];
+        }
+        
         const files = await fs.readdir(docsDir);
         return files.filter(f => f.endsWith('.txt') || f.endsWith('.pdf'));
     } catch (e) {
-        console.error("Failed to list docs:", e);
+        console.error("Critical failure listing docs:", e);
         return [];
     }
 }
