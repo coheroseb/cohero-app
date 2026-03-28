@@ -38,9 +38,9 @@ export default function ReviewMarquee() {
         <div className="relative w-full bg-slate-900 overflow-hidden py-4 border-y border-white/5">
             <div className="flex whitespace-nowrap">
                 <motion.div 
-                    animate={{ x: [0, -100 * reviews.length / 2 + '%'] }}
+                    animate={{ x: [0, '-50%'] }}
                     transition={{ 
-                        duration: 200, 
+                        duration: reviews.length * 12, 
                         repeat: Infinity, 
                         ease: "linear" 
                     }}
