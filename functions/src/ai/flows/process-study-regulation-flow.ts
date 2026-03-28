@@ -31,10 +31,11 @@ export const processStudyRegulationFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
+      model: 'googleai/gemini-2.5-flash',
       prompt: [
         { media: { url: `data:application/pdf;base64,${input.pdfBase64}`, contentType: 'application/pdf' } },
-        { text: `You are an expert academic coordinator for social work studies in Denmark. Your task is to analyze the provided PDF of a "Studieordning" (Study Regulations) and extract a structured index of the modules and their learning goals.
+        {
+          text: `You are an expert academic coordinator for social work studies in Denmark. Your task is to analyze the provided PDF of a "Studieordning" (Study Regulations) and extract a structured index of the modules and their learning goals.
 
 Please identify:
 1. **title**: A descriptive title (e.g., "Studieordning for Socialrådgiveruddannelsen 2024").
@@ -48,7 +49,8 @@ Please identify:
    - 'learningGoals': Liste af læringsmål.
    - 'examForm': Beskrivelse af prøveform.
 
-Besvar på dansk. Fokusér på den gældende uddannelse for ${input.institution || 'institutionen'}.` }
+Besvar på dansk. Fokusér på den gældende uddannelse for ${input.institution || 'institutionen'}.`
+        }
 
 
 
@@ -66,7 +68,7 @@ Besvar på dansk. Fokusér på den gældende uddannelse for ${input.institution 
     });
 
     if (!output) throw new Error("AI failed to parse the study regulation.");
-    
+
     // Merge institution if provided manually
     if (input.institution && !output.institution) {
       output.institution = input.institution;
