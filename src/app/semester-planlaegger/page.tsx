@@ -170,6 +170,27 @@ function SemesterPlannerPageContent() {
     const [expandedWeeks, setExpandedWeeks] = useState<number[]>([]);
     const [error, setError] = useState<string | null>(null);
 
+    const isPremium = useMemo(() => {
+        if (!userProfile) return false;
+        if (userProfile.isQualified) return true;
+        return ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || '');
+    }, [userProfile]);
+
+    const isTrial = useMemo(() => {
+        if (!userProfile?.createdAt) return true;
+        try {
+            const createdAt = userProfile.createdAt.toDate();
+            const now = new Date();
+            const diffTime = now.getTime() - createdAt.getTime();
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            return diffDays <= 7;
+        } catch (e) {
+            return true;
+        }
+    }, [userProfile]);
+
+    const hasAccess = isPremium || isTrial;
+
     // Deep link support
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -181,7 +202,7 @@ function SemesterPlannerPageContent() {
     }, []);
 
     const handleGeneratePlan = async () => {
-        if (!icalUrl || !user || !firestore) return;
+        if (!icalUrl || !user || !firestore || !hasAccess) return;
         setIsLoading(true);
         setError(null);
         setActivePlan(null);
@@ -282,6 +303,25 @@ function SemesterPlannerPageContent() {
             {/* LEFT COLUMN: Input & Info */}
             <div className="space-y-6">
               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
+                {!hasAccess && (
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+                        <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-amber-500/10 active:scale-95 transition-all">
+                            <Zap className="w-8 h-8 fill-current" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 mb-2">Kollega+ Påkrævet</h3>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-6">
+                            Import af semesterkalender er en premium funktion. <br />
+                            Prøv Kollega+ gratis i 7 dage.
+                        </p>
+                        <Link href="/upgrade" className="w-full">
+                            <Button className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-[10px] shadow-xl">
+                                Opgradér nu
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                        </Link>
+                    </div>
+                )}
+                
                 <div className="absolute top-0 right-0 p-8 opacity-5">
                     <CalendarDays className="w-24 h-24 text-indigo-600" />
                 </div>

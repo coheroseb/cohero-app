@@ -177,6 +177,7 @@ export interface UserProfile {
   firstFbclid?: string;
   conversionSource?: string;
   convertedAt?: any;
+  createdAt?: any;
 }
 
 export interface StudentCardVerification {
