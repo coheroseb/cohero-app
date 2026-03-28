@@ -114,6 +114,8 @@ function ConceptExplainerPageContent() {
   const [videoScript, setVideoScript] = useState<ConceptVideoScript | null>(null);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [hasCachedVideo, setHasCachedVideo] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const resultsRef = useRef<HTMLElement>(null);
 
@@ -266,6 +268,46 @@ function ConceptExplainerPageContent() {
         });
     }
   }, [explanation, searchQuery, firestore]);
+
+  // Check if saved
+  useEffect(() => {
+    if (explanation && user && firestore && searchQuery) {
+        const normalizedTerm = searchQuery.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
+        const savedRef = doc(firestore, 'users', user.uid, 'savedConcepts', normalizedTerm);
+        getDoc(savedRef).then(snap => setIsSaved(snap.exists()));
+    }
+  }, [explanation, user, firestore, searchQuery]);
+
+  const handleToggleSave = useCallback(async () => {
+    if (!explanation || !user || !firestore || isSaving) return;
+    setIsSaving(true);
+    const normalizedTerm = searchQuery.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
+    const savedRef = doc(firestore, 'users', user.uid, 'savedConcepts', normalizedTerm);
+
+    try {
+        if (isSaved) {
+            const batch = writeBatch(firestore);
+            batch.delete(savedRef);
+            await batch.commit();
+            setIsSaved(false);
+            toast({ title: "Fjernet", description: `"${searchQuery}" er fjernet fra dine gemte begreber.` });
+        } else {
+            const batch = writeBatch(firestore);
+            batch.set(savedRef, {
+                conceptName: searchQuery,
+                explanation,
+                savedAt: serverTimestamp()
+            });
+            await batch.commit();
+            setIsSaved(true);
+            toast({ title: "Gemt", description: `"${searchQuery}" er gemt i dit bibliotek.` });
+        }
+    } catch (err) {
+        toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke gemme begrebet." });
+    } finally {
+        setIsSaving(false);
+    }
+  }, [explanation, user, firestore, isSaving, isSaved, searchQuery, toast]);
 
 
   return (
@@ -770,8 +812,12 @@ function ConceptExplainerPageContent() {
                               <span className="hidden sm:block">Print Notat</span>
                           </button>
                           <div className="w-[1px] h-6 bg-slate-200" />
-                          <button className="p-3 bg-amber-50 text-amber-900 rounded-full hover:bg-amber-100 transition-all active:scale-90">
-                              <Bookmark className="w-5 h-5" />
+                          <button 
+                            onClick={handleToggleSave}
+                            disabled={isSaving}
+                            className={`p-3 rounded-full transition-all active:scale-90 ${isSaved ? 'bg-amber-950 text-amber-400' : 'bg-amber-50 text-amber-900 hover:bg-amber-100'}`}
+                          >
+                              {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />}
                           </button>
                           <button 
                             onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' })}
