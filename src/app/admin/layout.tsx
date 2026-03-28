@@ -194,7 +194,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </button>
             </div>
             
-             <nav className="flex-grow space-y-2">
+             <nav className="flex-grow space-y-2 overflow-y-auto -mx-4 px-4 py-4 overscroll-contain">
                 {navigation.map((item) => {
                    const isActive = activeSection === item.id;
                    return (

@@ -18,8 +18,15 @@ export const requestNotificationPermission = async (userId: string) => {
 
     const messaging = getMessaging(firebaseApp);
     
-    // Use the main service worker
-    const registration = await navigator.serviceWorker.register('/service-worker.js');
+    // 1. Trigger registration
+    await navigator.serviceWorker.register('/service-worker.js');
+    
+    // 2. Wait for it to be fully ready and active (most robust way)
+    const registration = await navigator.serviceWorker.ready;
+    
+    if (!registration || !registration.active) {
+        throw new Error("Service worker er ikke aktiv. Prøv at genindlæse appen.");
+    }
     
     const token = await getToken(messaging, { 
         vapidKey: 'BPzedfrAgPwtnL2Gri9xh0DdA_qQH500Gh8tOOuV5FYU0ZKZhIWcr19oVV8P9SYgedy7_eQ2rWilxzlzQ6PQ3t4',
