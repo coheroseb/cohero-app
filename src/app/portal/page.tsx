@@ -553,13 +553,13 @@ const PortalPageContent: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#FDFBF7] min-h-[100dvh] selection:bg-amber-200 selection:text-amber-950 font-sans pb-12">
+    <div className="bg-[#FDFBF7] min-h-[100dvh] w-full overflow-x-hidden selection:bg-amber-200 selection:text-amber-950 font-sans pb-12">
       
       {/* SMART COMMAND HEADER - Mobile First Premium Look */}
-      <header className="bg-white/90 backdrop-blur-2xl border-b border-slate-200/50 px-5 sm:px-8 py-10 md:py-20 relative overflow-visible z-30 transition-all rounded-b-[48px] sm:rounded-b-[72px] shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
-        {/* Dynamic mesh effect */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.08)_0,transparent_70%)] pointer-events-none -z-10 animate-pulse transition-all duration-1000"></div>
-        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle_at_top_left,rgba(79,70,229,0.03)_0,transparent_70%)] pointer-events-none -z-10 animate-pulse delay-700"></div>
+      <header className="bg-white/90 backdrop-blur-2xl border-b border-slate-200/50 px-5 sm:px-8 py-10 md:py-20 relative z-30 transition-all rounded-b-[48px] sm:rounded-b-[72px] shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
+        {/* Dynamic mesh effect - Constrained to prevent horizontal scroll */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.08)_0,transparent_70%)] pointer-events-none -z-10 animate-pulse transition-all duration-1000 overflow-hidden"></div>
+        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle_at_top_left,rgba(79,70,229,0.03)_0,transparent_70%)] pointer-events-none -z-10 animate-pulse delay-700 overflow-hidden"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-12 md:mb-20">

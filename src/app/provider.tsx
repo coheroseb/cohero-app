@@ -29,7 +29,7 @@ import {
 import { doc, getDoc, setDoc, DocumentData, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { sendStreakReminderEmailAction } from '@/app/actions';
 import { UserProfile } from '@/ai/flows/types';
-import { Home, Compass, BookOpen, User as UserIcon, MessageSquare, QrCode, Sparkles } from 'lucide-react';
+import { Home, Compass, BookOpen, User as UserIcon, MessageSquare, QrCode, Sparkles, Presentation, Scale, Shield } from 'lucide-react';
 
 type GameType = 'theorist' | 'paragraph' | 'method';
 
@@ -80,18 +80,21 @@ const UpgradeBanner = () => {
     );
 };
 
-const MobileTabNavigation = () => {
+const MobileTabNavigation = ({ userProfile }: { userProfile: any }) => {
     const pathname = usePathname();
     const router = useRouter();
     const isGroupsApp = pathname?.startsWith('/rum/groups');
 
     const mainTabs = [
         { label: 'Hjem', icon: Home, path: '/portal' },
-        { label: 'Værktøjer', icon: Compass, path: '/pensum' },
-        { label: 'Jura', icon: BookOpen, path: '/lov-portal' },
-        { label: 'Grupper', icon: MessageSquare, path: '/rum/groups' },
+        { label: 'Slides', icon: Presentation, path: '/mine-seminarer' },
+        { label: 'Jura', icon: Scale, path: '/lov-portal' },
         { label: 'Profil', icon: UserIcon, path: '/settings' },
     ];
+
+    if (userProfile?.role === 'admin') {
+        mainTabs.push({ label: 'Admin', icon: Shield, path: '/admin' });
+    }
 
     const groupsTabs = [
         { label: 'Mine grupper', icon: MessageSquare, path: '/rum/groups' },
@@ -370,7 +373,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         </main>
         {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && <Footer />}
         
-        {mounted && isNativeApp && user && <MobileTabNavigation />}
+        {mounted && isNativeApp && user && <MobileTabNavigation userProfile={userProfile} />}
 
         <Suspense fallback={null}>
             {/* AuthModal has been removed */}

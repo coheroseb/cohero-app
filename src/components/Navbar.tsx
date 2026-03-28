@@ -232,57 +232,18 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   const mobileCategories = useMemo(() => {
-    const categories = [
+    return [
       {
-        title: "Træning",
+        title: "Hovedmenu",
         items: [
-          { title: "Case-træner", path: "/case-trainer", icon: <BookCopy className="w-5 h-5" /> },
-          { title: "Journal-træner", path: "/journal-trainer", icon: <FileText className="w-5 h-5" /> },
-          { title: "Eksamens-Arkitekten", path: "/exam-architect", icon: <DraftingCompass className="w-5 h-5" /> },
-          { title: "Seminar-Arkitekten", path: "/seminar-architect", icon: <Presentation className="w-5 h-5" /> },
-          { title: "Mundtlig Eksamens-Træner", path: "/mundtlig-eksamenstraener", icon: <Mic className="w-5 h-5" /> },
-          { title: "Semester-Planlægger", path: "/semester-planlaegger", icon: <CalendarDays className="w-5 h-5" />, isPremium: true },
-          { title: "Memento", path: "/memento", icon: <Brain className="w-5 h-5" /> },
-        ]
-      },
-      {
-        title: "Viden",
-        items: [
-          { title: "Lovportal", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
-          { title: "Begrebsguide", path: "/concept-explainer", icon: <Wand2 className="w-5 h-5" /> },
-          { title: "Folketinget Direkte", path: "/folketinget", icon: <Building className="w-5 h-5" /> },
-          { title: "VIVE Indsigt", path: "/vive-indsigt", icon: <BookCopy className="w-5 h-5" /> },
-          { title: "Studieteknikker", path: "/teknikker", icon: <BrainCircuit className="w-5 h-5" /> },
-        ]
-      },
-      {
-        title: "Fællesskab",
-        items: [
-          { title: "Studiegrupper", path: "https://group.cohero.dk", icon: <UserPlus className="w-5 h-5" /> },
-        ]
-      },
-      {
-        title: "Mit Arkiv",
-        items: [
-          { title: "Min Logbog", path: "/min-logbog", icon: <BookMarked className="w-5 h-5" /> },
-          { title: "Mine Byggeplaner", path: "/mine-byggeplaner", icon: <DraftingCompass className="w-5 h-5" /> },
-          { title: "Gemte Paragraffer", path: "/mine-gemte-paragraffer", icon: <Gavel className="w-5 h-5" /> },
+          { title: "Hjem", path: "/portal", icon: <Home className="w-5 h-5" /> },
+          { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
+          { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
+          { title: "Profil", path: "/settings", icon: <Users className="w-5 h-5" /> },
         ]
       }
     ];
-
-    if (userProfile?.isQualified) {
-      // Filter Viden to only Lovportal and Folketinget
-      const viden = categories.find(c => c.title === "Viden");
-      if (viden) {
-        viden.items = viden.items.filter(i => ["Lovportal", "Folketinget Direkte"].includes(i.title));
-      }
-      // Hide Træning, Fællesskab, Arkiv
-      return categories.filter(c => c.title === "Viden");
-    }
-
-    return categories;
-  }, [userProfile?.isQualified]);
+  }, []);
 
   return (
     <>
@@ -337,61 +298,43 @@ const Navbar: React.FC<NavbarProps> = ({
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1"
               >
                 <Link href="/portal" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
                   <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-amber-100 group-hover:text-amber-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
                     <Home className="w-3.5 h-3.5"/>
                   </div>
-                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-amber-950 transition-colors">Portal</span>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-amber-950 transition-colors">Hjem</span>
+                </Link>
+
+                <Link href="/mine-seminarer" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
+                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-emerald-100 group-hover:text-emerald-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
+                    <Presentation className="w-3.5 h-3.5"/>
+                  </div>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-emerald-950 transition-colors">Slides</span>
+                </Link>
+
+                <Link href="/lov-portal" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
+                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-sky-100 group-hover:text-sky-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
+                    <Scale className="w-3.5 h-3.5"/>
+                  </div>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-sky-950 transition-colors">Jura</span>
+                </Link>
+
+                <Link href="/settings" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
+                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
+                    <Users className="w-3.5 h-3.5"/>
+                  </div>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-indigo-950 transition-colors">Profil</span>
                 </Link>
                 
-                <div className="w-[1px] h-4 bg-slate-200/50 mx-2"></div>
-                
-                {!userProfile?.isQualified && (
-                    <>
-                    <NavDropdown title="Træning" icon={<PlayCircle className="w-4 h-4 text-slate-400"/>}>
-                    <NavDropdownLink href="/case-trainer" icon={<BookCopy className="w-4 h-4"/>}>Case-træner</NavDropdownLink>
-                    <NavDropdownLink href="/journal-trainer" icon={<FileText className="w-4 h-4"/>}>Journal-træner</NavDropdownLink>
-                    <NavDropdownLink href="/exam-architect" icon={<DraftingCompass className="w-4 h-4" />}>Eksamens-Arkitekten</NavDropdownLink>
-                    <NavDropdownLink href="/seminar-architect" icon={<Presentation className="w-4 h-4" />}>Seminar-Arkitekten</NavDropdownLink>
-                    <NavDropdownLink href="/mundtlig-eksamenstraener" icon={<Mic className="w-4 h-4" />}>Mundtlig Træner</NavDropdownLink>
-                    <NavDropdownLink href="/semester-planlaegger" icon={<CalendarDays className="w-4 h-4" />} isPremium={true} userMembership={userProfile?.membership}>Semester-Planlægger</NavDropdownLink>
-                    <NavDropdownLink href="/memento" icon={<Brain className="w-4 h-4"/>}>Memento</NavDropdownLink>
-                    </NavDropdown>
-
-                    <NavDropdown title="Viden" icon={<BookOpen className="w-4 h-4 text-slate-400"/>}>
-                    <NavDropdownLink href="/lov-portal" icon={<Scale className="w-4 h-4"/>}>Lovportal</NavDropdownLink>
-                    <NavDropdownLink href="/concept-explainer" icon={<Wand2 className="w-4 h-4" />}>Begrebsguide</NavDropdownLink>
-                    <NavDropdownLink href="/folketinget" icon={<Building className="w-4 h-4" />}>Folketinget</NavDropdownLink>
-                    <NavDropdownLink href="/vive-indsigt" icon={<BookCopy className="w-4 h-4"/>}>VIVE Indsigt</NavDropdownLink>
-                    <NavDropdownLink href="/teknikker" icon={<BrainCircuit className="w-4 h-4"/>}>Studieteknikker</NavDropdownLink>
-                    </NavDropdown>
-
-                    <NavDropdown title="Fællesskab" icon={<Users className="w-4 h-4 text-slate-400"/>}>
-                    <NavDropdownLink href="https://group.cohero.dk" icon={<UserPlus className="w-4 h-4"/>}>Studiegrupper</NavDropdownLink>
-                    </NavDropdown>
-                    
-                    <NavDropdown title="Arkiv" icon={<Layers className="w-4 h-4 text-slate-400"/>}>
-                    <NavDropdownLink href="/min-logbog" icon={<BookMarked className="w-4 h-4"/>}>Min Logbog</NavDropdownLink>
-                    <NavDropdownLink href="/mine-byggeplaner" icon={<DraftingCompass className="w-4 h-4"/>}>Mine Byggeplaner</NavDropdownLink>
-                    <NavDropdownLink href="/mine-gemte-paragraffer" icon={<Gavel className="w-4 h-4"/>}>Gemte Paragraffer</NavDropdownLink>
-                    </NavDropdown>
-                    </>
-                )}
-
-                {userProfile?.isQualified && (
-                    <NavDropdown title="Viden" icon={<BookOpen className="w-4 h-4 text-slate-400"/>}>
-                        <NavDropdownLink href="/lov-portal" icon={<Scale className="w-4 h-4"/>}>Lovportal</NavDropdownLink>
-                        <NavDropdownLink href="/folketinget" icon={<Building className="w-4 h-4" />}>Folketinget</NavDropdownLink>
-                    </NavDropdown>
-                )}
-
                 {userProfile?.role === 'admin' && (
                   <>
                     <div className="w-[1px] h-4 bg-slate-200/50 mx-2"></div>
-                    <Link href="/admin" className="group flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-rose-50 transition-all">
-                      <Shield className="w-4 h-4 text-rose-500" />
+                    <Link href="/admin" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-rose-50' : 'hover:bg-rose-50/40'}`}>
+                      <div className="p-1.5 rounded-lg bg-rose-100 text-rose-600">
+                        <Shield className="w-3.5 h-3.5" />
+                      </div>
                       <span className="text-[13px] font-black uppercase tracking-widest text-rose-500">Admin</span>
                     </Link>
                   </>
@@ -556,11 +499,10 @@ const Navbar: React.FC<NavbarProps> = ({
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">{category.title}</p>
                         <ul className="grid grid-cols-1 gap-2.5">
                           {category.items.map((item, i) => {
-                            const hasAccess = !item.isPremium || (userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership));
                             return (
                               <li key={i}>
                                 <Link 
-                                  href={hasAccess ? item.path : '/upgrade'} 
+                                  href={item.path} 
                                   onClick={() => setIsMobileMenuOpen(false)}
                                   className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-[20px] active:scale-[0.98] active:bg-slate-50 transition-all shadow-sm"
                                 >
@@ -570,11 +512,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                     </div>
                                     <span className="font-bold text-slate-900 text-[15px]">{item.title}</span>
                                   </div>
-                                  {!hasAccess ? (
-                                    <span className="text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full shrink-0">Kollega+</span>
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
-                                  )}
+                                  <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
                                 </Link>
                               </li>
                             )
