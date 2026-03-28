@@ -35,6 +35,16 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "multimediaserver.gyldendal.dk",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "studybox.dk",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "lh3.googleusercontent.com",
         pathname: "/**",
       },

@@ -92,12 +92,15 @@ export default function PrivacyPolicyPage() {
                         </p>
                     </PolicyCard>
 
-                    <PolicyCard icon={BrainCircuit} title="2. AI & Data-anonymitet" delay={0.3}>
+                    <PolicyCard icon={BrainCircuit} title="2. AI & Optimering" delay={0.3}>
                         <p>
-                            Når du bruger vores AI-værktøjer (f.eks. Kollega eller Lov-portal), behandles dine input af AI-udbydere (som OpenAI/Google/Anthropic).
+                            Når du bruger vores AI-værktøjer (f.eks. Kollega eller Case-Analytikeren), behandles dine input af avancerede AI-modeller. 
                         </p>
-                        <p className="font-bold text-rose-600 text-sm italic">
-                            Alt input skal være anonymiseret. Vi træner ikke AI-modeller på dine personlige cases.
+                        <p>
+                            For at skabe en bedre brugeroplevelse og løbende forbedre platformens faglige præcision, forbeholder Cohéro sig retten til at bruge anonymiserede cases til intern træning og optimering af vores systemer.
+                        </p>
+                        <p className="font-bold text-amber-600 text-sm italic">
+                            Alt input skal fortsat være anonymiseret af brugeren før upload for at beskytte tredjeparter.
                         </p>
                     </PolicyCard>
 
@@ -184,7 +187,7 @@ export default function PrivacyPolicyPage() {
                 </Reveal>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sidst opdateret: 26. marts 2026</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sidst opdateret: 28. marts 2026</p>
                 </div>
             </main>
 

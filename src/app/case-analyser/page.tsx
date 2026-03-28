@@ -20,17 +20,20 @@ import {
   CheckCircle2,
   File,
   History,
-  Lock
+  Lock,
+  ArrowUpAZ,
+  BrainCircuit,
+  MessageSquare
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { analyzeCasePdfAction } from '@/app/actions';
+import { analyzeCasePdfAction, unifiedChatAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from 'framer-motion';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, addDoc, serverTimestamp, query, orderBy, limit, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, serverTimestamp, query, orderBy, limit, getDocs, deleteDoc } from 'firebase/firestore';
 import type { CaseAnalysis } from '@/ai/flows/types';
 
 // PDF extraction helper (reused from SeminarArchitect but simplified)
@@ -50,6 +53,144 @@ async function extractTextFromPdf(file: File): Promise<string> {
   return fullText;
 }
 
+// ---------------------------------------------------------------------------
+// Case Chat Overlay
+// ---------------------------------------------------------------------------
+const CaseChatOverlay: React.FC<{
+  title: string;
+  caseText: string;
+  onClose: () => void;
+  initialMessages?: { role: 'user' | 'assistant' | 'system'; content: string }[];
+  onSave?: (messages: { role: 'user' | 'assistant' | 'system'; content: string }[]) => void;
+}> = ({ title, caseText, onClose, initialMessages = [], onSave }) => {
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant' | 'system'; content: string }[]>(initialMessages);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (messages.length > 0 && onSave) {
+        onSave(messages);
+    }
+  }, [messages, onSave]);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, isLoading]);
+
+  const handleSend = async (text: string = input) => {
+    if (!text.trim() || isLoading) return;
+    const userMsg = { role: 'user' as const, content: text };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const resp = await unifiedChatAction({
+        message: text,
+        chatHistory: messages as any,
+        persona: 'case',
+        context: {
+          currentModule: 'CaseAnalyser',
+          // Special context for case persona to know about the text
+          currentPath: `Case: ${title}\n\n${caseText}`
+        }
+      });
+
+      if (resp?.data) {
+        setMessages(prev => [...prev, { role: 'assistant', content: resp.data.answer }]);
+      }
+    } catch (err: any) {
+       console.error(err);
+       setMessages(prev => [...prev, { role: 'assistant', content: "Beklager, der skete en fejl. Prøv igen senere." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[500] bg-slate-900/40 backdrop-blur-xl flex items-center justify-center p-4 md:p-12 overflow-hidden">
+      <div className="absolute top-8 right-8 z-10">
+        <button onClick={onClose} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all active:scale-95 shadow-xl border border-white/10">
+           <X className="w-6 h-6" />
+        </button>
+      </div>
+
+      <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full h-full max-w-2xl bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-amber-100 relative">
+        <div className="p-6 sm:p-8 border-b border-amber-50 flex items-center gap-4 shrink-0 bg-[#FDFCF8]/80 backdrop-blur-xl z-20">
+            <div className="w-12 h-12 bg-amber-950 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-900/20">
+                <BrainCircuit className="w-6 h-6" />
+            </div>
+            <div>
+                <h3 className="text-xl font-black text-amber-950 serif tracking-tight">Case Sparring</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Stil spørgsmål til casen: {title}</p>
+            </div>
+        </div>
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-6 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]">
+            {messages.length === 0 && (
+                <div className="py-20 text-center space-y-6">
+                    <div className="w-20 h-20 bg-amber-50 border border-amber-100 rounded-3xl flex items-center justify-center text-amber-200 mx-auto shadow-inner">
+                        <Sparkles className="w-10 h-10" />
+                    </div>
+                    <div className="max-w-xs mx-auto">
+                        <h4 className="text-lg font-black text-amber-950 serif mb-2">Hvad vil du vide?</h4>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed italic">Jeg har læst sagsakterne og kan hjælpe dig med at forstå detaljerne eller finde citater.</p>
+                    </div>
+                </div>
+            )}
+
+            {messages.map((m, i) => (
+                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] p-5 sm:p-6 rounded-[2rem] shadow-sm text-sm leading-relaxed ${
+                        m.role === 'user' 
+                          ? 'bg-amber-950 text-white rounded-tr-none' 
+                          : 'bg-[#FDFCF8] border border-amber-100 text-slate-700 rounded-tl-none font-medium'
+                    }`}>
+                        <div dangerouslySetInnerHTML={{ __html: m.content }} />
+                    </div>
+                </div>
+            ))}
+
+            {isLoading && (
+                <div className="flex justify-start">
+                    <div className="bg-[#FDFCF8] border border-amber-100 p-6 rounded-[2rem] rounded-tl-none shadow-sm flex items-center gap-3">
+                        <div className="flex gap-1">
+                            <div className="w-1.5 h-1.5 bg-amber-900 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                            <div className="w-1.5 h-1.5 bg-amber-900 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                            <div className="w-1.5 h-1.5 bg-amber-900 rounded-full animate-bounce" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tænker...</span>
+                    </div>
+                </div>
+            )}
+        </div>
+
+        <div className="p-6 sm:p-8 bg-white border-t border-amber-50">
+            <div className="relative group">
+                <input 
+                    type="text"
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSend()}
+                    placeholder="Stil et spørgsmål til sagen..."
+                    className="w-full h-14 pl-6 pr-16 bg-[#FDFCF8] border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:border-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-50/50 transition-all placeholder:text-slate-400"
+                />
+                <button 
+                    onClick={() => handleSend()}
+                    disabled={isLoading || !input.trim()}
+                    className="absolute right-2 top-2 h-10 w-10 bg-amber-950 text-white rounded-xl flex items-center justify-center transition-all hover:bg-black active:scale-90 disabled:opacity-50"
+                >
+                    <ArrowUpAZ className="w-5 h-5 rotate-180" />
+                </button>
+            </div>
+            <p className="text-[9px] text-center text-slate-300 font-bold uppercase tracking-widest mt-4">Sparring baseres på det uploade dokument.</p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const CaseAnalyserPage: React.FC = () => {
   const { user, userProfile, isUserLoading } = useApp();
   const firestore = useFirestore();
@@ -65,6 +206,10 @@ const CaseAnalyserPage: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [history, setHistory] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [openCaseId, setOpenCaseId] = useState<string | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [rawText, setRawText] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,9 +241,12 @@ const CaseAnalyserPage: React.FC = () => {
   };
 
   const loadAnalysis = (item: any) => {
+    setOpenCaseId(item.id);
     setAnalysis(item.analysis);
     setPdfUrl(item.pdfUrl);
     setFile({ name: item.fileName } as File);
+    setChatHistory(item.chatHistory || []);
+    setRawText(item.rawText || null);
   };
 
   const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
@@ -144,6 +292,9 @@ const CaseAnalyserPage: React.FC = () => {
     setIsAnalyzing(true);
     setAnalysis(null);
     setPdfUrl(null);
+    setOpenCaseId(null);
+    setChatHistory([]);
+    setRawText(null);
     setUploadProgress(10);
 
     try {
@@ -157,6 +308,7 @@ const CaseAnalyserPage: React.FC = () => {
 
       // 2. Extract text for AI
       const text = await extractTextFromPdf(pdfFile);
+      setRawText(text);
       setUploadProgress(70);
 
       // 3. Call AI action
@@ -165,12 +317,15 @@ const CaseAnalyserPage: React.FC = () => {
       setUploadProgress(100);
 
       // 4. Save to history
-      await addDoc(collection(firestore, 'users', user.uid, 'caseAnalyses'), {
+      const docRef = await addDoc(collection(firestore, 'users', user.uid, 'caseAnalyses'), {
         fileName: pdfFile.name,
         pdfUrl: url,
         analysis: response.data,
+        rawText: text,
+        chatHistory: [],
         createdAt: serverTimestamp(),
       });
+      setOpenCaseId(docRef.id);
 
       toast({ title: "Analyse færdig!", description: "Casen er nu gennemgået." });
     } catch (err) {
@@ -246,6 +401,19 @@ const CaseAnalyserPage: React.FC = () => {
             <div>
                 <h1 className="text-lg font-bold text-amber-950 serif">Case-Analytikeren</h1>
                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Din faglige AI-assistent</p>
+            </div>
+        </div>
+        <div className="px-6 pt-6 -mb-4">
+            <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 opacity-[0.03] group-hover:opacity-[0.1] transition-opacity">
+                    <Scale className="w-12 h-12" />
+                </div>
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-amber-900/60 mb-2 flex items-center gap-2">
+                    Peter Bundesens definition
+                </h4>
+                <p className="text-[11px] text-amber-950 font-medium leading-relaxed italic">
+                    "Det er en oplevet, uønsket social livssituation, som der er en udbredt opfattelse om, at politiske institutioner har et ansvar for at afhjælpe. Løsningsindsatsen kan udføres af de politiske institutioner alene eller i samarbejde med andre aktører"
+                </p>
             </div>
         </div>
 
@@ -405,10 +573,17 @@ const CaseAnalyserPage: React.FC = () => {
         </div>
 
         {analysis && (
-            <div className="p-6 border-t border-amber-50">
+            <div className="p-6 border-t border-amber-50 space-y-3">
+                <Button 
+                    onClick={() => setShowChat(true)}
+                    className="w-full h-14 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 text-[11px]"
+                >
+                    <MessageSquare className="w-4 h-4 mr-2" /> Start Case Sparring
+                </Button>
+
                 <Button 
                     variant="ghost" 
-                    onClick={() => { setFile(null); setAnalysis(null); setPdfUrl(null); }} 
+                    onClick={() => { setFile(null); setAnalysis(null); setPdfUrl(null); setOpenCaseId(null); setChatHistory([]); setRawText(null); }} 
                     className="w-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl h-12"
                 >
                     <X className="w-4 h-4 mr-2" /> Ryd Analyse
@@ -498,19 +673,64 @@ const CaseAnalyserPage: React.FC = () => {
                 </motion.div>
             )}
         </AnimatePresence>
+        
+        {/* Røde Lamper (Blinking Red Flags) */}
+        <div className="absolute top-12 left-12 flex flex-wrap gap-3 z-30 pointer-events-none pr-32">
+            {analysis?.redFlags?.map((flag, i) => (
+                <motion.div
+                    key={i}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                    whileHover={{ scale: 1.05 }}
+                    className="pointer-events-auto flex items-center gap-3 bg-rose-600/90 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-rose-400 backdrop-blur-md cursor-help group"
+                    title={flag.description}
+                >
+                    <div className="relative flex items-center justify-center shrink-0">
+                        <div className="w-3 h-3 bg-white rounded-full animate-ping absolute opacity-50" />
+                        <div className="w-3 h-3 bg-white rounded-full relative" />
+                    </div>
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white/70 leading-none">Rød Lampe</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest bg-white/20 px-1.5 py-0.5 rounded text-white leading-none">{flag.type}</span>
+                        </div>
+                        <span className="text-xs font-bold leading-tight mt-1">{flag.description}</span>
+                    </div>
+                </motion.div>
+            ))}
+        </div>
 
         {/* Floating action for history if needed */}
         {pdfUrl && !isAnalyzing && (
             <div className="absolute top-12 right-12 flex gap-3">
                  <button 
                     onClick={() => { setFile(null); setAnalysis(null); setPdfUrl(null); }}
-                    className="p-3 bg-white/90 backdrop-blur-md rounded-2xl border border-amber-100 shadow-xl text-slate-400 hover:text-rose-500 transition-all hover:scale-105 active:scale-95"
+                    className="p-3 bg-white/90 backdrop-blur-md rounded-2xl border border-amber-100 shadow-xl text-slate-400 hover:text-rose-500 transition-all hover:scale-105 active:scale-95 z-30"
                     title="Luk PDF"
                 >
                     <X className="w-6 h-6" />
                 </button>
             </div>
         )}
+        {/* Modals and Overlays */}
+        <AnimatePresence>
+            {showChat && openCaseId && rawText && (
+                <CaseChatOverlay 
+                    title={file?.name || 'Case'}
+                    caseText={rawText}
+                    initialMessages={chatHistory}
+                    onClose={() => setShowChat(false)}
+                    onSave={async (msgs) => {
+                        if (!user || !firestore || !openCaseId) return;
+                        try {
+                            const ref = doc(firestore, 'users', user.uid, 'caseAnalyses', openCaseId);
+                            await updateDoc(ref, { chatHistory: msgs });
+                        } catch (e) { console.error('Error saving chat:', e); }
+                    }}
+                />
+            )}
+        </AnimatePresence>
       </main>
     </div>
   );

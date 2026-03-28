@@ -68,6 +68,20 @@
     user-select: none;
     -webkit-user-select: none;
     overflow-x: hidden;
+    overscroll-behavior-y: none; /* Prevents elastic bounce on body */
+    -webkit-overflow-scrolling: touch;
+    
+    /* Native App Safe Area Support */
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+  }
+
+  /* Allow text selection in content elements while keeping UI fixed */
+  p, h1, h2, h3, h4, h5, h6, span, li, blockquote, input, textarea, [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
   }
   .serif {
     font-family: Georgia, serif;

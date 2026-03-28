@@ -1407,6 +1407,11 @@ export const CaseAnalysisSchema = z.object({
     relevans: z.string()
   })).describe('Forslag til relevante lovparagraffer og deres betydning for casen.'),
   sammenfatning: z.string().describe('En kort faglig opsummering af casen.'),
+  redFlags: z.array(z.object({
+    type: z.string().describe('Typen af advarsel, f.eks. "Sagsbehandlingsfejl", "Sundhedsrisiko", "Vold" eller "Andet".'),
+    description: z.string().describe('En kort beskrivelse af hvorfor dette er en "rød lampe".'),
+    severity: z.enum(['low', 'medium', 'high']).describe('Alvoren af den identificerede risiko.'),
+  })).optional().describe('Kritiske advarsler eller "røde lamper" identificeret i casen.'),
 });
 
 export const AnalyzeCasePdfInputSchema = z.object({
