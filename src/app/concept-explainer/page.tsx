@@ -482,7 +482,7 @@ function ConceptExplainerPageContent() {
                                             <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-3 flex items-center gap-2">
                                                 <History className="w-3 h-3" /> Oprindelse & Historik
                                             </h4>
-                                            <p className="text-sm text-slate-500 italic leading-relaxed">{explanation.etymology}</p>
+                                            <div className="text-sm text-slate-500 italic leading-relaxed" dangerouslySetInnerHTML={{ __html: explanation.etymology }} />
                                         </div>
                                       )}
                                   </div>
@@ -526,12 +526,13 @@ function ConceptExplainerPageContent() {
                                                 <div className="px-4 py-1.5 bg-amber-400 text-amber-950 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl shadow-amber-400/20">{explanation.legalContext.lawTitle}</div>
                                                 <span className="text-2xl font-black serif italic text-amber-100">{explanation.legalContext.paragraphNumber}</span>
                                             </div>
-                                            <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] italic text-sm text-amber-50/80 leading-relaxed font-serif backdrop-blur-sm">
-                                               "{explanation.legalContext.exactText}"
-                                            </div>
+                                            <div 
+                                                className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] italic text-sm text-amber-50/80 leading-relaxed font-serif backdrop-blur-sm"
+                                                dangerouslySetInnerHTML={{ __html: `"${explanation.legalContext.exactText}"` }}
+                                            />
                                             <div className="flex items-start gap-4 p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
                                                 <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0"><Zap className="w-3.5 h-3.5" /></div>
-                                                <p className="text-[11px] text-white/60 font-medium italic leading-relaxed">{explanation.legalContext.relevance}</p>
+                                                <div className="text-[11px] text-white/60 font-medium italic leading-relaxed" dangerouslySetInnerHTML={{ __html: explanation.legalContext.relevance }} />
                                             </div>
                                         </div>
                                     </div>
@@ -553,7 +554,7 @@ function ConceptExplainerPageContent() {
                                         <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-4 flex items-center gap-2">
                                             <Brain className="w-3 h-3" /> Kritisk Refleksion
                                         </h4>
-                                        <p className="text-xs text-slate-500 font-medium italic leading-relaxed">{explanation.criticalReflection}</p>
+                                        <div className="text-xs text-slate-500 font-medium italic leading-relaxed" dangerouslySetInnerHTML={{ __html: explanation.criticalReflection }} />
                                     </div>
                                   )}
                               </section>
@@ -583,7 +584,7 @@ function ConceptExplainerPageContent() {
                                 <section className="p-10 bg-amber-950 rounded-[3rem] text-white shadow-xl relative overflow-hidden group">
                                     <Sparkles className="absolute top-0 right-0 w-32 h-32 text-amber-400/10 -translate-y-8 translate-x-8 group-hover:scale-110 transition-transform" />
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-400 mb-4">Udfordring til dig</h4>
-                                    <p className="text-sm font-medium serif italic opacity-90 leading-relaxed">"{explanation.socraticQuestion}"</p>
+                                    <p className="text-sm font-medium serif italic opacity-90 leading-relaxed" dangerouslySetInnerHTML={{ __html: `"${explanation.socraticQuestion}"` }} />
                                 </section>
                               )}
 
@@ -637,7 +638,7 @@ function ConceptExplainerPageContent() {
                                           <div key={i} className="p-8 bg-white rounded-[2.5rem] border border-amber-100 shadow-sm hover:translate-x-1 transition-transform">
                                               <h5 className="text-md font-bold text-amber-950 serif">{lit.title}</h5>
                                               <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-4">af {lit.author}</p>
-                                              <p className="text-xs text-slate-500 italic">"{lit.relevance}"</p>
+                                              <div className="text-xs text-slate-500 italic" dangerouslySetInnerHTML={{ __html: `"${lit.relevance}"` }} />
                                           </div>
                                       ))}
                                   </div>
@@ -653,7 +654,7 @@ function ConceptExplainerPageContent() {
                                       {explanation.relevantTheorists?.map((theorist, i) => (
                                           <div key={i} className="p-8 bg-purple-50/10 rounded-[2.5rem] border border-purple-100 shadow-sm hover:translate-x-1 transition-transform">
                                               <h5 className="text-md font-bold text-amber-950 serif">{theorist.name} <span className="text-[9px] font-black text-purple-400 tracking-widest ml-2">{theorist.era}</span></h5>
-                                              <p className="text-xs text-slate-500 font-medium leading-relaxed font-serif mt-2">"{theorist.contribution}"</p>
+                                              <div className="text-xs text-slate-500 font-medium leading-relaxed font-serif mt-2" dangerouslySetInnerHTML={{ __html: `"${theorist.contribution}"` }} />
                                           </div>
                                       ))}
                                   </div>
