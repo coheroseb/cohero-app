@@ -145,10 +145,19 @@ export default function PrivacyPolicyPage() {
                             Vi opbevarer dine data, så længe du er aktiv på platformen. Inaktive konti og deres tilhørende data slettes efter 24 måneder.
                         </p>
                     </PolicyCard>
+
+                    <PolicyCard icon={Target} title="9. Markedsplads & Aggregeret Data" delay={1.0}>
+                        <p>
+                            Cohéro anvender fuldstændig anonymiserede og aggregerede data (f.eks. det totale antal brugere og deres overordnede uddannelsesretning) til statistiske formål.
+                        </p>
+                        <p>
+                            Dette gør det muligt for arbejdsgivere (f.eks. kommuner) at få indblik i størrelsen på talentpuljen (fx "Antal socialrådgivere"), så de kan målrette relevante jobopslag til jer. Din personlige identitet, chat-historik eller email deles <span className="font-bold underline text-amber-600">aldrig</span> med disse platforme eller aktører.
+                        </p>
+                    </PolicyCard>
                 </div>
 
                 {/* PRIVACY PROMISE */}
-                <Reveal delay={1.0}>
+                <Reveal delay={1.1}>
                     <div className="mt-20 bg-slate-900 rounded-[3rem] p-12 md:p-20 text-white relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 blur-[100px] -z-1" />
                         
@@ -187,7 +196,7 @@ export default function PrivacyPolicyPage() {
                 </Reveal>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sidst opdateret: 28. marts 2026</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sidst opdateret: 29. marts 2026</p>
                 </div>
             </main>
 

@@ -348,8 +348,8 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center space-x-1"
               >
                 {[
-                  { label: "Rådgivning (Borger)", href: "/raadgivning", type: "link", highlight: true },
-                  { label: "Hvorfor Cohéro?", href: "/hvorfor", type: "link" },
+                  { label: "Få hjælp fra en studerende", href: "/raadgivning", type: "link", highlight: true },
+                  { label: "Second Opinion", href: "/om-second-opinion", type: "link" },
                   { label: "Værktøjer", href: "#vaerktojer", type: "anchor" },
                   { label: "Priser", href: "#priser", type: "anchor" }
                 ].map((link, idx) => (
@@ -542,7 +542,12 @@ const Navbar: React.FC<NavbarProps> = ({
                   <ul className="space-y-4 pt-4">
                     <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.02 }}>
                         <Link href="/raadgivning" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
-                            Rådgivning (Borger) <HandHelping className="w-5 h-5 text-rose-400" />
+                            Få hjælp fra en studerende <HandHelping className="w-5 h-5 text-rose-400" />
+                        </Link>
+                    </motion.li>
+                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 }}>
+                        <Link href="/om-second-opinion" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-emerald-50 border border-emerald-100 rounded-[24px] text-[18px] font-extrabold text-emerald-600 shadow-sm active:scale-[0.98] transition-all">
+                            Second Opinion <Scale className="w-5 h-5 text-emerald-400" />
                         </Link>
                     </motion.li>
                     <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>

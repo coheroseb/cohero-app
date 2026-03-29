@@ -691,6 +691,7 @@ const PortalPageContent: React.FC = () => {
         subtitle: "Forbered dig på arbejdslivet",
         icon: <Compass className="w-6 h-6 text-amber-500" />,
         items: [
+          { title: "Jobopslag", desc: "Se målrettede stillinger fra arbejdsgivere", icon: Briefcase, path: "/jobopslag", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Nyt" },
           { title: "Institutionssøgning", desc: "Find din næste praktikplads", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
           { title: "Praktik-Rating", desc: "Se andres erfaringer i praktik", icon: Star, path: "/praktik-rating", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Reviews" },
           { title: "Faglige Tendenser", desc: "Hvad rører sig på studiet?", icon: Compass, path: "/tendenser", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Insights" }

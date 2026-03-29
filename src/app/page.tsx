@@ -407,6 +407,68 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 3.5 SECOND OPINION PROMO */}
+      <section className="py-24 sm:py-32 bg-[#FDFBF7] relative overflow-hidden px-5 sm:px-8 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
+          <div className="w-full lg:w-1/2 space-y-8 text-center lg:text-left">
+            <Reveal>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200/50 rounded-full mb-4">
+                 <Scale className="w-3.5 h-3.5 text-amber-500" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-900">Nyt: Second Opinion</span>
+              </div>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] leading-tight text-balance">
+                Fik du en lavere<br className="hidden sm:block" /> karakter end fortjent?
+              </h2>
+              <p className="text-xl text-slate-500 font-medium leading-relaxed mt-6">
+                Få en lynhurtig, AI-drevet vurdering af din eksamensopgave. Censorer laver fejl, og vi giver dig magten tilbage med en objektiv faglig analyse — før du klager.
+              </p>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+                 <Link href="/om-second-opinion" className="group relative px-10 py-6 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all w-full sm:w-auto overflow-hidden">
+                    <span className="relative z-10 flex items-center justify-center gap-3">Test din opgave <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" /></span>
+                 </Link>
+                 <div className="flex items-center gap-2 text-amber-600 font-bold uppercase text-[11px] tracking-wider lg:pt-2">
+                    <ShieldCheck className="w-5 h-5" /> 100% anonymt
+                 </div>
+              </div>
+            </Reveal>
+          </div>
+          <div className="w-full lg:w-1/2">
+             <Reveal delay={0.3} className="relative">
+                 <div className="absolute inset-0 bg-gradient-to-tr from-rose-200/40 to-amber-200/40 blur-3xl rounded-full" />
+                 <div className="relative bg-white border border-slate-100 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl">
+                    <div className="flex gap-4 items-center mb-8 border-b border-slate-50 pb-6">
+                        <div className="w-12 h-12 bg-rose-500 text-white rounded-xl flex items-center justify-center shadow-lg"><FileText className="w-6 h-6" /></div>
+                        <div>
+                            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Analyse fuldført</div>
+                            <div className="text-xl font-bold text-slate-900">Misforhold fundet i karakter</div>
+                        </div>
+                    </div>
+                    <div className="space-y-4 text-left">
+                       <div className="flex gap-4 bg-rose-50/50 p-4 rounded-2xl border border-rose-100/50">
+                          <Zap className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                          <div>
+                              <div className="font-bold text-slate-900">Mangelfuld bedømmelse</div>
+                              <div className="text-[13px] text-slate-500 mt-1">Indikationer på dybdegående refleksion over teori, som ikke blev belønnet.</div>
+                          </div>
+                       </div>
+                       <div className="flex gap-4 bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                          <div>
+                              <div className="font-bold text-slate-900">Læringsmål opfyldt</div>
+                              <div className="text-[13px] text-slate-500 mt-1">Opgaven demonstrerer stærk forståelse for pensums hovedområder.</div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+             </Reveal>
+          </div>
+        </div>
+      </section>
+
       {/* 4. CORE FEATURES (Mobile-First Card Layout) */}
       <section id="vaerktojer" className="py-20 sm:py-32 bg-[#FDFBF7] px-5 sm:px-8">
         <div className="max-w-7xl mx-auto">
