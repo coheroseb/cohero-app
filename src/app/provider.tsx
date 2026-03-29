@@ -26,7 +26,7 @@ import {
   User, 
   sendEmailVerification,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, DocumentData, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, DocumentData, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { sendStreakReminderEmailAction } from '@/app/actions';
 import { UserProfile } from '@/ai/flows/types';
 import { calculateStudyStarted } from '@/lib/education';
@@ -179,38 +179,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setCookieConsent('denied');
   };
 
-  const refetchUserProfile = useCallback(async () => {
-    if (user && firestore) {
-      const userRef = doc(firestore, 'users', user.uid);
-      try {
-        const docSnap = await getDoc(userRef);
-        if (docSnap.exists()) {
-          setUserProfile(docSnap.data() as UserProfile);
-        } else {
-          console.warn(`No profile document found for user ${user.uid} during refetch.`);
-          setUserProfile(null);
-        }
-      } catch (error) {
-        console.error('Error refetching user profile:', error);
-        setUserProfile(null);
-      }
-    } else {
-      setUserProfile(null);
-    }
-  }, [user, firestore]);
-
   useEffect(() => {
     if (isUserLoading) {
       setUserProfile(undefined);
       return;
     }
-    if (!user) {
+    if (!user || !firestore) {
       setUserProfile(null);
       return;
     }
-    if (userProfile === null) setUserProfile(undefined);
-    refetchUserProfile();
-  }, [user, isUserLoading, refetchUserProfile]);
+
+    const userRef = doc(firestore, 'users', user.uid);
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setUserProfile(docSnap.data() as UserProfile);
+      } else {
+        setUserProfile(null);
+      }
+    }, (error) => {
+      console.error('Error listening to user profile:', error);
+      setUserProfile(null);
+    });
+
+    return () => unsubscribe();
+  }, [user, isUserLoading, firestore]);
+
+  const refetchUserProfile = useCallback(async () => {
+    // Keep this as a no-op or simple trigger for backward compatibility if needed,
+    // though onSnapshot handles most cases now.
+  }, []);
 
   useEffect(() => {
     if (!userProfile) return;

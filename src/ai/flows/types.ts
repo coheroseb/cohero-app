@@ -178,6 +178,7 @@ export interface UserProfile {
   conversionSource?: string;
   convertedAt?: any;
   createdAt?: any;
+  learnedConcepts?: string[];
 }
 
 export interface StudentCardVerification {

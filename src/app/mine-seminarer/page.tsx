@@ -198,164 +198,6 @@ const QuizView: React.FC<{ quizData: QuizData; onFinish: () => void; userId: str
   );
 };
 
-// ---------------------------------------------------------------------------
-// Mindmap Overlay
-// ---------------------------------------------------------------------------
-const MindmapOverlay: React.FC<{
-  seminar: SavedSeminar;
-  onClose: () => void;
-}> = ({ seminar, onClose }) => {
-  const [activeSlide, setActiveSlide] = useState<number | null>(null);
-  const conceptSlides = (seminar.slides || []).filter(s => (s.keyConcepts?.length || 0) > 0);
-  const totalConcepts = conceptSlides.reduce((acc, s) => acc + (s.keyConcepts?.length || 0), 0);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[400] bg-slate-900/60 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden"
-    >
-      <div className="absolute top-8 right-8 z-10">
-        <button onClick={onClose} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all active:scale-95 shadow-xl border border-white/10">
-           <X className="w-6 h-6" />
-        </button>
-      </div>
-
-      <motion.div 
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        className="w-full h-full max-w-7xl bg-[#FDFCF8] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-white/20 relative"
-      >
-        <div className="p-8 sm:p-12 border-b border-slate-100 flex items-center justify-between shrink-0 relative bg-white/80 backdrop-blur-xl z-20">
-            <div className="space-y-1">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-indigo-100 mb-2">
-                    <Share2 className="w-3 h-3" /> Relationskort
-                </div>
-                <h3 className="text-3xl font-black text-slate-900 serif tracking-tight">{seminar.overallTitle}</h3>
-                <p className="text-xs text-slate-400 font-medium italic">Visuelt overblik over {totalConcepts} begreber fordelt på {conceptSlides.length} kerneslides.</p>
-            </div>
-            
-            <div className="hidden md:flex gap-6">
-                <div className="text-right">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status</p>
-                    <p className="text-sm font-black text-emerald-500">Fuldt kortlagt</p>
-                </div>
-            </div>
-        </div>
-
-        <div className="flex-1 relative overflow-auto custom-scrollbar flex items-center justify-center min-h-[600px] bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]">
-             <div className="relative w-[1400px] h-[1000px] flex items-center justify-center pointer-events-auto">
-                <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                   {conceptSlides.map((slide, idx) => {
-                      const angle = (idx / conceptSlides.length) * 2 * Math.PI;
-                      const xNode = 700 + Math.cos(angle) * 320;
-                      const yNode = 500 + Math.sin(angle) * 320;
-                      
-                      return (
-                        <g key={`${slide.slideNumber}-${idx}`}>
-                            <motion.line 
-                                initial={{ pathLength: 0, opacity: 0 }}
-                                animate={{ pathLength: 1, opacity: 1 }}
-                                transition={{ duration: 1, delay: idx * 0.1 }}
-                                x1="700" y1="500" x2={xNode} y2={yNode} 
-                                stroke="#e2e8f0" strokeWidth="2" strokeDasharray="6 6"
-                            />
-                            {(slide.keyConcepts || []).map((_, cIdx) => {
-                                const subAngle = angle - 0.4 + (cIdx / Math.max(1, (slide.keyConcepts?.length || 1) - 1)) * 0.8;
-                                const xSub = xNode + Math.cos(subAngle) * 160;
-                                const ySub = yNode + Math.sin(subAngle) * 160;
-                                return (
-                                    <motion.line 
-                                        key={cIdx}
-                                        initial={{ pathLength: 0, opacity: 0 }}
-                                        animate={{ pathLength: 1, opacity: 0.4 }}
-                                        transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
-                                        x1={xNode} y1={yNode} x2={xSub} y2={ySub} 
-                                        stroke="#818cf8" strokeWidth="1"
-                                    />
-                                );
-                            })}
-                        </g>
-                      );
-                   })}
-                </svg>
-
-                <motion.div 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-[450px] left-[650px] w-24 h-24 bg-slate-900 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl z-30 border-8 border-[#FDFCF8]"
-                >
-                    <BookOpen className="w-10 h-10 relative z-10" />
-                </motion.div>
-
-                {conceptSlides.map((slide, idx) => {
-                    const angle = (idx / conceptSlides.length) * 2 * Math.PI;
-                    const xNode = 700 + Math.cos(angle) * 320;
-                    const yNode = 500 + Math.sin(angle) * 320;
-                    const isActive = activeSlide === idx;
-
-                    return (
-                        <div key={`${slide.slideNumber}-${idx}`} className="contents">
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: idx * 0.1 }}
-                                onMouseEnter={() => setActiveSlide(idx)}
-                                onMouseLeave={() => setActiveSlide(null)}
-                                style={{ top: yNode - 45, left: xNode - 110 }}
-                                className={`absolute w-[220px] p-4 text-center transition-all cursor-default z-20 ${isActive ? 'scale-110' : ''}`}
-                            >
-                                <div className={`mb-3 mx-auto w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm transition-all shadow-md ${isActive ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-white text-slate-400 border border-slate-100'}`}>
-                                    {slide.slideNumber}
-                                </div>
-                                <span className={`text-[11px] font-black uppercase tracking-widest transition-colors block leading-tight ${isActive ? 'text-indigo-600 font-black' : 'text-slate-500 font-bold'}`}>
-                                    {slide.slideTitle}
-                                </span>
-                            </motion.div>
-
-                            {(slide.keyConcepts || []).map((concept: any, cIdx: number) => {
-                                const subAngle = angle - 0.4 + (cIdx / Math.max(1, (slide.keyConcepts?.length || 1) - 1)) * 0.8;
-                                const xSub = xNode + Math.cos(subAngle) * 160;
-                                const ySub = yNode + Math.sin(subAngle) * 160;
-
-                                return (
-                                    <motion.div
-                                        key={cIdx}
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: 0.8 + idx * 0.05 + cIdx * 0.02 }}
-                                        style={{ top: ySub - 22, left: xSub - 60 }}
-                                        className="absolute w-[130px] z-10"
-                                    >
-                                        <Link href={`/concept-explainer?term=${encodeURIComponent(concept.term)}`}>
-                                            <div className={`group/node bg-white border rounded-xl px-3 py-2.5 shadow-sm transition-all cursor-pointer text-center ${isActive ? 'border-indigo-200 shadow-indigo-100 ring-4 ring-indigo-50/50' : 'border-slate-100 hover:border-indigo-400 hover:shadow-lg'}`}>
-                                                <p className="text-[11px] font-bold text-slate-800 truncate leading-tight group-hover/node:text-indigo-600">{concept.term}</p>
-                                            </div>
-                                        </Link>
-                                    </motion.div>
-                                );
-                            })}
-                        </div>
-                    );
-                })}
-             </div>
-        </div>
-
-        <div className="px-12 py-8 border-t border-slate-100 flex items-center justify-between text-[11px] bg-white z-20 shrink-0">
-             <div className="flex gap-8">
-                <div className="flex items-center gap-2.5 font-bold text-slate-600"><div className="w-2.5 h-2.5 rounded-full bg-slate-900" /> {seminar.overallTitle}</div>
-                <div className="flex items-center gap-2.5 font-bold text-slate-600"><div className="w-2.5 h-2.5 rounded-full bg-indigo-600 shadow-lg shadow-indigo-200" /> Slides</div>
-                <div className="flex items-center gap-2.5 font-bold text-slate-600"><div className="w-2.5 h-2.5 rounded-full bg-indigo-50 border border-indigo-200" /> Begreber</div>
-             </div>
-             <p className="text-slate-400 font-bold flex items-center gap-2">
-                <ArrowDownAZ className="w-3.5 h-3.5" /> Klik på et begreb for at lære mere i Begrebsguiden
-             </p>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
 
 // ---------------------------------------------------------------------------
 // Seminar Chat Overlay
@@ -517,27 +359,33 @@ const SeminarChatOverlay: React.FC<{
 const ConceptListOverlay: React.FC<{
   title: string;
   slides: any[];
+  learnedConcepts?: string[];
+  onToggleLearned?: (term: string) => void;
   onClose: () => void;
-}> = ({ title, slides, onClose }) => {
+}> = ({ title, slides, learnedConcepts = [], onToggleLearned, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const allConcepts = useMemo(() => {
-    const map = new Map<string, { term: string; context: string; slideNumbers: number[] }>();
+    const map = new Map<string, { term: string; occurrences: { slideNumber: number; slideTitle: string; context: string; slideSummary: string; seminarTitle: string }[] }>();
     slides.forEach(slide => {
       (slide.keyConcepts || []).forEach((c: any) => {
         const termRaw = c.term || c.keyword || 'Ukendt begreb';
         const term = termRaw.trim();
+        const occurrence = {
+          slideNumber: slide.slideNumber,
+          slideTitle: slide.slideTitle || 'Slide',
+          context: c.context || c.explanation || 'Ingen specifik forklaring på denne slide.',
+          slideSummary: slide.summary || '',
+          seminarTitle: slide.seminarTitle || title
+        };
+
         if (!map.has(term)) {
-          map.set(term, { 
-            term, 
-            context: c.context || c.explanation || 'Ingen forklaring tilgængelig.', 
-            slideNumbers: [slide.slideNumber] 
-          });
+          map.set(term, { term, occurrences: [occurrence] });
         } else {
           const existing = map.get(term)!;
-          if (!existing.slideNumbers.includes(slide.slideNumber)) {
-            existing.slideNumbers.push(slide.slideNumber);
-            existing.slideNumbers.sort((a, b) => a - b);
+          if (!existing.occurrences.some(o => o.slideNumber === slide.slideNumber)) {
+            existing.occurrences.push(occurrence);
+            existing.occurrences.sort((a, b) => a.slideNumber - b.slideNumber);
           }
         }
       });
@@ -548,8 +396,13 @@ const ConceptListOverlay: React.FC<{
   const filteredConcepts = useMemo(() => {
     if (!searchQuery) return allConcepts;
     const q = searchQuery.toLowerCase();
-    return allConcepts.filter(c => c.term.toLowerCase().includes(q) || c.context.toLowerCase().includes(q));
+    return allConcepts.filter(c => 
+      c.term.toLowerCase().includes(q) || 
+      c.occurrences.some(o => o.context.toLowerCase().includes(q) || o.slideSummary.toLowerCase().includes(q))
+    );
   }, [allConcepts, searchQuery]);
+
+  const [expandedTerm, setExpandedTerm] = useState<string | null>(null);
 
   return (
     <motion.div
@@ -601,24 +454,93 @@ const ConceptListOverlay: React.FC<{
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-4">
-                    {filteredConcepts.map((item, idx) => (
-                        <div key={idx} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
-                            <div className="flex items-start justify-between gap-4 mb-3">
-                                <h4 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.term}</h4>
-                                <div className="flex gap-1.5 flex-wrap justify-end max-w-[120px]">
-                                    {item.slideNumbers.map(n => (
-                                        <span key={n} className="px-2 py-0.5 bg-slate-100 text-slate-400 text-[9px] font-black rounded-md">Slide {n}</span>
-                                    ))}
+                    {filteredConcepts.map((item, idx) => {
+                        const isExpanded = expandedTerm === item.term;
+                        return (
+                        <div key={idx} className={`bg-white rounded-[2rem] border transition-all duration-300 overflow-hidden ${isExpanded ? 'border-indigo-200 shadow-xl' : 'border-slate-100 shadow-sm hover:shadow-md'}`}>
+                            <div className="p-6 flex items-start justify-between gap-4">
+                                <div 
+                                    onClick={() => setExpandedTerm(isExpanded ? null : item.term)}
+                                    className="flex-1 min-w-0 cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <h3 className={`text-lg font-black transition-colors uppercase tracking-tight ${learnedConcepts.includes(item.term) ? 'text-emerald-600 line-through opacity-60' : 'text-slate-900 group-hover:text-indigo-600'}`}>{item.term}</h3>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 opacity-40" />
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.occurrences.length} {item.occurrences.length === 1 ? 'slide' : 'slides'}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-500 line-clamp-2 font-medium italic">
+                                        "{item.occurrences[0].context}"
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    {onToggleLearned && (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onToggleLearned(item.term); }}
+                                            className={`p-2.5 rounded-xl border-2 transition-all active:scale-90 ${learnedConcepts.includes(item.term) ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-slate-100 text-slate-200 hover:text-emerald-500 hover:border-emerald-100'}`}
+                                            title={learnedConcepts.includes(item.term) ? 'Marker som ikke lært' : 'Marker som forstået'}
+                                        >
+                                            <CheckCircle className="w-5 h-5" />
+                                        </button>
+                                    )}
+                                    <div 
+                                        onClick={() => setExpandedTerm(isExpanded ? null : item.term)}
+                                        className={`w-10 h-10 rounded-full bg-slate-50 cursor-pointer flex items-center justify-center transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-indigo-50 text-indigo-600' : 'text-slate-300'}`}
+                                    >
+                                        <ChevronDown className="w-5 h-5" />
+                                    </div>
                                 </div>
                             </div>
-                            <p className="text-sm text-slate-600 leading-relaxed font-medium">{item.context}</p>
-                            <div className="mt-4 pt-4 border-t border-slate-50 flex justify-end">
-                                <Link href={`/concept-explainer?term=${encodeURIComponent(item.term)}`} className="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 flex items-center gap-1.5">
-                                    Slå op i Begrebsguiden <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-                                </Link>
-                            </div>
+                            
+                            <AnimatePresence>
+                                {isExpanded && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="border-t border-slate-50 bg-slate-50/30"
+                                    >
+                                        <div className="p-6 space-y-6">
+                                            {item.occurrences.map((occ, oIdx) => (
+                                                <div key={oIdx} className="bg-white p-5 rounded-2xl border border-white shadow-sm space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex flex-col">
+                                                            <div className="flex items-center gap-2 mb-0.5">
+                                                                <span className="text-[10px] font-black uppercase text-indigo-600">{occ.seminarTitle}</span>
+                                                                <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                                                <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-500 text-[7px] font-black rounded-md uppercase tracking-widest">KILDE</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[9px] font-bold text-slate-400">Slide {occ.slideNumber}</span>
+                                                                <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                                                <span className="text-[9px] font-bold text-slate-400">{occ.slideTitle}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] font-black uppercase text-indigo-400 mb-1">Slide-kontekst</p>
+                                                        <p className="text-xs text-slate-700 font-bold leading-relaxed">
+                                                            {occ.context}
+                                                        </p>
+                                                    </div>
+                                                    <div className="pt-3 border-t border-slate-50">
+                                                        <p className="text-[9px] font-black uppercase text-slate-300 mb-1">Opsummering af slide</p>
+                                                        <p className="text-[11px] text-slate-500 font-medium italic leading-relaxed">
+                                                            {occ.slideSummary}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <div className="pt-2 flex justify-end">
+                                               <Link href={`/concept-explainer?term=${encodeURIComponent(item.term)}`} className="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 flex items-center gap-1.5 transition-all hover:translate-x-1">
+                                                   Slå op i Begrebsguiden <ArrowRight className="w-3 h-3" />
+                                               </Link>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
-                    ))}
+                    )})}
                 </div>
             )}
         </div>
@@ -810,7 +732,6 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
   const firestore = useFirestore();
   const { toast } = useToast();
   const [activeSlide, setActiveSlide] = useState<number | null>(null);
-  const [showMindmap, setShowMindmap] = useState(false);
   const [showConceptList, setShowConceptList] = useState(false);
   const [notes, setNotes] = useState<Record<number, string>>(() => (seminar.slides || []).reduce((acc, s) => { if (s.notes) acc[s.slideNumber] = s.notes; return acc; }, {} as Record<number, string>));
   const [debouncedNotes] = useDebounce(notes, 1500);
@@ -923,12 +844,11 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 shrink-0">
           {saveStatus === 'saved' && <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-1 whitespace-nowrap hidden sm:flex"><CheckCircle className="w-3 h-3" /> Gemt</span>}
-          <Button size="sm" variant="outline" onClick={() => setShowMindmap(true)} className="rounded-lg sm:rounded-2xl border-slate-200 hover:bg-slate-50 text-slate-600 h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 hidden sm:flex items-center gap-1 sm:gap-2 transition-all text-[10px] sm:text-[12px] md:text-[14px]"><Sparkles className="w-3.5 h-3.5 sm:w-4 md:w-4" /><span className="hidden md:inline">RELATIONSKORT</span></Button>
-          <Button size="sm" variant="outline" onClick={() => setShowChat(true)} className="rounded-lg sm:rounded-2xl bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-600 h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 flex items-center gap-1 sm:gap-2 transition-all text-[10px] sm:text-[12px] md:text-[14px]">
+          <Button size="sm" variant="outline" onClick={() => setShowChat(true)} className="rounded-lg sm:rounded-2xl bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-600 h-8 sm:h-10 md:h-12 px-2.5 sm:px-4 md:px-6 flex items-center gap-1 sm:gap-2 transition-all text-[10px] sm:text-[12px] md:text-[14px]">
             <BrainCircuit className="w-3.5 h-3.5 sm:w-4 md:w-4" />
             <span className="md:inline">CHAT MED AI</span>
           </Button>
-          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-lg sm:rounded-2xl bg-slate-900 hover:bg-slate-800 text-white h-8 sm:h-10 md:h-12 px-2 sm:px-4 md:px-6 shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group text-[10px] sm:text-[12px] md:text-[14px]">
+          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-lg sm:rounded-2xl bg-slate-900 hover:bg-slate-800 text-white h-8 sm:h-10 md:h-12 px-2.5 sm:px-4 md:px-6 shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group text-[10px] sm:text-[12px] md:text-[14px]">
             {isGeneratingQuiz ? <Loader2 className="w-3 h-3 sm:w-4 md:w-4 animate-spin" /> : <Trophy className="w-3.5 h-3.5 sm:w-4 md:w-4 group-hover:rotate-12 transition-transform" />}
             <span className="hidden sm:inline md:ml-2">TAG QUIZ</span>
           </Button>
@@ -964,9 +884,6 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
                   </button>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => setShowMindmap(true)} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-600/10 border-b-4 border-indigo-800">
-                    <BrainCircuit className="w-4 h-4" /> Relationskort
-                  </button>
                   <button onClick={() => setShowConceptList(true)} className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-600 active:scale-95 transition-all shadow-lg shadow-amber-600/10 border-b-4 border-amber-700">
                     <BookOpen className="w-4 h-4" /> Begreber
                   </button>
@@ -1018,13 +935,17 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
         )}
       </AnimatePresence>
       <AnimatePresence>
-            {showMindmap && (
-              <MindmapOverlay seminar={seminar} onClose={() => setShowMindmap(false)} />
-            )}
             {showConceptList && (
               <ConceptListOverlay 
                 title={seminar.overallTitle} 
-                slides={seminar.slides} 
+                slides={seminar.slides.map(s => ({ ...s, seminarTitle: seminar.overallTitle }))} 
+                learnedConcepts={userProfile?.learnedConcepts || []}
+                onToggleLearned={async (term) => {
+                    if (!user || !firestore) return;
+                    const learned = userProfile?.learnedConcepts || [];
+                    const newLearned = learned.includes(term) ? learned.filter(t => t !== term) : [...learned, term];
+                    await updateDoc(doc(firestore, 'users', user.uid), { learnedConcepts: newLearned });
+                }}
                 onClose={() => setShowConceptList(false)} 
               />
             )}
@@ -1163,7 +1084,6 @@ export default function MineSeminarerPage() {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title'>('newest');
   const [filterLaws, setFilterLaws] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [categoryMindmapData, setCategoryMindmapData] = useState<SavedSeminar | null>(null);
   const [categoryConceptListData, setCategoryConceptListData] = useState<{ title: string; slides: any[] } | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [categoryChatData, setCategoryChatData] = useState<{ title: string; seminars: any[] } | null>(null);
@@ -1209,22 +1129,11 @@ export default function MineSeminarerPage() {
 
   const categories = useMemo(() => Array.from(new Set(seminars.map(s => s.category).filter(Boolean))) as string[], [seminars]);
 
-  const handleOpenCategoryMindmap = () => {
-    if (!activeCategory) return;
-    const filtered = seminars.filter(s => s.category === activeCategory);
-    const allSlides = filtered.flatMap(s => s.slides);
-    setCategoryMindmapData({
-        ...filtered[0],
-        overallTitle: `${activeCategory} - Alle Seminarer`,
-        slides: allSlides,
-        createdAt: { toDate: () => new Date() }
-    });
-  };
 
   const handleOpenCategoryConceptList = () => {
     if (!activeCategory) return;
     const filtered = seminars.filter(s => s.category === activeCategory);
-    const allSlides = filtered.flatMap(s => s.slides);
+    const allSlides = filtered.flatMap(s => s.slides.map(sl => ({ ...sl, seminarTitle: s.overallTitle })));
     setCategoryConceptListData({
         title: `${activeCategory} - Samlet Begrebsoverblik`,
         slides: allSlides
@@ -1369,12 +1278,6 @@ export default function MineSeminarerPage() {
                         </div>
                         <div className="flex gap-2">
                             <button 
-                                onClick={handleOpenCategoryMindmap}
-                                className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all"
-                            >
-                                <Sparkles className="w-4 h-4" /> Mindmap
-                            </button>
-                            <button 
                                 onClick={handleOpenCategoryConceptList}
                                 className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-600 shadow-lg shadow-amber-600/20 active:scale-95 transition-all"
                             >
@@ -1408,13 +1311,17 @@ export default function MineSeminarerPage() {
           return s ? <SeminarDetailView seminar={s} user={user} userProfile={userProfile} onClose={() => setOpenSeminar(null)} /> : null;
       })()}
       <AnimatePresence>
-            {categoryMindmapData && (
-                <MindmapOverlay seminar={categoryMindmapData} onClose={() => setCategoryMindmapData(null)} />
-            )}
             {categoryConceptListData && (
                 <ConceptListOverlay 
                     title={categoryConceptListData.title}
                     slides={categoryConceptListData.slides}
+                    learnedConcepts={userProfile?.learnedConcepts || []}
+                    onToggleLearned={async (term) => {
+                        if (!user || !firestore) return;
+                        const learned = userProfile?.learnedConcepts || [];
+                        const newLearned = learned.includes(term) ? learned.filter(t => t !== term) : [...learned, term];
+                        await updateDoc(doc(firestore, 'users', user.uid), { learnedConcepts: newLearned });
+                    }}
                     onClose={() => setCategoryConceptListData(null)}
                 />
             )}
