@@ -3,7 +3,13 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
+  Building,
+  ShieldCheck,
+  Scale,
+  Share2,
+  Bookmark,
   SearchCode, 
   ArrowLeft, 
   Sparkles, 
@@ -31,12 +37,8 @@ import {
   Layout,
   BookOpen,
   GraduationCap,
-  Scale,
   MessageSquare,
-  Quote,
-  ShieldCheck,
-  Bookmark,
-  Share2
+  Quote
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
@@ -52,13 +54,14 @@ import {
   limit, 
   onSnapshot,
   setDoc,
-  addDoc
+  addDoc,
+  where
 } from 'firebase/firestore';
 import { getSecondOpinionAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { calculateStudyStarted } from '@/lib/education';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { motion, AnimatePresence } from 'framer-motion';
 
 // --- TYPES ---
 
@@ -137,6 +140,125 @@ const DashboardCard: React.FC<{
     );
 };
 
+const ModuleCard: React.FC<{
+  module: any;
+  isSelected: boolean;
+  onSelect: () => void;
+}> = ({ module, isSelected, onSelect }) => {
+  return (
+    <button 
+      onClick={onSelect}
+      className={`relative p-8 rounded-[2.5rem] border transition-all text-left flex flex-col gap-4 group ${
+        isSelected 
+          ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400 shadow-lg shadow-amber-100/50' 
+          : 'bg-white border-slate-100 hover:border-amber-200 hover:bg-slate-50/50'
+      }`}
+    >
+      <div className="flex items-start justify-between">
+        <div className={`w-10 h-10 rounded-xl shadow-sm flex items-center justify-center text-xs font-black shrink-0 border transition-colors ${
+          isSelected ? 'bg-amber-600 text-white border-amber-500' : 'bg-white text-amber-600 border-amber-50'
+        }`}>
+          {module.id}
+        </div>
+        {module.ects && (
+          <span className={`text-[10px] font-black px-3 py-1 rounded-full border transition-colors ${
+            isSelected ? 'bg-amber-600 text-white border-amber-500' : 'bg-amber-100 text-amber-700 border-amber-200'
+          }`}>
+            {module.ects} ECTS
+          </span>
+        )}
+      </div>
+      <div>
+        <h4 className="font-black text-slate-900 leading-tight mb-2 text-lg group-hover:text-amber-950 transition-colors">{module.name}</h4>
+        <p className="text-sm font-medium text-slate-500 leading-relaxed line-clamp-3">
+          {module.description || module.about || 'Ingen yderligere beskrivelse for dette modul.'}
+        </p>
+      </div>
+      <div className="mt-auto pt-4 flex gap-1.5 flex-wrap">
+        <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${
+          isSelected ? 'text-amber-600' : 'text-slate-300 group-hover:text-amber-400'
+        }`}>
+          {isSelected ? 'Valgt Modul' : 'Identificeret modul'}
+        </span>
+      </div>
+    </button>
+  );
+};
+
+const MultiCurriculumSelection: React.FC<{
+  institution?: string;
+  profession?: string;
+  curriculums: any[];
+  selectedCurriculumId: string;
+  selectedModuleId: string;
+  setSelectedModuleId: (id: string) => void;
+  isLoading: boolean;
+}> = ({ institution, profession, curriculums, selectedCurriculumId, selectedModuleId, setSelectedModuleId, isLoading }) => {
+  const currentCurriculum = curriculums.find(c => c.id === selectedCurriculumId) || curriculums[0];
+
+  return (
+    <div className="col-span-1 md:col-span-2 space-y-8">
+      {/* Selection Header */}
+      <div className="bg-white p-10 rounded-[3.5rem] border border-amber-100 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 w-32 h-32 bg-amber-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-10" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+               <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center border border-amber-100 shadow-inner">
+                  <Building className="w-6 h-6 text-amber-600" />
+               </div>
+               <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-200">{profession || 'Uddannelse'}</span>
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200">{institution || 'Institution'}</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-amber-950 serif">{currentCurriculum?.title || 'Studieordning er indlæst'}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">Automatisk matchet ud fra din brugerprofil</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modules Grid */}
+      <div>
+        <div className="flex items-center justify-between mb-6 px-4">
+          <h4 className="text-[12px] font-black uppercase tracking-[0.2em] text-amber-900/40">Vælg det relevante modul for din opgave</h4>
+          {currentCurriculum?.modules && (
+            <span className="text-[10px] font-bold text-slate-400 italic">{currentCurriculum.modules.length} moduler identificeret</span>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-amber-100">
+             <Loader2 className="w-10 h-10 animate-spin text-amber-200 mx-auto mb-4" />
+             <p className="text-sm text-slate-400 font-bold italic">Søger efter studieordninger...</p>
+          </div>
+        ) : currentCurriculum?.modules ? (
+          <div className="grid md:grid-cols-2 gap-6 animate-ink">
+            {currentCurriculum.modules.map((m: any, idx: number) => (
+              <ModuleCard 
+                key={m.id || idx}
+                module={m}
+                isSelected={selectedModuleId === (m.id || String(idx+1))}
+                onSelect={() => setSelectedModuleId(m.id || String(idx+1))}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-rose-50/50 border-2 border-dashed border-rose-100 rounded-[3rem] p-12 text-center">
+             <AlertTriangle className="w-12 h-12 text-rose-300 mx-auto mb-4" />
+             <h5 className="text-lg font-bold text-rose-950">Ingen studieordning fundet</h5>
+             <p className="text-sm text-rose-500/70 max-w-sm mx-auto leading-relaxed mt-2">
+               Admins har endnu ikke uploadet den officielle studieordning for din kombination af institution og uddannelse. Kontakt support hvis du mener dette er en fejl.
+             </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const FileInputCard: React.FC<{
   file: File | null;
   setFile: (file: File | null) => void;
@@ -186,8 +308,11 @@ const SecondOpinionPageContent = () => {
     const firestore = useFirestore();
     const { toast } = useToast();
 
-    const [studyRegulationsFile, setStudyRegulationsFile] = useState<File | null>(null);
-    const [examRegulationsFile, setExamRegulationsFile] = useState<File | null>(null);
+    const [selectedCurriculumId, setSelectedCurriculumId] = useState<string>('');
+    const [selectedModuleId, setSelectedModuleId] = useState<string>(userProfile?.semester || '1');
+    const [curriculums, setCurriculums] = useState<any[]>([]);
+    const [isLoadingCurriculums, setIsLoadingCurriculums] = useState(true);
+
     const [assignmentFile, setAssignmentFile] = useState<File | null>(null);
     const [feedbackFile, setFeedbackFile] = useState<File | null>(null);
     const [grade, setGrade] = useState('');
@@ -200,6 +325,73 @@ const SecondOpinionPageContent = () => {
     const [pastOpinions, setPastOpinions] = useState<SecondOpinionRecord[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
     const [showHistory, setShowHistory] = useState(false);
+
+    // Fetch curriculums for the user's institution and profession
+    useEffect(() => {
+        if (!user || !firestore || !userProfile?.institution || !userProfile?.profession) {
+            setIsLoadingCurriculums(false);
+            return;
+        }
+        
+        setIsLoadingCurriculums(true);
+        // Robust fetch: Query by profession only to handle naming variations in institutions client-side
+        const q = query(
+            collection(firestore, 'curriculums'),
+            where('profession', '==', userProfile.profession)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const records = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            setCurriculums(records);
+            if (records.length > 0 && !selectedCurriculumId) {
+                // Initial selection based on study start date
+                const studyStarted = userProfile?.studyStarted || calculateStudyStarted(userProfile?.semester || '1. Semester');
+                const bestMatch = (records.find((c: any) => {
+                    const start = c.validFrom;
+                    const end = c.validTo;
+                    return (!start || studyStarted >= start) && (!end || studyStarted < end);
+                }) || records[0]) as any;
+                setSelectedCurriculumId(bestMatch.id);
+                
+                // Also auto-select the module based on user's semester
+                const semStr = String(userProfile?.semester || '1').replace(/\D/g, '');
+                const m = bestMatch.modules?.find((mod: any) => {
+                  const id = (mod.id || '').toLowerCase();
+                  const name = (mod.name || '').toLowerCase();
+                  return id.includes(semStr) || name.includes(semStr);
+                }) || bestMatch.modules?.[parseInt(semStr) - 1];
+                
+                if (m) setSelectedModuleId(m.id || m.name || semStr);
+            }
+            setIsLoadingCurriculums(false);
+        }, (err) => {
+            console.error('[SecondOpinion] curriculum listener error:', err);
+            setIsLoadingCurriculums(false);
+        });
+
+        return () => unsubscribe();
+    }, [user, firestore, userProfile?.institution, userProfile?.profession]);
+
+    const matchedModule = useMemo(() => {
+        if (!curriculums || curriculums.length === 0 || !selectedCurriculumId) return null;
+        
+        const curr = curriculums.find(c => c.id === selectedCurriculumId);
+        if (!curr) return null;
+
+        const modId = selectedModuleId.toLowerCase();
+        const module = curr.modules?.find((m: any) => {
+            const id = (m.id || '').toLowerCase();
+            const name = (m.name || '').toLowerCase();
+            return id === modId || name === modId || id.includes(modId) || name.includes(modId);
+        }) || curr.modules?.[parseInt(selectedModuleId) - 1];
+
+        if (!module) return null;
+
+        return {
+            ...module,
+            curriculumTitle: curr.title || 'Studieordning'
+        };
+    }, [curriculums, selectedCurriculumId, selectedModuleId]);
 
     // Fetch history
     useEffect(() => {
@@ -224,8 +416,8 @@ const SecondOpinionPageContent = () => {
     }, [user, firestore]);
 
     const isFormValid = useMemo(() => {
-        return studyRegulationsFile && examRegulationsFile && assignmentFile && grade.trim();
-    }, [studyRegulationsFile, examRegulationsFile, assignmentFile, grade]);
+        return matchedModule && assignmentFile && grade.trim();
+    }, [matchedModule, assignmentFile, grade]);
 
       const isPremiumUser = useMemo(() => {
         const m = userProfile?.membership;
@@ -261,22 +453,24 @@ const SecondOpinionPageContent = () => {
             const now = new Date();
             const isNewMonth = !lastUsage || lastUsage.getMonth() !== now.getMonth() || lastUsage.getFullYear() !== now.getFullYear();
 
-            let limitVal;
+            let limitVal = 1;
             switch (userProfile.membership) {
                 case 'Group Pro':
                 case 'Kollega':
-                    limitVal = 1;
+                    limitVal = 100;
                     break;
                 case 'Kollega+':
-                    limitVal = 3;
+                case 'Kollega++':
+                case 'Institution':
+                    limitVal = 1000;
                     break;
                 default:
-                    limitVal = 100; 
+                    limitVal = 1; 
             }
             
             const currentCount = isNewMonth ? 0 : (userData.monthlySecondOpinionCount || 0);
 
-            if (currentCount >= (limitVal || 0)) {
+            if (currentCount >= limitVal && !['Kollega+', 'Kollega++', 'Institution'].includes(userProfile.membership || '')) {
                  const planName = userProfile.membership || 'din plan';
                  setLimitError(`Månedlig grænse nået for ${planName}.`);
                  setIsAnalyzing(false);
@@ -285,9 +479,14 @@ const SecondOpinionPageContent = () => {
             }
 
             // Client-side extraction
-            const [studyText, examText, assignmentText, feedbackText] = await Promise.all([
-                extractTextFromPdf(studyRegulationsFile!),
-                extractTextFromPdf(examRegulationsFile!),
+            const learningGoals = Array.isArray(matchedModule.learningGoals) 
+                ? matchedModule.learningGoals.join('\n') 
+                : (matchedModule.learningObjectives || '');
+                
+            const studyText = `CURRICULUM: ${matchedModule.curriculumTitle}\nMODULE: ${matchedModule.name || ''}\n\nDESCRIPTION:\n${matchedModule.description || matchedModule.about || ''}\n\nLEARNING OBJECTIVES:\n${learningGoals}`;
+            const examText = matchedModule.examForm || matchedModule.examInfo || matchedModule.description || matchedModule.about || 'Ingen specifikke eksamensbestemmelser fundet.';
+
+            const [assignmentText, feedbackText] = await Promise.all([
                 extractTextFromPdf(assignmentFile!),
                 feedbackFile ? extractTextFromPdf(feedbackFile) : Promise.resolve(undefined),
             ]);
@@ -306,7 +505,12 @@ const SecondOpinionPageContent = () => {
             // Save
             const batch = writeBatch(firestore);
             const secondOpinionRef = doc(collection(firestore, 'users', user.uid, 'secondOpinions'));
-            const dataToSave = { input: { grade }, analysis: analysisResult, createdAt: serverTimestamp() };
+            const dataToSave = { 
+                input: { grade }, 
+                analysis: analysisResult, 
+                isUndervalued: !analysisResult.isGradeAccurate, // Markeres hvis opgaven er undervurderet
+                createdAt: serverTimestamp() 
+            };
             batch.set(secondOpinionRef, dataToSave);
             batch.set(doc(firestore, 'users', user.uid, 'secondOpinions', 'latest'), dataToSave);
 
@@ -412,8 +616,15 @@ const SecondOpinionPageContent = () => {
                              
                              <form onSubmit={handleGetSecondOpinion} className="space-y-12">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <FileInputCard file={studyRegulationsFile} setFile={setStudyRegulationsFile} label="Studieordning" id="s-reg" required />
-                                    <FileInputCard file={examRegulationsFile} setFile={setExamRegulationsFile} label="Eksamensbestemmelser" id="e-reg" required />
+                                    <MultiCurriculumSelection 
+                                        institution={userProfile?.institution}
+                                        profession={userProfile?.profession}
+                                        curriculums={curriculums}
+                                        selectedCurriculumId={selectedCurriculumId}
+                                        selectedModuleId={selectedModuleId}
+                                        setSelectedModuleId={setSelectedModuleId}
+                                        isLoading={isLoadingCurriculums}
+                                    />
                                     <FileInputCard file={assignmentFile} setFile={setAssignmentFile} label="Besvarelse" id="assign" required />
                                     <FileInputCard file={feedbackFile} setFile={setFeedbackFile} label="Feedback (valgfri)" id="feed" />
                                 </div>

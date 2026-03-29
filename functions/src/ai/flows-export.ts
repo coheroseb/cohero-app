@@ -75,6 +75,7 @@ import { twistBlueprintFlow } from './flows/twist-blueprint-flow';
 import { fetchVivePublications } from './flows/vive-indsigt-flow';
 import { getViveReportQa } from './flows/vive-report-qa-flow';
 import { getSocraticReflection } from './flows/sokratisk-refleksion/flow';
+import { complaintDraftFlow } from './flows/complaint-draft-flow';
 
 export const allFlows: Record<string, any> = {
   'analyzeFtDocumentFlow': analyzeFtDocument,
@@ -231,4 +232,6 @@ export const allFlows: Record<string, any> = {
   'getViveReportQa': getViveReportQa,
   'getSocraticReflectionFlow': getSocraticReflection,
   'getSocraticReflection': getSocraticReflection,
+  'complaintDraftFlow': complaintDraftFlow,
+  'complaintDraft': complaintDraftFlow,
 };

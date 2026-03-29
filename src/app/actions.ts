@@ -90,7 +90,7 @@ import {
     AnalyzeCasePdfInput, AnalyzeCasePdfOutput
 } from '@/ai/flows/types';
 
-async function callFirebaseFlow(flowName, data) {
+export async function callFirebaseFlow(flowName: string, data: any) {
   const adminSecret = process.env.CRON_SECRET || "dev-secret-123";
   const projectId = 'studio-7870211338-fe921';
   
