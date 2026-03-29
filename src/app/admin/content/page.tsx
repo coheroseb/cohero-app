@@ -2,14 +2,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Gavel, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, FolderSync, MessageCircle, Play, ChevronDown } from 'lucide-react';
+import { BookOpen, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, MessageCircle, Play, ChevronDown } from 'lucide-react';
 import { INSTITUTIONS, PROFESSION_OPTIONS } from '@/lib/constants';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { listInternalDocsAction, processInternalDocAction, queueNotificationAction, processStudyRegulationAction } from '@/app/actions';
+import { processStudyRegulationAction } from '@/app/actions';
 import { deleteReviewAction, getReviewsAction } from '@/app/praktik-rating/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -256,166 +256,9 @@ const LawManager = () => {
   );
 };
 
-const KnowledgeSyncManager = () => {
-    const { toast } = useToast();
-    const [docs, setDocs] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [syncingFile, setSyncingId] = useState<string | null>(null);
 
-    useEffect(() => {
-        listInternalDocsAction().then(setDocs).finally(() => setIsLoading(false));
-    }, []);
 
-    const handleSync = async (fileName: string) => {
-        setSyncingId(fileName);
-        try {
-            await processInternalDocAction(fileName);
-            toast({
-                title: "Viden synkroniseret",
-                description: `${fileName} er blevet indlæst og processeret med Gemini Embedding 2.`,
-            });
-        } catch (e: any) {
-            toast({
-                variant: 'destructive',
-                title: "Fejl",
-                description: e.message || "Kunne ikke synkronisere dokumentet.",
-            });
-        } finally {
-            setSyncingId(null);
-        }
-    };
 
-    return (
-        <section className="bg-white p-10 rounded-[3.5rem] border border-amber-100 shadow-sm">
-            <div className="flex items-center justify-between mb-10">
-                <div>
-                    <h3 className="text-xl font-bold text-amber-950 serif flex items-center gap-3">
-                        <FolderSync className="w-5 h-5 text-indigo-600" />
-                        Arkiv-Synkronisering
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1">Processér dokumenter i arkivet med Gemini Embedding 2 for dyb forståelse.</p>
-                </div>
-            </div>
-
-            {isLoading ? (
-                <div className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-200" /></div>
-            ) : (
-                <div className="grid gap-4">
-                    {docs.map(docName => (
-                        <div key={docName} className="flex items-center justify-between p-6 bg-slate-50 border border-slate-100 rounded-2xl group hover:border-indigo-200 transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400">
-                                    <FileText className="w-5 h-5" />
-                                </div>
-                                <span className="text-sm font-bold text-slate-700">{docName}</span>
-                            </div>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleSync(docName)}
-                                disabled={!!syncingFile}
-                                className="group-hover:bg-amber-950 group-hover:text-white"
-                            >
-                                {syncingFile === docName ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <Sparkles className="w-4 h-4 mr-2" />}
-                                {syncingFile === docName ? 'Indlæser...' : 'Indlæs viden'}
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </section>
-    );
-};
-
-const DilemmaManager = () => {
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [isSaving, setIsSaving] = useState(false);
-    const [newDilemma, setNewDilemma] = useState({
-        title: '',
-        question: '',
-        weekNumber: 1,
-        options: [
-            { id: 'A' as const, text: '' },
-            { id: 'B' as const, text: '' },
-            { id: 'C' as const, text: '' }
-        ]
-    });
-
-    const dilemmaQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'dilemmas'), orderBy('createdAt', 'desc')) : null), [firestore]);
-    const { data: dilemmas, isLoading } = useCollection<any>(dilemmaQuery);
-
-    const handleAddDilemma = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!firestore || isSaving) return;
-        setIsSaving(true);
-        try {
-            await addDoc(collection(firestore, 'dilemmas'), {
-                ...newDilemma,
-                isReleased: true,
-                createdAt: serverTimestamp()
-            });
-
-            await queueNotificationAction({
-                title: "Nyt Ugens Dilemma! ",
-                body: `Uge ${newDilemma.weekNumber}: ${newDilemma.title}. Test dit faglige skøn nu!`,
-                recipientUids: [],
-                targetGroup: 'all',
-                sentBy: 'admin'
-            });
-
-            setNewDilemma({ title: '', question: '', weekNumber: 1, options: [{id:'A', text:''}, {id:'B', text:''}, {id:'C',text:''}]});
-            toast({ title: "Dilemma tilføjet og notificeret!" });
-        } catch (err) {
-            toast({ variant: 'destructive', title: "Fejl" });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!firestore || !window.confirm('Slet?')) return;
-        await deleteDoc(doc(firestore, 'dilemmas', id));
-        toast({ title: "Slettet" });
-    };
-
-    return (
-        <section className="bg-white p-10 rounded-[3.5rem] border border-amber-100 shadow-sm">
-            <div className="flex items-center justify-between mb-10">
-                <h3 className="text-xl font-bold text-amber-950 serif flex items-center gap-3"><Gavel className="w-5 h-5"/>Ugens Dilemmaer</h3>
-            </div>
-            
-            <form onSubmit={handleAddDilemma} className="mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border">
-                <div className="grid grid-cols-2 gap-4">
-                    <Input placeholder="Titel" value={newDilemma.title} onChange={e => setNewDilemma({...newDilemma, title: e.target.value})} required />
-                    <Input type="number" placeholder="Uge" value={newDilemma.weekNumber} onChange={e => setNewDilemma({...newDilemma, weekNumber: parseInt(e.target.value)})} required />
-                </div>
-                <textarea placeholder="Spørgsmål" className="w-full p-3 rounded-lg border text-sm" value={newDilemma.question} onChange={e => setNewDilemma({...newDilemma, question: e.target.value})} required />
-                <div className="grid grid-cols-3 gap-2">
-                    {newDilemma.options.map((opt, i) => (
-                        <Input key={opt.id} placeholder={`Svar ${opt.id}`} value={opt.text} onChange={e => {
-                            const newOpts = [...newDilemma.options];
-                            newOpts[i].text = e.target.value;
-                            setNewDilemma({...newDilemma, options: newOpts});
-                        }} required />
-                    ))}
-                </div>
-                <Button type="submit" disabled={isSaving} className="w-full">
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Publicér og notificér alle'}
-                </Button>
-            </form>
-
-            <div className="space-y-2">
-                {isLoading ? <Loader2 className="animate-spin mx-auto"/> : dilemmas?.map((d: any) => (
-                    <div key={d.id} className="p-4 border rounded-xl flex justify-between items-center text-sm font-medium">
-                        <span>Uge {d.weekNumber}: {d.title}</span>
-                        <button onClick={() => handleDelete(d.id)} className="text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
-                    </div>
-                ))}
-            </div>
-        </section>
-    );
-};
 
 const ReviewManager = () => {
     const { toast } = useToast();
@@ -917,8 +760,6 @@ const AdminContentPage = () => {
       <div className="space-y-8 animate-ink">
          <CurriculumManager />
          <LawManager />
-         <KnowledgeSyncManager />
-         <DilemmaManager />
          <ReviewManager />
          <TikTokManager />
       </div>

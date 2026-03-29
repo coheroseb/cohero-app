@@ -351,7 +351,7 @@ const FileDropZone = ({ files, onFiles, onClear }: { files: File[]; onFiles: (fs
     e.preventDefault();
     setIsDragging(false);
     const dropped = Array.from(e.dataTransfer.files);
-    if (dropped.length > 0) onFiles(dropped);
+    if (dropped.length > 0) onFiles([dropped[0]]);
   };
 
   return (
@@ -384,13 +384,10 @@ const FileDropZone = ({ files, onFiles, onClear }: { files: File[]; onFiles: (fs
               </div>
             );
           })}
-          <div className="flex items-center justify-center p-4 border-2 border-dashed border-indigo-100 rounded-2xl cursor-pointer hover:bg-indigo-50/20 transition-all" onClick={() => inputRef.current?.click()}>
-            <p className="text-xs font-bold text-indigo-400">+ Tilføj flere filer</p>
-          </div>
           <div className="px-1 pt-1">
              <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 rounded-full w-fit shadow-md shadow-indigo-200">
                 <Sparkles className="w-3 h-3 text-white" />
-                <span className="text-[10px] font-black text-white uppercase tracking-wider">{files.length} filer klar til analyse</span>
+                <span className="text-[10px] font-black text-white uppercase tracking-wider">Fil klar til analyse</span>
              </div>
           </div>
         </div>
@@ -412,11 +409,10 @@ const FileDropZone = ({ files, onFiles, onClear }: { files: File[]; onFiles: (fs
             ref={inputRef}
             type="file"
             className="sr-only"
-            multiple
             accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
             onChange={(e) => {
-                if (e.target.files) {
-                    onFiles(Array.from(e.target.files));
+                if (e.target.files && e.target.files.length > 0) {
+                    onFiles([e.target.files[0]]);
                 }
             }}
           />
@@ -808,15 +804,15 @@ function SeminarArchitectPageContent() {
                   files={files} 
                   onFiles={(newFiles) => {
                     const validFiles = newFiles.filter(f => {
-                        const isPptx = f.name.toLowerCase().endsWith('.pptx');
-                        const isPdf = f.name.toLowerCase().endsWith('.pdf');
-                        if (!isPptx && !isPdf) {
-                            toast({ title: 'Forker filtype', description: `${f.name} blev sprunget over. Kun PPTX og PDF understøttes.`, variant: 'destructive' });
-                            return false;
-                        }
-                        return true;
+                      const isPptx = f.name.toLowerCase().endsWith('.pptx');
+                      const isPdf = f.name.toLowerCase().endsWith('.pdf');
+                      if (!isPptx && !isPdf) {
+                        toast({ title: 'Forker filtype', description: `${f.name} blev sprunget over. Kun PPTX og PDF understøttes.`, variant: 'destructive' });
+                        return false;
+                      }
+                      return true;
                     });
-                    setFiles(prev => [...prev, ...validFiles]);
+                    setFiles(validFiles.slice(0, 1));
                   }} 
                   onClear={(idx) => setFiles(prev => prev.filter((_, i) => i !== idx))} 
                 />
