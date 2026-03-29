@@ -13,10 +13,11 @@ export default function PageViewTracker() {
   const firestore = useFirestore();
   
   const fbclid = searchParams?.get('fbclid');
+  const uf = searchParams?.get('uf');
   const lastTrackedTime = useRef<number>(0);
   const lastTrackedPath = useRef<string | null>(null);
 
-  const trackView = useCallback(async (path: string, fbclidValue?: string | null) => {
+  const trackView = useCallback(async (path: string, fbclidValue?: string | null, ufValue?: string | null) => {
     const now = Date.now();
     // Throttle: Don't track if the last track was less than a second ago
     if (now - lastTrackedTime.current < 1000) {
@@ -42,11 +43,15 @@ export default function PageViewTracker() {
         // 1. Log the page view event (works for both auth and anonymous)
         const pageViewsCollection = collection(firestore, 'pageViews');
         const newViewRef = doc(pageViewsCollection);
+        
+        const source = fbclidValue ? 'facebook' : (ufValue === 'tiktok' ? 'tiktok' : 'direct');
+        
         batch.set(newViewRef, {
           userId: user?.uid || 'anonymous',
           path: path,
           fbclid: fbclidValue || null,
-          source: fbclidValue ? 'facebook' : 'direct',
+          uf: ufValue || null,
+          source: source,
           timestamp: serverTimestamp()
         });
 
@@ -69,19 +74,45 @@ export default function PageViewTracker() {
             }, { merge: true });
         }
 
+        // 2b. If it's a TikTok referral, update aggregate stats
+        if (ufValue === 'tiktok') {
+            const statsRef = doc(firestore, 'stats', 'referrals');
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            // Increment total TikTok clicks and daily TikTok clicks
+            batch.set(statsRef, {
+                totalTikTokClicks: increment(1),
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
+
+            const dailyStatsRef = doc(firestore, `stats/referrals/daily/${today}`);
+            batch.set(dailyStatsRef, {
+                tiktokClicks: increment(1),
+                date: today,
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
+        }
+
         // 3. If user is logged in, update their activity
         if (user && userProfile) {
             const userRef = doc(firestore, 'users', user.uid);
-            batch.update(userRef, { 
+            
+            const updates: any = {
                 lastActivityAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                // If first time from FB, store it on the user profile
-                ...(fbclidValue && !userProfile.firstFbclid ? {
-                    firstFbclid: fbclidValue,
-                    conversionSource: 'facebook',
-                    convertedAt: serverTimestamp()
-                } : {})
-            });
+            };
+
+            // If first time from FB, store it on the user profile
+            if (fbclidValue && !userProfile.conversionSource) {
+                updates.firstFbclid = fbclidValue;
+                updates.conversionSource = 'facebook';
+                updates.convertedAt = serverTimestamp();
+            } else if (ufValue === 'tiktok' && !userProfile.conversionSource) {
+                updates.conversionSource = 'tiktok';
+                updates.convertedAt = serverTimestamp();
+            }
+
+            batch.update(userRef, updates);
         }
 
         await batch.commit();
@@ -95,15 +126,15 @@ export default function PageViewTracker() {
   // Track navigation changes
   useEffect(() => {
     if (pathname) {
-      trackView(pathname, fbclid);
+      trackView(pathname, fbclid, uf);
     }
-  }, [trackView, pathname, fbclid]);
+  }, [trackView, pathname, fbclid, uf]);
   
   // Track visibility changes (tab focus) to count as activity
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && pathname) {
-        trackView(pathname, fbclid);
+        trackView(pathname, fbclid, uf);
       }
     };
     
@@ -112,7 +143,7 @@ export default function PageViewTracker() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [trackView, pathname, fbclid]);
+  }, [trackView, pathname, fbclid, uf]);
 
   return null;
 }

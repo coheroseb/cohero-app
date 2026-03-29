@@ -20,6 +20,7 @@ import {
   BarChart3,
   Users,
   Facebook,
+  Music,
   Zap,
   CreditCard,
   Target,
@@ -241,6 +242,9 @@ const StatsPageContent = () => {
       const subscriptionChurnRate = totalPaidUsers > 0 ? (subscriptionChurnCount / totalPaidUsers) * 100 : 0;
       const fbConversions = allUsers.filter(u => u.conversionSource === 'facebook').length;
       const fbConversionRate = totalUsers > 0 ? (fbConversions / totalUsers) * 100 : 0;
+      
+      const tiktokConversions = allUsers.filter(u => u.conversionSource === 'tiktok').length;
+      const tiktokConversionRate = totalUsers > 0 ? (tiktokConversions / totalUsers) * 100 : 0;
 
       return {
           totalUsers,
@@ -256,7 +260,10 @@ const StatsPageContent = () => {
           subscriptionChurnRate: subscriptionChurnRate.toFixed(1),
           fbConversions,
           fbConversionRate: fbConversionRate.toFixed(1),
-          totalFbClicks: referralStats?.totalFbClicks || 0
+          totalFbClicks: referralStats?.totalFbClicks || 0,
+          tiktokConversions,
+          tiktokConversionRate: tiktokConversionRate.toFixed(1),
+          totalTikTokClicks: referralStats?.totalTikTokClicks || 0
       };
     }, [users, referralStats]);
 
@@ -328,9 +335,12 @@ const StatsPageContent = () => {
         description: 'Effektivitet af eksterne kanaler og henvisninger.',
         items: [
           { title: 'FB Klik', value: stats.totalFbClicks, description: 'Samlede klik fra FB', icon: MousePointer2, color: 'violet' as const },
+          { title: 'TikTok Klik', value: stats.totalTikTokClicks, description: 'Samlede klik fra TikTok', icon: Music, color: 'violet' as const },
           { title: 'FB Conv.', value: stats.fbConversions, description: 'Profiler via Facebook', icon: Facebook, color: 'violet' as const },
-          { title: 'Conv. Rate', value: stats.fbConversionRate, suffix: '%', description: 'FB andel af brugere', icon: TrendingUp, color: 'violet' as const },
-          { title: 'Organic', value: (stats.totalUsers - stats.fbConversions), description: 'Ikke-marketing brugere', icon: Users, color: 'violet' as const },
+          { title: 'TikTok Conv.', value: stats.tiktokConversions, description: 'Profiler via TikTok', icon: Music, color: 'violet' as const },
+          { title: 'FB Rate', value: stats.fbConversionRate, suffix: '%', description: 'FB andel af brugere', icon: TrendingUp, color: 'violet' as const },
+          { title: 'TikTok Rate', value: stats.tiktokConversionRate, suffix: '%', description: 'TikTok andel af brugere', icon: TrendingUp, color: 'violet' as const },
+          { title: 'Organic', value: (stats.totalUsers - stats.fbConversions - stats.tiktokConversions), description: 'Ikke-marketing brugere', icon: Users, color: 'violet' as const },
         ]
       }
     ];
