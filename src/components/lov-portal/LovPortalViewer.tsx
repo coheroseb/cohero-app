@@ -2196,44 +2196,6 @@ export function LovPortalViewer() {
                                 </div>
                             </div>
 
-                            {/* ZEN JOURNEY: SITUATION GUIDES */}
-                            <section className="space-y-10">
-                                <div className="flex items-center gap-6 px-4">
-                                    <div className="w-3 h-3 bg-orange-500 rounded-full shadow-lg shadow-orange-500/20"></div>
-                                    <h3 className="text-[13px] font-black uppercase tracking-[0.4em] text-amber-950/40 whitespace-nowrap">Situation-baserede guides</h3>
-                                    <div className="h-px w-full bg-gradient-to-r from-amber-100 to-transparent" />
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-2">
-                                    {SITUATIONS.slice(0, 4).map((s, i) => (
-                                        <motion.div 
-                                            key={s.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: i * 0.1 }}
-                                            onClick={() => setActiveSituationId(s.id)}
-                                            className="group bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm hover:shadow-2xl hover:border-amber-950 cursor-pointer transition-all duration-700 relative overflow-hidden active:scale-95"
-                                        >
-                                            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-150 transition-transform duration-1000">{s.icon}</div>
-                                            <div className={`w-12 h-12 rounded-2xl ${s.color} flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 transition-transform`}>
-                                                {React.cloneElement(s.icon as React.ReactElement, { className: "w-6 h-6" })}
-                                            </div>
-                                            <h4 className="text-xl font-black text-amber-950 serif-premium mb-2">{s.title}</h4>
-                                            <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic pr-4">{s.description}</p>
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            {activeSituationId && (
-                                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                                    <div className="absolute inset-0 bg-amber-950/40 backdrop-blur-md" onClick={() => setActiveSituationId(null)}></div>
-                                    <div className="relative bg-[#FDFCF8] w-full max-w-4xl rounded-[4rem] shadow-[0_50px_100px_rgba(0,0,0,0.3)] overflow-hidden p-10 md:p-20 border border-white/20">
-                                        <button onClick={() => setActiveSituationId(null)} className="absolute top-10 right-10 p-4 rounded-full hover:bg-amber-50 text-slate-300 hover:text-amber-950 transition-all"><X className="w-8 h-8" /></button>
-                                        <DecisionTreeFlow situation={SITUATIONS.find(s => s.id === activeSituationId)} onCancel={() => setActiveSituationId(null)} />
-                                    </div>
-                                </div>
-                            )}
-
                             <div className="space-y-24">
                                 {Object.entries(groupedLaws).map(([category, laws], groupIdx) => (
                                   laws.length > 0 && (
