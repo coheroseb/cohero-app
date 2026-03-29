@@ -98,6 +98,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
 
         const stripe = await stripePromise;
         if (!stripe) throw new Error('Stripe.js has not loaded yet.');
+        if (!sessionId) throw new Error('Failed to create a valid checkout session.');
 
         await stripe.redirectToCheckout({ sessionId });
 
@@ -166,6 +167,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
       lastLawPortalUsage: null,
       dailyChallengeStreak: 0,
       lastDailyChallengeDate: null,
+      lastCompletedChallengeDate: null,
       mementoLevels: { theorist: 0, paragraph: 0, method: 0 },
       weeklySynthesisHeatmapCount: 0,
       lastSynthesisHeatmapUsage: null,

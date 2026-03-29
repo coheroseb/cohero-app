@@ -214,7 +214,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const lastPlayedTimestamp = userProfile.lastDailyChallengeDate?.toDate();
+    const lastPlayedTimestamp = userProfile.lastCompletedChallengeDate?.toDate ? userProfile.lastCompletedChallengeDate.toDate() : (userProfile.lastCompletedChallengeDate ? new Date(userProfile.lastCompletedChallengeDate) : null);
     
     if (lastPlayedTimestamp) {
         const lastPlayedDate = new Date(lastPlayedTimestamp);
@@ -241,6 +241,60 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
     fixMissingStartDate();
   }, [user, userProfile, firestore, refetchUserProfile]);
+
+  // Streak System Maintenance (Daily Login Streak)
+  useEffect(() => {
+    if (!user || userProfile === undefined || userProfile === null || !firestore) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastStreakUpdate = userProfile.lastDailyChallengeDate?.toDate 
+        ? userProfile.lastDailyChallengeDate.toDate() 
+        : (userProfile.lastDailyChallengeDate ? new Date(userProfile.lastDailyChallengeDate) : null);
+    
+    if (lastStreakUpdate) {
+        lastStreakUpdate.setHours(0, 0, 0, 0);
+    }
+
+    // Already updated today?
+    if (lastStreakUpdate && lastStreakUpdate.getTime() === today.getTime()) {
+        return;
+    }
+
+    const updateStreak = async () => {
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+
+        let newStreak = 1;
+        // If last update was yesterday, increment.
+        if (lastStreakUpdate && lastStreakUpdate.getTime() === yesterday.getTime()) {
+            newStreak = (userProfile.dailyChallengeStreak || 0) + 1;
+        }
+
+        const currentHighest = userProfile.highestStreak || 0;
+        const finalHighest = Math.max(currentHighest, newStreak);
+
+        console.log(`[Streak] Updating streak for ${user.uid}. Old streak: ${userProfile.dailyChallengeStreak}, New streak: ${newStreak}, Highest: ${finalHighest}`);
+
+        try {
+            const userRef = doc(firestore, 'users', user.uid);
+            const updateObj: any = {
+                dailyChallengeStreak: newStreak,
+                lastDailyChallengeDate: serverTimestamp(),
+                lastLogin: serverTimestamp(),
+            };
+            if (finalHighest > currentHighest) {
+                updateObj.highestStreak = finalHighest;
+            }
+            await updateDoc(userRef, updateObj);
+        } catch (err) {
+            console.error("Failed to update daily streak:", err);
+        }
+    };
+
+    updateStreak();
+  }, [user, userProfile?.dailyChallengeStreak, userProfile?.lastDailyChallengeDate, firestore]);
 
 
   useEffect(() => {

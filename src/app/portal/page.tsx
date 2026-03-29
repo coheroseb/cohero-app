@@ -747,6 +747,23 @@ const PortalPageContent: React.FC = () => {
                     : "Alt hvad du skal bruge til socialrådgiverstudiet, samlet ét sted. Klar til dagens udfordringer?"}
               </p>
 
+              <div className="mt-10 flex flex-col gap-4 py-6 px-7 bg-white/80 backdrop-blur-md border border-slate-200/50 rounded-[32px] sm:rounded-[40px] max-w-xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] group hover:bg-white hover:shadow-2xl hover:shadow-rose-500/5 transition-all duration-700 animate-in fade-in slide-in-from-left-6 duration-1000 relative overflow-hidden group">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-rose-50 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center border border-rose-100/50 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                    <Flame className="w-6 h-6 fill-current" />
+                  </div>
+                  <div>
+                    <h3 className="text-[14px] font-black uppercase text-slate-950 tracking-[0.1em]">Høj Engagement = Din Fremtid</h3>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-0.5">Din uddannelse sker dag for dag</p>
+                  </div>
+                </div>
+                <p className="text-[15px] text-slate-700 font-medium leading-relaxed italic border-l-4 border-rose-500/20 pl-6 py-1 relative z-10 text-balance">
+                  "Høj streak er et tegn på høj engagement. Din fremtidige arbejdsgiver vil elske at vide, at du har dygtiggjort dig hver dag. Log ind hver dag for at holde din streak i live!"
+                </p>
+                <div className="absolute top-4 right-6 text-[10px] font-black text-rose-600/20 uppercase tracking-widest hidden sm:block">Faglig Stolthed</div>
+              </div>
+
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-8">
                   <Button asChild className="h-14 px-8 bg-amber-500 text-white rounded-[20px] font-bold hover:bg-amber-600 transition-all shadow-lg hover:scale-105 active:scale-95 border-none">
                       <Link href="/praktik-rating" className="flex items-center gap-2.5">

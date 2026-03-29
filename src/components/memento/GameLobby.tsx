@@ -148,27 +148,28 @@ export const GameLobby: React.FC<GameLobbyProps> = ({
                                       <Sparkles className="w-4 h-4 text-emerald-200" /> Dagens Udfordring
                                   </div>
                                   <h3 className="text-4xl md:text-5xl lg:text-6xl font-black serif leading-[1.1] tracking-tight transition-transform group-hover:translate-x-2 duration-700">
-                                      Boost din <span className="text-emerald-400 italic">streak</span> <br />& få dobbelt op
+                                      Hent dine <span className="text-emerald-400 italic">bonuspoint</span> <br />& bliv endnu skarpere
                                   </h3>
                                   <p className="text-amber-100/50 text-xl font-medium italic leading-relaxed max-w-xl">
                                       {hasPlayedDailyChallenge 
-                                          ? "Godt klaret! Du har allerede styrket din streak i dag."
-                                          : `Gennemfør ${gameDataSets[dailyChallengeGameType].title} for at låse op for bonuspoint.`
+                                          ? "Godt klaret! Du har allerede hentet din daglige dannelses-bonus i dag."
+                                          : `Gennemfør ${gameDataSets[dailyChallengeGameType].title} for at få bonuspoint baseret på din ${userProfile?.dailyChallengeStreak || 0} dages streak.`
                                       }
                                   </p>
                                   <Button disabled={hasPlayedDailyChallenge} size="lg" className="h-20 px-12 rounded-[2rem] bg-emerald-500 text-white hover:bg-white hover:text-emerald-900 border-none font-black uppercase text-xs tracking-widest transition-all disabled:bg-emerald-600">
-                                      {hasPlayedDailyChallenge ? <><CheckCircle className="w-5 h-5 mr-3" /> Gennemført i dag</> : <><Zap className="w-5 h-5 mr-3 text-amber-300" /> Start nu</>}
+                                      {hasPlayedDailyChallenge ? <><CheckCircle className="w-5 h-5 mr-3" /> Bonus modtaget</> : <><Zap className="w-5 h-5 mr-3 text-amber-300" /> Start & få bonus</>}
                                   </Button>
                               </div>
 
                               <div className="bg-white/5 border border-white/10 p-10 rounded-[3.5rem] flex flex-col items-center justify-center text-center backdrop-blur-md relative group-hover:bg-white/10 transition-all duration-700">
                                   <div className="w-20 h-20 bg-emerald-400 rounded-3xl flex items-center justify-center text-emerald-950 mb-6 shadow-2xl relative">
-                                      <Flame className="w-10 h-10 fill-current" />
+                                      <Zap className="w-10 h-10 fill-current" />
                                       <div className="absolute inset-0 bg-emerald-400 rounded-3xl animate-ping opacity-20" />
                                   </div>
-                                  <p className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-2">Streak</p>
-                                  <p className="text-4xl font-black serif tracking-tighter">{userProfile?.dailyChallengeStreak || 0} Dage</p>
+                                  <p className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-2">Bonus-status</p>
+                                  <p className="text-3xl font-black serif tracking-tighter">Tilgængelig</p>
                               </div>
+
                           </div>
                       </motion.div>
                   </section>

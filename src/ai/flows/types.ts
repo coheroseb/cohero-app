@@ -112,8 +112,11 @@ export interface UserProfile {
   badges?: string[];
   cohéroPoints?: number;
   role?: 'user' | 'admin';
-  lastDailyChallengeDate?: any; // Using any or Timestamp if imported
+  lastLogin?: any;
+  lastDailyChallengeDate?: any; // The last time the STREAK was updated (login or play)
+  lastCompletedChallengeDate?: any; // The last time they actually FINISHED a challenge
   dailyChallengeStreak?: number;
+  highestStreak?: number;
   lastCaseTrainerUsage?: any;
   weeklyCaseTrainerCount?: number;
   dailyCaseTrainerCount?: number;
@@ -147,6 +150,7 @@ export interface UserProfile {
   monthlyTokenTimestamp?: any;
   isHighUsage?: boolean;
   streakReminderSentAt?: any;
+
   totalSeminarAnalyses?: number;
   mementoLevels?: {
     theorist?: number;

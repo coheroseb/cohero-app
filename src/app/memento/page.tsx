@@ -245,31 +245,20 @@ const MementoPageContent: React.FC<{ user: any }> = ({ user }) => {
             
             if (isDailyChallenge && wasSuccessful) {
                 const today = new Date(); today.setHours(0, 0, 0, 0);
-                const lastPlayedTimestamp = userProfile.lastDailyChallengeDate;
-                const lastPlayedDate = lastPlayedTimestamp ? (lastPlayedTimestamp.toDate ? lastPlayedTimestamp.toDate() : new Date(lastPlayedTimestamp)) : null;
                 
-                let isSameDay = false;
-                if (lastPlayedDate) {
-                    const startOfLastPlayedDay = new Date(lastPlayedDate);
-                    startOfLastPlayedDay.setHours(0,0,0,0);
-                    isSameDay = startOfLastPlayedDay.getTime() === today.getTime();
-                }
+                const lastPlayedTimestamp = userProfile.lastCompletedChallengeDate;
+                const lastPlayedDate = lastPlayedTimestamp ? (lastPlayedTimestamp.toDate ? lastPlayedTimestamp.toDate() : new Date(lastPlayedTimestamp)) : null;
+                const playedToday = lastPlayedDate && (new Date(lastPlayedDate).setHours(0,0,0,0) === today.getTime());
 
-                if (!isSameDay) {
-                    const yesterday = new Date(today);
-                    yesterday.setDate(today.getDate() - 1);
+                if (!playedToday) {
+                    streakUpdate.lastCompletedChallengeDate = serverTimestamp();
                     
-                    const wasPlayedYesterday = lastPlayedDate && lastPlayedDate.getTime() >= yesterday.getTime() && lastPlayedDate.getTime() < today.getTime();
-
-                    newStreak = wasPlayedYesterday ? newStreak + 1 : 1;
-                    bonusPoints = newStreak > 1 ? 75 * (newStreak) : 50; // Increased bonus for fun
-                    
-                    streakUpdate = {
-                        dailyChallengeStreak: newStreak,
-                        lastDailyChallengeDate: serverTimestamp(),
-                    };
+                    // Award bonus points based on the current login streak
+                    const currentStreak = userProfile.dailyChallengeStreak || 0;
+                    bonusPoints = currentStreak > 1 ? 75 * currentStreak : 50; 
                 }
             }
+
 
             const totalPointsToAdd = score + bonusPoints;
 
