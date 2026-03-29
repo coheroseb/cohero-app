@@ -1520,3 +1520,25 @@ export const AnalyzeCasePdfOutputSchema = z.object({
 export type CaseAnalysis = z.infer<typeof CaseAnalysisSchema>;
 export type AnalyzeCasePdfInput = z.infer<typeof AnalyzeCasePdfInputSchema>;
 export type AnalyzeCasePdfOutput = z.infer<typeof AnalyzeCasePdfOutputSchema>;
+
+// ==========================================
+// EXAM ARCHITECT SUGGESTION SCHEMAS
+// ==========================================
+export const SuggestExamTopicInputSchema = z.object({
+  semester: z.string(),
+  seminarContext: z.string(),
+});
+
+export const SuggestExamTopicDataSchema = z.object({
+  suggestedTopic: z.string(),
+  suggestedProblemStatement: z.string(),
+});
+
+export const SuggestExamTopicOutputSchema = z.object({
+  data: SuggestExamTopicDataSchema,
+  usage: UsageSchema,
+});
+
+export type SuggestExamTopicInput = z.infer<typeof SuggestExamTopicInputSchema>;
+export type SuggestExamTopicData = z.infer<typeof SuggestExamTopicDataSchema>;
+export type SuggestExamTopicOutput = z.infer<typeof SuggestExamTopicOutputSchema>;

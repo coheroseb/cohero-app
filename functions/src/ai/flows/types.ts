@@ -1480,4 +1480,24 @@ export const SeminarChatOutputSchema = z.object({
 
 export type SeminarChatInput = z.infer<typeof SeminarChatInputSchema>;
 export type SeminarChatData = z.infer<typeof SeminarChatDataSchema>;
-export type SeminarChatOutput = z.infer<typeof SeminarChatOutputSchema>;
+export type SeminarChatOutput = z.infer<typeof SeminarChatOutputSchema>;// ==========================================
+// EXAM ARCHITECT SUGGESTION SCHEMAS
+// ==========================================
+export const SuggestExamTopicInputSchema = z.object({
+  semester: z.string(),
+  seminarContext: z.string(),
+});
+
+export const SuggestExamTopicDataSchema = z.object({
+  suggestedTopic: z.string(),
+  suggestedProblemStatement: z.string(),
+});
+
+export const SuggestExamTopicOutputSchema = z.object({
+  data: SuggestExamTopicDataSchema,
+  usage: UsageSchema,
+});
+
+export type SuggestExamTopicInput = z.infer<typeof SuggestExamTopicInputSchema>;
+export type SuggestExamTopicData = z.infer<typeof SuggestExamTopicDataSchema>;
+export type SuggestExamTopicOutput = z.infer<typeof SuggestExamTopicOutputSchema>;

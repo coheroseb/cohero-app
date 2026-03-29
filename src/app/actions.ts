@@ -421,6 +421,7 @@ export async function analyzeParagraphAction(input: { lovTitel: string, paragraf
 export async function recommendTechniqueAction(input: any) { return callFirebaseFlow('recommendTechniqueFlow', input); }
 export async function explainTechniqueWithAnalogyAction(input: any) { return callFirebaseFlow('explainTechniqueWithAnalogyFlow', input); }
 export async function generateExamBlueprintAction(input: any) { return callFirebaseFlow('generateExamBlueprintFlow', input); }
+export async function suggestExamTopicAction(input: any) { return callFirebaseFlow('suggestExamTopicFlow', input); }
 export async function getIntroCaseConsequenceAction(input: any) { return callFirebaseFlow('getIntroCaseConsequenceFlow', input); }
 export async function getMythBusterResponseAction(input: any) { return callFirebaseFlow('getMythBusterResponseFlow', input); }
 export async function getCareerMatchAction(input: any) { return callFirebaseFlow('getCareerMatchFlow', input); }

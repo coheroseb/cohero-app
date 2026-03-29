@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, addDoc, serverTimestamp, writeBatch, increment, query, where, DocumentData } from 'firebase/firestore';
-import { generateExamBlueprintAction } from '@/app/actions';
+import { generateExamBlueprintAction, suggestExamTopicAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -71,6 +71,8 @@ const ExamArchitectPageContent: React.FC = () => {
   
   const [topic, setTopic] = useState('');
   const [problemStatement, setProblemStatement] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const [semester, setSemester] = useState('');
   const [type, setType] = useState('Semesteropgave');
   const [institution, setInstitution] = useState('');
@@ -82,16 +84,42 @@ const ExamArchitectPageContent: React.FC = () => {
   const [limitError, setLimitError] = useState<string | null>(null);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
   
-  const isPremiumUser = useMemo(() => userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership), [userProfile]);
+  const isPremiumUser = useMemo(() => {
+    if (userProfile?.role === 'admin') return true;
+    return userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++', 'Institutionspakken'].includes(userProfile.membership);
+  }, [userProfile]);
 
   const seminarsQuery = useMemoFirebase(() => {
-    if (!user || !firestore || !semester) return null;
+    if (!user || !firestore) return null;
     return query(
-      collection(firestore, 'users', user.uid, 'seminars'),
-      where('semester', '==', semester)
+      collection(firestore, 'users', user.uid, 'seminars')
     );
-  }, [user, firestore, semester]);
+  }, [user, firestore]);
   const { data: seminars } = useCollection<DocumentData>(seminarsQuery);
+  const categories = useMemo(() => {
+    if (!seminars) return [];
+    return Array.from(new Set(seminars.map(s => s.category).filter(Boolean))) as string[];
+  }, [seminars]);
+
+  const handleSuggest = async () => {
+    if (!selectedCategory || !seminars) return;
+    setIsSuggesting(true);
+    try {
+      const filtered = seminars.filter(s => s.category === selectedCategory);
+      const context = filtered.map(s => `Seminar: ${s.overallTitle}\n${s.slides?.map((sl: any) => `Slide ${sl.slideNumber}: ${sl.summary}`).join('\n')}`).join('\n\n---\n\n');
+      
+      const result = await suggestExamTopicAction({ semester, seminarContext: context });
+      if (result?.data) {
+        setTopic(result.data.suggestedTopic);
+        setProblemStatement(result.data.suggestedProblemStatement);
+        toast({ title: 'Magi fra arkivet! ✨', description: 'Systemet har nu foreslået et emne og problemformulering ud fra dine gemte slides.' });
+      }
+    } catch {
+      toast({ title: 'Hov!', description: 'Noget gik galt under magien. Sørg for at du har premium for at bruge denne funktion.', variant: 'destructive' });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
   const hasSeminars = useMemo(() => seminars && seminars.length > 0, [seminars]);
   
   const isFormValid = useMemo(() => topic.trim() !== '', [topic]);
@@ -190,31 +218,34 @@ const ExamArchitectPageContent: React.FC = () => {
 
   return (
     <TooltipProvider>
-    <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-indigo-100">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col selection:bg-indigo-100 relative overflow-hidden">
+      {/* Structural Background Pattern */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '24px 24px'}}></div>
       
       {/* HEADER */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-indigo-100 px-6 py-4 sticky top-0 z-40 transition-all duration-300">
+      <header className="bg-white/70 backdrop-blur-xl border-b border-indigo-50 px-6 py-4 sticky top-0 z-40 transition-all duration-300">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <Link href="/portal" className="p-2.5 bg-slate-50 text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all">
+          <div className="flex items-center gap-6">
+            <Link href="/portal" className="p-2.5 bg-slate-50 text-slate-500 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                 <PencilRuler className="w-3.5 h-3.5 text-indigo-500" />
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Akademisk Byggearkitekt</span>
+                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
+                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Architectural Studio v2.0</span>
               </div>
-              <h1 className="text-lg font-bold text-slate-900">Eksamens-Arkitekten</h1>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">Eksamens-Arkitekten</h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-             <Link href="/mine-byggeplaner" className="p-2 text-slate-400 hover:text-slate-900 transition-colors hidden sm:block">
+          <div className="flex items-center gap-4">
+             <Link href="/mine-byggeplaner" className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all hidden sm:flex items-center gap-2">
                 <History className="w-5 h-5" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Arkiv</span>
              </Link>
              <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
-             <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-900/10">
-                <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-widest hidden md:inline">AI Struktur-Generator</span>
+             <div className="flex items-center gap-3 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-600/20 group cursor-default">
+                <Sparkles className="w-4 h-4 text-indigo-200 group-hover:rotate-12 transition-transform" />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Structural Intelligence</span>
              </div>
           </div>
         </div>
@@ -237,24 +268,74 @@ const ExamArchitectPageContent: React.FC = () => {
               </div>
             </div>
             
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Emne / Arbejdstitel *</label>
-                <Input 
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="F.eks: Barnets Lov og inddragelse..."
-                  className="w-full h-14 bg-slate-50 border-slate-100 rounded-2xl focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium"
-                />
-              </div>
+            <div className="space-y-6">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between ml-1">
+                    <label htmlFor="topic" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Emne / Arbejdstitel</label>
+                    {isPremiumUser && categories.length > 0 && !selectedCategory && (
+                       <span className="text-[8px] font-bold text-indigo-400 uppercase animate-pulse">Brug magi fra Arkivet →</span>
+                    )}
+                  </div>
+                  
+                  {isPremiumUser && (
+                    <div className="flex flex-col gap-2 animate-in slide-in-from-top-1 duration-500">
+                      {categories.length > 0 ? (
+                        <div className="p-3 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-black text-indigo-500 uppercase tracking-tighter flex items-center gap-1">
+                              <Presentation className="w-3 h-3" /> Genvej fra seminarer
+                            </span>
+                            {selectedCategory && (
+                              <button onClick={() => setSelectedCategory(null)} className="text-[8px] font-black text-slate-400 hover:text-rose-500 uppercase">Nulstil</button>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <select 
+                              value={selectedCategory || ''}
+                              onChange={e => setSelectedCategory(e.target.value || null)}
+                              className="flex-1 h-9 px-3 bg-white border border-indigo-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer shadow-sm"
+                            >
+                              <option value="">Vælg Kategori...</option>
+                              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            {selectedCategory && (
+                              <Button 
+                                size="sm" 
+                                onClick={handleSuggest} 
+                                disabled={isSuggesting}
+                                className="h-9 px-4 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-600/10 transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shrink-0"
+                              >
+                                {isSuggesting ? <Loader2 className="w-3 h-3 animate-spin"/> : <Zap className="w-3 h-3" />}
+                                Udfyld automatisk
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[9px] font-medium text-slate-400 bg-slate-50/50 px-4 py-3 rounded-2xl border border-slate-100 italic flex items-start gap-3">
+                           <Info className="w-4 h-4 text-indigo-400 shrink-0" />
+                           <span>Giv dine seminarer en kategori for at få AI-arkitekten til selv at foreslå emne og problemformulering her.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <Input 
+                    id="topic"
+                    placeholder="F.eks. Kommunalbestyrelsens ansvar ift. anbragte børn..." 
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    className="h-14 bg-slate-50 border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-sm"
+                  />
+                </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Problemformulering (Udkast)</label>
                 <Textarea 
                   value={problemStatement}
                   onChange={(e) => setProblemStatement(e.target.value)}
-                  placeholder="Hvad er det centrale spørgsmål?..."
-                  className="w-full h-32 bg-slate-50 border-slate-100 rounded-2xl focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm resize-none"
+                  placeholder="Hvad er det centrale spørgsmål du gerne vil undersøge?..."
+                  className="w-full h-36 bg-slate-50 border-slate-100 rounded-2xl focus:ring-indigo-500/5 focus:border-indigo-200 focus:bg-white transition-all text-sm font-medium resize-none shadow-sm leading-relaxed"
                 />
               </div>
 
@@ -264,7 +345,7 @@ const ExamArchitectPageContent: React.FC = () => {
                   <select 
                     value={semester}
                     onChange={(e) => setSemester(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border-slate-100 rounded-xl text-sm font-bold focus:ring-indigo-500"
+                    className="w-full h-12 bg-slate-50 border-slate-100 rounded-xl text-xs font-black uppercase tracking-wider focus:ring-indigo-500/10 focus:border-indigo-200 transition-all appearance-none cursor-pointer px-4"
                   >
                     {[1,2,3,4,5,6,7].map(s => <option key={s} value={`${s}. semester`}>{s}. semester</option>)}
                   </select>
@@ -274,7 +355,7 @@ const ExamArchitectPageContent: React.FC = () => {
                   <select 
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border-slate-100 rounded-xl text-sm font-bold focus:ring-indigo-500"
+                    className="w-full h-12 bg-slate-50 border-slate-100 rounded-xl text-xs font-black uppercase tracking-wider focus:ring-indigo-500/10 focus:border-indigo-200 transition-all appearance-none cursor-pointer px-4"
                   >
                     <option>Semesteropgave</option>
                     <option>Bachelorprojekt</option>
@@ -284,14 +365,14 @@ const ExamArchitectPageContent: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${includeSeminars ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400'}`}>
-                    <Presentation className="w-4 h-4" />
+              <div className="bg-indigo-50/50 p-5 rounded-[2rem] border border-indigo-100/50 flex items-center justify-between group hover:border-indigo-200 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-[1rem] flex items-center justify-center transition-all duration-500 ${includeSeminars ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 rotate-6' : 'bg-white text-slate-400 active:scale-95 shadow-sm'}`}>
+                    <Presentation className="w-5 h-5" />
                   </div>
                   <div>
-                    <label htmlFor="incl-sem" className={`text-xs font-bold block cursor-pointer ${(!isPremiumUser || !hasSeminars) ? 'text-slate-300' : 'text-slate-700'}`}>Hent mine seminarer</label>
-                    <p className="text-[9px] text-slate-400 font-medium">Brug dine egne analyser som kontekst</p>
+                    <label htmlFor="incl-sem" className={`text-xs font-black uppercase tracking-wider block cursor-pointer transition-colors ${(!isPremiumUser || !hasSeminars) ? 'text-slate-300' : 'text-slate-700'}`}>Inkludér Arkiv</label>
+                    <p className="text-[9px] text-indigo-400/70 font-bold uppercase tracking-tighter">Brug egne analyser som kontekst</p>
                   </div>
                 </div>
                 <input
@@ -300,26 +381,33 @@ const ExamArchitectPageContent: React.FC = () => {
                   checked={includeSeminars}
                   onChange={(e) => setIncludeSeminars(e.target.checked)}
                   disabled={!isPremiumUser || !hasSeminars}
-                  className="w-5 h-5 rounded-md border-indigo-200 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-6 h-6 rounded-lg border-indigo-200 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer shadow-sm"
                 />
               </div>
 
               {limitError ? (
-                <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl">
-                  <div className="flex gap-3 mb-2">
-                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                    <p className="text-xs font-bold text-rose-900">{limitError}</p>
+                <div className="bg-rose-50 border border-rose-100 p-6 rounded-[2rem] animate-in shake duration-500">
+                  <div className="flex gap-4 mb-3">
+                    <div className="w-8 h-8 bg-rose-500 rounded-xl flex items-center justify-center shrink-0">
+                      <AlertCircle className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-rose-900 uppercase tracking-wide">Grænse nået</p>
+                      <p className="text-[11px] font-medium text-rose-700 leading-normal mt-0.5">{limitError}</p>
+                    </div>
                   </div>
-                  <Link href="/upgrade" className="text-[10px] font-black uppercase tracking-widest text-indigo-600 flex items-center gap-1 hover:underline">Opgrader nu <ChevronRight className="w-3 h-3"/></Link>
+                  <Link href="/upgrade" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white bg-rose-600 px-6 py-2.5 rounded-xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20">
+                     Opgrader nu <ChevronRight className="w-3.5 h-3.5"/>
+                  </Link>
                 </div>
               ) : (
                 <Button 
                   onClick={handleGenerate}
                   disabled={!isFormValid || isGenerating}
-                  className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-lg shadow-indigo-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                  className="w-full h-16 bg-slate-900 border-b-4 border-slate-700 hover:bg-slate-800 text-white rounded-[2rem] font-black group shadow-xl shadow-slate-900/10 transition-all active:translate-y-1 active:border-b-0 disabled:opacity-50 disabled:translate-y-0 disabled:border-b-4 flex items-center justify-center gap-4 text-sm"
                 >
-                  {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <DraftingCompass className="w-5 h-5" />}
-                  Tegn Byggeplan
+                  {isGenerating ? <Loader2 className="w-6 h-6 animate-spin text-indigo-400" /> : <DraftingCompass className="w-6 h-6 text-indigo-400 group-hover:rotate-12 transition-transform duration-500" />}
+                  TEGN BYGGEPLAN
                 </Button>
               )}
             </div>
@@ -352,12 +440,21 @@ const ExamArchitectPageContent: React.FC = () => {
            )}
 
            {isGenerating && (
-             <div className="h-full min-h-[500px] bg-white rounded-[3rem] border border-indigo-100 flex flex-col items-center justify-center p-12 text-center relative overflow-hidden">
-                <div className="w-24 h-24 border-4 border-indigo-50 border-t-indigo-600 rounded-full animate-spin mb-8"></div>
-                <h3 className="text-2xl font-black text-slate-900 mb-2">Arkitekten arbejder...</h3>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Beregner afsnitsvægtning og teorikobling</p>
-             </div>
-           )}
+              <div className="h-full min-h-[600px] bg-white rounded-[3rem] border border-indigo-50 flex flex-col items-center justify-center p-12 text-center relative overflow-hidden shadow-2xl">
+                <div className="absolute inset-0 bg-[radial-gradient(#4f46e5_1px,transparent_1px)] opacity-[0.02] [background-size:24px_24px]"></div>
+                <div className="relative">
+                  <div className="w-32 h-32 border-[6px] border-indigo-50/50 border-t-indigo-600 rounded-full animate-spin mb-10 shadow-inner"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <DraftingCompass className="w-10 h-10 text-indigo-600 animate-pulse" />
+                  </div>
+                </div>
+                <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Arkitekten tegner...</h3>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] animate-pulse">Analyserer juridisk tyngde</p>
+                  <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Beregner afsnitsvægtning</p>
+                </div>
+              </div>
+            )}
 
            <AnimatePresence mode="wait">
             {blueprint && (
@@ -367,43 +464,57 @@ const ExamArchitectPageContent: React.FC = () => {
                 className="space-y-8"
               >
                 {/* ID Card */}
-                <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden p-8 md:p-10 relative">
-                  <div className="flex flex-col md:flex-row justify-between gap-6 mb-10">
-                     <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-black uppercase tracking-widest">{type}</span>
-                          <span className="px-2.5 py-1 bg-slate-50 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest">{semester}</span>
-                        </div>
-                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">{blueprint.title}</h2>
-                     </div>
-                     <div className="flex gap-3">
-                        <Button onClick={() => handleSave(blueprint)} disabled={isSaving} className="h-11 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/10">
-                          {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                          Gem
-                        </Button>
-                        <Button onClick={() => setIsWorkspaceOpen(true)} variant="outline" className="h-11 px-5 rounded-2xl font-bold border-slate-200">
-                           <Maximize className="w-4 h-4 mr-2" /> Fokus
-                        </Button>
-                     </div>
+                <section className="bg-white rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 p-10 opacity-[0.05] pointer-events-none">
+                     <DraftingCompass className="w-48 h-48 rotate-12" />
                   </div>
+                  
+                  <div className="p-8 md:p-12 border-b border-slate-50">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12">
+                       <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <span className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20">{type}</span>
+                            <span className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-slate-900/10 font-mono tracking-tighter">{semester}</span>
+                          </div>
+                          <h2 className="text-3xl md:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight max-w-2xl">{blueprint.title}</h2>
+                       </div>
+                       <div className="flex gap-3 shrink-0">
+                          <Button onClick={() => handleSave(blueprint)} disabled={isSaving} className="h-14 px-8 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-900/20 transition-all active:scale-95 group">
+                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-3" /> : <Save className="w-4 h-4 mr-3 group-hover:scale-110 transition-transform" />}
+                            Gem Tegning
+                          </Button>
+                          <Button onClick={() => setIsWorkspaceOpen(true)} className="h-14 px-8 rounded-2xl border-2 border-indigo-100 bg-white text-indigo-600 hover:bg-indigo-50 font-black uppercase text-[10px] tracking-widest transition-all">
+                             <Maximize className="w-4 h-4 mr-3" /> Fuldt Overblik
+                          </Button>
+                       </div>
+                    </div>
 
-                  <div className="grid sm:grid-cols-2 gap-4">
-                     <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-3">
-                           <Target className="w-3.5 h-3.5" /> Problemformulering
-                        </h4>
-                        <p className="text-sm font-bold text-slate-900 leading-relaxed mb-4">{blueprint.draftProblemStatement}</p>
-                        <p className="text-xs italic text-slate-500 border-l-2 border-indigo-200 pl-4">"{blueprint.problemStatementTip}"</p>
-                     </div>
-                     <div className="p-6 bg-indigo-600 rounded-3xl text-white shadow-xl shadow-indigo-600/20">
-                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-100 mb-3">
-                           <Layers className="w-3.5 h-3.5" /> Strategi & Rød Tråd
-                        </h4>
-                        <p className="text-sm font-medium leading-relaxed mb-4">{blueprint.researchStrategy}</p>
-                        <div className="p-3 bg-white/10 rounded-xl text-xs text-indigo-50 font-medium">
-                          <span className="text-white font-black">Arkitekt-tip: </span>{blueprint.redThreadAdvice}
-                        </div>
-                     </div>
+                    <div className="grid lg:grid-cols-2 gap-6">
+                       <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 relative group overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100/50 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-200/50 transition-all duration-700"></div>
+                          <h4 className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-6 relative z-10">
+                             <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center"><Target className="w-3.5 h-3.5" /></div>
+                             Den Akademiske Problemformulering
+                          </h4>
+                          <p className="text-lg font-black text-slate-800 leading-snug mb-6 relative z-10">{blueprint.draftProblemStatement}</p>
+                          <div className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-indigo-100/50 relative z-10">
+                             <div className="w-5 h-5 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center shrink-0 mt-0.5"><Sparkles className="w-2.5 h-2.5" /></div>
+                             <p className="text-[11px] font-bold text-slate-500 italic leading-relaxed">"{blueprint.problemStatementTip}"</p>
+                          </div>
+                       </div>
+                       <div className="p-8 bg-indigo-600 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-600/30 relative group overflow-hidden">
+                          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24 group-hover:bg-white/20 transition-all duration-700"></div>
+                          <h4 className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-200 mb-6 relative z-10">
+                             <div className="w-6 h-6 bg-white/10 rounded-lg flex items-center justify-center"><Layers className="w-3.5 h-3.5 text-white" /></div>
+                             Analyse-arkitektur & Fremgangsmåde
+                          </h4>
+                          <p className="text-lg font-bold leading-snug mb-8 relative z-10">{blueprint.researchStrategy}</p>
+                          <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl text-[11px] font-bold text-indigo-50 leading-relaxed border border-white/10 relative z-10">
+                             <span className="text-white font-black uppercase tracking-widest block mb-2 opacity-50 text-[9px]">Arkitektens Master-Tip</span>
+                             {blueprint.redThreadAdvice}
+                          </div>
+                       </div>
+                    </div>
                   </div>
                 </section>
 
@@ -473,21 +584,28 @@ const ExamArchitectPageContent: React.FC = () => {
 
                   {/* Checklist */}
                   {blueprint.checklist && (
-                    <section className="md:col-span-4 bg-indigo-900 rounded-[2.5rem] p-8 md:p-10 text-white shadow-xl relative overflow-hidden">
-                      <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mb-16 -mr-16"></div>
-                      <h3 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-8">
-                          <CheckCircle className="w-4 h-4" /> Arkitektens Tjekliste
+                    <section className="md:col-span-4 bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group/checklist">
+                      <div className="absolute inset-0 bg-[#4f46e5] opacity-5 [mask-image:radial-gradient(circle_at_center,white,transparent)]"></div>
+                      <div className="absolute bottom-0 right-0 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl -mb-24 -mr-24 group-hover/checklist:bg-indigo-600/30 transition-all duration-700"></div>
+                      
+                      <h3 className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-10 relative z-10 ml-1">
+                          <CheckCircle className="w-4 h-4" /> Kvalitetstjek
                       </h3>
-                      <ul className="space-y-4">
+                      <ul className="space-y-6 relative z-10">
                         {blueprint.checklist.map((item, k) => (
-                          <li key={k} className="flex gap-4 items-start group/check">
-                            <div className="mt-1 w-5 h-5 rounded-full border border-indigo-500 flex items-center justify-center shrink-0 group-hover/check:bg-indigo-500 transition-colors">
-                               <CheckCircle className="w-3 h-3 text-indigo-300 group-hover/check:text-white" />
+                          <li key={k} className="flex gap-5 items-start group/check">
+                            <div className="mt-1 w-6 h-6 rounded-xl border-2 border-slate-700 flex items-center justify-center shrink-0 group-hover/check:border-indigo-500 group-hover/check:bg-indigo-500 transition-all duration-300 shadow-sm">
+                               <CheckCircle className="w-3.5 h-3.5 text-slate-700 group-hover/check:text-white" />
                             </div>
-                            <p className="text-xs font-medium text-indigo-50 leading-relaxed">{item}</p>
+                            <p className="text-xs font-bold text-slate-300 group-hover/check:text-white transition-colors leading-relaxed pt-0.5">{item}</p>
                           </li>
                         ))}
                       </ul>
+                      
+                      <div className="mt-12 p-5 bg-white/5 rounded-2xl border border-white/10 relative z-10">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-2">Pro-Tip</p>
+                         <p className="text-[10px] text-slate-400 font-medium leading-relaxed italic">At følge arkitektens tjekliste sikrer at din opgave lever op til de højeste akademiske krav på tværs af semestre.</p>
+                      </div>
                     </section>
                   )}
                 </div>

@@ -76,6 +76,7 @@ import { fetchVivePublications } from './flows/vive-indsigt-flow';
 import { getViveReportQa } from './flows/vive-report-qa-flow';
 import { getSocraticReflection } from './flows/sokratisk-refleksion/flow';
 import { complaintDraftFlow } from './flows/complaint-draft-flow';
+import { suggestExamTopic } from './flows/suggest-exam-topic-flow';
 
 export const allFlows: Record<string, any> = {
   'analyzeFtDocumentFlow': analyzeFtDocument,
@@ -234,4 +235,6 @@ export const allFlows: Record<string, any> = {
   'getSocraticReflection': getSocraticReflection,
   'complaintDraftFlow': complaintDraftFlow,
   'complaintDraft': complaintDraftFlow,
+  'suggestExamTopicFlow': suggestExamTopic,
+  'suggestExamTopic': suggestExamTopic,
 };
