@@ -509,7 +509,9 @@ function SeminarArchitectPageContent() {
     // Total limit for free tier (1 upload in total)
     if (!isPremiumUser) {
       if ((userProfile.totalSeminarAnalyses || 0) >= 1) {
-        setError('Du har allerede brugt din gratis analyse. Opgrader til Kollega+ for ubegrænset brug.');
+        setError(userProfile.membership === 'Kollega' 
+          ? 'Dit Kollega-medlemskab inkluderer 1 seminar-plan. Opgrader til Kollega+ for at uploade mere materiale.' 
+          : 'Du har allerede brugt din gratis analyse. Opgrader til Kollega+ for ubegrænset brug.');
         setIsAnalyzing(false);
         return;
       }
@@ -706,7 +708,9 @@ function SeminarArchitectPageContent() {
           </div>
           <h2 className="text-2xl font-black text-slate-900 mb-4">Seminar-Arkitekten</h2>
           <p className="text-slate-500 text-sm leading-relaxed mb-10">
-            Du har brugt din gratis analyse. Opgrader til Kollega+ for at uploade flere koherente seminar-planer og få ubegrænset adgang til Seminar-Arkitekten.
+            {userProfile?.membership === 'Kollega' 
+              ? 'Det inkluderede seminar i dit Kollega-medlemskab er brugt. Opgrader til Kollega+ for at uploade ubegrænset materiale og få adgang til arkivet.' 
+              : 'Du har brugt din gratis analyse af et seminar. Opgrader til Kollega+ for at uploade dine planer og få ubegrænset adgang til Seminar-Arkitekten.'}
           </p>
           <Link href="/upgrade" className="w-full">
             <Button className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-700 text-white font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
