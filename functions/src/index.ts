@@ -118,6 +118,26 @@ export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, asyn
      }
 
      const result = await allFlows[flowName](data);
+     
+     // Log global AI usage for platform-wide cost analysis
+     if (result && result.usage) {
+        const { inputTokens = 0, outputTokens = 0 } = result.usage;
+        if (inputTokens > 0 || outputTokens > 0) {
+           try {
+             await admin.firestore().collection('stats').doc('ai_usage').set({
+                totalInputTokens: admin.firestore.FieldValue.increment(inputTokens),
+                totalOutputTokens: admin.firestore.FieldValue.increment(outputTokens),
+                lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+                // Track usage per flow type for granular analytics
+                [`flows.${flowName}.inputTokens`]: admin.firestore.FieldValue.increment(inputTokens),
+                [`flows.${flowName}.outputTokens`]: admin.firestore.FieldValue.increment(outputTokens),
+             }, { merge: true });
+           } catch (usageErr) {
+             console.error("Failed to log usage stats:", usageErr);
+           }
+        }
+     }
+
      res.status(200).json(result);
   } catch (error: any) {
      console.error(`Error in flow ${flowName}:`, error);

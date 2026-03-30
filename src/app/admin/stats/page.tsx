@@ -40,8 +40,9 @@ const PremiumStatCard = ({
   description, 
   icon: Icon, 
   trend, 
-  color = "amber",
-  suffix = ""
+  color = "indigo",
+  suffix = "",
+  href
 }: { 
   title: string; 
   value: string | number; 
@@ -50,6 +51,7 @@ const PremiumStatCard = ({
   trend?: { value: string; isPositive: boolean };
   color?: "amber" | "emerald" | "rose" | "indigo" | "violet" | "slate";
   suffix?: string;
+  href?: string;
 }) => {
   const colorMap = {
     amber: {
@@ -86,12 +88,12 @@ const PremiumStatCard = ({
 
   const selectedColor = colorMap[color];
 
-  return (
+  const content = (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02 }}
-      className={`premium-card p-6 rounded-3xl group border ${selectedColor.border}`}
+      className={`premium-card p-6 rounded-3xl group border ${selectedColor.border} h-full relative overflow-hidden bg-white`}
     >
       <div className="flex justify-between items-start mb-4">
         <div className={`p-3 rounded-2xl bg-gradient-to-br ${selectedColor.bg} ${selectedColor.text}`}>
@@ -108,7 +110,7 @@ const PremiumStatCard = ({
       <div>
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1 group-hover:text-slate-700 transition-colors">{title}</h3>
         <div className="flex items-baseline gap-1">
-          <span className="text-4xl font-extrabold tracking-tight stat-value">
+          <span className="text-4xl font-extrabold tracking-tight stat-value text-slate-900">
             {value}
           </span>
           {suffix && <span className="text-lg font-bold text-slate-400 ml-1">{suffix}</span>}
@@ -122,14 +124,14 @@ const PremiumStatCard = ({
       <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-gradient-to-br from-white/0 to-white/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
     </motion.div>
   );
-};
 
-// ... Sparkline ... (unchanged)
+  if (href) return <Link href={href} className="block h-full">{content}</Link>;
+  return content;
+};
 
 // --- Main Page Logic ---
 
 const StatsPageContent = () => {
-    // ... (data fetching logic unchanged)
     const { userProfile } = useApp();
     const firestore = useFirestore();
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -151,8 +153,13 @@ const StatsPageContent = () => {
     );
     const { data: referralStats, isLoading: isReferralsLoading } = useDoc(referralStatsRef);
 
+    const aiUsageRef = useMemoFirebase(
+        () => (firestore ? doc(firestore, 'stats', 'ai_usage') : null),
+        [firestore]
+    );
+    const { data: aiUsage } = useDoc(aiUsageRef);
+
     const stats = useMemo(() => {
-      // (same processing logic as before)
       if (!users) return null;
       const now = new Date();
       const currentMonth = now.getMonth();
@@ -189,19 +196,16 @@ const StatsPageContent = () => {
           const lastActivity = getLastActivity(u);
           return lastActivity && lastActivity > d30;
       }).length;
-      const costPerMillionInput = 0.35 * 6.95; 
-      const costPerMillionOutput = 0.70 * 6.95; 
-      const monthlyTokenCost = allUsers.reduce((acc, u) => {
-          const tokenDate = u.monthlyTokenTimestamp ? 
-              (typeof u.monthlyTokenTimestamp.toDate === 'function' ? u.monthlyTokenTimestamp.toDate() : new Date(u.monthlyTokenTimestamp)) 
-              : null;
-          if (tokenDate && tokenDate.getMonth() === currentMonth && tokenDate.getFullYear() === currentYear) {
-              const inputCost = (u.monthlyInputTokens || 0) / 1000000 * costPerMillionInput;
-              const outputCost = (u.monthlyOutputTokens || 0) / 1000000 * costPerMillionOutput;
-              return acc + inputCost + outputCost;
-          }
-          return acc;
-      }, 0);
+
+      const costPerMillionInput = 0.30 * 6.95; 
+      const costPerMillionOutput = 2.50 * 6.95; 
+      
+      // Calculate real hardware/API cost from global aggregator (Gemini 2.5 Flash)
+      const realAiCost = (
+        ((aiUsage?.totalInputTokens || 0) / 1000000 * costPerMillionInput) + 
+        ((aiUsage?.totalOutputTokens || 0) / 1000000 * costPerMillionOutput)
+      );
+
       const recentUsers = allUsers.filter(u => {
           const createdAt = u.createdAt ? (typeof u.createdAt.toDate === 'function' ? u.createdAt.toDate() : new Date(u.createdAt)) : null;
           return createdAt && createdAt > d7;
@@ -246,12 +250,17 @@ const StatsPageContent = () => {
       const tiktokConversions = allUsers.filter(u => u.conversionSource === 'tiktok').length;
       const tiktokConversionRate = totalUsers > 0 ? (tiktokConversions / totalUsers) * 100 : 0;
 
+      const growth30d = usersOlderThan30d.length > 0 
+          ? ((totalUsers - usersOlderThan30d.length) / usersOlderThan30d.length) * 100 
+          : 100;
+
       return {
           totalUsers,
           dau,
           wau,
           mau,
-          monthlyTokenCost: monthlyTokenCost.toFixed(2),
+          growth: growth30d.toFixed(1),
+          monthlyTokenCost: realAiCost.toFixed(2),
           stickiness: stickiness.toFixed(1),
           activationRate: activationRate.toFixed(1),
           retentionRate7d: retentionRate7d.toFixed(1),
@@ -265,7 +274,7 @@ const StatsPageContent = () => {
           tiktokConversionRate: tiktokConversionRate.toFixed(1),
           totalTikTokClicks: referralStats?.totalTikTokClicks || 0
       };
-    }, [users, referralStats]);
+    }, [users, referralStats, aiUsage]);
 
     if (isUsersLoading || isReferralsLoading) {
       return (
@@ -292,7 +301,7 @@ const StatsPageContent = () => {
         iconTextColor: "text-indigo-600",
         description: 'Hvor mange og hvor ofte benyttes platformen?',
         items: [
-          { title: 'Brugere', value: stats.totalUsers, description: 'Totale profiler oprettet', icon: Users, color: 'indigo' as const },
+          { title: 'Brugere', value: stats.totalUsers, description: 'Totale profiler oprettet', icon: Users, color: 'indigo' as const, trend: { value: `+${stats.growth}%`, isPositive: true } },
           { title: 'DAU', value: stats.dau, description: 'Aktive brugere (24t)', icon: Zap, color: 'indigo' as const },
           { title: 'WAU', value: stats.wau, description: 'Aktive brugere (7d)', icon: Calendar, color: 'indigo' as const },
           { title: 'MAU', value: stats.mau, description: 'Aktive brugere (30d)', icon: BarChart3, color: 'indigo' as const },
@@ -309,7 +318,7 @@ const StatsPageContent = () => {
           { title: 'Aha-Rate', value: stats.activationRate, suffix: '%', description: 'Nye brugere med point (7d)', icon: UserCheck, color: 'emerald' as const },
           { title: 'Retention', value: stats.retentionRate7d, suffix: '%', description: '7-dages fastholdelse', icon: RefreshCw, color: 'emerald' as const },
           { title: 'Stickiness', value: stats.stickiness, suffix: '%', description: 'DAU/MAU ratio', icon: MousePointer2, color: 'emerald' as const },
-          { title: 'AI Omk.', value: stats.monthlyTokenCost, suffix: 'kr', description: 'API forbrug (mdr)', icon: CreditCard, color: 'emerald' as const },
+          { title: 'AI Omk.', value: stats.monthlyTokenCost, suffix: 'kr', description: 'API forbrug (mdr)', icon: CreditCard, color: 'emerald' as const, href: '/admin/costs' },
         ]
       },
       {
@@ -401,10 +410,10 @@ const StatsPageContent = () => {
                 
                 <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
                     {[
-                      { label: "Vækst", value: "+12.5%", color: "text-emerald-600" },
+                      { label: "Vækst", value: `+${stats.growth}%`, color: "text-emerald-600" },
                       { label: "Volume", value: stats.totalUsers, color: "text-indigo-600" },
                       { label: "Active", value: stats.mau, color: "text-amber-600" },
-                      { label: "Health", value: "Great", color: "text-violet-600" }
+                      { label: "Health", value: parseFloat(stats.retentionRate7d) > 20 ? "Good" : "Fair", color: "text-violet-600" }
                     ].map((item, i) => (
                       <div key={i} className={`p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center text-center`}>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{item.label}</span>

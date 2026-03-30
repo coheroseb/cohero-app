@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, BookOpen, Sparkles, Database, Shield, ChevronRight, Search, Mail, BarChart, Menu, X, MessageSquare, Bell, HandHelping, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, Sparkles, Database, Shield, ChevronRight, Search, Mail, BarChart, Menu, X, MessageSquare, Bell, HandHelping, GraduationCap, CreditCard } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +20,7 @@ const navigation = [
   { id: 'marketing', href: '/admin/marketing', label: 'Marketing & Koder', icon: Sparkles },
   { id: 'emails', href: '/admin/emails', label: 'E-mail Kampagner', icon: Mail },
   { id: 'stats', href: '/admin/stats', label: 'SaaS Statistik', icon: BarChart },
+  { id: 'costs', href: '/admin/costs', label: 'AI Finans', icon: CreditCard },
   { id: 'markedsplads', href: '/admin/markedsplads', label: 'Markedsplads', icon: HandHelping },
   { id: 'system', href: '/admin/system', label: 'System & Fejllogs', icon: Database },
 ];
