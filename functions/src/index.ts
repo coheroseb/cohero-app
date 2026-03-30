@@ -94,6 +94,7 @@ export const processNotificationQueue = functions.firestore
 
 
 import { onRequest } from "firebase-functions/v2/https";
+import { logAiUsage } from "./lib/usage-tracker";
 
 export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
@@ -118,23 +119,15 @@ export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, asyn
      }
 
      const result = await allFlows[flowName](data);
-     
-     // Log global AI usage for platform-wide cost analysis
+
+     // Log token usage to Firestore for AI Finans dashboard
+     // This is the central point all client-triggered flows pass through.
      if (result && result.usage) {
         const { inputTokens = 0, outputTokens = 0 } = result.usage;
         if (inputTokens > 0 || outputTokens > 0) {
-           try {
-             await admin.firestore().collection('stats').doc('ai_usage').set({
-                totalInputTokens: admin.firestore.FieldValue.increment(inputTokens),
-                totalOutputTokens: admin.firestore.FieldValue.increment(outputTokens),
-                lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-                // Track usage per flow type for granular analytics
-                [`flows.${flowName}.inputTokens`]: admin.firestore.FieldValue.increment(inputTokens),
-                [`flows.${flowName}.outputTokens`]: admin.firestore.FieldValue.increment(outputTokens),
-             }, { merge: true });
-           } catch (usageErr) {
-             console.error("Failed to log usage stats:", usageErr);
-           }
+           // Fire-and-forget so we don't delay the response
+           logAiUsage(flowName, { inputTokens, outputTokens })
+             .catch(err => console.error("Failed to log AI usage:", err));
         }
      }
 
