@@ -341,6 +341,7 @@ export default function SettingsPage() {
 
   const subscriptionWillBeCancelled = userProfile?.stripeCancelAtPeriodEnd === true;
   const isSpecialSubscription = userProfile?.stripePriceId?.startsWith('b2b-') || userProfile?.stripePriceId?.startsWith('redeemed-');
+  const isPaidUser = !!userProfile?.membership && userProfile.membership !== 'Gratis Plan';
 
   const tabs = [
     { id: 'profile', label: 'Profil & Uddannelse', icon: User },
@@ -607,50 +608,70 @@ export default function SettingsPage() {
                              )}
                           </div>
 
-                          <div className="relative z-10 flex flex-col sm:flex-row justify-between items-center gap-4">
+                          <div className="relative z-10">
                               {isSpecialSubscription ? (
-                                  <p className="text-sm font-medium text-slate-400 italic">Dette abonnement administreres centralt af din institution.</p>
-                              ) : subscriptionWillBeCancelled ? (
-                                  <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
-                                      <p className="text-sm font-bold text-rose-400 flex items-center gap-2 bg-rose-500/10 px-4 py-2 rounded-xl border border-rose-500/20">
-                                          <CheckCircle className="w-4 h-4"/> Opsagt - udløber snart
-                                      </p>
-                                      <Link href="/upgrade" className="w-full sm:w-auto ml-auto">
-                                          <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 h-11 px-8 rounded-xl font-bold">
-                                              Forny Adgang
-                                          </Button>
-                                      </Link>
+                                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                                     <p className="text-sm font-bold text-amber-200 flex items-center gap-2">
+                                        <Info className="w-4 h-4" /> Dette abonnement administreres centralt af din institution.
+                                     </p>
                                   </div>
                               ) : (
-                                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
-                                      {userProfile?.stripeCustomerId && (
-                                          <Button 
-                                              onClick={handleManageSubscription} 
-                                              disabled={isPortalLoading}
-                                              className="w-full sm:w-auto bg-white text-slate-900 hover:bg-slate-100 h-11 px-8 rounded-xl font-bold shadow-md"
-                                          >
-                                              {isPortalLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <CreditCard className="w-4 h-4 mr-2" />}
-                                              Administrer betaling
-                                          </Button>
+                                  <div className="flex flex-col gap-6">
+                                      {subscriptionWillBeCancelled && (
+                                          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4">
+                                              <p className="text-sm font-bold text-rose-400 flex items-center gap-2">
+                                                  <ShieldAlert className="w-4 h-4"/> Opsagt - din adgang udløber snart
+                                              </p>
+                                              <Link href="/upgrade">
+                                                  <Button className="bg-white text-slate-900 hover:bg-slate-100 h-10 px-6 rounded-xl font-bold text-xs ring-2 ring-white/20">
+                                                      Forny Adgang
+                                                  </Button>
+                                              </Link>
+                                          </div>
                                       )}
-                                      
-                                      <Button 
-                                          variant="ghost" 
-                                          onClick={handleCancelSubscription} 
-                                          disabled={isCancelling} 
-                                          className="w-full sm:w-auto h-11 px-8 bg-white/5 text-white hover:bg-white/10 rounded-xl font-bold border border-white/10"
-                                      >
-                                          {isCancelling ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
-                                          Opsig abonnement
-                                      </Button>
 
-                                      {(userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) && (
-                                          <Link href="/upgrade" className="ml-auto">
-                                              <Button className="w-full sm:w-auto bg-amber-400 text-amber-950 hover:bg-amber-300 h-11 px-8 rounded-xl font-bold shadow-[0_0_20px_rgba(251,191,36,0.3)]">
-                                                  Opgrader
-                                              </Button>
-                                          </Link>
-                                      )}
+                                      <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+                                          {isPaidUser ? (
+                                              <>
+                                                  {userProfile?.stripeCustomerId && (
+                                                      <Button 
+                                                          onClick={handleManageSubscription} 
+                                                          disabled={isPortalLoading}
+                                                          className="w-full sm:w-auto bg-white text-slate-900 hover:bg-slate-100 h-12 px-8 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl"
+                                                      >
+                                                          {isPortalLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <CreditCard className="w-4 h-4 mr-2" />}
+                                                          Administrer betaling
+                                                      </Button>
+                                                  )}
+                                                  
+                                                  {!subscriptionWillBeCancelled && (
+                                                      <Button 
+                                                          variant="ghost" 
+                                                          onClick={handleCancelSubscription} 
+                                                          disabled={isCancelling} 
+                                                          className="w-full sm:w-auto h-12 px-8 bg-white/5 text-white hover:bg-rose-500 hover:text-white rounded-2xl font-black text-xs uppercase tracking-widest border border-white/10 transition-all"
+                                                      >
+                                                          {isCancelling ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
+                                                          Opsig abonnement
+                                                      </Button>
+                                                  )}
+                                              </>
+                                          ) : (
+                                              <Link href="/upgrade" className="w-full sm:w-auto">
+                                                  <Button className="w-full sm:w-auto bg-amber-400 text-amber-950 hover:bg-amber-300 h-12 px-10 rounded-2xl font-black text-xs uppercase tracking-widest shadow-[0_0_30px_rgba(251,191,36,0.3)]">
+                                                      Opgrader til Pro <Sparkles className="w-4 h-4 ml-2" />
+                                                  </Button>
+                                              </Link>
+                                          )}
+
+                                          {isPaidUser && userProfile?.membership !== 'Kollega+' && (
+                                              <Link href="/upgrade" className="ml-auto">
+                                                  <Button variant="outline" className="w-full sm:w-auto border-amber-400/30 text-amber-400 hover:bg-amber-400/10 h-12 px-8 rounded-2xl font-black text-xs uppercase tracking-widest">
+                                                      Skift Plan
+                                                  </Button>
+                                              </Link>
+                                          )}
+                                      </div>
                                   </div>
                               )}
                           </div>
