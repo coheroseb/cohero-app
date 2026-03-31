@@ -1180,7 +1180,7 @@ export function LovPortalViewer() {
     } finally {
         setIsLoadingDoc(false);
     }
-  }, [lawsConfigs, docsData]);
+  }, [lawsConfigs]);
 
   const handleSubElementClick = (sub: string, parentStk: string | null, parentNr: string | null) => {
       if (selectedSubElement === sub) {
@@ -1347,7 +1347,7 @@ export function LovPortalViewer() {
               return;
           }
 
-          const results: Record<string, LawContentType> = { ...bibMetadata };
+          const results: Record<string, LawContentType> = {};
           let changed = false;
           
           for (const id of missingIds) {
@@ -1375,12 +1375,12 @@ export function LovPortalViewer() {
               }
           }
           
-          if (changed) setBibMetadata(results);
+          if (changed) setBibMetadata(prev => ({ ...prev, ...results }));
           setIsFetchingBibMetadata(false);
       };
 
       fetchMissingMetadata();
-  }, [showBibliography, savedParagraphs, activeCollectionId, lawsLoading, lawsConfigs, docsData, bibMetadata]);
+  }, [showBibliography, savedParagraphs, activeCollectionId, lawsLoading, lawsConfigs]);
 
   const handleCreateCollection = async (e: React.FormEvent) => {
       e.preventDefault();

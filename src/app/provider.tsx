@@ -422,7 +422,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
-            <Navbar onAuth={() => openAuthPage()} user={user} userProfile={userProfile} onLogout={handleLogout} />
+            <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} />
           </>
         )}
         <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'}`}>
@@ -432,6 +432,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             )}
             
             <motion.div
+              key={pathname}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
