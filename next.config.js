@@ -61,6 +61,11 @@ const nextConfig = {
         destination: 'https://group.cohero.dk/:path*',
         permanent: true,
       },
+      {
+        source: '/raadgivning',
+        destination: 'https://ask.cohero.dk',
+        permanent: true,
+      },
     ];
   },
 

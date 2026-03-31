@@ -49,6 +49,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/raadgivning',
+        destination: 'https://ask.cohero.dk',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -240,6 +240,7 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
+          { title: "Giv din praktik stjerner", path: "/praktik-rating", icon: <Star className="w-5 h-5" /> },
         ]
       }
     ];
@@ -321,6 +322,13 @@ const Navbar: React.FC<NavbarProps> = ({
                   <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-sky-950 transition-colors">Jura</span>
                 </Link>
 
+                <Link href="/praktik-rating" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
+                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-amber-100 group-hover:text-amber-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
+                    <Star className="w-3.5 h-3.5"/>
+                  </div>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-amber-950 transition-colors">Giv din praktik stjerner</span>
+                </Link>
+
                 <Link href="/mit-semester" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
                   <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-amber-100 group-hover:text-amber-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
                     <CalendarDays className="w-3.5 h-3.5"/>
@@ -348,10 +356,9 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center space-x-1"
               >
                 {[
-                  { label: "Få hjælp fra en studerende", href: "/raadgivning", type: "link", highlight: true },
-                  { label: "Second Opinion", href: "/om-second-opinion", type: "link" },
-                  { label: "Værktøjer", href: "#vaerktojer", type: "anchor" },
-                  { label: "Priser", href: "#priser", type: "anchor" }
+                  { label: "Få hjælp fra en studerende", href: "https://ask.cohero.dk", type: "link", highlight: true },
+                  { label: "Få en Second Opinion", href: "/om-second-opinion", type: "link" },
+                  { label: "Giv din praktik stjerner", href: "/praktik-rating", type: "link" }
                 ].map((link, idx) => (
                   <motion.div key={link.label} className="relative group overflow-hidden">
                     {link.type === 'link' ? (
@@ -415,7 +422,7 @@ const Navbar: React.FC<NavbarProps> = ({
               <div className="hidden lg:flex items-center gap-4">
                 <button onClick={() => onAuth('login')} className="px-5 py-2.5 text-[14px] font-bold text-slate-700 hover:text-slate-950 transition-colors">Log ind</button>
                 <button onClick={() => onAuth('signup')} className="relative px-6 py-2.5 bg-gradient-to-br from-amber-950 to-slate-900 text-amber-400 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-[0_10px_30px_-10px_rgba(45,35,15,0.4)] active:scale-95 transition-all flex items-center gap-2 group border border-white/5">
-                  <span className="relative z-10">Bliv medlem</span>
+                  <span className="relative z-10">Opret en gratis konto</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform relative z-10"/>
                   <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
                 </button>
@@ -541,24 +548,19 @@ const Navbar: React.FC<NavbarProps> = ({
                 ) : (
                   <ul className="space-y-4 pt-4">
                     <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.02 }}>
-                        <Link href="/raadgivning" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
+                        <Link href="https://ask.cohero.dk" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
                             Få hjælp fra en studerende <HandHelping className="w-5 h-5 text-rose-400" />
                         </Link>
                     </motion.li>
                     <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 }}>
                         <Link href="/om-second-opinion" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-emerald-50 border border-emerald-100 rounded-[24px] text-[18px] font-extrabold text-emerald-600 shadow-sm active:scale-[0.98] transition-all">
-                            Second Opinion <Scale className="w-5 h-5 text-emerald-400" />
+                            Få en Second Opinion <Scale className="w-5 h-5 text-emerald-400" />
                         </Link>
                     </motion.li>
-                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>
-                        <a href="#vaerktojer" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-[24px] text-[18px] font-extrabold text-slate-900 shadow-sm active:scale-[0.98] transition-all">
-                            Værktøjer <ChevronRight className="w-5 h-5 text-slate-300" />
-                        </a>
-                    </motion.li>
-                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
-                        <a href="#priser" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-[24px] text-[18px] font-extrabold text-slate-900 shadow-sm active:scale-[0.98] transition-all">
-                            Priser <ChevronRight className="w-5 h-5 text-slate-300" />
-                        </a>
+                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.04 }}>
+                        <Link href="/praktik-rating" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-amber-50 border border-amber-100 rounded-[24px] text-[18px] font-extrabold text-amber-600 shadow-sm active:scale-[0.98] transition-all">
+                            Giv din praktik stjerner <Star className="w-5 h-5 text-amber-400" />
+                        </Link>
                     </motion.li>
                   </ul>
                 )}
@@ -585,7 +587,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     <Button onClick={() => handleMobileLinkClick(() => onAuth('login'))} variant="outline" className="h-[56px] rounded-[20px] font-bold text-[15px] active:scale-[0.98]">Log ind</Button>
-                    <Button onClick={() => handleMobileLinkClick(() => onAuth('signup'))} className="h-[56px] rounded-[20px] font-bold text-[15px] bg-slate-900 text-white active:scale-[0.98]">Bliv medlem</Button>
+                    <Button onClick={() => handleMobileLinkClick(() => onAuth('signup'))} className="h-[56px] rounded-[20px] font-bold text-[15px] bg-slate-900 text-white active:scale-[0.98]">Opret en gratis konto</Button>
                   </div>
                 )}
               </div>

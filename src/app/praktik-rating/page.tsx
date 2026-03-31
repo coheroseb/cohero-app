@@ -21,8 +21,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import InstitutionSearch from './InstitutionSearch';
-import { submitPublicReviewAction } from './actions';
-import { searchInstitutionsAction } from './actions';
+import { submitPublicReviewAction, searchInstitutionsAction, getReviewsAction, getInstitutionReviewsAction } from './actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
@@ -49,13 +48,18 @@ function PraktikRatingContent() {
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
+    
+    // Reviews state
+    const [latestReviews, setLatestReviews] = useState<any[]>([]);
+    const [instReviews, setInstReviews] = useState<any[]>([]);
+    const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+    const [instStats, setInstStats] = useState<{ average: number, count: number } | null>(null);
 
     // Fetch institution if ID is in searchParams
     useEffect(() => {
         const fetchInitialInst = async () => {
             const instId = searchParams?.get('id');
             if (instId && !selectedInst) {
-                // We'll use the searchInstitutionsAction or equivalent to get a specific one
                 const res = await searchInstitutionsAction("", instId);
                 if (res && res.length > 0) {
                     setSelectedInst(res[0]);
@@ -65,6 +69,29 @@ function PraktikRatingContent() {
         };
         fetchInitialInst();
     }, [searchParams, selectedInst]);
+
+    // Fetch latest reviews on mount
+    useEffect(() => {
+        const fetchLatest = async () => {
+            setIsLoadingReviews(true);
+            const reviews = await getReviewsAction();
+            setLatestReviews(reviews.slice(0, 6)); // Show latest 6
+            setIsLoadingReviews(false);
+        };
+        fetchLatest();
+    }, []);
+
+    // Fetch specific inst reviews when selected
+    useEffect(() => {
+        const fetchInstData = async () => {
+            if (selectedInst) {
+                const data = await getInstitutionReviewsAction(selectedInst.id);
+                setInstReviews(data.reviews);
+                setInstStats({ average: data.average, count: data.count });
+            }
+        };
+        fetchInstData();
+    }, [selectedInst]);
 
     const handleRatingSelect = (s: number) => {
         setRating(s);
@@ -215,6 +242,51 @@ function PraktikRatingContent() {
                                 />
                             </Reveal>
 
+                            {/* LATEST REVIEWS SECTION */}
+                            {!isLoadingReviews && latestReviews.length > 0 && (
+                                <div className="space-y-10 pt-20">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-12 h-1 bg-amber-200 rounded-full" />
+                                        <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.3em]">Hvad medstuderende siger</h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {latestReviews.map((rev) => (
+                                            <motion.div 
+                                                key={rev.id}
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                whileInView={{ opacity: 1, scale: 1 }}
+                                                viewport={{ once: true }}
+                                                className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm flex flex-col gap-5 text-left relative group hover:shadow-2xl hover:border-amber-200 transition-all"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center text-amber-600 border border-amber-100">
+                                                            <User className="w-5 h-5" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[9px] font-black uppercase text-amber-500 tracking-widest">{rev.isAnonymous ? 'Anonym' : rev.userName}</p>
+                                                            <p className="text-[13px] font-bold text-slate-900 line-clamp-1">{rev.institutionName}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-0.5">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <Star key={i} className={`w-3.5 h-3.5 ${i < rev.rating ? 'text-amber-400 fill-current' : 'text-slate-100'}`} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <p className="text-[15px] text-slate-500 font-medium leading-relaxed italic line-clamp-4">"{rev.reviewText}"</p>
+                                                <div className="flex items-center justify-between pt-4 border-t border-slate-50/80 mt-auto">
+                                                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">{rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('da-DK') : 'Nylig'}</span>
+                                                    <div className="flex items-center gap-1.5 text-emerald-500 font-black uppercase text-[8px] tracking-widest bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
+                                                        <CheckCircle2 className="w-3 h-3" /> Verificeret
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                         </motion.div>
                     )}
 
@@ -234,7 +306,7 @@ function PraktikRatingContent() {
                                 </h1>
                             </div>
 
-                            <div className="flex justify-center gap-3 md:gap-5 py-10">
+                            <div className="flex justify-center gap-3 md:gap-5 py-4">
                                 {[1, 2, 3, 4, 5].map((s) => (
                                     <motion.button
                                         key={s}
@@ -260,6 +332,61 @@ function PraktikRatingContent() {
                                         )}
                                     </motion.button>
                                 ))}
+                            </div>
+
+                            {/* INSTITUTION'S OWN REVIEWS */}
+                            <div className="max-w-2xl mx-auto pt-10 space-y-6">
+                                {instStats && instStats.count > 0 && (
+                                    <div className="flex items-center justify-center gap-6 mb-8">
+                                        <div className="text-center">
+                                            <p className="text-4xl font-black text-slate-900 leading-none">{instStats.average}</p>
+                                            <p className="text-[9px] font-black uppercase text-amber-500 tracking-widest mt-1">Gennemsnit</p>
+                                        </div>
+                                        <div className="w-px h-10 bg-slate-200" />
+                                        <div className="text-center">
+                                            <p className="text-4xl font-black text-slate-900 leading-none">{instStats.count}</p>
+                                            <p className="text-[9px] font-black uppercase text-rose-500 tracking-widest mt-1">Bedømmelser</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {instReviews.length > 0 ? (
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4">Hvad andre har skrevet om dette sted</p>
+                                        <div className="space-y-4">
+                                            {instReviews.slice(0, 3).map((rev) => (
+                                                <div key={rev.id} className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm text-left relative overflow-hidden group">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                                                                <User className="w-3.5 h-3.5" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase text-slate-900 tracking-widest">{rev.isAnonymous ? 'Anonym' : rev.userName}</p>
+                                                                <div className="flex gap-0.5">
+                                                                    {[...Array(5)].map((_, i) => (
+                                                                        <Star key={i} className={`w-2.5 h-2.5 ${i < rev.rating ? 'text-amber-400 fill-current' : 'text-slate-100'}`} />
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">{rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('da-DK') : 'Nylig'}</span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-500 font-medium italic leading-relaxed">"{rev.reviewText}"</p>
+                                                </div>
+                                            ))}
+                                            {instReviews.length > 3 && (
+                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Og {instReviews.length - 3} flere bedømmelser...</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="py-10 text-slate-400 flex flex-col items-center gap-3">
+                                        <MessageCircle className="w-10 h-10 opacity-20" />
+                                        <p className="text-sm font-medium">Ingen tidligere bedømmelser for dette sted endnu.</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest">Vær den første til at dele din oplevelse</p>
+                                    </div>
+                                )}
                             </div>
 
                             <AnimatePresence>

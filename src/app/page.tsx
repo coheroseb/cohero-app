@@ -212,13 +212,6 @@ export default function LandingPage() {
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                   </button>
                   
-                   <Link
-                       href="/praktik-rating"
-                       className="flex justify-center items-center gap-2.5 px-6 sm:px-8 py-5 sm:py-6 bg-amber-500 text-white rounded-[20px] sm:rounded-2xl font-bold text-[15px] sm:text-[13px] uppercase sm:tracking-widest active:scale-[0.98] sm:hover:bg-amber-600 transition-all shadow-lg w-full sm:w-auto will-change-transform"
-                   >
-                       <Star className="w-5 h-5 sm:w-4 sm:h-4 fill-current" />
-                       Praktik-Rating
-                   </Link>
 
                    <button
                        onClick={handleInstallClick}
@@ -381,7 +374,7 @@ export default function LandingPage() {
                 <Reveal delay={0.2}>
                     <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
                         <Link 
-                            href="/raadgivning" 
+                            href="https://ask.cohero.dk" 
                             className="group relative px-10 py-6 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 transition-all w-full sm:w-auto overflow-hidden active:scale-95"
                         >
                             <span className="relative z-10 flex items-center justify-center gap-3">
@@ -575,27 +568,6 @@ export default function LandingPage() {
       </section>
 
 
-      {/* 4. SOCIAL PROOF */}
-      <section className="py-20 sm:py-32 bg-white relative overflow-hidden px-5 sm:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <Reveal>
-             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-50 rounded-[24px] flex items-center justify-center mx-auto mb-8 sm:mb-12 shadow-sm border border-amber-100/50">
-                <Quote className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500" />
-             </div>
-             <blockquote className="text-[22px] sm:text-3xl md:text-5xl font-extrabold text-slate-800 leading-[1.3] sm:leading-[1.4] tracking-tight mb-8 sm:mb-12 px-2 sm:px-4 text-balance">
-               "At kunne tjekke juraen og få sparring har gjort mig langt mere tryg i min praktik."
-             </blockquote>
-             <div className="space-y-1 sm:space-y-2 flex flex-col items-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-full mb-3 flex items-center justify-center border border-slate-200 overflow-hidden">
-                    <Image src="/nan_jul.jpg" alt="Student" width={48} height={48} className="object-cover w-full h-full scale-150 grayscale object-top" />
-                </div>
-                <p className="text-[17px] sm:text-xl font-bold text-slate-900">Mads Henriksen</p>
-                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 px-6">Socialrådgiverstuderende, 6. semester</p>
-             </div>
-          </Reveal>
-        </div>
-        <div className="absolute top-1/2 left-[-10%] sm:left-0 w-64 h-64 bg-amber-100/30 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none"></div>
-      </section>
       {/* 4.5 TIKTOK FEED SECTION */}
       <section className="py-24 sm:py-40 bg-[#FDFBF7] relative overflow-hidden px-5 sm:px-8 border-t border-slate-100/50">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(251,191,36,0.08)_0%,transparent_100%)] pointer-events-none" />

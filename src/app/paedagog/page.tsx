@@ -328,7 +328,7 @@ const PedagogueLandingContent: React.FC<PedagogueLandingContentProps> = ({ onSta
                 <Reveal delay={0.2}>
                     <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
                         <Link 
-                            href="/raadgivning" 
+                            href="https://ask.cohero.dk" 
                             className="group relative px-10 py-6 bg-white text-emerald-950 rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 transition-all w-full sm:w-auto overflow-hidden active:scale-95"
                         >
                             <span className="relative z-10 flex items-center justify-center gap-3">

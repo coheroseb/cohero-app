@@ -75,6 +75,7 @@ export async function getReviewsAction() {
   try {
     const { adminFirestore } = await import('@/firebase/server-init');
     const snapshot = await adminFirestore.collection('institution_reviews')
+      .where('isPublic', '==', true)
       .orderBy('createdAt', 'desc')
       .get();
     
@@ -126,6 +127,7 @@ export async function getInstitutionReviewsAction(id: string) {
     const { adminFirestore } = await import('@/firebase/server-init');
     const snapshot = await adminFirestore.collection('institution_reviews')
       .where('institutionId', '==', id)
+      .where('isPublic', '==', true)
       .orderBy('createdAt', 'desc')
       .get();
       
