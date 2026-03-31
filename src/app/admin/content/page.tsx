@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { processStudyRegulationAction } from '@/app/actions';
-import { deleteReviewAction, getReviewsAction } from '@/app/praktik-rating/actions';
+import { deleteReviewAction, getReviewsAction, getAllReviewsAdminAction, togglePublicReviewAction } from '@/app/praktik-rating/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LawConfig {
@@ -266,8 +266,18 @@ const ReviewManager = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        getReviewsAction().then(setReviews).finally(() => setIsLoading(false));
+        getAllReviewsAdminAction().then(setReviews).finally(() => setIsLoading(false));
     }, []);
+
+    const handleTogglePublic = async (id: string, currentStatus: boolean) => {
+        const res = await togglePublicReviewAction(id, !currentStatus);
+        if (res.success) {
+            setReviews(reviews.map(r => r.id === id ? { ...r, isPublic: !currentStatus } : r));
+            toast({ title: currentStatus ? "Anmeldelse skjult" : "Anmeldelse offentliggjort" });
+        } else {
+            toast({ variant: 'destructive', title: "Fejl", description: res.error });
+        }
+    };
 
     const handleDelete = async (id: string) => {
         if (!window.confirm('Vil du slette denne anmeldelse permanent?')) return;
@@ -305,6 +315,16 @@ const ReviewManager = () => {
                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                                         Indsendt {review.createdAt ? new Date(review.createdAt).toLocaleDateString('da-DK') : 'Ukendt dato'}
                                     </span>
+                                    {review.status === 'pending' && (
+                                        <span className="text-[9px] font-black uppercase bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Venter
+                                        </span>
+                                    )}
+                                    {review.isPublic ? (
+                                        <span className="text-[9px] font-black uppercase bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">Offentlig</span>
+                                    ) : (
+                                        <span className="text-[9px] font-black uppercase bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full border border-slate-300">Skjult</span>
+                                    )}
                                 </div>
                                 
                                 <blockquote className="text-slate-700 italic text-sm leading-relaxed">
@@ -323,14 +343,22 @@ const ReviewManager = () => {
                                 </div>
                             </div>
                             
-                            <div className="flex items-start">
+                            <div className="flex flex-col gap-2 shrink-0">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => handleTogglePublic(review.id, review.isPublic)}
+                                    className={`${review.isPublic ? 'text-amber-600 border-amber-100' : 'text-emerald-600 border-emerald-100'} bg-white text-xs`}
+                                >
+                                    {review.isPublic ? 'Skjul fra forsiden' : 'Vis på forsiden'}
+                                </Button>
                                 <Button 
                                     variant="outline" 
                                     size="sm" 
                                     onClick={() => handleDelete(review.id)}
-                                    className="text-rose-500 hover:bg-rose-50 bg-white border-rose-100"
+                                    className="text-rose-500 hover:bg-rose-50 bg-white border-rose-100 text-xs"
                                 >
-                                    <Trash2 className="w-4 h-4 mr-2" /> Slet anmeldelse
+                                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Slet
                                 </Button>
                             </div>
                         </div>

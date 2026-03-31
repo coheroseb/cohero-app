@@ -74,18 +74,66 @@ export async function deleteReviewAction(id: string) {
 export async function getReviewsAction() {
   try {
     const { adminFirestore } = await import('@/firebase/server-init');
-    const snapshot = await adminFirestore.collection('institution_reviews')
-      .where('isPublic', '==', true)
-      .orderBy('createdAt', 'desc')
-      .get();
     
-    return snapshot.docs.map(doc => ({
+    // Attempt filtered and ordered query (requires composite index)
+    try {
+      const snapshot = await adminFirestore.collection('institution_reviews')
+        .where('isPublic', '==', true)
+        .orderBy('createdAt', 'desc')
+        .get();
+      
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate()?.toISOString()
+      }));
+    } catch (indexError: any) {
+      console.warn("Firestore index error in getReviewsAction, falling back to in-memory sort:", indexError.message);
+      
+      // Fallback: Fetch public reviews without order and sort in-memory
+      const snapshot = await adminFirestore.collection('institution_reviews')
+        .where('isPublic', '==', true)
+        .get();
+        
+      const reviews = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate()?.toISOString()
+      }));
+      
+      return reviews.sort((a: any, b: any) => {
+        const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return db - da;
+      });
+    }
+  } catch (error) {
+    console.error("Total error in getReviewsAction:", error);
+    return [];
+  }
+}
+
+export async function getAllReviewsAdminAction() {
+  try {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    
+    // Admin should see ALL reviews, regardless of isPublic status
+    const snapshot = await adminFirestore.collection('institution_reviews').get();
+    
+    const reviews = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate()?.toISOString()
     }));
+    
+    // Sort in-memory to avoid index requirement for admin
+    return reviews.sort((a: any, b: any) => {
+      const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return db - da;
+    });
   } catch (error) {
-    console.error("Error fetching reviews:", error);
+    console.error("Error fetching all reviews for admin:", error);
     return [];
   }
 }
@@ -143,5 +191,19 @@ export async function getInstitutionReviewsAction(id: string) {
   } catch (error) {
     console.error("Error fetching institution reviews:", error);
     return { reviews: [], average: 0, count: 0 };
+  }
+}
+
+export async function togglePublicReviewAction(id: string, isPublic: boolean) {
+  try {
+    const { adminFirestore, admin } = await import('@/firebase/server-init');
+    await adminFirestore.collection('institution_reviews').doc(id).update({
+      isPublic,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error toggling public status:", error);
+    return { success: false, error: "Kunne ikke opdatere status." };
   }
 }
