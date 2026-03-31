@@ -1706,7 +1706,7 @@ export function LovPortalViewer() {
   }, [isLoadingDoc, viewMode, activeLawId]);
 
   return (
-    <div className={`min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 selection:text-amber-950 overflow-x-hidden ${(!activeLawId && !activeReferenceId) ? '' : 'lg:h-[calc(100vh-8rem)] lg:overflow-hidden'}`}>
+    <div className={`min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 selection:text-amber-950 overflow-x-hidden ${(!activeLawId && !activeReferenceId) ? '' : 'lg:h-full lg:overflow-hidden'}`}>
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
         .serif-premium { font-family: 'Playfair Display', serif; }
