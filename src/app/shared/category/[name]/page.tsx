@@ -160,7 +160,7 @@ export default function SharedCategoryPage({ params }: { params: { name: string 
           </div>
           <h1 className="text-3xl font-black text-slate-900 leading-tight">Log ind for at se delte kategorier</h1>
           <p className="text-slate-500 font-medium">Du skal være medlem af Cohéro for at se fælles vidensbaser.</p>
-          <Link href="/auth?mode=login" className="block w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all">Log ind nu</Link>
+          <Link href="/auth?mode=signin" className="block w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all">Log ind nu</Link>
         </div>
       </div>
     );

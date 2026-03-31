@@ -883,7 +883,7 @@ const AssistancePage = () => {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.replace('/auth?mode=login&callbackUrl=/markedsplads');
+            router.replace('/auth?mode=signin&callbackUrl=/markedsplads');
         }
     }, [user, isUserLoading, router]);
 

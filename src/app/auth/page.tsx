@@ -10,13 +10,13 @@ import { Loader2, Check, AlertTriangle, Mail, Lock, User, ArrowRight, Sparkles, 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Suspense } from 'react';
 
-type AuthMode = 'login' | 'signup';
+type AuthMode = 'signin' | 'signup';
 
 const AuthContent = () => {
   const { user, handleLogin, handleSignup, handleGoogleLogin } = useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialMode = searchParams?.get('mode') === 'signup' ? 'signup' : 'login';
+  const initialMode = searchParams?.get('mode') === 'signup' ? 'signup' : 'signin';
   const [mode, setMode] = useState<AuthMode>(initialMode);
   
   const [email, setEmail] = useState('');
@@ -80,15 +80,15 @@ const AuthContent = () => {
   };
 
   const t = {
-    login: "Log ind",
+    signin: "Log ind",
     signup: "Opret konto",
     email: "Email adresse",
     password: "Adgangskode",
     confirmPassword: "Bekræft adgangskode",
     displayName: "Dit fulde navn",
-    loginCTA: "Log ind på din konto",
+    signinCTA: "Log ind på din konto",
     signupCTA: "Opret en ny konto",
-    loginSubtext: "Velkommen tilbage til din digitale kollega.",
+    signinSubtext: "Velkommen tilbage til din digitale kollega.",
     signupSubtext: "Bliv en del af fællesskabet og byg bro mellem teori og praksis.",
     noAccount: "Har du ikke en konto?",
     hasAccount: "Allerede medlem?",
@@ -186,11 +186,11 @@ const AuthContent = () => {
             <div className="flex p-1 bg-slate-100 rounded-[20px] mb-8 relative">
               <button 
                 type="button"
-                onClick={() => setMode('login')} 
-                className={`relative flex-1 py-3 text-[14px] font-bold transition-all duration-300 z-10 rounded-[16px] ${mode === 'login' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                onClick={() => setMode('signin')} 
+                className={`relative flex-1 py-3 text-[14px] font-bold transition-all duration-300 z-10 rounded-[16px] ${mode === 'signin' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
               >
-                {t.login}
-                {mode === 'login' && (
+                {t.signin}
+                {mode === 'signin' && (
                   <motion.div 
                     layoutId="activeTabMode"
                     className="absolute inset-0 bg-white rounded-[16px] shadow-sm border border-slate-200/50 -z-10"
@@ -259,7 +259,7 @@ const AuthContent = () => {
               >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : (
                   <>
-                    {mode === 'login' ? t.login : t.signup}
+                    {mode === 'signin' ? t.signin : t.signup}
                     <ArrowRight className="w-5 h-5 opacity-70" />
                   </>
                 )}
@@ -293,11 +293,11 @@ const AuthContent = () => {
 
           <div className="text-center pt-4 pb-8 sm:pb-0">
             <button 
-              onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+              onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
               className="text-[14px] text-slate-500 font-medium active:scale-95 transition-transform"
             >
-              {mode === 'login' ? t.noAccount : t.hasAccount}{' '} 
-              <span className="font-extrabold text-slate-900 underline decoration-slate-300 underline-offset-4">{mode === 'login' ? t.signup : t.login}</span>
+              {mode === 'signin' ? t.noAccount : t.hasAccount}{' '} 
+              <span className="font-extrabold text-slate-900 underline decoration-slate-300 underline-offset-4">{mode === 'signin' ? t.signup : t.signin}</span>
             </button>
           </div>
         </div>

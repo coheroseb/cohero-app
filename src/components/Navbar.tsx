@@ -194,7 +194,7 @@ const NavDropdownLink: React.FC<{
 };
 
 interface NavbarProps {
-  onAuth: (mode: 'login' | 'signup') => void;
+  onAuth: (mode: 'signin' | 'signup') => void;
   onLogout: () => void;
   user: User | null;
   userProfile: DocumentData | null | undefined;
@@ -414,7 +414,7 @@ const Navbar: React.FC<NavbarProps> = ({
               </div>
             ) : (
               <div className="hidden lg:flex items-center gap-4">
-                <button onClick={() => onAuth('login')} className="px-5 py-2.5 text-[14px] font-bold text-slate-700 hover:text-slate-950 transition-colors">Log ind</button>
+                <button onClick={() => onAuth('signin')} className="px-5 py-2.5 text-[14px] font-bold text-slate-700 hover:text-slate-950 transition-colors">Log ind</button>
                 <button onClick={() => onAuth('signup')} className="relative px-6 py-2.5 bg-gradient-to-br from-amber-950 to-slate-900 text-amber-400 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-[0_10px_30px_-10px_rgba(45,35,15,0.4)] active:scale-95 transition-all flex items-center gap-2 group border border-white/5">
                   <span className="relative z-10">Opret en gratis konto</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform relative z-10"/>
@@ -580,7 +580,7 @@ const Navbar: React.FC<NavbarProps> = ({
                    </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    <Button onClick={() => handleMobileLinkClick(() => onAuth('login'))} variant="outline" className="h-[56px] rounded-[20px] font-bold text-[15px] active:scale-[0.98]">Log ind</Button>
+                    <Button onClick={() => handleMobileLinkClick(() => onAuth('signin'))} variant="outline" className="h-[56px] rounded-[20px] font-bold text-[15px] active:scale-[0.98]">Log ind</Button>
                     <Button onClick={() => handleMobileLinkClick(() => onAuth('signup'))} className="h-[56px] rounded-[20px] font-bold text-[15px] bg-slate-900 text-white active:scale-[0.98]">Opret en gratis konto</Button>
                   </div>
                 )}

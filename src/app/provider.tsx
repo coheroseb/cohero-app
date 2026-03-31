@@ -38,7 +38,7 @@ interface AppContextType {
   user: User | null;
   userProfile: UserProfile | null | undefined;
   isUserLoading: boolean;
-  openAuthPage: (mode: 'login' | 'signup', priceId?: string) => void;
+  openAuthPage: (mode: 'signin' | 'signup', priceId?: string) => void;
   handleLogout: () => void;
   refetchUserProfile: () => Promise<void>;
   openTeamModal: () => void;
@@ -305,7 +305,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!user) {
       // AUTO-LOGIN REDIRECT FOR PWA
       if (isNativeApp && pathname === '/') {
-          router.push('/auth?mode=login');
+          router.push('/auth?mode=signin');
       }
       return;
     }
@@ -336,7 +336,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return userProfile === null || (!userProfile.isQualified && (!userProfile.institution || !userProfile.semester || !userProfile.studyStarted));
   }, [isUserLoading, userProfile, user, isStandaloneGroups, pathname]);
 
-  const openAuthPage = (mode: 'login' | 'signup' = 'signup', priceId?: string) => {
+  const openAuthPage = (mode: 'signin' | 'signup' = 'signup', priceId?: string) => {
     const authUrl = isStandaloneGroups ? `/rum/groups/auth` : `/auth`;
     const callbackPart = pathname?.includes('/join/') ? `&callbackUrl=${encodeURIComponent(pathname)}` : '';
     router.push(`${authUrl}?mode=${mode}${priceId ? `&priceId=${priceId}` : ''}${callbackPart}`);
@@ -346,7 +346,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (user) {
       setIsTeamModalOpen(true);
     } else {
-      openAuthPage('login');
+      openAuthPage('signin');
     }
   };
 
