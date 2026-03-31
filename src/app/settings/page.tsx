@@ -8,7 +8,7 @@ import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, C
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { cancelSubscription } from '@/app/actions';
+import { cancelSubscription, createPortalSessionAction } from '@/app/actions';
 import DeleteAccountModal from '@/components/DeleteAccountModal';
 import { deleteUser, updateProfile } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +57,7 @@ export default function SettingsPage() {
   
   // Resend verification state
   const [isResending, setIsResending] = useState(false);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -292,6 +293,23 @@ export default function SettingsPage() {
             });
         } finally {
             setIsCancelling(false);
+        }
+    };
+
+    const handleManageSubscription = async () => {
+        if (!userProfile?.stripeCustomerId) return;
+        setIsPortalLoading(true);
+        try {
+            const { url } = await createPortalSessionAction(userProfile.stripeCustomerId);
+            window.location.href = url;
+        } catch (err: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Portal Fejl',
+                description: err.message || 'Kunne ikke indlæse betalingsportalen.',
+            });
+        } finally {
+            setIsPortalLoading(false);
         }
     };
 
@@ -603,17 +621,37 @@ export default function SettingsPage() {
                                           </Button>
                                       </Link>
                                   </div>
-                              ) : (userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) ? (
-                                  <Link href="/upgrade" className="w-full sm:w-auto">
-                                      <Button className="w-full bg-amber-400 text-amber-950 hover:bg-amber-300 h-11 px-8 rounded-xl font-bold shadow-[0_0_20px_rgba(251,191,36,0.3)]">
-                                          Opgrader til Kollega+
-                                      </Button>
-                                  </Link>
                               ) : (
-                                  <Button variant="outline" onClick={handleCancelSubscription} disabled={isCancelling} className="w-full sm:w-auto h-11 px-8 border-white/20 bg-transparent text-white hover:bg-white/10 rounded-xl font-bold">
-                                      {isCancelling ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
-                                      Opsig abonnement
-                                  </Button>
+                                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+                                      {userProfile?.stripeCustomerId && (
+                                          <Button 
+                                              onClick={handleManageSubscription} 
+                                              disabled={isPortalLoading}
+                                              className="w-full sm:w-auto bg-white text-slate-900 hover:bg-slate-100 h-11 px-8 rounded-xl font-bold shadow-md"
+                                          >
+                                              {isPortalLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : <CreditCard className="w-4 h-4 mr-2" />}
+                                              Administrer betaling
+                                          </Button>
+                                      )}
+                                      
+                                      <Button 
+                                          variant="ghost" 
+                                          onClick={handleCancelSubscription} 
+                                          disabled={isCancelling} 
+                                          className="w-full sm:w-auto h-11 px-8 bg-white/5 text-white hover:bg-white/10 rounded-xl font-bold border border-white/10"
+                                      >
+                                          {isCancelling ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
+                                          Opsig abonnement
+                                      </Button>
+
+                                      {(userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) && (
+                                          <Link href="/upgrade" className="ml-auto">
+                                              <Button className="w-full sm:w-auto bg-amber-400 text-amber-950 hover:bg-amber-300 h-11 px-8 rounded-xl font-bold shadow-[0_0_20px_rgba(251,191,36,0.3)]">
+                                                  Opgrader
+                                              </Button>
+                                          </Link>
+                                      )}
+                                  </div>
                               )}
                           </div>
                        </div>

@@ -1330,6 +1330,26 @@ export async function cancelSubscription(subscriptionId: string): Promise<{ succ
     }
 }
 
+export async function createPortalSessionAction(stripeCustomerId: string): Promise<{ url: string }> {
+    if (!isStripeConfigured) throw new Error("Stripe er ikke konfigureret.");
+    
+    // We use headers to get the dynamic host if NEXT_PUBLIC_APP_URL is missing
+    const host = headers().get('host');
+    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
+
+    try {
+        const portalSession = await stripe.billingPortal.sessions.create({
+            customer: stripeCustomerId,
+            return_url: `${baseUrl}/settings`,
+        });
+        return { url: portalSession.url };
+    } catch (error: any) {
+        console.error("Stripe Portal Error:", error);
+        throw new Error(error.message);
+    }
+}
+
 export async function syncSubscriptionStatusAction(stripeCustomerId: string): Promise<{
     stripeSubscriptionStatus: string;
     stripeCurrentPeriodEnd: string;
