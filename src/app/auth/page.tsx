@@ -2,19 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/app/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Check, AlertTriangle, Mail, Lock, User, ArrowRight, Sparkles, ShieldCheck, Zap } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Suspense } from 'react';
 
 type AuthMode = 'login' | 'signup';
 
-const AuthPage = () => {
+const AuthContent = () => {
   const { user, handleLogin, handleSignup, handleGoogleLogin } = useApp();
   const router = useRouter();
-  const [mode, setMode] = useState<AuthMode>('login');
+  const searchParams = useSearchParams();
+  const initialMode = searchParams?.get('mode') === 'signup' ? 'signup' : 'login';
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -356,6 +359,14 @@ const AuthPage = () => {
       </div>
 
     </div>
+  );
+};
+
+const AuthPage = () => {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>}>
+      <AuthContent />
+    </Suspense>
   );
 };
 

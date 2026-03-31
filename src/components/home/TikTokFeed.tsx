@@ -30,15 +30,27 @@ export default function TikTokFeed({
   const handle = featuredData?.[0]?.handle || initialHandle;
 
   useEffect(() => {
-    // Load TikTok embed script
-    const script = document.createElement('script');
-    script.src = "https://www.tiktok.com/embed.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    // Check if script already exists to avoid multiple injections
+    const SCRIPT_ID = 'tiktok-embed-script';
+    let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement;
+    
+    if (!script) {
+      script = document.createElement('script');
+      script.id = SCRIPT_ID;
+      script.src = "https://www.tiktok.com/embed.js";
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      (script as any).referrerPolicy = "no-referrer-when-downgrade";
+      document.body.appendChild(script);
+    } else {
+      // If script exists, trigger a re-render of the embed
+      // Small timeout to ensure the DOM is ready for parsing
+      setTimeout(() => {
+        if ((window as any).tiktok?.embed?.lib?.render) {
+          (window as any).tiktok.embed.lib.render();
+        }
+      }, 100);
+    }
   }, [videoId]);
 
   return (
