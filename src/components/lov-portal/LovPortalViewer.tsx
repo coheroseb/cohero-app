@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -1139,7 +1139,7 @@ export function LovPortalViewer() {
   const [reformResult, setReformResult] = useState<GenerateParagraphDiffData | null>(null);
   const [isReformOracleOpen, setIsReformOracleOpen] = useState(false);
   
-
+  const mainScrollRef = useRef<HTMLElement>(null);
   const activeLawId = useMemo(() => params?.lawId as string || searchParams?.get('lawId'), [params, searchParams]);
   const activeGuidelineId = useMemo(() => searchParams?.get('guidelineId'), [searchParams]);
   const activeReferenceId = useMemo(() => searchParams?.get('refId')?.toString(), [searchParams]);
@@ -1257,10 +1257,11 @@ export function LovPortalViewer() {
             // Wait for render, then scroll
             setTimeout(() => {
                 const element = document.getElementById(`para-${foundKey}`);
-                if (element) {
+                if (element && mainScrollRef.current) {
                     const rect = element.getBoundingClientRect();
-                    const offset = window.scrollY + rect.top - 150;
-                    window.scrollTo({ top: offset, behavior: 'smooth' });
+                    const containerRect = mainScrollRef.current.getBoundingClientRect();
+                    const offset = rect.top + mainScrollRef.current.scrollTop - containerRect.top - 150;
+                    mainScrollRef.current.scrollTo({ top: offset, behavior: 'smooth' });
                 }
             }, 500);
         }
@@ -1542,9 +1543,9 @@ export function LovPortalViewer() {
 
   const scrollToChapter = (chapterIndex: number) => {
     const element = document.getElementById(`chapter-${chapterIndex}`);
-    if (element) {
-        const top = window.scrollY + element.getBoundingClientRect().top - 100;
-        window.scrollTo({ top, behavior: 'smooth' });
+    if (mainScrollRef.current && element) {
+        const top = element.getBoundingClientRect().top + mainScrollRef.current.scrollTop - 100;
+        mainScrollRef.current.scrollTo({ top, behavior: 'smooth' });
     }
   };
 
@@ -1692,15 +1693,20 @@ export function LovPortalViewer() {
   }, [filteredParagraphsData, bibMetadata, docsData]);
 
   useEffect(() => {
+    const scrollContainer = mainScrollRef.current;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100);
+      if (scrollContainer) {
+        setIsScrolled(scrollContainer.scrollTop > 100);
+      }
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+    }
+    return () => scrollContainer?.removeEventListener('scroll', handleScroll);
   }, [isLoadingDoc, viewMode, activeLawId]);
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 overflow-x-hidden selection:text-amber-950">
+    <div className={`min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 selection:text-amber-950 overflow-x-hidden ${(!activeLawId && !activeReferenceId) ? '' : 'lg:h-[calc(100vh-8rem)] lg:overflow-hidden'}`}>
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
         .serif-premium { font-family: 'Playfair Display', serif; }
@@ -1826,7 +1832,7 @@ export function LovPortalViewer() {
       </AnimatePresence>
       
       {/* DESKTOP SIDEBAR NAVIGATION */}
-      <aside className={`w-80 bg-white/60 backdrop-blur-3xl border-r border-amber-100 flex flex-col sticky top-28 h-[calc(100vh-7rem)] z-30 transition-all duration-700 ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
+      <aside className={`w-80 bg-white/60 backdrop-blur-3xl border-r border-amber-100 flex flex-col sticky top-0 h-full z-30 transition-all duration-700 overflow-y-auto custom-scrollbar ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
         <div className="p-10 flex items-center gap-4 border-b border-amber-50/50">
             <div className="w-14 h-14 bg-amber-950 rounded-[1.5rem] flex items-center justify-center text-amber-400 shadow-2xl shadow-amber-950/40 rotate-1 flex-shrink-0 animate-ink"><ScaleIcon className="w-8 h-8" /></div>
             <div>
@@ -1907,8 +1913,8 @@ export function LovPortalViewer() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-0">
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-28 z-50">
+      <main ref={mainScrollRef as any} className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-0 h-full overflow-y-auto">
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-0 z-50">
             <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
                 <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-950 transition-colors" />
@@ -2220,7 +2226,7 @@ export function LovPortalViewer() {
                     </motion.div>
                 ) : (activeLawId || activeReferenceId) && currentDocData ? (
                     <motion.div id="law-content-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`${isScrolled ? '' : 'space-y-6'}`}>
-                        <div className={`sticky top-48 z-40 bg-slate-50/50 backdrop-blur-md transition-all duration-500 overflow-hidden ${isScrolled ? 'p-3 px-5 rounded-2xl shadow-lg border border-slate-200 mt-2 mb-8' : 'p-4 md:p-8 rounded-2xl md:rounded-3xl border border-slate-200 shadow-sm mb-6'}`}>
+                        <div className={`sticky top-0 z-40 bg-slate-50/50 backdrop-blur-md transition-all duration-500 overflow-hidden ${isScrolled ? 'p-3 px-5 rounded-2xl shadow-lg border border-slate-200 mt-2 mb-8' : 'p-4 md:p-8 rounded-2xl md:rounded-3xl border border-slate-200 shadow-sm mb-6'}`}>
                             <div className={`absolute top-0 right-0 p-8 opacity-[0.02] ${isScrolled ? 'hidden' : ''}`}><ScaleIcon className="w-24 h-24 text-slate-900" /></div>
                             <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-10">
                                 {!isScrolled && (
@@ -2444,7 +2450,7 @@ export function LovPortalViewer() {
       {/* CONTEXT SIDEBAR */}
       <AnimatePresence>
           {isContextSidebarOpen && !isFocusMode && (activeLawId || activeReferenceId) && (
-              <motion.aside initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }} className="w-[22rem] bg-white border-l border-amber-100 hidden lg:flex flex-col sticky top-28 h-[calc(100vh-7rem)] z-30 shadow-2xl">
+              <motion.aside initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }} className="w-[22rem] bg-white border-l border-amber-100 hidden lg:flex flex-col sticky top-0 h-full z-30 shadow-2xl overflow-y-auto custom-scrollbar">
                   <div className="p-10 space-y-12 overflow-y-auto flex-1 custom-scrollbar">
                       <div className="flex items-center justify-between">
                           <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-amber-950/20">Sagsindsigt</h3>
