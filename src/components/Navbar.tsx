@@ -254,7 +254,7 @@ const Navbar: React.FC<NavbarProps> = ({
       className="fixed top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/90 via-white/40 to-transparent z-[90] pointer-events-none backdrop-blur-sm"
     />
 
-    <nav className={`fixed top-0 left-0 right-0 z-[200] transition-all duration-700 ease-in-out px-4 py-4 md:px-8 pointer-events-none`}>
+    <nav className={`fixed top-0 left-0 right-0 z-[500] transition-all duration-700 ease-in-out px-4 py-4 md:px-8 pointer-events-none`}>
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -447,7 +447,7 @@ const Navbar: React.FC<NavbarProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-[150] bg-white lg:hidden"
+            className="fixed inset-0 z-[600] bg-white lg:hidden"
           >
             <div className="p-5 flex flex-col h-[100dvh] overflow-y-auto pb-8 sm:p-8 relative">
               
