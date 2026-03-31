@@ -326,7 +326,7 @@ export async function getCaseFeedbackAction(input: { topic: string, scenario: st
     return callFirebaseFlow('getCaseFeedbackFlow', { ...input, lawContext });
 }
 
-const wrapEmailHtml = (inner: string) => `
+export const wrapEmailHtml = (inner: string) => `
 <!DOCTYPE html>
 <html>
 <head>

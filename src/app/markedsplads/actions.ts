@@ -6,6 +6,7 @@ import { stripe } from '@/lib/stripe';
 import { AssistanceRequest } from '@/ai/flows/types';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
+import { wrapEmailHtml } from '@/app/actions';
 
 const PLATFORM_FEE_PERCENT = 15;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cohero.dk';
@@ -42,6 +43,30 @@ export async function createAssistanceRequestAction(formData: {
     const requestId = docRef.id;
 
     console.log('Assistance request created in Firestore:', requestId);
+
+    // Send confirmation email to citizen with status link
+    try {
+      const statusLink = `${APP_URL}/raadgivning/status/${requestId}`;
+      await resend.emails.send({
+        from: 'Cohéro Rådgivning <info@platform.cohero.dk>',
+        to: formData.citizenEmail,
+        subject: "Vi har modtaget din anmodning! 🚀",
+        html: wrapEmailHtml(`
+            <h1 style="color: #0f172a; margin-bottom: 16px;">Hej ${formData.citizenName || 'Borger'}</h1>
+            <p>Vi har nu modtaget din anmodning om hjælp til opgaven: <strong>"${formData.title}"</strong>.</p>
+            <p>Din anmodning er nu lagt ud på vores markedsplads, hvor dygtige socialrådgiverstuderende kan se den. Du får en e-mail så snart en studerende har takket ja til at hjælpe dig.</p>
+            <p>Du kan løbende følge status på din sag og se næste skridt via din personlige status-side:</p>
+            <div style="margin-top: 32px; text-align: center;">
+                <a href="${statusLink}" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; display: inline-block;">Gå til din status-side</a>
+            </div>
+            <p style="font-size: 13px; color: #64748b; margin-top: 24px; font-style: italic;">Har du spørgsmål til processen? Skriv til os på <a href="mailto:kontakt@cohero.dk" style="color: #451a03; font-weight: bold;">kontakt@cohero.dk</a> – vi står klar til at hjælpe dig.</p>
+        `),
+      });
+      console.log('Confirmation email sent to:', formData.citizenEmail);
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      // We don't fail the whole action if email fails, but it's logged
+    }
 
     return { success: true, id: requestId };
   } catch (error) {

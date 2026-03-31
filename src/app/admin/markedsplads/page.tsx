@@ -35,12 +35,20 @@ import {
   Star,
   Banknote,
   FileSpreadsheet,
-  UserMinus
+  UserMinus,
+  Plus,
+  X,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { AssistanceRequest } from '@/ai/flows/types';
 import { sendTaskResetEmailAction } from '@/app/actions';
+import { createAssistanceRequestAction } from '@/app/markedsplads/actions';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const STAT_CARDS = [
   { label: 'Totale Opgaver', key: 'total', icon: HandHelping, color: 'text-amber-600', bg: 'bg-amber-50' },
@@ -56,6 +64,20 @@ const AdminMarkedspladsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'claimed' | 'paid' | 'completed'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'price_desc' | 'price_asc'>('newest');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: 'Rådgivning' as AssistanceRequest['category'],
+    price: 500,
+    location: '',
+    citizenName: '',
+    citizenEmail: '',
+    citizenPhone: '',
+    dueDate: ''
+  });
 
   const requestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -144,6 +166,42 @@ const AdminMarkedspladsPage = () => {
     }
   };
 
+  const handleCreateRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!formData.title || !formData.description || !formData.citizenName || !formData.citizenEmail || !formData.price) {
+      toast({ title: 'Venligst udfyld alle påkrævede felter', variant: 'destructive' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await createAssistanceRequestAction(formData as any);
+      if (result.success) {
+        toast({ title: 'Opgave oprettet manuelt' });
+        setShowCreateModal(false);
+        setFormData({
+            title: '',
+            description: '',
+            category: 'Rådgivning',
+            price: 500,
+            location: '',
+            citizenName: '',
+            citizenEmail: '',
+            citizenPhone: '',
+            dueDate: ''
+        });
+      } else {
+        toast({ title: result.error || 'Fejl ved oprettelse', variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Serverfejl ved oprettelse', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
@@ -151,6 +209,13 @@ const AdminMarkedspladsPage = () => {
           <h3 className="text-3xl font-bold text-slate-900 serif">Markedsplads Administration</h3>
           <p className="text-sm text-slate-500 mt-1 font-medium italic">Overvåg opgaver, transaktioner og udbetalinger på tværs af platformen.</p>
         </div>
+        <Button 
+          onClick={() => setShowCreateModal(true)}
+          className="bg-amber-950 text-amber-400 hover:bg-slate-900 rounded-2xl flex items-center gap-2 px-6 py-6 shadow-xl shadow-amber-950/20 active:scale-95 transition-all"
+        >
+          <Plus className="w-5 h-5" />
+          Opret manuel sag
+        </Button>
       </div>
 
       {/* Stats */}
@@ -367,6 +432,208 @@ const AdminMarkedspladsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Manual Create Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isSubmitting && setShowCreateModal(false)}
+              className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shadow-inner">
+                    <HandHelping className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">Opret Manuel Sag</h3>
+                    <p className="text-xs text-slate-400 font-medium">Udfyld formularen for at oprette en sag på vegne af en borger.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => !isSubmitting && setShowCreateModal(false)}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateRequest} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Basic Info */}
+                  <div className="space-y-4 md:col-span-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 block px-1">Opgave Detaljer</label>
+                    <div className="space-y-4 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 px-1">Titel</label>
+                        <input 
+                          required
+                          type="text" 
+                          placeholder="F.eks. Hjælp til ankesag om merudgifter"
+                          className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 transition-all outline-none"
+                          value={formData.title}
+                          onChange={(e) => setFormData({...formData, title: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 px-1">Beskrivelse</label>
+                        <textarea 
+                          required
+                          rows={4}
+                          placeholder="Beskriv opgaven i detaljer..."
+                          className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 transition-all outline-none resize-none"
+                          value={formData.description}
+                          onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-600 px-1">Kategori</label>
+                          <select 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-amber-500/5"
+                            value={formData.category}
+                            onChange={(e) => setFormData({...formData, category: e.target.value as any})}
+                          >
+                            <option value="Rådgivning">Rådgivning</option>
+                            <option value="Ansøgning">Ansøgning</option>
+                            <option value="Bisidder">Bisidder</option>
+                            <option value="Andet">Andet</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-600 px-1">Pris (DKK)</label>
+                          <div className="relative">
+                            <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input 
+                              required
+                              type="number" 
+                              className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 transition-all outline-none"
+                              value={formData.price}
+                              onChange={(e) => setFormData({...formData, price: parseInt(e.target.value) || 0})}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Citizen Info */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 block px-1">Borger Information</label>
+                    <div className="space-y-4 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 px-1">Navn</label>
+                        <div className="relative">
+                          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            required
+                            type="text" 
+                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
+                            value={formData.citizenName}
+                            onChange={(e) => setFormData({...formData, citizenName: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 px-1">E-mail</label>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            required
+                            type="email" 
+                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
+                            value={formData.citizenEmail}
+                            onChange={(e) => setFormData({...formData, citizenEmail: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 px-1">Telefon</label>
+                        <div className="relative">
+                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="tel" 
+                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
+                            value={formData.citizenPhone}
+                            onChange={(e) => setFormData({...formData, citizenPhone: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Settings */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 block px-1">Praktiske Detaljer</label>
+                    <div className="space-y-4 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 px-1">Lokation</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="text" 
+                            placeholder="F.eks. København eller Online"
+                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
+                            value={formData.location}
+                            onChange={(e) => setFormData({...formData, location: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 px-1">Deadline</label>
+                        <div className="relative">
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="date" 
+                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
+                            value={formData.dueDate}
+                            onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex items-center justify-end gap-4">
+                  <Button 
+                    type="button"
+                    onClick={() => !isSubmitting && setShowCreateModal(false)}
+                    variant="ghost"
+                    className="rounded-2xl px-8 h-14 font-bold text-slate-500"
+                  >
+                    Annuller
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-amber-950 text-amber-400 hover:bg-slate-900 rounded-2xl px-12 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-amber-950/20 active:scale-95 transition-all"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Opretter...
+                      </>
+                    ) : (
+                      'Opret Opgave Nu'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
