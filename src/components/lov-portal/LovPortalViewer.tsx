@@ -1826,7 +1826,7 @@ export function LovPortalViewer() {
       </AnimatePresence>
       
       {/* DESKTOP SIDEBAR NAVIGATION */}
-      <aside className={`w-80 bg-white/60 backdrop-blur-3xl border-r border-amber-100 flex flex-col sticky top-32 h-[calc(100vh-8rem)] z-30 transition-all duration-700 ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
+      <aside className={`w-80 bg-white/60 backdrop-blur-3xl border-r border-amber-100 flex flex-col sticky top-28 h-[calc(100vh-7rem)] z-30 transition-all duration-700 ${isFocusMode ? 'hidden' : 'hidden lg:flex'}`}>
         <div className="p-10 flex items-center gap-4 border-b border-amber-50/50">
             <div className="w-14 h-14 bg-amber-950 rounded-[1.5rem] flex items-center justify-center text-amber-400 shadow-2xl shadow-amber-950/40 rotate-1 flex-shrink-0 animate-ink"><ScaleIcon className="w-8 h-8" /></div>
             <div>
@@ -1908,7 +1908,7 @@ export function LovPortalViewer() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-0">
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-20 z-20">
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-28 z-20">
             <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
                 <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-950 transition-colors" />
@@ -2444,7 +2444,7 @@ export function LovPortalViewer() {
       {/* CONTEXT SIDEBAR */}
       <AnimatePresence>
           {isContextSidebarOpen && !isFocusMode && (activeLawId || activeReferenceId) && (
-              <motion.aside initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }} className="w-[22rem] bg-white border-l border-amber-100 hidden lg:flex flex-col sticky top-32 h-[calc(100vh-8rem)] z-30 shadow-2xl">
+              <motion.aside initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }} className="w-[22rem] bg-white border-l border-amber-100 hidden lg:flex flex-col sticky top-28 h-[calc(100vh-7rem)] z-30 shadow-2xl">
                   <div className="p-10 space-y-12 overflow-y-auto flex-1 custom-scrollbar">
                       <div className="flex items-center justify-between">
                           <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-amber-950/20">Sagsindsigt</h3>

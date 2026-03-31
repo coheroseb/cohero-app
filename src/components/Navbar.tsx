@@ -251,7 +251,7 @@ const Navbar: React.FC<NavbarProps> = ({
     <motion.div 
       initial={false}
       animate={{ opacity: scrolled ? 1 : 0 }}
-      className="fixed top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/90 via-white/40 to-transparent z-[90] pointer-events-none backdrop-blur-sm"
+      className="fixed top-0 left-0 right-0 h-28 bg-gradient-to-b from-white/60 via-white/10 to-transparent z-[90] pointer-events-none backdrop-blur-[2px]"
     />
 
     <nav className={`fixed top-0 left-0 right-0 z-[500] transition-all duration-700 ease-in-out px-4 py-4 md:px-8`}>
@@ -261,8 +261,8 @@ const Navbar: React.FC<NavbarProps> = ({
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className={`max-w-7xl mx-auto w-full transition-all duration-500 will-change-transform
           ${scrolled 
-            ? 'bg-[#FDFCF8]/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(45,35,15,0.1)] border border-white/60 h-16 px-6' 
-            : 'bg-white/80 backdrop-blur-md rounded-[2.5rem] border border-white/20 h-20 px-6 sm:px-8 shadow-sm'
+            ? 'bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(45,35,15,0.1)] border border-white/60 h-16 px-6' 
+            : 'bg-white/10 backdrop-blur-[2px] rounded-[2.5rem] border border-white/20 h-20 px-6 sm:px-8 shadow-sm hover:bg-white/20'
           }`}
       >
         <div className="flex items-center justify-between h-full">
