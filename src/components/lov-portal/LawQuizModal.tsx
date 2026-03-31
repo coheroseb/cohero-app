@@ -36,10 +36,20 @@ type Difficulty = 'easy' | 'medium' | 'hard';
 type QuizMode = 'fact' | 'case';
 
 const LawQuizModal: React.FC<LawQuizModalProps> = ({ isOpen, onClose, lawId, lawTitle, chapters = [] }) => {
-  const { user, userProfile } = useApp();
+  const { user, userProfile, setIsNavbarHidden } = useApp();
   const { toast } = useToast();
   
   const [gameState, setGameState] = useState<'setup' | 'generating' | 'playing' | 'results'>('setup');
+  
+  useEffect(() => {
+    if (isOpen) {
+        setIsNavbarHidden(true);
+    } else {
+        setIsNavbarHidden(false);
+    }
+    return () => setIsNavbarHidden(false);
+  }, [isOpen, setIsNavbarHidden]);
+
   const [selectedChapterIdx, setSelectedChapterIdx] = useState<number | 'all'>('all');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [quizMode, setQuizMode] = useState<QuizMode>('fact');

@@ -53,6 +53,8 @@ interface AppContextType {
   handleSignup: (email: string, pass: string, displayName: string) => Promise<any>;
   handleGoogleLogin: () => Promise<any>;
   isNativeApp: boolean;
+  isNavbarHidden: boolean;
+  setIsNavbarHidden: (hidden: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -136,6 +138,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [hasPlayedDailyChallenge, setHasPlayedDailyChallenge] = useState(false);
   const [cookieConsent, setCookieConsent] = useState<'granted' | 'denied' | 'pending'>('pending');
   const [isNativeApp, setIsNativeApp] = useState(false);
+  const [isNavbarHidden, setIsNavbarHidden] = useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
@@ -401,7 +404,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     handleSignup,
     handleGoogleLogin,
     isNativeApp,
-  }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, isNativeApp]);
+    isNavbarHidden,
+    setIsNavbarHidden
+  }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, isNativeApp, isNavbarHidden, setIsNavbarHidden]);
 
 
   const pageBackground = useMemo(() => {
@@ -420,7 +425,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={contextValue}
     >
       <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && (
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isNavbarHidden && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
             <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} />
