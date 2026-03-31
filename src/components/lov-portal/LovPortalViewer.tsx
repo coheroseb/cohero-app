@@ -1908,7 +1908,7 @@ export function LovPortalViewer() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-0">
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-28 z-20">
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-28 z-50">
             <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
                 <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-950 transition-colors" />
@@ -2220,7 +2220,7 @@ export function LovPortalViewer() {
                     </motion.div>
                 ) : (activeLawId || activeReferenceId) && currentDocData ? (
                     <motion.div id="law-content-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`${isScrolled ? '' : 'space-y-6'}`}>
-                        <div className={`sticky top-20 z-40 bg-slate-50/50 backdrop-blur-md transition-all duration-500 overflow-hidden ${isScrolled ? 'p-3 px-5 rounded-2xl shadow-lg border border-slate-200 mt-2 mb-8' : 'p-4 md:p-8 rounded-2xl md:rounded-3xl border border-slate-200 shadow-sm mb-6'}`}>
+                        <div className={`sticky top-48 z-40 bg-slate-50/50 backdrop-blur-md transition-all duration-500 overflow-hidden ${isScrolled ? 'p-3 px-5 rounded-2xl shadow-lg border border-slate-200 mt-2 mb-8' : 'p-4 md:p-8 rounded-2xl md:rounded-3xl border border-slate-200 shadow-sm mb-6'}`}>
                             <div className={`absolute top-0 right-0 p-8 opacity-[0.02] ${isScrolled ? 'hidden' : ''}`}><ScaleIcon className="w-24 h-24 text-slate-900" /></div>
                             <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-10">
                                 {!isScrolled && (
