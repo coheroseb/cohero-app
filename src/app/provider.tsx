@@ -144,7 +144,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [mounted, setMounted] = useState(false);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
   const isRaadgivning = useMemo(() => pathname?.startsWith('/raadgivning'), [pathname]);
-  const isLovPortal = useMemo(() => pathname?.startsWith('/lov-portal'), [pathname]);
+  const isLovPortalView = useMemo(() => pathname?.startsWith('/lov-portal/view'), [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -426,7 +426,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} />
           </>
         )}
-        <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${isLovPortal ? 'lg:h-screen lg:overflow-hidden' : ''}`}>
+        <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${isLovPortalView ? 'lg:h-screen lg:overflow-hidden' : ''}`}>
             {/* Soft top gradient to blend with navbar when scrolling */}
             {!isNativeApp && !isStandaloneGroups && !isRaadgivning && (
                 <div className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-inherit to-transparent pointer-events-none z-10`} />
@@ -442,7 +442,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortalView && <Footer />}
         
         {mounted && isNativeApp && user && <MobileTabNavigation userProfile={userProfile} />}
 
