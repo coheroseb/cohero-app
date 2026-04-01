@@ -492,7 +492,7 @@ const PortalPageContent: React.FC = () => {
         if (!isFreeTier) return false;
     
         const dailyCount = getDailyCount(userProfile.lastConceptExplainerUsage, userProfile.dailyConceptExplainerCount);
-        return dailyCount >= 3;
+        return dailyCount >= 1;
     }, [userProfile]);
 
     // Fetch Global Trends for "Hurtig-opslag"
@@ -595,6 +595,14 @@ const PortalPageContent: React.FC = () => {
       if (isLaw) {
           router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
       } else {
+          if (isConceptLimitReached) {
+            toast({
+                variant: 'destructive',
+                title: 'Dagsgrænse nået',
+                description: 'Som Kollega-medlem har du 1 dagligt opslag. Opgradér til Kollega+ for at få fri adgang til Guiden.',
+            });
+            return;
+          }
           router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
       }
     }

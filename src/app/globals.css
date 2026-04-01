@@ -60,6 +60,8 @@
   * {
     @apply border-border;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   body {
     @apply bg-background text-foreground;
@@ -76,7 +78,20 @@
     padding-bottom: env(safe-area-inset-bottom, 0);
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
+
+    /* Safari Height Fix */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
+
+  /* Support for backdrop-filter in Safari */
+  .backdrop-blur-sm { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .backdrop-blur-md { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .backdrop-blur-lg { -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .backdrop-blur-xl { -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+  .backdrop-blur-2xl { -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); }
+  .backdrop-blur-3xl { -webkit-backdrop-filter: blur(64px); backdrop-filter: blur(64px); }
+  .backdrop-blur-none { -webkit-backdrop-filter: none; backdrop-filter: none; }
 
   /* Allow text selection in content elements while keeping UI fixed */
   p, h1, h2, h3, h4, h5, h6, span, li, blockquote, input, textarea, [contenteditable="true"] {

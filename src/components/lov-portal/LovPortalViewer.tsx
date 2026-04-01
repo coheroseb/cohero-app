@@ -1139,6 +1139,11 @@ export function LovPortalViewer() {
   const [reformResult, setReformResult] = useState<GenerateParagraphDiffData | null>(null);
   const [isReformOracleOpen, setIsReformOracleOpen] = useState(false);
   
+  // Global Paragraph Search States
+  const [globalParaNum, setGlobalParaNum] = useState<string | null>(null);
+  const [globalParaResults, setGlobalParaResults] = useState<any[]>([]);
+  const [isGlobalParaLoading, setIsGlobalParaLoading] = useState(false);
+  
   const mainScrollRef = useRef<HTMLElement>(null);
   const activeLawId = useMemo(() => params?.lawId as string || searchParams?.get('lawId'), [params, searchParams]);
   const activeGuidelineId = useMemo(() => searchParams?.get('guidelineId'), [searchParams]);
@@ -1316,6 +1321,102 @@ export function LovPortalViewer() {
       user && firestore ? query(collection(firestore, 'users', user.uid, 'highlights')) : null
   ), [user, firestore]);
   const { data: userHighlights = [] } = useCollection<any>(highlightsQuery);
+
+  // Detect Global Para Search
+  useEffect(() => {
+    if (!debouncedSearchQuery || activeLawId || activeReferenceId) {
+        setGlobalParaNum(null);
+        return;
+    }
+    const q = debouncedSearchQuery.toLowerCase().trim();
+    if (q.includes('§') || q.startsWith('paragraf') || q.startsWith('par ') || q.startsWith('p ') || (/^\d+$/.test(q) && q.length < 5)) {
+        const match = q.match(/\d+/);
+        if (match) {
+            setGlobalParaNum(match[0]);
+        } else {
+            setGlobalParaNum(null);
+        }
+    } else {
+        setGlobalParaNum(null);
+    }
+  }, [debouncedSearchQuery, activeLawId, activeReferenceId]);
+
+  // Fetch Global Para Results
+  useEffect(() => {
+      if (!globalParaNum || activeLawId || activeReferenceId || viewMode !== 'laws') {
+          setGlobalParaResults([]);
+          return;
+      }
+      
+      const fetchGlobalParas = async () => {
+          setIsGlobalParaLoading(true);
+          const results: any[] = [];
+          
+          // Use a broader list of priority IDs and make matching case-insensitive
+          const priorityIds = ['barnet', 'service', 'aktiv', 'retssikkerhed', 'forvaltning', 'offentlighed', 'vum', 'støtte'];
+          
+          // First, identify all laws that have an XML URL
+          const availableLaws = lawsConfigs.filter(l => !!l.xmlUrl);
+          
+          // Prioritize them
+          const sortedLaws = [...availableLaws].sort((a, b) => {
+              const aId = a.id.toLowerCase();
+              const bId = b.id.toLowerCase();
+              const aIsPriority = priorityIds.some(id => aId.includes(id));
+              const bIsPriority = priorityIds.some(id => bId.includes(id));
+              if (aIsPriority && !bIsPriority) return -1;
+              if (!aIsPriority && bIsPriority) return 1;
+              return 0;
+          });
+
+          // Limit to 15 laws to keep it performant
+          const targetConfigs = sortedLaws.slice(0, 15);
+          
+          const fetchPromises = targetConfigs.map(async (config) => {
+              try {
+                  const res = await getLawContentAction({
+                      documentId: config.id,
+                      xmlUrl: config.xmlUrl,
+                      name: config.name,
+                      abbreviation: config.abbreviation,
+                      lbk: config.lbk
+                  });
+                  
+                  if (res?.data && res.data.kapitler) {
+                      const lowerParaNum = globalParaNum.toLowerCase();
+                      
+                      // More robust paragraph finding
+                      const allParas = res.data.kapitler.flatMap((c: any) => c.paragraffer || []);
+                      const para = allParas.find((p: any) => {
+                        const cleanNum = p.nummer.toLowerCase().replace(/[§\s\.,;]/g, '');
+                        return cleanNum === lowerParaNum || cleanNum.startsWith(lowerParaNum + 'a'); // Match § 7a if searching for 7 maybe? No, be exact but handle extras.
+                      }) || allParas.find((p: any) => p.nummer.includes(`§ ${globalParaNum}`) || p.nummer.includes(`§${globalParaNum}`));
+                      
+                      if (para) {
+                        return {
+                            lawId: config.id,
+                            lawName: config.name,
+                            lawAbbreviation: config.abbreviation,
+                            paraNumber: para.nummer,
+                            paraText: para.tekst,
+                            lawData: res.data
+                        };
+                      }
+                  }
+              } catch (e) {
+                  console.error(`Failed to fetch global para for ${config.id}`, e);
+              }
+              return null;
+          });
+
+          const fetchedResults = await Promise.all(fetchPromises);
+          const validResults = fetchedResults.filter(r => r !== null);
+          setGlobalParaResults(validResults);
+          setIsGlobalParaLoading(false);
+      };
+      
+      fetchGlobalParas();
+  }, [globalParaNum, lawsConfigs, activeLawId, activeReferenceId, viewMode]);
 
   // Load Main Configuration
   useEffect(() => {
@@ -2195,6 +2296,145 @@ export function LovPortalViewer() {
                                     </div>
                                 </div>
                             </div>
+
+                            {globalParaNum && (
+                                <section className="space-y-12 animate-ink">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-5 h-5 bg-orange-400 rounded-full shadow-lg shadow-orange-400/20 animate-pulse"></div>
+                                        <h3 className="text-[13px] font-black uppercase tracking-[0.4em] text-orange-950/60 whitespace-nowrap">Globale resultater for § {globalParaNum}</h3>
+                                        <div className="h-px w-full bg-gradient-to-r from-orange-100 to-transparent" />
+                                    </div>
+
+                                    {isGlobalParaLoading && globalParaResults.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-20 gap-4 bg-orange-50/20 rounded-[3rem] border border-dashed border-orange-100">
+                                            <Loader2 className="w-10 h-10 animate-spin text-orange-200" />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-orange-900/40">Gennemsøger de 15 vigtigste love...</p>
+                                        </div>
+                                    ) : globalParaResults.length > 0 ? (
+                                        <div className="grid md:grid-cols-2 gap-10">
+                                            {globalParaResults.map((result, i) => {
+                                                const paraKey = `global-${result.lawId}-${i}`;
+                                                const isExpanded = expandedParaKey === paraKey;
+                                                const isSaved = (savedParagraphs || []).some(p => p.id === `${result.lawId}-${result.paraNumber.replace(/[§\s\.]/g, '-')}`);
+
+                                                return (
+                                                    <motion.div 
+                                                        key={paraKey}
+                                                        initial={{ opacity: 0, scale: 0.95 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        transition={{ delay: i * 0.05 }}
+                                                        className={`bg-white border transition-all overflow-hidden ${isExpanded ? 'md:col-span-2 rounded-[3.5rem] border-amber-950 shadow-2xl bg-amber-50/5' : 'rounded-[3rem] border-orange-100 hover:border-orange-300 shadow-sm hover:shadow-xl'}`}
+                                                    >
+                                                        <div 
+                                                            onClick={() => {
+                                                                if (isExpanded) {
+                                                                    setExpandedParaKey(null);
+                                                                } else {
+                                                                    setExpandedParaKey(paraKey);
+                                                                }
+                                                            }}
+                                                            className="p-8 md:p-12 flex flex-col gap-6 cursor-pointer group"
+                                                        >
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${isExpanded ? 'bg-amber-950 text-amber-400 border-amber-950' : 'bg-orange-50 text-orange-950 border-orange-100'}`}>
+                                                                        {result.lawAbbreviation}
+                                                                    </div>
+                                                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-300 truncate max-w-[200px]">
+                                                                        {result.lawName}
+                                                                    </span>
+                                                                </div>
+                                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black serif text-xl shrink-0 ${isExpanded ? 'bg-amber-950 text-white shadow-xl' : 'bg-orange-50 text-orange-950'}`}>
+                                                                    {result.paraNumber}
+                                                                </div>
+                                                            </div>
+                                                            <div className={`text-base leading-relaxed font-medium text-slate-600 line-clamp-3 ${isExpanded ? 'line-clamp-none' : ''}`}>
+                                                                <InteractiveParagraphBody 
+                                                                    text={result.paraText} 
+                                                                    highlight={globalParaNum} 
+                                                                    userHighlights={[]} 
+                                                                    onRemoveHighlight={() => {}}
+                                                                    onSubElementClick={() => {}}
+                                                                    selectedSubElement={null}
+                                                                />
+                                                            </div>
+                                                            <div className="flex items-center justify-between mt-4">
+                                                                <button 
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        router.push(`/lov-portal/view/${result.lawId}?para=${encodeURIComponent(result.paraNumber)}`);
+                                                                    }}
+                                                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:text-amber-950 transition-all hover:translate-x-1"
+                                                                >
+                                                                    Gå til fuld lovtekst <ArrowRight className="w-3.5 h-3.5" />
+                                                                </button>
+                                                                <ChevronDown className={`w-6 h-6 text-orange-200 transition-transform ${isExpanded ? 'rotate-180 text-amber-950' : ''}`} />
+                                                            </div>
+                                                        </div>
+
+                                                        {isExpanded && (
+                                                            <motion.div 
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                className="bg-amber-50/20 border-t border-amber-50 p-8 md:p-14 space-y-12"
+                                                            >
+                                                                <div className="flex flex-col md:flex-row gap-6">
+                                                                    <Button 
+                                                                        onClick={(e) => { e.stopPropagation(); handleAnalyzeParagraph({ nummer: result.paraNumber, tekst: result.paraText }, result.lawData, paraKey); }} 
+                                                                        disabled={isAnalysingPara[paraKey]} 
+                                                                        className="flex-[2] h-20 text-lg rounded-[2.5rem] bg-amber-950 hover:bg-black shadow-2xl shadow-amber-950/20 group/ai relative overflow-hidden"
+                                                                    >
+                                                                        {isAnalysingPara[paraKey] ? (
+                                                                            <div className="flex items-center gap-4">
+                                                                                <Loader2 className="animate-spin w-6 h-6 text-amber-400" />
+                                                                                <span className="font-black uppercase tracking-widest text-xs">Analyserer...</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex items-center gap-4">
+                                                                                <Brain className="w-5 h-5 text-amber-400" />
+                                                                                <span className="font-black uppercase tracking-widest text-xs">AI Deep-Analyse</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </Button>
+                                                                    <Button 
+                                                                        onClick={(e) => { e.stopPropagation(); handleToggleSave({ nummer: result.paraNumber, tekst: result.paraText }, result.lawData, result.lawId); }} 
+                                                                        variant="outline" 
+                                                                        className={`flex-1 h-20 text-lg rounded-[2.5rem] border-2 transition-all shadow-xl shadow-amber-950/5 ${isSaved ? 'bg-amber-950 border-amber-950 text-white' : 'bg-white border-amber-100 text-amber-950 hover:border-amber-950'}`}
+                                                                    >
+                                                                        {isSaved ? <BookmarkCheck className="fill-amber-400 mr-3 w-6 h-6" /> : <Bookmark className="mr-3 w-6 h-6" />} 
+                                                                        <span className="font-black uppercase tracking-widest text-xs">Gem kilde</span>
+                                                                    </Button>
+                                                                </div>
+
+                                                                {paraAnalysis[paraKey] && (
+                                                                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid md:grid-cols-3 gap-8">
+                                                                        <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] border border-amber-100 shadow-sm space-y-5">
+                                                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/30">Retssubjekt</span>
+                                                                            <p className="text-base font-bold text-amber-950 leading-relaxed font-serif italic">"{paraAnalysis[paraKey].subjekt}"</p>
+                                                                        </div>
+                                                                        <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] border border-amber-100 shadow-sm space-y-5">
+                                                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-900/30">Retsvirkning</span>
+                                                                            <p className="text-base font-bold text-rose-950 leading-relaxed font-serif italic">"{paraAnalysis[paraKey].handling}"</p>
+                                                                        </div>
+                                                                        <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[3rem] border border-amber-100 shadow-sm space-y-5">
+                                                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/30">Betingelser</span>
+                                                                            <p className="text-base font-bold text-indigo-950 leading-relaxed font-serif italic">"{paraAnalysis[paraKey].betingelser}"</p>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                )}
+                                                            </motion.div>
+                                                        )}
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : !isGlobalParaLoading && (
+                                        <div className="py-12 text-center bg-white rounded-[3rem] border border-dashed border-orange-100">
+                                            <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">Ingen direkte match fundet på § {globalParaNum} i de primære love.</p>
+                                        </div>
+                                    )}
+                                </section>
+                            )}
 
                             <div className="space-y-24">
                                 {Object.entries(groupedLaws).map(([category, laws], groupIdx) => (

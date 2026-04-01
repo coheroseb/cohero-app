@@ -159,8 +159,8 @@ function ConceptExplainerPageContent() {
         const lastUsage = userProfile.lastConceptExplainerUsage?.toDate().toDateString();
         const count = lastUsage === today ? userProfile.dailyConceptExplainerCount || 0 : 0;
         
-        if (count >= 3) {
-            setLimitError('Dine opslag for i dag er brugt. Opgrader til Kollega+ for fri adgang.');
+        if (count >= 1) {
+            setLimitError('Dine opslag for i dag er brugt. Som Kollega-medlem har du 1 dagligt opslag. Opgrader til Kollega+ for fri adgang.');
             setIsLoading(false);
             return;
         }
