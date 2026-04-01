@@ -94,8 +94,8 @@ export default function SettingsPage() {
     if (user?.metadata.lastSignInTime) {
       const lastSignIn = new Date(user.metadata.lastSignInTime).getTime();
       const now = new Date().getTime();
-      const twoMinutes = 2 * 60 * 1000;
-      setIsRecentLogin(now - lastSignIn < twoMinutes);
+      const fiveMinutes = 5 * 60 * 1000;
+      setIsRecentLogin(now - lastSignIn < fiveMinutes);
     }
   }, [user]);
 
@@ -317,11 +317,34 @@ export default function SettingsPage() {
     if (!user || !firestore || !auth || !auth.currentUser) {
       throw new Error("Bruger eller database er ikke tilgængelig.");
     }
+
+    setIsDeleting(true);
     
-    const userRef = doc(firestore, 'users', user.uid);
-    await deleteDoc(userRef);
-    await deleteUser(auth.currentUser);
-    handleLogout();
+    try {
+      // 1. Cancel subscription if active and personal
+      if (userProfile?.stripeSubscriptionId && !isSpecialSubscription) {
+        try {
+          await cancelSubscription(userProfile.stripeSubscriptionId);
+        } catch (subErr) {
+          console.error("Failed to cancel subscription during deletion:", subErr);
+          // We continue anyway, but we log the error
+        }
+      }
+
+      // 2. Delete Firestore document
+      // Note: We do this while auth user still exists so Firestore rules allow it
+      const userRef = doc(firestore, 'users', user.uid);
+      await deleteDoc(userRef);
+
+      // 3. Delete Auth user
+      await deleteUser(auth.currentUser);
+      
+      // 4. Logout and clean up
+      handleLogout();
+    } catch (err: any) {
+      setIsDeleting(false);
+      throw err; // Re-throw to be caught by DeleteAccountModal
+    }
   };
   
   const handleResendClick = async () => {
@@ -791,8 +814,16 @@ export default function SettingsPage() {
                                     </div>
                                  </TooltipTrigger>
                                  {!isRecentLogin && (
-                                    <TooltipContent className="bg-slate-900 text-white p-4 max-w-xs border-none shadow-xl rounded-xl" side="bottom">
-                                       <p className="text-xs font-semibold leading-relaxed text-slate-300"><span className="text-white">Sikkerhedslås:</span> Du skal have logget ind inden for de sidste 2 minutter for at slette din konto. Log af og log ind igen for at fortsætte.</p>
+                                    <TooltipContent className="bg-slate-900 text-white p-5 max-w-xs border-none shadow-2xl rounded-2xl" side="bottom">
+                                       <div className="space-y-2">
+                                          <p className="text-[14px] font-black tracking-tight text-white flex items-center gap-2">
+                                             <ShieldAlert className="w-4 h-4 text-amber-400" /> Sikkerhedslås
+                                          </p>
+                                          <p className="text-xs font-medium leading-relaxed text-slate-300">
+                                             For at beskytte din konto skal du have logget ind inden for de sidste <span className="text-amber-400 font-bold">5 minutter</span> for at slette den. 
+                                          </p>
+                                          <p className="text-xs font-bold text-slate-100">Log venligst ud og ind igen for at låse op.</p>
+                                       </div>
                                     </TooltipContent>
                                  )}
                               </Tooltip>
