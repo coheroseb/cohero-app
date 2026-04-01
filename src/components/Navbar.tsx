@@ -43,6 +43,8 @@ import { DocumentData } from 'firebase/firestore';
 import { Button } from './ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationBell from './NotificationBell';
+import { useApp } from '@/app/provider';
+import { Snowflake, Bird, Ghost } from 'lucide-react';
 
 const BookSpine: React.FC<{
   letter?: string;
@@ -52,9 +54,38 @@ const BookSpine: React.FC<{
   tilt?: string;
   decoration?: 'bands' | 'stripes' | 'plain' | 'gold' | 'ornament';
   index?: number;
-}> = ({ letter, height, width, color, tilt = '', decoration = 'plain', index = 0 }) => {
+  theme?: string;
+}> = ({ letter, height, width, color, tilt = '', decoration = 'plain', index = 0, theme = 'default' }) => {
   const randomDelay = useMemo(() => Math.random() * 15, []);
   const randomRepeatDelay = useMemo(() => 10 + Math.random() * 20, []);
+
+  const themeStyle = useMemo(() => {
+    if (theme === 'christmas') {
+        const colors = ['bg-rose-600', 'bg-emerald-600', 'bg-rose-500', 'bg-emerald-500', 'bg-slate-100'];
+        return { 
+            color: colors[index % colors.length], 
+            textColor: 'text-white/90',
+            decorationColor: 'bg-white/20' 
+        };
+    }
+    if (theme === 'easter') {
+        const colors = ['bg-yellow-200', 'bg-rose-200', 'bg-sky-200', 'bg-lime-200', 'bg-purple-200'];
+        return { 
+            color: colors[index % colors.length], 
+            textColor: 'text-slate-700',
+            decorationColor: 'bg-white/40' 
+        };
+    }
+    if (theme === 'halloween') {
+        const colors = ['bg-orange-600', 'bg-purple-900', 'bg-slate-900', 'bg-orange-700', 'bg-purple-800'];
+        return { 
+            color: colors[index % colors.length], 
+            textColor: 'text-orange-200',
+            decorationColor: 'bg-white/10' 
+        };
+    }
+    return { color, textColor: 'text-black/80', decorationColor: 'bg-black/20' };
+  }, [theme, color, index]);
 
   return (
     <motion.div
@@ -70,14 +101,20 @@ const BookSpine: React.FC<{
         delay: randomDelay
       }}
       whileHover={{ 
-        y: -12, 
+        y: theme === 'easter' ? -25 : theme === 'christmas' ? -15 : -12,
+        x: theme === 'christmas' ? [0, -2, 2, -2, 2, 0] : theme === 'halloween' ? [0, -1, 1, -1, 1, 0] : 0,
+        rotate: theme === 'christmas' ? [0, -3, 3, -3, 3, 0] : theme === 'halloween' ? [0, -2, 2, -2, 2, 0] : 0,
+        scale: 1.05,
         transition: { type: "spring", stiffness: 400, damping: 10 } 
       }}
-    className={`relative flex flex-col items-center justify-end ${width} ${height} ${color} 
+    className={`relative flex flex-col items-center justify-end ${width} ${height} ${themeStyle.color} 
     rounded-t-[2px] shadow-[inset_-1px_0_3px_rgba(0,0,0,0.1),2px_0_5px_rgba(0,0,0,0.05)] 
     transition-all duration-300 ease-out
     ${tilt} border border-black/20 z-10 cursor-pointer group/book`}
   >
+    {/* Theme Decorations on books */}
+    {theme === 'christmas' && index % 4 === 0 && <Snowflake className="absolute -top-2 text-white/40 animate-pulse" size={10} />}
+    {theme === 'halloween' && index % 5 === 0 && <Ghost className="absolute -top-3 text-white/20" size={12} />}
     <div className="absolute inset-0 opacity-15 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] pointer-events-none"></div>
 
     {/* Elegant Gold Glint Effect */}
@@ -93,10 +130,10 @@ const BookSpine: React.FC<{
 
     {decoration === 'bands' && (
       <>
-        <div className="absolute top-3 w-full h-[1px] bg-black/20"></div>
-        <div className="absolute top-4 w-full h-[1px] bg-black/5"></div>
-        <div className="absolute bottom-8 w-full h-[2px] bg-black/10"></div>
-        <div className="absolute bottom-10 w-full h-[1px] bg-black/10"></div>
+        <div className={`absolute top-3 w-full h-[1px] ${themeStyle.decorationColor}`}></div>
+        <div className={`absolute top-4 w-full h-[1px] ${themeStyle.decorationColor} opacity-50`}></div>
+        <div className={`absolute bottom-8 w-full h-[2px] ${themeStyle.decorationColor} opacity-50`}></div>
+        <div className={`absolute bottom-10 w-full h-[1px] ${themeStyle.decorationColor} opacity-50`}></div>
       </>
     )}
     {decoration === 'gold' && (
@@ -116,7 +153,7 @@ const BookSpine: React.FC<{
     {letter && (
       <motion.span 
         whileHover={{ scale: 1.1 }}
-        className="mb-3 text-[12px] font-black text-black/80 uppercase tracking-tighter select-none z-20"
+        className={`mb-3 text-[12px] font-black uppercase tracking-tighter select-none z-20 ${themeStyle.textColor}`}
       >
         {letter}
       </motion.span>
@@ -124,6 +161,43 @@ const BookSpine: React.FC<{
     
     {/* Subtle Glow on Hover */}
     <div className="absolute inset-0 bg-white/0 group-hover/book:bg-white/5 transition-colors pointer-events-none rounded-t-[2px]"></div>
+    
+    {/* Thematic Accent */}
+    {theme === 'christmas' && index === 3 && (
+        <motion.div 
+            initial={{ y: -5, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="absolute -top-4 -right-2 rotate-[15deg] z-30 pointer-events-none"
+        >
+            <div className="relative w-7 h-6">
+                <div className="absolute bottom-0 w-full h-2 bg-white rounded-full shadow-sm" />
+                <div className="absolute bottom-1 right-0 w-6 h-5 bg-rose-500 rounded-tr-[50%] rounded-tl-[10%] rotate-[-10deg]" 
+                    style={{ clipPath: 'polygon(0% 100%, 100% 100%, 100% 0%)' }} />
+                <div className="absolute top-0 right-0 w-2 h-2 bg-white rounded-full shadow-sm" />
+            </div>
+        </motion.div>
+    )}
+    
+    {theme === 'easter' && index === 5 && (
+        <motion.div 
+            initial={{ y: 5, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="absolute -top-5 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex gap-0.5"
+        >
+            <div className="w-2 h-6 bg-pink-100 rounded-full border border-pink-200 rotate-[-15deg] origin-bottom" />
+            <div className="w-2 h-6 bg-pink-100 rounded-full border border-pink-200 rotate-[15deg] origin-bottom" />
+        </motion.div>
+    )}
+
+    {theme === 'halloween' && index === 7 && (
+        <motion.div 
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+        >
+            <Ghost className="w-6 h-6 text-white/40 fill-white/20" />
+        </motion.div>
+    )}
     </motion.div>
   );
 };
@@ -206,6 +280,7 @@ const Navbar: React.FC<NavbarProps> = ({
   user,
   userProfile,
 }) => {
+  const { effectiveTheme } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -274,20 +349,20 @@ const Navbar: React.FC<NavbarProps> = ({
               className="flex items-end -space-x-[1px]"
               aria-label="Cohéro Hjem"
             >
-              <BookSpine index={0} width="w-2 sm:w-2.5" height="h-6 sm:h-7" color="bg-white" decoration="plain" tilt="-rotate-1" />
-              <BookSpine index={1} width="w-2.5 sm:w-3" height="h-9 sm:h-10" color="bg-white" decoration="bands" />
-              <BookSpine index={2} width="w-1 sm:w-1.5" height="h-7 sm:h-8" color="bg-white" decoration="plain" />
+              <BookSpine index={0} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-6 sm:h-7" color="bg-white" decoration="plain" tilt="-rotate-1" />
+              <BookSpine index={1} theme={effectiveTheme} width="w-2.5 sm:w-3" height="h-9 sm:h-10" color="bg-white" decoration="bands" />
+              <BookSpine index={2} theme={effectiveTheme} width="w-1 sm:w-1.5" height="h-7 sm:h-8" color="bg-white" decoration="plain" />
 
-              <BookSpine index={3} letter="C" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-white" decoration="bands" />
-              <BookSpine index={4} letter="o" width="w-3.5 sm:w-4" height="h-8 sm:h-9" color="bg-white" decoration="gold" />
-              <BookSpine index={5} letter="h" width="w-3.5 sm:w-4" height="h-11 sm:h-12" color="bg-white" decoration="bands" tilt="-rotate-[1.5deg]" />
-              <BookSpine index={6} letter="é" width="w-3.5 sm:w-4" height="h-9 sm:h-10" color="bg-white" decoration="stripes" />
-              <BookSpine index={7} letter="r" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-white" decoration="bands" />
-              <BookSpine index={8} letter="o" width="w-3.5 sm:w-4" height="h-7 sm:h-8" color="bg-white" decoration="gold" tilt="rotate-[1deg]" />
+              <BookSpine index={3} theme={effectiveTheme} letter="C" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-white" decoration="bands" />
+              <BookSpine index={4} theme={effectiveTheme} letter="o" width="w-3.5 sm:w-4" height="h-8 sm:h-9" color="bg-white" decoration="gold" />
+              <BookSpine index={5} theme={effectiveTheme} letter="h" width="w-3.5 sm:w-4" height="h-11 sm:h-12" color="bg-white" decoration="bands" tilt="-rotate-[1.5deg]" />
+              <BookSpine index={6} theme={effectiveTheme} letter="é" width="w-3.5 sm:w-4" height="h-9 sm:h-10" color="bg-white" decoration="stripes" />
+              <BookSpine index={7} theme={effectiveTheme} letter="r" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-white" decoration="bands" />
+              <BookSpine index={8} theme={effectiveTheme} letter="o" width="w-3.5 sm:w-4" height="h-7 sm:h-8" color="bg-white" decoration="gold" tilt="rotate-[1deg]" />
 
-              <BookSpine index={9} width="w-2 sm:w-2.5" height="h-9 sm:h-10" color="bg-white" decoration="ornament" />
-              <BookSpine index={10} width="w-2.5 sm:w-3" height="h-6 sm:h-7" color="bg-white" decoration="plain" tilt="rotate-2" />
-              <BookSpine index={11} width="w-2 sm:w-2.5" height="h-8 sm:h-9" color="bg-white" decoration="bands" />
+              <BookSpine index={9} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-9 sm:h-10" color="bg-white" decoration="ornament" />
+              <BookSpine index={10} theme={effectiveTheme} width="w-2.5 sm:w-3" height="h-6 sm:h-7" color="bg-white" decoration="plain" tilt="rotate-2" />
+              <BookSpine index={11} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-8 sm:h-9" color="bg-white" decoration="bands" />
             </Link>
           </div>
 

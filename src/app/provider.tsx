@@ -26,11 +26,41 @@ import {
   User, 
   sendEmailVerification,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, DocumentData, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, DocumentData, serverTimestamp, updateDoc, collection, query, where } from 'firebase/firestore';
+import { 
+  Home, 
+  CalendarDays, 
+  Scale, 
+  MessageSquare, 
+  Plus, 
+  Bell, 
+  HandHelping, 
+  GraduationCap, 
+  CreditCard, 
+  Sparkles, 
+  Megaphone, 
+  Zap, 
+  Tag, 
+  X, 
+  ArrowRight, 
+  Gift, 
+  Bird, 
+  Ghost,
+  Compass,
+  BookOpen,
+  User as UserIcon,
+  QrCode,
+  Presentation,
+  Shield,
+  CheckCircle2,
+  Snowflake,
+  Flower2,
+  Egg,
+  Skull
+} from 'lucide-react';
 import { sendStreakReminderEmailAction } from '@/app/actions';
 import { UserProfile } from '@/ai/flows/types';
 import { calculateStudyStarted } from '@/lib/education';
-import { Home, Compass, BookOpen, User as UserIcon, MessageSquare, QrCode, Sparkles, Presentation, Scale, Shield, CalendarDays } from 'lucide-react';
 
 type GameType = 'theorist' | 'paragraph' | 'method';
 
@@ -55,6 +85,10 @@ interface AppContextType {
   isNativeApp: boolean;
   isNavbarHidden: boolean;
   setIsNavbarHidden: (hidden: boolean) => void;
+  usageLimits: any;
+  activeTheme: string;
+  effectiveTheme: string;
+  campaigns: any[];
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -139,6 +173,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [cookieConsent, setCookieConsent] = useState<'granted' | 'denied' | 'pending'>('pending');
   const [isNativeApp, setIsNativeApp] = useState(false);
   const [isNavbarHidden, setIsNavbarHidden] = useState(false);
+  const [usageLimits, setUsageLimits] = useState<any>(null);
+  const [activeTheme, setActiveTheme] = useState<string>('default');
+  const [campaigns, setCampaigns] = useState<any[]>([]);
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
@@ -208,6 +245,44 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, [user, isUserLoading, firestore]);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const limitsRef = doc(firestore, 'systemSettings', 'usageLimits');
+    const unsubscribeLimits = onSnapshot(limitsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setUsageLimits(docSnap.data());
+      } else {
+        // Fallback defaults
+        setUsageLimits({
+            Kollega: { concepts: 1, cases: 1, journal: 0, architect: 1, oralExam: 1, opinion: 0, star: 1, caseAnalyser: 0 },
+            'Kollega+': { concepts: -1, cases: -1, journal: -1, architect: -1, oralExam: -1, opinion: 10, star: -1, caseAnalyser: -1 }
+        });
+      }
+    });
+
+    const themeRef = doc(firestore, 'systemSettings', 'activeTheme');
+    const unsubscribeTheme = onSnapshot(themeRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setActiveTheme(docSnap.data().theme || 'default');
+      } else {
+        setActiveTheme('default');
+      }
+    });
+
+    const campaignsRef = collection(firestore, 'campaigns');
+    const activeCampaignsQuery = query(campaignsRef, where('isActive', '==', true), where('showBanner', '==', true));
+    const unsubscribeCampaigns = onSnapshot(activeCampaignsQuery, (snap) => {
+        const campaignData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setCampaigns(campaignData);
+    });
+
+    return () => {
+        unsubscribeLimits();
+        unsubscribeTheme();
+        unsubscribeCampaigns();
+    };
+  }, [firestore]);
 
   const refetchUserProfile = useCallback(async () => {
     // Keep this as a no-op or simple trigger for backward compatibility if needed,
@@ -392,6 +467,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [auth]);
 
+  const effectiveTheme = useMemo(() => {
+    if (campaigns && campaigns.length > 0 && campaigns[0].theme) {
+      return campaigns[0].theme;
+    }
+    if (activeTheme !== 'default') return activeTheme;
+    
+    // Auto-fallbacks based on date to ensure the platform feels alive
+    const now = new Date();
+    const month = now.getMonth(); // 0-indexed (0 is Jan, 3 is April, 11 is Dec)
+    
+    if (month === 11) return 'christmas';
+    if (month === 3) return 'easter'; // April (Show Easter for early Spring!)
+    if (month === 9) return 'halloween'; // October
+    
+    return 'default';
+  }, [campaigns, activeTheme]);
+
+  const pageBackground = useMemo(() => {
+    if (effectiveTheme === 'christmas') return 'bg-rose-50/50';
+    if (effectiveTheme === 'easter') return 'bg-yellow-50/50';
+    if (effectiveTheme === 'halloween') return 'bg-orange-50/20';
+    
+    if (pathname?.includes('/lov-portal')) return 'bg-[#F9F7F2]';
+    if (pathname?.includes('/rum/groups')) return 'bg-[#F8FAFC]';
+    if (pathname?.includes('/memento') || pathname?.includes('/case-trainer')) return 'bg-[#FFFBF5]';
+    return pathname === '/' ? 'bg-[#FDFBF7]' : 'bg-white';
+  }, [pathname, effectiveTheme]);
+
   const showUpgradeBanner = !isStandaloneGroups && userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership);
 
   const contextValue = useMemo((): AppContextType => ({
@@ -414,16 +517,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     handleGoogleLogin,
     isNativeApp,
     isNavbarHidden,
-    setIsNavbarHidden
-  }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, isNativeApp, isNavbarHidden, setIsNavbarHidden]);
-
-
-  const pageBackground = useMemo(() => {
-    if (pathname?.includes('/lov-portal')) return 'bg-[#F9F7F2]';
-    if (pathname?.includes('/rum/groups')) return 'bg-[#F8FAFC]';
-    if (pathname?.includes('/memento') || pathname?.includes('/case-trainer')) return 'bg-[#FFFBF5]';
-    return 'bg-white';
-  }, [pathname]);
+    setIsNavbarHidden,
+    usageLimits,
+    activeTheme,
+    effectiveTheme,
+    campaigns,
+  }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, isNativeApp, isNavbarHidden, setIsNavbarHidden, usageLimits, activeTheme, effectiveTheme, campaigns]);
 
   if (IS_PRE_LAUNCH) {
     return <ComingSoon />;
@@ -434,6 +533,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={contextValue}
     >
       <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
+        <style dangerouslySetInnerHTML={{ __html: `
+            ${effectiveTheme === 'christmas' ? `
+                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #be123c !important; }
+                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover { background-color: #9f1239 !important; }
+                .text-amber-600, .text-amber-500 { color: #facc15 !important; }
+                .accent-color { color: #be123c !important; }
+            ` : effectiveTheme === 'easter' ? `
+                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #047857 !important; color: white !important; font-weight: 800 !important; }
+                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover { background-color: #065f46 !important; }
+                .text-amber-600, .text-amber-500 { color: #047857 !important; font-weight: 600 !important; }
+                .accent-color { color: #047857 !important; }
+            ` : effectiveTheme === 'halloween' ? `
+                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #7c3aed !important; }
+                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover { background-color: #6d28d9 !important; }
+                .text-amber-600, .text-amber-500 { color: #f97316 !important; }
+                .accent-color { color: #ea580c !important; }
+            ` : ''}
+        ` }} />
         {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isNavbarHidden && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
@@ -466,9 +583,143 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         {!isStandaloneGroups && showOnboardingModal && <OnboardingModal onComplete={refetchUserProfile} />}
         {isTeamModalOpen && <TeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />}
         <ErrorLogger user={user} userProfile={userProfile} />
+        {mounted && campaigns.length > 0 && <CampaignBanner campaign={campaigns[0]} />}
+        <ThemeDecorations theme={effectiveTheme} />
       </div>
     </AppContext.Provider>
   );
+};
+
+const CampaignBanner = ({ campaign }: { campaign: any }) => {
+    const [isVisible, setIsVisible] = useState(true);
+
+    if (!isVisible) return null;
+
+    const themeStyles = {
+        christmas: 'bg-rose-600 text-white',
+        easter: 'bg-emerald-800 text-white shadow-[0_0_20px_rgba(4,120,87,0.4)]',
+        halloween: 'bg-orange-600 text-white',
+        default: 'bg-slate-900 text-white'
+    }[campaign.theme as keyof typeof themeStyles || 'default'];
+
+    return (
+        <motion.div 
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            className={`fixed top-0 left-0 right-0 z-[1000] p-3 text-center flex items-center justify-center gap-4 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-90`}
+        >
+            <div className="flex items-center gap-3">
+                <div className="hidden sm:flex w-8 h-8 rounded-full bg-white/20 items-center justify-center">
+                    {campaign.theme === 'christmas' ? <Gift className="w-4 h-4" /> :
+                     campaign.theme === 'easter' ? <Bird className="w-4 h-4" /> :
+                     campaign.theme === 'halloween' ? <Ghost className="w-4 h-4" /> :
+                     <Megaphone className="w-4 h-4" />}
+                </div>
+                <p className="text-[13px] font-black uppercase tracking-widest text-current">
+                    {campaign.bannerText} 
+                    {campaign.discountCode && (
+                        <span className="ml-3 px-3 py-1 bg-white/20 rounded-lg border border-white/30 font-black text-xs">
+                           KODE: {campaign.discountCode}
+                        </span>
+                    )}
+                </p>
+            </div>
+            <Link 
+                href="/upgrade" 
+                className="ml-6 flex items-center gap-2 px-4 py-1.5 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-black/10"
+            >
+                Spar nu <ArrowRight className="w-3 h-3" />
+            </Link>
+            <button onClick={() => setIsVisible(false)} className="absolute right-4 p-1 opacity-60 hover:opacity-100 transition-opacity">
+                <X className="w-4 h-4" />
+            </button>
+        </motion.div>
+    );
+};
+
+const ThemeDecorations = ({ theme }: { theme: string }) => {
+    if (theme === 'default') return null;
+
+    const particles = Array.from({ length: 15 });
+
+    const getIcon = () => {
+        if (theme === 'christmas') return <Snowflake className="text-rose-200 opacity-40 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />;
+        if (theme === 'easter') return <Egg className="text-yellow-300 opacity-40" />;
+        if (theme === 'halloween') return <Ghost className="text-orange-300 opacity-40" />;
+        return <Sparkles className="text-amber-300 opacity-40" />;
+    };
+
+    return (
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-[50]">
+            {/* Corner Decor */}
+            {theme === 'christmas' && (
+                <div className="absolute top-0 left-0 right-0 h-4 bg-white/20 blur-sm flex justify-around items-start">
+                    {Array.from({ length: 40 }).map((_, i) => (
+                        <div key={i} className="w-1 bg-white/80 rounded-full" style={{ height: `${Math.random() * 20 + 10}px` }} />
+                    ))}
+                </div>
+            )}
+            
+            {theme === 'halloween' && (
+                <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+                    <svg viewBox="0 0 100 100" className="w-full h-full text-orange-600 fill-current">
+                        <path d="M0,0 Q50,5 100,0 L100,5 Q50,15 0,5 Z" />
+                        <path d="M10,0 L12,40 L15,0" />
+                        <path d="M40,0 L45,60 L50,0" />
+                        <path d="M80,0 L85,45 L90,0" />
+                    </svg>
+                </div>
+            )}
+
+            {/* Floating Particles */}
+            {particles.map((_, i) => (
+                <motion.div
+                    key={i}
+                    initial={{ 
+                        opacity: 0,
+                        x: Math.random() * 100 + "vw",
+                        y: -100,
+                        scale: Math.random() * 0.5 + 0.5,
+                        rotate: 0
+                    }}
+                    animate={{ 
+                        opacity: [0, 1, 1, 0],
+                        y: ["0vh", "110vh"],
+                        x: [(Math.random() * 100) + "vw", (Math.random() * 100) + "vw"],
+                        rotate: [0, 360]
+                    }}
+                    transition={{ 
+                        duration: Math.random() * 10 + 10,
+                        repeat: Infinity,
+                        delay: Math.random() * 20,
+                        ease: "linear"
+                    }}
+                    className="absolute"
+                >
+                    {getIcon()}
+                </motion.div>
+            ))}
+
+            {/* Dense Bottom Decor */}
+            {theme === 'easter' && (
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-emerald-500/10 to-transparent flex items-end justify-around pb-4">
+                    {Array.from({ length: 30 }).map((_, i) => (
+                         <div key={i} className="flex flex-col items-center animate-bounce" style={{ animationDelay: `${i * 0.1}s`, animationDuration: `${2 + Math.random()}s` }}>
+                            <Flower2 className="text-rose-400/30 w-6 h-6" style={{ transform: `rotate(${Math.random() * 360}deg)` }} />
+                         </div>
+                    ))}
+                </div>
+            )}
+
+            {theme === 'christmas' && (
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/20 to-transparent flex items-end">
+                    {Array.from({ length: 15 }).map((_, i) => (
+                         <div key={i} className="flex-1 h-12 bg-white/40 blur-xl rounded-[100%] scale-150 transform -translate-y-4" />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 };
 
 export const useApp = () => {

@@ -87,7 +87,7 @@ const PersonaCard = ({ icon, title, color, feedback, score, subtitle }: { icon: 
 );
 
 const CaseTrainerPageContent: React.FC = () => {
-  const { user, userProfile, refetchUserProfile } = useApp();
+  const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -114,17 +114,20 @@ const CaseTrainerPageContent: React.FC = () => {
   const handleGenerateCase = async () => {
     if (!selectedTopic || isGenerating || !user || !firestore || !userProfile || !activeCaseRef) return;
     
-    // Limit Check for Free Tier / Group Pro
-    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
-      const lastUsage = userProfile.lastCaseTrainerUsage?.toDate();
-      const now = new Date();
-      const isNewDay = !lastUsage || lastUsage.toDateString() !== now.toDateString();
-      const count = isNewDay ? 0 : (userProfile.dailyCaseTrainerCount || 0);
+    // Limit Check
+    const currentTier = userProfile?.membership || 'Kollega';
+    const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+    const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : { cases: 1 };
+    const casesLimit = tierLimits.cases === -1 ? Infinity : (tierLimits.cases ?? 1);
 
-      if (count >= 1) {
-        setLimitError("Du har brugt dit daglige forsøg i Case-træneren. Opgrader til Kollega+ for fri adgang.");
-        return;
-      }
+    const lastUsage = userProfile.lastCaseTrainerUsage?.toDate();
+    const now = new Date();
+    const isNewDay = !lastUsage || lastUsage.toDateString() !== now.toDateString();
+    const count = isNewDay ? 0 : (userProfile.dailyCaseTrainerCount || 0);
+
+    if (count >= casesLimit) {
+      setLimitError(`Du har brugt dine ${casesLimit} daglige forsøg i Case-træneren. Opgrader til Kollega+ for fri adgang.`);
+      return;
     }
     
     setIsGenerating(true);

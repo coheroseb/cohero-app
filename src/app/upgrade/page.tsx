@@ -18,7 +18,10 @@ import {
   CheckCircle2,
   Users,
   Crown,
-  Lock
+  Lock,
+  Gift,
+  Bird,
+  Ghost
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -63,7 +66,7 @@ const staggerContainer = {
 };
 
 const UpgradePageContent: React.FC = () => {
-  const { user, userProfile } = useApp();
+  const { user, userProfile, campaigns } = useApp();
   const router = useRouter();
   const firestore = useFirestore();
   const pathname = usePathname();
@@ -233,9 +236,46 @@ const UpgradePageContent: React.FC = () => {
             Vælg dit <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400">kollegaskab</span>.
           </h1>
           
-          <p className="text-xl text-slate-500 max-w-2xl leading-relaxed font-medium">
+            <p className="text-xl text-slate-500 max-w-2xl leading-relaxed font-medium">
             Et fundament i særklasse for alle studerende. Kraftfulde, ubegrænsede AI-værktøjer for dem, der stræber efter toppen.
           </p>
+
+          {/* Active Campaign Spotlight */}
+          {campaigns && campaigns.length > 0 && (
+            <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: 0.5 }}
+               className={`mt-12 w-full max-w-2xl p-8 rounded-[3rem] border-2 shadow-2xl relative overflow-hidden group ${
+                 campaigns[0].theme === 'christmas' ? 'bg-rose-600 border-rose-500 text-white' :
+                 campaigns[0].theme === 'easter' ? 'bg-yellow-400 border-yellow-300 text-yellow-950' :
+                 campaigns[0].theme === 'halloween' ? 'bg-orange-600 border-orange-500 text-white' :
+                 'bg-slate-900 border-slate-800 text-white'
+               }`}
+            >
+               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                  {campaigns[0].theme === 'christmas' ? <Gift className="w-32 h-32" /> :
+                   campaigns[0].theme === 'easter' ? <Bird className="w-32 h-32" /> :
+                   campaigns[0].theme === 'halloween' ? <Ghost className="w-32 h-32" /> :
+                   <Sparkles className="w-32 h-32" />}
+               </div>
+               
+               <div className="relative z-10 text-center flex flex-col items-center">
+                  <div className="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-white/30">Kampagnetilbud</div>
+                  <h3 className="text-3xl font-black mb-3 tracking-tight">{campaigns[0].title}</h3>
+                  <p className="text-[17px] font-medium opacity-80 mb-6 leading-relaxed">"{campaigns[0].bannerText}"</p>
+                  
+                  {campaigns[0].discountCode && (
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="px-6 py-4 bg-white/10 backdrop-blur-xl border-2 border-dashed border-white/40 rounded-2xl">
+                           <span className="text-2xl font-black tracking-[0.2em]">{campaigns[0].discountCode}</span>
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Indtast i kurven ved betaling</p>
+                    </div>
+                  )}
+               </div>
+            </motion.div>
+          )}
         </motion.div>
       </header>
 

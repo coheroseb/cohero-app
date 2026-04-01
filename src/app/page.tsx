@@ -26,7 +26,10 @@ import {
   GraduationCap,
   Download,
   Music,
-  Lock
+  Lock,
+  Gift,
+  Bird,
+  Ghost
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -49,7 +52,7 @@ const Reveal = ({ children, delay = 0, className = "" }: { children: React.React
 );
 
 export default function LandingPage() {
-  const { openAuthPage } = useApp();
+  const { openAuthPage, campaigns, effectiveTheme } = useApp();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
@@ -96,7 +99,12 @@ export default function LandingPage() {
 
 
   return (
-    <div className="flex flex-col selection:bg-amber-200 selection:text-amber-950 overflow-x-hidden bg-[#FDFBF7] font-sans antialiased">
+    <div className={`flex flex-col selection:bg-amber-200 selection:text-amber-950 overflow-x-hidden font-sans antialiased ${
+       effectiveTheme === 'christmas' ? 'bg-rose-50/50' :
+       effectiveTheme === 'easter' ? 'bg-yellow-50/50' :
+       effectiveTheme === 'halloween' ? 'bg-orange-50/20' :
+       'bg-[#FDFBF7]'
+    }`}>
       <div className="pt-20 sm:pt-24 lg:pt-28">
          <ReviewMarquee />
       </div>
@@ -104,7 +112,12 @@ export default function LandingPage() {
       {/* 1. HERO SECTION */}
       <section className="relative min-h-[100dvh] flex flex-col justify-center pb-16 px-5 sm:px-8 overflow-hidden">
         {/* Dynamic Mobile-First Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FFFDF9] via-[#FAF6EC]/60 to-[#FDFBF7] -z-20"></div>
+        <div className={`absolute inset-0 bg-gradient-to-b -z-20 ${
+            effectiveTheme === 'christmas' ? 'from-rose-100/30 via-rose-50/20 to-rose-100/30' :
+            effectiveTheme === 'easter' ? 'from-yellow-100/30 via-yellow-50/20 to-yellow-100/30' :
+            effectiveTheme === 'halloween' ? 'from-orange-100/10 via-orange-50/5 to-orange-100/10' :
+            'from-[#FFFDF9] via-[#FAF6EC]/60 to-[#FDFBF7]'
+        }`}></div>
         <div className="absolute top-[-10%] sm:top-0 right-[-10%] sm:left-1/2 sm:-translate-x-1/2 w-[120%] sm:w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(251,191,36,0.12)_0%,transparent_60%)] -z-10"></div>
         <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-64 h-48 sm:h-64 bg-amber-200/40 rounded-full blur-[80px] sm:blur-[100px] animate-pulse"></div>
         
@@ -253,6 +266,57 @@ export default function LandingPage() {
 
         </div>
       </section>
+
+      {/* 1.5 ACTIVE CAMPAIGN SPOTLIGHT (Premium Card) */}
+      {campaigns && campaigns.length > 0 && (
+        <section className="px-5 sm:px-8 py-10 -mt-20 relative z-30">
+           <motion.div 
+             initial={{ opacity: 0, y: 30 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             viewport={{ once: true }}
+             className={`max-w-6xl mx-auto rounded-[3.5rem] p-10 md:p-16 border-2 shadow-2xl relative overflow-hidden group ${
+               campaigns[0].theme === 'christmas' ? 'bg-rose-600 border-rose-500 text-white' :
+               campaigns[0].theme === 'easter' ? 'bg-yellow-400 border-yellow-300 text-yellow-950' :
+               campaigns[0].theme === 'halloween' ? 'bg-orange-600 border-orange-500 text-white' :
+               'bg-slate-900 border-slate-800 text-white'
+             }`}
+           >
+              <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform duration-1000 pointer-events-none">
+                  {campaigns[0].theme === 'christmas' ? <Gift className="w-64 h-64" /> :
+                   campaigns[0].theme === 'easter' ? <Bird className="w-64 h-64" /> :
+                   campaigns[0].theme === 'halloween' ? <Ghost className="w-64 h-64" /> :
+                   <Sparkles className="w-64 h-64" />}
+              </div>
+
+              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
+                 <div className="flex-1 space-y-6 text-center lg:text-left">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-xs font-black uppercase tracking-widest border border-white/30">
+                       Tidsbegrænset tilbud
+                    </div>
+                    <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-none italic">{campaigns[0].title}</h2>
+                    <p className="text-xl md:text-2xl font-medium opacity-80 max-w-2xl leading-relaxed text-current">
+                       {campaigns[0].bannerText}
+                    </p>
+                 </div>
+
+                 <div className="flex flex-col items-center gap-6 shrink-0 bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
+                    <div className="text-center">
+                       <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-3">Anvend denne kode</p>
+                       <div className="px-10 py-5 bg-white/10 rounded-2xl border-2 border-dashed border-white/40 flex items-center justify-center">
+                          <span className="text-3xl font-black tracking-[0.2em]">{campaigns[0].discountCode || 'AUTOMATISK'}</span>
+                       </div>
+                    </div>
+                    <Link 
+                      href="/upgrade"
+                      className="w-full py-5 px-8 bg-white text-slate-900 rounded-[20px] font-black uppercase text-[13px] tracking-widest shadow-xl shadow-black/10 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                    >
+                      Benyt tilbud nu <ArrowRight className="w-5 h-5" />
+                    </Link>
+                 </div>
+              </div>
+           </motion.div>
+        </section>
+      )}
 
       {/* 2. TRUST RIBBON (Mobile Scroller) */}
       <section className="py-8 sm:py-16 bg-white border-y border-slate-100 overflow-hidden relative">

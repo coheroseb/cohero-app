@@ -314,7 +314,7 @@ const StarChart = ({ data, type = 'bar' }: { data: StarDataResult, type?: 'bar' 
 };
 
 export default function StarTableDetailsPage() {
-    const { user, isUserLoading, userProfile, refetchUserProfile } = useApp();
+    const { user, isUserLoading, userProfile, refetchUserProfile, usageLimits } = useApp();
     const firestore = useFirestore();
     const router = useRouter();
     const params = useParams();
@@ -522,16 +522,19 @@ export default function StarTableDetailsPage() {
             return;
         }
 
-        // Limit check for free tier
-        if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
-            const lastUsage = userProfile.lastStarAnalysisUsage?.toDate();
-            const now = new Date();
-            const dailyCount = (lastUsage && lastUsage.toDateString() === now.toDateString()) ? (userProfile.dailyStarAnalysisCount || 0) : 0;
+        // Limit check
+        const currentTier = userProfile?.membership || 'Kollega';
+        const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+        const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : { star: 3 };
+        const starLimit = tierLimits.star === -1 ? Infinity : (tierLimits.star ?? 3);
 
-            if (dailyCount >= 3) {
-                setLimitError('Du har brugt dine 3 daglige tolkninger i STAR Indsigt. Opgrader til Kollega+ for ubegrænset brug.');
-                return;
-            }
+        const lastUsage = userProfile.lastStarAnalysisUsage?.toDate();
+        const now = new Date();
+        const dailyCount = (lastUsage && lastUsage.toDateString() === now.toDateString()) ? (userProfile.dailyStarAnalysisCount || 0) : 0;
+
+        if (dailyCount >= starLimit) {
+            setLimitError(`Du har brugt dine ${starLimit} daglige tolkninger i STAR Indsigt. Opgrader til Kollega+ for ubegrænset brug.`);
+            return;
         }
 
         setIsAnalysing(true);

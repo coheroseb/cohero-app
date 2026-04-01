@@ -95,7 +95,7 @@ const ContentSection = ({ title, icon, children, delay = 0 }: { title: string, i
 // --- MAIN COMPONENT ---
 
 function ConceptExplainerPageContent() {
-  const { user, userProfile, refetchUserProfile } = useApp();
+  const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
   const firestore = useFirestore();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -153,17 +153,20 @@ function ConceptExplainerPageContent() {
         });
     }, 1500);
 
-    // Limit Check (Free Tier)
-    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
-        const today = new Date().toDateString();
-        const lastUsage = userProfile.lastConceptExplainerUsage?.toDate().toDateString();
-        const count = lastUsage === today ? userProfile.dailyConceptExplainerCount || 0 : 0;
-        
-        if (count >= 1) {
-            setLimitError('Dine opslag for i dag er brugt. Som Kollega-medlem har du 1 dagligt opslag. Opgrader til Kollega+ for fri adgang.');
-            setIsLoading(false);
-            return;
-        }
+    // Limit Check
+    const currentTier = userProfile?.membership || 'Kollega';
+    const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+    const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : { concepts: 1 };
+    const conceptsLimit = tierLimits.concepts === -1 ? Infinity : (tierLimits.concepts ?? 1);
+
+    const today = new Date().toDateString();
+    const lastUsage = userProfile.lastConceptExplainerUsage?.toDate().toDateString();
+    const count = lastUsage === today ? userProfile.dailyConceptExplainerCount || 0 : 0;
+
+    if (count >= conceptsLimit) {
+        setLimitError(`Dine opslag for i dag er brugt. Som Kollega-medlem har du ${conceptsLimit} dagligt opslag. Opgrader til Kollega+ for fri adgang.`);
+        setIsLoading(false);
+        return;
     }
 
     try {

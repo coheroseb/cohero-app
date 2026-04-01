@@ -53,7 +53,7 @@ import { GlassCard, HistoryItem, SourceViewer, FeedbackItemCard, ScoreCard, High
 
 const JournalTrainerPageContent: React.FC = () => {
   const router = useRouter();
-  const { user, userProfile, refetchUserProfile } = useApp();
+  const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -112,17 +112,20 @@ const JournalTrainerPageContent: React.FC = () => {
   const handleStartTraining = async () => {
     if (!selectedTopic || isGenerating || !user || !firestore || !userProfile || !activeScenarioRef) return;
     
-    // Limit Check for Free Tier / Group Pro
-    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
-        const lastUsage = userProfile.lastJournalTrainerUsage?.toDate();
-        const now = new Date();
-        const isNewDay = !lastUsage || lastUsage.toDateString() !== now.toDateString();
-        const count = isNewDay ? 0 : (userProfile.dailyJournalTrainerCount || 0);
-        
-        if (count >= 1) {
-            setError("Du har brugt dit daglige forsøg i Journal-træneren. Opgrader til Kollega+ for fri adgang.");
-            return;
-        }
+    // Limit Check
+    const currentTier = userProfile?.membership || 'Kollega';
+    const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+    const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : { journal: 0 };
+    const journalLimit = tierLimits.journal === -1 ? Infinity : (tierLimits.journal ?? 0);
+
+    const lastUsage = userProfile.lastJournalTrainerUsage?.toDate();
+    const now = new Date();
+    const isNewDay = !lastUsage || lastUsage.toDateString() !== now.toDateString();
+    const count = isNewDay ? 0 : (userProfile.dailyJournalTrainerCount || 0);
+
+    if (count >= journalLimit) {
+        setError(`Du har brugt dine ${journalLimit} daglige forsøg i Journal-træneren. Opgrader til Kollega+ for fri adgang.`);
+        return;
     }
     
     setIsGenerating(true);
