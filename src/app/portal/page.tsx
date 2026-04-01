@@ -574,38 +574,47 @@ const PortalPageContent: React.FC = () => {
   const handleSearch = (e?: React.FormEvent, overrideTerm?: string) => {
     if (e) e.preventDefault();
     const term = overrideTerm || searchQuery.trim();
-    if (term && !isConceptLimitReached) {
+    if (!term) return;
+
+    const isLaw = term.includes('§') || 
+                  /(\d+)/.test(term) || 
+                  term.toLowerCase().includes('lov') || 
+                  term.toLowerCase().includes('bekendtgørelse') ||
+                  term.toLowerCase().includes('vejledning');
+
+    if (isLaw) {
       // Record Activity
       if (user && firestore) {
-        const isLawTerm = term.includes('§') || term.toLowerCase().includes('lov');
         addDoc(collection(firestore, 'userActivities'), {
             userId: user.uid,
             userName: userProfile?.username || user.displayName || 'Anonym bruger',
-            actionText: isLawTerm ? `slog ${term} op.` : `slog begrebet "${term}" op.`,
+            actionText: `slog ${term} op.`,
             createdAt: serverTimestamp(),
         }).catch(err => console.error("Failed to record activity:", err));
       }
-
-      const isLaw = term.includes('§') || 
-                    /(\d+)/.test(term) || 
-                    term.toLowerCase().includes('lov') || 
-                    term.toLowerCase().includes('bekendtgørelse') ||
-                    term.toLowerCase().includes('vejledning');
-
-      if (isLaw) {
-          router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
-      } else {
-          if (isConceptLimitReached) {
-            toast({
-                variant: 'destructive',
-                title: 'Dagsgrænse nået',
-                description: 'Som Kollega-medlem har du 1 dagligt opslag. Opgradér til Kollega+ for at få fri adgang til Guiden.',
-            });
-            return;
-          }
-          router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
-      }
+      router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+      return;
     }
+
+    if (isConceptLimitReached) {
+        toast({
+            variant: 'destructive',
+            title: 'Dagsgrænse nået',
+            description: 'Som Kollega-medlem har du 1 dagligt opslag i Begrebsguiden. Opgradér til Kollega+ for fri adgang.',
+        });
+        return;
+    }
+
+    // Record Activity
+    if (user && firestore) {
+        addDoc(collection(firestore, 'userActivities'), {
+            userId: user.uid,
+            userName: userProfile?.username || user.displayName || 'Anonym bruger',
+            actionText: `slog begrebet "${term}" op.`,
+            createdAt: serverTimestamp(),
+        }).catch(err => console.error("Failed to record activity:", err));
+    }
+    router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -711,12 +720,20 @@ const PortalPageContent: React.FC = () => {
   }, [limits]);
 
   const handleTrendClick = (tag: string) => {
-    if (isConceptLimitReached) return;
     const isLaw = tag.includes('§') || 
                   /(\d+)/.test(tag) || 
                   tag.toLowerCase().includes('lov') || 
                   tag.toLowerCase().includes('bekendtgørelse') ||
                   tag.toLowerCase().includes('vejledning');
+
+    if (!isLaw && isConceptLimitReached) {
+        toast({
+            variant: 'destructive',
+            title: 'Dagsgrænse nået',
+            description: 'Som Kollega-medlem har du 1 dagligt opslag i Begrebsguiden. Opgradér til Kollega+ for fri adgang.',
+        });
+        return;
+    }
 
     if (isLaw) {
         router.push(`/lov-portal?search=${encodeURIComponent(tag)}`);
