@@ -56,6 +56,7 @@ import {
   Briefcase,
   Database,
   Network,
+  Globe,
   Play,
   FolderOpen,
   ScrollText,
@@ -686,6 +687,7 @@ const PortalPageContent: React.FC = () => {
           { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
           { title: "Politisk Puls", desc: "Seneste nyt fra Folketinget", icon: Gavel, path: "/folketinget", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Live" },
           { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
+          { title: "Statslig Myndighed", desc: "Forstå arbejdet i staten", icon: Globe, path: "/statslig-myndighed", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Akademi" },
         ]
       },
       {

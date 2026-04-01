@@ -2515,7 +2515,6 @@ export function LovPortalViewer() {
                                                     </div>
                                                 ))}
                                             </div>
-                                            <span className="text-[10px] font-medium text-slate-400 italic">Læst af 1.200+ studerende i denne uge</span>
                                         </div>
                                     )}
                                 </div>
