@@ -487,6 +487,33 @@ const AssistanceMarketplaceContent = () => {
         
         {/* Main Content Area */}
         <main className="lg:col-span-9 space-y-6 sm:space-y-8 order-1 lg:order-2">
+           {/* Opsamling af opgaver notice */}
+           <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden group shadow-sm transition-all hover:shadow-md animate-in fade-in slide-in-from-top-4 duration-700">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+                 <Briefcase className="w-64 h-64 -rotate-12 text-amber-950" />
+              </div>
+              <div className="relative z-10 flex flex-col sm:flex-row items-center gap-8 text-center sm:text-left">
+                 <div className="w-20 h-20 bg-white rounded-[2rem] shadow-xl shadow-amber-900/5 flex items-center justify-center text-amber-600 shrink-0 border border-amber-50">
+                    <div className="relative">
+                       <Clock className="w-10 h-10" />
+                       <div className="absolute top-0 right-0 w-3 h-3 bg-amber-500 rounded-full animate-ping" />
+                    </div>
+                 </div>
+                 <div className="space-y-2 flex-1">
+                    <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                       <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                       <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/60">Aktuel Status</span>
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-amber-950 serif tracking-tight leading-tight">
+                       Vi samler opgaver til markedspladsen...
+                    </h2>
+                    <p className="text-slate-500 font-medium text-lg leading-relaxed italic max-w-xl">
+                       Vi er i gang med at klargøre nye cases og borgerhenvendelser. <span className="text-amber-900 font-black">Bliv ved med at holde øje herpå!</span>
+                    </p>
+                 </div>
+              </div>
+           </div>
+
            {requestsLoading ? (
              <div className="flex flex-col items-center justify-center py-32 space-y-4">
                 <Loader2 className="w-10 h-10 animate-spin text-amber-950" />
