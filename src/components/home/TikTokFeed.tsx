@@ -39,8 +39,6 @@ export default function TikTokFeed({
       script.id = SCRIPT_ID;
       script.src = "https://www.tiktok.com/embed.js";
       script.async = true;
-      script.crossOrigin = "anonymous";
-      (script as any).referrerPolicy = "no-referrer-when-downgrade";
       document.body.appendChild(script);
     } else {
       // If script exists, trigger a re-render of the embed

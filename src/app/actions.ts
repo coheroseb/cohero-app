@@ -306,7 +306,7 @@ export async function recommendContentAction(input: any) { return callFirebaseFl
 
 export async function generateNewCase(input: { topic: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
-    const lawContext = fetchRes.data;
+    const lawContext = fetchRes?.data || '';
     return callFirebaseFlow('generateCaseFlow', { topic: input.topic, lawContext });
 }
 
@@ -314,15 +314,21 @@ export const generateCaseAction = generateNewCase;
 
 export async function getSecondOpinionAction(input: any) { return callFirebaseFlow('getSecondOpinionFlow', input); }
 
-export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string }): Promise<any> {
+export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string, complexityHints?: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
-    const lawContext = fetchRes.data;
-    return callFirebaseFlow('journalSynthesisFeedbackFlow', { ...input, lawContext });
+    const lawContext = fetchRes?.data || '';
+    return callFirebaseFlow('journalSynthesisFeedbackFlow', { 
+        topic: input.topic,
+        sources: input.sources,
+        journalEntry: input.journalEntry,
+        complexityHints: input.complexityHints || '',
+        lawContext: lawContext
+    });
 }
 
 export async function getCaseFeedbackAction(input: { topic: string, scenario: string, initialObservation: string, assessment: string, goals: string, actionPlan: string }): Promise<Types.CaseFeedbackOutput> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
-    const lawContext = fetchRes.data;
+    const lawContext = fetchRes?.data || '';
     return callFirebaseFlow('getCaseFeedbackFlow', { ...input, lawContext });
 }
 

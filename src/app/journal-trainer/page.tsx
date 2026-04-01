@@ -17,7 +17,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   Wand2,
-  LineChart
+  LineChart,
+  User,
+  Calendar,
+  Hash,
+  Activity
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { Button } from '@/components/ui/button';
@@ -45,7 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { socialWorkTopics } from './data/topics';
-import { GlassCard, HistoryItem, SourceViewer, FeedbackItemCard } from './components/JournalComponents';
+import { GlassCard, HistoryItem, SourceViewer, FeedbackItemCard, ScoreCard, HighlightableText } from './components/JournalComponents';
 
 const JournalTrainerPageContent: React.FC = () => {
   const router = useRouter();
@@ -169,7 +173,11 @@ const JournalTrainerPageContent: React.FC = () => {
   };
 
   const handleGetFeedback = async () => {
-    if (journalContent.length < 50 || isSubmitting || !activeScenario || !user || !firestore || !userProfile || !activeScenarioRef) return;
+    if (wordCount < 10 || journalContent.length < 50) {
+        toast({ variant: "destructive", title: "For kort notat", description: "Skriv mindst 10 ord og 50 tegn for at få en ordentlig vurdering." });
+        return;
+    }
+    if (isSubmitting || !activeScenario || !user || !firestore || !userProfile || !activeScenarioRef) return;
     
     setIsSubmitting(true);
     setError(null);
@@ -179,7 +187,12 @@ const JournalTrainerPageContent: React.FC = () => {
             topic: activeScenario.topic,
             sources: activeScenario.sources,
             journalEntry: journalContent,
+            complexityHints: activeScenario.complexityHints,
         });
+
+        if (!response?.data) {
+            throw new Error("AI returnerede intet svar. Prøv igen.");
+        }
 
         const batch = writeBatch(firestore);
         batch.update(activeScenarioRef, {
@@ -204,7 +217,9 @@ const JournalTrainerPageContent: React.FC = () => {
 
     } catch (err: any) {
         console.error("Error getting feedback:", err);
-        setError("Kunne ikke hente feedback. Prøv venligst igen.");
+        const errorMessage = err.message || "Kunne ikke hente feedback. Prøv venligst igen.";
+        setError(errorMessage);
+        toast({ variant: "destructive", title: "Fejl ved vurdering", description: errorMessage });
     } finally {
         setIsSubmitting(false);
     }
@@ -339,6 +354,29 @@ const JournalTrainerPageContent: React.FC = () => {
                                         </div>
                                         <h4 className="text-xl font-black text-amber-950 leading-tight tracking-tight">{activeScenario.title}</h4>
                                         <p className="text-xs text-slate-500 mt-4 leading-relaxed font-medium">{activeScenario.description}</p>
+                                        
+                                        {(activeScenario.citizenName || activeScenario.caseNumber) && (
+                                            <div className="mt-6 pt-6 border-t border-amber-950/5 grid grid-cols-1 gap-4">
+                                                {activeScenario.citizenName && (
+                                                    <div className="flex items-center gap-3">
+                                                        <User className="w-3.5 h-3.5 text-amber-900/40" />
+                                                        <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-wider">{activeScenario.citizenName}</span>
+                                                    </div>
+                                                )}
+                                                {activeScenario.citizenBirthday && (
+                                                    <div className="flex items-center gap-3">
+                                                        <Calendar className="w-3.5 h-3.5 text-amber-900/40" />
+                                                        <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-wider">{activeScenario.citizenBirthday}</span>
+                                                    </div>
+                                                )}
+                                                {activeScenario.caseNumber && (
+                                                    <div className="flex items-center gap-3">
+                                                        <Hash className="w-3.5 h-3.5 text-amber-900/40" />
+                                                        <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-wider">{activeScenario.caseNumber}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </GlassCard>
                                 </section>
 
@@ -415,8 +453,8 @@ const JournalTrainerPageContent: React.FC = () => {
                 {showEditor && (
                     <Button 
                         onClick={handleGetFeedback}
-                        disabled={wordCount < 10 || isSubmitting}
-                        className={`h-14 px-10 rounded-2xl shadow-2xl transition-all font-black uppercase text-[11px] tracking-[0.2em] flex items-center gap-4 ${wordCount >= 10 ? 'bg-amber-950 text-white shadow-amber-900/40 hover:scale-105 active:scale-95' : 'bg-slate-50 text-slate-300 shadow-none'}`}
+                        disabled={(wordCount < 10 || journalContent.length < 50) || isSubmitting}
+                        className={`h-14 px-10 rounded-2xl shadow-2xl transition-all font-black uppercase text-[11px] tracking-[0.2em] flex items-center gap-4 ${(wordCount >= 10 && journalContent.length >= 50) ? 'bg-amber-950 text-white shadow-amber-900/40 hover:scale-105 active:scale-95' : 'bg-slate-50 text-slate-300 shadow-none'}`}
                     >
                         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4 text-amber-400" />}
                         {isSubmitting ? 'Analyserer...' : 'Vurder mit notat'}
@@ -493,18 +531,82 @@ const JournalTrainerPageContent: React.FC = () => {
                 ) : (showEditor || showFeedbackView) && activeScenario ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-16">
                         
+                        {showFeedbackView && activeScenario.feedback && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: -20 }} 
+                                animate={{ opacity: 1, y: 0 }} 
+                                className="space-y-10 bg-white/40 p-8 rounded-[3rem] border border-amber-950/5 relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-emerald-500 to-amber-500" />
+                                
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                    <div>
+                                        <h3 className="text-3xl font-black text-amber-950 tracking-tight mb-2">Vurdering af dit notat</h3>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center -space-x-2">
+                                                <div className="w-8 h-8 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center text-[10px] font-black text-white">{activeScenario.feedback.overallScore}</div>
+                                                <div className="w-8 h-8 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[10px] font-black text-white">{activeScenario.feedback.objectivityScore}</div>
+                                                <div className="w-8 h-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center text-[10px] font-black text-white">{activeScenario.feedback.legalScore || 0}</div>
+                                            </div>
+                                            <span className="text-xs font-bold text-slate-400">Dine scores i overblik</span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <ScoreCard label="Kvalitet" score={activeScenario.feedback.overallScore} icon={CheckCircle2} colorClass="indigo" />
+                                        <ScoreCard label="Neutralitet" score={activeScenario.feedback.objectivityScore} icon={ShieldCheck} colorClass="emerald" />
+                                        <ScoreCard label="Juridisk" score={activeScenario.feedback.legalScore || 0} icon={Target} colorClass="blue" />
+                                        <ScoreCard label="Fakta" score={activeScenario.feedback.factScore || 0} icon={Activity} colorClass="orange" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-10">
+                                    <div className="bg-white rounded-[2.5rem] p-10 lg:p-12 border border-slate-100 shadow-xl shadow-amber-950/5 relative group">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <LineChart className="w-6 h-6 text-amber-500" />
+                                            <h4 className="text-xl font-black text-slate-800 uppercase tracking-tight">Supervisor Feedback</h4>
+                                        </div>
+                                        <div className="prose prose-sm text-slate-600 leading-[2.2] font-medium serif text-lg" dangerouslySetInnerHTML={{ __html: activeScenario.feedback.generalFeedback }} />
+                                    </div>
+
+                                    {activeScenario.feedback.strengths && activeScenario.feedback.strengths.length > 0 && (
+                                        <div className="bg-emerald-50/70 backdrop-blur-sm rounded-[2.5rem] p-10 border border-emerald-100/50 flex flex-col">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-8 flex items-center gap-3">
+                                                <Sparkles className="w-5 h-5 text-emerald-400" /> Dine Styrker
+                                            </h4>
+                                            <ul className="space-y-6 flex-1">
+                                                {activeScenario.feedback.strengths.map((str: string, index: number) => (
+                                                    <motion.li 
+                                                        key={index} 
+                                                        initial={{ opacity: 0, x: 20 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: index * 0.1 }}
+                                                        className="flex items-start gap-4"
+                                                    >
+                                                        <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-sm">
+                                                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                                        </div>
+                                                        <p className="text-sm font-bold text-emerald-900 leading-relaxed italic">{str}</p>
+                                                    </motion.li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+
                         <div className="grid lg:grid-cols-[400px_1fr] xl:grid-cols-[500px_1fr] gap-12 items-start">
                             {/* LEFT: THE INBOX / RAW DATA */}
                             <motion.section 
                                 initial={{ opacity: 0, x: -30 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="space-y-6"
+                                className="space-y-6 sticky top-32"
                             >
                                 <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-2xl font-black text-amber-950 tracking-tight">Indbakken</h3>
-                                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-3 py-1 rounded-full">{activeScenario.sources?.length} nye elementer</span>
+                                    <h3 className="text-2xl font-black text-amber-950 tracking-tight">Kildemateriale</h3>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-100 px-4 py-1.5 rounded-full">{activeScenario.sources?.length} Elementer</span>
                                 </div>
-                                <div className="space-y-4">
+                                <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
                                     {activeScenario.sources?.map((source: any) => (
                                         <SourceViewer 
                                             key={source.id} 
@@ -514,14 +616,9 @@ const JournalTrainerPageContent: React.FC = () => {
                                         />
                                     ))}
                                 </div>
-                                <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-3xl mt-8">
-                                    <p className="text-xs text-blue-800 leading-relaxed font-medium italic">
-                                        Din opgave: Læs disse kilder og skriv et fagligt forsvarligt notat. Filtrer de subjektive udsagn fra, og hold dig til sagens kernefakta.
-                                    </p>
-                                </div>
                             </motion.section>
 
-                            {/* RIGHT: THE EDITOR OR FEEDBACK */}
+                            {/* RIGHT: THE EDITOR OR FEEDBACK HIGHLIGHTS */}
                             <div className="space-y-12">
                                 <GlassCard className="p-10 border-amber-950/10 min-h-[600px] flex flex-col shadow-2xl relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-10 opacity-[0.02] pointer-events-none">
@@ -534,7 +631,11 @@ const JournalTrainerPageContent: React.FC = () => {
                                                     <FileText className="w-6 h-6" />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-xl font-black text-amber-950 tracking-tight">Dit Journalnotat</h3>
+                                                    {showFeedbackView ? (
+                                                        <h3 className="text-xl font-black text-amber-950 tracking-tight">Gennemgang af Notat</h3>
+                                                    ) : (
+                                                        <h3 className="text-xl font-black text-amber-950 tracking-tight">Dit Journalnotat</h3>
+                                                    )}
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Syntese og Vurdering</p>
                                                 </div>
                                             </div>
@@ -543,18 +644,23 @@ const JournalTrainerPageContent: React.FC = () => {
                                             </div>
                                         </div>
                                         
-                                        <textarea 
-                                            value={journalContent}
-                                            onChange={(e) => setJournalContent(e.target.value)}
-                                            readOnly={showFeedbackView}
-                                            placeholder="Start dit faglige notat her... Fokuser på det objektive, inddrag lovgivning og afslut gerne med en handleplan."
-                                            className={`w-full flex-1 bg-transparent border-none focus:ring-0 text-amber-950 font-medium text-lg leading-[2] resize-none placeholder:text-slate-300 placeholder:italic p-4 rounded-xl transition-all ${showFeedbackView ? 'opacity-80' : 'hover:bg-amber-50/30'}`}
-                                        />
+                                        {showFeedbackView ? (
+                                            <div className="p-8 bg-amber-50/20 rounded-[2.5rem] border border-amber-950/5 min-h-[400px]">
+                                                <HighlightableText text={journalContent} improvements={activeScenario.feedback?.improvements || []} />
+                                            </div>
+                                        ) : (
+                                            <textarea 
+                                                value={journalContent}
+                                                onChange={(e) => setJournalContent(e.target.value)}
+                                                placeholder="Start dit faglige notat her... Fokuser på det objektive, inddrag lovgivning og afslut gerne med en handleplan."
+                                                className="w-full flex-1 bg-transparent border-none focus:ring-0 text-amber-950 font-medium text-xl leading-[2.2] resize-none placeholder:text-slate-200 placeholder:italic p-4 rounded-xl transition-all hover:bg-amber-50/30 font-serif"
+                                            />
+                                        )}
 
                                         {showEditor && (
-                                            <div className="pt-6 mt-auto">
-                                                <p className="text-[10px] font-bold text-slate-400 flex items-center justify-center gap-2">
-                                                    <ShieldCheck className="w-4 h-4 text-emerald-400" /> Sagsmappen gemmes lokalt
+                                            <div className="pt-8 mt-auto border-t border-amber-900/5">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center justify-center gap-3">
+                                                    <ShieldCheck className="w-4 h-4 text-emerald-400" /> Sagsmappen gemmes lokalt til sagsbehandling
                                                 </p>
                                             </div>
                                         )}
@@ -562,44 +668,13 @@ const JournalTrainerPageContent: React.FC = () => {
                                 </GlassCard>
 
                                 {showFeedbackView && activeScenario.feedback && (
-                                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                                         
-                                        {/* Score Banner */}
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm flex items-center gap-6">
-                                                <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 font-black text-2xl border-4 border-white shadow-lg">
-                                                    {activeScenario.feedback.overallScore}
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Helhedsindtryk</p>
-                                                    <p className="text-sm font-bold text-slate-700 mt-1">Samlet vurdering</p>
-                                                </div>
-                                            </div>
-                                            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm flex items-center gap-6">
-                                                <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 font-black text-2xl border-4 border-white shadow-lg">
-                                                    {activeScenario.feedback.objectivityScore}
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Objektivitet</p>
-                                                    <p className="text-sm font-bold text-slate-700 mt-1">Sproglig neutralitet</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* General Feedback */}
-                                        <div className="bg-white rounded-[2rem] p-8 lg:p-12 border border-slate-100 shadow-sm">
-                                            <div className="flex items-center gap-3 mb-6">
-                                                <LineChart className="w-6 h-6 text-amber-500" />
-                                                <h4 className="text-xl font-black text-slate-800">Feedback på dit notat</h4>
-                                            </div>
-                                            <div className="prose prose-sm text-slate-600 leading-[2] font-medium" dangerouslySetInnerHTML={{ __html: activeScenario.feedback.generalFeedback }} />
-                                        </div>
-
                                         {/* Specific Improvements */}
                                         {activeScenario.feedback.improvements && activeScenario.feedback.improvements.length > 0 && (
-                                            <div className="space-y-6 pt-6">
-                                                <h4 className="text-sm font-black uppercase tracking-widest text-slate-400 px-2">Anbefalede Omskrivninger</h4>
-                                                <div className="space-y-4">
+                                            <div className="space-y-8 pt-6">
+                                                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 px-6">De vigtigste læringspunkter</h4>
+                                                <div className="grid grid-cols-1 gap-6">
                                                     {activeScenario.feedback.improvements.map((item: any, idx: number) => (
                                                         <FeedbackItemCard key={idx} item={item} index={idx} />
                                                     ))}
@@ -609,27 +684,30 @@ const JournalTrainerPageContent: React.FC = () => {
 
                                         {/* REVISION BUTTON (Guldnotatet) */}
                                         <div className="pt-12">
-                                            <div className="bg-gradient-to-br from-amber-900 to-amber-950 p-12 rounded-[3xl] text-white shadow-2xl relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[100px] -mr-[200px] -mt-[200px] pointer-events-none" />
-                                                <div className="relative z-10 space-y-8">
-                                                    <div>
-                                                        <h4 className="text-3xl font-black mb-3">Se Guldnotatet</h4>
-                                                        <p className="text-amber-200/80 font-medium">Lad AI'en omskrive dit notat ved at integrere feedbacken til et fejlfrit stykke faglig dokumentation.</p>
+                                            <div className="bg-gradient-to-br from-amber-900 to-amber-950 p-12 rounded-[4rem] text-white shadow-2xl relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[120px] -mr-[200px] -mt-[200px] pointer-events-none" />
+                                                <div className="relative z-10 space-y-10">
+                                                    <div className="max-w-2xl">
+                                                        <div className="w-16 h-16 bg-amber-400 rounded-2xl flex items-center justify-center text-amber-950 mb-8 shadow-xl">
+                                                            <Wand2 className="w-8 h-8" />
+                                                        </div>
+                                                        <h4 className="text-4xl font-black mb-4 tracking-tight">Guldnotatet</h4>
+                                                        <p className="text-amber-200/90 font-medium text-lg leading-relaxed">Integration af al feedback til ét perfekt notat. Brug dette som reference til din fremtidige dokumentation.</p>
                                                     </div>
                                                     <Button 
                                                         onClick={handleRevise}
                                                         disabled={isRevising || !!revisedEntry}
-                                                        className={`w-full h-16 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-4 ${revisedEntry ? 'bg-white/10 text-white' : 'bg-amber-400 text-amber-950 hover:bg-white hover:scale-102'}`}
+                                                        className={`w-full max-w-sm h-16 rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-4 ${revisedEntry ? 'bg-white/10 text-white' : 'bg-amber-400 text-amber-950 hover:bg-white hover:scale-102 hover:shadow-amber-500/20'}`}
                                                     >
-                                                        {isRevising ? <Loader2 className="w-6 h-6 animate-spin" /> : <Wand2 className="w-6 h-6" />}
-                                                        {isRevising ? 'Skaber det perfekte notat...' : revisedEntry ? 'Omskrevet' : 'Generér Guldnotat'}
+                                                        {isRevising ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
+                                                        {isRevising ? 'Skriver om...' : revisedEntry ? 'Notat Revideret' : 'Skab Guldnotatet'}
                                                     </Button>
                                                 </div>
                                                 
                                                 {revisedEntry && (
-                                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-8 pt-8 border-t border-white/10 relative z-10">
-                                                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/10">
-                                                            <div className="prose prose-invert max-w-none text-amber-50 leading-[2] font-serif" dangerouslySetInnerHTML={{ __html: revisedEntry }} />
+                                                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-12 pt-12 border-t border-white/10 relative z-10">
+                                                        <div className="bg-white/5 backdrop-blur-xl rounded-[3rem] p-12 border border-white/10 shadow-inner">
+                                                            <div className="prose prose-invert max-w-none text-amber-50 leading-[2.4] font-serif text-xl" dangerouslySetInnerHTML={{ __html: revisedEntry }} />
                                                         </div>
                                                     </motion.div>
                                                 )}

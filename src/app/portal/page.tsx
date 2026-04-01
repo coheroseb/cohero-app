@@ -895,6 +895,13 @@ const PortalPageContent: React.FC = () => {
                         <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Grupper</span>
                     </Link>
                 </Button>
+                <Button asChild variant="outline" className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden">
+                    <Link href="/velkommen?restart=true">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        <Compass className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-500 shrink-0 group-hover:scale-110 transition-transform relative z-10"/>
+                        <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Guide</span>
+                    </Link>
+                </Button>
                 <div className="hidden md:block w-px h-16 bg-slate-200/50 mx-2" />
                 <Link href="/settings" passHref>
                   <div className="relative group cursor-pointer transition-all duration-500 hover:rotate-2">
@@ -1107,7 +1114,7 @@ const PortalPageContent: React.FC = () => {
                               : 'active:scale-[0.98] lg:hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] border-slate-100 lg:hover:border-slate-300 lg:hover:-translate-y-1 cursor-pointer shadow-sm shadow-slate-200/50'
                         }`}
                     >
-                    <div className="relative z-10 flex justify-between items-start">
+                        <div className="relative z-10 flex justify-between items-start">
                          <div className={`w-16 h-16 rounded-[22px] border flex items-center justify-center shadow-sm ${item.color} ${item.limit && item.limit.used >= item.limit.total ? 'grayscale opacity-30' : 'group-hover:scale-110 group-hover:rotate-3 transition-all duration-500'}`}>
                            {React.createElement(item.icon, { className: 'w-7 h-7' })}
                         </div>
@@ -1131,19 +1138,27 @@ const PortalPageContent: React.FC = () => {
                     </div>
 
                     {item.limit && item.limit.used >= item.limit.total && (
-                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[4px] flex items-center justify-center p-8 z-20 group-hover:bg-slate-950/30 transition-all duration-500">
-                            <div className="bg-white p-8 rounded-[40px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col items-center gap-4 max-w-[240px] border border-white/20 scale-100 group-hover:scale-105 transition-all duration-500">
-                                <div className="w-14 h-14 bg-amber-400 text-amber-950 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-400/20 mb-1">
+                        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[6px] flex items-center justify-center p-6 z-20 group-hover:bg-slate-950/50 transition-all duration-700">
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="bg-slate-900 p-8 rounded-[40px] shadow-2xl flex flex-col items-center text-center gap-5 max-w-[260px] border border-white/10 relative overflow-hidden"
+                            >
+                                {/* Decorative amber glow effect */}
+                                <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl" />
+                                
+                                <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20 relative z-10 animate-bounce transition-all duration-[3000ms]">
                                   <Star className="w-7 h-7 fill-current" />
                                 </div>
-                                <div className="space-y-2">
-                                  <p className="text-[16px] font-black text-slate-950 leading-none">Limit nået</p>
-                                  <p className="text-[12px] font-medium text-slate-500 leading-snug">Opgrader og få ubegrænset brug af {item.title}.</p>
+                                <div className="space-y-2 relative z-10">
+                                  <p className="text-[18px] font-black text-white leading-none tracking-tight">Limit nået</p>
+                                  <p className="text-[12px] font-medium text-slate-400 leading-relaxed px-2">Lås op for ubegrænset brug af <span className="text-white font-bold">{item.title}</span> og meget mere.</p>
                                 </div>
-                                <div className="mt-2 w-full py-4 bg-slate-950 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-black transition-all shadow-xl shadow-slate-900/10">
+                                <div className="mt-2 w-full py-4 bg-white text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-100 transition-all shadow-xl shadow-white/5 active:scale-95 relative z-10">
                                   Lås op nu
                                 </div>
-                            </div>
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-amber-500/50 transition-colors">Opgradér til Kollega+</p>
+                            </motion.div>
                         </div>
                     )}
                   </Link>

@@ -145,6 +145,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   const [mounted, setMounted] = useState(false);
+  const isUpdatingProfile = React.useRef(false);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
   const isRaadgivning = useMemo(() => pathname?.startsWith('/raadgivning'), [pathname]);
   const isLovPortalView = useMemo(() => pathname?.startsWith('/lov-portal/view'), [pathname]);
@@ -228,77 +229,70 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setHasPlayedDailyChallenge(false);
     }
   }, [userProfile]);
-  useEffect(() => {
-    const fixMissingStartDate = async () => {
-        if (user && userProfile && !userProfile.isQualified && userProfile.semester && !userProfile.studyStarted && firestore) {
-            const startDate = calculateStudyStarted(userProfile.semester);
-            console.log(`Auto-calculating study start date for ${user.uid}: ${startDate}`);
-            try {
-                await updateDoc(doc(firestore, 'users', user.uid), {
-                    studyStarted: startDate
-                });
-                refetchUserProfile();
-            } catch (err) {
-                console.error("Failed to auto-update study start date:", err);
-            }
-        }
-    };
-    fixMissingStartDate();
-  }, [user, userProfile, firestore, refetchUserProfile]);
 
-  // Streak System Maintenance (Daily Login Streak)
+  // Consolidate maintenance tasks: Streak and Missing Start Date
   useEffect(() => {
-    if (!user || userProfile === undefined || userProfile === null || !firestore) return;
+    if (!user || userProfile === undefined || userProfile === null || !firestore || isUpdatingProfile.current) return;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const lastStreakUpdate = userProfile.lastDailyChallengeDate?.toDate 
-        ? userProfile.lastDailyChallengeDate.toDate() 
-        : (userProfile.lastDailyChallengeDate ? new Date(userProfile.lastDailyChallengeDate) : null);
-    
-    if (lastStreakUpdate) {
-        lastStreakUpdate.setHours(0, 0, 0, 0);
-    }
-
-    // Already updated today?
-    if (lastStreakUpdate && lastStreakUpdate.getTime() === today.getTime()) {
-        return;
-    }
-
-    const updateStreak = async () => {
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
-
-        let newStreak = 1;
-        // If last update was yesterday, increment.
-        if (lastStreakUpdate && lastStreakUpdate.getTime() === yesterday.getTime()) {
-            newStreak = (userProfile.dailyChallengeStreak || 0) + 1;
+    const runMaintenance = async () => {
+        const updateObj: any = {};
+        
+        // 1. Streak check
+        const lastStreakUpdate = userProfile.lastDailyChallengeDate?.toDate 
+            ? userProfile.lastDailyChallengeDate.toDate() 
+            : (userProfile.lastDailyChallengeDate ? new Date(userProfile.lastDailyChallengeDate) : null);
+        
+        if (lastStreakUpdate) {
+            lastStreakUpdate.setHours(0, 0, 0, 0);
         }
 
-        const currentHighest = userProfile.highestStreak || 0;
-        const finalHighest = Math.max(currentHighest, newStreak);
+        if (!lastStreakUpdate || lastStreakUpdate.getTime() !== today.getTime()) {
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
 
-        console.log(`[Streak] Updating streak for ${user.uid}. Old streak: ${userProfile.dailyChallengeStreak}, New streak: ${newStreak}, Highest: ${finalHighest}`);
+            let newStreak = 1;
+            if (lastStreakUpdate && lastStreakUpdate.getTime() === yesterday.getTime()) {
+                newStreak = (userProfile.dailyChallengeStreak || 0) + 1;
+            }
 
-        try {
-            const userRef = doc(firestore, 'users', user.uid);
-            const updateObj: any = {
-                dailyChallengeStreak: newStreak,
-                lastDailyChallengeDate: serverTimestamp(),
-                lastLogin: serverTimestamp(),
-            };
+            const currentHighest = userProfile.highestStreak || 0;
+            const finalHighest = Math.max(currentHighest, newStreak);
+
+            updateObj.dailyChallengeStreak = newStreak;
+            updateObj.lastDailyChallengeDate = serverTimestamp();
+            updateObj.lastLogin = serverTimestamp();
             if (finalHighest > currentHighest) {
                 updateObj.highestStreak = finalHighest;
             }
-            await updateDoc(userRef, updateObj);
-        } catch (err) {
-            console.error("Failed to update daily streak:", err);
+        }
+
+        // 2. Missing Start Date check
+        if (!userProfile.isQualified && userProfile.semester && !userProfile.studyStarted) {
+            updateObj.studyStarted = calculateStudyStarted(userProfile.semester);
+        }
+
+        // If anything needs updating, do it in one go
+        if (Object.keys(updateObj).length > 0) {
+            isUpdatingProfile.current = true;
+            try {
+                console.log(`[AppProvider] Consolidating profile maintenance for ${user.uid}:`, Object.keys(updateObj));
+                await updateDoc(doc(firestore, 'users', user.uid), updateObj);
+            } catch (err) {
+                console.error("Failed to update profile maintenance:", err);
+            } finally {
+                // Keep it locked for a bit to let the snapshot settle
+                setTimeout(() => {
+                    isUpdatingProfile.current = false;
+                }, 2000);
+            }
         }
     };
 
-    updateStreak();
-  }, [user, userProfile?.dailyChallengeStreak, userProfile?.lastDailyChallengeDate, firestore]);
+    runMaintenance();
+  }, [user, userProfile, firestore]);
 
 
   useEffect(() => {
@@ -339,6 +333,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     return userProfile === null || (!userProfile.isQualified && (!userProfile.institution || !userProfile.semester || !userProfile.studyStarted));
   }, [isUserLoading, userProfile, user, isStandaloneGroups, pathname]);
+
+  const showFeatureIntroRedirect = useMemo(() => {
+    if (isUserLoading || userProfile === undefined || !user || isStandaloneGroups || pathname === '/' || pathname?.startsWith('/velkommen')) {
+        return false;
+    }
+    // Only redirect if onboarding is complete but intro hasn't been seen
+    const onboardingComplete = userProfile && (userProfile.isQualified || (userProfile.institution && userProfile.semester && userProfile.studyStarted));
+    return onboardingComplete && !userProfile.hasSeenFeatureIntro && !showOnboardingModal;
+  }, [isUserLoading, userProfile, user, isStandaloneGroups, pathname, showOnboardingModal]);
+
+  useEffect(() => {
+    if (showFeatureIntroRedirect) {
+        router.push(`/velkommen?callbackUrl=${encodeURIComponent(pathname || '/portal')}`);
+    }
+  }, [showFeatureIntroRedirect, router, pathname]);
 
   const openAuthPage = (mode: 'signin' | 'signup' = 'signup', priceId?: string) => {
     const authUrl = isStandaloneGroups ? `/rum/groups/auth` : `/auth`;

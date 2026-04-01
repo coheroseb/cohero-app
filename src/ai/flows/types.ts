@@ -182,6 +182,7 @@ export interface UserProfile {
   conversionSource?: string;
   convertedAt?: any;
   createdAt?: any;
+  hasSeenFeatureIntro?: boolean;
   learnedConcepts?: string[];
 }
 
