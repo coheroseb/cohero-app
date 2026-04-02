@@ -1501,3 +1501,39 @@ export const SuggestExamTopicOutputSchema = z.object({
 export type SuggestExamTopicInput = z.infer<typeof SuggestExamTopicInputSchema>;
 export type SuggestExamTopicData = z.infer<typeof SuggestExamTopicDataSchema>;
 export type SuggestExamTopicOutput = z.infer<typeof SuggestExamTopicOutputSchema>;
+
+// ==========================================
+// MODULE EXAM PREP SCHEMAS
+// ==========================================
+export const ModuleExamPrepInputSchema = z.object({
+  moduleName: z.string(),
+  learningGoals: z.array(z.string()),
+  examForm: z.string().optional(),
+});
+
+export const ModuleExamPrepDataSchema = z.object({
+  concepts: z.array(z.object({
+    name: z.string(),
+    explanation: z.string(),
+    relevance: z.string(),
+  })).describe('Væsentlige faglige begreber for dette modul.'),
+  models: z.array(z.object({
+    name: z.string(),
+    explanation: z.string(),
+    usage: z.string(),
+  })).describe('Relevante teoretiske eller praktiske modeller.'),
+  legislation: z.array(z.object({
+    title: z.string(),
+    paragraphs: z.array(z.string()),
+    relevance: z.string(),
+  })).describe('Relevant lovgivning og specifikke paragraffer.'),
+});
+
+export const ModuleExamPrepOutputSchema = z.object({
+  data: ModuleExamPrepDataSchema,
+  usage: UsageSchema,
+});
+
+export type ModuleExamPrepInput = z.infer<typeof ModuleExamPrepInputSchema>;
+export type ModuleExamPrepOutput = z.infer<typeof ModuleExamPrepOutputSchema>;
+export type ModuleExamPrepData = z.infer<typeof ModuleExamPrepDataSchema>;

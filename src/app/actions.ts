@@ -612,6 +612,9 @@ export async function fetchVivePublicationsAction(input: any) { return callFireb
 export async function textToSpeechAction(input: any) { return callFirebaseFlow('textToSpeechFlow', input); }
 export async function getViveReportQaAction(input: any) { return callFirebaseFlow('getViveReportQaFlow', input); }
 export async function generateReportQuestionsAction(input: any) { return callFirebaseFlow('generateReportQuestionsFlow', input); }
+export async function generateModuleExamPrepAction(input: Types.ModuleExamPrepInput): Promise<Types.ModuleExamPrepOutput> {
+    return callFirebaseFlow('generateModuleExamPrepFlow', input);
+}
 
 export async function analyzeStarDataAction(input: Types.AnalyzeStarDataInput): Promise<Types.AnalyzeStarDataOutput> {
     return callFirebaseFlow('analyzeStarDataFlow', input);

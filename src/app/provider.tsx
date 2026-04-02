@@ -638,7 +638,13 @@ const CampaignBanner = ({ campaign }: { campaign: any }) => {
 };
 
 const ThemeDecorations = ({ theme }: { theme: string }) => {
-    if (theme === 'default') return null;
+    const [isMounted, setIsMounted] = React.useState(false);
+    
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (theme === 'default' || !isMounted) return null;
 
     const particles = Array.from({ length: 15 });
 
