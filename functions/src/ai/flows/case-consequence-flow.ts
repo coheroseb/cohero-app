@@ -15,6 +15,7 @@ const CaseConsequenceInputSchema = z.object({
   scenario: z.string().describe("The case scenario text."),
   dilemma: z.string().describe("The specific dilemma the studerende faced."),
   chosenActionText: z.string().describe("The text of the action the studerende chose."),
+  chosenActionJustification: z.string().optional().describe("The user's professional justification/reasoning for choosing this action."),
 });
 export type CaseConsequenceInput = z.infer<typeof CaseConsequenceInputSchema>;
 
@@ -46,11 +47,14 @@ const prompt = ai.definePrompt({
 The scenario is: "{{{scenario}}}"
 The dilemma was: "{{{dilemma}}}"
 The studerende chose this action: "{{{chosenActionText}}}"
+{{#if chosenActionJustification}}
+The studerende's professional justification is: "{{{chosenActionJustification}}}"
+{{/if}}
 
 Your task is to provide a pedagogical response that explains the outcome of this specific choice. Your response should be in Danish and structured as a JSON object with two keys:
 
-1.  **consequence**: Describe the immediate, realistic outcome of the chosen action. What happens next? Focus on the direct result of this single step.
-2.  **reflection**: Provide a deeper professional reflection. What are the trade-offs of this choice? What professional value or legal principle does it prioritize (e.g., retssikkerhed, relationsdannelse, mindsteindgrebets princip)? What might be a critical perspective on this choice?
+1.  **consequence**: Describe the immediate, realistic outcome of the chosen action. What happens next? Focus on the direct result of this single step. If the studerende provided a justification, incorporate whether it was professionally sound or if they missed a critical point.
+2.  **reflection**: Provide a deeper professional reflection. What are the trade-offs of this choice? What professional value or legal principle does it prioritize (e.g., retssikkerhed, relationsdannelse, mindsteindgrebets princip)? What might be a critical perspective on this choice? If a justification was provided, reflect on its validity and the students "faglige skøn".
 
 Keep your response focused and educational. It's not about "right" or "wrong", but about illuminating the professional considerations behind each action. Always use the term "borger" instead of "klient".
 `,

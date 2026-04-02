@@ -99,6 +99,9 @@ const CaseTrainerPageContent: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [limitError, setLimitError] = useState<string | null>(null);
+  const [pendingChoice, setPendingChoice] = useState<{id: string, text: string} | null>(null);
+  const [justification, setJustification] = useState('');
+  const [showConsequence, setShowConsequence] = useState(false);
 
   // Persistent Firestore State
   const activeCaseRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'users', user.uid, 'cases', 'active') : null, [user, firestore]);
@@ -178,18 +181,23 @@ const CaseTrainerPageContent: React.FC = () => {
     }
   };
 
-  const handleSelectChoice = async (choice: {id: string, text: string}) => {
-    if (isSubmitting || isAnalyzing || !activeCase || !activeCaseRef || !user || !firestore) return;
+  const handleSelectChoice = async () => {
+    if (!pendingChoice || isSubmitting || isAnalyzing || !activeCase || !activeCaseRef || !user || !firestore) return;
     setIsSubmitting(true);
 
     const currentDilemma = activeCase.dilemmas[currentDilemmaIndex];
-    const newChoices = [...userChoices, { dilemma: currentDilemma.dilemma, choice: choice.text }];
+    const newChoices = [...userChoices, { 
+        dilemma: currentDilemma.dilemma, 
+        choice: pendingChoice.text,
+        justification: justification 
+    }];
     
     try {
       const consResponse = await getCaseConsequenceAction({
         scenario: activeCase.scenario,
         dilemma: currentDilemma.dilemma,
-        chosenActionText: choice.text
+        chosenActionText: pendingChoice.text,
+        chosenActionJustification: justification
       });
       
       const newConsequences = [...consequences, consResponse.data];
@@ -209,14 +217,17 @@ const CaseTrainerPageContent: React.FC = () => {
             topic: activeCase.topic,
             scenario: activeCase.scenario,
             initialObservation: activeCase.initialObservation,
-            assessment: 'Brugeren valgte handlinger baseret på dilemmaer.',
-            goals: 'At navigere i casen.',
-            actionPlan: newChoices.map(c => c.choice).join(' -> ')
+            assessment: 'Brugeren valgte handlinger og begrundelser baseret på dilemmaer.',
+            goals: 'At navigere i casen med fagligt skøn.',
+            actionPlan: newChoices.map(c => `VALG: ${c.choice}\nBEGRUNDELSE: ${c.justification || 'Ingen'}`).join('\n\n---\n\n')
         });
         updates.finalFeedback = feedback.data;
       }
 
       updateDoc(activeCaseRef, updates)
+        .then(() => {
+            setShowConsequence(true);
+        })
         .catch(err => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: activeCaseRef.path,
@@ -230,6 +241,8 @@ const CaseTrainerPageContent: React.FC = () => {
     } finally {
       setIsSubmitting(false);
       setIsAnalyzing(false);
+      setPendingChoice(null);
+      setJustification('');
     }
   };
 
@@ -272,8 +285,9 @@ const CaseTrainerPageContent: React.FC = () => {
   };
 
   const showStartScreen = !isCaseLoading && !activeCase;
-  const showDilemma = !isCaseLoading && activeCase && !finalFeedback && activeCase.dilemmas && activeCase.dilemmas.length > currentDilemmaIndex;
+  const showDilemma = !isCaseLoading && activeCase && !finalFeedback && !showConsequence && activeCase.dilemmas && activeCase.dilemmas.length > currentDilemmaIndex;
   const showFeedback = !isCaseLoading && activeCase && finalFeedback;
+  const showConsequenceScreen = !isCaseLoading && activeCase && showConsequence && !finalFeedback;
 
   if (isCaseLoading) {
       return (
@@ -335,7 +349,10 @@ const CaseTrainerPageContent: React.FC = () => {
                                 <div key={i} className="p-4 bg-white border border-amber-50 rounded-xl shadow-sm relative group">
                                     <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-4 bg-emerald-500 rounded-full"></div>
                                     <p className="text-[9px] font-bold text-amber-700 uppercase mb-1">Valg {i+1}</p>
-                                    <p className="text-[11px] text-amber-950 font-medium leading-relaxed line-clamp-2 italic">"{uc.choice}"</p>
+                                    <p className="text-[11px] text-amber-950 font-medium leading-relaxed italic mb-1">"{uc.choice}"</p>
+                                    {uc.justification && (
+                                        <p className="text-[9px] text-slate-400 line-clamp-1">Begrundelse: {uc.justification}</p>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -456,18 +473,62 @@ const CaseTrainerPageContent: React.FC = () => {
                                 {activeCase.dilemmas[currentDilemmaIndex].choices.map((choice: any) => (
                                     <button 
                                         key={choice.id} 
-                                        onClick={() => handleSelectChoice(choice)}
+                                        onClick={() => setPendingChoice(choice)}
                                         disabled={isSubmitting}
-                                        className="bg-white p-8 rounded-3xl border border-amber-100 hover:border-amber-950 hover:shadow-2xl transition-all text-left flex items-start gap-6 group/choice disabled:opacity-50 active:scale-[0.99]"
+                                        className={`bg-white p-8 rounded-3xl border transition-all text-left flex items-start gap-6 group/choice disabled:opacity-50 active:scale-[0.99] ${pendingChoice?.id === choice.id ? 'border-amber-950 ring-4 ring-amber-950/5' : 'border-amber-100 hover:border-amber-950 hover:shadow-2xl'}`}
                                     >
-                                        <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-950 font-black serif text-lg group-hover/choice:bg-amber-950 group-hover/choice:text-white transition-colors shrink-0">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black serif text-lg transition-colors shrink-0 ${pendingChoice?.id === choice.id ? 'bg-amber-950 text-white' : 'bg-amber-50 border border-amber-100 text-amber-950 group-hover/choice:bg-amber-950 group-hover/choice:text-white'}`}>
                                             {choice.id}
                                         </div>
                                         <span className="flex-1 text-lg text-amber-950 font-bold leading-snug pt-1">{choice.text}</span>
-                                        <ChevronRight className="w-6 h-6 text-amber-200 group-hover/choice:translate-x-2 group-hover/choice:text-amber-950 transition-all self-center shrink-0" />
+                                        <ChevronRight className={`w-6 h-6 transition-all self-center shrink-0 ${pendingChoice?.id === choice.id ? 'translate-x-2 text-amber-950' : 'text-amber-200 group-hover/choice:translate-x-2 group-hover/choice:text-amber-950'}`} />
                                     </button>
                                 ))}
                             </div>
+
+                            <AnimatePresence>
+                                {pendingChoice && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, height: 0 }} 
+                                        animate={{ opacity: 1, height: 'auto' }} 
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="mt-8 space-y-6 pt-8 border-t border-amber-100 overflow-hidden"
+                                    >
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-xs font-black uppercase tracking-widest text-amber-900/40 px-2 italic">Faglig Begrundelse (Valgfrit, men anbefales)</label>
+                                                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 rounded-full border border-amber-100">
+                                                    <Sparkles className="w-3 h-3 text-amber-400" />
+                                                    <span className="text-[9px] font-bold text-amber-900 uppercase">Giver bedre feedback</span>
+                                                </div>
+                                            </div>
+                                            <textarea 
+                                                value={justification}
+                                                onChange={(e) => setJustification(e.target.value)}
+                                                placeholder="Hvorfor vælger du denne handling? Skriv kort din faglige overvejelse her..."
+                                                className="w-full h-32 p-6 bg-white border border-amber-100 rounded-2xl focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 focus:outline-none transition-all text-slate-600 italic resize-none shadow-inner"
+                                            />
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <Button 
+                                                variant="outline" 
+                                                onClick={() => setPendingChoice(null)}
+                                                className="px-8 h-14 rounded-2xl border-amber-100 text-slate-400 hover:text-amber-950"
+                                            >
+                                                Annuller
+                                            </Button>
+                                            <button 
+                                                onClick={handleSelectChoice}
+                                                disabled={isSubmitting}
+                                                className="flex-1 h-14 bg-amber-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                                                Bekræft mit valg
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                             {isSubmitting && (
                                 <div className="absolute inset-0 bg-[#FDFCF8]/60 backdrop-blur-sm rounded-[3rem] flex flex-col items-center justify-center space-y-6 z-10 animate-ink">
                                     <div className="relative">
@@ -477,6 +538,53 @@ const CaseTrainerPageContent: React.FC = () => {
                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/40">Beregner konsekvenser...</p>
                                 </div>
                             )}
+                        </section>
+                    </motion.div>
+                ) : showConsequenceScreen ? (
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 pb-32">
+                        <section className="bg-white p-8 md:p-16 rounded-[4rem] border border-emerald-100 shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-12 opacity-[0.03] text-emerald-500">
+                                <CheckCircle2 className="w-64 h-64" />
+                            </div>
+                            <div className="relative z-10 space-y-12">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
+                                        <Zap className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600/50 mb-1">Konsekvens af dit valg</h3>
+                                        <p className="text-2xl font-bold text-amber-950 serif">Hvad skete der?</p>
+                                    </div>
+                                </div>
+
+                                <div className="prose prose-slate prose-lg max-w-none">
+                                    <div className="bg-emerald-50/30 p-8 rounded-[2.5rem] border border-emerald-100 italic text-slate-700 leading-relaxed shadow-inner" dangerouslySetInnerHTML={{ __html: consequences[currentDilemmaIndex - 1]?.consequence }} />
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-px flex-1 bg-amber-100"></div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-900/30">Faglig Refleksion</span>
+                                        <div className="h-px flex-1 bg-amber-100"></div>
+                                    </div>
+                                    <div className="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 relative group">
+                                        <div className="absolute -left-2 top-10 w-4 h-8 bg-amber-200 rounded-r-full"></div>
+                                        <p className="text-slate-600 leading-[1.8] italic font-medium">
+                                            {consequences[currentDilemmaIndex - 1]?.reflection}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="pt-8">
+                                    <button 
+                                        onClick={() => setShowConsequence(false)}
+                                        className="w-full py-6 bg-amber-950 text-white rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-amber-950/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 group"
+                                    >
+                                        Fortsæt til Næste Dilemma
+                                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </div>
+                            </div>
                         </section>
                     </motion.div>
                 ) : showFeedback ? (
