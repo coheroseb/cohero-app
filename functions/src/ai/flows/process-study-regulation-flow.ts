@@ -1,6 +1,11 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+const ElectiveSchema = z.object({
+  name: z.string().describe("Name of the elective choice"),
+  description: z.string().describe("Brief description of the elective module content"),
+});
+
 const ModuleSchema = z.object({
   id: z.string().describe("Module/Semester ID, e.g. 'Modul 1' or 'Semester 4'"),
   name: z.string().describe("Full name of the module"),
@@ -8,18 +13,21 @@ const ModuleSchema = z.object({
   description: z.string().describe("Brief summary or 'Om modulet' description"),
   learningGoals: z.array(z.string()).describe("Specific learning goals (læringsmål)"),
   examForm: z.string().optional().describe("Description of the exam form"),
+  electives: z.array(ElectiveSchema).optional().describe("If the module/semester contains elective choices (valgmoduler), list them here"),
 });
 
 export const ProcessStudyRegulationInputSchema = z.object({
   pdfBase64: z.string().describe("Base64 encoded PDF content."),
   institution: z.string().optional(),
   profession: z.string().optional(),
+  isElectivesOnly: z.boolean().optional().describe("If true, the AI should focus exclusively on extracting all elective modules found in the document, rather than a structured semester 1-7 list."),
 });
 
 export const ProcessStudyRegulationOutputSchema = z.object({
   title: z.string(),
   institution: z.string(),
   year: z.string().optional(),
+  validFrom: z.string().optional().describe("Find the date this regulation is valid from (gældende fra / ikrafttræden), e.g. '2024-09-01'"),
   modules: z.array(ModuleSchema),
 });
 
@@ -41,13 +49,15 @@ Please identify:
 1. **title**: A descriptive title (e.g., "Studieordning for Socialrådgiveruddannelsen 2024").
 2. **institution**: The name of the educational institution.
 3. **year**: The version or year of the regulation.
-4. **modules**: Find ALLE semestre (f.eks. Semester 1-7). Hvert modul skal have:
-   - 'id': Numret på semesteret (f.eks. '1').
-   - 'name': Navnet på semesteret.
+4. **modules**: ${input.isElectivesOnly ? 'Find ALLE valgmoduler (electives) nævnt i dokumentet.' : 'Find ALLE semestre (f.eks. Semester 1-7).'} Hvert modul skal have:
+   - 'id': ${input.isElectivesOnly ? 'En unik ID eller navn (f.eks. "V1")' : 'Numret på semesteret (f.eks. "1")'}.
+   - 'name': Navnet på ${input.isElectivesOnly ? 'valgmodulet' : 'semesteret'}.
    - 'ects': ECTS point.
    - 'description': En kort beskrivelse af semesters fokus.
    - 'learningGoals': Liste af læringsmål.
    - 'examForm': Beskrivelse af prøveform.
+   - 'electives': Hvis semesteret/modulet indeholder yderligere valgmuligheder (valgmoduler), skal de listes her med navn og beskrivelse.
+5. **validFrom**: Find datoen for hvornår denne ordning er gældende fra (f.eks. "1. september 2024"). Formatér som YYYY-MM-DD hvis muligt.
 
 Besvar på dansk. Fokusér på den gældende uddannelse for ${input.institution || 'institutionen'}.`
         }

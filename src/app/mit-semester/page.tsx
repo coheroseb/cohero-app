@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +9,7 @@ import {
   Activity, Clock, ChevronDown, GraduationCap, Layers, Loader2, Plus,
   RefreshCw, ArrowRight, Flag, Navigation, CheckCircle, Brain, FileText,
   Zap, Trophy, BarChart3, ListOrdered, CheckCircle2, Hash, Award,
-  BookMarked, Puzzle, Scale, ChevronRight, Book, Lightbulb, Check
+  BookMarked, Puzzle, Scale, ChevronRight, Book, Lightbulb, Check, Info
 } from 'lucide-react';
 import { semesterPrepData, type SemesterPrepData } from '@/lib/semester-data';
 import { useApp } from '@/app/provider';
@@ -34,6 +34,11 @@ interface SavedPlan extends SemesterPlan {
   semesterInfo: string;
 }
 
+interface ElectiveChoice {
+  name: string;
+  description: string;
+}
+
 interface CurriculumModule {
   id: string;
   name: string;
@@ -42,6 +47,7 @@ interface CurriculumModule {
   ects?: number;
   learningGoals?: string[];
   examForm?: string;
+  electives?: ElectiveChoice[];
 }
 
 interface Curriculum {
@@ -51,6 +57,7 @@ interface Curriculum {
   title: string;
   validFrom: string;
   validTo?: string | null;
+  type?: 'standard' | 'electives';
   modules: CurriculumModule[];
 }
 
@@ -549,17 +556,21 @@ function AnalyseTab({ plan, activeModule }: { plan: SavedPlan; activeModule: Cur
 }
 
 // ── Eksamen Tab ───────────────────────────────────────────────────────────────
-function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; curriculum: Curriculum | null }) {
-  const [selectedModuleIdx, setSelectedModuleIdx] = useState<number>(() => {
-    if (!curriculum?.modules) return getSemNum(currentSemester) - 1;
-    const semNum = getSemNum(currentSemester);
-    const idx = curriculum.modules.findIndex(m => {
-        const id = m.id?.toLowerCase() || '';
-        const name = m.name?.toLowerCase() || '';
-        return id.includes(String(semNum)) || name.includes(String(semNum));
-    });
-    return idx !== -1 ? idx : 0;
-  });
+function EksamenTab({ 
+  currentSemester, 
+  curriculum, 
+  electiveCurriculums,
+  selectedModuleIdx,
+  setSelectedModuleIdx
+}: { 
+  currentSemester: string; 
+  curriculum: Curriculum | null; 
+  electiveCurriculums: Curriculum[];
+  selectedModuleIdx: number;
+  setSelectedModuleIdx: (idx: number) => void;
+}) {
+  const { user, userProfile, refetchUserProfile } = useApp();
+  const firestore = useFirestore();
 
   const modules = curriculum?.modules || [];
   const activeModule = modules[selectedModuleIdx] || null;
@@ -572,6 +583,74 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
   const [aiData, setAiData] = useState<ModuleExamPrepData | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const currentElective = (activeModule && userProfile?.selectedElectives?.[activeModule.id]) || '';
+
+  // Combine electives from the activeModule and ANY modules from elective-only curricula
+  const allElectiveChoices = useMemo(() => {
+    // Standard electives defined WITHIN the main module
+    const choices: any[] = (activeModule?.electives || []).map(e => ({
+        id: '', 
+        learningGoals: [], 
+        examForm: '',
+        ...e
+    }));
+    
+    // Also include ALL modules from special 'electives' curricula
+    electiveCurriculums.forEach(c => {
+        c.modules.forEach(m => {
+           if (!choices.find(ch => ch.name.toLowerCase() === m.name.toLowerCase())) {
+               choices.push({ ...m });
+           }
+        });
+    });
+    
+    return choices;
+  }, [activeModule, electiveCurriculums]);
+
+  // Check if the current semester module is actually meant to have electives
+  const isElectiveSemester = useMemo(() => {
+    if (!activeModule) return false;
+    const name = activeModule.name.toLowerCase();
+    const id = (activeModule.id || '').toLowerCase();
+    
+    // Check if the semester module itself indicates it's an elective slot
+    const isValg = name.includes('valg') || id.includes('valg') || name.includes('elective') || name.includes('valgmodul') || name.includes('valgfag');
+    // OR if it already has electives defined within it
+    const hasInternalElectives = (activeModule.electives && activeModule.electives.length > 0);
+    
+    return isValg || hasInternalElectives;
+  }, [activeModule]);
+
+  // The actual module content to show. If an elective is selected, use its data.
+  const effectiveModule = useMemo(() => {
+    if (!currentElective || !activeModule) return activeModule;
+    const selected = allElectiveChoices.find(e => e.name === currentElective);
+    if (!selected) return activeModule;
+
+    // Merge! Keep activeModule's basic ID/name for context but prioritze elective's description/goals
+    return {
+        ...activeModule,
+        ...selected,
+        // Override name if it was just 'Valgmodul' originally
+        name: selected.name || activeModule.name,
+    };
+  }, [activeModule, currentElective, allElectiveChoices]);
+
+  const handleSelectElective = async (electiveName: string) => {
+    if (!user || !firestore || !activeModule) return;
+    try {
+        const userRef = doc(firestore, 'users', user.uid);
+        await updateDoc(userRef, {
+            [`selectedElectives.${activeModule.id}`]: electiveName
+        });
+        await refetchUserProfile();
+        toast({ title: "Valgmodul opdateret", description: `Du har valgt: ${electiveName}` });
+    } catch (e) {
+        toast({ title: "Fejl", description: "Kunne ikke gemme dit valg.", variant: "destructive" });
+    }
+  };
 
   // Reset AI data when selector changes
   useEffect(() => {
@@ -580,17 +659,27 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
 
   const handleGenerateAI = async () => {
     setIsGenerating(true);
+    // Scroll to results area immediately so user sees the loading state
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
     try {
       const res = await generateModuleExamPrepAction({
-        moduleName: activeModule?.name || prepData?.title || `Modul ${selectedModuleIdx + 1}`,
-        learningGoals: activeModule?.learningGoals || prepData?.learningGoals || [],
-        examForm: activeModule?.examForm,
+        moduleName: effectiveModule?.name || prepData?.title || `Modul ${selectedModuleIdx + 1}`,
+        description: effectiveModule?.about || effectiveModule?.description || prepData?.focus || '',
+        learningGoals: effectiveModule?.learningGoals || prepData?.learningGoals || [],
+        examForm: effectiveModule?.examForm,
       });
       setAiData(res.data);
       toast({
         title: "AI-Motor Aktiveret",
         description: "Vi har fundet nye begreber, modeller og lovgivning til dig.",
       });
+      // Final scroll once data is rendered
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
     } catch (e) {
       toast({
         title: "Fejl",
@@ -603,154 +692,145 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* ── Control Center ─────────────────────────────────────────────────── */}
-      <div className="relative z-[100] bg-white/40 backdrop-blur-md border border-white/20 p-5 rounded-[2.5rem] flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl shadow-slate-200/50">
-        <div className="space-y-1 ml-2">
-          <h2 className="text-lg font-black text-slate-900 tracking-tight">Eksamens-Forberedelse</h2>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em]">Studieordning & AI Indsigt</p>
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      {/* ── Dashboard Status Bar ──────────────────────────────────────────────── */}
+      <div className="bg-slate-950 text-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row items-center justify-between gap-10 overflow-hidden relative group">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] -mr-48 -mt-48 group-hover:scale-125 transition-transform duration-1000" />
+        
+        <div className="flex items-center gap-6 relative z-10">
+           <div className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+              <GraduationCap className="w-8 h-8 text-indigo-400" />
+           </div>
+           <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-1">Eksamens-Status</p>
+              <h2 className="text-xl font-black serif tracking-tight">Klar til forberedelse</h2>
+           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-          {/* Dropdown */}
-          <div className="relative z-[101] w-full sm:w-[400px] lg:w-[480px]">
-            <button 
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full h-14 bg-white border border-slate-100 rounded-2xl px-6 flex items-center justify-between shadow-sm hover:border-indigo-200 hover:shadow-md transition-all active:scale-[0.98] group"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                   <Layers className="w-4 h-4" />
-                </div>
-                <span className="text-sm font-black text-slate-900 truncate pr-2">
-                  {activeModule 
-                    ? `${activeModule.id || selectedModuleIdx + 1}. ${activeModule.name?.split(':')[0]}` 
-                    : `${selectedModuleIdx + 1}. Semester`
-                  }
-                </span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-slate-300 transition-transform duration-300 shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            <AnimatePresence>
-              {isDropdownOpen && (
-                <>
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
-                    exit={{ opacity: 0 }}
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="fixed inset-0 z-[102]"
-                  />
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white border border-white/20 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[103] overflow-hidden max-h-[350px] overflow-y-auto no-scrollbar scroll-smooth"
-                  >
-                    <div className="p-2">
-                      {(modules.length > 0 ? modules : [1, 2, 3, 4, 5, 6, 7]).map((m, idx) => {
-                        const isSelected = selectedModuleIdx === idx;
-                        const name = typeof m === 'number' ? `${m}. Semester` : `${m.id || idx + 1}. ${m.name}`;
-                        
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => {
-                              setSelectedModuleIdx(idx);
-                              setIsDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-left transition-all mb-1 ${
-                              isSelected 
-                                ? 'bg-slate-900 text-white shadow-lg' 
-                                : 'text-slate-600 hover:bg-slate-50'
-                            }`}
-                          >
-                            <span className={`text-[11px] font-black uppercase tracking-tight truncate pr-4 ${isSelected ? 'text-white' : 'text-slate-700'}`}>
-                              {name}
-                            </span>
-                            {isSelected && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="h-12 w-[1px] bg-white/10 hidden md:block mx-4" />
+          
+          <div className="text-right hidden sm:block">
+             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Aktuelt Modul</p>
+             <p className="text-xs font-black text-slate-300">{effectiveModule?.name?.split(':')[0] || 'Ikke valgt'}</p>
           </div>
 
-          {/* AI Trigger */}
-          {!aiData && (
-            <button
+          <Button 
               onClick={handleGenerateAI}
-              disabled={isGenerating || isDropdownOpen}
-              className="h-14 px-8 bg-indigo-600 text-white rounded-2xl flex items-center gap-3 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 disabled:opacity-50 group relative overflow-hidden active:scale-95"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              {isGenerating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-              )}
-              <span className="text-[11px] font-black uppercase tracking-widest relative z-10 whitespace-nowrap">
-                {isGenerating ? 'Tænker...' : 'Få AI Indsigt'}
-              </span>
-            </button>
-          )}
+              disabled={isGenerating}
+              className="h-16 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-indigo-500/20 group transition-all shrink-0 active:scale-95"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-3 animate-spin" />
+                Aktiverer AI...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-3 text-indigo-200 group-hover:scale-125 transition-transform" />
+                AI Eksamens Analyse
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
-      <div className="relative z-0 grid lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Focus & Learning Goals */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-[3rem] p-8 sm:p-12 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500">
-            <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity">
-              <BookOpen className="w-64 h-64" />
-            </div>
+      <div className="grid lg:grid-cols-12 gap-12">
+        {/* Main Dashboard Content (Column 8) */}
+        <div className="lg:col-span-8 space-y-12">
+          {/* Module Hero Card */}
+          <div className="bg-white rounded-[3rem] border border-indigo-50 p-10 md:p-14 shadow-2xl shadow-indigo-100/20 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-50/50 rounded-full blur-[100px] -mr-40 -mt-40" />
             
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-10">
-                <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200 rotate-3 group-hover:rotate-0 transition-transform">
-                  <GraduationCap className="w-7 h-7" />
+            <div className="relative z-10 space-y-12">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                   <span className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.3em] shadow-xl">Modul {effectiveModule?.id || (selectedModuleIdx + 1)}</span>
+                   {effectiveModule?.ects && <span className="px-5 py-2 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-black tracking-widest">{effectiveModule.ects} ECTS</span>}
                 </div>
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight max-w-lg">
-                    {activeModule?.name || prepData?.title || 'Modul Oversigt'}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest">Studieordning</span>
-                    {aiData && <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1"><Sparkles className="w-2.5 h-2.5" /> AI Udvidet</span>}
-                  </div>
-                </div>
+                <h1 className="text-3xl md:text-5xl font-black text-slate-950 serif tracking-tighter leading-[0.9]">
+                   {effectiveModule?.name || prepData?.title || 'Modul Oversigt'}
+                </h1>
+                <p className="text-base font-medium text-slate-400 max-w-2xl leading-relaxed">
+                   Her finder du alt dit teoretiske fundament, lovgivning og AI-indsigter tilpasset din eksamen.
+                </p>
               </div>
 
-              {(activeModule?.about || activeModule?.description || prepData?.focus) && (
-                <div className="bg-slate-900/5 backdrop-blur-sm border border-slate-900/5 p-8 rounded-[2.5rem] mb-10">
-                  <p className="text-sm font-bold text-slate-700 leading-relaxed italic">
-                    "{activeModule?.about || activeModule?.description || prepData?.focus}"
-                  </p>
+              {activeModule && isElectiveSemester && allElectiveChoices.length > 0 && (
+                <div className="p-10 bg-indigo-50/50 border border-indigo-100 rounded-[2.5rem] space-y-8 shadow-inner overflow-hidden relative">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-10">
+                    <div>
+                      <h4 className="text-lg font-black text-indigo-950 serif flex items-center gap-3 mb-1">
+                        <Sparkles className="w-5 h-5 text-indigo-500" />
+                        Tilpas Valgmodul
+                      </h4>
+                      <p className="text-[10px] font-bold text-indigo-600/60 leading-relaxed max-w-md uppercase tracking-wider">
+                        Vælg din specifikke retning for 100% præcis AI-hjælp
+                      </p>
+                    </div>
+                    <div className="relative min-w-[300px]">
+                      <select 
+                        value={currentElective}
+                        onChange={(e) => handleSelectElective(e.target.value)}
+                        className="w-full h-14 pl-6 pr-10 bg-white rounded-2xl border-2 border-indigo-100 outline-none focus:ring-4 focus:ring-indigo-500/10 text-sm font-black text-indigo-950 appearance-none cursor-pointer transition-all hover:border-indigo-300 shadow-sm"
+                      >
+                        <option value="">Vælg din specialisering...</option>
+                        {allElectiveChoices.map((e, idx) => (
+                          <option key={idx} value={e.name}>{e.name}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-300 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {currentElective && (
+                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="p-6 bg-white border border-indigo-100 rounded-2xl shadow-sm">
+                      <p className="text-sm font-medium text-slate-600 italic leading-relaxed">
+                        "{allElectiveChoices.find(e => e.name === currentElective)?.description}"
+                      </p>
+                    </motion.div>
+                  )}
                 </div>
               )}
 
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2 mb-4">Centrale Læringsmål</h4>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {(activeModule?.learningGoals || prepData?.learningGoals || []).map((goal, i) => (
-                    <div key={i} className="flex gap-4 p-6 bg-white/40 border border-white hover:bg-white hover:shadow-lg transition-all rounded-[2rem] group/goal">
-                      <div className="w-7 h-7 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 group-hover/goal:bg-indigo-600 group-hover/goal:text-white transition-all">
-                        {i + 1}
-                      </div>
-                      <p className="text-xs font-bold text-slate-600 leading-snug pt-1">{goal}</p>
-                    </div>
-                  ))}
+              {(effectiveModule?.about || effectiveModule?.description || prepData?.focus) && (
+                <div className="p-10 bg-slate-50 rounded-[2.5rem] border border-slate-100 relative group/about">
+                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 mb-6 flex items-center gap-3">
+                      <div className="w-8 h-1 bg-slate-200 rounded-full" />
+                      Beskrivelse & Fokusområde
+                   </h4>
+                   <p className="text-base font-bold text-slate-900 leading-relaxed italic pr-20">
+                     "{effectiveModule?.about || effectiveModule?.description || prepData?.focus}"
+                   </p>
+                   <Info className="absolute bottom-10 right-10 w-12 h-12 text-slate-950/5 group-hover:text-indigo-600/10 transition-colors" />
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
+            <div className="space-y-8">
+              <div className="flex items-center justify-between px-2">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600/40 ml-2">Centrale Læringsmål</h4>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-indigo-100 to-transparent mx-6"></div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-6">
+                {(effectiveModule?.learningGoals || prepData?.learningGoals || []).map((goal, i) => (
+                  <div key={i} className="flex gap-6 p-8 bg-white/60 border border-white hover:bg-white hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] group/goal relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-2 h-full bg-slate-50 group-hover:bg-indigo-600 transition-all duration-700" />
+                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-[11px] font-black shrink-0 group-hover/goal:bg-indigo-600 group-hover/goal:text-white group-hover/goal:rotate-6 transition-all duration-500 shadow-inner">
+                      {i + 1}
+                    </div>
+                    <p className="text-[11px] font-bold text-slate-600 leading-relaxed pt-2 group-hover:text-slate-900 transition-colors uppercase tracking-tight">{goal}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          {/* AI Results Anchor */}
+          <div ref={resultsRef} className="scroll-mt-24" />
+
           {/* AI Suggestions Section (Concepts & Models) */}
-          {(prepData?.concepts || prepData?.models || aiData) && (
+          {(isGenerating || prepData?.concepts || prepData?.models || aiData) && (
             <div className="grid sm:grid-cols-2 gap-8">
               {/* Concepts & Theory */}
               <div className="space-y-6">
@@ -760,6 +840,15 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
                 </div>
                 
                 <div className="space-y-4">
+                  {isGenerating && !aiData && (
+                    <div className="space-y-6">
+                      <div className="flex flex-col items-center justify-center p-12 bg-indigo-50 border border-indigo-100/50 rounded-[2.5rem] animate-in fade-in zoom-in duration-500">
+                         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+                         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600/60">Analyserer begreber...</p>
+                      </div>
+                      <div className="h-40 bg-slate-100 rounded-[2rem] animate-pulse opacity-50" />
+                    </div>
+                  )}
                   {prepData?.concepts?.map((c, i) => (
                     <div key={`static-c-${i}`} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
                       <div className="absolute top-0 left-0 w-2 h-full bg-indigo-50 group-hover:w-3 transition-all"></div>
@@ -800,6 +889,16 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
                 </div>
 
                 <div className="space-y-4">
+                  {isGenerating && !aiData && (
+                    <div className="space-y-4">
+                      <div className="h-40 bg-slate-100 rounded-[2rem] animate-pulse flex items-center justify-center">
+                         <div className="flex flex-col items-center gap-3">
+                            <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+                            <p className="text-[9px] font-black uppercase text-slate-300">Finder modeller</p>
+                         </div>
+                      </div>
+                    </div>
+                  )}
                   {prepData?.models?.map((m, i) => (
                     <div key={`static-m-${i}`} className="bg-slate-900 p-8 rounded-[2rem] text-white shadow-2xl shadow-slate-200 relative overflow-hidden group active:scale-95 transition-all">
                       <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
@@ -837,7 +936,7 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
           )}
 
           {/* AI Legislation Section */}
-          {aiData && (
+          {(isGenerating || aiData) && (
             <motion.div 
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
@@ -849,7 +948,20 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
               </div>
 
               <div className="grid sm:grid-cols-2 gap-6">
-                {aiData.legislation.map((law, i) => (
+                {isGenerating && !aiData && (
+                  <>
+                    <div className="h-64 bg-slate-50 border border-slate-100 rounded-[2.5rem] animate-pulse flex items-center justify-center">
+                       <div className="flex flex-col items-center gap-4">
+                          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm">
+                             <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Lovgivnings-check...</p>
+                       </div>
+                    </div>
+                    <div className="h-64 bg-slate-50 border border-slate-100 rounded-[2.5rem] animate-pulse opacity-50" />
+                  </>
+                )}
+                {(aiData?.legislation || []).map((law, i) => (
                   <div key={i} className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:border-indigo-100 transition-all duration-500 group">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="w-12 h-12 bg-slate-50 text-slate-900 rounded-2xl flex items-center justify-center shrink-0 border border-slate-100 group-hover:bg-slate-900 group-hover:text-white transition-all">
@@ -861,7 +973,7 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2 mb-6">
-                      {law.paragraphs.map((p, pi) => (
+                      {(law.paragraphs || []).map((p, pi) => (
                         <div key={pi} className="px-4 py-2 bg-indigo-50/50 text-indigo-600 rounded-xl text-[10px] font-black border border-indigo-100/50">
                           {p}
                         </div>
@@ -875,72 +987,79 @@ function EksamenTab({ currentSemester, curriculum }: { currentSemester: string; 
                         {law.relevance}
                       </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Right Column: Exam Tips & Preparation */}
-        <div className="lg:col-span-4 space-y-8">
-          <div className="bg-amber-500 rounded-[3rem] p-10 text-white shadow-2xl shadow-amber-100 relative overflow-hidden group">
-            <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-1000"></div>
-            
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-10">
-                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                  <Trophy className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-black tracking-tight leading-tight uppercase">Eksamens-Guide</h3>
-              </div>
-
-              {activeModule?.examForm && (
-                  <div className="mb-10 p-6 bg-white/15 backdrop-blur-md rounded-[2rem] border border-white/20">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">Officiel Prøveform</p>
-                      <p className="text-sm font-black text-white leading-snug">{activeModule.examForm}</p>
-                  </div>
-              )}
-              
-              <ul className="space-y-8">
-                {(prepData?.examTips || ["Forbered din case grundigt.", "Læs op på de juridiske rammer.", "Øv dig i tværfaglig formidling."]).map((tip, i) => (
-                  <li key={i} className="flex gap-4 group/tip">
-                    <div className="w-6 h-6 rounded-xl bg-white/20 flex items-center justify-center shrink-0 mt-0.5 group-hover/tip:bg-white group-hover/tip:scale-110 transition-all">
-                      <Check className="w-3 h-3 text-white group-hover/tip:text-amber-500" />
                     </div>
-                    <p className="text-xs font-black text-white/90 leading-relaxed pt-0.5">{tip}</p>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-12 p-6 bg-slate-900/40 backdrop-blur-xl rounded-[2rem] border border-white/5">
-                 <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2">
-                   <Lightbulb className="w-4 h-4" /> Pro-tip til studiet
-                 </p>
-                 <p className="text-[11px] text-white/70 font-bold leading-relaxed italic">
-                   "Husk at din eksamen altid handler om at demonstrere din evne til at omsætte teori til praksis. Brug din case aktivt!"
-                 </p>
-              </div>
-            </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
 
-          <Link href="/exam-architect">
-            <div className="bg-slate-900 rounded-[3rem] p-10 text-white group cursor-pointer hover:bg-black transition-all shadow-2xl shadow-slate-300 overflow-hidden relative">
-              <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-600/30 rounded-full blur-3xl group-hover:scale-150 transition-all duration-1000"></div>
-              <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md group-hover:scale-110 transition-transform">
-                  <Zap className="w-8 h-8 text-indigo-400" />
+          {/* Right Column: Exam Assistant & Tools (Column 4) */}
+          <div className="lg:col-span-4 space-y-8">
+          <div className="sticky top-12 space-y-8">
+             <div className="bg-slate-950 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group">
+                <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-600/20 rounded-full blur-[100px] group-hover:scale-150 transition-transform duration-1000" />
+                
+                <div className="relative z-10">
+                   <div className="flex items-center gap-4 mb-10">
+                      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10">
+                         <Trophy className="w-6 h-6 text-indigo-400" />
+                      </div>
+                      <h3 className="text-lg font-black serif tracking-tight">Eksamens-Assistent</h3>
+                   </div>
+
+                   {effectiveModule?.examForm && (
+                      <div className="p-6 bg-white/5 border border-white/5 rounded-2xl mb-8">
+                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-2">Prøveform</p>
+                         <p className="text-sm font-bold text-slate-300 leading-snug">{effectiveModule.examForm}</p>
+                      </div>
+                   )}
+
+                   <div className="space-y-6">
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Dine Strategier</p>
+                      <ul className="space-y-5">
+                         {(prepData?.examTips || ["Forbered din case grundigt.", "Øv dig i tværfaglig formidling.", "Fokusér på metode-valg."]).map((tip, i) => (
+                           <li key={i} className="flex gap-4 group/tip">
+                              <div className="w-6 h-6 rounded-lg bg-indigo-600/20 flex items-center justify-center shrink-0 mt-0.5 group-hover/tip:bg-indigo-600 transition-colors">
+                                 <Check className="w-3 h-3 text-indigo-400 group-hover/tip:text-white" />
+                              </div>
+                              <p className="text-[11px] font-bold text-slate-400 group-hover/tip:text-slate-100 leading-relaxed transition-colors">{tip}</p>
+                           </li>
+                         ))}
+                      </ul>
+                   </div>
+
+                   <div className="mt-10 pt-8 border-t border-white/5">
+                      <div className="flex items-center gap-3 p-4 bg-indigo-600/10 rounded-xl border border-indigo-600/20">
+                         <Lightbulb className="w-5 h-5 text-indigo-400" />
+                         <p className="text-[10px] text-indigo-200 font-bold leading-snug italic">
+                            "Husk at AI kan analysere dine specifikke cases hvis du indsætter dem i Arkitekten."
+                         </p>
+                      </div>
+                   </div>
                 </div>
-                <h4 className="text-lg font-black uppercase tracking-widest mb-3">Eksamens-Arkitekten</h4>
-                <p className="text-xs text-slate-400 font-bold leading-relaxed mb-8 max-w-[200px]">
-                  Tag dine AI-noter videre og byg din komplette opgave-struktur her.
-                </p>
-                <div className="w-full py-4 bg-indigo-600 text-white text-xs font-black rounded-2xl uppercase tracking-widest flex items-center justify-center gap-3 group-hover:bg-indigo-500 transition-all">
-                  Åbn Arkitekten <ChevronRight className="w-4 h-4" />
+             </div>
+
+             {/* Action Tool: Exam Architect */}
+             <Link href="/exam-architect">
+                <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-xl group cursor-pointer hover:border-indigo-600 hover:-translate-y-2 transition-all duration-500 overflow-hidden relative">
+                   <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-50 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                   
+                   <div className="relative z-10 flex flex-col items-center text-center space-y-6">
+                      <div className="w-16 h-16 bg-slate-950 text-white rounded-2xl flex items-center justify-center shadow-2xl group-hover:bg-indigo-600 transition-colors duration-500">
+                         <Zap className="w-8 h-8" />
+                      </div>
+                      <div>
+                         <h4 className="text-lg font-black text-slate-900 tracking-tight">Eksamens-Arkitekten</h4>
+                         <p className="text-xs font-medium text-slate-400 mt-2 px-4">Byg din komplette opgavestruktur med AI-støtte.</p>
+                      </div>
+                      <div className="w-full py-4 bg-slate-50 text-slate-900 text-[10px] font-black rounded-xl uppercase tracking-widest flex items-center justify-center gap-3 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                         Åbn Værktøj <ChevronRight className="w-4 h-4" />
+                      </div>
+                   </div>
                 </div>
-              </div>
-            </div>
-          </Link>
+             </Link>
+          </div>
         </div>
       </div>
     </div>
@@ -978,11 +1097,13 @@ export default function MitSemesterPage() {
   const { user, isUserLoading, userProfile } = useApp();
   const router = useRouter();
   const firestore = useFirestore();
-  const { toast } = useToast();
-
   const [activeTab, setActiveTab] = useState<TabId>('overblik');
+  const [selectedSemesterNum, setSelectedSemesterNum] = useState<number>(getSemNum(userProfile?.semester || '1'));
+  const [selectedModuleIdx, setSelectedModuleIdx] = useState<number>(0);
   const [plans, setPlans] = useState<SavedPlan[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
 
   useEffect(() => {
     if (!isUserLoading && !user) router.replace('/');
@@ -1037,8 +1158,8 @@ export default function MitSemesterPage() {
       return (
         cInst === userInst || 
         nInst === normalizedUserInst || 
-        (normalizedUserInst.length > 3 && (cInst.includes(normalizedUserInst) || nInst.includes(normalizedUserInst))) ||
-        (nInst.length > 3 && normalizedUserInst.includes(nInst))
+        (normalizedUserInst.length > 2 && (cInst.includes(normalizedUserInst) || nInst.includes(normalizedUserInst))) ||
+        (nInst.length > 2 && normalizedUserInst.includes(nInst))
       );
     });
 
@@ -1058,29 +1179,78 @@ export default function MitSemesterPage() {
     return instMatches[0];
   }, [curriculumsRaw, userProfile?.studyStarted, userProfile?.institution]);
 
-  // Active module for current semester
-  const activeModule = useMemo((): CurriculumModule | null => {
-    if (!curriculum || !userProfile?.semester) return null;
-    const semNum = getSemNum(userProfile.semester);
-    const semStr = String(semNum);
-    // Try various matching patterns: id contains the number, name contains it, etc.
-    return curriculum.modules?.find(m => {
-      const id = m.id?.toLowerCase() ?? '';
-      const name = m.name?.toLowerCase() ?? '';
-      return (
-        id.includes(semStr) ||
-        name.includes(semStr) ||
-        id.includes(`s${semStr}`) ||
-        name.includes(`semester ${semStr}`) ||
-        name.includes(`modul ${semStr}`)
-      );
-    }) ?? curriculum.modules?.[semNum - 1] ?? null; // final fallback: index-based
-  }, [curriculum, userProfile?.semester]);
+  const availableSemesters = useMemo(() => {
+    // Standard for professional bachelors (like social worker) is 7 semesters
+    const professionsDegreeStandard = ['socialrådgiver', 'pædagog', 'sygeplejerske', 'lærer'].some(p => 
+        userProfile?.profession?.toLowerCase().includes(p)
+    );
+    const minSems = professionsDegreeStandard ? 7 : 4;
+    
+    const sems = new Set<number>();
+    // Pre-populate with standard range to ensure user isn't 'locked out' of empty semesters
+    for(let i = 1; i <= minSems; i++) sems.add(i);
+
+    if (curriculum?.modules) {
+        curriculum.modules.forEach((m, idx) => {
+            const match = m.id?.match(/[sS]em\s*(\d+)/) || m.name?.match(/[sS]em\s*(\d+)/) || 
+                          m.id?.match(/(\d+)[\.\s]*sem/) || m.name?.match(/(\d+)[\.\s]*sem/) ||
+                          m.id?.match(/^[vV](\d+)/); 
+            if (match) {
+                sems.add(parseInt(match[1]));
+            }
+        });
+    }
+
+    const userSem = getSemNum(userProfile?.semester || '1');
+    sems.add(userSem);
+    
+    return Array.from(sems).sort((a, b) => a - b);
+  }, [curriculum, userProfile?.semester, userProfile?.profession]);
+
+  // Filter modules for the sidebar list based on selected semester
+  const semesterModules = useMemo(() => {
+    if (!curriculum) return [];
+    const semStr = String(selectedSemesterNum);
+    return curriculum.modules.map((m, idx) => ({ ...m, originalIdx: idx })).filter(m => {
+       const id = m.id?.toLowerCase() ?? '';
+       const name = m.name?.toLowerCase() ?? '';
+       return id.includes(semStr) || name.includes(semStr) || id.includes(`s${semStr}`) || 
+              (m.originalIdx >= (selectedSemesterNum - 1) * 2 && m.originalIdx < selectedSemesterNum * 2); // fallback
+    });
+  }, [curriculum, selectedSemesterNum]);
+
+  // Sync selectedModuleIdx when semester changes
+  useEffect(() => {
+    if (semesterModules.length > 0) {
+      const containsActive = semesterModules.find(m => m.originalIdx === selectedModuleIdx);
+      if (!containsActive) {
+        setSelectedModuleIdx(semesterModules[0].originalIdx);
+      }
+    }
+  }, [selectedSemesterNum, semesterModules, selectedModuleIdx]);
+
+  // Find specifically elective-only curricula for this institution/profession
+  const electiveCurriculums = useMemo((): Curriculum[] => {
+    if (!curriculumsRaw) return [];
+    
+    const inst = (userProfile?.institution || '').toLowerCase().trim();
+    return curriculumsRaw.filter((c: any) => {
+        const cInst = (c.institution || '').toLowerCase().trim();
+        const instMatch = cInst.includes(inst) || inst.includes(cInst);
+        return c.type === 'electives' && instMatch;
+    });
+  }, [curriculumsRaw, userProfile?.institution]);
+
+  // Active module — now based on selectedModuleIdx instead of just current semester
+  const activeModule = useMemo(() => {
+    if (!curriculum) return null;
+    return curriculum.modules[selectedModuleIdx] || null;
+  }, [curriculum, selectedModuleIdx]);
 
   if (isUserLoading || !user || userProfile === undefined) return <AuthLoadingScreen />;
 
   const latestPlan = plans[0] ?? null;
-  const semNum = getSemNum(userProfile?.semester ?? '1');
+  const currentSemNum = getSemNum(userProfile?.semester ?? '1');
   const studyStarted = userProfile?.studyStarted || calculateStudyStarted(userProfile?.semester || '1');
   const gradDate = calculateGraduationDate(studyStarted);
 
@@ -1095,170 +1265,122 @@ export default function MitSemesterPage() {
   const milestones = [1,2,3,4,5,6,7];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-2xl border-b border-slate-200/60">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8 h-20 flex items-center gap-6">
-          <Link href="/portal" className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors shrink-0">
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
+    <div className="flex h-screen bg-[#FDFCF8] overflow-hidden selection:bg-indigo-100">
+      {/* ── Fixed Sidebar Navigation ────────────────────────────────────────── */}
+      <aside className="w-80 bg-white/60 backdrop-blur-3xl border-r border-indigo-100 hidden lg:flex flex-col sticky top-0 h-full z-30 transition-all duration-700 overflow-y-auto custom-scrollbar">
+        <div className="p-8 pb-4">
+          <Link href="/portal" className="flex items-center gap-3 group mb-8">
+            <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <ArrowLeft className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-indigo-600 transition-colors">Portal</span>
           </Link>
-          <div>
-            <h1 className="text-lg font-black text-slate-900 leading-none tracking-tight">Mit Semester</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-              {userProfile?.semester ?? '…'} · {userProfile?.profession ?? ''}
-              {curriculum && <span className="text-emerald-500 ml-2">· Studieordning indlæst</span>}
-            </p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            {latestPlan ? (
-              <Link href="/semester-planlaegger">
-                <Button size="sm" variant="outline" className="h-9 rounded-xl border-slate-200 text-xs font-bold hidden sm:flex">
-                  <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Opdater plan
-                </Button>
-              </Link>
-            ) : (
-              <Link href="/semester-planlaegger">
-                <Button size="sm" className="h-9 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black">
-                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Importér Kalender
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
 
-      <main className="max-w-5xl mx-auto px-5 sm:px-8 mt-10 space-y-8">
-
-        {/* ── Profile hero ── */}
-        <div className="grid sm:grid-cols-2 gap-6">
-          {/* Study progress */}
-          <div className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl p-8 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-10 opacity-5"><GraduationCap className="w-40 h-40" /></div>
-            <div className="relative z-10 space-y-5">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Studieforløb</p>
-                <h2 className="text-3xl font-black">{userProfile?.semester || '?. semester'}</h2>
-                <p className="text-slate-400 font-medium mt-1 text-sm">{userProfile?.profession} · {userProfile?.institution}</p>
-              </div>
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  <span>Semesterforløb</span>
-                  <span className="text-indigo-400">{semNum}/7 semestre</span>
-                </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <motion.div className="h-full bg-indigo-500 rounded-full" initial={{ width: 0 }} animate={{ width: `${(semNum / 7) * 100}%` }} transition={{ duration: 1.2, ease: 'easeOut' }} />
-                </div>
-                <div className="flex items-center justify-between">
-                  {milestones.map(m => (
-                    <div key={m} className="flex flex-col items-center gap-1">
-                      <div className={`w-2 h-2 rounded-full transition-colors ${m <= semNum ? 'bg-indigo-400' : 'bg-slate-700'}`} />
-                      {(m === 1 || m === 4 || m === 7) && <span className="text-[7px] font-bold text-slate-600 uppercase">{m === 1 ? 'Start' : m === 4 ? 'Praktik' : 'Afgang'}</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Studiestart</p>
-                  <p className="text-sm font-bold text-slate-300">{new Date(studyStarted).toLocaleDateString('da-DK', { month: 'long', year: 'numeric' })}</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Forventet afgang</p>
-                  <p className="text-sm font-bold text-slate-300">{new Date(gradDate).toLocaleDateString('da-DK', { month: 'long', year: 'numeric' })}</p>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-1 mb-8">
+             <h1 className="text-xl font-black text-indigo-950 serif tracking-tight">Mit Semester</h1>
+             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">Akademisk Kontrolpanel</p>
           </div>
 
-          {/* Current module from studieordning */}
-          {activeModule ? (
-            <div className="bg-blue-600 rounded-3xl p-8 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-10"><Layers className="w-32 h-32" /></div>
-              <div className="relative z-10 space-y-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="px-2.5 py-1 bg-white/20 rounded-lg text-[9px] font-black uppercase tracking-widest">Studieordning</span>
-                    {activeModule.ects && <span className="px-2.5 py-1 bg-white/15 rounded-lg text-[9px] font-black">{activeModule.ects} ECTS</span>}
-                  </div>
-                  <h3 className="text-xl font-black leading-tight">{activeModule.name}</h3>
-                </div>
-                {(activeModule.learningGoals?.length ?? 0) > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-200">Kerne-læringsmål</p>
-                    {activeModule.learningGoals!.slice(0, 3).map((g, i) => (
-                      <div key={i} className="flex items-start gap-2.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-300 shrink-0 mt-0.5" />
-                        <p className="text-xs text-blue-100 font-medium leading-snug">{g}</p>
-                      </div>
+          <div className="space-y-8">
+            {/* Semester Selector */}
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-2">Vælg Semester</h3>
+              <div className="relative group/select">
+                 <select 
+                    value={selectedSemesterNum}
+                    onChange={(e) => setSelectedSemesterNum(Number(e.target.value))}
+                    className="w-full h-12 pl-5 pr-10 bg-slate-50 rounded-2xl border-2 border-transparent outline-none focus:ring-4 focus:ring-indigo-500/10 text-xs font-black text-slate-700 appearance-none cursor-pointer transition-all hover:bg-slate-100 hover:border-slate-200 shadow-sm"
+                 >
+                    {availableSemesters.map(num => (
+                      <option key={num} value={num}>
+                        {num}. Semester {num === getSemNum(userProfile?.semester || '1') ? '(Aktuelt)' : ''}
+                      </option>
                     ))}
-                  </div>
-                )}
-                {activeModule.examForm && (
-                  <div className="pt-3 border-t border-blue-500">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-200 mb-1.5">Prøveform</p>
-                    <p className="text-xs text-blue-100 italic">"{activeModule.examForm}"</p>
-                  </div>
-                )}
-                <button onClick={() => setActiveTab('studieordning')} className="flex items-center gap-1.5 text-[10px] font-black text-blue-200 hover:text-white transition-colors mt-2">
-                  Se alle moduler <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                 </select>
+                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-hover/select:text-indigo-600 transition-colors" />
               </div>
             </div>
-          ) : (
-            <div className="bg-slate-100 rounded-3xl p-8 flex items-center justify-center text-center">
-              <div>
-                <Layers className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm font-bold text-slate-400">Ingen studieordning tilknyttet</p>
-                <p className="text-[10px] text-slate-300 mt-1">Kontakt din administrator</p>
+
+            {/* Nav Group: Tools */}
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-2">Værktøjer</h3>
+              <div className="grid gap-1">
+                {TABS.map(tab => {
+                   const isActive = activeTab === tab.id;
+                   return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex items-center gap-4 p-4 rounded-2xl text-left transition-all ${isActive ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-white/10' : 'bg-slate-50'}`}>
+                        <tab.icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-widest">{tab.label}</span>
+                    </button>
+                   );
+                })}
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatCard icon={CalendarDays} label="Undervisningsuger" value={stats.weeks} color="bg-indigo-50 text-indigo-600" />
-            <StatCard icon={FileText} label="Begivenheder" value={stats.totalEvents} color="bg-slate-100 text-slate-600" />
-            <StatCard icon={Flag} label="Eksaminer" value={stats.exams} sub={`+ ${stats.deadlines} afleveringer`} color="bg-amber-50 text-amber-600" />
-            <StatCard icon={Activity} label="Max Intensitet" value={`${stats.maxIntensity}/10`} color="bg-rose-50 text-rose-600" />
-          </div>
-        )}
-
-        {/* No plan CTA */}
-        {!plansLoading && !latestPlan && (
-          <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-14 text-center">
-            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <CalendarDays className="w-8 h-8 text-indigo-400" />
+            {/* Module List for Selected Semester */}
+            <div className="space-y-4">
+               <div className="flex items-center justify-between ml-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Moduler ({selectedSemesterNum}.)</h3>
+                  <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
+                    <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                  </div>
+               </div>
+               <div className="space-y-2">
+                  {semesterModules.length > 0 ? semesterModules.map((m) => {
+                    const isActive = selectedModuleIdx === m.originalIdx;
+                    return (
+                      <button
+                        key={m.originalIdx}
+                        onClick={() => setSelectedModuleIdx(m.originalIdx)}
+                        className={`w-full text-left p-4 rounded-2xl border transition-all flex flex-col gap-1 group ${isActive ? 'bg-white border-indigo-100 shadow-md ring-1 ring-indigo-50' : 'bg-transparent border-transparent hover:bg-slate-50'}`}
+                      >
+                        <p className={`text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
+                          {m.ects ? `${m.ects} ECTS` : 'Modul'}
+                        </p>
+                        <p className={`text-xs font-black leading-tight ${isActive ? 'text-slate-950' : 'text-slate-500 group-hover:text-slate-900'}`}>{m.name}</p>
+                      </button>
+                    );
+                  }) : (
+                    <p className="text-[10px] text-slate-400 italic ml-2">Ingen moduler fundet</p>
+                  )}
+               </div>
             </div>
-            <h2 className="text-xl font-black text-slate-900 mb-2">Importér din kalender for fuld indsigt</h2>
-            <p className="text-sm text-slate-400 font-medium max-w-sm mx-auto mb-7">
-              Hent dit iCal-link fra TimeEdit — AI'en kombinerer det med din studieordning og laver en komplet analyse.
-            </p>
-            <Link href="/semester-planlaegger">
-              <Button className="h-12 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-xs shadow-lg">
-                <Zap className="w-4 h-4 mr-2" /> Opret Semesterplan
-              </Button>
-            </Link>
           </div>
-        )}
-
-        {/* Tabs */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-1.5 flex gap-1 w-fit mx-auto shadow-sm flex-wrap justify-center">
-          {TABS.map(tab => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${isActive ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
-              >
-                <tab.icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:block">{tab.label}</span>
-              </button>
-            );
-          })}
         </div>
+
+        {/* Sidebar Footer: Institution info */}
+        <div className="mt-auto p-8 border-t border-indigo-50">
+           <div className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+              <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest mb-1">Institution</p>
+              <p className="text-[11px] font-black text-indigo-950 truncate">{userProfile?.institution || 'Portal Medlem'}</p>
+           </div>
+        </div>
+      </aside>
+
+      {/* ── Main Content Area ────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto scroll-smooth relative custom-scrollbar">
+        <div className="max-w-6xl mx-auto p-12 space-y-12">
+          {/* Welcome/Stats Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-4">
+             <div>
+                <h2 className="text-2xl font-black text-slate-950 serif tracking-tight">Velkommen tilbage</h2>
+                <p className="text-[11px] font-medium text-slate-400 mt-1">Dine studier for {userProfile?.profession || 'uddannelsen'} — Semester {userProfile?.semester || '?'}</p>
+             </div>
+             
+             {!latestPlan && (
+               <Link href="/semester-planlaegger">
+                 <Button className="h-14 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-indigo-100">
+                   <Zap className="w-5 h-5 mr-3" /> Generer ugeplan
+                 </Button>
+               </Link>
+             )}
+          </div>
 
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
@@ -1376,12 +1498,19 @@ export default function MitSemesterPage() {
 
             {/* ── EKSAMEN ─── */}
             {activeTab === 'eksamen' && (
-              <EksamenTab currentSemester={userProfile?.semester || '1. semester'} curriculum={curriculum} />
+              <EksamenTab 
+                currentSemester={userProfile?.semester || '1. semester'} 
+                curriculum={curriculum} 
+                electiveCurriculums={electiveCurriculums}
+                selectedModuleIdx={selectedModuleIdx}
+                setSelectedModuleIdx={setSelectedModuleIdx}
+              />
             )}
 
           </motion.div>
         </AnimatePresence>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

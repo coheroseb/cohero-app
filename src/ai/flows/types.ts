@@ -186,6 +186,7 @@ export interface UserProfile {
   createdAt?: any;
   hasSeenFeatureIntro?: boolean;
   learnedConcepts?: string[];
+  selectedElectives?: Record<string, string>;
 }
 
 export interface StudentCardVerification {
@@ -1558,6 +1559,7 @@ export type SuggestExamTopicOutput = z.infer<typeof SuggestExamTopicOutputSchema
 
 export const ModuleExamPrepInputSchema = z.object({
   moduleName: z.string(),
+  description: z.string().optional(),
   learningGoals: z.array(z.string()),
   examForm: z.string().optional(),
   profession: z.string().optional(),

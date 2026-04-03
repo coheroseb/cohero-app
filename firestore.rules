@@ -54,6 +54,10 @@ service cloud.firestore {
       allow read: if true;
     }
 
+    match /curriculums/{curriculumId} {
+      allow read: if isSignedIn();
+    }
+
     match /leaderboard/{userId} {
       allow read: if isSignedIn();
     }
@@ -158,6 +162,10 @@ service cloud.firestore {
     match /teamMembers/{memberId} { allow read: if true; }
     match /highlightedSager/{sagId} { allow read: if isSignedIn(); }
     match /pageViews/{viewId} { allow create: if true; }
+    match /systemErrors/{errorId} {
+      allow create: if true;
+      allow read, delete: if isAdmin();
+    }
     match /stats/{document=**} { 
       allow read: if isSignedIn();
       allow write: if true; 

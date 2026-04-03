@@ -72,7 +72,15 @@ export default function SettingsPage() {
       setUsername(userProfile.username || user?.displayName || '');
       setPhoneNumber(userProfile.phoneNumber || '');
       setSemester(userProfile.semester || '');
-      setInstitution(userProfile.institution || '');
+      
+      const MAPPING: Record<string, string> = {
+        "UCL": "UCL Erhvervsakademi og Professionshøjskole",
+        "Absalon": "Professionshøjskolen Absalon",
+        "UCN": "Professionshøjskolen UCN"
+      };
+      const inst = userProfile.institution || '';
+      setInstitution(MAPPING[inst] || inst);
+
       setProfession(userProfile.profession || '');
       setIsQualified(userProfile.isQualified || false);
 

@@ -23,6 +23,11 @@ const prompt = ai.definePrompt({
     Du er en ekspert i socialrådgiveruddannelsen i Danmark. 
     Din opgave er at hjælpe en studerende med at forberede sig til eksamen i modulet: "{{{moduleName}}}".
     
+    {{#if description}}
+    Beskrivelse af modulet:
+    {{{description}}}
+    {{/if}}
+
     Læringsmål for modulet:
     {{{learningGoals}}}
     
@@ -56,8 +61,8 @@ export const generateModuleExamPrep = ai.defineFlow(
     outputSchema: ModuleExamPrepOutputSchema,
   },
   async (input) => {
-    // Fetch relevant law context based on module name and learning goals
-    const searchQuery = `${input.moduleName} ${input.learningGoals.join(' ')}`;
+    // Fetch relevant law context based on module name, description, and learning goals
+    const searchQuery = `${input.moduleName} ${input.description || ''} ${input.learningGoals.join(' ')}`;
     console.log(`[MODULE-EXAM-PREP] Fetching Lovportal context for: "${searchQuery.substring(0, 50)}..."`);
     
     const lawContext = await getRelevantLawContext(searchQuery);

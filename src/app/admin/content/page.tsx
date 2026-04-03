@@ -502,6 +502,7 @@ const CurriculumManager = () => {
     const [profession, setProfession] = useState('');
     const [validFromDate, setValidFromDate] = useState(new Date().toISOString().split('T')[0]);
     const [validToDate, setValidToDate] = useState('');
+    const [curriculumType, setCurriculumType] = useState<'standard' | 'electives'>('standard');
     const [curriculums, setCurriculums] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [processingStatus, setProcessingStatus] = useState('');
@@ -531,7 +532,8 @@ const CurriculumManager = () => {
                 const result = await processStudyRegulationAction({
                     pdfBase64: base64,
                     institution: institution,
-                    profession: profession
+                    profession: profession,
+                    isElectivesOnly: curriculumType === 'electives'
                 });
 
                 if (result) {
@@ -541,13 +543,15 @@ const CurriculumManager = () => {
                         institution: result.institution,
                         profession: profession,
                         title: result.title,
-                        validFrom: validFromDate,
+                        validFrom: result.validFrom || validFromDate,
                         validTo: validToDate || null,
+                        type: curriculumType,
                         updatedAt: serverTimestamp(),
                         modules: result.modules
                     });
                     
-                    toast({ title: "Studieordning indlæst!", description: `${result.modules.length} moduler identificeret for ${profession}` });
+                    const finalDate = result.validFrom || validFromDate;
+                    toast({ title: "Studieordning indlæst!", description: `${result.modules.length} moduler identificeret. Gælder fra: ${finalDate}` });
                     setProcessingStatus('');
                     setIsProcessing(false);
                 } else {
@@ -597,6 +601,33 @@ const CurriculumManager = () => {
                    <h3 className="text-xl font-bold text-amber-950 serif flex items-center gap-3"><Building className="w-5 h-5 text-indigo-500"/>Studieordnings-AI</h3>
                    <p className="text-xs text-slate-400 mt-1">Upload PDF-studieordninger for at lade AI analysere semester-fokus.</p>
                 </div>
+            </div>
+
+            <div className="flex gap-4 mb-6">
+                <button 
+                    onClick={() => setCurriculumType('standard')}
+                    className={`flex-1 p-6 rounded-[2rem] border-2 transition-all flex items-center gap-4 ${curriculumType === 'standard' ? 'border-indigo-600 bg-indigo-50/50 shadow-lg shadow-indigo-100' : 'border-slate-100 bg-white hover:border-slate-200 opacity-60'}`}
+                >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${curriculumType === 'standard' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                        <Calendar className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                        <p className={`text-sm font-black ${curriculumType === 'standard' ? 'text-indigo-950' : 'text-slate-500'}`}>Standard Forløb</p>
+                        <p className="text-[10px] font-medium text-slate-400">Normal semester-struktur (1-7)</p>
+                    </div>
+                </button>
+                <button 
+                    onClick={() => setCurriculumType('electives')}
+                    className={`flex-1 p-6 rounded-[2rem] border-2 transition-all flex items-center gap-4 ${curriculumType === 'electives' ? 'border-amber-600 bg-amber-50/50 shadow-lg shadow-amber-100' : 'border-slate-100 bg-white hover:border-slate-200 opacity-60'}`}
+                >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${curriculumType === 'electives' ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                        <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                        <p className={`text-sm font-black ${curriculumType === 'electives' ? 'text-amber-950' : 'text-slate-500'}`}>Valgmodul-oversigt</p>
+                        <p className="text-[10px] font-medium text-slate-400">Kun beskrivelser af valgmoduler</p>
+                    </div>
+                </button>
             </div>
 
             <div className="grid lg:grid-cols-5 gap-6 mb-10 items-end">
@@ -691,6 +722,12 @@ const CurriculumManager = () => {
                                     {curr.validFrom} {curr.validTo ? `→ ${curr.validTo}` : '→ nu'}
                                 </span>
                                 <span className="text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md border border-indigo-100">{curr.profession}</span>
+                                {curr.type === 'electives' && (
+                                    <span className="text-[10px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 px-2 py-1 rounded-md border border-amber-200 flex items-center gap-1.5 animation-pulse">
+                                        <Sparkles className="w-3 h-3" />
+                                        Valgmoduler
+                                    </span>
+                                )}
                                 <h4 className="font-bold text-slate-900 ml-1">{curr.institution}</h4>
                             </div>
                             <p className="text-xs font-medium text-slate-500">{curr.title}</p>
@@ -764,6 +801,46 @@ const CurriculumManager = () => {
                                             <div className="mt-auto pt-4 flex gap-1.5 flex-wrap">
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Identificeret modul</span>
                                             </div>
+
+                                            {/* Electives Section */}
+                                            <div className="mt-4 pt-4 border-t border-slate-200">
+                                                <h5 className="text-[10px] font-black uppercase text-slate-400 mb-3 flex items-center gap-2">
+                                                    <Sparkles className="w-3 h-3 text-amber-500" /> Valgmoduler (Electives)
+                                                </h5>
+                                                <div className="space-y-3 mb-4">
+                                                    {m.electives?.map((e: any, eIdx: number) => (
+                                                        <div key={eIdx} className="p-4 bg-white border border-amber-100 rounded-2xl relative group/e">
+                                                            <p className="text-xs font-black text-slate-900">{e.name}</p>
+                                                            <p className="text-[10px] text-slate-500 mt-1">{e.description}</p>
+                                                            <button 
+                                                                onClick={async (ev) => {
+                                                                    ev.preventDefault();
+                                                                    ev.stopPropagation();
+                                                                    if (!window.confirm('Slet dette valgmodul?')) return;
+                                                                    const updatedModules = [...selectedCurriculum.modules];
+                                                                    updatedModules[idx].electives = updatedModules[idx].electives.filter((_: any, i: number) => i !== eIdx);
+                                                                    await updateDoc(doc(firestore!, 'curriculums', selectedCurriculum.id), { modules: updatedModules });
+                                                                    toast({ title: "Valgmodul slettet" });
+                                                                    setSelectedCurriculum({ ...selectedCurriculum, modules: updatedModules });
+                                                                }}
+                                                                className="absolute top-2 right-2 p-1.5 text-slate-300 hover:text-rose-600 transition-all opacity-0 group-hover/e:opacity-100"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <AddElectiveForm 
+                                                    onAdd={async (e) => {
+                                                        const updatedModules = [...selectedCurriculum.modules];
+                                                        if (!updatedModules[idx].electives) updatedModules[idx].electives = [];
+                                                        updatedModules[idx].electives.push(e);
+                                                        await updateDoc(doc(firestore!, 'curriculums', selectedCurriculum.id), { modules: updatedModules });
+                                                        toast({ title: "Valgmodul tilføjet" });
+                                                        setSelectedCurriculum({ ...selectedCurriculum, modules: updatedModules });
+                                                    }} 
+                                                />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -780,6 +857,48 @@ const CurriculumManager = () => {
                 )}
             </AnimatePresence>
         </section>
+    );
+};
+
+const AddElectiveForm = ({ onAdd }: { onAdd: (e: { name: string, description: string }) => Promise<void> }) => {
+    const [isAdding, setIsAdding] = useState(false);
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    if (!isAdding) return (
+        <Button variant="ghost" size="sm" onClick={() => setIsAdding(true)} className="text-[10px] font-black uppercase h-8 px-4 border border-dashed border-slate-200">
+            <Plus className="w-3 h-3 mr-1.5" /> Tilføj Valgmodul
+        </Button>
+    );
+
+    return (
+        <div className="bg-white p-4 rounded-2xl border border-amber-200 space-y-4 shadow-xl">
+            <div className="space-y-2">
+                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Navn på valgmodul</label>
+                <Input placeholder="F.eks. Socialret i praksis" value={name} onChange={e => setName(e.target.value)} className="h-9 text-xs" />
+            </div>
+            <div className="space-y-2">
+                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Beskrivelse</label>
+                <textarea 
+                    placeholder="Kort beskrivelse..." 
+                    value={description} 
+                    onChange={e => setDescription(e.target.value)} 
+                    className="w-full h-20 p-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                />
+            </div>
+            <div className="flex gap-2">
+                <Button size="sm" variant="ghost" onClick={() => setIsAdding(false)} className="flex-1 text-xs">Annuller</Button>
+                <Button size="sm" disabled={isLoading || !name} onClick={async () => {
+                    setIsLoading(true);
+                    await onAdd({ name, description });
+                    setName('');
+                    setDescription('');
+                    setIsAdding(false);
+                    setIsLoading(false);
+                }} className="flex-1 text-xs">Gem</Button>
+            </div>
+        </div>
     );
 };
 

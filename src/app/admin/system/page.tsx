@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit, DocumentData, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
-import { Database, Loader2, AlertCircle, Trash2, CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, Sparkles, Palette, Layout, Gift, Bird, Ghost, Snowflake } from 'lucide-react';
+import { collection, query, orderBy, limit, DocumentData, deleteDoc, doc, getDoc, setDoc, getDocs, writeBatch, where } from 'firebase/firestore';
+import { Database, Loader2, AlertCircle, Trash2, CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, Sparkles, Palette, Layout, Gift, Bird, Ghost, Snowflake, RefreshCw, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PageView extends DocumentData {
@@ -43,6 +43,9 @@ const AdminSystemPage = () => {
     // Theme States
     const [activeTheme, setActiveTheme] = useState<string>('default');
     const [isSavingTheme, setIsSavingTheme] = useState(false);
+
+    // Migration State
+    const [isMigrating, setIsMigrating] = useState(false);
 
     const pageViewsQuery = useMemoFirebase(
         () => firestore ? query(collection(firestore, 'pageViews'), orderBy('timestamp', 'desc'), limit(200)) : null,
@@ -148,6 +151,64 @@ const AdminSystemPage = () => {
         }
     };
 
+    const handleMigrateInstitutions = async () => {
+        if (!firestore) return;
+        if (!confirm('Vil du opdatere alle brugerprofiler med de nye institutionsnavne? (F.eks. fra UCL til UCL Erhvervsakademi...) \n\nDette kan ikke fortrydes.')) return;
+        
+        setIsMigrating(true);
+
+        const MAPPING: Record<string, string> = {
+            "UCL": "UCL Erhvervsakademi og Professionshøjskole",
+            "Absalon": "Professionshøjskolen Absalon",
+            "UCN": "Professionshøjskolen UCN"
+        };
+
+        try {
+            const MAPPING_VALS = Object.keys(MAPPING);
+            
+            // 1. Migrate Users
+            const usersRef = collection(firestore, 'users');
+            const usersSnapshot = await getDocs(query(usersRef, where('institution', 'in', MAPPING_VALS)));
+            
+            let userCount = 0;
+            const userBatch = writeBatch(firestore);
+            usersSnapshot.forEach(doc => {
+                const old = doc.data().institution;
+                if (MAPPING[old]) {
+                    userBatch.update(doc.ref, { institution: MAPPING[old] });
+                    userCount++;
+                }
+            });
+            if (userCount > 0) await userBatch.commit();
+
+            // 2. Migrate Curriculums (Study Regulations)
+            const currRef = collection(firestore, 'curriculums');
+            const currSnapshot = await getDocs(query(currRef, where('institution', 'in', MAPPING_VALS)));
+            
+            let currCount = 0;
+            const currBatch = writeBatch(firestore);
+            currSnapshot.forEach(doc => {
+                const old = doc.data().institution;
+                if (MAPPING[old]) {
+                    currBatch.update(doc.ref, { institution: MAPPING[old] });
+                    currCount++;
+                }
+            });
+            if (currCount > 0) await currBatch.commit();
+
+            if (userCount > 0 || currCount > 0) {
+                alert(`Migrering fuldført!\n\n- ${userCount} brugerprofiler opdateret.\n- ${currCount} studieordninger opdateret.`);
+            } else {
+                alert('Ingen profiler eller studieordninger havde brug for opdatering.');
+            }
+        } catch (error: any) {
+            console.error("Migration error:", error);
+            alert('Fejl under migrering: ' + error.message);
+        } finally {
+            setIsMigrating(false);
+        }
+    };
+
     const updateLimitValue = (tier: string, feature: string, value: string) => {
         const numValue = parseInt(value);
         setLimitsSettings((prev: any) => ({
@@ -170,6 +231,52 @@ const AdminSystemPage = () => {
 
     return (
         <div className="space-y-8 animate-ink">
+            {/* NEW: SYSTEM MAINTENANCE SECTION */}
+            <section className="bg-slate-900 text-white rounded-[3rem] shadow-2xl overflow-hidden relative group">
+                <div className="p-10 border-b border-white/10 relative z-10">
+                    <h3 className="text-xl font-bold serif flex items-center gap-3">
+                        <RefreshCw className={`w-5 h-5 text-amber-400 ${isMigrating ? 'animate-spin' : ''}`}/> Systemvedligehold & Migreringer
+                    </h3>
+                    <p className="text-sm text-white/40 mt-1 italic">Kør tunge database-opgaver og data-oprydning.</p>
+                </div>
+
+                <div className="p-10 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] flex flex-col justify-between group/tool hover:bg-white/10 transition-all duration-500">
+                            <div>
+                                <div className="w-12 h-12 bg-amber-400/20 text-amber-400 rounded-2xl flex items-center justify-center mb-6">
+                                    <Layers className="w-6 h-6" />
+                                </div>
+                                <h4 className="text-lg font-bold mb-2">Opdater Institutioner</h4>
+                                <p className="text-xs text-white/40 leading-relaxed">Opdaterer alle gamle profiler (UCL, Absalon, UCN) til deres nye officielle fulde navne for at matche studieordninger.</p>
+                            </div>
+                            <button 
+                                onClick={handleMigrateInstitutions}
+                                disabled={isMigrating}
+                                className="mt-8 w-full py-4 bg-amber-400 text-amber-950 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-white transition-all shadow-lg shadow-amber-400/10 disabled:opacity-50"
+                            >
+                                {isMigrating ? 'Migrerer...' : 'Kør Migrering'}
+                            </button>
+                        </div>
+
+                        <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] opacity-40 grayscale flex flex-col justify-between">
+                            <div>
+                                <div className="w-12 h-12 bg-blue-400/20 text-blue-400 rounded-2xl flex items-center justify-center mb-6">
+                                    <Database className="w-6 h-6" />
+                                </div>
+                                <h4 className="text-lg font-bold mb-2">Cleanup Orphan Data</h4>
+                                <p className="text-xs text-white/40 leading-relaxed">Rydder op i forældreløse dokumenter i databasen. (Kommer snart)</p>
+                            </div>
+                            <button disabled className="mt-8 w-full py-4 bg-white/10 text-white/20 font-black uppercase tracking-widest text-[10px] rounded-2xl cursor-not-allowed">Deaktiveret</button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Decorative background elements */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-amber-400/5 rounded-full blur-3xl -mr-48 -mt-48 transition-opacity group-hover:opacity-100 opacity-50"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-400/5 rounded-full blur-3xl -ml-48 -mb-48 transition-opacity group-hover:opacity-100 opacity-50"></div>
+            </section>
+
             {/* NEW: USAGE LIMITS SECTION */}
             <section className="bg-white rounded-[3rem] border border-blue-100 shadow-sm overflow-hidden">
                 <div className="p-10 border-b border-blue-50">

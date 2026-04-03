@@ -2,9 +2,9 @@ export const INSTITUTIONS = [
   "Københavns Professionshøjskole",
   "VIA University College",
   "UC SYD",
-  "UCL",
-  "Absalon",
-  "UCN",
+  "UCL Erhvervsakademi og Professionshøjskole",
+  "Professionshøjskolen Absalon",
+  "Professionshøjskolen UCN",
   "Aalborg Universitet",
   "Andet"
 ];
