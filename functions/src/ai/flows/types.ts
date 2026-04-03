@@ -824,6 +824,7 @@ export const QuizDataSchema = z.object({
     options: z.array(z.string()).length(4),
     correctOptionIndex: z.number().min(0).max(3),
     explanation: z.string(),
+    relatedParagraphs: z.array(z.string()).optional().describe('Specifikke paragraffer (§) som er relevante for dette spørgsmål, f.eks. ["§ 23", "§ 114"]'),
   })),
 });
 

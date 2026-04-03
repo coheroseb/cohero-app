@@ -61,6 +61,7 @@ For each question, you MUST:
 4.  The position of the correct answer within the \`options\` array MUST be randomized for each question. Do not always place it at the same index.
 5.  Identify the index (0-3) of the correct answer in \`correctOptionIndex\`.
 6.  Write a brief, pedagogical explanation for why the correct answer is right and, if relevant, why the distractors are wrong.
+7.  Identify which specific paragraphs (§) are most relevant for this question and list them in the \`relatedParagraphs\` array (e.g., ["§ 23", "§ 114"]). This is crucial for providing the student with study recommendations.
 
 All output must be in Danish.
 Your response MUST be a JSON object containing an array of question objects.

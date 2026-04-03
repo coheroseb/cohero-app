@@ -3,6 +3,6 @@
 import React from 'react';
 import { LovPortalViewer } from '@/components/lov-portal/LovPortalViewer';
 
-export default function TrainingPage() {
-  return <LovPortalViewer initialViewMode="training" />;
+export default function SavedParagraphsPage() {
+  return <LovPortalViewer initialViewMode="saved" />;
 }

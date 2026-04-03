@@ -63,7 +63,8 @@ import {
   Eye,
   Briefcase,
   Menu,
-  ChevronUp
+  ChevronUp,
+  BrainCircuit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -1073,7 +1074,7 @@ const DecisionTreeFlow = ({ situation, onCancel }: { situation: any, onCancel: (
 
 // --- MAIN PAGE COMPONENT ---
 
-export function LovPortalViewer() {
+export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' | 'decisions' | 'saved' | 'training' | 'reforms' }) {
   const { user, userProfile, refetchUserProfile, isUserLoading } = useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1086,7 +1087,7 @@ export function LovPortalViewer() {
   const [lawsLoading, setLawsLoading] = useState(true);
   const [docsData, setDocsData] = useState<Record<string, LawContentType>>({});
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
-  const [viewMode, setViewMode] = useState<'laws' | 'decisions' | 'saved' | 'training' | 'reforms'>('laws');
+  const [viewMode, setViewMode] = useState<'laws' | 'decisions' | 'saved' | 'training' | 'reforms'>(initialViewMode || 'laws');
   const [isContextSidebarOpen, setIsContextSidebarOpen] = useState(true);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -1807,7 +1808,7 @@ export function LovPortalViewer() {
   }, [isLoadingDoc, viewMode, activeLawId]);
 
   return (
-    <div className={`min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 selection:text-amber-950 overflow-x-hidden ${(!activeLawId && !activeReferenceId) ? '' : 'lg:h-full lg:overflow-hidden'}`}>
+    <div className={`min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 selection:text-amber-950 overflow-x-hidden lg:h-full lg:overflow-hidden`}>
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
         .serif-premium { font-family: 'Playfair Display', serif; }
@@ -1952,19 +1953,19 @@ export function LovPortalViewer() {
                 <LayoutDashboard className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'laws' && !activeLawId && !activeReferenceId ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Oversigt
             </button>
             <button 
-                onClick={() => setViewMode('saved')} 
+                onClick={() => { setViewMode('saved'); router.push('/lov-portal/gemte'); }} 
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'saved' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
             >
                 <Bookmark className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'saved' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Gemte kilder
             </button>
             <button 
-                onClick={() => setViewMode('training')} 
+                onClick={() => { setViewMode('training'); router.push('/lov-portal/traening'); }} 
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'training' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
             >
                 <TrendingUp className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'training' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Min Træning
             </button>
             <button 
-                onClick={() => setViewMode('reforms')} 
+                onClick={() => { setViewMode('reforms'); router.push('/lov-portal/reformer'); }} 
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'reforms' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
             >
                 <Gavel className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'reforms' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Lov-reformer
@@ -2014,7 +2015,7 @@ export function LovPortalViewer() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main ref={mainScrollRef as any} className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-0 h-full overflow-y-auto">
+      <main ref={mainScrollRef as any} className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-32 h-full overflow-y-auto">
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-0 z-50">
             <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
                 <div className="relative flex-1 group">
@@ -2183,6 +2184,85 @@ export function LovPortalViewer() {
                                         ))}
                                     </div>
                                 </section>
+
+                                {/* PERSONAL RECOMMENDATIONS SECTION */}
+                                {(() => {
+                                    const recommendations: Record<string, { count: number, laws: Set<string> }> = {};
+                                    (quizResults || []).forEach(res => {
+                                        if (!res.results) return;
+                                        res.results.forEach((q: any) => {
+                                            if (!q.isCorrect && q.relatedParagraphs) {
+                                                q.relatedParagraphs.forEach((p: string) => {
+                                                    if (!recommendations[p]) recommendations[p] = { count: 0, laws: new Set() };
+                                                    recommendations[p].count += 1;
+                                                    recommendations[p].laws.add(res.lawTitle);
+                                                });
+                                            }
+                                        });
+                                    });
+
+                                    const sortedRecs = Object.entries(recommendations)
+                                        .sort((a, b) => b[1].count - a[1].count)
+                                        .slice(0, 4);
+
+                                    if (sortedRecs.length === 0) return null;
+
+                                    return (
+                                        <section className="space-y-8">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-xl font-bold text-amber-950 serif flex items-center gap-3">
+                                                    <BrainCircuit className="w-6 h-6 text-indigo-600"/> Personlige Anbefalinger
+                                                </h3>
+                                                <div className="px-4 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
+                                                    AI-Drevet
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {sortedRecs.map(([para, data]) => (
+                                                    <div key={para} className="bg-gradient-to-br from-white to-indigo-50/30 p-8 rounded-[2.5rem] border border-indigo-100 shadow-sm group hover:shadow-xl hover:translate-y-[-4px] transition-all duration-500">
+                                                        <div className="flex justify-between items-start mb-6">
+                                                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-50 group-hover:scale-110 transition-transform">
+                                                                <BookOpen className="w-6 h-6" />
+                                                            </div>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sværhedsgrad</span>
+                                                        </div>
+                                                        <div className="space-y-3">
+                                                            <h4 className="text-2xl font-black text-amber-950 serif">{para}</h4>
+                                                            <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                                                                Du har haft udfordringer med spørgsmål relateret til denne paragraf i <span className="text-indigo-600 font-bold">{Array.from(data.laws).join(', ')}</span>.
+                                                            </p>
+                                                        </div>
+                                                        <div className="mt-8 pt-6 border-t border-indigo-100/50 flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="flex -space-x-2">
+                                                                    {[1, 2, 3].map(i => (
+                                                                        <div key={i} className={`w-2 h-2 rounded-full ${i <= data.count ? 'bg-indigo-500' : 'bg-slate-200'}`} />
+                                                                    ))}
+                                                                </div>
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mangler fordybelse</span>
+                                                            </div>
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                onClick={() => {
+                                                                    const law = (lawsConfigs || []).find(l => data.laws.has(l.name));
+                                                                    if (law) {
+                                                                        router.push(`/lov-portal/view/${law.id}?para=${para.replace('§ ', '')}`);
+                                                                    } else {
+                                                                        setViewMode('laws');
+                                                                    }
+                                                                }}
+                                                                className="text-indigo-600 hover:text-indigo-700 hover:bg-transparent font-black uppercase tracking-widest text-[10px] p-0 h-auto group-hover:translate-x-1 transition-transform"
+                                                            >
+                                                                Læs op nu <ArrowRight className="w-4 h-4 ml-2" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </section>
+                                    );
+                                })()}
+
 
                                 <section className="space-y-8">
                                     <h3 className="text-xl font-bold text-amber-950 serif flex items-center gap-3"><History className="w-6 h-6 text-amber-700"/> Seneste Resultater</h3>

@@ -126,7 +126,8 @@ const LawQuizModal: React.FC<LawQuizModalProps> = ({ isOpen, onClose, lawId, law
         isCorrect,
         chosenIndex: index,
         correctIndex: correctIndex,
-        explanation: currentQuestion.explanation
+        explanation: currentQuestion.explanation,
+        relatedParagraphs: currentQuestion.relatedParagraphs || []
     }]);
   };
 
@@ -137,23 +138,39 @@ const LawQuizModal: React.FC<LawQuizModalProps> = ({ isOpen, onClose, lawId, law
       setIsAnswered(false);
     } else {
       setGameState('results');
+      
+      // Save results to user's training history
       if (user) {
-          const finalTopic = selectedChapterIdx === 'all' 
-            ? lawTitle 
-            : `${lawTitle}: ${chapters[selectedChapterIdx as number].nummer}`;
+          try {
+              const finalTopic = selectedChapterIdx === 'all' 
+                ? lawTitle 
+                : `${lawTitle}: ${chapters[selectedChapterIdx as number].nummer}`;
 
-          await saveQuizResultAction({
-              userId: user.uid,
-              result: {
-                  id: crypto.randomUUID(),
-                  lawId,
-                  lawTitle,
-                  topic: `${finalTopic} (${difficulty === 'easy' ? 'Begynder' : difficulty === 'hard' ? 'Ekspert' : 'Øvet'})`,
-                  score,
-                  totalQuestions: quizData?.questions.length || 5,
-                  results: userResults
+              // Vi sikrer at vi har de nyeste resultatene ved å bruge userResults direkte 
+              // i en async kontekst efter re-render, men for en sikkerheds skyld 
+              // logger vi success/fejl.
+              const response = await saveQuizResultAction({
+                  userId: user.uid,
+                  result: {
+                      id: crypto.randomUUID(),
+                      lawId,
+                      lawTitle,
+                      topic: `${finalTopic} (${difficulty === 'easy' ? 'Begynder' : difficulty === 'hard' ? 'Ekspert' : 'Øvet'})`,
+                      score,
+                      totalQuestions: quizData?.questions.length || 5,
+                      results: userResults
+                  }
+              });
+
+              if (response.success) {
+                  toast({
+                      title: "Fremskridt gemt!",
+                      description: "Dine resultater er nu tilgængelige under 'Min Træning'.",
+                  });
               }
-          });
+          } catch (e) {
+              console.error("Failed to save quiz result:", e);
+          }
       }
     }
   };

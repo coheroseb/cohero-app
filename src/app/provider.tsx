@@ -186,7 +186,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const isUpdatingProfile = React.useRef(false);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
   const isRaadgivning = useMemo(() => pathname?.startsWith('/raadgivning'), [pathname]);
-  const isLovPortalView = useMemo(() => pathname?.startsWith('/lov-portal/view'), [pathname]);
+  const isLovPortal = useMemo(() => pathname?.startsWith('/lov-portal'), [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -536,7 +536,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     <AppContext.Provider
       value={contextValue}
     >
-      <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-all duration-500 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
+      <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-all duration-500 ${pageBackground} ${isNativeApp ? 'native-app' : ''} ${isLovPortal ? 'lg:h-screen lg:overflow-hidden' : ''}`}>
         {showCampaignBanner && <CampaignBanner campaign={campaigns[0]} onDismiss={() => setIsBannerDismissed(true)} />}
         <style dangerouslySetInnerHTML={{ __html: `
             ${effectiveTheme === 'christmas' ? `
@@ -563,7 +563,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           </>
         )}
         <main 
-          className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${isLovPortalView ? 'lg:h-screen lg:overflow-hidden' : ''}`}
+          className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${isLovPortal ? 'lg:overflow-hidden' : ''}`}
           style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && pathname !== '/' ? `calc(${bannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (showCampaignBanner && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${bannerOffset}px` : undefined) }}
         >
             {/* Soft top gradient to blend with navbar when scrolling */}
@@ -581,7 +581,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortalView && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && <Footer />}
         
         {mounted && isNativeApp && user && <MobileTabNavigation userProfile={userProfile} />}
 
