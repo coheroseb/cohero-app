@@ -533,7 +533,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={contextValue}
     >
       <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
-        {mounted && campaigns.length > 0 && userProfile?.membership !== 'Kollega+' && <CampaignBanner campaign={campaigns[0]} />}
+        {mounted && campaigns.length > 0 && !(user && userProfile?.membership === 'Kollega+') && <CampaignBanner campaign={campaigns[0]} />}
         <style dangerouslySetInnerHTML={{ __html: `
             ${effectiveTheme === 'christmas' ? `
                 .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #be123c !important; }
