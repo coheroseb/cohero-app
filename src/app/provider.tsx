@@ -535,7 +535,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={contextValue}
     >
       <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
-        {showCampaignBanner && <CampaignBanner campaign={campaigns[0]} />}
+        {mounted && campaigns.length > 0 && <CampaignBanner campaign={campaigns[0]} />}
         <style dangerouslySetInnerHTML={{ __html: `
             ${effectiveTheme === 'christmas' ? `
                 .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #be123c !important; }
@@ -605,10 +605,8 @@ const CampaignBanner = ({ campaign }: { campaign: any }) => {
     }[campaign.theme as keyof typeof themeStyles || 'default'];
 
     return (
-        <motion.div 
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            className={`fixed top-0 left-0 right-0 z-[1000] p-3 text-center flex items-center justify-center gap-4 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-90`}
+        <div 
+            className={`fixed top-0 left-0 right-0 z-[9999] p-3 text-center flex items-center justify-center gap-4 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-90`}
         >
             <div className="flex items-center gap-3">
                 <div className="hidden sm:flex w-8 h-8 rounded-full bg-white/20 items-center justify-center">
@@ -635,7 +633,7 @@ const CampaignBanner = ({ campaign }: { campaign: any }) => {
             <button onClick={() => setIsVisible(false)} className="absolute right-4 p-1 opacity-60 hover:opacity-100 transition-opacity">
                 <X className="w-4 h-4" />
             </button>
-        </motion.div>
+        </div>
     );
 };
 
