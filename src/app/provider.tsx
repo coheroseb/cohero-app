@@ -609,7 +609,8 @@ const CampaignBanner = ({ campaign, onDismiss }: { campaign: any, onDismiss: () 
         <motion.div 
             initial={{ y: -100 }}
             animate={{ y: 0 }}
-            className={`fixed top-0 left-0 right-0 z-[10000] p-4 md:p-3 transition-all duration-500 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-95 md:bg-opacity-90 overflow-hidden`}
+            className={`fixed top-0 left-0 right-0 z-[10000] p-4 md:p-3 transition-all duration-500 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-95 md:bg-opacity-90 overflow-hidden will-change-transform`}
+            style={{ transform: 'translateZ(0)', WebkitBackdropFilter: 'blur(12px)' }}
         >
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-3 md:gap-8 px-4 relative">
                 {/* Visual Accent */}
@@ -653,17 +654,28 @@ const CampaignBanner = ({ campaign, onDismiss }: { campaign: any, onDismiss: () 
         </motion.div>
     );
 };
-
 const ThemeDecorations = ({ theme }: { theme: string }) => {
     const [isMounted, setIsMounted] = React.useState(false);
+    const [isMobile, setIsMobile] = React.useState(false);
     
     React.useEffect(() => {
         setIsMounted(true);
+        setIsMobile(window.innerWidth < 768);
     }, []);
 
-    if (theme === 'default' || !isMounted) return null;
+    const particleData = React.useMemo(() => {
+        if (!isMounted) return [];
+        const count = isMobile ? 6 : 15;
+        return Array.from({ length: count }).map(() => ({
+            x: Math.random() * 100,
+            scale: Math.random() * 0.5 + 0.5,
+            duration: Math.random() * 10 + 15,
+            delay: Math.random() * 20,
+            xdrift: Math.random() * 20 - 10
+        }));
+    }, [isMounted, isMobile]);
 
-    const particles = Array.from({ length: 15 });
+    if (theme === 'default' || !isMounted) return null;
 
     const getIcon = () => {
         if (theme === 'christmas') return <Snowflake className="text-rose-200 opacity-40 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />;
@@ -695,29 +707,30 @@ const ThemeDecorations = ({ theme }: { theme: string }) => {
             )}
 
             {/* Floating Particles */}
-            {particles.map((_, i) => (
+            {particleData.map((data, i) => (
                 <motion.div
                     key={i}
                     initial={{ 
                         opacity: 0,
-                        x: Math.random() * 100 + "vw",
+                        x: data.x + "vw",
                         y: -100,
-                        scale: Math.random() * 0.5 + 0.5,
+                        scale: data.scale,
                         rotate: 0
                     }}
                     animate={{ 
                         opacity: [0, 1, 1, 0],
-                        y: ["0vh", "110vh"],
-                        x: [(Math.random() * 100) + "vw", (Math.random() * 100) + "vw"],
+                        y: ["-10vh", "110vh"],
+                        x: [data.x + "vw", (data.x + data.xdrift) + "vw"],
                         rotate: [0, 360]
                     }}
                     transition={{ 
-                        duration: Math.random() * 10 + 10,
+                        duration: data.duration,
                         repeat: Infinity,
-                        delay: Math.random() * 20,
+                        delay: data.delay,
                         ease: "linear"
                     }}
-                    className="absolute"
+                    className="absolute will-change-transform"
+                    style={{ transform: 'translateZ(0)' }}
                 >
                     {getIcon()}
                 </motion.div>
