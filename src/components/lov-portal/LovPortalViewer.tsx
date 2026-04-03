@@ -64,7 +64,9 @@ import {
   Briefcase,
   Menu,
   ChevronUp,
-  BrainCircuit
+  BrainCircuit,
+  Pencil,
+  Tag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -500,6 +502,71 @@ function InteractiveParagraphBody({
     </div>
   );
 }
+
+const SAVED_CATEGORIES: Record<string, { label: string, color: string, bg: string, icon: any }> = {
+  'condition': { label: 'Betingelse', color: '#059669', bg: '#ecfdf5', icon: CheckCircle2 },
+  'procedure': { label: 'Procedure', color: '#2563eb', bg: '#eff6ff', icon: Activity },
+  'note': { label: 'Huskeregel', color: '#d97706', bg: '#fffbeb', icon: Zap },
+  'exception': { label: 'Undtagelse', color: '#dc2626', bg: '#fef2f2', icon: AlertTriangle },
+  'important': { label: 'Vigtig', color: '#7c3aed', bg: '#f5f3ff', icon: Sparkles },
+};
+
+function SimpleLawFormatter({ text }: { text: string }) {
+  const regex = /(Stk\.\s\d+\.\s?|Nr\.\s\d+\.\s?|\d+\)\s?|[a-z]\)\s?)/g;
+  const rawParts = (text || '').split(regex);
+  
+  if (rawParts.length <= 1) {
+    return <p className="text-sm font-medium leading-relaxed text-slate-600 italic">"{text}"</p>;
+  }
+
+  const lines: { identifier: string | null; content: string }[] = [];
+  let currentLineIdentifier: string | null = null;
+  let currentLineContent = "";
+
+  rawParts.forEach((part) => {
+      if (regex.test(part)) {
+          if (currentLineIdentifier || currentLineContent.trim()) {
+              lines.push({ identifier: currentLineIdentifier, content: currentLineContent });
+          }
+          currentLineIdentifier = part.trim();
+          currentLineContent = "";
+      } else {
+          currentLineContent += part;
+      }
+  });
+  if (currentLineIdentifier || currentLineContent.trim()) {
+      lines.push({ identifier: currentLineIdentifier, content: currentLineContent });
+  }
+
+  return (
+    <div className="space-y-3 italic text-slate-600">
+      {lines.map((line, i) => {
+          let indentClass = "";
+          if (line.identifier) {
+              if (/^\d+\)/.test(line.identifier) || /^Nr\./.test(line.identifier)) {
+                  indentClass = "pl-4";
+              } else if (/^[a-z]\)/.test(line.identifier)) {
+                  indentClass = "pl-8";
+              }
+          }
+
+          return (
+              <div key={i} className={`flex gap-2 text-sm font-medium leading-relaxed ${indentClass}`}>
+                  {line.identifier && (
+                      <span className="shrink-0 h-fit font-black serif text-[10px] text-amber-900 border-b border-amber-200">
+                          {line.identifier}
+                      </span>
+                  )}
+                  <div className="flex-1">
+                      {line.content.trim()}
+                  </div>
+              </div>
+          );
+      })}
+    </div>
+  );
+}
+
 
 function HighlightText({ text, highlight, userHighlights = [], onRemoveHighlight }: { 
     text: string, 
@@ -1131,6 +1198,10 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   const [showBibliography, setShowBibliography] = useState(false);
   const [bibMetadata, setBibMetadata] = useState<Record<string, LawContentType>>({});
   const [isFetchingBibMetadata, setIsFetchingBibMetadata] = useState(false);
+  const [savedSearchQuery, setSavedSearchQuery] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteValue, setNoteValue] = useState('');
+  const [activeCategoryParaId, setActiveCategoryParaId] = useState<string | null>(null);
 
   // Reform Oracle States
   const [reformQuery, setReformQuery] = useState('');
@@ -1591,6 +1662,29 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
       setIsMovingParaId(null);
   };
 
+  const handleUpdateCategory = async (id: string, category: string | null) => {
+    if (!user || !firestore) return;
+    try {
+      await updateDoc(doc(firestore, 'users', user.uid, 'savedParagraphs', id), { category });
+      toast({ title: "Kategori opdateret" });
+    } catch (err) {
+      console.error("Error updating category:", err);
+      toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke opdatere kategorien." });
+    }
+  };
+
+  const handleUpdateNote = async (id: string, notes: string) => {
+    if (!user || !firestore) return;
+    try {
+      await updateDoc(doc(firestore, 'users', user.uid, 'savedParagraphs', id), { notes });
+      setEditingNoteId(null);
+      toast({ title: "Notat opdateret" });
+    } catch (err) {
+      console.error("Error updating note:", err);
+      toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke gemme notatet." });
+    }
+  };
+
   const handleToggleSave = async (para: any, lawData: LawContentType, lawId: string) => {
     if (!user || !isPremium) return;
     const savedId = `${lawId}-${para.nummer.replace(/[§\s\.]/g, '-')}`;
@@ -1730,14 +1824,33 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   }, [currentDocData, activeParagraphNumber, selectedSubElement, selectedParentStk, selectedParentNr]);
 
   const filteredParagraphsData = useMemo(() => {
-      let list = savedParagraphs || [];
-      if (activeCollectionId !== 'all') list = list.filter(p => p.collectionId === activeCollectionId);
-      if (debouncedSearchQuery.trim()) {
-          const q = debouncedSearchQuery.toLowerCase();
-          list = list.filter(p => p.paragraphNumber.toLowerCase().includes(q) || p.fullText.toLowerCase().includes(q) || p.lawTitle.toLowerCase().includes(q));
-      }
-      return list;
-  }, [savedParagraphs, activeCollectionId, debouncedSearchQuery]);
+    let list = savedParagraphs || [];
+    if (activeCollectionId !== 'all') list = list.filter(p => p.collectionId === activeCollectionId);
+    
+    // Combine both search queries for maximum flexibility
+    const globalQ = debouncedSearchQuery.toLowerCase().trim();
+    const localQ = savedSearchQuery.toLowerCase().trim();
+    
+    if (globalQ || localQ) {
+        list = list.filter(p => {
+            const matchesGlobal = !globalQ || (p.paragraphNumber.toLowerCase().includes(globalQ) || p.fullText.toLowerCase().includes(globalQ) || p.lawTitle.toLowerCase().includes(globalQ) || (p.notes || '').toLowerCase().includes(globalQ));
+            const matchesLocal = !localQ || (p.paragraphNumber.toLowerCase().includes(localQ) || p.fullText.toLowerCase().includes(localQ) || p.lawTitle.toLowerCase().includes(localQ) || (p.notes || '').toLowerCase().includes(localQ));
+            return matchesGlobal && matchesLocal;
+        });
+    }
+    return list;
+  }, [savedParagraphs, activeCollectionId, debouncedSearchQuery, savedSearchQuery]);
+
+  const groupedSavedParagraphs = useMemo(() => {
+    const groups: Record<string, SavedParagraph[]> = {};
+    filteredParagraphsData.forEach(p => {
+      const g = p.lawTitle || 'Ukendt Lov';
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(p);
+    });
+    return groups;
+  }, [filteredParagraphsData]);
+
 
   const filteredDocData = useMemo(() => {
       if (!currentDocData || !debouncedSearchQuery.trim()) return currentDocData;
@@ -2063,7 +2176,7 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
             </div>
         </header>
 
-        <div className={`p-4 md:p-12 mx-auto pt-8 md:pt-12 transition-all duration-700 ease-in-out ${isFocusMode ? 'max-w-4xl pt-24' : (activeLawId || activeReferenceId ? 'max-w-full' : 'max-w-7xl')}`}>
+        <div className={`p-4 md:p-8 lg:p-12 transition-all duration-700 ease-in-out ${isFocusMode ? 'max-w-4xl mx-auto pt-24' : (activeLawId || activeReferenceId || viewMode === 'saved' || viewMode === 'training' ? 'w-full max-w-none pt-12 lg:pt-16' : 'max-w-7xl mx-auto pt-10 lg:pt-16')}`}>
             {isFocusMode && (
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
@@ -2300,7 +2413,7 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
                         )}
                     </motion.div>
                 ) : viewMode === 'saved' ? (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row gap-12">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row gap-8 lg:gap-16 min-w-0">
                         <aside className="w-full lg:w-72 shrink-0 space-y-8">
                             <section className="bg-white p-6 rounded-[2rem] border border-amber-100 shadow-sm">
                                 <div className="flex items-center justify-between mb-6"><h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mine Samlinger</h3><button onClick={() => setIsCreatingCollection(true)} className="p-2 bg-amber-50 text-amber-700 rounded-xl hover:bg-amber-950 hover:text-white transition-all shadow-sm"><FolderPlus className="w-5 h-5" /></button></div>
@@ -2319,34 +2432,229 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
                             </section>
                         </aside>
                         <div className="flex-1 space-y-12">
-                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                                <div><h2 className="text-4xl font-bold text-amber-950 serif tracking-tight">Gemte kilder</h2><p className="text-slate-500 mt-2 font-medium italic">Dine bogmærkede lovtekster.</p></div>
-                                {activeCollectionId !== 'all' && (<Button onClick={() => setShowBibliography(true)} className="rounded-xl bg-amber-950 shadow-xl"><FileStack className="w-4 h-4 mr-2" /> Litteraturliste</Button>)}
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 max-w-3xl xl:max-w-none">
+                                <div>
+                                    <h2 className="text-4xl font-bold text-amber-950 serif tracking-tight">Gemte kilder</h2>
+                                    <p className="text-slate-500 mt-2 font-medium italic">
+                                        {activeCollectionId === 'all' ? 'Dine bogmærkede lovtekster på tværs af alle samlinger.' : `Bogmærker i '${collections?.find(c => c.id === activeCollectionId)?.name}'.`}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="relative group/search">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-amber-950 transition-colors" />
+                                        <Input 
+                                            placeholder="Søg i dine gemte kilder..." 
+                                            value={savedSearchQuery}
+                                            onChange={e => setSavedSearchQuery(e.target.value)}
+                                            className="pl-12 w-64 rounded-xl bg-white/50 border-amber-100 focus:bg-white transition-all shadow-sm"
+                                        />
+                                    </div>
+                                    {activeCollectionId !== 'all' && (
+                                        <Button onClick={() => setShowBibliography(true)} className="rounded-xl bg-amber-950 shadow-xl">
+                                            <FileStack className="w-4 h-4 mr-2" /> Litteraturliste
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
-                            <div className="bg-white rounded-[2rem] border border-amber-100 shadow-xl overflow-hidden">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-slate-50 border-b border-amber-50"><tr><th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400">Kilde</th><th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400">Paragraf</th><th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400">Status</th><th className="px-8 py-5 text-right"></th></tr></thead>
-                                    <tbody className="divide-y divide-amber-50">
-                                        {filteredParagraphsData.map(para => {
-                                            const targetXmlUrl = para.externalUrl ? para.externalUrl + '/xml' : (lawsConfigs || []).find(l => l.id === para.lawId)?.xmlUrl;
-                                            return (
-                                                <tr key={para.id} className="group hover:bg-amber-50/30 transition-colors">
-                                                    <td className="px-8 py-6 font-bold text-amber-950">{para.lawAbbreviation}</td>
-                                                    <td className="px-8 py-6 font-black serif text-amber-900">{para.paragraphNumber}</td>
-                                                    <td className="px-8 py-6"><LiveStatusBadge xmlUrl={targetXmlUrl} /></td>
-                                                    <td className="px-8 py-6 text-right">
-                                                        <div className="flex items-center gap-2 justify-end">
-                                                            <button onClick={() => setIsMovingParaId(para.id)} className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:text-amber-900"><Folders className="w-4 h-4" /></button>
-                                                            <button onClick={(e) => handleUnsave(e, para.id)} className="p-2.5 text-slate-300 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+
+                            {Object.keys(groupedSavedParagraphs).length === 0 ? (
+                                <div className="bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-amber-100 p-20 text-center space-y-4">
+                                    <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-200">
+                                        <Bookmark className="w-10 h-10" />
+                                    </div>
+                                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Ingen gemte kilder fundet.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-16">
+                                    {Object.entries(groupedSavedParagraphs).map(([lawTitle, paras]) => (
+                                        <section key={lawTitle} className="space-y-8">
+                                            <div className="flex items-center gap-6 max-w-3xl xl:max-w-none">
+                                                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-950/60 leading-relaxed max-w-2xl">{lawTitle}</h3>
+                                                <div className="h-px flex-1 bg-gradient-to-r from-amber-100 to-transparent"></div>
+                                                <span className="text-[10px] font-black uppercase text-amber-400 bg-amber-50 px-3 py-1 rounded-full shrink-0">{paras.length}</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                                                {paras.map(para => {
+                                                    const targetXmlUrl = para.externalUrl ? para.externalUrl + '/xml' : (lawsConfigs || []).find(l => l.id === para.lawId)?.xmlUrl;
+                                                    const isEditing = editingNoteId === para.id;
+                                                    
+                                                    return (
+                                                        <div key={para.id} className="bg-white rounded-[2.5rem] border border-amber-100 shadow-sm hover:shadow-2xl transition-all flex flex-col group/para w-full max-w-3xl">
+                                                            <div className="p-8 space-y-6 flex-1">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className={`h-12 px-5 bg-amber-50 text-amber-950 rounded-2xl flex items-center justify-center font-black serif shadow-inner border border-amber-100 min-w-12 w-auto ${para.paragraphNumber.length > 5 ? 'text-xs' : 'text-lg'}`}>
+                                                                            {para.paragraphNumber}
+                                                                        </div>
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <p className="text-[9px] font-black uppercase tracking-widest text-amber-500">{para.lawAbbreviation}</p>
+                                                                            <LiveStatusBadge xmlUrl={targetXmlUrl} />
+                                                                        </div>
+                                                                        
+                                                                        <div className="ml-4 relative">
+                                                                            {para.category ? (
+                                                                                <button 
+                                                                                    onClick={() => setActiveCategoryParaId(activeCategoryParaId === para.id ? null : para.id)} 
+                                                                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full shadow-sm hover:scale-105 transition-all group/cat" 
+                                                                                    style={{ backgroundColor: SAVED_CATEGORIES[para.category]?.bg, color: SAVED_CATEGORIES[para.category]?.color }}
+                                                                                >
+                                                                                    {React.createElement(SAVED_CATEGORIES[para.category]?.icon, { className: "w-3 h-3" })}
+                                                                                    <span className="text-[9px] font-black uppercase tracking-widest">{SAVED_CATEGORIES[para.category]?.label}</span>
+                                                                                </button>
+                                                                            ) : (
+                                                                                <button 
+                                                                                    onClick={() => setActiveCategoryParaId(activeCategoryParaId === para.id ? null : para.id)} 
+                                                                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-dashed border-slate-200 text-slate-400 hover:border-amber-950 hover:text-amber-950 transition-all"
+                                                                                >
+                                                                                    <Tag className="w-3 h-3" />
+                                                                                    <span className="text-[9px] font-black uppercase tracking-widest">Kategorisér</span>
+                                                                                </button>
+                                                                            )}
+
+                                                                            <AnimatePresence>
+                                                                                {activeCategoryParaId === para.id && (
+                                                                                    <>
+                                                                                        <div className="fixed inset-0 z-40" onClick={() => setActiveCategoryParaId(null)} />
+                                                                                        <motion.div 
+                                                                                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                                                            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                                                            className="absolute left-0 bottom-full mb-3 w-48 p-2 bg-white rounded-2xl shadow-2xl border border-amber-50 z-50 overflow-hidden"
+                                                                                        >
+                                                                                            <div className="grid grid-cols-1 gap-1">
+                                                                                                {Object.entries(SAVED_CATEGORIES).map(([key, config]) => (
+                                                                                                    <button 
+                                                                                                        key={key} 
+                                                                                                        onClick={() => { handleUpdateCategory(para.id, key); setActiveCategoryParaId(null); }}
+                                                                                                        className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${para.category === key ? 'bg-amber-50 text-amber-950' : 'hover:bg-slate-50 text-slate-500'}`}
+                                                                                                    >
+                                                                                                        <config.icon className="w-4 h-4" style={{ color: config.color }} />
+                                                                                                        {config.label}
+                                                                                                    </button>
+                                                                                                ))}
+                                                                                                {para.category && (
+                                                                                                    <button 
+                                                                                                        onClick={() => { handleUpdateCategory(para.id, null); setActiveCategoryParaId(null); }}
+                                                                                                        className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-50 transition-all mt-1 pt-3 border-t border-slate-50"
+                                                                                                    >
+                                                                                                        <X className="w-4 h-4" />
+                                                                                                        Fjern kategori
+                                                                                                    </button>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </motion.div>
+                                                                                    </>
+                                                                                )}
+                                                                            </AnimatePresence>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button onClick={() => setIsMovingParaId(para.id)} className="p-2.5 text-slate-300 hover:text-amber-900 hover:bg-amber-50 rounded-xl transition-all"><Folders className="w-4 h-4" /></button>
+                                                                        <button onClick={(e) => handleUnsave(e, para.id)} className="p-2.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <SimpleLawFormatter text={para.fullText} />
+
+                                                                <div className="pt-6 border-t border-amber-50 space-y-4">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
+                                                                            <FileText className="w-3 h-3" /> Dine Notater
+                                                                        </p>
+                                                                        {!isEditing && (
+                                                                            <button onClick={() => { setEditingNoteId(para.id); setNoteValue(para.notes || ''); }} className="text-[9px] font-black uppercase text-amber-600 hover:text-amber-950 flex items-center gap-1 transition-colors">
+                                                                                <Pencil className="w-2.5 h-2.5" /> Rediger
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    {isEditing ? (
+                                                                        <div className="space-y-2">
+                                                                            <textarea 
+                                                                                className="w-full p-4 bg-slate-50 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-amber-950 transition-all min-h-[100px] border-none"
+                                                                                value={noteValue}
+                                                                                onChange={e => setNoteValue(e.target.value)}
+                                                                                placeholder="Skriv dine personlige noter her..."
+                                                                            />
+                                                                            <div className="flex gap-2">
+                                                                                <Button size="sm" className="h-8 rounded-lg px-4" onClick={() => handleUpdateNote(para.id, noteValue)}>Gem</Button>
+                                                                                <Button size="sm" variant="ghost" className="h-8 rounded-lg px-4" onClick={() => setEditingNoteId(null)}>Annuller</Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : para.notes ? (
+                                                                        <p className="text-xs font-bold text-amber-950 leading-relaxed">
+                                                                            {para.notes}
+                                                                        </p>
+                                                                    ) : (
+                                                                        <button onClick={() => { setEditingNoteId(para.id); setNoteValue(''); }} className="w-full py-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-slate-50 hover:text-slate-400 transition-all">
+                                                                            Tilføj note
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => router.push(`/lov-portal/view/${para.lawId}?para=${encodeURIComponent(para.paragraphNumber)}`)}
+                                                                className="w-full py-5 bg-amber-50 text-[10px] font-black uppercase tracking-widest text-amber-900/60 hover:bg-amber-950 hover:text-amber-400 transition-all flex items-center justify-center gap-3 rounded-b-[2.5rem]"
+                                                            >
+                                                                Gå til kilden <ArrowRight className="w-4 h-4" />
+                                                            </button>
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </section>
+                                    ))}
+                                </div>
+                            )}
                         </div>
+                        <AnimatePresence>
+                            {isMovingParaId && (
+                                <motion.div 
+                                    initial={{ opacity: 0 }} 
+                                    animate={{ opacity: 1 }} 
+                                    exit={{ opacity: 0 }}
+                                    className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[100] flex items-center justify-center p-4" 
+                                    onClick={() => setIsMovingParaId(null)}
+                                >
+                                    <motion.div 
+                                        initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+                                        animate={{ scale: 1, opacity: 1, y: 0 }} 
+                                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                        className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl space-y-8" 
+                                        onClick={e => e.stopPropagation()}
+                                    >
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-16 h-16 bg-amber-50 text-amber-950 rounded-3xl flex items-center justify-center shadow-inner border border-amber-100">
+                                                <Folders className="w-8 h-8" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-black text-amber-950 serif-premium">Flyt til samling</h3>
+                                                <p className="text-sm font-medium text-slate-400 italic">Vælg den samling du vil flytte paragraffen til.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {collections?.map(col => (
+                                                <button 
+                                                    key={col.id} 
+                                                    onClick={() => handleMoveToCollection(isMovingParaId, col.id)}
+                                                    className="w-full text-left p-6 rounded-2xl border border-amber-50 hover:bg-amber-50 hover:border-amber-200 transition-all flex items-center justify-between group"
+                                                >
+                                                    <span className="font-bold text-amber-950">{col.name}</span>
+                                                    <ChevronRight className="w-5 h-5 text-slate-200 group-hover:translate-x-1 group-hover:text-amber-950 transition-all" />
+                                                </button>
+                                            ))}
+                                            <button 
+                                                onClick={() => handleMoveToCollection(isMovingParaId, null)}
+                                                className="w-full text-left p-6 rounded-2xl border border-dashed border-slate-100 text-slate-400 hover:bg-slate-50 transition-all flex items-center justify-between group"
+                                            >
+                                                <span className="font-bold">Ingen samling (Alle)</span>
+                                                <ChevronRight className="w-5 h-5 text-slate-200 group-hover:translate-x-1 transition-all" />
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </motion.div>
                 ) : viewMode === 'laws' && !activeLawId && !activeReferenceId ? (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-16 pb-20">

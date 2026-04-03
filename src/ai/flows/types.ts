@@ -59,6 +59,8 @@ export interface SavedParagraph {
   savedAt: { toDate: () => Date };
   externalUrl?: string;
   collectionId?: string;
+  notes?: string;
+  category?: string;
 }
 
 export interface CollectionData {
