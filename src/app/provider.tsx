@@ -99,18 +99,18 @@ const UpgradeBanner = () => {
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.5, type: "spring", stiffness: 200, damping: 20 }}
-            className="fixed bottom-6 md:bottom-10 right-6 md:right-10 z-[120] pointer-events-auto group"
+            className="fixed bottom-28 md:bottom-10 right-6 md:right-10 z-[120] pointer-events-auto group"
         >
             <Link 
                 href="/upgrade" 
-                className="flex flex-row items-center gap-3 bg-white/95 backdrop-blur-xl border border-amber-200/50 shadow-2xl p-2.5 pr-6 rounded-full hover:bg-white hover:border-amber-300 hover:scale-105 transition-all cursor-pointer ring-4 ring-black/5"
+                className="flex flex-row items-center gap-3 bg-white/95 backdrop-blur-xl border border-amber-200/50 shadow-2xl p-2 md:p-2.5 pr-5 md:pr-6 rounded-full hover:bg-white hover:border-amber-300 hover:scale-105 transition-all cursor-pointer ring-4 ring-black/5"
             >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-inner">
-                    <Sparkles className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-inner">
+                    <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-white" />
                 </div>
                 <div className="flex flex-col text-left">
-                    <span className="text-[10px] uppercase tracking-widest text-slate-400 font-black group-hover:text-amber-900 transition-colors">Opgrader Konto</span>
-                    <span className="text-sm font-bold text-slate-800 leading-tight">Lås alt op <span className="text-amber-500">→</span></span>
+                    <span className="text-[9px] md:text-[10px] uppercase tracking-widest text-slate-400 font-black group-hover:text-amber-900 transition-colors">Opgrader Konto</span>
+                    <span className="text-xs md:text-sm font-bold text-slate-800 leading-tight">Lås alt op <span className="text-amber-500">→</span></span>
                 </div>
             </Link>
         </motion.div>
@@ -608,33 +608,47 @@ const CampaignBanner = ({ campaign }: { campaign: any }) => {
         <motion.div 
             initial={{ y: -100 }}
             animate={{ y: 0 }}
-            className={`fixed top-0 left-0 right-0 z-[10000] p-3 text-center flex items-center justify-center gap-4 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-90`}
+            className={`fixed top-0 left-0 right-0 z-[10000] p-4 md:p-3 transition-all duration-500 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-95 md:bg-opacity-90 overflow-hidden`}
         >
-            <div className="flex items-center gap-3">
-                <div className="hidden sm:flex w-8 h-8 rounded-full bg-white/20 items-center justify-center">
-                    {campaign.theme === 'christmas' ? <Gift className="w-4 h-4" /> :
-                     campaign.theme === 'easter' ? <Bird className="w-4 h-4" /> :
-                     campaign.theme === 'halloween' ? <Ghost className="w-4 h-4" /> :
-                     <Megaphone className="w-4 h-4" />}
+            <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-3 md:gap-8 px-4 relative">
+                {/* Visual Accent */}
+                <div className="absolute -left-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl md:block hidden" />
+                
+                <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                    <div className="flex w-8 h-8 rounded-full bg-white/20 items-center justify-center shrink-0">
+                        {campaign.theme === 'christmas' ? <Gift className="w-4 h-4" /> :
+                         campaign.theme === 'easter' ? <Bird className="w-4 h-4" /> :
+                         campaign.theme === 'halloween' ? <Ghost className="w-4 h-4" /> :
+                         <Megaphone className="w-4 h-4" />}
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                        <p className="text-[12px] md:text-[13px] font-black uppercase tracking-widest text-current leading-tight">
+                            {campaign.bannerText} 
+                        </p>
+                        {campaign.discountCode && (
+                            <span className="inline-flex px-3 py-1 bg-white/20 rounded-lg border border-white/30 font-black text-[10px] md:text-xs whitespace-nowrap shadow-inner">
+                               KODE: {campaign.discountCode}
+                            </span>
+                        )}
+                    </div>
                 </div>
-                <p className="text-[13px] font-black uppercase tracking-widest text-current">
-                    {campaign.bannerText} 
-                    {campaign.discountCode && (
-                        <span className="ml-3 px-3 py-1 bg-white/20 rounded-lg border border-white/30 font-black text-xs">
-                           KODE: {campaign.discountCode}
-                        </span>
-                    )}
-                </p>
+
+                <div className="flex items-center gap-4 w-full md:w-auto justify-center">
+                    <Link 
+                        href="/upgrade" 
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 md:px-4 py-2 md:py-1.5 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-black/10 active:scale-95"
+                    >
+                        Spar nu <ArrowRight className="w-3 h-3" />
+                    </Link>
+                </div>
+
+                <button 
+                    onClick={() => setIsVisible(false)} 
+                    className="absolute -top-1 -right-2 md:static md:ml-4 p-2 opacity-60 hover:opacity-100 transition-opacity"
+                >
+                    <X className="w-4 h-4" />
+                </button>
             </div>
-            <Link 
-                href="/upgrade" 
-                className="ml-6 flex items-center gap-2 px-4 py-1.5 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-black/10"
-            >
-                Spar nu <ArrowRight className="w-3 h-3" />
-            </Link>
-            <button onClick={() => setIsVisible(false)} className="absolute right-4 p-1 opacity-60 hover:opacity-100 transition-opacity">
-                <X className="w-4 h-4" />
-            </button>
         </motion.div>
     );
 };
