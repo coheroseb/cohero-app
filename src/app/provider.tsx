@@ -181,6 +181,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [isBannerDismissed, setIsBannerDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const isUpdatingProfile = React.useRef(false);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
@@ -528,7 +529,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return <ComingSoon />;
   }
 
-  const showCampaignBanner = mounted && campaigns.length > 0 && (!user || userProfile?.membership !== 'Kollega+');
+  const showCampaignBanner = mounted && campaigns.length > 0 && (!user || userProfile?.membership !== 'Kollega+') && !isBannerDismissed;
   const bannerOffset = showCampaignBanner ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 96 : 52) : 0;
 
   return (
@@ -536,7 +537,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={contextValue}
     >
       <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-all duration-500 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
-        {showCampaignBanner && <CampaignBanner campaign={campaigns[0]} />}
+        {showCampaignBanner && <CampaignBanner campaign={campaigns[0]} onDismiss={() => setIsBannerDismissed(true)} />}
         <style dangerouslySetInnerHTML={{ __html: `
             ${effectiveTheme === 'christmas' ? `
                 .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #be123c !important; }
@@ -596,11 +597,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const CampaignBanner = ({ campaign }: { campaign: any }) => {
-    const [isVisible, setIsVisible] = useState(true);
-
-    if (!isVisible) return null;
-
+const CampaignBanner = ({ campaign, onDismiss }: { campaign: any, onDismiss: () => void }) => {
     const themeStyles = {
         christmas: 'bg-rose-600 text-white',
         easter: 'bg-emerald-800 text-white shadow-[0_0_20px_rgba(4,120,87,0.4)]',
@@ -647,7 +644,7 @@ const CampaignBanner = ({ campaign }: { campaign: any }) => {
                 </div>
 
                 <button 
-                    onClick={() => setIsVisible(false)} 
+                    onClick={onDismiss} 
                     className="absolute -top-1 -right-2 md:static md:ml-4 p-2 opacity-60 hover:opacity-100 transition-opacity"
                 >
                     <X className="w-4 h-4" />
