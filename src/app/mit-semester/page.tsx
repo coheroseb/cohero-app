@@ -1282,26 +1282,7 @@ export default function MitSemesterPage() {
           </div>
 
           <div className="space-y-8">
-            {/* Semester Selector */}
-            <div className="space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-2">Vælg Semester</h3>
-              <div className="relative group/select">
-                 <select 
-                    value={selectedSemesterNum}
-                    onChange={(e) => setSelectedSemesterNum(Number(e.target.value))}
-                    className="w-full h-12 pl-5 pr-10 bg-slate-50 rounded-2xl border-2 border-transparent outline-none focus:ring-4 focus:ring-indigo-500/10 text-xs font-black text-slate-700 appearance-none cursor-pointer transition-all hover:bg-slate-100 hover:border-slate-200 shadow-sm"
-                 >
-                    {availableSemesters.map(num => (
-                      <option key={num} value={num}>
-                        {num}. Semester {num === getSemNum(userProfile?.semester || '1') ? '(Aktuelt)' : ''}
-                      </option>
-                    ))}
-                 </select>
-                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-hover/select:text-indigo-600 transition-colors" />
-              </div>
-            </div>
-
-            {/* Nav Group: Tools */}
+            {/* Nav Group: Tools - ALWAYS VISIBLE AT TOP */}
             <div className="space-y-4">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-2">Værktøjer</h3>
               <div className="grid gap-1">
@@ -1323,34 +1304,62 @@ export default function MitSemesterPage() {
               </div>
             </div>
 
-            {/* Module List for Selected Semester */}
-            <div className="space-y-4">
-               <div className="flex items-center justify-between ml-2">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Moduler ({selectedSemesterNum}.)</h3>
-                  <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
-                    <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            {/* ONLY VISIBLE UNDER EXAM TAB */}
+            {activeTab === 'eksamen' && (
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                className="space-y-8 pt-4 border-t border-indigo-50/50"
+              >
+                {/* Semester Selector */}
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-2">Vælg Semester</h3>
+                  <div className="relative group/select">
+                     <select 
+                        value={selectedSemesterNum}
+                        onChange={(e) => setSelectedSemesterNum(Number(e.target.value))}
+                        className="w-full h-12 pl-5 pr-10 bg-slate-50 rounded-2xl border-2 border-transparent outline-none focus:ring-4 focus:ring-indigo-500/10 text-xs font-black text-slate-700 appearance-none cursor-pointer transition-all hover:bg-slate-100 hover:border-slate-200 shadow-sm"
+                     >
+                        {availableSemesters.map(num => (
+                          <option key={num} value={num}>
+                            {num}. Semester {num === getSemNum(userProfile?.semester || '1') ? '(Aktuelt)' : ''}
+                          </option>
+                        ))}
+                     </select>
+                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-hover/select:text-indigo-600 transition-colors" />
                   </div>
-               </div>
-               <div className="space-y-2">
-                  {semesterModules.length > 0 ? semesterModules.map((m) => {
-                    const isActive = selectedModuleIdx === m.originalIdx;
-                    return (
-                      <button
-                        key={m.originalIdx}
-                        onClick={() => setSelectedModuleIdx(m.originalIdx)}
-                        className={`w-full text-left p-4 rounded-2xl border transition-all flex flex-col gap-1 group ${isActive ? 'bg-white border-indigo-100 shadow-md ring-1 ring-indigo-50' : 'bg-transparent border-transparent hover:bg-slate-50'}`}
-                      >
-                        <p className={`text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
-                          {m.ects ? `${m.ects} ECTS` : 'Modul'}
-                        </p>
-                        <p className={`text-xs font-black leading-tight ${isActive ? 'text-slate-950' : 'text-slate-500 group-hover:text-slate-900'}`}>{m.name}</p>
-                      </button>
-                    );
-                  }) : (
-                    <p className="text-[10px] text-slate-400 italic ml-2">Ingen moduler fundet</p>
-                  )}
-               </div>
-            </div>
+                </div>
+
+                {/* Module List for Selected Semester */}
+                <div className="space-y-4">
+                   <div className="flex items-center justify-between ml-2">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Moduler ({selectedSemesterNum}.)</h3>
+                      <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
+                        <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                      </div>
+                   </div>
+                   <div className="space-y-2">
+                      {semesterModules.length > 0 ? semesterModules.map((m) => {
+                        const isActive = selectedModuleIdx === m.originalIdx;
+                        return (
+                          <button
+                            key={m.originalIdx}
+                            onClick={() => setSelectedModuleIdx(m.originalIdx)}
+                            className={`w-full text-left p-4 rounded-2xl border transition-all flex flex-col gap-1 group ${isActive ? 'bg-white border-indigo-100 shadow-md ring-1 ring-indigo-50' : 'bg-transparent border-transparent hover:bg-slate-50'}`}
+                          >
+                            <p className={`text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
+                              {m.ects ? `${m.ects} ECTS` : 'Modul'}
+                            </p>
+                            <p className={`text-xs font-black leading-tight ${isActive ? 'text-slate-950' : 'text-slate-500 group-hover:text-slate-900'}`}>{m.name}</p>
+                          </button>
+                        );
+                      }) : (
+                        <p className="text-[10px] text-slate-400 italic ml-2">Ingen moduler fundet</p>
+                      )}
+                   </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
 
