@@ -528,8 +528,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return <ComingSoon />;
   }
 
-  const membership = userProfile?.membership || 'Gratis';
-  const showCampaignBanner = mounted && campaigns.length > 0 && membership !== 'Kollega+';
+  const showCampaignBanner = mounted && campaigns.length > 0 && (!user || (userProfile && userProfile.membership !== 'Kollega+'));
 
   return (
     <AppContext.Provider
