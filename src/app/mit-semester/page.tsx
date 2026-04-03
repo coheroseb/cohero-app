@@ -9,7 +9,7 @@ import {
   Activity, Clock, ChevronDown, GraduationCap, Layers, Loader2, Plus,
   RefreshCw, ArrowRight, Flag, Navigation, CheckCircle, Brain, FileText,
   Zap, Trophy, BarChart3, ListOrdered, CheckCircle2, Hash, Award,
-  BookMarked, Puzzle, Scale, ChevronRight, Book, Lightbulb, Check, Info
+  BookMarked, Puzzle, Scale, ChevronRight, Book, Lightbulb, Check, Info, Star
 } from 'lucide-react';
 import { semesterPrepData, type SemesterPrepData } from '@/lib/semester-data';
 import { useApp } from '@/app/provider';
@@ -252,23 +252,12 @@ function WeeklyCalendar({ plan, activeModule, user, firestore }: { plan: SavedPl
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
-
-      <AnimatePresence>
-        {saveStatus !== 'idle' && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-            <div className={`px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-bold ${saveStatus === 'saving' ? 'bg-white border border-slate-200 text-slate-600' : 'bg-emerald-500 text-white'}`}>
-              {saveStatus === 'saving' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-              {saveStatus === 'saving' ? 'Gemmer noter…' : 'Gemt!'}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+           </AnimatePresence>
+        </div>
+      );
+    })}
+  </div>
+);
 }
 
 // ── Curriculum deep-dive tab ─────────────────────────────────────────────────
@@ -561,13 +550,17 @@ function EksamenTab({
   curriculum, 
   electiveCurriculums,
   selectedModuleIdx,
-  setSelectedModuleIdx
+  setSelectedModuleIdx,
+  selectedSemesterNum,
+  setSelectedSemesterNum
 }: { 
   currentSemester: string; 
   curriculum: Curriculum | null; 
   electiveCurriculums: Curriculum[];
   selectedModuleIdx: number;
   setSelectedModuleIdx: (idx: number) => void;
+  selectedSemesterNum: number;
+  setSelectedSemesterNum: (num: number) => void;
 }) {
   const { user, userProfile, refetchUserProfile } = useApp();
   const firestore = useFirestore();
@@ -575,13 +568,18 @@ function EksamenTab({
   const modules = curriculum?.modules || [];
   const activeModule = modules[selectedModuleIdx] || null;
   
-  // Try to find supplementary prep data based on semester number in module ID/name
-  const matchedSemNum = activeModule ? (parseInt(activeModule.id?.match(/\d+/)?.[0] || activeModule.name?.match(/\d+/)?.[0] || '0')) : (selectedModuleIdx + 1);
-  const prepData = semesterPrepData[matchedSemNum];
-
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [aiData, setAiData] = useState<ModuleExamPrepData | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Use the semester number directly for supplementary prep data lookup
+  const matchedSemNum = selectedSemesterNum;
+  const prepData = semesterPrepData[matchedSemNum];
+
+  // Reset AI data when selector changes (module or semester)
+  useEffect(() => {
+    setAiData(null);
+  }, [selectedModuleIdx, selectedSemesterNum]);
   const { toast } = useToast();
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -693,6 +691,144 @@ function EksamenTab({
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      {/* Unified Academic Selector - THE ONE DROP-DOWN */}
+      <div className={`bg-white/60 backdrop-blur-xl border border-indigo-50 p-8 rounded-[2.5rem] shadow-sm space-y-6 relative transition-all duration-300 ${isDropdownOpen ? 'z-50 ring-2 ring-indigo-500/10' : 'z-20 shadow-none'}`}>
+        <div className="flex items-center justify-between">
+            <h3 className="text-lg font-black text-slate-950 serif tracking-tight">Akademisk Vælger</h3>
+            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-full border border-indigo-100">
+               <Sparkles className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500" />
+               <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Vælg Modul eller Semester</span>
+            </div>
+        </div>
+
+        <div className="relative">
+           <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full h-auto min-h-[4.5rem] py-5 pl-8 pr-16 bg-slate-50/50 rounded-3xl border-2 border-slate-100/50 text-left transition-all hover:bg-white hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 flex flex-col justify-center gap-1 group/btn"
+           >
+              <div className="flex items-center gap-2">
+                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-500">
+                  {activeModule?.id || `Modul ${selectedModuleIdx + 1}`}
+                  {activeModule?.ects && ` — ${activeModule.ects} ECTS`}
+                </p>
+                {(activeModule as any)?.semester && (
+                  <span className="text-[9px] font-black bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200">
+                    {(activeModule as any).semester}. Semester
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-black text-slate-900 leading-tight group-hover/btn:text-indigo-600 transition-colors">
+                {activeModule?.name || 'Vælg fra studieordning'}
+              </p>
+              <ChevronDown className={`absolute right-8 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-indigo-600' : ''}`} />
+           </button>
+
+           <AnimatePresence>
+             {isDropdownOpen && (
+               <>
+                 <div className="fixed inset-0 z-[100]" onClick={() => setIsDropdownOpen(false)} />
+                 <motion.div 
+                   initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                   animate={{ opacity: 1, y: 10, scale: 1 }}
+                   exit={{ opacity: 0, y: 15, scale: 0.98 }}
+                   className="absolute top-full left-0 right-0 z-[101] mt-2 p-3 bg-white rounded-[2.5rem] shadow-2xl border border-indigo-50 overflow-hidden ring-4 ring-indigo-500/5"
+                 >
+                   <div className="max-h-[500px] overflow-y-auto custom-scrollbar p-1 space-y-1">
+                     {modules.map((m, idx) => {
+                       const isSelected = selectedModuleIdx === idx;
+                       return (
+                         <button
+                           key={idx}
+                           onClick={() => {
+                             setSelectedModuleIdx(idx);
+                             const semNum = (m as any).semester || m.id?.match(/\d+/)?.[0];
+                             if (semNum) setSelectedSemesterNum(parseInt(semNum));
+                             setIsDropdownOpen(false);
+                           }}
+                           className={`w-full text-left p-6 rounded-[1.75rem] transition-all flex flex-col gap-2 ${isSelected ? 'bg-indigo-600 text-white shadow-xl translate-x-1' : 'hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 hover:translate-x-1'}`}
+                         >
+                           <div className="flex items-center justify-between">
+                             <span className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? 'text-white/70' : 'text-slate-400'}`}>
+                               {m.id || `Modul ${idx + 1}`} {m.ects && `• ${m.ects} ECTS`}
+                             </span>
+                             {(m as any).semester && (
+                               <span className={`text-[9px] font-black px-2 py-1 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                 {(m as any).semester}. Semester
+                               </span>
+                             )}
+                           </div>
+                           <span className="text-xs font-black leading-snug">{m.name}</span>
+                         </button>
+                       );
+                     })}
+                     {(!curriculum || modules.length === 0) && (
+                       <p className="p-10 text-center text-xs text-slate-400 italic">Ingen moduler fundet i din studieordning</p>
+                     )}
+                   </div>
+                 </motion.div>
+               </>
+             )}
+            </AnimatePresence>
+        </div>
+
+        {/* INTEGRATED ELECTIVE SELECTOR - Only if relevant for this module */}
+        {isElectiveSemester && allElectiveChoices.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="pt-8 border-t border-indigo-50 space-y-6"
+          >
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 border border-amber-100">
+                  <Star className="w-4 h-4 fill-amber-500" />
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none">Tilpas Valgmodul</h4>
+                  <p className="text-[9px] font-bold text-amber-600/60 mt-1">Vælg din specifikke studieretning</p>
+                </div>
+              </div>
+              <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[8px] font-black uppercase tracking-widest rounded-full border border-amber-100">AI Præcision</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+               {allElectiveChoices.map((choice) => {
+                 const isPicked = (currentElective === choice.name);
+                 return (
+                   <button
+                     key={choice.name}
+                     onClick={() => handleSelectElective(choice.name)}
+                     className={`p-5 rounded-2xl border-2 text-left transition-all flex items-center justify-between group relative overflow-hidden ${isPicked ? 'bg-indigo-600 border-indigo-600 shadow-xl shadow-indigo-500/10 text-white' : 'bg-white border-slate-100 hover:border-amber-400 text-slate-600 hover:bg-slate-50'}`}
+                   >
+                     <div className="relative z-10">
+                        <span className="text-xs font-black leading-tight line-clamp-1">{choice.name}</span>
+                        {isPicked && <p className="text-[8px] font-bold text-white/60 mt-0.5">Valgt Specialisering</p>}
+                     </div>
+                     {isPicked ? (
+                       <CheckCircle2 className="w-5 h-5 shrink-0 text-white relative z-10" />
+                     ) : (
+                       <Plus className="w-4 h-4 shrink-0 text-slate-300 group-hover:text-amber-400 transition-colors" />
+                     )}
+                     {isPicked && <div className="absolute top-0 right-0 w-8 h-full bg-white/5 skew-x-12 -mr-4" />}
+                   </button>
+                 );
+               })}
+            </div>
+
+            {currentElective && (
+              <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="p-5 bg-indigo-50/50 border border-indigo-100/50 rounded-2xl">
+                <div className="flex gap-3">
+                  <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] font-bold text-indigo-900/60 leading-relaxed italic">
+                    "{allElectiveChoices.find(e => e.name === currentElective)?.description}"
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </div>
+
       {/* ── Dashboard Status Bar ──────────────────────────────────────────────── */}
       <div className="bg-slate-950 text-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row items-center justify-between gap-10 overflow-hidden relative group">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] -mr-48 -mt-48 group-hover:scale-125 transition-transform duration-1000" />
@@ -734,7 +870,6 @@ function EksamenTab({
           </Button>
         </div>
       </div>
-
       <div className="grid lg:grid-cols-12 gap-12">
         {/* Main Dashboard Content (Column 8) */}
         <div className="lg:col-span-8 space-y-12">
@@ -756,42 +891,6 @@ function EksamenTab({
                 </p>
               </div>
 
-              {activeModule && isElectiveSemester && allElectiveChoices.length > 0 && (
-                <div className="p-10 bg-indigo-50/50 border border-indigo-100 rounded-[2.5rem] space-y-8 shadow-inner overflow-hidden relative">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-10">
-                    <div>
-                      <h4 className="text-lg font-black text-indigo-950 serif flex items-center gap-3 mb-1">
-                        <Sparkles className="w-5 h-5 text-indigo-500" />
-                        Tilpas Valgmodul
-                      </h4>
-                      <p className="text-[10px] font-bold text-indigo-600/60 leading-relaxed max-w-md uppercase tracking-wider">
-                        Vælg din specifikke retning for 100% præcis AI-hjælp
-                      </p>
-                    </div>
-                    <div className="relative min-w-[300px]">
-                      <select 
-                        value={currentElective}
-                        onChange={(e) => handleSelectElective(e.target.value)}
-                        className="w-full h-14 pl-6 pr-10 bg-white rounded-2xl border-2 border-indigo-100 outline-none focus:ring-4 focus:ring-indigo-500/10 text-sm font-black text-indigo-950 appearance-none cursor-pointer transition-all hover:border-indigo-300 shadow-sm"
-                      >
-                        <option value="">Vælg din specialisering...</option>
-                        {allElectiveChoices.map((e, idx) => (
-                          <option key={idx} value={e.name}>{e.name}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-300 pointer-events-none" />
-                    </div>
-                  </div>
-
-                  {currentElective && (
-                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="p-6 bg-white border border-indigo-100 rounded-2xl shadow-sm">
-                      <p className="text-sm font-medium text-slate-600 italic leading-relaxed">
-                        "{allElectiveChoices.find(e => e.name === currentElective)?.description}"
-                      </p>
-                    </motion.div>
-                  )}
-                </div>
-              )}
 
               {(effectiveModule?.about || effectiveModule?.description || prepData?.focus) && (
                 <div className="p-10 bg-slate-50 rounded-[2.5rem] border border-slate-100 relative group/about">
@@ -1141,10 +1240,37 @@ export default function MitSemesterPage() {
 
     // Helper to normalize institution names for better matching
     // Ignores prefixes like 'professionshøjskolen' and 'university college'
-    const normalize = (s: string) => s.toLowerCase()
-      .replace(/professionshøjskolen\s+/g, '')
-      .replace(/university college\s+/g, '')
-      .trim();
+    const normalize = (s: string) => {
+      let res = s.toLowerCase()
+        .replace(/professionshøjskolen\s+/gs, '')
+        .replace(/university college\s+/gs, '')
+        .replace(/erhvervsakademi og professionshøjskole\s+/gs, '')
+        .replace(/professionshøjskole\s+/gs, '')
+        .replace(/\bsjælland\b/g, 'absalon') // Absalon is Sjælland
+        .trim();
+      
+      // Common abbreviations mapping
+      const mapping: Record<string, string> = {
+        'københavns professionshøjskole': 'kp',
+        'københavn': 'kp',
+        'københavns': 'kp',
+        'professionshøjskolen absalon': 'absalon',
+        'lillebælt': 'ucl',
+        'erhvervsakademi lillebælt': 'ucl',
+        'ucl erhvervsakademi og professionshøjskole': 'ucl'
+      };
+      
+      let mapped = mapping[res];
+      if (!mapped) {
+        if (res.includes('lillebælt')) mapped = 'ucl';
+        else if (res.includes('københavn')) mapped = 'kp';
+        else if (res.includes('sjælland')) mapped = 'absalon';
+        else if (res.includes('midtjylland')) mapped = 'via';
+        else if (res.includes('nordjylland')) mapped = 'ucn';
+      }
+      
+      return mapped || res;
+    };
 
     const normalizedUserInst = normalize(userInst);
 
@@ -1154,12 +1280,12 @@ export default function MitSemesterPage() {
       const cInst = cInstRaw.toLowerCase().trim();
       const nInst = normalize(cInst);
       
-      // Try exact, normalized, or substring matches
+      // Try exact, normalized, abbreviation or substring matches
       return (
         cInst === userInst || 
         nInst === normalizedUserInst || 
-        (normalizedUserInst.length > 2 && (cInst.includes(normalizedUserInst) || nInst.includes(normalizedUserInst))) ||
-        (nInst.length > 2 && normalizedUserInst.includes(nInst))
+        (normalizedUserInst.length > 1 && (nInst.includes(normalizedUserInst) || normalizedUserInst.includes(nInst))) ||
+        (nInst.length > 1 && (normalizedUserInst.includes(nInst) || normalizedUserInst === nInst))
       );
     });
 
@@ -1180,42 +1306,61 @@ export default function MitSemesterPage() {
   }, [curriculumsRaw, userProfile?.studyStarted, userProfile?.institution]);
 
   const availableSemesters = useMemo(() => {
-    // Standard for professional bachelors (like social worker) is 7 semesters
-    const professionsDegreeStandard = ['socialrådgiver', 'pædagog', 'sygeplejerske', 'lærer'].some(p => 
-        userProfile?.profession?.toLowerCase().includes(p)
-    );
-    const minSems = professionsDegreeStandard ? 7 : 4;
+    const semsMap = new Map<number, { num: number, title: string }>();
     
-    const sems = new Set<number>();
-    // Pre-populate with standard range to ensure user isn't 'locked out' of empty semesters
-    for(let i = 1; i <= minSems; i++) sems.add(i);
+    // Initial standard list
+    [1, 2, 3, 4, 5, 6, 7].forEach(n => {
+        semsMap.set(n, { num: n, title: semesterPrepData[n]?.title || `${n}. Semester` });
+    });
 
     if (curriculum?.modules) {
-        curriculum.modules.forEach((m, idx) => {
-            const match = m.id?.match(/[sS]em\s*(\d+)/) || m.name?.match(/[sS]em\s*(\d+)/) || 
-                          m.id?.match(/(\d+)[\.\s]*sem/) || m.name?.match(/(\d+)[\.\s]*sem/) ||
-                          m.id?.match(/^[vV](\d+)/); 
-            if (match) {
-                sems.add(parseInt(match[1]));
+        curriculum.modules.forEach((m) => {
+            const semNum = (m as any).semester || (m.id?.match(/[sS]em\s*(\d+)/) || m.name?.match(/[sS]em\s*(\d+)/) || 
+                          m.id?.match(/(\d+)[\.\s]*sem/) || 
+                          m.id?.match(/[sS](\d+)/))?.[1];
+            
+            if (semNum) {
+                const n = parseInt(semNum);
+                // In UCL and other ph's, the modules ARE the semester focus
+                // If it's a "big" module (like the ones in the screenshot), use its name as the semester title
+                const hasFocusKeywords = ['socialt arbejde', 'praksis', 'videnskab'].some(k => m.name?.toLowerCase().includes(k));
+                const isLongName = m.name?.length > 25;
+                const isSemTitleModule = hasFocusKeywords || isLongName || m.id?.endsWith('-s' + n);
+                
+                // If we find a good title, override the generic one
+                if (isSemTitleModule) {
+                    const currentTitle = semsMap.get(n)?.title;
+                    // Only override if the current title is either generic or shorter
+                    if (!currentTitle || currentTitle.includes('Semester') || m.name.length > (currentTitle?.length || 0)) {
+                        semsMap.set(n, { num: n, title: m.name });
+                    }
+                } else if (!semsMap.has(n)) {
+                    semsMap.set(n, { num: n, title: `${n}. Semester` });
+                }
             }
         });
     }
 
     const userSem = getSemNum(userProfile?.semester || '1');
-    sems.add(userSem);
+    if (!semsMap.has(userSem)) semsMap.set(userSem, { num: userSem, title: `${userSem}. Semester` });
     
-    return Array.from(sems).sort((a, b) => a - b);
-  }, [curriculum, userProfile?.semester, userProfile?.profession]);
+    return Array.from(semsMap.values()).sort((a, b) => a.num - b.num);
+  }, [curriculum, userProfile?.semester]);
 
   // Filter modules for the sidebar list based on selected semester
   const semesterModules = useMemo(() => {
     if (!curriculum) return [];
     const semStr = String(selectedSemesterNum);
     return curriculum.modules.map((m, idx) => ({ ...m, originalIdx: idx })).filter(m => {
-       const id = m.id?.toLowerCase() ?? '';
-       const name = m.name?.toLowerCase() ?? '';
-       return id.includes(semStr) || name.includes(semStr) || id.includes(`s${semStr}`) || 
-              (m.originalIdx >= (selectedSemesterNum - 1) * 2 && m.originalIdx < selectedSemesterNum * 2); // fallback
+        // 1. Check direct semester prop
+        if ((m as any).semester === selectedSemesterNum) return true;
+        
+        // 2. Check metadata strings
+        const id = m.id?.toLowerCase() ?? '';
+        const name = m.name?.toLowerCase() ?? '';
+        return id.includes(semStr) || name.includes(semStr) || id.includes(`s${semStr}`) || 
+               id.includes(`sem${semStr}`) ||
+               (m.originalIdx >= (selectedSemesterNum - 1) * 2 && m.originalIdx < selectedSemesterNum * 2); // fallback
     });
   }, [curriculum, selectedSemesterNum]);
 
@@ -1309,54 +1454,12 @@ export default function MitSemesterPage() {
               <motion.div 
                 initial={{ opacity: 0, x: -10 }} 
                 animate={{ opacity: 1, x: 0 }} 
-                className="space-y-8 pt-4 border-t border-indigo-50/50"
+                className="space-y-6 pt-4 border-t border-indigo-50/50"
               >
-                {/* Semester Selector */}
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-2">Vælg Semester</h3>
-                  <div className="relative group/select">
-                     <select 
-                        value={selectedSemesterNum}
-                        onChange={(e) => setSelectedSemesterNum(Number(e.target.value))}
-                        className="w-full h-12 pl-5 pr-10 bg-slate-50 rounded-2xl border-2 border-transparent outline-none focus:ring-4 focus:ring-indigo-500/10 text-xs font-black text-slate-700 appearance-none cursor-pointer transition-all hover:bg-slate-100 hover:border-slate-200 shadow-sm"
-                     >
-                        {availableSemesters.map(num => (
-                          <option key={num} value={num}>
-                            {num}. Semester {num === getSemNum(userProfile?.semester || '1') ? '(Aktuelt)' : ''}
-                          </option>
-                        ))}
-                     </select>
-                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-hover/select:text-indigo-600 transition-colors" />
-                  </div>
-                </div>
-
-                {/* Module List for Selected Semester */}
-                <div className="space-y-4">
-                   <div className="flex items-center justify-between ml-2">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Moduler ({selectedSemesterNum}.)</h3>
-                      <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
-                        <Layers className="w-3.5 h-3.5 text-indigo-400" />
-                      </div>
-                   </div>
-                   <div className="space-y-2">
-                      {semesterModules.length > 0 ? semesterModules.map((m) => {
-                        const isActive = selectedModuleIdx === m.originalIdx;
-                        return (
-                          <button
-                            key={m.originalIdx}
-                            onClick={() => setSelectedModuleIdx(m.originalIdx)}
-                            className={`w-full text-left p-4 rounded-2xl border transition-all flex flex-col gap-1 group ${isActive ? 'bg-white border-indigo-100 shadow-md ring-1 ring-indigo-50' : 'bg-transparent border-transparent hover:bg-slate-50'}`}
-                          >
-                            <p className={`text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
-                              {m.ects ? `${m.ects} ECTS` : 'Modul'}
-                            </p>
-                            <p className={`text-xs font-black leading-tight ${isActive ? 'text-slate-950' : 'text-slate-500 group-hover:text-slate-900'}`}>{m.name}</p>
-                          </button>
-                        );
-                      }) : (
-                        <p className="text-[10px] text-slate-400 italic ml-2">Ingen moduler fundet</p>
-                      )}
-                   </div>
+                <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-50">
+                  <p className="text-[10px] font-black text-indigo-400 italic leading-tight">
+                    Foretage dine valg øverst i analysen.
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -1513,6 +1616,8 @@ export default function MitSemesterPage() {
                 electiveCurriculums={electiveCurriculums}
                 selectedModuleIdx={selectedModuleIdx}
                 setSelectedModuleIdx={setSelectedModuleIdx}
+                selectedSemesterNum={selectedSemesterNum}
+                setSelectedSemesterNum={setSelectedSemesterNum}
               />
             )}
 
