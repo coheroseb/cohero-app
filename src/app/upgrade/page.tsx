@@ -526,7 +526,7 @@ const UpgradePageWrapper = () => {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.push('/');
+            router.push('/auth?mode=signup');
         }
     }, [user, isUserLoading, router]);
 
