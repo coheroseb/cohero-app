@@ -272,6 +272,7 @@ interface NavbarProps {
   onLogout: () => void;
   user: User | null;
   userProfile: DocumentData | null | undefined;
+  topOffset?: number;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -279,6 +280,7 @@ const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   user,
   userProfile,
+  topOffset = 0,
 }) => {
   const { effectiveTheme } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -326,10 +328,14 @@ const Navbar: React.FC<NavbarProps> = ({
     <motion.div 
       initial={false}
       animate={{ opacity: scrolled ? 1 : 0 }}
-      className="fixed top-0 left-0 right-0 h-28 bg-gradient-to-b from-white/60 via-white/10 to-transparent z-[90] pointer-events-none backdrop-blur-[2px]"
+      className="fixed left-0 right-0 h-28 bg-gradient-to-b from-white/60 via-white/10 to-transparent z-[90] pointer-events-none backdrop-blur-[2px]"
+      style={{ top: topOffset }}
     />
 
-    <nav className={`fixed top-0 left-0 right-0 z-[500] transition-all duration-700 ease-in-out px-4 py-4 md:px-8`}>
+    <nav 
+      className={`fixed left-0 right-0 z-[500] transition-all duration-700 ease-in-out px-4 py-4 md:px-8`}
+      style={{ top: topOffset }}
+    >
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

@@ -528,14 +528,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return <ComingSoon />;
   }
 
-  const showCampaignBanner = mounted && campaigns.length > 0 && (!user || (userProfile && userProfile.membership !== 'Kollega+'));
+  const showCampaignBanner = mounted && campaigns.length > 0 && (!user || userProfile?.membership !== 'Kollega+');
+  const bannerOffset = showCampaignBanner ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 96 : 52) : 0;
 
   return (
     <AppContext.Provider
       value={contextValue}
     >
-      <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
-        {mounted && campaigns.length > 0 && userProfile?.membership !== 'Kollega+' && <CampaignBanner campaign={campaigns[0]} />}
+      <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-all duration-500 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
+        {showCampaignBanner && <CampaignBanner campaign={campaigns[0]} />}
         <style dangerouslySetInnerHTML={{ __html: `
             ${effectiveTheme === 'christmas' ? `
                 .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #be123c !important; }
@@ -557,10 +558,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isNavbarHidden && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
-            <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} />
+            <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} topOffset={bannerOffset} />
           </>
         )}
-        <main className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${isLovPortalView ? 'lg:h-screen lg:overflow-hidden' : ''}`}>
+        <main 
+          className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${isLovPortalView ? 'lg:h-screen lg:overflow-hidden' : ''}`}
+          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && pathname !== '/' ? `calc(${bannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (showCampaignBanner && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${bannerOffset}px` : undefined) }}
+        >
             {/* Soft top gradient to blend with navbar when scrolling */}
             {!isNativeApp && !isStandaloneGroups && !isRaadgivning && (
                 <div className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-inherit to-transparent pointer-events-none z-10`} />
