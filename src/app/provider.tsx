@@ -583,7 +583,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         {!isStandaloneGroups && showOnboardingModal && <OnboardingModal onComplete={refetchUserProfile} />}
         {isTeamModalOpen && <TeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />}
         <ErrorLogger user={user} userProfile={userProfile} />
-        {mounted && campaigns.length > 0 && <CampaignBanner campaign={campaigns[0]} />}
+        {mounted && campaigns.length > 0 && userProfile?.membership !== 'Kollega+' && <CampaignBanner campaign={campaigns[0]} />}
         <ThemeDecorations theme={effectiveTheme} />
       </div>
     </AppContext.Provider>
