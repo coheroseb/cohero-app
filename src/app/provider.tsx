@@ -533,6 +533,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={contextValue}
     >
       <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-colors duration-1000 ${pageBackground} ${isNativeApp ? 'native-app' : ''}`}>
+        {mounted && campaigns.length > 0 && userProfile?.membership !== 'Kollega+' && <CampaignBanner campaign={campaigns[0]} />}
         <style dangerouslySetInnerHTML={{ __html: `
             ${effectiveTheme === 'christmas' ? `
                 .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #be123c !important; }
@@ -583,7 +584,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         {!isStandaloneGroups && showOnboardingModal && <OnboardingModal onComplete={refetchUserProfile} />}
         {isTeamModalOpen && <TeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />}
         <ErrorLogger user={user} userProfile={userProfile} />
-        {mounted && campaigns.length > 0 && !(userProfile && userProfile.membership === 'Kollega+') && <CampaignBanner campaign={campaigns[0]} />}
         <ThemeDecorations theme={effectiveTheme} />
       </div>
     </AppContext.Provider>
