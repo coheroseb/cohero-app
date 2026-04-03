@@ -107,7 +107,7 @@ const UserActivityFeed = () => {
 export default function AdminOverviewPage() {
     const { user: currentUser } = useApp();
     const firestore = useFirestore();
-    const usersQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'user')) : null), [firestore]);
+    const usersQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'users')) : null), [firestore]);
     const { data: users, isLoading: isUsersBatchLoading } = useCollection<any>(usersQuery);
 
     const aiUsageRef = useMemoFirebase(() => (firestore ? doc(firestore, 'stats', 'ai_usage') : null), [firestore]);
@@ -120,8 +120,9 @@ export default function AdminOverviewPage() {
             return { totalUsers: 0, premiumUsers: 0, monthlyTokenCost: 0, averageRating: 0, userGrowth: '0', premiumGrowth: '0' };
         }
 
-        const totalUsers = users.length;
-        const premiumUsersList = users.filter(u => u.membership && (u.membership.includes('+') || u.membership === 'Semesterpakken' || u.membership === 'Group Pro'));
+        const nonAdmins = users.filter(u => u.role !== 'admin');
+        const totalUsers = nonAdmins.length;
+        const premiumUsersList = nonAdmins.filter(u => u.membership && (u.membership.includes('+') || u.membership === 'Semesterpakken' || u.membership === 'Group Pro'));
         const premiumUsers = premiumUsersList.length;
 
         const costPerMillionInput = 0.30 * 6.95;
@@ -142,7 +143,7 @@ export default function AdminOverviewPage() {
         const d30 = new Date();
         d30.setDate(d30.getDate() - 30);
 
-        const usersOlderThan30d = users.filter(u => {
+        const usersOlderThan30d = nonAdmins.filter(u => {
             const createdAt = u.createdAt ? (typeof u.createdAt.toDate === 'function' ? u.createdAt.toDate() : new Date(u.createdAt)) : null;
             return createdAt && createdAt < d30;
         }).length;

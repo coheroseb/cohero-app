@@ -190,7 +190,7 @@ const AdminUsersPage = () => {
 
       if (createdAt && createdAt > thirtyDaysAgo) newCount++;
       if (lastActivity && lastActivity > twentyFourHoursAgo) activeCount++;
-      if (mem.includes('+')) premiumCount++;
+      if (mem.includes('+') || mem === 'Semesterpakken' || mem === 'Group Pro') premiumCount++;
     });
 
     return { total: nonAdmins.length, new: newCount, active: activeCount, premium: premiumCount };
