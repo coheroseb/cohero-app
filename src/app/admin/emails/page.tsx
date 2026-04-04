@@ -1,14 +1,15 @@
+
 'use client';
 
 import React, { useState } from 'react';
-import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, addDoc, serverTimestamp, where } from 'firebase/firestore';
-import { Mail, Send, Users, Loader2, CheckCircle, Info, Save, LayoutTemplate, Eye, Edit3, Plus, MousePointerClick, MessageSquareWarning, Trash2, Sparkles, Building2, X } from 'lucide-react';
+import { Mail, Send, Users, Loader2, CheckCircle, Save, LayoutTemplate, Eye, Edit3, Plus, MousePointerClick, MessageSquareWarning, Trash2, Sparkles, Building2, X, ChevronRight, Target, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import { sendBulkEmailAction, draftEmailAction } from '@/app/actions';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // We import ReactQuill to have a nice rich-text editor for emails (it's already in the project)
 import dynamic from 'next/dynamic';
@@ -19,7 +20,7 @@ const ReactQuill = dynamic(
         ReactQuillComponent.displayName = 'ReactQuillComponent';
         return ReactQuillComponent;
     },
-    { ssr: false, loading: () => <div className="h-64 bg-slate-50 flex items-center justify-center rounded-xl animate-pulse font-bold text-slate-400">Loading Editor...</div> }
+    { ssr: false, loading: () => <div className="h-64 bg-slate-50 flex items-center justify-center rounded-[2rem] animate-pulse font-black text-[10px] text-slate-300 uppercase tracking-widest">Indlæser Editor...</div> }
 );
 import 'react-quill/dist/quill.snow.css';
 
@@ -53,10 +54,10 @@ interface EmailCampaign {
   targetGroup: string;
   sentCount: number;
   sentAt: any;
+  adminName?: string;
 }
 
 export default function AdminEmailsPage() {
-    const { userProfile } = useApp();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -90,10 +91,6 @@ export default function AdminEmailsPage() {
 
     const campaignsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'emailCampaigns')) : null), [firestore]);
     const { data: campaigns, isLoading: campaignsLoading } = useCollection<EmailCampaign>(campaignsQuery);
-
-    if (userProfile?.role !== 'admin' && userProfile?.membership !== 'Admin') {
-        return <div className="p-20 text-center font-bold text-rose-600">Adgang nægtet. Kun for administratorer.</div>;
-    }
 
     // -- WRAPPER HTML --
     const wrapEmailHtml = (inner: string, showFooter: boolean) => `
@@ -156,10 +153,7 @@ export default function AdminEmailsPage() {
 
         if (targetGroup === 'institutions') {
             if (!institutions) return;
-            targets = institutions.map(i => ({
-                email: i.E_MAIL,
-                name: i.INST_NAVN || 'Institution'
-            }));
+            targets = institutions.map(i => ({ email: i.E_MAIL, name: i.INST_NAVN || 'Institution' }));
         } else {
             if (!users) return;
             targets = users.filter(u => {
@@ -176,10 +170,7 @@ export default function AdminEmailsPage() {
                 if (targetGroup === 'Kollega') return m === 'Kollega' || m === '';
                 
                 return u.profession?.trim() === targetGroup;
-            }).map(u => ({
-                email: u.email,
-                name: u.username || 'Kollega'
-            }));
+            }).map(u => ({ email: u.email, name: u.username || 'Kollega' }));
         }
 
         if (targets.length === 0) {
@@ -187,7 +178,7 @@ export default function AdminEmailsPage() {
             return;
         }
 
-        if (!confirm(`Er du sikker på at du vil sende denne e-mail til ${targets.length} modtagere?\n(Husk at trække vejret!)`)) return;
+        if (!confirm(`Vil du udsende denne kampagne til ${targets.length} modtagere?`)) return;
 
         setIsSending(true);
         try {
@@ -199,33 +190,22 @@ export default function AdminEmailsPage() {
             });
 
             if (result.success) {
-                // Save to history
                 if (firestore) {
-                    try {
-                        await addDoc(collection(firestore, 'emailCampaigns'), {
-                            subject: subject.trim(),
-                            htmlContent: finalHtmlBytes,
-                            targetGroup: targetGroup,
-                            sentCount: result.sentCount,
-                            sentAt: serverTimestamp(),
-                            adminName: userProfile?.username || 'Admin'
-                        });
-                    } catch (e) {
-                        console.error("Failed to log campaign:", e);
-                    }
+                    await addDoc(collection(firestore, 'emailCampaigns'), {
+                        subject: subject.trim(),
+                        htmlContent: finalHtmlBytes,
+                        targetGroup: targetGroup,
+                        sentCount: result.sentCount,
+                        sentAt: serverTimestamp(),
+                    });
                 }
-
                 setSendStats({ count: result.sentCount, group: targetGroup });
-                setSubject('');
-                setHtmlContent('');
-                setActiveTab('edit');
-                setSelectedEmails([]);
-                toast({ title: "Mails afsendt!", description: `Succes! Afsendt til ${result.sentCount} brugere.` });
+                setSubject(''); setHtmlContent(''); setActiveTab('edit'); setSelectedEmails([]);
+                toast({ title: "Mails afsendt!" });
             } else {
                 throw new Error(result.message);
             }
         } catch (error: any) {
-            console.error("EMAIL ERROR:", error);
             toast({ variant: "destructive", title: "Fejl", description: error.message });
         } finally {
             setIsSending(false);
@@ -241,19 +221,13 @@ export default function AdminEmailsPage() {
                 htmlContent: htmlContent,
                 createdAt: serverTimestamp()
             });
-            toast({ title: "Skabelon gemt", description: `"${templateTitle}" kan nu indlæses fremover.` });
+            toast({ title: "Skabelon gemt" });
             setTemplateTitle('');
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke gemme skabelon." });
+            toast({ variant: "destructive", title: "Fejl" });
         } finally {
             setIsSavingTemplate(false);
         }
-    };
-
-    const loadTemplate = (html: string) => {
-        if (htmlContent.trim() && !confirm("Dette vil overskrive dit nuværende indhold. Fortsæt?")) return;
-        setHtmlContent(html);
-        toast({ title: "Skabelon indlæst", description: "Editor opdateret." });
     };
 
     const handleGenerateDraft = async () => {
@@ -263,369 +237,247 @@ export default function AdminEmailsPage() {
             const res = await draftEmailAction(aiTopic);
             if (res.success && res.data) {
                 setSubject(res.data.subject);
-                if (htmlContent.trim() && !confirm("Dette vil overskrive dit nuværende indhold med AI udkastet. Fortsæt?")) {
-                    setIsGeneratingDraft(false);
-                    return;
-                }
                 setHtmlContent(res.data.htmlBody);
-                setShowAiDraft(false);
-                setAiTopic('');
-                toast({ title: "AI Udkast genereret!", description: "Dit udkast er klar til redigering." });
-            } else {
-                toast({ variant: "destructive", title: "Fejl", description: res.message || "Kunne ikke generere udkast." });
+                setShowAiDraft(false); setAiTopic('');
+                toast({ title: "AI Udkast genereret!" });
             }
-        } catch (error: any) {
-            toast({ variant: "destructive", title: "Fejl", description: "Der opstod en systemfejl." });
         } finally {
             setIsGeneratingDraft(false);
         }
     };
 
-    // -- EDITOR TOOLKIT --
-    const insertButton = () => {
-        const btnHtml = `<br/><div style="text-align: center;"><a href="https://platform.cohero.dk" style="display: inline-block; padding: 14px 32px; background-color: #451a03; color: #ffffff; text-decoration: none; font-weight: bold; border-radius: 12px; margin: 20px 0; font-size: 16px;">Klik Her</a></div><br/>`;
-        setHtmlContent(prev => prev + btnHtml);
-    };
-
-    const insertInfoBox = () => {
-        const boxHtml = `<br/><div style="background-color: #fffbeb; border: 1px solid #fde68a; padding: 24px; border-radius: 16px; margin: 20px 0; color: #92400e;"><strong style="display:block; margin-bottom:8px; font-size:18px; color:#78350f;">💡 Godt at vide</strong><p style="margin:0;">Skriv din infotekst her...</p></div><br/>`;
-        setHtmlContent(prev => prev + boxHtml);
-    };
-
-    const insertDivider = () => {
-        const hrHtml = `<br/><hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" /><br/>`;
-        setHtmlContent(prev => prev + hrHtml);
-    };
-
-    const insertNamePlaceholder = () => {
-        setHtmlContent(prev => prev + ' [Navn] ');
-    };
-
     return (
-        <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-12">
-            <header className="space-y-2">
-                <div className="flex justify-between items-end">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-amber-950 text-amber-400 rounded-2xl flex items-center justify-center shadow-lg">
-                            <Mail className="w-6 h-6" />
-                        </div>
-                        <h1 className="text-3xl font-bold text-amber-950 serif">E-mail Editor (Advanced)</h1>
+        <div className="space-y-12 animate-ink pb-20">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
+                <div>
+                   <h1 className="text-3xl font-black text-slate-900 serif mb-2">Campaign Intelligence</h1>
+                   <p className="text-slate-500 font-medium">Byg, segmentér og udsend professionelle e-mails til platformens kolleger.</p>
+                </div>
+                <div className="flex items-center gap-4 px-5 py-3 bg-emerald-50 border border-emerald-100/60 rounded-2xl">
+                    <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700 leading-none mb-1">Status</p>
+                        <p className="text-xs font-bold text-emerald-900 leading-none">Resend API Online</p>
                     </div>
                 </div>
-                <p className="text-slate-500 font-medium italic">Byg flotte mails, brug skabeloner og udsend sikkert med Resend.</p>
             </header>
 
-            <div className="grid lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 items-start">
                 
-                {/* LEFT: Editor & Preview Area */}
-                <div className="lg:col-span-3 space-y-6">
-                    <div className="bg-white rounded-[2.5rem] border border-amber-100 shadow-xl overflow-hidden flex flex-col min-h-[800px]">
+                {/* Main Editor */}
+                <div className="xl:col-span-8 space-y-8">
+                    <section className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[900px]">
                         
-                        {/* TABS */}
-                        <div className="flex items-center gap-2 p-4 border-b border-slate-100 bg-slate-50">
+                        {/* Tabs Bar */}
+                        <div className="flex items-center gap-1.5 p-6 bg-slate-50/50 border-b border-slate-100">
                             <button 
                                 onClick={() => setActiveTab('edit')}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === 'edit' ? 'bg-amber-950 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'}`}
+                                className={`flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'edit' ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
                             >
-                                <Edit3 className="w-4 h-4" /> Redigér Indhold
+                                <Edit3 className="w-4 h-4" /> Kampagne Editor
                             </button>
                             <button 
                                 onClick={() => setActiveTab('preview')}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === 'preview' ? 'bg-amber-950 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'}`}
+                                className={`flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'preview' ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
                             >
-                                <Eye className="w-4 h-4" /> Live Forhåndsvisning
+                                <Eye className="w-4 h-4" /> Live Preview
                             </button>
                         </div>
 
-                        {/* EDIT TAB */}
-                        {activeTab === 'edit' && (
-                            <form onSubmit={handleSendEmail} className="flex flex-col flex-1 p-8 space-y-8">
-                                <div className="space-y-4">
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Målgruppe</label>
+                        <div className="p-10 flex-1 flex flex-col">
+                            {activeTab === 'edit' ? (
+                                <form onSubmit={handleSendEmail} className="space-y-10 flex-1 flex flex-col">
+                                    {/* Segmentation */}
                                     <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <p className="text-[9px] font-black uppercase text-slate-400 px-1">Betaling / Niveau</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {[
-                                                    { id: 'all', label: 'Alle' },
-                                                    { id: 'premium', label: 'Premium (Samlet)' },
-                                                    { id: 'Kollega', label: 'Kollega' },
-                                                    { id: 'Kollega+', label: 'Kollega+' },
-                                                    { id: 'Kollega++', label: 'Kollega++' },
-                                                    { id: 'Semesterpakken', label: 'Semesterp.' },
-                                                    { id: 'Group Pro', label: 'Group Pro' },
-                                                ].map((group) => (
-                                                    <button
-                                                        key={group.id}
-                                                        type="button"
-                                                        onClick={() => setTargetGroup(group.id as TargetGroup)}
-                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${targetGroup === group.id ? 'bg-amber-950 text-white border-amber-950 shadow-md' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-amber-200'}`}
-                                                    >
-                                                        {group.label} ({getRecipientCount(group.id as TargetGroup)})
-                                                    </button>
-                                                ))}
+                                        <div className="flex items-center justify-between px-1">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Målgruppe & Segmentering</label>
+                                            <div className="flex items-center gap-2 text-indigo-600 px-3 py-1 bg-indigo-50 rounded-lg text-[10px] font-black uppercase">
+                                                <Users className="w-3.5 h-3.5" /> {getRecipientCount(targetGroup)} Modtagere
                                             </div>
                                         </div>
-
-                                        <div className="space-y-2">
-                                            <p className="text-[9px] font-black uppercase text-slate-400 px-1">Faggruppe / Type</p>
+                                        <div className="bg-slate-50/50 p-6 rounded-[2.5rem] border border-slate-100 space-y-6">
                                             <div className="flex flex-wrap gap-2">
-                                                {[
-                                                    { id: 'Socialrådgiver', label: 'Soc.Rådg.' },
-                                                    { id: 'Pædagog', label: 'Pædagog' },
-                                                    { id: 'Lærer', label: 'Lærer' },
-                                                    { id: 'Sygeplejerske', label: 'Sygeplejerske' },
-                                                    { id: 'Andet', label: 'Andet' },
-                                                    { id: 'institutions', label: 'Institutioner' },
-                                                    { id: 'specific', label: 'Vælg Manuelt' }
-                                                ].map((group) => (
+                                                {['all', 'premium', 'Kollega', 'Kollega+', 'Kollega++', 'Semesterpakken', 'institutions', 'specific'].map(g => (
                                                     <button
-                                                        key={group.id}
+                                                        key={g}
                                                         type="button"
-                                                        onClick={() => setTargetGroup(group.id as TargetGroup)}
-                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${targetGroup === group.id ? 'bg-amber-800 text-white border-amber-800 shadow-md' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-amber-200'}`}
+                                                        onClick={() => setTargetGroup(g as TargetGroup)}
+                                                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${targetGroup === g ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-indigo-200'}`}
                                                     >
-                                                        {group.label} ({getRecipientCount(group.id as TargetGroup)})
+                                                        {g === 'all' ? 'Alle' : g === 'premium' ? 'Premium (Samlet)' : g === 'institutions' ? 'Institutioner' : g === 'specific' ? 'Manuelt' : g}
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {targetGroup === 'specific' && (
-                                        <div className="p-4 border border-slate-200 rounded-2xl space-y-3 bg-slate-50 mt-4">
-                                            <Input 
-                                                placeholder="Søg på navn eller e-mail..." 
-                                                value={userSearch}
-                                                onChange={(e) => setUserSearch(e.target.value)}
-                                                className="h-12 bg-white rounded-xl"
-                                            />
-                                            <div className="max-h-56 overflow-y-auto space-y-1 custom-scrollbar">
-                                                {users?.filter(u => u.email && (u.username?.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase())))
-                                                    .slice(0, 100) // Limiting to prevent extreme lag
-                                                    .map(u => (
-                                                    <label key={u.id} className="flex items-center gap-3 p-3 bg-white hover:bg-amber-50 rounded-xl cursor-pointer transition-colors shadow-sm border border-slate-100">
-                                                        <input 
-                                                            type="checkbox" 
-                                                            checked={selectedEmails.includes(u.email)}
-                                                            onChange={(e) => {
-                                                                if (e.target.checked) setSelectedEmails(prev => [...prev, u.email]);
-                                                                else setSelectedEmails(prev => prev.filter(email => email !== u.email));
-                                                            }}
-                                                            className="w-4 h-4 rounded text-amber-900 focus:ring-amber-900"
-                                                        />
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-bold text-slate-700">{u.username || 'Ukendt navn'} {u.membership && <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-md ml-2">{u.membership}</span>}</span>
-                                                            <span className="text-xs text-slate-500">{u.email} • {u.profession || 'Ingen profession'}</span>
-                                                        </div>
-                                                    </label>
-                                                ))}
-                                                {users?.length === 0 && <p className="text-xs text-slate-400 p-2">Ingen brugere at vise.</p>}
+                                    {/* AI Assistant */}
+                                    <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden group">
+                                        <div className="relative z-10 space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <Sparkles className="w-5 h-5 text-amber-400 fill-amber-400" />
+                                                    <h3 className="text-xl font-black text-white serif">Magic Draft</h3>
+                                                </div>
+                                                <button type="button" onClick={() => setShowAiDraft(!showAiDraft)} className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+                                                    {showAiDraft ? 'Skjul' : 'Konfigurér'}
+                                                </button>
                                             </div>
-                                            {selectedEmails.length > 0 && (
-                                                <div className="pt-2 flex justify-between items-center text-xs font-bold text-amber-900">
-                                                    <span>{selectedEmails.length} valgt</span>
-                                                    <button type="button" onClick={() => setSelectedEmails([])} className="hover:underline">Ryd alle</button>
+
+                                            {showAiDraft && (
+                                                <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                                    <textarea 
+                                                        placeholder="Beskriv hvad mailen skal handle om... f.eks. 'Nye eksamenssæt er loadet for pædagoger, husk at købe Premium for fuld adgang.'"
+                                                        value={aiTopic}
+                                                        onChange={e => setAiTopic(e.target.value)}
+                                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white text-sm font-medium focus:ring-4 focus:ring-amber-500/10 transition-all outline-none min-h-[120px]"
+                                                    />
+                                                    <Button type="button" onClick={handleGenerateDraft} disabled={isGeneratingDraft || !aiTopic} className="w-full h-14 rounded-[1.5rem] bg-white text-slate-900 font-black text-xs uppercase tracking-widest hover:bg-slate-100 shadow-xl shadow-white/5">
+                                                        {isGeneratingDraft ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Generér Kampagne Udkast'}
+                                                    </Button>
                                                 </div>
                                             )}
                                         </div>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">E-mail Emne (Modtager ser dette)</label>
-                                    <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="F.eks. Stor opdatering til platformen!" className="h-14 text-lg font-bold rounded-2xl" required />
-                                </div>
-
-                                {/* QUICK INSERT TOOLKIT */}
-                                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/60 flex items-center gap-1"><Plus className="w-3 h-3"/> Quick-Insert Blokke</p>
-                                        <button type="button" onClick={() => setShowAiDraft(prev => !prev)} className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors"><Sparkles className="w-3.5 h-3.5"/> Skriv Udkast med AI</button>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        <button type="button" onClick={insertButton} className="px-4 py-2 bg-white border border-amber-200 text-amber-900 rounded-xl text-xs font-bold shadow-sm hover:bg-amber-100 flex items-center gap-2 transition-colors"><MousePointerClick className="w-3 h-3"/> CTA Knap</button>
-                                        <button type="button" onClick={insertNamePlaceholder} className="px-4 py-2 bg-white border border-amber-200 text-amber-900 rounded-xl text-xs font-bold shadow-sm hover:bg-amber-100 flex items-center gap-2 transition-colors"><Users className="w-3 h-3"/> Modtagers Navn</button>
-                                        <button type="button" onClick={insertInfoBox} className="px-4 py-2 bg-white border border-amber-200 text-amber-900 rounded-xl text-xs font-bold shadow-sm hover:bg-amber-100 flex items-center gap-2 transition-colors"><MessageSquareWarning className="w-3 h-3"/> Info Boks</button>
-                                        <button type="button" onClick={insertDivider} className="px-4 py-2 bg-white border border-amber-200 text-amber-900 rounded-xl text-xs font-bold shadow-sm hover:bg-amber-100 flex items-center gap-2 transition-colors"><div className="w-4 h-[1px] bg-amber-900"></div> Linjeskift</button>
-                                        <button type="button" onClick={() => setShowNotificationFooter(prev => !prev)} className={`px-4 py-2 border rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all ${showNotificationFooter ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
-                                            {showNotificationFooter ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                                            Notifikations-fodnote
-                                        </button>
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
                                     </div>
 
-                                    {showAiDraft && (
-                                        <div className="mt-4 p-4 border border-amber-200 bg-white rounded-2xl shadow-sm space-y-3 animate-in fade-in slide-in-from-top-2">
-                                            <label className="block text-[10px] font-black uppercase tracking-widest text-amber-900">Hvad skal mailen handle om?</label>
-                                            <textarea 
-                                                value={aiTopic}
-                                                onChange={e => setAiTopic(e.target.value)}
-                                                className="w-full text-sm p-4 border border-slate-200 rounded-xl focus:ring-amber-500 focus:border-amber-500 min-h-[100px] bg-slate-50"
-                                                placeholder="Skriv stikord, f.eks.: Vi har netop lanceret en ny opslagstavle, prøv den i dag..."
+                                    {/* Subject & Editor */}
+                                    <div className="space-y-8 flex-1 flex flex-col">
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">E-mail Emnefelt</label>
+                                            <Input 
+                                                value={subject} 
+                                                onChange={e => setSubject(e.target.value)} 
+                                                placeholder="Kampagne overskrift..." 
+                                                className="h-14 font-black text-slate-900 serif text-xl border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-600/5 transition-all" 
                                             />
-                                            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                                                <Button type="button" variant="ghost" className="h-9 text-xs font-bold" onClick={() => setShowAiDraft(false)}>Annuller</Button>
-                                                <Button type="button" className="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-md font-bold text-xs" onClick={handleGenerateDraft} disabled={isGeneratingDraft || !aiTopic}>
-                                                    {isGeneratingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />} Generér Udkast
-                                                </Button>
+                                        </div>
+
+                                        <div className="space-y-3 flex-1 flex flex-col">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Kampagne Indhold</label>
+                                            <div className="bg-white rounded-[2.5rem] border border-slate-100 flex-1 relative flex flex-col pb-12 overflow-hidden shadow-inner">
+                                                <ReactQuill 
+                                                    theme="snow" 
+                                                    value={htmlContent} 
+                                                    onChange={setHtmlContent}
+                                                    className="flex-1 custom-quill"
+                                                />
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2 flex-1 flex flex-col">
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Indhold (Bliver indpakket i Cohéro Premium layout)</label>
-                                    <div className="bg-white rounded-[2rem] overflow-hidden border border-slate-200 flex-1 relative flex flex-col pb-12">
-                                        <ReactQuill 
-                                            theme="snow" 
-                                            value={htmlContent} 
-                                            onChange={setHtmlContent}
-                                            className="react-quill-tall custom-scrollbar"
-                                            modules={{
-                                                toolbar: [
-                                                    [{ 'header': [1, 2, 3, false] }],
-                                                    ['bold', 'italic', 'underline', 'strike'],
-                                                    [{'color': []}, {'background': []}],
-                                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                                    ['link'],
-                                                    ['clean']
-                                                ]
-                                            }}
-                                        />
                                     </div>
-                                </div>
 
-                                <div className="pt-4 border-t border-slate-100 flex gap-4">
-                                    <Button type="submit" disabled={isSending || usersLoading || !subject || !htmlContent} className="h-16 flex-1 rounded-2xl bg-amber-950 text-white shadow-2xl active:scale-95 transition-all text-lg group">
-                                        {isSending ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Send E-mail Kampagne Nu <Send className="w-5 h-5 ml-3" /></>}
-                                    </Button>
+                                    {/* Action Footer */}
+                                    <div className="pt-8 border-t border-slate-100">
+                                        <Button 
+                                            type="submit" 
+                                            disabled={isSending || !subject || !htmlContent} 
+                                            className="w-full h-20 rounded-[2.5rem] bg-slate-900 text-white font-black text-lg serif uppercase tracking-widest shadow-2xl shadow-slate-900/20 active:scale-95 transition-all"
+                                        >
+                                            {isSending ? <Loader2 className="w-6 h-6 animate-spin" /> : <span className="flex items-center gap-4">Start Broadcast <Send className="w-6 h-6" /></span>}
+                                        </Button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="flex-1 bg-slate-100 rounded-[3rem] p-8 flex justify-center items-start min-h-[700px] overflow-y-auto">
+                                   <div className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl overflow-hidden" dangerouslySetInnerHTML={{ __html: wrapEmailHtml(htmlContent, showNotificationFooter) }} />
                                 </div>
-                            </form>
-                        )}
-
-                        {/* PREVIEW TAB */}
-                        {activeTab === 'preview' && (
-                            <div className="flex-1 overflow-y-auto bg-slate-800 p-8 flex justify-center items-start custom-scrollbar h-[800px]">
-                                <div className="w-full max-w-full origin-top" dangerouslySetInnerHTML={{ __html: wrapEmailHtml(htmlContent, showNotificationFooter) }} />
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    </section>
                 </div>
 
-                {/* RIGHT: Stats & Templates Sidebar */}
-                <div className="space-y-6">
+                {/* Sidebar */}
+                <div className="xl:col-span-4 space-y-10">
                     
-                    {/* Skabeloner Box */}
-                    <div className="bg-white p-6 rounded-[2.5rem] border border-amber-100 shadow-sm space-y-6">
-                        <h3 className="font-bold text-amber-950 flex items-center gap-2"><LayoutTemplate className="w-5 h-5" /> Skabeloner</h3>
-                        
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase text-slate-400">Gem aktuelle som skabelon</label>
-                            <div className="flex gap-2">
-                                <Input value={templateTitle} onChange={e => setTemplateTitle(e.target.value)} placeholder="Titel..." className="h-10 text-xs rounded-xl" />
-                                <Button onClick={handleSaveTemplate} disabled={!templateTitle || !htmlContent || isSavingTemplate} className="h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3"><Save className="w-4 h-4" /></Button>
+                    {/* Templates */}
+                    <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+                                <LayoutTemplate className="w-5 h-5" />
                             </div>
+                            <h3 className="text-xl font-black text-slate-900 serif">Skabeloner</h3>
                         </div>
 
-                        <hr className="border-slate-100" />
-                        
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black uppercase text-slate-400">Gemte Mails</label>
-                            {templatesLoading && <Loader2 className="w-5 h-5 animate-spin mx-auto text-amber-300" />}
-                            {!templatesLoading && templates?.length === 0 && <p className="text-xs text-slate-400 italic text-center">Ingen skabeloner gemt endnu.</p>}
-                            <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                                {templates?.sort((a,b) => b.createdAt?.toMillis?.() - a.createdAt?.toMillis?.()).map(t => (
-                                    <button 
-                                        key={t.id} 
-                                        onClick={() => loadTemplate(t.htmlContent)}
-                                        className="w-full text-left p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-amber-50 hover:border-amber-200 transition-colors group"
-                                    >
-                                        <p className="text-sm font-bold text-slate-700 group-hover:text-amber-900 truncate">{t.title}</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Klik for at indlæse</p>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Stats Box */}
-                    <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 space-y-6">
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-slate-400 font-black uppercase text-[10px] tracking-widest"><Users className="w-4 h-4" /> Brugere i alt</div>
-                            <p className="text-4xl font-bold text-slate-700 serif italic">{usersLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : users?.filter(u => u.email).length || 0}</p>
-                        </div>
-                        
-                        <div className="space-y-4 pt-4 border-t border-slate-200/50">
-                            <div className="flex items-center gap-2 text-amber-600 font-black uppercase text-[10px] tracking-widest"><Building2 className="w-4 h-4" /> Institutioner i alt</div>
-                            <p className="text-4xl font-bold text-amber-700 serif italic">{institutionsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : institutions?.length || 0}</p>
-                        </div>
-                        
-                        <p className="text-xs text-slate-400 font-medium leading-relaxed">Antallet af unikke modtagere på tværs af platformen.</p>
-                    </div>
-
-                    {/* Historik Box */}
-                    <div className="bg-white p-6 rounded-[2.5rem] border border-amber-100 shadow-sm space-y-6">
-                        <h3 className="font-bold text-amber-950 flex items-center gap-2"><Mail className="w-5 h-5" /> Udsendte Kampagner</h3>
-                        <div className="space-y-3">
-                            {campaignsLoading && <Loader2 className="w-5 h-5 animate-spin mx-auto text-amber-300" />}
-                            {!campaignsLoading && campaigns?.length === 0 && <p className="text-xs text-slate-400 italic text-center">Ingen historik endnu.</p>}
-                            <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                                {campaigns?.sort((a,b) => b.sentAt?.toMillis?.() - a.sentAt?.toMillis?.()).map(c => (
-                                    <div 
-                                        key={c.id} 
-                                        className="w-full text-left p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-amber-50 hover:border-amber-200 transition-colors group cursor-default"
-                                    >
-                                        <div className="flex justify-between items-start mb-1">
-                                            <p className="text-xs font-black text-amber-900 group-hover:text-amber-700 truncate max-w-[150px]">{c.subject}</p>
-                                            <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-md font-bold">{c.sentCount} modt.</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
-                                            <span>{c.sentAt?.toDate ? c.sentAt.toDate().toLocaleDateString('da-DK') : 'Dato ukendt'}</span>
-                                            <button 
-                                                onClick={() => {
-                                                    setSubject(c.subject);
-                                                    setHtmlContent(c.htmlContent);
-                                                    toast({ title: "Kampagne indlæst", description: "Indholdet er klar til redigering." });
-                                                }}
-                                                className="text-amber-600 hover:text-amber-800 font-bold hover:underline"
-                                            >
-                                                Genbrug
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Gem aktuelle udkast</label>
+                            <div className="flex gap-2">
+                                <Input value={templateTitle} onChange={e => setTemplateTitle(e.target.value)} placeholder="Titel..." className="h-12 rounded-xl bg-slate-50 border-slate-100" />
+                                <Button onClick={handleSaveTemplate} disabled={!templateTitle || !htmlContent || isSavingTemplate} className="h-12 w-12 rounded-xl bg-slate-900 text-white flex-shrink-0"><Save className="w-4 h-4" /></Button>
                             </div>
                         </div>
-                    </div>
 
-                    {sendStats && (
-                        <div className="bg-emerald-50 p-6 rounded-[2.5rem] border border-emerald-100 animate-ink shadow-lg">
-                            <div className="flex items-center gap-3 text-emerald-700 font-bold mb-2"><CheckCircle className="w-5 h-5" /> Succes!</div>
-                            <p className="text-xs text-emerald-600 leading-relaxed font-medium">Kampagnen blev afsendt til <strong>{sendStats.count}</strong> brugere i "{sendStats.group}".</p>
+                        <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                            {templates?.sort((a,b) => b.createdAt?.toMillis?.() - a.createdAt?.toMillis?.()).map(t => (
+                                <button 
+                                    key={t.id} 
+                                    onClick={() => setHtmlContent(t.htmlContent)}
+                                    className="w-full text-left p-5 rounded-[1.5rem] bg-slate-50 border border-slate-50 hover:border-indigo-200 transition-all group"
+                                >
+                                    <p className="font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">{t.title}</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Klik for at indlæse</p>
+                                </button>
+                            ))}
                         </div>
-                    )}
+                    </section>
+
+                    {/* History */}
+                    <section className="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 space-y-8">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-700">
+                                <Mail className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 serif">Kampagne Historik</h3>
+                        </div>
+
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                            {campaigns?.sort((a,b) => b.sentAt?.toMillis?.() - a.sentAt?.toMillis?.()).map(c => (
+                                <div key={c.id} className="p-5 bg-white border border-slate-100 rounded-[1.5rem] space-y-3 shadow-sm group">
+                                    <div className="flex justify-between items-start">
+                                        <p className="font-bold text-slate-800 text-sm leading-tight max-w-[180px]">{c.subject}</p>
+                                        <span className="text-[9px] font-black bg-slate-900 text-white px-2 py-0.5 rounded-md uppercase tracking-tighter">{c.sentCount} recipients</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{c.sentAt?.toDate ? c.sentAt.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) : 'Dato mangler'}</span>
+                                        <button 
+                                            onClick={() => { setSubject(c.subject); setHtmlContent(c.htmlContent); }}
+                                            className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+                                        >
+                                            Genbrug
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
                 </div>
             </div>
-            
-            {/* Global Styles for Quill Editor Height overriding */}
+
+            {/* Global Styles */}
             <style dangerouslySetInnerHTML={{ __html: `
-                .react-quill-tall .ql-container {
-                    min-height: 400px;
+                .custom-quill .ql-container {
+                    min-height: 500px;
                     font-family: 'Inter', sans-serif;
-                    font-size: 15px;
+                    font-size: 16px;
+                    border: none !important;
                 }
-                .react-quill-tall .ql-toolbar {
-                    border: none;
-                    border-bottom: 1px solid #e2e8f0;
-                    padding: 16px;
+                .custom-quill .ql-toolbar {
+                    border: none !important;
                     background-color: #f8fafc;
-                    border-top-left-radius: 2rem;
-                    border-top-right-radius: 2rem;
+                    padding: 20px !important;
+                    border-bottom: 1px solid #f1f5f9 !important;
                 }
-                .react-quill-tall .ql-editor {
-                    padding: 24px;
+                .custom-quill .ql-editor {
+                    padding: 40px !important;
+                    color: #334155;
+                }
+                .custom-quill .ql-editor.ql-blank::before {
+                    color: #94a3b8;
+                    font-style: italic;
+                    left: 40px;
                 }
             `}} />
         </div>
     );
 }
+

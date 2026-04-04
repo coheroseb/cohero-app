@@ -532,6 +532,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const showCampaignBanner = mounted && campaigns.length > 0 && (!user || userProfile?.membership !== 'Kollega+') && !isBannerDismissed;
   const bannerOffset = showCampaignBanner ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 96 : 52) : 0;
+  const isAdminPage = pathname?.startsWith('/admin');
 
   return (
     <AppContext.Provider
@@ -557,18 +558,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 .accent-color { color: #ea580c !important; }
             ` : ''}
         ` }} />
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isNavbarHidden && (
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isNavbarHidden && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
             <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} topOffset={bannerOffset} />
           </>
         )}
         <main 
-          className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${(isLovPortal || isMitSemester) ? 'lg:overflow-hidden h-full' : ''}`}
-          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && pathname !== '/' ? `calc(${bannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (showCampaignBanner && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${bannerOffset}px` : undefined) }}
+          className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${(isLovPortal || isMitSemester) ? 'lg:overflow-hidden h-full' : ''}`}
+          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' ? `calc(${bannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (showCampaignBanner && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${bannerOffset}px` : undefined) }}
         >
             {/* Soft top gradient to blend with navbar when scrolling */}
-            {!isNativeApp && !isStandaloneGroups && !isRaadgivning && (
+            {!isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && (
                 <div className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-inherit to-transparent pointer-events-none z-10`} />
             )}
             
@@ -582,7 +583,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && <Footer />}
+
+
         
         {mounted && isNativeApp && user && <MobileTabNavigation userProfile={userProfile} />}
 

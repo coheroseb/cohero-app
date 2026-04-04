@@ -8,7 +8,9 @@ import { initializeServerFirebase } from '@/firebase/server-init';
 const relevantEvents = new Set([
   'checkout.session.completed',
   'customer.subscription.updated',
-  'customer.subscription.deleted'
+  'customer.subscription.deleted',
+  'invoice.payment_succeeded',
+  'invoice.payment_failed'
 ]);
 
 export async function POST(req: NextRequest) {
@@ -56,6 +58,7 @@ export async function POST(req: NextRequest) {
             }
             
             await userRef.set({
+                stripeCustomerId: session.customer as string,
                 stripeSubscriptionId: subscription.id,
                 stripePriceId: price.id,
                 stripeSubscriptionStatus: subscription.status,
@@ -63,8 +66,6 @@ export async function POST(req: NextRequest) {
                 membership: membershipLevel,
                 stripeCancelAtPeriodEnd: false,
             }, { merge: true });
-          } else {
-             console.warn(`Webhook: checkout.session.completed event missing client_reference_id.`);
           }
           break;
         }
@@ -94,17 +95,67 @@ export async function POST(req: NextRequest) {
                 stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
             };
 
-            // If a user has re-enabled their subscription, ensure their membership is active.
-            if (subscription.cancel_at_period_end === false && subscription.status === 'active') {
+            // Reactivate membership logic
+            if (subscription.status === 'active' || subscription.status === 'trialing') {
                 updateData.membership = membershipLevel;
                 updateData.stripePriceId = price.id;
+            } else if (subscription.status === 'unpaid' || subscription.status === 'past_due' || subscription.status === 'canceled') {
+                // Graceful degradation instead of instant hard block
+                if (subscription.status === 'canceled') {
+                    updateData.membership = 'Kollega';
+                }
             }
 
             await userDoc.ref.set(updateData, { merge: true });
-          } else {
-             console.warn(`Webhook: Could not find user for stripeCustomerId: ${subscription.customer} on update.`);
           }
           break;
+        }
+
+        case 'invoice.payment_succeeded': {
+            const invoice = event.data.object as Stripe.Invoice;
+            if (invoice.subscription) {
+                const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+                const userRefSnap = await firestore.collection('users').where('stripeCustomerId', '==', invoice.customer).get();
+                
+                if (!userRefSnap.empty) {
+                    const userDoc = userRefSnap.docs[0];
+                    const price = subscription.items.data[0].price;
+                    let membershipLevel = 'Kollega+';
+
+                    if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
+                        membershipLevel = 'Group Pro';
+                    } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
+                        membershipLevel = 'Kollega+';
+                    } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
+                        membershipLevel = 'Semesterpakken';
+                    } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
+                        membershipLevel = 'Kollega++';
+                    }
+
+                    await userDoc.ref.set({
+                        membership: membershipLevel,
+                        stripeSubscriptionStatus: 'active',
+                        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString()
+                    }, { merge: true });
+                }
+            }
+            break;
+        }
+
+        case 'invoice.payment_failed': {
+            const invoice = event.data.object as Stripe.Invoice;
+            const userRefSnap = await firestore.collection('users').where('stripeCustomerId', '==', invoice.customer).get();
+            
+            if (!userRefSnap.empty) {
+                const userDoc = userRefSnap.docs[0];
+                // We keep the membership for now until the subscription status actually changes to 'unpaid' or 'canceled'
+                // But we log the failure in the user document
+                await userDoc.ref.set({
+                    stripeLastPaymentFailed: true,
+                    stripeLastPaymentError: invoice.last_finalization_error?.message || 'Payment failed'
+                }, { merge: true });
+            }
+            break;
         }
 
         case 'customer.subscription.deleted': {
@@ -121,14 +172,9 @@ export async function POST(req: NextRequest) {
                   stripePriceId: null,
                   stripeSubscriptionId: null,
               }, { merge: true });
-          } else {
-              console.warn(`Webhook: Could not find user for stripeSubscriptionId: ${subscription.id} on deletion.`);
           }
           break;
         }
-
-        default:
-          console.warn(`Webhook: Unhandled relevant event type: ${event.type}`);
       }
     } catch (error) {
       console.error('Webhook handler failed.', error);

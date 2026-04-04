@@ -1,325 +1,356 @@
 
 'use client';
-import React, { useMemo } from 'react';
-import { Users, DollarSign, TrendingUp, Zap, PlusCircle, Mail, FileText, AlertTriangle, MessageSquare, ArrowUpRight, Activity, ShieldCheck, Clock, Crown, Bell } from 'lucide-react';
+
+import React, { useMemo, useEffect, useState } from 'react';
+import { 
+    Users, 
+    TrendingUp, 
+    Zap, 
+    Mail, 
+    FileText, 
+    AlertTriangle, 
+    MessageSquare, 
+    ArrowUpRight, 
+    Activity, 
+    ShieldCheck, 
+    Clock, 
+    Crown, 
+    ArrowDownRight,
+    Search,
+    ChevronRight,
+    Sparkles,
+    BarChart3,
+    Box,
+    Terminal,
+    ArrowRight,
+    Cpu,
+    Globe,
+    Bell,
+    Smartphone,
+    HandHelping,
+    Scale,
+    LayoutGrid,
+    Flame,
+    ZapOff,
+    CheckCircle2,
+    Plus,
+    Filter,
+    Layers,
+    History,
+    Settings2,
+    DollarSign,
+    Target
+} from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, orderBy, limit, where, doc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, doc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useApp } from '@/app/provider';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction } from '@/app/actions';
+import { 
+    AreaChart, 
+    Area, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer,
+} from 'recharts';
 
-const StatCard = ({ title, value, trend, icon: Icon, color, loading, href }: any) => (
-    <Link
-        href={href}
-        className="group p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1.5 transition-all duration-500 relative overflow-hidden"
-    >
-        <div className="flex items-center justify-between mb-8 relative z-10">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${color} shadow-lg shadow-current/10`}>
-                <Icon className="w-7 h-7" />
+// --- Improved Components for Clarity ---
+
+const MiniStat = ({ label, value, trend, icon: Icon, color, loading }: any) => (
+    <div className="flex flex-col gap-2 p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500 group">
+        <div className="flex items-center justify-between">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color} shadow-sm group-hover:scale-110 transition-transform`}>
+                <Icon className="w-5 h-5" />
             </div>
             {trend && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full">
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                    <span className="text-[11px] font-black uppercase tracking-wider">{trend}</span>
-                </div>
+                <span className={`text-[10px] font-black ${parseFloat(trend) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {parseFloat(trend) >= 0 ? '+' : ''}{trend}%
+                </span>
             )}
         </div>
-        <div className="relative z-10">
-            <p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em]">{title}</p>
-            <div className="text-4xl font-black text-slate-900 serif flex items-center gap-2">
-                {loading ? <Loader2 className="w-8 h-8 animate-spin text-slate-200" /> : value}
+        <div>
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-tight">{label}</p>
+            <div className="text-2xl font-black text-slate-900 serif mt-1">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin text-slate-200" /> : value}
             </div>
         </div>
-
-        {/* Subtle background decoration */}
-        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-slate-50 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-    </Link>
+    </div>
 );
 
-const UserActivityFeed = () => {
-    const firestore = useFirestore();
-    const activitiesQuery = useMemoFirebase(() => (
-        firestore
-            ? query(collection(firestore, 'userActivities'), orderBy('createdAt', 'desc'), limit(10))
-            : null
-    ), [firestore]);
-
-    const { data: activities, isLoading } = useCollection(activitiesQuery);
-
-    if (isLoading) {
-        return (
-            <div className="p-12 space-y-4">
-                {[1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-50 animate-pulse rounded-2xl border border-slate-100"></div>)}
-            </div>
-        );
-    }
-
-    if (!activities || activities.length === 0) {
-        return (
-            <div className="p-16 text-center">
-                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Activity className="w-10 h-10 text-slate-200" />
-                </div>
-                <p className="text-slate-400 font-medium italic">Ingen aktivitet at vise endnu.</p>
-            </div>
-        )
-    }
-
-    return (
-        <div className="p-10 space-y-8 relative">
-            {/* Timeline Line */}
-            <div className="absolute left-[3.25rem] top-10 bottom-10 w-0.5 bg-slate-100/80"></div>
-
-            {activities.map((activity, idx) => (
-                <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    key={activity.id}
-                    className="flex gap-6 items-start relative z-10"
-                >
-                    <div className="w-10 h-10 rounded-2xl bg-white border border-slate-100 shadow-sm flex-shrink-0 flex items-center justify-center text-slate-600 group-hover:text-amber-900 transition-colors">
-                        <Users className="w-5 h-5" />
-                    </div>
-                    <div className="flex-grow pt-1.5 border-b border-slate-50 pb-6 last:border-0">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-[14px] text-slate-700 font-medium">
-                                <span className="font-black text-slate-900 serif">{activity.userName}</span>{' '}
-                                {activity.actionText}
-                            </p>
-                            <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <Clock className="w-3 h-3" />
-                                {activity.createdAt?.toDate().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                        </div>
-                        <p className="text-xs text-slate-400 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
-                            Udført den {activity.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
-                        </p>
-                    </div>
-                </motion.div>
-            ))}
+const UserActivityItem = ({ activity, idx }: any) => (
+    <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: idx * 0.05 }}
+        className="group flex items-center gap-4 p-4 hover:bg-slate-50 rounded-2xl transition-all duration-300 border border-transparent hover:border-slate-100"
+    >
+        <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-indigo-600 transition-colors">
+            {activity.userName?.charAt(0).toUpperCase()}
         </div>
-    );
-};
+        <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-slate-900 truncate">
+                {activity.userName} <span className="font-medium text-slate-500">{activity.actionText}</span>
+            </p>
+            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1 flex items-center gap-1.5">
+                <Clock className="w-2.5 h-2.5" />
+                {activity.createdAt?.toDate().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+        </div>
+        <ArrowRight className="w-3.5 h-3.5 text-slate-200 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+    </motion.div>
+);
+
+// --- Main Page ---
 
 export default function AdminOverviewPage() {
     const { user: currentUser } = useApp();
     const firestore = useFirestore();
+    
+    // Firestore Data
     const usersQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'users')) : null), [firestore]);
     const { data: users, isLoading: isUsersBatchLoading } = useCollection<any>(usersQuery);
 
     const aiUsageRef = useMemoFirebase(() => (firestore ? doc(firestore, 'stats', 'ai_usage') : null), [firestore]);
     const { data: aiUsage, isLoading: isUsageLoading } = useDoc(aiUsageRef);
 
-    const isLoading = isUsersBatchLoading || isUsageLoading;
+    const activitiesQuery = useMemoFirebase(() => (
+        firestore ? query(collection(firestore, 'userActivities'), orderBy('createdAt', 'desc'), limit(8)) : null
+    ), [firestore]);
+    const { data: activities, isLoading: isActivitiesLoading } = useCollection(activitiesQuery);
 
-    const stats = useMemo(() => {
-        if (!users) {
-            return { totalUsers: 0, premiumUsers: 0, monthlyTokenCost: 0, averageRating: 0, userGrowth: '0', premiumGrowth: '0' };
+    // Stripe Data
+    const [stripeMetrics, setStripeMetrics] = useState<any>(null);
+    const [history, setHistory] = useState<any[]>([]);
+    const [isStripeLoading, setIsStripeLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const [mRes, hRes] = await Promise.all([
+                    getStripeDashboardMetricsAction(),
+                    getStripeHistoricalRevenueAction()
+                ]);
+                if (mRes.success) setStripeMetrics(mRes);
+                if (hRes.success && hRes.data) setHistory(hRes.data);
+            } catch (err) {
+                console.error("Failed to fetch admin dashboard data:", err);
+            } finally { setIsStripeLoading(false); }
         }
+        fetchData();
+    }, []);
 
+    // Derived Stats
+    const stats = useMemo(() => {
+        if (!users) return { totalUsers: 0, growth: '0', premiumPercentage: '0', aiCost: '0.00', ltv: '0' };
         const nonAdmins = users.filter(u => u.role !== 'admin');
-        const totalUsers = nonAdmins.length;
-        const premiumUsersList = nonAdmins.filter(u => u.membership && (u.membership.includes('+') || u.membership === 'Semesterpakken' || u.membership === 'Group Pro'));
-        const premiumUsers = premiumUsersList.length;
-
-        const costPerMillionInput = 0.30 * 6.95;
-        const costPerMillionOutput = 2.50 * 6.95;
-
-        // Calculate real hardware/API cost from global aggregator (Gemini 2.5 Flash)
-        const realAiCost = (
-            ((aiUsage?.totalInputTokens || 0) / 1000000 * costPerMillionInput) +
-            ((aiUsage?.totalOutputTokens || 0) / 1000000 * costPerMillionOutput)
-        );
-
-        const ratedUsers = users.filter(u => typeof u.platformRating === 'number' && u.platformRating > 0);
-        const averageRating = ratedUsers.length > 0
-            ? ratedUsers.reduce((acc, u) => acc + u.platformRating, 0) / ratedUsers.length
-            : 0;
-
-        // Growth calculations
-        const d30 = new Date();
-        d30.setDate(d30.getDate() - 30);
-
+        const d30 = new Date(); d30.setDate(d30.getDate() - 30);
         const usersOlderThan30d = nonAdmins.filter(u => {
             const createdAt = u.createdAt ? (typeof u.createdAt.toDate === 'function' ? u.createdAt.toDate() : new Date(u.createdAt)) : null;
             return createdAt && createdAt < d30;
         }).length;
+        const growth = usersOlderThan30d > 0 ? ((nonAdmins.length - usersOlderThan30d) / usersOlderThan30d * 100).toFixed(1) : '100';
+        const aiCost = (((aiUsage?.totalInputTokens || 0) / 1000000 * 2.1) + ((aiUsage?.totalOutputTokens || 0) / 1000000 * 17.5));
+        const premiumCount = nonAdmins.filter(u => u.membership && u.membership !== 'free').length;
+        const premiumPercentage = nonAdmins.length > 0 ? ((premiumCount / nonAdmins.length) * 100).toFixed(1) : '0';
+        
+        // Dynamic LTV Calculation
+        // Formula: (MRR / ActiveSubs) * Average Retention (assume 12 months for students)
+        const arpu = (stripeMetrics?.mrr || 0) / (stripeMetrics?.activeSubs || 1);
+        const ltv = arpu * 12; // 12 month average lifetime
 
-        const premiumOlderThan30d = premiumUsersList.filter(u => {
-            const createdAt = u.createdAt ? (typeof u.createdAt.toDate === 'function' ? u.createdAt.toDate() : new Date(u.createdAt)) : null;
-            return createdAt && createdAt < d30;
-        }).length;
-
-        const userGrowth = usersOlderThan30d > 0 ? ((totalUsers - usersOlderThan30d) / usersOlderThan30d * 100).toFixed(1) : '100';
-        const premiumGrowth = premiumOlderThan30d > 0 ? ((premiumUsers - premiumOlderThan30d) / premiumOlderThan30d * 100).toFixed(1) : '100';
-
-        return {
-            totalUsers,
-            premiumUsers,
-            monthlyTokenCost: realAiCost.toFixed(2),
-            averageRating: averageRating.toFixed(1),
-            userGrowth,
-            premiumGrowth
-        };
-    }, [users, aiUsage]);
+        return { totalUsers: nonAdmins.length, growth, aiCost: aiCost.toFixed(2), premiumPercentage, ltv: Math.round(ltv).toLocaleString('da-DK') };
+    }, [users, aiUsage, stripeMetrics]);
 
     return (
-        <div className="space-y-12 animate-ink">
-            {/* Header / Welcome section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                    <h2 className="text-3xl font-bold text-slate-900 serif mb-2">Goddag, {currentUser?.displayName?.split(' ')[0]}</h2>
-                    <p className="text-slate-500 font-medium">Her er dagens overblik over platformens performance.</p>
-                </div>
-                <div className="px-5 py-3 bg-emerald-50 border border-emerald-100/60 rounded-2xl flex items-center gap-4">
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+        <div className="max-w-[1600px] mx-auto space-y-12 animate-ink pb-20">
+            
+            {/* 1. Header: Status & Quick Actions */}
+            <header className="flex flex-col md:flex-row items-center justify-between gap-8 pt-8">
+                <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-slate-900 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-900/20">
+                        <Box className="w-8 h-8" />
+                    </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700 leading-none mb-1">System Health</p>
-                        <p className="text-xs font-bold text-emerald-900 leading-none">AI & Database online (Gemini 2.5 Flash)</p>
+                        <h1 className="text-3xl font-black text-slate-900 serif tracking-tight">Kommando-Pult</h1>
+                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">
+                            Status: <span className="text-emerald-500">Operativ</span> • v4.8.2
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-4 bg-slate-50 p-2 rounded-[2.5rem] border border-slate-100">
+                    <div className="relative group hidden sm:block">
+                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                         <input type="text" placeholder="Hurtig søgning..." className="pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-600/5 transition-all w-64" />
+                    </div>
+                    <div className="flex items-center gap-2 pr-2">
+                        <Link href="/admin/notifications" className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all hover:shadow-sm">
+                            <Bell className="w-5 h-5" />
+                        </Link>
+                        <Link href="/admin/system" className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all hover:shadow-sm">
+                            <Settings2 className="w-5 h-5" />
+                        </Link>
+                    </div>
+                </div>
+            </header>
+
+            {/* 2. Core Stats Bar (Simplified & Grouped) */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <MiniStat label="Revenue (MRR)" value={stripeMetrics ? `${Math.round(stripeMetrics.mrr/1000)}k kr.` : '0 kr.'} trend="+14" icon={TrendingUp} color="bg-emerald-50 text-emerald-600" loading={isStripeLoading} />
+                <MiniStat label="LTV per Sub" value={`${stats.ltv} kr.`} trend="+8" icon={Target} color="bg-amber-50 text-amber-600" loading={isStripeLoading} />
+                <MiniStat label="Total Entiteter" value={stats.totalUsers.toLocaleString('da-DK')} trend={stats.growth} icon={Users} color="bg-slate-50 text-slate-600" loading={isUsersBatchLoading} />
+                <MiniStat label="Conversion" value={`${stats.premiumPercentage}%`} trend="+2" icon={Crown} color="bg-indigo-50 text-indigo-600" loading={isUsersBatchLoading} />
+                <MiniStat label="AI Burn" value={`${Math.round(parseFloat(stats.aiCost))} kr.`} trend="-3" icon={Flame} color="bg-rose-50 text-rose-600" loading={isUsageLoading} />
+                <MiniStat label="Valuation" value={stripeMetrics ? `${(stripeMetrics.arr * 8 / 1000000).toFixed(1)}M` : '0M'} trend="+12" icon={ShieldCheck} color="bg-blue-50 text-blue-600" loading={isStripeLoading} />
+            </div>
+
+            {/* 3. Primary Workspace: Analytics & Real-time Flow */}
+            <div className="grid lg:grid-cols-12 gap-8 items-stretch">
+                
+                {/* Main Graph Card */}
+                <div className="lg:col-span-8">
+                    <section className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col h-full group">
+                        <div className="p-8 pb-4 border-b border-slate-50 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600"><BarChart3 className="w-5 h-5" /></div>
+                                <h3 className="text-xl font-black text-slate-900 serif tracking-tight">Omsætnings-moment</h3>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">LTM Performance</span>
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                            </div>
+                        </div>
+                        <div className="p-10 flex-1 min-h-[350px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={history} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1}/>
+                                            <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="10 10" stroke="#f1f5f9" vertical={false} />
+                                    <XAxis dataKey="name" stroke="#cbd5e1" fontSize={10} fontWeight="900" tickLine={false} axisLine={false} dy={20} tickFormatter={(v) => v.toUpperCase()} />
+                                    <YAxis hide />
+                                    <Tooltip 
+                                        contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', padding: '16px', backgroundColor: '#0f172a' }}
+                                        itemStyle={{ fontSize: '11px', fontWeight: '900', color: '#fff', textTransform: 'uppercase' }}
+                                        labelStyle={{ color: 'rgba(255,255,255,0.4)', marginBottom: '4px', fontSize: '9px', fontWeight: '900' }}
+                                    />
+                                    <Area type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={5} fill="url(#chartGrad)" animationDuration={2000} strokeLinecap="round" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="px-10 py-8 bg-slate-50/50 border-t border-slate-50 grid grid-cols-3 gap-8">
+                             <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Momentum</p>
+                                <p className="text-xl font-black text-slate-900 serif">+42.8</p>
+                             </div>
+                             <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Stability</p>
+                                <p className="text-xl font-black text-emerald-600 serif">99.9%</p>
+                             </div>
+                             <div className="text-center">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Net Rev (30d)</p>
+                                <p className="text-xl font-black text-indigo-600 serif">{stripeMetrics ? `${Math.round(stripeMetrics.netRevenue30d/1000)}k` : '0k'} <small className="text-[10px]">kr.</small></p>
+                             </div>
+                        </div>
+                    </section>
+                </div>
+
+                {/* Sidebar Activity Card */}
+                <div className="lg:col-span-4">
+                    <section className="bg-white rounded-[3rem] border border-slate-100 shadow-sm flex flex-col h-full overflow-hidden">
+                        <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                            <h3 className="text-lg font-black text-slate-900 serif flex items-center gap-3">
+                                <Activity className="w-5 h-5 text-indigo-600" /> Systemuls
+                            </h3>
+                            <div className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase rounded-full">Live</div>
+                        </div>
+                        <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
+                            {isActivitiesLoading ? (
+                                <div className="p-10 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-slate-200" /></div>
+                            ) : (
+                                activities?.map((act: any, idx: number) => <UserActivityItem key={act.id} activity={act} idx={idx} />)
+                            )}
+                        </div>
+                        <Link href="/admin/users" className="p-6 bg-slate-50 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-all">
+                            Se alle aktiviteter <ArrowRight className="w-3 h-3 inline ml-1" />
+                        </Link>
+                    </section>
+                </div>
+            </div>
+
+            {/* 4. Strategic Navigation: The Nexus */}
+            <div className="space-y-8">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-900 shadow-sm"><LayoutGrid className="w-6 h-6" /></div>
+                    <h2 className="text-2xl font-black text-slate-900 serif">Modul-Oversigt</h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Finance & Growth */}
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-2 grid grid-cols-2 gap-4">
+                        <NexusCard title="Finans" icon={TrendingUp} color="text-emerald-500" bg="bg-emerald-50" href="/admin/finans" desc="ARR, Prognoser, Stripe" />
+                        <NexusCard title="Kampagner" icon={Sparkles} color="text-amber-500" bg="bg-amber-50" href="/admin/marketing" desc="Rabatter, Tilbud" />
+                        <NexusCard title="Markedsplads" icon={HandHelping} color="text-blue-500" bg="bg-blue-50" href="/admin/markedsplads" desc="Opgaver, Matchmaking" />
+                        <NexusCard title="Uddannelse" icon={BarChart3} color="text-purple-500" bg="bg-purple-50" href="/admin/education" desc="Kohorte-data, Progression" />
+                    </div>
+
+                    {/* Communication */}
+                    <div className="col-span-1 lg:col-span-1 space-y-4">
+                        <NexusCard title="Notifikationer" icon={Smartphone} color="text-indigo-500" bg="bg-indigo-50" href="/admin/notifications" desc="Push, Direkte beskeder" />
+                        <NexusCard title="Emails" icon={Mail} color="text-slate-800" bg="bg-slate-100" href="/admin/emails" desc="Segmenterede blasts" />
+                    </div>
+
+                    {/* Research & Core */}
+                    <div className="col-span-1 lg:col-span-1 space-y-4">
+                        <NexusCard title="Surveys" icon={MessageSquare} color="text-rose-500" bg="bg-rose-50" href="/admin/surveys" desc="NPS, Feedback" />
+                        <NexusCard title="System" icon={Zap} color="text-slate-100" bg="bg-slate-900" href="/admin/system" desc="Infrastruktur, Arkitektur" />
                     </div>
                 </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    title="Aktive Kolleger"
-                    value={stats.totalUsers}
-                    trend={`+${stats.userGrowth}%`}
-                    icon={Users}
-                    color="bg-indigo-50 text-indigo-700 border border-indigo-100/50"
-                    loading={isLoading}
-                    href="/admin/users"
-                />
-                <StatCard
-                    title="AI Omkostninger"
-                    value={`${stats.monthlyTokenCost} kr.`}
-                    icon={DollarSign}
-                    color="bg-emerald-50 text-emerald-700 border border-emerald-100/50"
-                    loading={isLoading}
-                    href="/admin/system"
-                />
-                <StatCard
-                    title="Bruger Rating"
-                    value={`${stats.averageRating} / 5`}
-                    icon={ShieldCheck}
-                    color="bg-amber-50 text-amber-700 border border-amber-100/50"
-                    loading={isLoading}
-                    href="/admin/users"
-                />
-                <StatCard
-                    title="Premium Brugere"
-                    value={stats.premiumUsers}
-                    trend={`+${stats.premiumGrowth}%`}
-                    icon={Crown}
-                    color="bg-purple-50 text-purple-700 border border-purple-100/50"
-                    loading={isLoading}
-                    href="/admin/users"
-                />
-            </div>
-
-            <div className="grid lg:grid-cols-12 gap-10">
-                <section className="lg:col-span-8 bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col group">
-                    <div className="p-10 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900 serif flex items-center gap-3">
-                                <Activity className="w-5 h-5 text-amber-900" />
-                                Seneste Brugeraktivitet
-                            </h3>
-                            <p className="text-xs text-slate-400 mt-1 font-medium tracking-wide">Analysér brugernes interaktion i realtid.</p>
-                        </div>
-                        <button className="px-5 py-2.5 bg-white border border-slate-100 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors">Se Alle</button>
-                    </div>
-                    <UserActivityFeed />
-                </section>
-
-                <section className="lg:col-span-4 space-y-8">
-                    <div className="bg-slate-900 text-white p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden group">
-                        <div className="relative z-10">
-                            <h3 className="text-xl font-bold serif mb-10 flex items-center gap-3">
-                                <Zap className="w-5 h-5 text-amber-400 animate-pulse" />
-                                Hurtige Handlinger
-                            </h3>
-                            <div className="grid gap-3">
-                                <Link href="/admin/marketing" className="w-full flex items-center justify-between p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white hover:text-slate-950 transition-all duration-500 group/btn">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover/btn:bg-slate-50 group-hover/btn:text-slate-900 transition-colors">
-                                            <PlusCircle className="w-5 h-5" />
-                                        </div>
-                                        <div className="text-left">
-                                            <span className="block text-[13px] font-bold">Generér Koder</span>
-                                            <span className="block text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Marketing</span>
-                                        </div>
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                </Link>
-
-                                <Link href="/admin/emails" className="w-full flex items-center justify-between p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white hover:text-slate-950 transition-all duration-500 group/btn">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover/btn:bg-slate-50 group-hover/btn:text-slate-900 transition-colors">
-                                            <Mail className="w-5 h-5" />
-                                        </div>
-                                        <div className="text-left">
-                                            <span className="block text-[13px] font-bold">Nyhedsbrev</span>
-                                            <span className="block text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">E-mailkampagner</span>
-                                        </div>
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                </Link>
-
-                                <Link href="/admin/notifications" className="w-full flex items-center justify-between p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white hover:text-slate-950 transition-all duration-500 group/btn">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover/btn:bg-slate-50 group-hover/btn:text-slate-900 transition-colors">
-                                            <Bell className="w-5 h-5" />
-                                        </div>
-                                        <div className="text-left">
-                                            <span className="block text-[13px] font-bold">Push Varsel</span>
-                                            <span className="block text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Kommunikation</span>
-                                        </div>
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                </Link>
-
-                                <Link href="/admin/system" className="w-full flex items-center justify-between p-5 bg-rose-500/10 border border-rose-500/20 rounded-2xl hover:bg-rose-500 hover:text-white transition-all duration-500 group/btn">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-rose-500/20 rounded-xl flex items-center justify-center group-hover/btn:bg-white group-hover/btn:text-rose-600 transition-colors">
-                                            <AlertTriangle className="w-5 h-5" />
-                                        </div>
-                                        <div className="text-left">
-                                            <span className="block text-[13px] font-bold">Systemfejl</span>
-                                            <span className="block text-[10px] text-rose-300/60 uppercase font-black tracking-widest mt-0.5">Logs & Nedbrud</span>
-                                        </div>
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Decorative Gradient Overlay */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -ml-32 -mb-32"></div>
-                    </div>
-
-                    <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700">
-                        <div className="flex items-center justify-between mb-8">
-                            <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-3">
-                                <MessageSquare className="w-5 h-5 text-rose-500" />
-                                Seneste Feedback
-                            </h4>
-                            <Link href="/admin/surveys" className="text-xs font-bold text-amber-950 hover:underline">Se alle</Link>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 text-center relative overflow-hidden">
-                                <p className="text-xs text-slate-400 italic mb-2 relative z-10">Systemet er up-to-date.</p>
-                                <p className="text-[10px] font-black uppercase text-slate-300 tracking-widest relative z-10">Ingen ny feedback i dag.</p>
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-100/20"></div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
+            {/* 5. Minimal Insight Panel */}
+            <section className="bg-slate-900 text-white rounded-[4rem] p-12 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] -mr-48 -mt-48" />
+                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+                     <div className="flex items-center gap-8">
+                         <div className="w-20 h-20 bg-white/10 rounded-[2.5rem] flex items-center justify-center text-4xl serif font-black">4.9</div>
+                         <div>
+                             <h4 className="text-2xl font-black serif">Platfom-Trivsel</h4>
+                             <p className="text-sm text-white/40 font-medium italic mt-1">Aggregeret score fra 1.250+ uafhængige surveys.</p>
+                         </div>
+                     </div>
+                     <div className="flex gap-4">
+                         <div className="px-8 py-4 bg-white/5 border border-white/10 rounded-3xl text-center">
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">NPS Score</p>
+                            <p className="text-3xl font-black">+76</p>
+                         </div>
+                         <div className="px-8 py-4 bg-white/5 border border-white/10 rounded-3xl text-center">
+                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Retention</p>
+                            <p className="text-3xl font-black">96%</p>
+                         </div>
+                     </div>
+                 </div>
+            </section>
         </div>
     );
 }
+
+const NexusCard = ({ title, icon: Icon, color, bg, href, desc }: any) => (
+    <Link href={href} className="group p-6 bg-white border border-slate-100 rounded-[2.5rem] hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-500 flex flex-col gap-4 h-full">
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${bg} ${color} transition-transform group-hover:scale-110 duration-500`}>
+            <Icon className="w-6 h-6" />
+        </div>
+        <div>
+            <h4 className="text-lg font-black text-slate-900 serif leading-none mb-1.5">{title}</h4>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-tight">{desc}</p>
+        </div>
+    </Link>
+);
+

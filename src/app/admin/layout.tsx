@@ -1,39 +1,94 @@
 
 'use client';
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, BookOpen, Sparkles, Database, Shield, ChevronRight, Search, Mail, BarChart, Menu, X, MessageSquare, Bell, HandHelping, GraduationCap, CreditCard, Megaphone } from 'lucide-react';
+import { 
+    LayoutDashboard, 
+    Users, 
+    BookOpen, 
+    Sparkles, 
+    Database, 
+    Shield, 
+    ChevronRight, 
+    Search, 
+    Mail, 
+    BarChart, 
+    Menu, 
+    X, 
+    MessageSquare, 
+    Bell, 
+    HandHelping, 
+    GraduationCap, 
+    CreditCard, 
+    Megaphone, 
+    TrendingUp,
+    LogOut,
+    CheckCircle2,
+    Command,
+    Plus,
+    Activity,
+    Scale,
+    Layers,
+    History,
+    Settings2,
+    DollarSign,
+    Target
+} from 'lucide-react';
+
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 
-const navigation = [
-  { id: 'overview', href: '/admin', label: 'Overblik', icon: LayoutDashboard },
-  { id: 'users', href: '/admin/users', label: 'Brugerstyring', icon: Users },
-  { id: 'education', href: '/admin/education', label: 'Uddannelses-Indsigt', icon: GraduationCap },
-  { id: 'surveys', href: '/admin/surveys', label: 'Bruger-Indsigt', icon: MessageSquare },
-  { id: 'notifications', href: '/admin/notifications', label: 'Push Beskeder', icon: Bell },
-  { id: 'content', href: '/admin/content', label: 'Indhold & AI', icon: BookOpen },
-  { id: 'marketing', href: '/admin/marketing', label: 'Marketing & Koder', icon: Sparkles },
-  { id: 'emails', href: '/admin/emails', label: 'E-mail Kampagner', icon: Mail },
-  { id: 'stats', href: '/admin/stats', label: 'SaaS Statistik', icon: BarChart },
-  { id: 'costs', href: '/admin/costs', label: 'AI Finans', icon: CreditCard },
-  { id: 'markedsplads', href: '/admin/markedsplads', label: 'Markedsplads', icon: HandHelping },
-  { id: 'campaigns', href: '/admin/campaigns', label: 'Kampagner & Salg', icon: Megaphone },
-  { id: 'system', href: '/admin/system', label: 'System & Fejllogs', icon: Database },
+// Navigation structure categorized for better visibility
+const navigationGroups = [
+  {
+    title: 'Operations',
+    items: [
+      { id: 'overview', href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'users', href: '/admin/users', label: 'Brugerstyring', icon: Users },
+      { id: 'finans', href: '/admin/finans', label: 'Økonomi & MMR', icon: TrendingUp },
+      { id: 'stats', href: '/admin/stats', label: 'Bruger-Adfærd', icon: BarChart },
+      { id: 'costs', href: '/admin/costs', label: 'AI Omkostninger', icon: CreditCard },
+    ]
+  },
+  {
+    title: 'Vækst & Marked',
+    items: [
+        { id: 'markedsplads', href: '/admin/markedsplads', label: 'Markedsplads', icon: HandHelping },
+        { id: 'marketing', href: '/admin/marketing', label: 'Koder & Tilbud', icon: Sparkles },
+        { id: 'emails', href: '/admin/emails', label: 'E-mail Blasts', icon: Mail },
+        { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
+    ]
+  },
+  {
+    title: 'Intelligence',
+    items: [
+        { id: 'education', href: '/admin/education', label: 'Uddannelsesdata', icon: GraduationCap },
+        { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
+        { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
+    ]
+  },
+  {
+    title: 'System & Indhold',
+    items: [
+        { id: 'content', href: '/admin/content', label: 'Platform Indhold', icon: BookOpen },
+        { id: 'notifications', href: '/admin/notifications', label: 'Push Beskeder', icon: Bell },
+        { id: 'system', href: '/admin/system', label: 'System Puls', icon: Database },
+    ]
+  }
 ];
+
+// Flatten for easier active section lookup
+const allNavItems = navigationGroups.flatMap(g => g.items);
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, isUserLoading, handleLogout } = useApp();
   const router = useRouter();
   const pathname = usePathname();
-  const firestore = useFirestore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-
 
   useEffect(() => {
     if (!isUserLoading && (!user || userProfile?.role !== 'admin')) {
@@ -44,201 +99,176 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const activeSection = useMemo(() => {
     if (pathname === '/admin') return 'overview';
     const section = pathname?.split('/')[2];
-    return navigation.find(nav => nav.id === section) ? section : 'overview';
+    return allNavItems.find(nav => nav.id === section) ? section : 'overview';
   }, [pathname]);
 
   if (isUserLoading || !userProfile || userProfile.role !== 'admin') {
     return <AuthLoadingScreen />;
   }
 
-  const handleMobileLinkClick = () => {
-    setIsMobileMenuOpen(false);
-  };
-
   return (
-    <div className="min-h-screen bg-white flex overflow-hidden selection:bg-rose-100 selection:text-rose-900">
-      {/* DESKTOP SIDEBAR - Glassmorphism style */}
-      <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col sticky top-0 h-screen z-30">
-        <div className="p-10 flex flex-col h-full">
-          <Link href="/portal" className="flex items-center gap-4 mb-14 group">
-            <div className="w-12 h-12 bg-amber-950 rounded-2xl flex items-center justify-center text-amber-400 shadow-2xl shadow-amber-950/20 group-hover:scale-110 transition-transform">
-              <Shield className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] leading-none mb-1">Cohéro</div>
-              <h2 className="text-xl font-bold text-amber-950 serif">Admin</h2>
-            </div>
-          </Link>
+    <div className="min-h-screen bg-[#F8FAFC] flex overflow-hidden selection:bg-indigo-100 selection:text-indigo-900">
+      
+      {/* SIDEBAR - Full completeness restored */}
+      <aside className="w-80 bg-white border-r border-slate-200 hidden lg:flex flex-col sticky top-0 h-screen z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] overflow-y-auto custom-scrollbar">
+        <div className="flex flex-col h-full py-8">
+          
+          {/* Brand Logo */}
+          <div className="px-10 pb-10">
+            <Link href="/portal" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 bg-slate-950 rounded-xl flex items-center justify-center text-white shadow-xl shadow-slate-900/10 group-hover:scale-105 transition-all">
+                <Command className="w-5 h-5" />
+              </div>
+              <h2 className="text-xl font-black text-slate-900 serif tracking-tight">Cohéro <span className="text-indigo-600 font-bold ml-0.5">Admin</span></h2>
+            </Link>
+          </div>
 
-          <nav className="space-y-1.5 flex-grow">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-5 mb-4">Operations</p>
-            {navigation.map((item) => {
-              const isActive = activeSection === item.id;
-              return (
-              <Link
-                key={item.id}
-                href={item.href}
-                className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 group relative
-                  ${isActive 
-                    ? 'bg-amber-950 text-white shadow-xl shadow-amber-950/10' 
-                    : 'text-slate-500 hover:bg-white hover:text-amber-900 hover:translate-x-1'
-                  }`}
-              >
-                <div className="flex items-center gap-4 relative z-10">
-                  <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-amber-400' : 'text-slate-300 group-hover:text-amber-700'}`} />
-                  {item.label}
+          {/* Categorized Navigation */}
+          <div className="px-6 flex-1 space-y-10">
+            {navigationGroups.map((group, gIdx) => (
+              <div key={gIdx} className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 px-4 leading-none mb-1">{group.title}</p>
+                <div className="space-y-1">
+                  {group.items.map((item) => {
+                    const isActive = activeSection === item.id;
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-[13px] font-bold transition-all duration-200 group relative
+                          ${isActive 
+                            ? 'bg-slate-950 text-white shadow-2xl shadow-slate-900/20' 
+                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                          }`}
+                      >
+                        <div className="flex items-center gap-3.5 relative z-10">
+                          <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-indigo-400' : 'text-slate-300 group-hover:text-slate-600'}`} />
+                          {item.label}
+                        </div>
+                        {isActive && (
+                          <motion.div layoutId="activeNavIndicator" className="w-1.5 h-1.5 bg-indigo-400 rounded-full shadow-[0_0_12px_rgba(129,140,248,0.8)]" />
+                        )}
+                      </Link>
+                    )
+                  })}
                 </div>
-                {isActive && (
-                  <motion.div layoutId="activeNav" className="absolute inset-0 bg-amber-950 rounded-2xl -z-10 shadow-2xl shadow-amber-950/20" />
-                )}
-                {isActive && <ChevronRight className="w-4 h-4 text-amber-400/50" />}
-              </Link>
-            )})}
-          </nav>
+              </div>
+            ))}
+          </div>
 
-          <div className="mt-8 pt-8 border-t border-slate-200/60">
-             <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                <div className="relative z-10">
-                  <div className="text-[9px] font-black uppercase text-amber-900 mb-3 tracking-widest flex items-center gap-2">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                    System Engine
-                  </div>
-                  <div className="flex items-center justify-between group-hover:translate-x-1 transition-transform">
-                    <span className="text-xs font-bold text-amber-950">Live & Aktiv</span>
-                    <span className="text-[10px] text-slate-400 font-bold">99.9%</span>
-                  </div>
+          {/* Profile & Footer */}
+          <div className="px-6 mt-12 pt-8 border-t border-slate-100">
+             <div className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between group transition-all hover:bg-slate-100 border border-slate-100/50">
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-900 font-black text-sm">
+                      {userProfile.displayName?.charAt(0)}
+                   </div>
+                   <div className="min-w-0">
+                      <p className="text-[13px] font-black text-slate-900 truncate serif leading-none">{userProfile.displayName?.split(' ')[0]}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Master Ops</p>
+                   </div>
                 </div>
-                <div className="absolute bottom-0 right-0 w-16 h-16 bg-emerald-50 rounded-full blur-2xl -mr-8 -mb-8 group-hover:scale-150 transition-transform duration-700"></div>
+                <button onClick={handleLogout} className="p-2.5 text-slate-300 hover:text-rose-500 transition-colors"><LogOut className="w-4 h-4" /></button>
              </div>
           </div>
         </div>
       </aside>
 
+      {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* IMPROVED TOP NAV BAR */}
-        <header className="h-20 flex-shrink-0 flex items-center justify-between px-8 md:px-12 bg-white/70 backdrop-blur-xl z-[40] border-b border-slate-100">
-          <div className="flex items-center gap-8">
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-widest mb-0.5">
-                  <Link href="/admin" className="hover:text-amber-900 transition-colors">Admin</Link>
-                  <ChevronRight className="w-3 h-3 opacity-50" />
-                  <span className="text-amber-900">{navigation.find(n => n.id === activeSection)?.label}</span>
-                </div>
-                <h1 className="text-xl font-bold text-amber-950 serif">
-                  {navigation.find(n => n.id === activeSection)?.label}
-                </h1>
+        
+        {/* TOP BAR */}
+        <header className="h-20 flex-shrink-0 flex items-center justify-between px-8 md:px-12 bg-white/80 backdrop-blur-xl z-[40] border-b border-slate-200">
+          <div className="flex items-center gap-12">
+              <div className="hidden xl:flex items-center gap-4 bg-slate-100/50 p-2 rounded-xl border border-slate-200 group focus-within:border-indigo-600/30 transition-all">
+                <Search className="w-4 h-4 ml-2 text-slate-300 group-focus-within:text-indigo-600" />
+                <input type="text" placeholder="Hurtig søgning..." className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 w-64" />
+              </div>
+              
+              <div className="flex items-center gap-3 text-[10px] font-black uppercase text-slate-300 tracking-[0.2em]">
+                <Link href="/admin" className="hover:text-slate-900 transition-colors">Workspace</Link>
+                <ChevronRight className="w-3 h-3" />
+                <span className="text-slate-900">{allNavItems.find(n => n.id === activeSection)?.label}</span>
               </div>
           </div>
 
-          <div className="flex items-center gap-6">
-              <div className="hidden md:flex relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-900 transition-colors" />
-                <input 
-                  type="text" 
-                  placeholder="Hurtig søgning (⌘K)" 
-                  className="w-72 pl-11 pr-4 py-2.5 bg-slate-50 border border-transparent rounded-[14px] focus:bg-white focus:border-amber-900/20 focus:ring-4 focus:ring-amber-950/5 text-xs font-medium transition-all"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pr-4 border-r border-slate-200">
-                <button className="p-2.5 text-slate-400 hover:text-amber-950 hover:bg-slate-50 rounded-xl transition-all relative">
+          <div className="flex items-center gap-5">
+              <div className="flex items-center gap-3 pl-5 border-l border-slate-100 ml-5">
+                <button className="p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl relative group">
                    <Bell className="w-5 h-5" />
+                   <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-indigo-600 rounded-full border-2 border-white" />
                 </button>
-              </div>
-
-              <div className="flex items-center gap-4">
-                 <div className="text-right hidden sm:block">
-                    <p className="text-[14px] font-bold text-slate-800 leading-none mb-1 serif">{user?.displayName?.split(' ')[0]}</p>
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none">Operations</p>
-                 </div>
-                 <Link href="/settings" className="w-10 h-10 rounded-xl bg-amber-950 flex items-center justify-center text-amber-400 font-black text-sm shadow-xl shadow-amber-950/20 active:scale-95 transition-all">
-                    {user?.displayName?.charAt(0)}
-                 </Link>
-                 <div className="lg:hidden">
-                    <button 
-                      onClick={() => setIsMobileMenuOpen(true)} 
-                      className="p-3 bg-amber-950 text-white rounded-xl shadow-lg active:scale-95 transition-transform"
-                    >
-                      <Menu className="w-5 h-5" />
-                    </button>
-                 </div>
+                <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-3 text-slate-600 bg-slate-100 rounded-xl active:scale-95 transition-transform"><Menu className="w-5 h-5" /></button>
               </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-white relative scroll-smooth">
-            <div className="relative p-8 md:p-12 pb-24 max-w-7xl mx-auto w-full">
-                {children}
+        {/* CONTAINER FOR CHILDREN */}
+        <main className="flex-1 overflow-y-auto relative scroll-smooth overscroll-none scrollbar-hide">
+            <div className="relative p-8 md:p-14 pb-32">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={pathname}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="max-w-[1600px] mx-auto w-full"
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
             </div>
         </main>
       </div>
 
-       {/* MOBILE MENU */}
-       <AnimatePresence>
-       {isMobileMenuOpen && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.05 }}
-          className="fixed inset-0 z-50 bg-white p-8 flex flex-col lg:hidden"
-        >
-            <div className="flex items-center justify-between mb-16">
-                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-xl shadow-amber-950/20">
-                      <Shield className="w-5 h-5" />
+      {/* MOBILE DRAWER */}
+      <AnimatePresence>
+      {isMobileMenuOpen && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 z-[60] bg-slate-950/40 backdrop-blur-sm lg:hidden" />
+          <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 left-0 z-[70] w-[85%] max-w-sm bg-white shadow-2xl flex flex-col lg:hidden" >
+              <div className="p-8 flex items-center justify-between border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white"><Command className="w-5 h-5" /></div>
+                    <span className="font-black serif text-xl text-slate-900">Admin</span>
+                  </div>
+                  <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 rounded-lg text-slate-600 active:scale-90 transition-transform"><X className="w-6 h-6" /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                {navigationGroups.map((group, gIdx) => (
+                    <div key={gIdx} className="mb-8">
+                        <p className="text-[10px] font-black uppercase text-slate-300 px-4 mb-3 tracking-widest">{group.title}</p>
+                        <div className="space-y-1">
+                            {group.items.map((item) => {
+                                const isActive = activeSection === item.id;
+                                return (
+                                    <Link key={item.id} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center justify-between p-4 rounded-xl transition-all ${isActive ? 'bg-slate-950 text-white' : 'bg-transparent text-slate-500'}`}>
+                                        <div className="flex items-center gap-4"><item.icon className="w-5 h-5" /><span className="font-bold">{item.label}</span></div>
+                                        <ChevronRight className="w-4 h-4 opacity-20" />
+                                    </Link>
+                                )
+                            })}
+                        </div>
                     </div>
-                    <span className="font-bold serif text-xl text-amber-950">Kontrolrummet</span>
-                 </div>
-                 <button 
-                    onClick={handleMobileLinkClick} 
-                    className="p-3 bg-slate-100 rounded-full text-slate-600 active:scale-90 transition-transform"
-                  >
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
-            
-             <nav className="flex-grow space-y-2 overflow-y-auto -mx-4 px-4 py-4 overscroll-contain">
-                {navigation.map((item) => {
-                   const isActive = activeSection === item.id;
-                   return (
-                      <Link 
-                        key={item.id}
-                        href={item.href} 
-                        onClick={handleMobileLinkClick} 
-                        className={`flex items-center justify-between p-5 rounded-2xl transition-all shadow-sm
-                          ${isActive 
-                            ? 'bg-amber-950 text-white' 
-                            : 'bg-slate-50 text-slate-600 active:bg-slate-100'
-                          }`}
-                      >
-                         <div className="flex items-center gap-5">
-                            <item.icon className={`w-6 h-6 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
-                            <span className="font-bold text-lg">{item.label}</span>
-                         </div>
-                         <ChevronRight className={`w-5 h-5 ${isActive ? 'opacity-50' : 'opacity-20'}`} />
-                      </Link>
-                   )
-                })}
-            </nav>
-            
-            <div className="pt-8 border-t border-slate-100 flex items-center justify-between">
+                ))}
+              </div>
+              <div className="p-8 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-900 font-black text-lg shadow-inner">{user?.displayName?.charAt(0)}</div>
-                    <div>
-                        <p className="font-black text-amber-950 text-lg leading-tight">{user?.displayName}</p>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Administrator</p>
-                    </div>
+                  <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-900 font-black text-sm">{userProfile.displayName?.charAt(0)}</div>
+                  <div><p className="font-black text-slate-900 leading-tight">{userProfile.displayName}</p><p className="text-[9px] font-bold text-slate-400">Master Ops</p></div>
                 </div>
-                <button 
-                  onClick={() => {handleMobileLinkClick(); handleLogout();}} 
-                  className="px-6 py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm shadow-sm active:scale-95 transition-transform"
-                >
-                  Log ud
-                </button>
-            </div>
-        </motion.div>
+                <button onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }} className="p-3 bg-white border border-slate-200 rounded-xl text-rose-600 shadow-sm"><LogOut className="w-5 h-5" /></button>
+              </div>
+          </motion.div>
+        </>
       )}
       </AnimatePresence>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+      `}</style>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -23,25 +24,23 @@ import {
   Clock, 
   DollarSign, 
   Trash2, 
-  Eye,
-  AlertCircle,
   TrendingUp,
   HandHelping,
   CreditCard,
   User,
-  ShieldCheck,
   ChevronDown,
   ArrowUpDown,
   Star,
   Banknote,
-  FileSpreadsheet,
-  UserMinus,
   Plus,
   X,
   Mail,
   Phone,
   Calendar,
-  MapPin
+  MapPin,
+  UserMinus,
+  Zap,
+  Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -51,10 +50,10 @@ import { createAssistanceRequestAction } from '@/app/markedsplads/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STAT_CARDS = [
-  { label: 'Totale Opgaver', key: 'total', icon: HandHelping, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'I Gang', key: 'claimed', icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { label: 'Betalt', key: 'paid', icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  { label: 'Afsluttet', key: 'completed', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { label: 'Totale Opgaver', key: 'total', icon: HandHelping, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100/50' },
+  { label: 'Aktive Forløb', key: 'claimed', icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100/50' },
+  { label: 'Transaktioner', key: 'paid', icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100/50' },
+  { label: 'Afventende', key: 'open', icon: Clock, color: 'text-slate-400', bg: 'bg-slate-50 border-slate-100/50' },
 ];
 
 const AdminMarkedspladsPage = () => {
@@ -84,7 +83,7 @@ const AdminMarkedspladsPage = () => {
     return query(collection(firestore, 'assistance_requests'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
-  const { data: requests, isLoading, error } = useCollection<AssistanceRequest>(requestsQuery);
+  const { data: requests, isLoading } = useCollection<AssistanceRequest>(requestsQuery);
 
   const stats = useMemo(() => {
     if (!requests) return { total: 0, open: 0, claimed: 0, paid: 0, completed: 0 };
@@ -123,7 +122,7 @@ const AdminMarkedspladsPage = () => {
   }, [requests, searchTerm, statusFilter, sortBy]);
 
   const handleResetRequest = async (req: AssistanceRequest) => {
-    if (!firestore || !window.confirm('Vil du nulstille denne opgave? Den studerende vil blive fjernet, og opgaven bliver åben for andre igen.')) return;
+    if (!firestore || !window.confirm('Vil du nulstille denne opgave?')) return;
     try {
       await updateDoc(doc(firestore, 'assistance_requests', req.id), {
         status: 'open',
@@ -133,19 +132,15 @@ const AdminMarkedspladsPage = () => {
         studentPhone: null,
         claimedAt: null
       });
-
-      if (req.citizenEmail) {
-        await sendTaskResetEmailAction(req.citizenEmail, req.title);
-      }
-
-      toast({ title: 'Opgave nulstillet og borger adviseret' });
+      if (req.citizenEmail) await sendTaskResetEmailAction(req.citizenEmail, req.title);
+      toast({ title: 'Opgave nulstillet' });
     } catch (err) {
       toast({ title: 'Fejl ved nulstilling', variant: 'destructive' });
     }
   };
 
   const handleDeleteRequest = async (id: string) => {
-    if (!firestore || !window.confirm('Er du sikker på du vil slette denne opgave?')) return;
+    if (!firestore || !window.confirm('Slet opgaven permanent?')) return;
     try {
       await deleteDoc(doc(firestore, 'assistance_requests', id));
       toast({ title: 'Opgave slettet' });
@@ -157,10 +152,8 @@ const AdminMarkedspladsPage = () => {
   const handleTogglePayment = async (req: AssistanceRequest) => {
     if (!firestore) return;
     try {
-      await updateDoc(doc(firestore, 'assistance_requests', req.id), {
-        isPaid: !req.isPaid
-      });
-      toast({ title: `Betaling markeret som ${!req.isPaid ? 'gennemført' : 'afventende'}` });
+      await updateDoc(doc(firestore, 'assistance_requests', req.id), { isPaid: !req.isPaid });
+      toast({ title: `Status opdateret` });
     } catch (err) {
       toast({ title: 'Fejl ved opdatering', variant: 'destructive' });
     }
@@ -169,263 +162,226 @@ const AdminMarkedspladsPage = () => {
   const handleCreateRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-
-    if (!formData.title || !formData.description || !formData.citizenName || !formData.citizenEmail || !formData.price) {
-      toast({ title: 'Venligst udfyld alle påkrævede felter', variant: 'destructive' });
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const result = await createAssistanceRequestAction(formData as any);
       if (result.success) {
-        toast({ title: 'Opgave oprettet manuelt' });
+        toast({ title: 'Opgave oprettet' });
         setShowCreateModal(false);
-        setFormData({
-            title: '',
-            description: '',
-            category: 'Rådgivning',
-            price: 500,
-            location: '',
-            citizenName: '',
-            citizenEmail: '',
-            citizenPhone: '',
-            dueDate: ''
-        });
-      } else {
-        toast({ title: result.error || 'Fejl ved oprettelse', variant: 'destructive' });
+        setFormData({ title: '', description: '', category: 'Rådgivning', price: 500, location: '', citizenName: '', citizenEmail: '', citizenPhone: '', dueDate: '' });
       }
-    } catch (err) {
-      toast({ title: 'Serverfejl ved oprettelse', variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex justify-between items-end">
+    <div className="space-y-12 animate-ink pb-20">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
         <div>
-          <h3 className="text-3xl font-bold text-slate-900 serif">Markedsplads Administration</h3>
-          <p className="text-sm text-slate-500 mt-1 font-medium italic">Overvåg opgaver, transaktioner og udbetalinger på tværs af platformen.</p>
+           <h1 className="text-3xl font-black text-slate-900 serif mb-2">Marketplace Engine</h1>
+           <p className="text-slate-500 font-medium">Monitoring af assistance-opgaver, transaktioner og mægler-aktivitet.</p>
         </div>
-        <Button 
+        <button 
           onClick={() => setShowCreateModal(true)}
-          className="bg-amber-950 text-amber-400 hover:bg-slate-900 rounded-2xl flex items-center gap-2 px-6 py-6 shadow-xl shadow-amber-950/20 active:scale-95 transition-all"
+          className="group relative flex items-center justify-center gap-3 px-8 py-5 bg-slate-900 text-white rounded-[2rem] font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-slate-900/20 active:scale-95 transition-all hover:bg-slate-800"
         >
-          <Plus className="w-5 h-5" />
-          Opret manuel sag
-        </Button>
-      </div>
+          <Plus className="w-5 h-5" /> Opret Manuel Sag
+        </button>
+      </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {STAT_CARDS.map((statCard) => {
-          const Icon = statCard.icon;
-          return (
-            <div key={statCard.key} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${statCard.bg} ${statCard.color}`}>
-                <Icon className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-400 font-bold mb-1">{statCard.label}</p>
-                <p className="text-3xl font-black text-slate-900">
-                  {isLoading ? '...' : stats[statCard.key as keyof typeof stats]}
-                </p>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        {STAT_CARDS.map((stat, i) => (
+          <motion.div 
+            key={stat.key}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className={`bg-white p-8 rounded-[2.5rem] border ${stat.bg} shadow-sm group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700 min-h-[140px] flex flex-col justify-between`}
+          >
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color} bg-white shadow-sm group-hover:scale-110 transition-transform`}>
+              <stat.icon className="w-6 h-6" />
             </div>
-          );
-        })}
+            <div className="mt-4">
+              <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-[0.2em]">{stat.label}</p>
+              <p className="text-4xl font-black text-slate-900 serif">{isLoading ? '...' : stats[stat.key as keyof typeof stats]}</p>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
       {/* Main Content */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
-        <div className="p-8 border-b border-slate-50 bg-slate-50/20 space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="relative group w-full lg:max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+        <div className="p-10 border-b border-slate-50 bg-slate-50/20 space-y-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+            <div className="relative group w-full lg:max-w-xl">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="Søg i titler, borgere eller studerende..."
-                className="pl-11 pr-5 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 transition-all text-sm w-full font-medium"
+                placeholder="Find opgaver, borgere eller studerende..."
+                className="w-full pl-14 pr-8 py-5 bg-white border border-slate-200 rounded-[2rem] focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm font-bold text-slate-900 outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <select 
-                  className="pl-10 pr-8 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 appearance-none outline-none"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as any)}
-                >
-                  <option value="all">Alle Statusser</option>
-                  <option value="open">Åbne</option>
-                  <option value="claimed">I Gang</option>
-                  <option value="paid">Betalt</option>
-                  <option value="completed">Afsluttet</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
-
-              <div className="relative">
-                <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <select 
-                  className="pl-10 pr-8 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 appearance-none outline-none"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                >
-                  <option value="newest">Nyeste</option>
-                  <option value="price_desc">Højeste Pris</option>
-                  <option value="price_asc">Laveste Pris</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
+            <div className="flex flex-wrap items-center gap-4">
+               <div className="flex bg-slate-100/50 p-1.5 rounded-[1.5rem] border border-slate-100">
+                  {['all', 'open', 'claimed', 'paid', 'completed'].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setStatusFilter(f as any)}
+                      className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === f ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                      {f === 'all' ? 'Alle' : f === 'open' ? 'Åbne' : f === 'claimed' ? 'I Gang' : f === 'paid' ? 'Betalt' : 'Slut'}
+                    </button>
+                  ))}
+               </div>
             </div>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-20">
-            <Loader2 className="w-10 h-10 animate-spin text-slate-200 mb-4" />
-            <p className="text-slate-400 font-bold">Indlæser markedsplads...</p>
+          <div className="flex-1 flex flex-col items-center justify-center p-32 gap-6">
+            <Loader2 className="w-12 h-12 animate-spin text-slate-100" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Synchronizing transactions...</p>
           </div>
         ) : filteredRequests.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-20 text-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
-               <HandHelping className="w-8 h-8 text-slate-300" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Ingen opgaver fundet</h3>
-            <p className="text-slate-400 text-sm max-w-sm">Ingen opgaver matcher dine filtre lige nu.</p>
+          <div className="flex-1 flex flex-col items-center justify-center p-32 text-center gap-8">
+             <div className="w-24 h-24 bg-slate-50 text-slate-200 rounded-[2.5rem] flex items-center justify-center shadow-inner">
+                <HandHelping className="w-10 h-10" />
+             </div>
+             <div className="space-y-2">
+                <h3 className="text-2xl font-black text-slate-800 serif">Ingen sager fundet</h3>
+                <p className="text-slate-400 font-medium">Prøv at justere dine filtre eller søgetermer.</p>
+             </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100">
                 <tr>
-                  <th className="px-8 py-5">Opgave</th>
-                  <th className="px-8 py-5">Borger / Kontakt</th>
-                  <th className="px-8 py-5">Studerende</th>
-                  <th className="px-8 py-5">Økonomi</th>
-                  <th className="px-8 py-5">Status</th>
-                  <th className="px-8 py-5 text-right pr-12">Handling</th>
+                  <th className="px-10 py-6">Opgave & Kategori</th>
+                  <th className="px-10 py-6">Klient / Borger</th>
+                  <th className="px-10 py-6">Konsulent / Studerende</th>
+                  <th className="px-10 py-6">Financials</th>
+                  <th className="px-10 py-6">Status</th>
+                  <th className="px-10 py-6 text-right">Handling</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-6">
-                      <div className="max-w-xs">
-                        <p className="font-bold text-slate-900 mb-1 truncate">{req.title}</p>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 w-fit px-2 py-0.5 rounded">
-                          {req.category}
-                        </p>
+              <tbody className="divide-y divide-slate-50">
+                {filteredRequests.map((req, idx) => (
+                  <motion.tr 
+                    key={req.id} 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="hover:bg-slate-50/30 transition-colors group"
+                  >
+                    <td className="px-10 py-8">
+                      <div className="max-w-xs space-y-2">
+                        <p className="font-black text-slate-900 serif text-lg leading-tight truncate">{req.title}</p>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200">
+                           <Tag className="w-3 h-3" /> {req.category}
+                        </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-black text-[11px] border border-orange-100 uppercase">
                           {req.citizenName?.charAt(0) || 'B'}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-slate-800">{req.citizenName}</p>
-                          <p className="text-[10px] text-slate-400 truncate">{req.citizenEmail}</p>
+                          <p className="font-black text-slate-800 text-sm uppercase tracking-tight">{req.citizenName}</p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{req.citizenEmail || 'Ingen mail'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-10 py-8">
                       {req.studentId ? (
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] font-bold text-indigo-500">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-[11px] border border-indigo-100 uppercase">
                             {req.studentName?.charAt(0) || 'S'}
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-indigo-900">{req.studentName}</p>
-                            <span className="text-[9px] font-black uppercase tracking-tighter text-indigo-400">Påtager</span>
+                            <p className="font-black text-indigo-900 text-sm uppercase tracking-tight">{req.studentName}</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 mt-0.5">CONTRACTED</p>
                           </div>
                         </div>
                       ) : (
-                        <span className="text-[10px] font-bold text-slate-300 italic">Ikke taget endnu</span>
+                        <div className="flex items-center gap-2 text-slate-300 font-black text-[10px] uppercase tracking-widest italic">
+                           <Clock className="w-4 h-4 opacity-30" /> Unclaimed
+                        </div>
                       )}
                     </td>
-                    <td className="px-8 py-6">
-                      <div className="space-y-1">
-                        <p className="text-sm font-black text-slate-900">{req.price} kr.</p>
-                        <p className="text-[9px] font-bold text-emerald-600">Studerende: {req.studentEarnings} kr.</p>
+                    <td className="px-10 py-8">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-lg font-black text-slate-900 serif leading-none">{req.price} kr.</p>
+                        <div className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 uppercase tracking-widest">
+                           <Banknote className="w-3 h-3" /> Earning: {req.studentEarnings} kr.
+                        </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col gap-1.5">
-                        {req.status === 'completed' ? (
-                          <div className="flex flex-col gap-2">
-                             <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 w-fit">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span className="text-[10px] font-black uppercase tracking-widest">Afsluttet</span>
-                            </div>
-                            <div className="flex items-center gap-0.5">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star 
-                                  key={star} 
-                                  className={`w-3 h-3 ${star <= (req.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        ) : req.isPaid ? (
-                          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 w-fit">
-                            <CreditCard className="w-3 h-3" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Betalt</span>
-                          </div>
-                        ) : req.status === 'claimed' ? (
-                          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 w-fit">
-                            <Clock className="w-3 h-3" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">I Gang</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 w-fit">
-                            <HandHelping className="w-3 h-3" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Åben</span>
-                          </div>
-                        )}
-                      </div>
+                    <td className="px-10 py-8">
+                        <div className="flex flex-col gap-3">
+                            {req.status === 'completed' ? (
+                                <div className="space-y-2">
+                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 shadow-sm shadow-emerald-500/5">
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Delivered</span>
+                                    </div>
+                                    <div className="flex items-center gap-0.5 px-0.5 opacity-80">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star key={star} className={`w-3 h-3 ${star <= (req.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-100'}`} />
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : req.isPaid ? (
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100 shadow-sm shadow-indigo-500/5">
+                                    <CreditCard className="w-4 h-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Paid Out</span>
+                                </div>
+                            ) : req.status === 'claimed' ? (
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 shadow-sm shadow-amber-500/5 animate-pulse">
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">In Progress</span>
+                                </div>
+                            ) : (
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-50 text-slate-400 rounded-full border border-slate-100">
+                                    <Clock className="w-4 h-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Looking...</span>
+                                </div>
+                            )}
+                        </div>
                     </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {req.studentId && (
-                           <button 
-                            onClick={() => window.location.href = `/admin/users?search=${req.studentName}`}
-                            title="Se udbetalingsoplysninger"
-                            className="p-2 bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 rounded-xl transition-all"
-                          >
-                            <Banknote className="w-4 h-4" />
-                          </button>
-                        )}
+                    <td className="px-10 py-8 text-right">
+                      <div className="flex items-center justify-end gap-3">
                         {req.studentId && (
                            <button 
                             onClick={() => handleResetRequest(req)}
-                            title="Fjern studerende (Nulstil opgave)"
-                            className="p-2 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-100 rounded-xl transition-all"
+                            className="w-12 h-12 flex items-center justify-center bg-white border border-slate-100 text-slate-300 hover:text-rose-500 hover:border-rose-100 rounded-2xl transition-all shadow-sm"
+                            title="Nulstil opgave"
                           >
-                            <UserMinus className="w-4 h-4" />
+                            <UserMinus className="w-5 h-5" />
                           </button>
                         )}
                         <button 
                           onClick={() => handleTogglePayment(req)}
-                          className={`p-2 rounded-xl border transition-all ${req.isPaid ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200 hover:text-emerald-600'}`}
+                          className={`w-12 h-12 flex items-center justify-center rounded-2xl border-2 transition-all shadow-sm ${req.isPaid ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-100 text-slate-300 hover:text-indigo-600 hover:border-indigo-100'}`}
+                          title="Marker betaling"
                         >
-                          <DollarSign className="w-4 h-4" />
+                          <DollarSign className="w-5 h-5" />
                         </button>
                         <button 
                           onClick={() => handleDeleteRequest(req.id)}
-                          className="p-2 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-100 rounded-xl transition-all"
+                          className="w-12 h-12 flex items-center justify-center bg-rose-50 border border-rose-100 text-rose-500 rounded-2xl lg:hover:bg-rose-500 lg:hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-sm"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
@@ -436,197 +392,59 @@ const AdminMarkedspladsPage = () => {
       {/* Manual Create Modal */}
       <AnimatePresence>
         {showCreateModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md">
             <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !isSubmitting && setShowCreateModal(false)}
-              className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]"
+              initial={{ scale: 0.9, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 30, opacity: 0 }}
+              className="bg-white w-full max-w-2xl rounded-[3.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shadow-inner">
-                    <HandHelping className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900">Opret Manuel Sag</h3>
-                    <p className="text-xs text-slate-400 font-medium">Udfyld formularen for at oprette en sag på vegne af en borger.</p>
-                  </div>
+              <div className="p-10 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
+              <div>
+                  <h2 className="text-2xl font-black text-slate-900 serif flex items-center gap-3">Manual Case Entry</h2>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-1">Udfyld system-informationer for oprettelse</p>
                 </div>
-                <button 
-                  onClick={() => !isSubmitting && setShowCreateModal(false)}
-                  className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+                <button onClick={() => !isSubmitting && setShowCreateModal(false)} className="w-12 h-12 flex items-center justify-center bg-white rounded-2xl hover:bg-slate-100 transition-colors text-slate-400"><X className="w-6 h-6"/></button>
               </div>
 
-              <form onSubmit={handleCreateRequest} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Basic Info */}
-                  <div className="space-y-4 md:col-span-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 block px-1">Opgave Detaljer</label>
-                    <div className="space-y-4 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-600 px-1">Titel</label>
-                        <input 
-                          required
-                          type="text" 
-                          placeholder="F.eks. Hjælp til ankesag om merudgifter"
-                          className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 transition-all outline-none"
-                          value={formData.title}
-                          onChange={(e) => setFormData({...formData, title: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-600 px-1">Beskrivelse</label>
-                        <textarea 
-                          required
-                          rows={4}
-                          placeholder="Beskriv opgaven i detaljer..."
-                          className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 transition-all outline-none resize-none"
-                          value={formData.description}
-                          onChange={(e) => setFormData({...formData, description: e.target.value})}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-600 px-1">Kategori</label>
-                          <select 
-                            className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-amber-500/5"
-                            value={formData.category}
-                            onChange={(e) => setFormData({...formData, category: e.target.value as any})}
-                          >
-                            <option value="Rådgivning">Rådgivning</option>
-                            <option value="Ansøgning">Ansøgning</option>
-                            <option value="Bisidder">Bisidder</option>
-                            <option value="Andet">Andet</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-600 px-1">Pris (DKK)</label>
-                          <div className="relative">
-                            <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input 
-                              required
-                              type="number" 
-                              className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 transition-all outline-none"
-                              value={formData.price}
-                              onChange={(e) => setFormData({...formData, price: parseInt(e.target.value) || 0})}
-                            />
-                          </div>
-                        </div>
-                      </div>
+              <form onSubmit={handleCreateRequest} className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+                
+                <section className="space-y-6">
+                    <div className="flex items-center gap-3 text-indigo-600 bg-indigo-50 w-fit px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100/50">
+                        <Zap className="w-3.5 h-3.5 fill-indigo-600" /> Sagens Kerne
                     </div>
-                  </div>
-
-                  {/* Citizen Info */}
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 block px-1">Borger Information</label>
-                    <div className="space-y-4 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-600 px-1">Navn</label>
-                        <div className="relative">
-                          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <input 
-                            required
-                            type="text" 
-                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
-                            value={formData.citizenName}
-                            onChange={(e) => setFormData({...formData, citizenName: e.target.value})}
-                          />
+                    <div className="space-y-4">
+                        <input required type="text" placeholder="Titel på sagen..." className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-[2rem] text-lg font-black text-slate-900 serif outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/30 transition-all" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} />
+                        <textarea required rows={4} placeholder="Beskriv problemstillingen i detaljer..." className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[2rem] font-medium text-slate-600 outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/30 transition-all resize-none" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+                        <div className="grid grid-cols-2 gap-6">
+                            <select className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-[2rem] font-black text-[10px] uppercase tracking-widest text-slate-600 outline-none focus:ring-4 focus:ring-indigo-600/5 transition-all appearance-none cursor-pointer" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value as any})} >
+                                <option value="Rådgivning">Rådgivning</option>
+                                <option value="Ansøgning">Ansøgning</option>
+                                <option value="Bisidder">Bisidder</option>
+                                <option value="Andet">Andet</option>
+                            </select>
+                            <div className="relative">
+                                <Banknote className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
+                                <input required type="number" className="w-full pl-14 pr-8 py-5 bg-slate-50 border border-slate-100 rounded-[2rem] font-black text-slate-900 outline-none focus:ring-4 focus:ring-emerald-600/5 focus:border-emerald-600/30 transition-all" value={formData.price} onChange={(e) => setFormData({...formData, price: parseInt(e.target.value) || 0})} />
+                            </div>
                         </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-600 px-1">E-mail</label>
-                        <div className="relative">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <input 
-                            required
-                            type="email" 
-                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
-                            value={formData.citizenEmail}
-                            onChange={(e) => setFormData({...formData, citizenEmail: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-600 px-1">Telefon</label>
-                        <div className="relative">
-                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <input 
-                            type="tel" 
-                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
-                            value={formData.citizenPhone}
-                            onChange={(e) => setFormData({...formData, citizenPhone: e.target.value})}
-                          />
-                        </div>
-                      </div>
                     </div>
-                  </div>
+                </section>
 
-                  {/* Settings */}
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 block px-1">Praktiske Detaljer</label>
-                    <div className="space-y-4 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-600 px-1">Lokation</label>
-                        <div className="relative">
-                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <input 
-                            type="text" 
-                            placeholder="F.eks. København eller Online"
-                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
-                            value={formData.location}
-                            onChange={(e) => setFormData({...formData, location: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-600 px-1">Deadline</label>
-                        <div className="relative">
-                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <input 
-                            type="date" 
-                            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-amber-500/5"
-                            value={formData.dueDate}
-                            onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
-                          />
-                        </div>
-                      </div>
+                <section className="space-y-6">
+                    <div className="flex items-center gap-3 text-orange-600 bg-orange-50 w-fit px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-orange-100/50">
+                        <User className="w-3.5 h-3.5" /> Klient Detaljer
                     </div>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-2 gap-6">
+                        <input required type="text" placeholder="Fulde navn" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 outline-none transition-all focus:border-orange-200" value={formData.citizenName} onChange={(e) => setFormData({...formData, citizenName: e.target.value})} />
+                        <input required type="email" placeholder="E-mail adresse" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 outline-none transition-all focus:border-orange-200" value={formData.citizenEmail} onChange={(e) => setFormData({...formData, citizenEmail: e.target.value})} />
+                    </div>
+                </section>
 
-                <div className="pt-4 flex items-center justify-end gap-4">
-                  <Button 
-                    type="button"
-                    onClick={() => !isSubmitting && setShowCreateModal(false)}
-                    variant="ghost"
-                    className="rounded-2xl px-8 h-14 font-bold text-slate-500"
-                  >
-                    Annuller
-                  </Button>
-                  <Button 
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-amber-950 text-amber-400 hover:bg-slate-900 rounded-2xl px-12 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-amber-950/20 active:scale-95 transition-all"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Opretter...
-                      </>
-                    ) : (
-                      'Opret Opgave Nu'
-                    )}
+                <div className="pt-4 flex items-center justify-end gap-6">
+                  <Button type="button" onClick={() => !isSubmitting && setShowCreateModal(false)} variant="ghost" className="rounded-[1.5rem] px-8 h-16 font-black uppercase tracking-widest text-[11px] text-slate-400">Annuller</Button>
+                  <Button type="submit" disabled={isSubmitting} className="bg-slate-900 text-white hover:bg-slate-800 rounded-[2rem] px-12 h-20 font-black uppercase tracking-widest text-[12px] shadow-2xl shadow-slate-900/20 active:scale-95 transition-all">
+                    {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Confirm & Deploy Case'}
                   </Button>
                 </div>
               </form>
@@ -639,3 +457,4 @@ const AdminMarkedspladsPage = () => {
 };
 
 export default AdminMarkedspladsPage;
+

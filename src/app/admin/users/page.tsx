@@ -7,7 +7,8 @@ import { collection, query, doc, deleteDoc } from 'firebase/firestore';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
-  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle
+  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle,
+  CheckCircle2, XCircle, GraduationCap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +19,8 @@ import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarke
 
 import { StudentCardVerification } from '@/ai/flows/types';
 import { calculateStudyStarted } from '@/lib/education';
-import { writeBatch, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { writeBatch, updateDoc } from 'firebase/firestore';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface UserProfile {
   id: string;
@@ -45,10 +47,10 @@ interface UserProfile {
 }
 
 const STAT_CARDS = [
-  { label: 'Totale Brugere', key: 'total', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { label: 'Nye (30 dage)', key: 'new', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { label: 'Aktive (24t)', key: 'active', icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Plus Medlemmer', key: 'premium', icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50' },
+  { label: 'Totale Brugere', key: 'total', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50/50 border-indigo-100/50' },
+  { label: 'Nye (30 dage)', key: 'new', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50/50 border-emerald-100/50' },
+  { label: 'Aktive (24t)', key: 'active', icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50/50 border-amber-100/50' },
+  { label: 'Premium', key: 'premium', icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50/50 border-purple-100/50' },
 ];
 
 const BankRow = ({ label, value }: { label: string, value?: string }) => {
@@ -129,15 +131,15 @@ const StudentCardDisplay = ({ path, userId, userName }: { path: string, userId: 
 
   return (
     <div className="space-y-4">
-        <div className="aspect-[3/2] bg-slate-100 rounded-xl overflow-hidden relative group">
+        <div className="aspect-[3/2] bg-slate-100 rounded-2xl overflow-hidden relative group shadow-inner">
             {isLoading ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
                     <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
                 </div>
             ) : url ? (
                 <>
-                    <img src={url} alt="Studiekort" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                    <a href={url} target="_blank" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity">Vis fuld størrelse</a>
+                    <img src={url} alt="Studiekort" className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
+                    <a href={url} target="_blank" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-black uppercase tracking-widest transition-opacity backdrop-blur-sm">Vis fuld størrelse</a>
                 </>
             ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-50 text-rose-400 text-[10px] font-bold">
@@ -276,23 +278,17 @@ const AdminUsersPage = () => {
     if (!userToDelete || !firestore) return;
 
     try {
-      // 1. Delete from Auth via Server Action
       const result = await adminDeleteUserAction(userToDelete.id);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      // 2. Delete from Firestore locally for immediate UI feedback.
-      // (The Cloud Function onUserDeleteCleanUp also does this automatically)
+      if (!result.success) throw new Error(result.error);
+      
       await deleteDoc(doc(firestore, 'users', userToDelete.id));
       
       toast({
         title: 'Bruger slettet',
-        description: `Brugeren ${userToDelete.username} er blevet slettet permanent (Auth + Firestore).`,
+        description: `Brugeren ${userToDelete.username} er blevet slettet permanent.`,
       });
       setUserToDelete(null);
     } catch (err: any) {
-      console.error('Error deleting user:', err);
       toast({
         variant: 'destructive',
         title: 'Fejl',
@@ -300,7 +296,6 @@ const AdminUsersPage = () => {
       });
     }
   };
-
 
   const [isBulkLoading, setIsBulkLoading] = useState(false);
   const handleBulkCalculateStartDates = async () => {
@@ -327,7 +322,6 @@ const AdminUsersPage = () => {
         await batch.commit();
         toast({ title: "Beregning fuldført", description: `${count} brugere fik opdateret deres startdato.` });
     } catch (err) {
-        console.error(err);
         toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke gennemføre bulk opdatering." });
     } finally {
         setIsBulkLoading(false);
@@ -347,156 +341,170 @@ const AdminUsersPage = () => {
 
   return (
     <>
-    <div className="space-y-8 animate-ink">
-      {/* Header sections */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h3 className="text-3xl font-bold text-slate-900 serif">Brugeradministration</h3>
-          <p className="text-sm text-slate-500 mt-1 font-medium italic">Få indsigt i brugeraktivitet og håndtér profiler på platformen.</p>
+    <div className="space-y-10 animate-ink pb-20">
+      {/* 1. Header Area */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Users className="w-5 h-5" />
+            </div>
+            <h1 className="text-3xl font-black text-slate-900 serif">Brugerstyring</h1>
+          </div>
+          <p className="text-slate-500 font-medium ml-1">Administrér platformens {stats.total} kolleger og sikr datakvaliteten.</p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={handleBulkCalculateStartDates}
-          disabled={isBulkLoading}
-          className="rounded-2xl bg-amber-50 border-amber-100 text-amber-900 font-bold text-xs h-11 px-6 shadow-sm hover:bg-amber-100 transition-all"
-        >
-          {isBulkLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Calendar className="w-4 h-4 mr-2" />}
-          Beregner manglende startdatoer
-        </Button>
+        <div className="relative z-10">
+          <Button 
+            variant="outline" 
+            onClick={handleBulkCalculateStartDates}
+            disabled={isBulkLoading}
+            className="rounded-2xl border-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest h-12 px-6 shadow-sm hover:bg-slate-50 transition-all"
+          >
+            {isBulkLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Calendar className="w-4 h-4 mr-2" />}
+            Bulk Beregn Startdatoer
+          </Button>
+        </div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 2. Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {STAT_CARDS.map((statCard) => {
           const Icon = statCard.icon;
           return (
-            <div key={statCard.key} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${statCard.bg} ${statCard.color}`}>
+            <div key={statCard.key} className={`bg-white p-8 rounded-[2.5rem] border ${statCard.bg} shadow-sm flex flex-col justify-between group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700 min-h-[160px]`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${statCard.color} shadow-lg shadow-current/5 group-hover:scale-110 transition-transform`}>
                 <Icon className="w-6 h-6" />
               </div>
-              <div>
-                <p className="text-sm text-slate-400 font-bold mb-1">{statCard.label}</p>
-                <p className="text-3xl font-black text-slate-900">
-                  {isLoading ? <span className="text-slate-200">...</span> : stats[statCard.key as keyof typeof stats]}
-                </p>
+              <div className="mt-4">
+                <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-[0.2em]">{statCard.label}</p>
+                <div className="text-4xl font-black text-slate-900 flex items-baseline gap-2">
+                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-slate-200" /> : stats[statCard.key as keyof typeof stats]}
+                  <span className="text-xs font-bold text-slate-300">pers.</span>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Main Table Area */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+      {/* 3. Main Data Table */}
+      <section className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
          
-         <div className="p-8 border-b border-slate-50 bg-slate-50/20 space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-               {/* Search */}
-               <div className="relative group w-full lg:max-w-md">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-950 transition-colors" />
+         {/* Filter Bar */}
+         <div className="p-8 border-b border-slate-50 bg-slate-50/10 space-y-6">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+               <div className="relative group w-full xl:max-w-xl">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                   <input 
                     type="text" 
-                    placeholder="Søg i brugernavne eller e-mails..." 
+                    placeholder="Søg i brugere, e-mails eller studieretninger..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-11 pr-5 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 transition-all text-sm w-full font-medium shadow-sm"
+                    className="pl-12 pr-6 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/20 transition-all text-sm w-full font-medium shadow-sm"
                   />
                </div>
                
-               {/* Filters */}
                <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative">
-                    <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                    <select 
-                      value={roleFilter} 
-                      onChange={(e) => setRoleFilter(e.target.value)}
-                      className="pl-10 pr-8 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 appearance-none hover:border-slate-300 transition-all shadow-sm focus:ring-4 focus:ring-slate-100 outline-none"
-                    >
-                      <option value="all">Alle Roller</option>
-                      <option value="user">Brugere</option>
-                      <option value="admin">Admins</option>
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+                      <Filter className="w-3.5 h-3.5 text-slate-400" />
+                      <div className="h-4 w-px bg-slate-200 mx-2"></div>
+                      <select 
+                        value={roleFilter} 
+                        onChange={(e) => setRoleFilter(e.target.value)}
+                        className="bg-transparent text-xs font-bold text-slate-600 outline-none pr-4 cursor-pointer"
+                      >
+                        <option value="all">Alle Roller</option>
+                        <option value="user">Brugere</option>
+                        <option value="admin">Admins</option>
+                      </select>
                   </div>
 
-                  <div className="relative">
-                    <Crown className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                    <select 
-                      value={membershipFilter} 
-                      onChange={(e) => setMembershipFilter(e.target.value)}
-                      className="pl-10 pr-8 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 appearance-none hover:border-slate-300 transition-all shadow-sm focus:ring-4 focus:ring-slate-100 outline-none"
-                    >
-                      <option value="all">Alle Planer</option>
-                      <option value="free">Kollega (Gratis)</option>
-                      <option value="Kollega+">Kollega+</option>
-                      <option value="Kollega++">Kollega++</option>
-                      <option value="Semesterpakken">Semesterpakken</option>
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+                      <Crown className="w-3.5 h-3.5 text-slate-400" />
+                      <div className="h-4 w-px bg-slate-200 mx-2"></div>
+                      <select 
+                        value={membershipFilter} 
+                        onChange={(e) => setMembershipFilter(e.target.value)}
+                        className="bg-transparent text-xs font-bold text-slate-600 outline-none pr-4 cursor-pointer"
+                      >
+                        <option value="all">Alle Planer</option>
+                        <option value="free">Kollega (Gratis)</option>
+                        <option value="Kollega+">Kollega+</option>
+                        <option value="Kollega++">Kollega++</option>
+                        <option value="Semesterpakken">Semesterpakken</option>
+                      </select>
                   </div>
 
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                    <select 
-                      value={semesterFilter} 
-                      onChange={(e) => setSemesterFilter(e.target.value)}
-                      className="pl-10 pr-8 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 appearance-none hover:border-slate-300 transition-all shadow-sm focus:ring-4 focus:ring-slate-100 outline-none"
-                    >
-                      <option value="all">Alle Semestre</option>
-                      {[1, 2, 3, 4, 5, 6, 7].map(num => (
-                        <option key={num} value={num.toString()}>{num}. semester</option>
-                      ))}
-                      <option value="qualified">Færdiguddannet</option>
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      <div className="h-4 w-px bg-slate-200 mx-2"></div>
+                      <select 
+                        value={semesterFilter} 
+                        onChange={(e) => setSemesterFilter(e.target.value)}
+                        className="bg-transparent text-xs font-bold text-slate-600 outline-none pr-4 cursor-pointer"
+                      >
+                        <option value="all">Alle Semestre</option>
+                        {[1, 2, 3, 4, 5, 6, 7].map(num => (
+                          <option key={num} value={num.toString()}>{num}. semester</option>
+                        ))}
+                        <option value="qualified">Færdiguddannet</option>
+                      </select>
                   </div>
 
-                  <div className="relative">
-                    <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                    <select 
-                      value={sortBy} 
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="pl-10 pr-8 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 appearance-none hover:border-slate-300 transition-all shadow-sm focus:ring-4 focus:ring-slate-100 outline-none"
-                    >
-                      <option value="newest">Nyeste Først</option>
-                      <option value="oldest">Ældste Først</option>
-                      <option value="points_desc">Flest Point</option>
-                      <option value="last_active_desc">Senest Aktiv</option>
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-indigo-600" />
+                      <div className="h-4 w-px bg-indigo-200 mx-2"></div>
+                      <select 
+                        value={sortBy} 
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="bg-transparent text-xs font-black text-indigo-900 outline-none pr-4 cursor-pointer uppercase tracking-tighter"
+                      >
+                        <option value="newest">Nyeste</option>
+                        <option value="oldest">Ældste</option>
+                        <option value="points_desc">Flest Point</option>
+                        <option value="last_active_desc">Senest Aktiv</option>
+                      </select>
                   </div>
                </div>
             </div>
          </div>
          
          {isLoading ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-20"><Loader2 className="w-10 h-10 animate-spin text-slate-200 mb-4" /> <p className="text-slate-400 font-bold">Indlæser brugere...</p></div>
+            <div className="flex-1 flex flex-col items-center justify-center p-32 space-y-6">
+                <div className="relative">
+                    <Loader2 className="w-16 h-16 animate-spin text-indigo-100" />
+                    <div className="absolute inset-0 flex items-center justify-center text-indigo-600 font-black text-[10px]">COHERO</div>
+                </div>
+                <p className="text-slate-400 font-black tracking-widest uppercase text-xs">Indlæser database...</p>
+            </div>
          ) : error ? (
-            <div className="flex-1 flex items-center justify-center text-rose-500 font-bold">Fejl i indlæsning: {error.message}</div>
+            <div className="flex-1 flex items-center justify-center text-rose-500 font-bold p-20">Fejl: {error.message}</div>
          ) : paginatedUsers.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-20 text-center">
-              <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
-                 <Users className="w-8 h-8 text-slate-300" />
+            <div className="flex-1 flex flex-col items-center justify-center p-32 text-center">
+              <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-8">
+                 <Users className="w-10 h-10 text-slate-200" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">Ingen brugere fundet</h3>
-              <p className="text-slate-400 text-sm max-w-sm">Der er ingen brugere, der matcher dine aktuelle søge- eller filterkriterier.</p>
-              <Button onClick={() => { setSearchTerm(''); setRoleFilter('all'); setMembershipFilter('all'); setSemesterFilter('all'); }} variant="outline" className="mt-6 rounded-2xl">
+              <h3 className="text-2xl font-black text-slate-800 serif mb-3">Ingen resultater</h3>
+              <p className="text-slate-400 font-medium max-w-sm mb-10 leading-relaxed">Vi fandt ingen kolleger der matcher din søgning. Prøv at justere dine filtre eller søgeord.</p>
+              <Button onClick={() => { setSearchTerm(''); setRoleFilter('all'); setMembershipFilter('all'); setSemesterFilter('all'); }} className="rounded-2xl h-12 px-8 bg-slate-900 text-white font-black text-xs uppercase tracking-widest">
                  Ryd Filtre
               </Button>
             </div>
          ) : (
             <div className="overflow-x-auto flex-1 h-full">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100">
-                  <tr>
-                    <th className="px-8 py-5">Kollega</th>
-                    <th className="px-8 py-5">Status & Info</th>
-                    <th className="px-8 py-5">Engagement</th>
-                    <th className="px-8 py-5">Aktivitet & Historik</th>
-                    <th className="px-8 py-5 text-right pr-12">Handling</th>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/30 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 border-b border-slate-100">
+                    <th className="px-10 py-6">Kollega & Profil</th>
+                    <th className="px-10 py-6">Studie & Status</th>
+                    <th className="px-10 py-6">Engagement</th>
+                    <th className="px-10 py-6">Sidst Aktiv</th>
+                    <th className="px-10 py-6 text-right pr-14">Handlinger</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {paginatedUsers.map((u) => {
+                <tbody className="divide-y divide-slate-50">
+                  {paginatedUsers.map((u, idx) => {
                     const lastActivity = u.lastActivityAt?.toDate() || u.lastLogin?.toDate();
                     const createdAt = u.createdAt?.toDate();
                     const now = new Date();
@@ -505,286 +513,367 @@ const AdminUsersPage = () => {
                     
                     return (
                     <React.Fragment key={u.id}>
-                      <tr className={`hover:bg-slate-50/70 transition-colors group cursor-pointer ${expandedUserId === u.id ? 'bg-slate-50/50' : ''}`} onClick={() => setExpandedUserId(expandedUserId === u.id ? null : u.id)}>
-                        <td className="px-8 py-5">
-                           <div className="flex items-center gap-4">
-                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shadow-inner shrink-0 ${isAdmin ? 'bg-rose-100 text-rose-900' : 'bg-slate-100 text-slate-600'}`}>
-                                 {isAdmin ? <Shield className="w-5 h-5" /> : (u.username?.charAt(0) || '?').toUpperCase()}
+                      <motion.tr 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.02 }}
+                        className={`hover:bg-slate-50/50 transition-all group cursor-pointer ${expandedUserId === u.id ? 'bg-indigo-50/30' : ''}`} 
+                        onClick={() => setExpandedUserId(expandedUserId === u.id ? null : u.id)}
+                      >
+                        <td className="px-10 py-6">
+                           <div className="flex items-center gap-5">
+                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm transition-transform group-hover:scale-105 duration-500 ${isAdmin ? 'bg-rose-100 text-rose-700' : 'bg-white border border-slate-100 text-slate-600'}`}>
+                                 {isAdmin ? <Shield className="w-6 h-6" /> : (u.username?.charAt(0) || u.email?.charAt(0) || '?').toUpperCase()}
                               </div>
-                              <div className="truncate min-w-0">
-                                 <p className="font-bold text-slate-900 leading-none mb-1.5 truncate">{u.username}</p>
-                                 <p className="text-xs text-slate-500 font-medium truncate">{u.email}</p>
+                              <div className="min-w-0">
+                                 <p className="font-bold text-slate-900 text-lg leading-tight mb-1 group-hover:text-indigo-600 transition-colors serif">{u.username}</p>
+                                 <p className="text-xs text-slate-400 font-medium tracking-tight truncate">{u.email}</p>
                               </div>
                            </div>
                         </td>
-                        <td className="px-8 py-5">
-                           <div className="flex items-center gap-2 mb-1">
-                             <p className="text-sm font-bold text-slate-800">{u.institution || 'Ej angivet'}</p>
-                             {u.isQualified && (
-                               <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase tracking-widest rounded-md">Færdiguddannet</span>
-                             )}
-                           </div>
-                            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                              <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[9px] font-black uppercase tracking-widest rounded-md border border-indigo-100">
-                                {u.semester || (u.isQualified ? 'Afsluttet' : 'N/A')}
-                              </span>
-                              {u.profession && (
-                                <span className="px-2 py-0.5 bg-slate-50 text-slate-500 text-[9px] font-bold rounded-md border border-slate-100 uppercase tracking-tighter">
-                                    {u.profession}
-                                </span>
-                              )}
+                        <td className="px-10 py-6">
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold text-slate-700">{u.institution || 'Ikke angivet'}</span>
+                                    {u.isQualified ? (
+                                        <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]" title="Færdiguddannet"></div>
+                                    ) : (
+                                        <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest rounded-md">Sem. {u.semester || '?'}</span>
+                                    )}
+                                </div>
+                                <div className="flex gap-1.5 flex-wrap">
+                                    {u.profession && (
+                                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-lg border border-indigo-100/50 uppercase tracking-tighter">
+                                            {u.profession}
+                                        </span>
+                                    )}
+                                    {u.isQualified && (
+                                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-lg border border-emerald-100/50">
+                                            Kvalificeret
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </td>
-                        <td className="px-8 py-5">
-                           <div className="flex items-center gap-2 mb-2">
-                              <Zap className="w-3.5 h-3.5 text-amber-500 fill-current" />
-                               <span className="text-sm font-black text-slate-800">{u.cohéroPoints || 0}</span>
+                        <td className="px-10 py-6">
+                           <div className="flex items-center gap-2 mb-2 font-black text-slate-900 italic">
+                               <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                               {u.cohéroPoints || 0}
                            </div>
-                           <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${u.membership === 'Kollega++' || u.membership === 'Semesterpakken' ? 'bg-amber-100 text-amber-900' : u.membership === 'Kollega+' ? 'bg-blue-100 text-blue-900' : 'bg-slate-100 text-slate-600'}`}>
-                             {u.membership || 'Kollega'}
+                           <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors ${
+                                u.membership === 'Kollega++' || u.membership === 'Semesterpakken' ? 'bg-amber-950 text-amber-400 border-amber-900/50' : 
+                                u.membership === 'Kollega+' ? 'bg-indigo-900 text-indigo-200 border-indigo-800' : 'bg-slate-50 text-slate-500 border-slate-100'
+                           }`}>
+                             {u.membership || 'Kollega (Gratis)'}
                            </span>
                         </td>
-                        <td className="px-8 py-5">
-                           <div className="space-y-1.5">
-                             <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
-                                <span className="text-xs font-bold text-slate-600">
-                                  {lastActivity ? new Date(lastActivity).toLocaleDateString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Aldrig'}
-                                </span>
-                             </div>
-                             <div className="flex items-center gap-2 text-slate-400">
-                                <Calendar className="w-3.5 h-3.5" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">
-                                  Oprettet {createdAt ? new Date(createdAt).toLocaleDateString('da-DK') : 'Ukendt'}
-                                </span>
-                             </div>
-                           </div>
+                        <td className="px-10 py-6">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.6)]' : 'bg-slate-200'}`}></div>
+                                <div>
+                                    <p className="text-[14px] font-bold text-slate-800 leading-none mb-1">
+                                        {lastActivity ? new Date(lastActivity).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) : 'Aldrig'}
+                                    </p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        Kl. {lastActivity ? new Date(lastActivity).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) : '00:00'}
+                                    </p>
+                                </div>
+                            </div>
                         </td>
-                        <td className="px-8 py-5 text-right">
-                           <div className="flex items-center justify-end gap-2">
-                              <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(u); }} className="p-2.5 bg-white shadow-sm border border-slate-200 hover:bg-rose-50 rounded-xl text-slate-400 hover:text-rose-600 transition-all hover:border-rose-100">
+                        <td className="px-10 py-6 text-right">
+                           <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(u); }} 
+                                className="w-10 h-10 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm"
+                              >
                                  <Trash2 className="w-4 h-4" />
                               </button>
-                              <div className={`p-2.5 rounded-xl border transition-all ${expandedUserId === u.id ? 'bg-slate-900 border-slate-900 text-white rotate-180' : 'bg-white border-slate-200 text-slate-400'}`}>
+                              <div className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${expandedUserId === u.id ? 'bg-slate-950 text-white rotate-180 ring-4 ring-slate-100' : 'bg-white border-slate-100 text-slate-300 group-hover:text-slate-600 shadow-sm'}`}>
                                  <ChevronDown className="w-4 h-4" />
                               </div>
                            </div>
                         </td>
-                      </tr>
+                      </motion.tr>
+
+                      <AnimatePresence>
                       {expandedUserId === u.id && (
                         <tr>
-                          <td colSpan={5} className="p-0 bg-slate-50 border-b border-slate-200">
-                            <div className="p-8 grid lg:grid-cols-4 gap-8">
-                               <div className="space-y-4">
-                                  <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><User className="w-3.5 h-3.5" /> Generelt</h4>
-                                  <div className="text-sm space-y-2">
-                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Username:</span> <span className="font-bold text-slate-900">{u.username}</span></p>
-                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Email:</span> <span className="font-bold text-slate-900">{u.email}</span></p>
-                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Profession:</span> <span className="font-bold text-slate-900">{u.profession || '-'}</span></p>
-                                    <p className="flex justify-between pb-2"><span className="text-slate-500 font-medium">UID:</span> <span className="text-xs font-mono text-slate-400 bg-white px-2 py-0.5 rounded">{u.id}</span></p>
-                                  </div>
-                               </div>
-                               <div className="space-y-4">
-                                  <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Briefcase className="w-3.5 h-3.5" /> Adgang / Status</h4>
-                                  <div className="text-sm space-y-2">
-                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Rolle:</span> <span className="font-bold text-slate-900 capitalize">{u.role || 'Bruger'}</span></p>
-                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Plan:</span> <span className="font-bold text-slate-900">{u.membership || 'Kollega (Gratis)'}</span></p>
-                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Uddannet:</span> <span className={`font-bold ${u.isQualified ? 'text-emerald-600' : 'text-slate-400'}`}>{u.isQualified ? 'Ja' : 'Nej'}</span></p>
-                                    <p className="flex justify-between border-b border-white pb-2"><span className="text-slate-500 font-medium">Oprettet:</span> <span className="font-bold text-slate-900">{createdAt ? new Date(createdAt).toLocaleDateString('da-DK') : '-'}</span></p>
-                                    {!u.isQualified && (
-                                      <p className="flex justify-between pb-2">
-                                        <span className="text-slate-500 font-medium">Studie Start:</span> 
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-bold text-slate-900">{u.studyStarted || '-'}</span>
-                                          {!u.studyStarted && u.semester && (
-                                            <button 
-                                              onClick={() => handleCalculateStartDate(u.id, u.semester!)}
-                                              className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded transition-colors hover:bg-amber-200"
-                                            >
-                                              Beregn
-                                            </button>
-                                          )}
-                                        </div>
-                                      </p>
-                                    )}
-                                  </div>
-                               </div>
-                               <div className="space-y-4">
-                                   <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><CreditCard className="w-3.5 h-3.5" /> Udbetaling</h4>
-                                   <div className="text-sm space-y-2">
-                                     <BankRow label="CPR / CVR" value={u.cprNumber} />
-                                     <BankRow label="Reg" value={u.bankReg} />
-                                     <BankRow label="Konto" value={u.bankAccount} />
-                                   </div>
-                                </div>
-                                <div className="space-y-4 lg:col-span-2 xl:col-span-1">
-                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><CreditCard className="w-3.5 h-3.5" /> Studiekort</h4>
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                                        {u.studentCardUrl ? (
-                                            <div className="space-y-4">
-                                                <StudentCardDisplay path={u.studentCardUrl} userId={u.id} userName={u.username || u.email || ''} />
-                                                <div className="space-y-3">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                                            u.studentCardVerification?.status === 'verified' ? 'bg-emerald-100 text-emerald-800' : 
-                                                            u.studentCardVerification?.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
-                                                        }`}>
-                                                            {u.studentCardVerification?.status === 'verified' ? 'Verificeret' : 
-                                                             u.studentCardVerification?.status === 'rejected' ? 'Afvist' : 'Afventer' }
-                                                        </span>
-                                                        <Button 
-                                                            size="sm" 
-                                                            variant="outline" 
-                                                            className="rounded-lg h-7 text-[9px] font-black uppercase tracking-widest px-2"
-                                                            disabled={!u.studentCardUrl}
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-                                                                const btn = e.currentTarget;
-                                                                btn.disabled = true;
-                                                                const originalText = btn.innerText;
-                                                                btn.innerText = "Scanner...";
-                                                                
-                                                                try {
-                                                                    const res = await scanStudentCardAction({ imageUrl: u.studentCardUrl!, userFullName: u.username || u.email || '' });
-                                                                    
-                                                                    if (!res.success) {
-                                                                        throw new Error(res.error || 'Ukendt fejl under scanning');
-                                                                    }
-
-                                                                    const verification: any = {
-                                                                        status: res.data.isStudentCard && !res.data.nameMismatch && !res.data.isExpired ? 'verified' : 'rejected',
-                                                                        ...res.data
-                                                                    };
-                                                                    await updateStudentCardVerificationAction(u.id, verification);
-                                                                    toast({ title: 'Scanning fuldført', description: 'Studiekortet er blevet analyseret.' });
-                                                                } catch (err) {
-                                                                    toast({ title: 'Scanning fejlede', variant: 'destructive', description: err instanceof Error ? err.message : 'Ukendt fejl' });
-                                                                } finally {
-                                                                    btn.disabled = false;
-                                                                    btn.innerText = originalText;
-                                                                }
-                                                            }}
-                                                        >
-                                                            Scan Nu
-                                                        </Button>
-                                                    </div>
-                                                    
-                                                    {u.studentCardVerification && (
-                                                        <div className="space-y-2 text-[10px] border-t border-slate-50 pt-3">
-                                                            <div className="flex justify-between">
-                                                                <span className="text-slate-400 font-bold uppercase tracking-tight">Navn på kort</span>
-                                                                <span className={`font-black text-right ${u.studentCardVerification.nameMismatch ? 'text-rose-600' : 'text-slate-800'}`}>
-                                                                    {u.studentCardVerification.nameOnCard || 'N/A'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex justify-between">
-                                                                <span className="text-slate-400 font-bold uppercase tracking-tight">Udløb</span>
-                                                                <span className={`font-black text-right ${u.studentCardVerification.isExpired ? 'text-rose-600' : 'text-slate-800'}`}>
-                                                                    {u.studentCardVerification.expiryDate || 'Ukendt'}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
+                          <td colSpan={5} className="p-0 border-b border-slate-100 overflow-hidden">
+                            <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="bg-slate-50/40 p-12"
+                            >
+                                <div className="grid lg:grid-cols-4 gap-12 max-w-7xl">
+                                    {/* Kolonne 1: Generelt & Kontakt */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                                            <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shadow-sm">
+                                                <User className="w-4 h-4" />
                                             </div>
-                                        ) : (
-                                            <div className="text-center py-6 text-slate-400 italic text-[10px]">Intet studiekort uploadet.</div>
-                                        )}
+                                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Bruger og Kontakt</h4>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-1">Brugernavn / Full Name</span>
+                                                <span className="font-bold text-slate-900 serif text-lg">{u.username}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-1">E-mail Adresse</span>
+                                                <span className="font-bold text-slate-700 select-all">{u.email}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-1">Unikt Bruger ID (UID)</span>
+                                                <code className="text-[10px] font-mono text-slate-400 bg-white px-3 py-1.5 rounded-lg border border-slate-100 w-fit">{u.id}</code>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Kolonne 2: Akademisk Status */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                                            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shadow-sm">
+                                                <GraduationCap className="w-4 h-4" />
+                                            </div>
+                                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Akademisk Status</h4>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                                <span className="text-xs font-bold text-slate-500">Plan:</span>
+                                                <span className="text-xs font-black uppercase tracking-widest text-indigo-600">{u.membership || 'Kollega (Gratis)'}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                                <span className="text-xs font-bold text-slate-500">Semester:</span>
+                                                <span className={`text-xs font-black ${u.isQualified ? 'text-emerald-600' : 'text-slate-900'}`}>{u.semester || (u.isQualified ? 'Afsluttet' : 'N/A')}</span>
+                                            </div>
+                                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-bold text-slate-500">Studie Start:</span>
+                                                    <span className="text-xs font-black text-slate-900">{u.studyStarted || 'Ej beregnet'}</span>
+                                                </div>
+                                                {!u.studyStarted && !u.isQualified && u.semester && (
+                                                    <Button 
+                                                        size="sm" 
+                                                        onClick={() => handleCalculateStartDate(u.id, u.semester!)}
+                                                        className="w-full rounded-xl h-8 bg-amber-50 text-amber-700 hover:bg-amber-100 text-[10px] font-black uppercase tracking-widest border border-amber-200/50 shadow-none"
+                                                    >
+                                                        Kør Beregning
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Kolonne 3: Finansiel / Bank */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                                            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-sm">
+                                                <CreditCard className="w-4 h-4" />
+                                            </div>
+                                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Udbetaling & Sikkerhed</h4>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+                                            <BankRow label="CPR / CVR" value={u.cprNumber} />
+                                            <BankRow label="Bank Reg" value={u.bankReg} />
+                                            <BankRow label="Konto Nr." value={u.bankAccount} />
+                                            <p className="text-[9px] text-slate-400 leading-relaxed pt-2">Data er krypteret med AES-256 før lagring i databasen.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Kolonne 4: Dokumentation & Studiekort */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shadow-sm">
+                                                <Shield className="w-4 h-4" />
+                                            </div>
+                                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Studiekort & Validering</h4>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4 flex flex-col">
+                                            {u.studentCardUrl ? (
+                                                <>
+                                                    <StudentCardDisplay path={u.studentCardUrl} userId={u.id} userName={u.username || u.email || ''} />
+                                                    <div className="pt-2">
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
+                                                                u.studentCardVerification?.status === 'verified' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                                            }`}>
+                                                                {u.studentCardVerification?.status === 'verified' ? (
+                                                                    <>Verificeret <CheckCircle2 className="w-3 h-3" /></>
+                                                                ) : (
+                                                                    <>Afvist <XCircle className="w-3 h-3" /></>
+                                                                )}
+                                                            </span>
+                                                            <Button 
+                                                                variant="outline" 
+                                                                className="h-8 rounded-xl text-[10px] font-black uppercase tracking-widest border-slate-100"
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    const btn = e.currentTarget;
+                                                                    btn.disabled = true;
+                                                                    try {
+                                                                        const res = await scanStudentCardAction({ imageUrl: u.studentCardUrl!, userFullName: u.username || u.email || '' });
+                                                                        if (res.success) {
+                                                                            const verification: any = { status: res.data.isStudentCard && !res.data.nameMismatch && !res.data.isExpired ? 'verified' : 'rejected', ...res.data };
+                                                                            await updateStudentCardVerificationAction(u.id, verification);
+                                                                            toast({ title: 'Analyse Fuldført' });
+                                                                        }
+                                                                    } catch (err) { toast({ variant: 'destructive', title: 'Fejl under scan' }); }
+                                                                    finally { btn.disabled = false; }
+                                                                }}
+                                                            >
+                                                                Scan & Analysér
+                                                            </Button>
+                                                        </div>
+                                                        {u.studentCardVerification && (
+                                                            <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                                <div className="flex justify-between text-[10px]">
+                                                                    <span className="text-slate-400 font-bold">Kort Navn:</span>
+                                                                    <span className="font-black text-slate-800">{u.studentCardVerification.nameOnCard || 'N/A'}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-[10px]">
+                                                                    <span className="text-slate-400 font-bold">Udløb:</span>
+                                                                    <span className="font-black text-slate-800">{u.studentCardVerification.expiryDate || 'Ukendt'}</span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                                    <p className="text-[11px] font-bold text-slate-300 italic uppercase tracking-tighter">Intet dokument fundet</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-sm lg:col-span-2 xl:col-span-1">
-                                   <div>
-                                     <h4 className="text-[11px] font-black uppercase tracking-widest text-rose-800 flex items-center gap-2 mb-4"><Shield className="w-3.5 h-3.5" /> Administrative Handlinger</h4>
-                                     <p className="text-xs text-slate-500 leading-relaxed mb-4">Advarsel: Sletning af en bruger er permanent. De mister alt indhold og deres abonnement annulleres, hvis det er aktivt.</p>
-                                   </div>
-                                   <div className="flex flex-wrap items-center gap-3">
-                                      <Button size="sm" variant="outline" className="rounded-xl border-slate-200" disabled>Nulstil Adgangskode (Kommer snart)</Button>
-                                      <Button size="sm" variant="outline" className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50" onClick={async () => {
-                                          await clearUserPaymentInfoAction(u.id, u.studentCardUrl);
-                                          toast({ title: "Oplysninger slettet", description: "CPR, bankoplysninger og studiekort er nu fjernet." });
-                                      }}>Slet Udbetalingsinfo</Button>
-                                      {u.isMarketplaceBanned ? (
-                                          <Button size="sm" variant="outline" className="rounded-xl border-emerald-200 text-emerald-600 hover:bg-emerald-50" onClick={async () => {
-                                              await toggleMarketplaceBanAction(u.id, false);
-                                              toast({ title: "Udelukkelse fjernet", description: "Brugeren har nu adgang til markedspladsen igen." });
-                                          }}>Fjern Udelukkelse</Button>
-                                      ) : (
-                                          <Button size="sm" variant="outline" className="rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50" onClick={async () => {
-                                              const reason = prompt(`Hvorfor skal ${u.username || u.email} udelukkes fra markedspladsen?`);
-                                              if (reason) {
-                                                  await toggleMarketplaceBanAction(u.id, true, reason);
-                                                  toast({ title: "Bruger udelukket", description: "Brugeren er nu spærret fra markedspladsen." });
-                                              }
-                                          }}>Udeluk fra Markedsplads</Button>
-                                      )}
-                                      <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => handleDeleteClick(u)}>Slet Bruger permanent</Button>
-                                   </div>
-                                   {u.isMarketplaceBanned && (
-                                       <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100 flex items-start gap-3">
-                                           <AlertCircle className="w-4 h-4 text-rose-600 mt-0.5" />
-                                           <div>
-                                               <p className="text-[10px] font-black uppercase text-rose-900 mb-1">Udelukket fra markedsplads</p>
-                                               <p className="text-[11px] font-medium text-rose-700 leading-relaxed italic">Begrundelse: {u.marketplaceBanReason}</p>
-                                           </div>
-                                       </div>
-                                   )}
+
+                                {/* Administrative Actions Row */}
+                                <div className="mt-12 flex flex-wrap items-center justify-between gap-8 pt-8 border-t border-slate-100">
+                                    <div className="flex items-center gap-6">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Status på Markedsplads</span>
+                                            {u.isMarketplaceBanned ? (
+                                                <div className="flex items-center gap-3">
+                                                    <span className="px-3 py-1 bg-rose-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest">Udelukket</span>
+                                                    <p className="text-xs text-rose-600 font-medium italic">"{u.marketplaceBanReason}"</p>
+                                                </div>
+                                            ) : (
+                                                <span className="px-3 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 w-fit">Aktiv <CheckCircle2 className="w-3 h-3" /></span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-3">
+                                        <Button 
+                                            size="sm" 
+                                            variant="outline" 
+                                            className="rounded-2xl border-slate-200 h-11 px-6 text-xs font-bold"
+                                            onClick={async () => {
+                                                await clearUserPaymentInfoAction(u.id, u.studentCardUrl);
+                                                toast({ title: "Sensitiv data fjernet" });
+                                            }}
+                                        >
+                                            Ryd Finansiel Data
+                                        </Button>
+                                        
+                                        {u.isMarketplaceBanned ? (
+                                            <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="rounded-2xl border-emerald-200 text-emerald-600 hover:bg-emerald-50 h-11 px-6 text-xs font-bold"
+                                                onClick={() => toggleMarketplaceBanAction(u.id, false)}
+                                            >
+                                                Ophæv Udelukkelse
+                                            </Button>
+                                        ) : (
+                                            <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="rounded-2xl border-rose-200 text-rose-600 hover:bg-rose-50 h-11 px-6 text-xs font-bold"
+                                                onClick={() => {
+                                                    const reason = prompt(`Årsag til udelukkelse af ${u.username}?`);
+                                                    if (reason) toggleMarketplaceBanAction(u.id, true, reason);
+                                                }}
+                                            >
+                                                Udeluk fra Markedsplads
+                                            </Button>
+                                        )}
+                                        
+                                        <Button 
+                                            size="sm" 
+                                            variant="destructive" 
+                                            className="rounded-2xl h-11 px-8 font-black text-xs uppercase tracking-widest ml-4 shadow-xl shadow-rose-500/10"
+                                            onClick={() => handleDeleteClick(u)}
+                                        >
+                                            Slet permanent
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
+                            </motion.div>
                           </td>
                         </tr>
                       )}
+                      </AnimatePresence>
                     </React.Fragment>
                   )})}
                 </tbody>
               </table>
-           </div>
-         )}
-         
-         {/* Pagination Controls */}
-         {totalPages > 1 && (
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-white text-sm">
-              <span className="text-slate-500 font-medium pl-4">Viser {Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedUsers.length)} til {Math.min(currentPage * itemsPerPage, filteredAndSortedUsers.length)} af {filteredAndSortedUsers.length} brugere</span>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="rounded-xl" 
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" /> Forrige
-                </Button>
-                <div className="flex items-center gap-1.5 px-3">
-                   {Array.from({length: totalPages}, (_, i) => i + 1)
-                     .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
-                     .map((page, i, arr) => (
-                       <React.Fragment key={page}>
-                         {i > 0 && arr[i - 1] !== page - 1 && <span className="text-slate-300">...</span>}
-                         <button 
-                           onClick={() => setCurrentPage(page)}
-                           className={`w-8 h-8 rounded-lg font-bold text-sm transition-all ${currentPage === page ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
-                         >
-                           {page}
-                         </button>
-                       </React.Fragment>
-                     ))
-                   }
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="rounded-xl" 
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Næste <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
             </div>
          )}
-      </div>
+         
+         {/* 4. Combined Pagination & Results Info */}
+         <div className="p-8 border-t border-slate-50 flex flex-col md:flex-row items-center justify-between gap-6 bg-slate-50/10">
+            <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-1">Resultater</span>
+                <p className="text-sm font-bold text-slate-800">
+                    Viser {Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedUsers.length)}-{Math.min(currentPage * itemsPerPage, filteredAndSortedUsers.length)} af {filteredAndSortedUsers.length}
+                </p>
+            </div>
 
+            {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="rounded-2xl border-slate-100 h-10 px-4 group" 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" /> Forrige
+                    </Button>
+                    
+                    <div className="flex items-center gap-1.5 mx-2">
+                        {Array.from({length: totalPages}, (_, i) => i + 1)
+                            .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+                            .map((page, i, arr) => (
+                                <React.Fragment key={page}>
+                                    {i > 0 && arr[i - 1] !== page - 1 && <span className="text-slate-300 px-1 font-bold">...</span>}
+                                    <button 
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`w-10 h-10 rounded-xl font-black text-xs transition-all ${currentPage === page ? 'bg-slate-950 text-white shadow-xl shadow-slate-900/10 scale-110' : 'text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-sm'}`}
+                                    >
+                                        {page}
+                                    </button>
+                                </React.Fragment>
+                            ))
+                        }
+                    </div>
+
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="rounded-2xl border-slate-100 h-10 px-4 group" 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Næste <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                </div>
+            )}
+         </div>
+      </section>
     </div>
+
     {userToDelete && (
         <DeleteUserModal
           isOpen={!!userToDelete}
@@ -792,7 +881,7 @@ const AdminUsersPage = () => {
           onConfirm={handleConfirmDelete}
           username={userToDelete.username}
         />
-      )}
+    )}
     </>
   );
 };

@@ -2060,3 +2060,158 @@ export async function adminDeleteUserAction(userId: string) {
         return { success: false, error: e.message || "Kunne ikke slette brugeren fra Auth." };
     }
 }
+
+export async function getStripeDashboardMetricsAction() {
+    if (!isStripeConfigured) {
+
+        return { success: false, error: "Stripe er ikke konfigureret." };
+    }
+
+    try {
+        let totalMrrCents = 0;
+        let activeSubsCount = 0;
+        
+        const counts = {
+            'Semesterpakken': 0,
+            'Kollega+': 0,
+            'Group Pro': 0,
+            'Andre': 0
+        };
+
+        // 1. Fetch all active subscriptions across all prices
+        // Using auto-pagination to ensure we get ALL subscriptions (more than the 100 limit)
+        for await (const sub of stripe.subscriptions.list({
+            status: 'active',
+            expand: ['data.plan.product', 'data.discount.coupon'],
+        })) {
+            activeSubsCount++;
+            
+            let subscriptionMrrCents = 0;
+
+            // Step 1: Calculate Gross MRR for this subscription's items
+            for (const item of sub.items.data) {
+                const price = item.price;
+                const amount = price.unit_amount || 0;
+                const quantity = item.quantity || 1;
+                
+                let itemMonthlyCents = (amount * quantity) / (price.recurring?.interval_count || 1);
+                if (price.recurring?.interval === 'year') {
+                    itemMonthlyCents /= 12;
+                }
+                
+                subscriptionMrrCents += itemMonthlyCents;
+                
+                // Track counts by type (using price ID)
+                const pid = price.id;
+                if (pid === process.env.STRIPE_GROUP_PRO_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
+                    counts['Group Pro']++;
+                } else if (pid === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
+                    counts['Kollega+']++;
+                } else if (pid === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
+                    counts['Kollega+']++; 
+                } else if (pid === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
+                    counts['Semesterpakken']++;
+                } else {
+                    counts['Andre']++;
+                }
+            }
+
+            // Step 2: Apply active discounts/coupons to the subscription's MRR
+            if (sub.discount && sub.discount.coupon) {
+                const coupon = sub.discount.coupon;
+                if (coupon.amount_off) {
+                    // Normalize fixed discount to monthly
+                    let monthlyDiscount = coupon.amount_off;
+                    const interval = (sub as any).plan?.interval || 'month';
+                    if (interval === 'year') monthlyDiscount /= 12;
+                    subscriptionMrrCents = Math.max(0, subscriptionMrrCents - monthlyDiscount);
+                } else if (coupon.percent_off) {
+                    subscriptionMrrCents = subscriptionMrrCents * (1 - (coupon.percent_off / 100));
+                }
+            }
+
+            totalMrrCents += subscriptionMrrCents;
+        }
+
+
+
+        // 2. Fetch net revenue for the last 30 days
+        const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+        let netRevenue30dCents = 0;
+
+        for await (const payment of stripe.paymentIntents.list({
+            created: { gte: thirtyDaysAgo },
+        })) {
+            if (payment.status === 'succeeded') {
+                netRevenue30dCents += (payment.amount_received || payment.amount || 0);
+            }
+        }
+
+        return {
+            success: true,
+            mrr: totalMrrCents / 100,
+            arr: (totalMrrCents * 12) / 100,
+            activeSubs: activeSubsCount,
+            counts,
+            netRevenue30d: netRevenue30dCents / 100,
+            currency: 'DKK'
+        };
+
+    } catch (error: any) {
+        console.error("Stripe Dashboard Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function getStripeHistoricalRevenueAction() {
+    if (!isStripeConfigured) {
+        return { success: false, error: "Stripe er ikke konfigureret." };
+    }
+
+    try {
+        const now = Math.floor(Date.now() / 1000);
+        const twelveMonthsAgo = now - (365 * 24 * 60 * 60);
+
+        const months = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
+        const revenueByMonth: Record<string, number> = {};
+
+        // Fetch paid invoices for the last 12 months using auto-pagination
+        for await (const inv of stripe.invoices.list({
+            created: { gte: twelveMonthsAgo },
+            status: 'paid',
+        })) {
+            const date = new Date(inv.created * 1000);
+            const monthName = months[date.getMonth()];
+            const year = date.getFullYear();
+            const label = `${monthName} ${year}`;
+            
+            revenueByMonth[label] = (revenueByMonth[label] || 0) + (inv.amount_paid / 100);
+        }
+
+
+        // Convert the map to a sorted array for charts
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        
+        // Generate last 12 months slots to ensure zero-filled months
+        const result: any[] = [];
+        for (let i = 11; i >= 0; i--) {
+
+            const d = new Date(currentYear, currentMonth - i, 1);
+            const label = `${months[d.getMonth()]} ${d.getFullYear()}`;
+            result.push({
+                name: label,
+                revenue: Math.round(revenueByMonth[label] || 0),
+                _timestamp: d.getTime()
+            });
+        }
+
+        return { success: true, data: result };
+    } catch (error: any) {
+        console.error("Stripe Historical Revenue Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+
+
