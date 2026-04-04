@@ -489,6 +489,36 @@ export async function saveQuizResultAction(params: { userId: string, result: Omi
             ...params.result,
             createdAt: FieldValue.serverTimestamp()
         });
+
+        // --- Gamification: Check for active Quiz Challenges ---
+        const now = new Date();
+        const activeEvents = await adminFirestore.collection('gamificationEvents')
+            .where('startDate', '<=', now)
+            .where('endDate', '>=', now)
+            .where('isActive', '==', true)
+            .where('type', '==', 'quiz_count')
+            .get();
+
+        if (!activeEvents.empty) {
+            const userDoc = await adminFirestore.collection('users').doc(params.userId).get();
+            const userName = userDoc.data()?.username || userDoc.data()?.displayName || 'Anonym Kollega';
+
+            for (const eventDoc of activeEvents.docs) {
+                const progressRef = adminFirestore.collection('gamificationEvents')
+                    .doc(eventDoc.id)
+                    .collection('userProgress')
+                    .doc(params.userId);
+
+                await progressRef.set({
+                    userId: params.userId,
+                    userName,
+                    score: FieldValue.increment(1),
+                    lastUpdate: FieldValue.serverTimestamp()
+                }, { merge: true });
+            }
+        }
+        // ---------------------------------------------------
+
         return { success: true };
     } catch (e) {
         console.error("Failed to save quiz result:", e);
@@ -2225,6 +2255,341 @@ export async function getStripeHistoricalRevenueAction() {
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Security: Logs user session metadata for fraud and sharing detection.
+ * Part of the "AI Fraud & Sharing Detection" system.
+ */
+export async function logUserSessionAction(userId: string, userName: string) {
+    if (!userId || !adminFirestore) return { success: false };
+
+    try {
+        const headerList = await headers();
+        const ip = headerList.get('x-forwarded-for') || 'unknown';
+        const userAgent = headerList.get('user-agent') || 'unknown';
+        
+        // Simple rate limiting: Only log once every 30 minutes to reduce DB load
+        const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+        const recentLogs = await adminFirestore.collection('userSessions')
+            .where('userId', '==', userId)
+            .where('createdAt', '>=', thirtyMinsAgo)
+            .limit(1)
+            .get();
+
+        if (recentLogs.empty) {
+            await adminFirestore.collection('userSessions').add({
+                userId,
+                userName,
+                ip,
+                userAgent,
+                createdAt: FieldValue.serverTimestamp()
+            });
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to log user session:", error);
+        return { success: false };
+    }
+}
+
+/**
+ * AI Security: Detects users with high risk of account sharing.
+ * Flags users with > 3 unique IPs in the last 7 days.
+ */
+export async function detectAccountSharingAction() {
+    try {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const logs = await adminFirestore.collection('userSessions')
+            .where('createdAt', '>=', sevenDaysAgo)
+            .get();
+
+        const userRisks: Record<string, { userId: string, userName: string, ips: Set<string>, agents: Set<string> }> = {};
+
+        logs.forEach(doc => {
+            const data = doc.data();
+            if (!userRisks[data.userId]) {
+                userRisks[data.userId] = { userId: data.userId, userName: data.userName, ips: new Set(), agents: new Set() };
+            }
+            userRisks[data.userId].ips.add(data.ip);
+            userRisks[data.userId].agents.add(data.userAgent);
+        });
+
+        const flaggedUsers = Object.values(userRisks)
+            .filter(u => u.ips.size > 2 || u.agents.size > 3) // Sharper threshold
+            .map(u => ({
+                userId: u.userId,
+                userName: u.userName,
+                uniqueIps: u.ips.size,
+                uniqueDevices: u.agents.size,
+                riskLevel: u.ips.size > 4 ? 'critical' : 'high'
+            }))
+            .sort((a, b) => b.uniqueIps - a.uniqueIps);
+
+        return { success: true, data: flaggedUsers };
+    } catch (error) {
+        console.error("Failed to detect account sharing:", error);
+        return { success: false, error: "Security scan felet." };
+    }
+}
+
+/**
+ * Engagement: Management of Gamification Challenges.
+ */
+export async function createGamificationEventAction(input: {
+    title: string;
+    description: string;
+    type: 'quiz_count' | 'streak_days';
+    startDate: string;
+    endDate: string;
+    reward: string;
+}) {
+    if (!adminFirestore) return { success: false };
+    try {
+        await adminFirestore.collection('gamificationEvents').add({
+            ...input,
+            startDate: new Date(input.startDate),
+            endDate: new Date(input.endDate),
+            isActive: true,
+            createdAt: FieldValue.serverTimestamp()
+        });
+        return { success: true };
+    } catch (e) {
+        console.error("Failed to create gamification event:", e);
+        return { success: false };
+    }
+}
+
+export async function getGamificationEventsAction() {
+    if (!adminFirestore) return { success: false };
+    try {
+        const snap = await adminFirestore.collection('gamificationEvents')
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        const events = snap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            startDate: doc.data().startDate.toDate().toISOString(),
+            endDate: doc.data().endDate.toDate().toISOString()
+        }));
+        
+        return { success: true, data: events };
+    } catch (e) {
+        console.error("Failed to get gamification events:", e);
+        return { success: false };
+    }
+}
+
+export async function deleteGamificationEventAction(eventId: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        await adminFirestore.collection('gamificationEvents').doc(eventId).delete();
+        return { success: true };
+    } catch (e) {
+        console.error("Failed to delete gamification event:", e);
+        return { success: false };
+    }
+}
+
+export async function getEventLeaderboardAction(eventId: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const snap = await adminFirestore.collection('gamificationEvents')
+            .doc(eventId)
+            .collection('userProgress')
+            .orderBy('score', 'desc')
+            .limit(20)
+            .get();
+        
+        const leaderboard = snap.docs.map(doc => ({
+            ...doc.data(),
+            lastUpdate: doc.data().lastUpdate?.toDate()?.toISOString() || null
+        }));
+        return { success: true, data: leaderboard };
+    } catch (e) {
+        console.error("Failed to get leaderboard:", e);
+        return { success: false };
+    }
+}
+
+/**
+ * Legal & Compliance: GDPR and Audit readiness.
+ */
+export async function getComplianceLogsAction() {
+    if (!adminFirestore) return { success: false };
+    try {
+        const snap = await adminFirestore.collection('users')
+            .orderBy('createdAt', 'desc')
+            .limit(100)
+            .get();
+        
+        const logs = snap.docs.map(doc => ({
+            userId: doc.id,
+            userName: doc.data().username || 'Kollega',
+            email: doc.data().email,
+            acceptedAt: doc.data().createdAt?.toDate()?.toISOString() || null,
+            termsVersion: 'v1.0.0'
+        }));
+        
+        return { success: true, data: logs };
+    } catch (e) {
+        console.error("Failed to get compliance logs:", e);
+        return { success: false };
+    }
+}
+
+export async function exportUserGDPRDataAction(userIdOrEmail: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        let userSnap;
+        if (userIdOrEmail.includes('@')) {
+            userSnap = await adminFirestore.collection('users').where('email', '==', userIdOrEmail.toLowerCase()).get();
+        } else {
+            const doc = await adminFirestore.collection('users').doc(userIdOrEmail).get();
+            if (doc.exists) userSnap = { docs: [doc], empty: false };
+            else userSnap = { empty: true };
+        }
+
+        if (userSnap.empty) return { success: false, message: 'User not found' };
+        
+        const userDoc = userSnap.docs[0];
+        const userId = userDoc.id;
+        const profile = userDoc.data();
+
+        // Gather subcollections
+        const quizSnap = await adminFirestore.collection('users').doc(userId).collection('quizResults').get();
+        const quizResults = quizSnap.docs.map(d => ({ ...d.data(), createdAt: d.data().createdAt?.toDate()?.toISOString() || null }));
+        
+        const sessionSnap = await adminFirestore.collection('userSessions').where('userId', '==', userId).get();
+        const sessions = sessionSnap.docs.map(d => ({ ...d.data(), createdAt: d.data().createdAt?.toDate()?.toISOString() || null }));
+        
+        const notifSnap = await adminFirestore.collection('users').doc(userId).collection('notifications').get();
+        const notifications = notifSnap.docs.map(d => ({ ...d.data(), createdAt: d.data().createdAt?.toDate()?.toISOString() || null }));
+
+        const fullDump = {
+            metadata: {
+                exportedAt: new Date().toISOString(),
+                userId,
+                email: profile.email || 'N/A'
+            },
+            profile: JSON.parse(JSON.stringify(profile)), // Clean up Timestamps etc
+            usageHistory: {
+                quizResults: JSON.parse(JSON.stringify(quizResults)),
+                sessions: JSON.parse(JSON.stringify(sessions)),
+                notifications: JSON.parse(JSON.stringify(notifications))
+            }
+        };
+
+        return { success: true, data: fullDump };
+    } catch (e: any) {
+        console.error("GDPR Export failed:", e);
+        return { success: false, message: e.message || 'Export failed' };
+    }
+}
+
+/**
+ * Policy Management: Manage Terms, Privacy & Cookies.
+ */
+export type PolicyType = 'terms' | 'privacy' | 'cookies';
+
+export async function getPolicyAction(type: PolicyType) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const docRef = adminFirestore.collection('globalConfigs').doc(type);
+        const snap = await docRef.get();
+        
+        if (!snap.exists) {
+            const defaults = {
+                terms: "Standard Handelsbetingelser...",
+                privacy: "Privatlivspolitik...",
+                cookies: "Cookiepolitik..."
+            };
+            return { 
+                success: true, 
+                data: { 
+                    content: defaults[type] || "Ny Politik...", 
+                    version: "1.0.0",
+                    updatedAt: new Date().toISOString()
+                } 
+            };
+        }
+        
+        const data = snap.data() || {};
+        return { 
+            success: true, 
+            data: {
+                ...data,
+                updatedAt: data.updatedAt?.toDate()?.toISOString() || new Date().toISOString()
+            }
+        };
+    } catch (e) {
+        console.error(`Failed to get policy ${type}:`, e);
+        return { success: false };
+    }
+}
+
+export async function updatePolicyAction(type: PolicyType, content: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const docRef = adminFirestore.collection('globalConfigs').doc(type);
+        const snap = await docRef.get();
+        
+        let newVersion = "1.0.1";
+        if (snap.exists) {
+            const currentVersion = snap.data()?.version || "1.0.0";
+            const parts = currentVersion.split('.').map(Number);
+            parts[2] = (parts[2] || 0) + 1; // Increment patch
+            newVersion = parts.join('.');
+        }
+
+        const updateData = {
+            content,
+            version: newVersion,
+            updatedAt: FieldValue.serverTimestamp(),
+            updatedBy: 'admin'
+        };
+
+        await docRef.set(updateData, { merge: true });
+
+        // Log the change in audit history
+        await adminFirestore.collection('globalConfigs').doc(type).collection('history').add({
+            ...updateData,
+            updatedAt: FieldValue.serverTimestamp() // Log real server time
+        });
+
+        return { success: true, version: newVersion };
+    } catch (e) {
+        console.error(`Failed to update policy ${type}:`, e);
+        return { success: false };
+    }
+}
+
+export async function getPolicyHistoryAction(type: PolicyType) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const snap = await adminFirestore.collection('globalConfigs').doc(type)
+            .collection('history')
+            .orderBy('updatedAt', 'desc')
+            .limit(50)
+            .get();
+        
+        const history = snap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            updatedAt: doc.data().updatedAt?.toDate()?.toISOString() || null
+        }));
+        
+        return { success: true, data: history };
+    } catch (e) {
+        console.error(`Failed to fetch history for ${type}:`, e);
+        return { success: false };
+    }
+}
+
+// Aliases for compatibility
+export async function getTermsConfigAction() { return getPolicyAction('terms'); }
+export async function updateTermsConfigAction(content: string) { return updatePolicyAction('terms', content); }
 
 
 

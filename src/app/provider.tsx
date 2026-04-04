@@ -295,6 +295,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isBannerDismissed, setIsBannerDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const isUpdatingProfile = React.useRef(false);
+  const maintenanceThrottleRef = React.useRef(0);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
   const isRaadgivning = useMemo(() => pathname?.startsWith('/raadgivning'), [pathname]);
   const isLovPortal = useMemo(() => pathname?.startsWith('/lov-portal'), [pathname]);
@@ -435,6 +436,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!user || userProfile === undefined || userProfile === null || !firestore || isUpdatingProfile.current) return;
 
+    // Throttle: Only run maintenance logic if we haven't done it in the last 30 seconds
+    const nowTime = Date.now();
+    if (nowTime - maintenanceThrottleRef.current < 30000) return;
+    maintenanceThrottleRef.current = nowTime;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -481,13 +487,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             try {
                 console.log(`[AppProvider] Consolidating profile maintenance for ${user.uid}:`, Object.keys(updateObj));
                 await updateDoc(doc(firestore, 'users', user.uid), updateObj);
-            } catch (err) {
-                console.error("Failed to update profile maintenance:", err);
-            } finally {
-                // Keep it locked for a bit to let the snapshot settle
+                // Keep it locked for a bit to let the snapshot settle and prevent bouncing
                 setTimeout(() => {
                     isUpdatingProfile.current = false;
-                }, 2000);
+                }, 10000); // 10s lock
+            } catch (err) {
+                console.error("Failed to update profile maintenance:", err);
+                isUpdatingProfile.current = false;
             }
         }
     };

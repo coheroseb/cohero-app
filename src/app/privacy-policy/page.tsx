@@ -1,6 +1,7 @@
+
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     ShieldCheck, 
     Database, 
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { getPolicyAction } from '@/app/actions';
 
 const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
     <motion.div
@@ -34,7 +36,7 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
 
 const PolicyCard = ({ icon: Icon, title, children, delay }: { icon: any, title: string, children: React.ReactNode, delay: number }) => (
     <Reveal delay={delay}>
-        <div className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-900/5 hover:-translate-y-1 transition-all">
+        <div className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-900/5 hover:-translate-y-1 transition-all h-full">
             <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <Icon className="w-7 h-7" />
             </div>
@@ -47,6 +49,22 @@ const PolicyCard = ({ icon: Icon, title, children, delay }: { icon: any, title: 
 );
 
 export default function PrivacyPolicyPage() {
+    const [dynamicPrivacy, setDynamicPrivacy] = useState<{ content: string, version: string, updatedAt: string } | null>(null);
+
+    useEffect(() => {
+        async function fetchPrivacy() {
+            const res = await getPolicyAction('privacy');
+            if (res.success && res.data) {
+                setDynamicPrivacy({
+                    content: res.data.content || '',
+                    version: res.data.version || '1.0.0',
+                    updatedAt: res.data.updatedAt || new Date().toISOString()
+                });
+            }
+        }
+        fetchPrivacy();
+    }, []);
+
     return (
         <div className="bg-[#fafafa] min-h-screen selection:bg-amber-500/10 selection:text-amber-600">
             {/* HEADER */}
@@ -80,81 +98,96 @@ export default function PrivacyPolicyPage() {
             </header>
 
             <main className="max-w-6xl mx-auto px-6 pb-40">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    
-                    <PolicyCard icon={Lock} title="1. Dataansvarlig" delay={0.2}>
-                        <p>
-                            Cohéro I/S (CVR: 46181425) er dataansvarlig. Vi beskytter dine data i overensstemmelse med GDPR og dansk lovgivning.
-                        </p>
-                        <p className="text-sm border-t border-slate-100 pt-4">
-                            Kontakt os på: <br />
-                            <span className="font-bold text-slate-900">kontakt@cohero.dk</span>
-                        </p>
-                    </PolicyCard>
+                {dynamicPrivacy && dynamicPrivacy.content && dynamicPrivacy.content !== "Privatlivspolitik..." ? (
+                    <Reveal delay={0.2}>
+                        <div className="bg-white p-12 md:p-20 rounded-[3rem] border border-slate-100 shadow-xl space-y-12 min-h-[600px]">
+                            <div className="flex items-center justify-between border-b border-slate-50 pb-8">
+                                <div className="flex items-center gap-4">
+                                    <ShieldCheck className="w-6 h-6 text-amber-600" />
+                                    <h3 className="text-xl font-black text-slate-900 serif">Gældende Privatlivspolitik</h3>
+                                </div>
+                                <div className="px-4 py-2 bg-slate-50 rounded-full text-[10px] font-black uppercase text-slate-400">
+                                    Versio {dynamicPrivacy.version}
+                                </div>
+                            </div>
+                            <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-loose whitespace-pre-wrap">
+                                {dynamicPrivacy.content}
+                            </div>
+                        </div>
+                    </Reveal>
+                ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <PolicyCard icon={Lock} title="1. Dataansvarlig" delay={0.2}>
+                            <p>
+                                Cohéro I/S (CVR: 46181425) er dataansvarlig. Vi beskytter dine data i overensstemmelse med GDPR og dansk lovgivning.
+                            </p>
+                            <p className="text-sm border-t border-slate-100 pt-4">
+                                Kontakt os på: <br />
+                                <span className="font-bold text-slate-900">kontakt@cohero.dk</span>
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={BrainCircuit} title="2. AI & Optimering" delay={0.3}>
-                        <p>
-                            Når du bruger vores AI-værktøjer (f.eks. Kollega eller Case-Analytikeren), behandles dine input af avancerede AI-modeller. 
-                        </p>
-                        <p>
-                            For at skabe en bedre brugeroplevelse og løbende forbedre platformens faglige præcision, forbeholder Cohéro sig retten til at bruge anonymiserede cases til intern træning og optimering af vores systemer.
-                        </p>
-                        <p className="font-bold text-amber-600 text-sm italic">
-                            Alt input skal fortsat være anonymiseret af brugeren før upload for at beskytte tredjeparter.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={BrainCircuit} title="2. AI & Optimering" delay={0.3}>
+                            <p>
+                                Når du bruger vores AI-værktøjer (f.eks. Kollega eller Case-Analytikeren), behandles dine input af avancerede AI-modeller. 
+                            </p>
+                            <p>
+                                For at skabe en bedre brugeroplevelse og løbende forbedre platformens faglige præcision, forbeholder Cohéro rætten til at bruge anonymiserede cases til intern træning og optimering af vores systemer.
+                            </p>
+                            <p className="font-bold text-amber-600 text-sm italic">
+                                Alt input skal fortsat være anonymiseret af brugeren før upload for at beskytte tredjeparter.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={Star} title="3. Praktikvurderinger" delay={0.4}>
-                        <p>
-                            Når du volder en institution, vælger du selv om dit navn skal være synligt (offentligt) eller om anmeldelsen skal være anonym.
-                        </p>
-                        <p>
-                            Anonyme anmeldelser gemmes uden reference til din identitet på den offentlige portal.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={Star} title="3. Praktikvurderinger" delay={0.4}>
+                            <p>
+                                Når du volder en institution, vælger du selv om dit navn skal være synligt (offentligt) eller om anmeldelsen skal være anonym.
+                            </p>
+                            <p>
+                                Anonyme anmeldelser gemmes uden reference til din identitet på den offentlige portal.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={FileSearch} title="4. Seminarer & Filer" delay={0.5}>
-                        <p>
-                            Når du uploader præsentationer eller PDF'er til seminar-chatten, gemmes disse sikkert. De bruges kun til at give dig kontekst-baseret AI-hjælp.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={FileSearch} title="4. Seminarer & Filer" delay={0.5}>
+                            <p>
+                                Når du uploader præsentationer eller PDF'er til seminar-chatten, gemmes disse sikkert. De bruges kun til at give dig kontekst-baseret AI-hjælp.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={Users} title="5. Fællesskab & Synlighed" delay={0.6}>
-                        <p>
-                            Dit valgte <span className="font-bold">brugernavn</span> og dine optjente point er synlige på Leaderboardet og i aktivitetsfeedet for at fremme motivation.
-                        </p>
-                        <p>
-                            Din email og dit fulde navn deles aldrig med andre brugere.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={Users} title="5. Fællesskab & Synlighed" delay={0.6}>
+                            <p>
+                                Dit valgte <span className="font-bold">brugernavn</span> og dine optjente point er synlige på Leaderboardet og i aktivitetsfeedet for at fremme motivation.
+                            </p>
+                            <p>
+                                Din email og dit fulde navn deles aldrig med andre brugere.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={Share2} title="6. Tredjeparter" delay={0.7}>
-                        <p>
-                            Vi benytter Firebase (hosting/database), Stripe (betaling) og AI-modeller. Alle partnere er nøje udvalgt ud fra deres sikkerhed og overholdelse af databeskyttelse.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={Share2} title="6. Tredjeparter" delay={0.7}>
+                            <p>
+                                Vi benytter Firebase (hosting/database), Stripe (betaling) og AI-modeller. Alle partnere er nøje udvalgt ud fra deres sikkerhed og overholdelse af databeskyttelse.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={UserCircle} title="7. Dine Rettigheder" delay={0.8}>
-                        <p>
-                            Du har ret til at få udleveret dine data, få dem rettet eller få slettet din konto permanent. Dette kan gøres direkte i dine indstillinger eller ved at kontakte os.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={UserCircle} title="7. Dine Rettigheder" delay={0.8}>
+                            <p>
+                                Du har ret til at få udleveret dine data, få dem rettet eller få slettet din konto permanent. Dette kan gøres direkte i dine indstillinger eller ved at kontakte os.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={History} title="8. Datalagring" delay={0.9}>
-                        <p>
-                            Vi opbevarer dine data, så længe du er aktiv på platformen. Inaktive konti og deres tilhørende data slettes efter 24 måneder.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={History} title="8. Datalagring" delay={0.9}>
+                            <p>
+                                Vi opbevarer dine data, så længe du er aktiv på platformen. Inaktive konti og deres tilhørende data slettes efter 24 måneder.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={Target} title="9. Markedsplads & Aggregeret Data" delay={1.0}>
-                        <p>
-                            Cohéro anvender fuldstændig anonymiserede og aggregerede data (f.eks. det totale antal brugere og deres overordnede uddannelsesretning) til statistiske formål.
-                        </p>
-                        <p>
-                            Dette gør det muligt for arbejdsgivere (f.eks. kommuner) at få indblik i størrelsen på talentpuljen (fx "Antal socialrådgivere"), så de kan målrette relevante jobopslag til jer. Din personlige identitet, chat-historik eller email deles <span className="font-bold underline text-amber-600">aldrig</span> med disse platforme eller aktører.
-                        </p>
-                    </PolicyCard>
-                </div>
+                        <PolicyCard icon={Target} title="9. Markedsplads & Aggregeret Data" delay={1.0}>
+                            <p>
+                                Cohéro anvender fuldstændig anonymiserede og aggregerede data (f.eks. det totale antal brugere og deres overordnede uddannelsesretning) til statistiske formål.
+                            </p>
+                        </PolicyCard>
+                    </div>
+                )}
 
                 {/* PRIVACY PROMISE */}
                 <Reveal delay={1.1}>
@@ -196,13 +229,15 @@ export default function PrivacyPolicyPage() {
                 </Reveal>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sidst opdateret: 29. marts 2026</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">
+                        Sidst opdateret: {dynamicPrivacy?.updatedAt ? new Date(dynamicPrivacy.updatedAt).toLocaleDateString('da-DK', { day: '2-digit', month: 'long', year: 'numeric' }) : '29. marts 2026'}
+                    </p>
                 </div>
             </main>
 
             {/* FOOTER BADGE */}
             <footer className="fixed bottom-0 left-0 right-0 p-8 z-[90] pointer-events-none flex justify-center">
-                <div className="px-6 py-2 bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl flex items-center gap-3">
+                <div className="px-6 py-2 bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl flex items-center gap-3 pointer-events-auto">
                     <div className="flex -space-x-1 items-end h-3">
                         <div className="w-0.5 h-full bg-amber-400 rounded-full" />
                         <div className="w-0.5 h-4 bg-amber-500 rounded-full" />

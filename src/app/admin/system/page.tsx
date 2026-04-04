@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { useApp } from '@/app/provider';
 import { logAdminAction } from '@/lib/audit-logger';
+import Link from 'next/link';
 
 interface PageView extends DocumentData {
   id: string;
@@ -239,6 +240,15 @@ const AdminSystemPage = () => {
                             </div>
                         </div>
                     ))}
+                    <Link href="/admin/system/security" className="px-5 py-4 rounded-[1.5rem] border bg-rose-50 border-rose-100 flex items-center gap-3 hover:shadow-xl hover:shadow-rose-500/10 transition-all group active:scale-95">
+                        <Shield className="w-4 h-4 text-rose-500 group-hover:scale-110 transition-transform" />
+                        <div>
+                            <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">Security Hub</p>
+                            <p className="text-xs font-black uppercase tracking-tight text-rose-600 flex items-center gap-1.5">
+                                Fraud Shield <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+                            </p>
+                        </div>
+                    </Link>
                 </div>
             </header>
 

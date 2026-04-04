@@ -14,7 +14,7 @@ import {
   getAdditionalUserInfo,
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, writeBatch, getDoc, query, where, getDocs, collection, increment, updateDoc } from 'firebase/firestore';
-import { generateWelcomeEmailAction, createCheckoutSession } from '@/app/actions';
+import { generateWelcomeEmailAction, createCheckoutSession, getTermsConfigAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
@@ -125,6 +125,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
     
     const finalUsername = displayName || user.displayName || 'Ny Bruger';
 
+    // Fetch latest terms version for compliance
+    let latestTermsVersion = '1.0.0';
+    try {
+        const termsRes = await getTermsConfigAction();
+        if (termsRes.success && termsRes.data?.version) {
+            latestTermsVersion = termsRes.data.version;
+        }
+    } catch (e) {
+        console.error("Failed to fetch terms version for compliance:", e);
+    }
+
     const newUserDoc: any = {
       id: user.uid,
       username: finalUsername,
@@ -149,6 +160,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
       badges: [],
       cohéroPoints: 0,
       role: 'user',
+      // Compliance mapping
+      acceptedTermsVersion: latestTermsVersion,
+      acceptedTermsAt: serverTimestamp(),
+      // -----------------
       dailyOnlineColleagueCount: 0,
       lastOnlineColleagueUsage: null,
       dailyConceptExplainerCount: 0,

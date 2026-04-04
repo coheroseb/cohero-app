@@ -13,7 +13,9 @@ export const MaintenanceGuard = ({ children }: { children: React.ReactNode }) =>
     const { userProfile } = useApp();
     const pathname = usePathname();
     const firestore = useFirestore();
-    const maintenanceQuery = doc(firestore!, 'systemSettings', 'maintenance');
+    const maintenanceQuery = React.useMemo(() => 
+        firestore ? doc(firestore, 'systemSettings', 'maintenance') : null,
+    [firestore]);
     const { data: maintenance, isLoading } = useDoc<any>(maintenanceQuery);
 
     if (isLoading) return <>{children}</>;

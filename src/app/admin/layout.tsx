@@ -31,11 +31,12 @@ import {
     Activity,
     Scale,
     Layers,
-    History,
-    Settings2,
-    DollarSign,
+    History as HistoryIcon,
     Target,
-    Inbox
+    Inbox,
+    ShieldAlert,
+    Trophy,
+    Gavel
 } from 'lucide-react';
 
 import { useApp } from '@/app/provider';
@@ -72,6 +73,7 @@ const navigationGroups = [
         { id: 'education', href: '/admin/education', label: 'Uddannelsesdata', icon: GraduationCap },
         { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
         { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
+        { id: 'gamification', href: '/admin/gamification', label: 'Challenges & Ritualer', icon: Trophy },
     ]
   },
   {
@@ -79,8 +81,10 @@ const navigationGroups = [
     items: [
         { id: 'content', href: '/admin/content', label: 'Platform Indhold', icon: BookOpen },
         { id: 'notifications', href: '/admin/notifications', label: 'Push Beskeder', icon: Bell },
-        { id: 'audit-logs', href: '/admin/audit-logs', label: 'Audit Logs', icon: History },
+        { id: 'audit-logs', href: '/admin/audit-logs', label: 'Audit Logs', icon: HistoryIcon },
         { id: 'system', href: '/admin/system', label: 'System Puls', icon: Database },
+        { id: 'security', href: '/admin/system/security', label: 'Sikkerhed & Deling', icon: ShieldAlert },
+        { id: 'compliance', href: '/admin/system/compliance', label: 'Juridisk & GDPR', icon: Gavel },
     ]
   }
 ];
@@ -114,8 +118,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const activeSection = useMemo(() => {
     if (pathname === '/admin') return 'overview';
-    const section = pathname?.split('/')[2];
-    return allNavItems.find(nav => nav.id === section) ? section : 'overview';
+    
+    // Sort by href length descending to prioritize most specific matches (e.g. /admin/system/security over /admin/system)
+    const sortedNavItems = [...allNavItems].sort((a, b) => b.href.length - a.href.length);
+    const matched = sortedNavItems.find(nav => nav.href !== '/admin' && pathname?.startsWith(nav.href));
+    
+    return matched ? matched.id : 'overview';
   }, [pathname]);
 
   if (isUserLoading || !userProfile || userProfile.role !== 'admin') {

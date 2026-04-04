@@ -70,7 +70,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { processStripeSession, fetchPoliticalNews, fetchSocialMinistryNews } from '@/app/actions';
+import { processStripeSession, fetchPoliticalNews, fetchSocialMinistryNews, logUserSessionAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -581,6 +581,13 @@ const PortalPageContent: React.FC = () => {
           setIsProcessingSession(false);
       }
   }, [searchParams, user, firestore, userProfile, isAppLoading, router, toast, refetchUserProfile]);
+
+  // AI Security: Log session on portal access to detect account sharing
+  useEffect(() => {
+      if (user && userProfile) {
+          logUserSessionAction(user.uid, userProfile.username || user.displayName || 'Anonym bruger');
+      }
+  }, [user, userProfile]);
 
   if (isAppLoading || !user || userProfile === undefined) {
     return <AuthLoadingScreen />;

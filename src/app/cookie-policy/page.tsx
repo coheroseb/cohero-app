@@ -1,6 +1,7 @@
+
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Cookie, 
     Info, 
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { getPolicyAction } from '@/app/actions';
 
 const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
     <motion.div
@@ -29,7 +31,7 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
 
 const PolicyCard = ({ icon: Icon, title, children, delay }: { icon: any, title: string, children: React.ReactNode, delay: number }) => (
     <Reveal delay={delay}>
-        <div className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-900/5 hover:-translate-y-1 transition-all">
+        <div className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-900/5 hover:-translate-y-1 transition-all h-full">
             <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <Icon className="w-7 h-7" />
             </div>
@@ -42,6 +44,22 @@ const PolicyCard = ({ icon: Icon, title, children, delay }: { icon: any, title: 
 );
 
 export default function CookiePolicyPage() {
+    const [dynamicCookies, setDynamicCookies] = useState<{ content: string, version: string, updatedAt: string } | null>(null);
+
+    useEffect(() => {
+        async function fetchCookies() {
+            const res = await getPolicyAction('cookies');
+            if (res.success && res.data) {
+                setDynamicCookies({
+                    content: res.data.content || '',
+                    version: res.data.version || '1.0.0',
+                    updatedAt: res.data.updatedAt || new Date().toISOString()
+                });
+            }
+        }
+        fetchCookies();
+    }, []);
+
     return (
         <div className="bg-[#fafafa] min-h-screen selection:bg-amber-500/10 selection:text-amber-600">
             {/* HEADER */}
@@ -60,8 +78,8 @@ export default function CookiePolicyPage() {
                     
                     <Reveal delay={0.1}>
                         <div className="flex justify-center mb-6">
-                            <div className="w-20 h-20 bg-amber-900 text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-amber-900/20">
-                                <Cookie className="w-10 h-10" />
+                            <div className="w-20 h-20 bg-amber-950 text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-amber-900/20">
+                                <Cookie className="w-10 h-10 text-amber-400" />
                             </div>
                         </div>
                         <h1 className="text-5xl md:text-7xl font-extrabold text-slate-950 tracking-[-0.03em] serif">
@@ -75,32 +93,50 @@ export default function CookiePolicyPage() {
             </header>
 
             <main className="max-w-6xl mx-auto px-6 pb-40">
-                <div className="grid md:grid-cols-2 gap-8">
-                    
-                    <PolicyCard icon={Info} title="1. Introduktion" delay={0.2}>
-                        <p>
-                            Denne cookiepolitik forklarer, hvordan Cohéro I/S ("vi", "os" eller "vores") bruger cookies og lignende teknologier på vores hjemmeside. Ved at bruge vores tjenester accepterer du brugen af cookies som beskrevet i denne politik.
-                        </p>
-                    </PolicyCard>
+                {dynamicCookies && dynamicCookies.content && dynamicCookies.content !== "Cookiepolitik..." ? (
+                    <Reveal delay={0.2}>
+                        <div className="bg-white p-12 md:p-20 rounded-[3rem] border border-slate-100 shadow-xl space-y-12 min-h-[600px]">
+                            <div className="flex items-center justify-between border-b border-slate-50 pb-8">
+                                <div className="flex items-center gap-4">
+                                    <Cookie className="w-6 h-6 text-amber-600" />
+                                    <h3 className="text-xl font-black text-slate-900 serif">Gældende Cookiepolitik</h3>
+                                </div>
+                                <div className="px-4 py-2 bg-slate-50 rounded-full text-[10px] font-black uppercase text-slate-400">
+                                    Versio {dynamicCookies.version}
+                                </div>
+                            </div>
+                            <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-loose whitespace-pre-wrap">
+                                {dynamicCookies.content}
+                            </div>
+                        </div>
+                    </Reveal>
+                ) : (
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <PolicyCard icon={Info} title="1. Introduktion" delay={0.2}>
+                            <p>
+                                Denne cookiepolitik forklarer, hvordan Cohéro I/S ("vi", "os" eller "vores") bruger cookies og lignende teknologier på vores hjemmeside. Ved at bruge vores tjenester accepterer du brugen af cookies som beskrevet i denne politik.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={Layers} title="2. Hvad er cookies?" delay={0.3}>
-                        <p>
-                            Cookies er små tekstfiler, der gemmes på din computer eller mobile enhed, når du besøger en hjemmeside. De bruges til at huske dine præferencer, forbedre din brugeroplevelse og indsamle statistik.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={Layers} title="2. Hvad er cookies?" delay={0.3}>
+                            <p>
+                                Cookies er små tekstfiler, der gemmes på din computer eller mobile enhed, når du besøger en hjemmeside. De bruges til at huske dine præferencer, forbedre din brugeroplevelse og indsamle statistik.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={CheckCircle2} title="3. Strengt nødvendige cookies" delay={0.4}>
-                        <p>
-                            Disse er essentielle for, at du kan navigere på hjemmesiden og bruge dens funktioner, såsom at logge ind. Uden disse cookies kan de tjenester, du har anmodet om, ikke leveres korrekt eller sikkert.
-                        </p>
-                    </PolicyCard>
+                        <PolicyCard icon={CheckCircle2} title="3. Strengt nødvendige cookies" delay={0.4}>
+                            <p>
+                                Disse er essentielle for, at du kan navigere på hjemmesiden og bruge dens funktioner, såsom at logge ind. Uden disse cookies kan de tjenester, du har anmodet om, ikke leveres korrekt eller sikkert.
+                            </p>
+                        </PolicyCard>
 
-                    <PolicyCard icon={PieChart} title="4. Præstations- og analysecookies" delay={0.5}>
-                        <p>
-                            Disse cookies indsamler anonymiseret information om, hvordan besøgende bruger vores hjemmeside. Vi bruger denne data til at forstå, hvilke funktioner der er mest populære, og hvordan vi kan optimere platformen yderligere.
-                        </p>
-                    </PolicyCard>
-                </div>
+                        <PolicyCard icon={PieChart} title="4. Præstations- og analysecookies" delay={0.5}>
+                            <p>
+                                Disse cookies indsamler anonymiseret information om, hvordan besøgende bruger vores hjemmeside. Vi bruger denne data til at forstå, hvilke funktioner der er mest populære, og hvordan vi kan optimere platformen yderligere.
+                            </p>
+                        </PolicyCard>
+                    </div>
+                )}
 
                 {/* MANAGEMENT SECTION */}
                 <Reveal delay={0.6}>
@@ -131,13 +167,15 @@ export default function CookiePolicyPage() {
                 </Reveal>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sidst opdateret: 26. marts 2026</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">
+                        Sidst opdateret: {dynamicCookies?.updatedAt ? new Date(dynamicCookies.updatedAt).toLocaleDateString('da-DK', { day: '2-digit', month: 'long', year: 'numeric' }) : '26. marts 2026'}
+                    </p>
                 </div>
             </main>
 
             {/* FOOTER BADGE */}
             <footer className="fixed bottom-0 left-0 right-0 p-8 z-[90] pointer-events-none flex justify-center">
-                <div className="px-6 py-2 bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl flex items-center gap-3">
+                <div className="px-6 py-2 bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl flex items-center gap-3 pointer-events-auto">
                     <div className="flex -space-x-1 items-end h-3">
                         <div className="w-0.5 h-full bg-amber-400 rounded-full" />
                         <div className="w-0.5 h-4 bg-amber-500 rounded-full" />
