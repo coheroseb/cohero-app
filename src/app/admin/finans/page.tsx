@@ -491,7 +491,22 @@ export default function AdminFinansPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                 <section className="bg-white p-12 rounded-[4.5rem] border border-slate-100 shadow-sm space-y-12 group hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-700">
                     <div className="flex items-center gap-5"><div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-110 duration-700"><BrainCircuit className="w-7 h-7" /></div><h3 className="text-2xl font-black text-slate-900 serif">AI Økonomi</h3></div>
-                    <div className="space-y-8"><div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">LTV per Bruger (Est)</p><p className="text-3xl font-black text-slate-900 serif italic">4.820 kr.</p><p className="text-[9px] font-bold text-slate-300 mt-3 italic">Beregnet over en 10 mdr. livscyklus</p></div><div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Netto Margin (AI)</p><p className="text-3xl font-black text-emerald-600 serif italic">92.4%</p><p className="text-[9px] font-bold text-indigo-400 mt-3 uppercase tracking-tighter font-black">Optimized with Gemini 2.0</p></div></div>
+                    <div className="space-y-8">
+                        <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">
+                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">LTV per Bruger (Est)</p>
+                            <p className="text-3xl font-black text-slate-900 serif italic">
+                                {metrics?.arpu && metrics?.churnRate 
+                                    ? `${Math.round(metrics.arpu / metrics.churnRate).toLocaleString('da-DK')} kr.` 
+                                    : '---'}
+                            </p>
+                            <p className="text-[9px] font-bold text-slate-300 mt-3 italic">Beregnet over realtid ARPU & Churn Rate</p>
+                        </div>
+                        <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">
+                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Netto Margin (AI)</p>
+                            <p className="text-3xl font-black text-emerald-600 serif italic">92.4%</p>
+                            <p className="text-[9px] font-bold text-indigo-400 mt-3 uppercase tracking-tighter font-black">Optimized with Gemini 2.0</p>
+                        </div>
+                    </div>
                 </section>
                 <section className="bg-indigo-900 p-12 rounded-[4.5rem] text-white shadow-2xl space-y-12 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" /><div className="flex items-center gap-5"><div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-white shadow-sm"><Boxes className="w-7 h-7" /></div><h3 className="text-2xl font-black serif">Eksponentiel Vækst</h3></div><div className="space-y-8 relative z-10"><div className="space-y-4"><div className="flex justify-between items-end"><span className="text-[10px] font-black uppercase tracking-widest text-white/40">Expansion Capacity</span><span className="text-xl font-black">12.5k Brugere</span></div><div className="h-2 bg-white/10 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: '15%' }} transition={{ duration: 2, delay: 0.5 }} className="h-full bg-white shadow-lg shadow-white" /></div></div><p className="text-sm text-white/50 leading-relaxed italic">Systemet kan skalere til de næste 10.000 aktive brugere uden behov for yderligere arkitektonisk udvidelse.</p><button className="flex items-center justify-between w-full p-6 bg-white text-indigo-900 rounded-[2rem] font-black uppercase text-[11px] tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-indigo-900/40">Ekspander Kapacitet <ArrowRight className="w-5 h-5" /></button></div>

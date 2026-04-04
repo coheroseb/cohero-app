@@ -157,12 +157,18 @@ export default function AdminOverviewPage() {
         const premiumCount = nonAdmins.filter(u => u.membership && u.membership !== 'free').length;
         const premiumPercentage = nonAdmins.length > 0 ? ((premiumCount / nonAdmins.length) * 100).toFixed(1) : '0';
         
-        // Dynamic LTV Calculation
-        // Formula: (MRR / ActiveSubs) * Average Retention (assume 12 months for students)
-        const arpu = (stripeMetrics?.mrr || 0) / (stripeMetrics?.activeSubs || 1);
-        const ltv = arpu * 12; // 12 month average lifetime
+        // Dynamic LTV Calculation: Standard SaaS Formula (ARPU / Churn Rate)
+        const arpu = stripeMetrics?.arpu || ((stripeMetrics?.mrr || 0) / (stripeMetrics?.activeSubs || 1));
+        const churnRate = stripeMetrics?.churnRate || 0.0833; // Fallback to ~12mo retention if data missing
+        const ltv = arpu / churnRate;
 
-        return { totalUsers: nonAdmins.length, growth, aiCost: aiCost.toFixed(2), premiumPercentage, ltv: Math.round(ltv).toLocaleString('da-DK') };
+        return { 
+            totalUsers: nonAdmins.length, 
+            growth, 
+            aiCost: aiCost.toFixed(2), 
+            premiumPercentage, 
+            ltv: Math.round(ltv).toLocaleString('da-DK') 
+        };
     }, [users, aiUsage, stripeMetrics]);
 
     return (

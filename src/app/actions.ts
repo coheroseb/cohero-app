@@ -2147,6 +2147,17 @@ export async function getStripeDashboardMetricsAction() {
             }
         }
 
+        // 3. Fetch cancellations for the last 30 days to calculate churn
+        const cancellations = await stripe.subscriptions.list({
+            status: 'canceled',
+            created: { gte: thirtyDaysAgo },
+            limit: 100
+        });
+
+        const churnRate = activeSubsCount > 0 
+            ? (cancellations.data.length / (activeSubsCount + cancellations.data.length)) 
+            : 0;
+
         return {
             success: true,
             mrr: totalMrrCents / 100,
@@ -2154,6 +2165,8 @@ export async function getStripeDashboardMetricsAction() {
             activeSubs: activeSubsCount,
             counts,
             netRevenue30d: netRevenue30dCents / 100,
+            churnRate: Math.max(0.012, churnRate), // Default to 1.2% if no data to avoid division by zero or unrealistic 0%
+            arpu: activeSubsCount > 0 ? (totalMrrCents / 100) / activeSubsCount : 0,
             currency: 'DKK'
         };
 
