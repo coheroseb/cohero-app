@@ -378,8 +378,16 @@ export default function AdminFinansPage() {
             </header>
 
             {/* 2. Top-Level Performance Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
                 <FinStatCard title="Monthly Recurring (MRR)" value={metrics ? `${Math.round(metrics.mrr).toLocaleString('da-DK')} kr.` : '0 kr.'} icon={TrendingUp} color="bg-indigo-50 text-indigo-600" loading={loading} />
+                <FinStatCard 
+                    title="Trial Pipeline (MRR +)" 
+                    value={metrics ? `${Math.round(metrics.potentialMrrFromTrials || 0).toLocaleString('da-DK')} kr.` : '0 kr.'} 
+                    trend={metrics?.trialSubs > 0 ? { value: `${metrics.trialSubs} trials`, isPositive: true } : null}
+                    icon={Activity} 
+                    color="bg-rose-50 text-rose-600" 
+                    loading={loading} 
+                />
                 <FinStatCard title="Net Omsætning (30d)" value={metrics ? `${Math.round(metrics.netRevenue30d).toLocaleString('da-DK')} kr.` : '0 kr.'} icon={DollarSign} color="bg-emerald-50 text-emerald-600" loading={loading} />
                 <FinStatCard title="Estimated ARR" value={metrics ? `${Math.round(metrics.arr).toLocaleString('da-DK')} kr.` : '0 kr.'} icon={Rocket} color="bg-amber-50 text-amber-600" loading={loading} />
                 <FinStatCard title="Betalende Brugere" value={metrics ? metrics.activeSubs : 0} icon={Users} color="bg-blue-50 text-blue-600" loading={loading} />

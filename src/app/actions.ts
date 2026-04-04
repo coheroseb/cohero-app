@@ -2100,6 +2100,8 @@ export async function getStripeDashboardMetricsAction() {
     try {
         let totalMrrCents = 0;
         let activeSubsCount = 0;
+        let trialSubsCount = 0;
+        let potentialMrrFromTrialsCents = 0;
         
         const counts = {
             'Semesterpakken': 0,
@@ -2108,13 +2110,17 @@ export async function getStripeDashboardMetricsAction() {
             'Andre': 0
         };
 
-        // 1. Fetch all active subscriptions across all prices
+        // 1. Fetch all active and trialing subscriptions across all prices
         // Using auto-pagination to ensure we get ALL subscriptions (more than the 100 limit)
         for await (const sub of stripe.subscriptions.list({
-            status: 'active',
+            status: 'all',
             expand: ['data.plan.product', 'data.discount.coupon'],
         })) {
-            activeSubsCount++;
+            if (sub.status !== 'active' && sub.status !== 'trialing') continue;
+
+            const isTrial = sub.status === 'trialing';
+            if (isTrial) trialSubsCount++;
+            else activeSubsCount++;
             
             let subscriptionMrrCents = 0;
 
@@ -2131,18 +2137,20 @@ export async function getStripeDashboardMetricsAction() {
                 
                 subscriptionMrrCents += itemMonthlyCents;
                 
-                // Track counts by type (using price ID)
-                const pid = price.id;
-                if (pid === process.env.STRIPE_GROUP_PRO_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
-                    counts['Group Pro']++;
-                } else if (pid === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
-                    counts['Kollega+']++;
-                } else if (pid === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-                    counts['Kollega+']++; 
-                } else if (pid === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
-                    counts['Semesterpakken']++;
-                } else {
-                    counts['Andre']++;
+                // Track counts by type (using price ID) for ACTIVE subs only (so we don't mix reports)
+                if (!isTrial) {
+                    const pid = price.id;
+                    if (pid === process.env.STRIPE_GROUP_PRO_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
+                        counts['Group Pro']++;
+                    } else if (pid === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
+                        counts['Kollega+']++;
+                    } else if (pid === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
+                        counts['Kollega+']++; 
+                    } else if (pid === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || pid === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
+                        counts['Semesterpakken']++;
+                    } else {
+                        counts['Andre']++;
+                    }
                 }
             }
 
@@ -2160,7 +2168,11 @@ export async function getStripeDashboardMetricsAction() {
                 }
             }
 
-            totalMrrCents += subscriptionMrrCents;
+            if (isTrial) {
+                potentialMrrFromTrialsCents += subscriptionMrrCents;
+            } else {
+                totalMrrCents += subscriptionMrrCents;
+            }
         }
 
 
@@ -2193,6 +2205,8 @@ export async function getStripeDashboardMetricsAction() {
             mrr: totalMrrCents / 100,
             arr: (totalMrrCents * 12) / 100,
             activeSubs: activeSubsCount,
+            trialSubs: trialSubsCount,
+            potentialMrrFromTrials: potentialMrrFromTrialsCents / 100,
             counts,
             netRevenue30d: netRevenue30dCents / 100,
             churnRate: Math.max(0.012, churnRate), // Default to 1.2% if no data to avoid division by zero or unrealistic 0%
