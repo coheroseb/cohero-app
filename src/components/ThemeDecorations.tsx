@@ -197,39 +197,39 @@ const HalloweenDecorations = () => {
 };
 
 export const ThemeDecorations = () => {
-    const { activeTheme } = useApp();
+    const { effectiveTheme } = useApp();
 
     useEffect(() => {
         // Inject Theme Colors as CSS Variables
         const root = document.documentElement;
-        if (activeTheme === 'christmas') {
+        if (effectiveTheme === 'christmas') {
             root.style.setProperty('--theme-accent', 'rgba(225, 29, 72, 0.1)');
             root.style.setProperty('--theme-border', 'rgba(225, 29, 72, 0.2)');
-        } else if (activeTheme === 'easter') {
+        } else if (effectiveTheme === 'easter') {
             root.style.setProperty('--theme-accent', 'rgba(250, 204, 21, 0.1)');
             root.style.setProperty('--theme-border', 'rgba(250, 204, 21, 0.2)');
-        } else if (activeTheme === 'halloween') {
+        } else if (effectiveTheme === 'halloween') {
             root.style.setProperty('--theme-accent', 'rgba(249, 115, 22, 0.1)');
             root.style.setProperty('--theme-border', 'rgba(249, 115, 22, 0.2)');
         } else {
             root.style.removeProperty('--theme-accent');
             root.style.removeProperty('--theme-border');
         }
-    }, [activeTheme]);
+    }, [effectiveTheme]);
 
     return (
         <AnimatePresence mode="wait">
-            {activeTheme === 'christmas' && (
+            {effectiveTheme === 'christmas' && (
                 <motion.div key="christmas" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <ChristmasDecorations />
                 </motion.div>
             )}
-            {activeTheme === 'easter' && (
+            {effectiveTheme === 'easter' && (
                 <motion.div key="easter" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <EasterDecorations />
                 </motion.div>
             )}
-            {activeTheme === 'halloween' && (
+            {effectiveTheme === 'halloween' && (
                 <motion.div key="halloween" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <HalloweenDecorations />
                 </motion.div>

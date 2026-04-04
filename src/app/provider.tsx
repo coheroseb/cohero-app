@@ -18,6 +18,8 @@ import OnboardingModal from '@/components/OnboardingModal';
 import Footer from '@/components/Footer';
 import ComingSoon from '@/components/ComingSoon';
 import TeamModal from '@/components/TeamModal';
+import CookieConsent from '@/components/CookieConsent';
+import { ThemeDecorations } from '@/components/ThemeDecorations';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { useUser, useAuth, useFirestore } from '@/firebase';
 import { ErrorLogger } from '@/components/ErrorLogger';
@@ -56,7 +58,8 @@ import {
   Snowflake,
   Flower2,
   Egg,
-  Skull
+  Skull,
+  AlertTriangle
 } from 'lucide-react';
 import { sendStreakReminderEmailAction } from '@/app/actions';
 import { UserProfile } from '@/ai/flows/types';
@@ -89,6 +92,7 @@ interface AppContextType {
   activeTheme: string;
   effectiveTheme: string;
   campaigns: any[];
+  isMaintenanceMode: boolean;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -113,6 +117,112 @@ const UpgradeBanner = () => {
                     <span className="text-xs md:text-sm font-bold text-slate-800 leading-tight">Lås alt op <span className="text-amber-500">→</span></span>
                 </div>
             </Link>
+        </motion.div>
+    );
+};
+
+const PaymentFailedBanner = ({ onDismiss }: { onDismiss?: () => void }) => {
+    return (
+        <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            className="bg-rose-600 text-white shadow-xl relative z-[10001] overflow-hidden"
+        >
+            <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                        <p className="font-black text-xs md:text-sm uppercase tracking-widest leading-tight">Betaling Fejlede</p>
+                        <p className="text-[11px] md:text-xs font-medium text-white/80">Vi kunne ikke gennemføre din seneste betaling for Kollega+. Opdater dine oplysninger for at beholde adgangen.</p>
+                    </div>
+                </div>
+                
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Link 
+                        href="/settings" 
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-white text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-lg active:scale-95"
+                    >
+                        Opdater kort <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                    {onDismiss && (
+                        <button 
+                            onClick={onDismiss}
+                            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+            </div>
+            
+            {/* Animated shimmer effect */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <motion.div 
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"
+                />
+            </div>
+        </motion.div>
+    );
+};
+
+const CampaignBanner = ({ campaign, onDismiss }: { campaign: any, onDismiss: () => void }) => {
+    const themeStyles = {
+        christmas: 'bg-rose-600 text-white',
+        easter: 'bg-emerald-800 text-white shadow-[0_0_20px_rgba(4,120,87,0.4)]',
+        halloween: 'bg-orange-600 text-white',
+        default: 'bg-slate-900 text-white'
+    }[campaign.theme as keyof typeof themeStyles || 'default'];
+
+    return (
+        <motion.div 
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            className={`fixed top-0 left-0 right-0 z-[10000] p-4 md:p-3 transition-all duration-500 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-95 md:bg-opacity-90 overflow-hidden will-change-transform`}
+            style={{ transform: 'translateZ(0)', WebkitBackdropFilter: 'blur(12px)' }}
+        >
+            <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-3 md:gap-8 px-4 relative">
+                {/* Visual Accent */}
+                <div className="absolute -left-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl md:block hidden" />
+                
+                <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                    <div className="flex w-8 h-8 rounded-full bg-white/20 items-center justify-center shrink-0">
+                        {campaign.theme === 'christmas' ? <Gift className="w-4 h-4" /> :
+                         campaign.theme === 'easter' ? <Bird className="w-4 h-4" /> :
+                         campaign.theme === 'halloween' ? <Ghost className="w-4 h-4" /> :
+                         <Megaphone className="w-4 h-4" />}
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                        <p className="text-[12px] md:text-[13px] font-black uppercase tracking-widest text-current leading-tight">
+                            {campaign.bannerText} 
+                        </p>
+                        {campaign.discountCode && (
+                            <span className="inline-flex px-3 py-1 bg-white/20 rounded-lg border border-white/30 font-black text-[10px] md:text-xs whitespace-nowrap shadow-inner">
+                               KODE: {campaign.discountCode}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4 w-full md:w-auto justify-center">
+                    <Link 
+                        href="/upgrade" 
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 md:px-4 py-2 md:py-1.5 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-black/10 active:scale-95"
+                    >
+                        Spar nu <ArrowRight className="w-3 h-3" />
+                    </Link>
+                </div>
+
+                <button 
+                    onClick={onDismiss} 
+                    className="absolute -top-1 -right-2 md:static md:ml-4 p-2 opacity-60 hover:opacity-100 transition-opacity"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
         </motion.div>
     );
 };
@@ -176,6 +286,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [usageLimits, setUsageLimits] = useState<any>(null);
   const [activeTheme, setActiveTheme] = useState<string>('default');
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
@@ -247,6 +358,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, [user, isUserLoading, firestore]);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const maintRef = doc(firestore, 'systemSettings', 'maintenance');
+    const unsubscribe = onSnapshot(maintRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setIsMaintenanceMode(docSnap.data().enabled || false);
+        } else {
+            setIsMaintenanceMode(false);
+        }
+    });
+    return () => unsubscribe();
+  }, [firestore]);
 
   useEffect(() => {
     if (!firestore) return;
@@ -524,22 +648,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     activeTheme,
     effectiveTheme,
     campaigns,
-  }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, isNativeApp, isNavbarHidden, setIsNavbarHidden, usageLimits, activeTheme, effectiveTheme, campaigns]);
+    isMaintenanceMode,
+  }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, isNativeApp, isNavbarHidden, setIsNavbarHidden, usageLimits, activeTheme, effectiveTheme, campaigns, isMaintenanceMode]);
 
   if (IS_PRE_LAUNCH) {
     return <ComingSoon />;
   }
 
-  const showCampaignBanner = mounted && campaigns.length > 0 && (!user || userProfile?.membership !== 'Kollega+') && !isBannerDismissed;
-  const bannerOffset = showCampaignBanner ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 96 : 52) : 0;
   const isAdminPage = pathname?.startsWith('/admin');
+  const showPaymentFailedBanner = mounted && userProfile?.stripeLastPaymentFailed && !isAdminPage;
+  const showCampaignBanner = mounted && campaigns.length > 0 && (!user || userProfile?.membership !== 'Kollega+') && !isBannerDismissed;
+  
+  // Calculate total offset based on multiple possible banners
+  const paymentOffset = showPaymentFailedBanner ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 100 : 72) : 0;
+  const campaignOffset = showCampaignBanner ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 96 : 52) : 0;
+  const totalBannerOffset = paymentOffset + campaignOffset;
+  
+  const showBannerOverlays = !isMaintenanceMode || (isMaintenanceMode && userProfile?.role === 'admin');
 
   return (
     <AppContext.Provider
       value={contextValue}
     >
       <div className={`min-h-screen flex flex-col selection:bg-amber-200 transition-all duration-500 ${pageBackground} ${isNativeApp ? 'native-app' : ''} ${isLovPortal ? 'lg:h-screen lg:overflow-hidden' : ''}`}>
-        {showCampaignBanner && <CampaignBanner campaign={campaigns[0]} onDismiss={() => setIsBannerDismissed(true)} />}
+        {showPaymentFailedBanner && showBannerOverlays && <PaymentFailedBanner />}
+        {showCampaignBanner && showBannerOverlays && (
+            <div style={{ top: `${paymentOffset}px`, position: 'sticky', zIndex: 10000 }}>
+                <CampaignBanner campaign={campaigns[0]} onDismiss={() => setIsBannerDismissed(true)} />
+            </div>
+        )}
         <style dangerouslySetInnerHTML={{ __html: `
             ${effectiveTheme === 'christmas' ? `
                 .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #be123c !important; }
@@ -558,15 +695,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 .accent-color { color: #ea580c !important; }
             ` : ''}
         ` }} />
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isNavbarHidden && (
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isNavbarHidden && showBannerOverlays && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
-            <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} topOffset={bannerOffset} />
+            <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} topOffset={totalBannerOffset} />
           </>
         )}
         <main 
           className={`flex-grow relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${(isLovPortal || isMitSemester) ? 'lg:overflow-hidden h-full' : ''}`}
-          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' ? `calc(${bannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (showCampaignBanner && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${bannerOffset}px` : undefined) }}
+          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' ? `calc(${totalBannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (totalBannerOffset > 0 && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${totalBannerOffset}px` : undefined) }}
         >
             {/* Soft top gradient to blend with navbar when scrolling */}
             {!isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && (
@@ -592,174 +729,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         <Suspense fallback={null}>
             {/* AuthModal has been removed */}
         </Suspense>
-        {!isStandaloneGroups && showOnboardingModal && <OnboardingModal onComplete={refetchUserProfile} />}
-        {isTeamModalOpen && <TeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />}
+        {!isStandaloneGroups && showOnboardingModal && showBannerOverlays && <OnboardingModal onComplete={refetchUserProfile} />}
+        {isTeamModalOpen && showBannerOverlays && <TeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />}
         <ErrorLogger user={user} userProfile={userProfile} />
-        <ThemeDecorations theme={effectiveTheme} />
+        {showBannerOverlays && <ThemeDecorations />}
+        {showBannerOverlays && <CookieConsent />}
       </div>
     </AppContext.Provider>
   );
-};
-
-const CampaignBanner = ({ campaign, onDismiss }: { campaign: any, onDismiss: () => void }) => {
-    const themeStyles = {
-        christmas: 'bg-rose-600 text-white',
-        easter: 'bg-emerald-800 text-white shadow-[0_0_20px_rgba(4,120,87,0.4)]',
-        halloween: 'bg-orange-600 text-white',
-        default: 'bg-slate-900 text-white'
-    }[campaign.theme as keyof typeof themeStyles || 'default'];
-
-    return (
-        <motion.div 
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            className={`fixed top-0 left-0 right-0 z-[10000] p-4 md:p-3 transition-all duration-500 ${themeStyles} shadow-lg backdrop-blur-md bg-opacity-95 md:bg-opacity-90 overflow-hidden will-change-transform`}
-            style={{ transform: 'translateZ(0)', WebkitBackdropFilter: 'blur(12px)' }}
-        >
-            <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-3 md:gap-8 px-4 relative">
-                {/* Visual Accent */}
-                <div className="absolute -left-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-2xl md:block hidden" />
-                
-                <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
-                    <div className="flex w-8 h-8 rounded-full bg-white/20 items-center justify-center shrink-0">
-                        {campaign.theme === 'christmas' ? <Gift className="w-4 h-4" /> :
-                         campaign.theme === 'easter' ? <Bird className="w-4 h-4" /> :
-                         campaign.theme === 'halloween' ? <Ghost className="w-4 h-4" /> :
-                         <Megaphone className="w-4 h-4" />}
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-center gap-2">
-                        <p className="text-[12px] md:text-[13px] font-black uppercase tracking-widest text-current leading-tight">
-                            {campaign.bannerText} 
-                        </p>
-                        {campaign.discountCode && (
-                            <span className="inline-flex px-3 py-1 bg-white/20 rounded-lg border border-white/30 font-black text-[10px] md:text-xs whitespace-nowrap shadow-inner">
-                               KODE: {campaign.discountCode}
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-4 w-full md:w-auto justify-center">
-                    <Link 
-                        href="/upgrade" 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 md:px-4 py-2 md:py-1.5 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-black/10 active:scale-95"
-                    >
-                        Spar nu <ArrowRight className="w-3 h-3" />
-                    </Link>
-                </div>
-
-                <button 
-                    onClick={onDismiss} 
-                    className="absolute -top-1 -right-2 md:static md:ml-4 p-2 opacity-60 hover:opacity-100 transition-opacity"
-                >
-                    <X className="w-4 h-4" />
-                </button>
-            </div>
-        </motion.div>
-    );
-};
-const ThemeDecorations = ({ theme }: { theme: string }) => {
-    const [isMounted, setIsMounted] = React.useState(false);
-    const [isMobile, setIsMobile] = React.useState(false);
-    
-    React.useEffect(() => {
-        setIsMounted(true);
-        setIsMobile(window.innerWidth < 768);
-    }, []);
-
-    const particleData = React.useMemo(() => {
-        if (!isMounted) return [];
-        const count = isMobile ? 6 : 15;
-        return Array.from({ length: count }).map(() => ({
-            x: Math.random() * 100,
-            scale: Math.random() * 0.5 + 0.5,
-            duration: Math.random() * 10 + 15,
-            delay: Math.random() * 20,
-            xdrift: Math.random() * 20 - 10
-        }));
-    }, [isMounted, isMobile]);
-
-    if (theme === 'default' || !isMounted) return null;
-
-    const getIcon = () => {
-        if (theme === 'christmas') return <Snowflake className="text-rose-200 opacity-40 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />;
-        if (theme === 'easter') return <Egg className="text-yellow-300 opacity-40" />;
-        if (theme === 'halloween') return <Ghost className="text-orange-300 opacity-40" />;
-        return <Sparkles className="text-amber-300 opacity-40" />;
-    };
-
-    return (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-[50]">
-            {/* Corner Decor */}
-            {theme === 'christmas' && (
-                <div className="absolute top-0 left-0 right-0 h-4 bg-white/20 blur-sm flex justify-around items-start">
-                    {Array.from({ length: 40 }).map((_, i) => (
-                        <div key={i} className="w-1 bg-white/80 rounded-full" style={{ height: `${Math.random() * 20 + 10}px` }} />
-                    ))}
-                </div>
-            )}
-            
-            {theme === 'halloween' && (
-                <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-                    <svg viewBox="0 0 100 100" className="w-full h-full text-orange-600 fill-current">
-                        <path d="M0,0 Q50,5 100,0 L100,5 Q50,15 0,5 Z" />
-                        <path d="M10,0 L12,40 L15,0" />
-                        <path d="M40,0 L45,60 L50,0" />
-                        <path d="M80,0 L85,45 L90,0" />
-                    </svg>
-                </div>
-            )}
-
-            {/* Floating Particles */}
-            {particleData.map((data, i) => (
-                <motion.div
-                    key={i}
-                    initial={{ 
-                        opacity: 0,
-                        x: data.x + "vw",
-                        y: -100,
-                        scale: data.scale,
-                        rotate: 0
-                    }}
-                    animate={{ 
-                        opacity: [0, 1, 1, 0],
-                        y: ["-10vh", "110vh"],
-                        x: [data.x + "vw", (data.x + data.xdrift) + "vw"],
-                        rotate: [0, 360]
-                    }}
-                    transition={{ 
-                        duration: data.duration,
-                        repeat: Infinity,
-                        delay: data.delay,
-                        ease: "linear"
-                    }}
-                    className="absolute will-change-transform"
-                    style={{ transform: 'translateZ(0)' }}
-                >
-                    {getIcon()}
-                </motion.div>
-            ))}
-
-            {/* Dense Bottom Decor */}
-            {theme === 'easter' && (
-                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-emerald-500/10 to-transparent flex items-end justify-around pb-4">
-                    {Array.from({ length: 30 }).map((_, i) => (
-                         <div key={i} className="flex flex-col items-center animate-bounce" style={{ animationDelay: `${i * 0.1}s`, animationDuration: `${2 + Math.random()}s` }}>
-                            <Flower2 className="text-rose-400/30 w-6 h-6" style={{ transform: `rotate(${Math.random() * 360}deg)` }} />
-                         </div>
-                    ))}
-                </div>
-            )}
-
-            {theme === 'christmas' && (
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/20 to-transparent flex items-end">
-                    {Array.from({ length: 15 }).map((_, i) => (
-                         <div key={i} className="flex-1 h-12 bg-white/40 blur-xl rounded-[100%] scale-150 transform -translate-y-4" />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
 };
 
 export const useApp = () => {

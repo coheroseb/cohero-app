@@ -1,4 +1,9 @@
 import { analyzeFtDocument } from './flows/analyze-ft-document-flow';
+import { adminInsightFlow } from './flows/admin-insight-flow';
+import { nudgeEmailFlow } from './flows/nudge-email-flow';
+import { studyCompanionFlow } from './flows/study-companion-flow';
+import { blogPostFlow } from './flows/blog-post-flow';
+import { tiktokScriptFlow } from './flows/tiktok-script-flow';
 import { analyzeCasePdf } from './flows/analyze-case-pdf-flow';
 import { analyzeLegalDecision } from './flows/analyze-legal-decision-flow';
 import { analyzeParagraph } from './flows/analyze-paragraph-flow';
@@ -80,6 +85,11 @@ import { suggestExamTopic } from './flows/suggest-exam-topic-flow';
 import { generateModuleExamPrep } from './flows/generate-module-exam-prep-flow';
 
 export const allFlows: Record<string, any> = {
+  'blogPostFlow': blogPostFlow,
+  'tiktokScriptFlow': tiktokScriptFlow,
+  'studyCompanionFlow': studyCompanionFlow,
+  'adminInsightFlow': adminInsightFlow,
+  'nudgeEmailFlow': nudgeEmailFlow,
   'analyzeFtDocumentFlow': analyzeFtDocument,
   'analyzeFtDocument': analyzeFtDocument,
   'analyzeCasePdfFlow': analyzeCasePdf,

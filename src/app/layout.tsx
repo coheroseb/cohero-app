@@ -8,9 +8,8 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
 import GoogleTagManager from '@/components/GoogleTagManager';
 import { Suspense } from 'react';
-import CookieConsent from '@/components/CookieConsent';
 import PageViewTracker from '@/components/PageViewTracker';
-import { ThemeDecorations } from '@/components/ThemeDecorations';
+import { MaintenanceGuard } from '@/components/MaintenanceGuard';
 const siteUrl = 'https://cohero.dk';
 const siteTitle = 'Cohéro (Cohero) - Din Digitale Kollega for Socialrådgiverstuderende';
 const siteDescription = 'Cohéro (Cohero) er en AI-drevet platform for socialrådgiverstuderende, der tilbyder værktøjer som case-træner, journal-feedback og lovportal for at bygge bro mellem teori og praksis.';
@@ -145,9 +144,9 @@ export default function RootLayout({
               <GoogleTagManager />
               <PageViewTracker />
             </Suspense>
-            {children}
-            <ThemeDecorations />
-            <CookieConsent />
+            <MaintenanceGuard>
+              {children}
+            </MaintenanceGuard>
           </AppProvider>
         </FirebaseClientProvider>
         <Toaster />

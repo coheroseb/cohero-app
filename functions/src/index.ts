@@ -140,7 +140,10 @@ export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, asyn
 
 import { checkFolketingetUpdates } from "./cron/check-ft-updates";
 import { incrementUserSemesters } from "./cron/semester-increment";
-export { checkFolketingetUpdates, incrementUserSemesters };
+import { weeklyAdminReport } from "./cron/weekly-admin-report";
+import { dailyAutomatedNudges } from "./cron/automated-nudges";
+import { weeklyStudyCompanion } from "./cron/study-companion-newsletter";
+export { checkFolketingetUpdates, incrementUserSemesters, weeklyAdminReport, dailyAutomatedNudges, weeklyStudyCompanion };
 
 import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";
 export { onAssistanceRequestUpdate, onAssistanceRequestCreate };

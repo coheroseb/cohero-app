@@ -111,6 +111,7 @@ export interface UserProfile {
   stripeCurrentPeriodEnd?: string | Date;
   stripeSubscriptionStatus?: string;
   stripeCancelAtPeriodEnd?: boolean;
+  stripeLastPaymentFailed?: boolean;
   badges?: string[];
   cohéroPoints?: number;
   role?: 'user' | 'admin';
@@ -152,6 +153,7 @@ export interface UserProfile {
   monthlyTokenTimestamp?: any;
   isHighUsage?: boolean;
   streakReminderSentAt?: any;
+  lastNudgeSentAt?: any;
 
   totalSeminarAnalyses?: number;
   mementoLevels?: {

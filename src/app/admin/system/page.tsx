@@ -8,6 +8,8 @@ import { Database, Loader2, AlertCircle, Trash2, CheckCircle2, ChevronDown, Chev
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
+import { useApp } from '@/app/provider';
+import { logAdminAction } from '@/lib/audit-logger';
 
 interface PageView extends DocumentData {
   id: string;
@@ -39,6 +41,7 @@ interface SystemError extends DocumentData {
 const AdminSystemPage = () => {
     const firestore = useFirestore();
     const { toast } = useToast();
+    const { userProfile } = useApp();
 
     // Usage Limits States
     const [limitsSettings, setLimitsSettings] = useState<any>(null);
@@ -50,6 +53,10 @@ const AdminSystemPage = () => {
 
     // Migration State
     const [isMigrating, setIsMigrating] = useState(false);
+
+    // Maintenance State
+    const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+    const [isTogglingMaintenance, setIsTogglingMaintenance] = useState(false);
 
     const pageViewsQuery = useMemoFirebase(
         () => firestore ? query(collection(firestore, 'pageViews'), orderBy('timestamp', 'desc'), limit(200)) : null,
@@ -98,7 +105,14 @@ const AdminSystemPage = () => {
             }
             const themeRef = doc(firestore, 'systemSettings', 'activeTheme');
             const themeSnap = await getDoc(themeRef);
-            if (themeSnap.exists()) setActiveTheme(themeSnap.data().theme || 'default');
+            if (themeSnap.exists()) {
+                const themeData = themeSnap.data() as { theme?: string };
+                setActiveTheme(themeData.theme || 'default');
+            }
+
+            const maintRef = doc(firestore, 'systemSettings', 'maintenance');
+            const maintSnap = await getDoc(maintRef);
+            if (maintSnap.exists()) setIsMaintenanceMode(maintSnap.data().enabled || false);
         };
         fetchLimits();
     }, [firestore]);
@@ -143,6 +157,17 @@ const AdminSystemPage = () => {
             currSnapshot.forEach(doc => { const old = doc.data().institution; if (MAPPING[old]) { currBatch.update(doc.ref, { institution: MAPPING[old] }); currCount++; } });
             if (currCount > 0) await currBatch.commit();
 
+            if (currCount > 0) await currBatch.commit();
+
+            await logAdminAction(
+                'SYSTEM_SETTING_UPDATE',
+                userProfile?.uid || 'unknown',
+                userProfile?.username || 'Admin',
+                'migration',
+                'Institution Normalization',
+                { usersAffected: userCount, curriculumsAffected: currCount }
+            );
+
             toast({ title: 'Migration Complete', description: `${userCount} profiles and ${currCount} curricula normalized.` });
         } finally { setIsMigrating(false); }
     };
@@ -156,6 +181,39 @@ const AdminSystemPage = () => {
         if (!firestore || !confirm('Permanently wipe error trace?')) return;
         await deleteDoc(doc(firestore, 'systemErrors', id));
         toast({ title: 'Trace Purged' });
+    };
+
+    const handleToggleMaintenance = async () => {
+        if (!firestore) return;
+        const newState = !isMaintenanceMode;
+        if (newState && !confirm('ADVARSEL: Dette vil blokere adgangen for ALLE brugere (undtagen admins). Er du sikker?')) return;
+        
+        setIsTogglingMaintenance(true);
+        try {
+            await setDoc(doc(firestore, 'systemSettings', 'maintenance'), { 
+                enabled: newState,
+                updatedAt: new Date().toISOString(),
+                updatedBy: userProfile?.uid || 'admin'
+            });
+
+            await logAdminAction(
+                'MAINTENANCE_TOGGLE',
+                userProfile?.uid || 'unknown',
+                userProfile?.username || 'Admin',
+                'maintenance',
+                newState ? 'ACTIVATED' : 'DEACTIVATED'
+            );
+
+            setIsMaintenanceMode(newState);
+            toast({ 
+                title: newState ? 'Vedligeholdelse AKTIVERET' : 'Vedligeholdelse DEAKTIVERET',
+                description: newState ? 'Platformen er nu i lockdown.' : 'Platformen er nu åben for alle.'
+            });
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Fejl ved opdatering' });
+        } finally {
+            setIsTogglingMaintenance(false);
+        }
     };
 
     return (
@@ -206,8 +264,13 @@ const AdminSystemPage = () => {
                                     >
                                         {isMigrating ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-700" />} {isMigrating ? 'Propagating...' : 'Sync Institutions'}
                                     </button>
-                                    <button disabled className="group relative flex items-center justify-center gap-3 px-8 py-5 bg-white/5 text-white/20 border border-white/10 rounded-[2rem] font-black uppercase text-[11px] tracking-widest cursor-not-allowed">
-                                        <HardDrive className="w-5 h-5" /> Cleanup Orphan Docs
+                                    <button 
+                                        onClick={handleToggleMaintenance}
+                                        disabled={isTogglingMaintenance}
+                                        className={`group relative flex items-center justify-center gap-3 px-8 py-5 rounded-[2rem] font-black uppercase text-[11px] tracking-widest shadow-2xl active:scale-95 transition-all ${isMaintenanceMode ? 'bg-rose-600 text-white shadow-rose-900/40 hover:bg-rose-500' : 'bg-amber-500 text-slate-900 shadow-amber-900/20 hover:bg-amber-400'}`}
+                                    >
+                                        {isTogglingMaintenance ? <Loader2 className="w-5 h-5 animate-spin" /> : <Shield className="w-5 h-5" />} 
+                                        {isMaintenanceMode ? 'Afbryd Vedligeholdelse' : 'Aktivér Vedligeholdelse'}
                                     </button>
                                 </div>
                             </div>

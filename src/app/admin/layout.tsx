@@ -34,13 +34,15 @@ import {
     History,
     Settings2,
     DollarSign,
-    Target
+    Target,
+    Inbox
 } from 'lucide-react';
 
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirestore } from '@/firebase';
+import { getUnreadCount } from './inbox/actions';
 
 // Navigation structure categorized for better visibility
 const navigationGroups = [
@@ -50,7 +52,7 @@ const navigationGroups = [
       { id: 'overview', href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'users', href: '/admin/users', label: 'Brugerstyring', icon: Users },
       { id: 'finans', href: '/admin/finans', label: 'Økonomi & MMR', icon: TrendingUp },
-      { id: 'stats', href: '/admin/stats', label: 'Bruger-Adfærd', icon: BarChart },
+      { id: 'stats', href: '/admin/stats', label: 'Bruger-Analyse & Retention', icon: BarChart },
       { id: 'costs', href: '/admin/costs', label: 'AI Omkostninger', icon: CreditCard },
     ]
   },
@@ -60,6 +62,7 @@ const navigationGroups = [
         { id: 'markedsplads', href: '/admin/markedsplads', label: 'Markedsplads', icon: HandHelping },
         { id: 'marketing', href: '/admin/marketing', label: 'Koder & Tilbud', icon: Sparkles },
         { id: 'emails', href: '/admin/emails', label: 'E-mail Blasts', icon: Mail },
+        { id: 'inbox', href: '/admin/inbox', label: 'Indbakke (Simply)', icon: Inbox },
         { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
     ]
   },
@@ -76,6 +79,7 @@ const navigationGroups = [
     items: [
         { id: 'content', href: '/admin/content', label: 'Platform Indhold', icon: BookOpen },
         { id: 'notifications', href: '/admin/notifications', label: 'Push Beskeder', icon: Bell },
+        { id: 'audit-logs', href: '/admin/audit-logs', label: 'Audit Logs', icon: History },
         { id: 'system', href: '/admin/system', label: 'System Puls', icon: Database },
     ]
   }
@@ -89,6 +93,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+        const count = await getUnreadCount();
+        setUnreadCount(count);
+    }
+    fetchCount();
+    // Poll every 5 mins
+    const interval = setInterval(fetchCount, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!isUserLoading && (!user || userProfile?.role !== 'admin')) {
@@ -144,6 +160,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <div className="flex items-center gap-3.5 relative z-10">
                           <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-indigo-400' : 'text-slate-300 group-hover:text-slate-600'}`} />
                           {item.label}
+                          {item.id === 'inbox' && unreadCount > 0 && (
+                            <span className="flex-shrink-0 w-5 h-5 bg-rose-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-rose-600/20 translate-x-1">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                          )}
                         </div>
                         {isActive && (
                           <motion.div layoutId="activeNavIndicator" className="w-1.5 h-1.5 bg-indigo-400 rounded-full shadow-[0_0_12px_rgba(129,140,248,0.8)]" />
@@ -243,7 +264,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 const isActive = activeSection === item.id;
                                 return (
                                     <Link key={item.id} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center justify-between p-4 rounded-xl transition-all ${isActive ? 'bg-slate-950 text-white' : 'bg-transparent text-slate-500'}`}>
-                                        <div className="flex items-center gap-4"><item.icon className="w-5 h-5" /><span className="font-bold">{item.label}</span></div>
+                                        <div className="flex items-center gap-4">
+                                            <item.icon className="w-5 h-5" />
+                                            <span className="font-bold">{item.label}</span>
+                                            {item.id === 'inbox' && unreadCount > 0 && (
+                                                <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">{unreadCount}</span>
+                                            )}
+                                        </div>
                                         <ChevronRight className="w-4 h-4 opacity-20" />
                                     </Link>
                                 )

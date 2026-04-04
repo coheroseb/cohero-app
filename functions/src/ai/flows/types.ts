@@ -1540,3 +1540,109 @@ export const ModuleExamPrepOutputSchema = z.object({
 export type ModuleExamPrepInput = z.infer<typeof ModuleExamPrepInputSchema>;
 export type ModuleExamPrepOutput = z.infer<typeof ModuleExamPrepOutputSchema>;
 export type ModuleExamPrepData = z.infer<typeof ModuleExamPrepDataSchema>;
+// ==========================================
+// ADMIN & ANALYTICS SCHEMAS
+// ==========================================
+
+export const AdminInsightInputSchema = z.object({
+  totalUsers: z.number(),
+  growth: z.string(),
+  dau: z.number(),
+  mau: z.number(),
+  stickiness: z.string(),
+  churnRate30d: z.string(),
+  monthlyTokenCost: z.string(),
+  riskUsersCount: z.number(),
+  totalRiskMRR: z.number(),
+  fbConversions: z.number().optional(),
+  tiktokConversions: z.number().optional(),
+});
+
+export type AdminInsightInput = z.infer<typeof AdminInsightInputSchema>;
+
+export const AdminInsightOutputSchema = z.object({
+  data: z.object({
+    subject: z.string().describe("En dragende emnefelt til mailen"),
+    report: z.string().describe("Den fulde statusrapport i Markdown/HTML format"),
+  }),
+  usage: UsageSchema,
+});
+
+export type AdminInsightOutput = z.infer<typeof AdminInsightOutputSchema>;
+
+export const NudgeEmailInputSchema = z.object({
+  userName: z.string(),
+  lastActivityAt: z.string().optional(),
+  daysInactive: z.number(),
+});
+
+export type NudgeEmailInput = z.infer<typeof NudgeEmailInputSchema>;
+
+export const NudgeEmailOutputSchema = z.object({
+  data: z.object({
+    subject: z.string(),
+    content: z.string(),
+  }),
+  usage: UsageSchema,
+});
+
+export type NudgeEmailOutput = z.infer<typeof NudgeEmailOutputSchema>;
+
+export const StudyCompanionInputSchema = z.object({
+  userName: z.string(),
+  semester: z.string().optional(),
+  institution: z.string().optional(),
+  recentToolsUsed: z.array(z.string()).optional(),
+});
+
+export type StudyCompanionInput = z.infer<typeof StudyCompanionInputSchema>;
+
+export const StudyCompanionOutputSchema = z.object({
+  data: z.object({
+    subject: z.string().describe("Emnefelt til nyhedsbrevet"),
+    content: z.string().describe("Personlig hilsen, ugens fokus-paragraf og refleksion"),
+  }),
+  usage: UsageSchema,
+});
+
+export type StudyCompanionOutput = z.infer<typeof StudyCompanionOutputSchema>;
+
+export const TikTokScriptInputSchema = z.object({
+  topic: z.string().optional().describe("Emne for videoen (f.eks. 'eksamensangst' eller 'servicelovens § 15')"),
+  goal: z.string().optional().describe("Målet med videoen (f.eks. 'mere trafik' eller 'flere tilmeldinger')"),
+  tone: z.string().optional().describe("Tone of voice (f.eks. 'energisk' eller 'seriøs')"),
+});
+
+export type TikTokScriptInput = z.infer<typeof TikTokScriptInputSchema>;
+
+export const TikTokScriptOutputSchema = z.object({
+  data: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    hook: z.string().describe("De første 2 sekunder der skal fange opmærksomhed"),
+    body: z.string().describe("Selve indholdet i punkter eller fortælling"),
+    cta: z.string().describe("Call to action (f.eks. 'Klik på linket i bio')"),
+    caption: z.string().describe("Forslag til TikTok caption inkl. hashtags"),
+  })),
+  usage: UsageSchema,
+});
+
+export type TikTokScriptOutput = z.infer<typeof TikTokScriptOutputSchema>;
+
+export const BlogPostInputSchema = z.object({
+  topic: z.string().optional().describe("Hovedemme for artiklen (f.eks. 'Serviceloven § 15' eller 'eksamensperioden')"),
+  targetAudience: z.string().optional().describe("Hvem er læseren? (f.eks. 'socialrådgiverstuderende' eller 'nyuddannede')"),
+  keywords: z.string().optional().describe("Søgeord der skal inkluderes (f.eks. 'socialrådgiver studie, juridisk metode')"),
+});
+
+export type BlogPostInput = z.infer<typeof BlogPostInputSchema>;
+
+export const BlogPostOutputSchema = z.object({
+  title: z.string().describe("SEO-optimeret overskrift (H1)"),
+  excerpt: z.string().describe("Kort, fængende meta-beskrivelse eller teaser"),
+  content: z.string().describe("Selve indholdet i formateret Markdown"),
+  seoKeywords: z.array(z.string()).describe("Foreslåede tags/keywords til SEO"),
+  usage: UsageSchema,
+});
+
+export type BlogPostOutput = z.infer<typeof BlogPostOutputSchema>;
