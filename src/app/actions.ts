@@ -789,12 +789,14 @@ export async function sendBulkEmailAction(input: { recipients: { email: string, 
 
             if (error) {
                 console.error(`Resend batch error for chunk ${i}:`, error);
-                // We could continue to next chunk instead of throwing, making it even more resilient
-                console.warn("Fortsætter til næste chunk trods fejl i denne.");
-                continue; 
+                return { success: false, message: `Resend Fejl: ${error.message} (${error.name})`, sentCount: totalSentCount };
             }
 
             totalSentCount += chunk.length;
+        }
+
+        if (totalSentCount === 0 && validRecipients.length > 0) {
+            return { success: false, message: 'Ingen e-mails kunne sendes. Der opstod en fejl ved alle forsøg hos Resend.', sentCount: 0 };
         }
 
         return { success: true, message: `E-mails sendt (${totalSentCount} af ${recipients.length}).`, sentCount: totalSentCount };

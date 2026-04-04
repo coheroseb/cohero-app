@@ -23,7 +23,7 @@ const ReactQuill = dynamic(
 );
 import 'react-quill/dist/quill.snow.css';
 
-type TargetGroup = 'all' | 'Socialrådgiver' | 'Pædagog' | 'Lærer' | 'Sygeplejerske' | 'premium' | 'free' | 'specific' | 'institutions';
+type TargetGroup = 'all' | 'Socialrådgiver' | 'Pædagog' | 'Lærer' | 'Sygeplejerske' | 'Andet' | 'premium' | 'Kollega+' | 'Kollega++' | 'Semesterpakken' | 'Group Pro' | 'Kollega' | 'specific' | 'institutions';
 
 interface UserProfile {
   id: string;
@@ -44,6 +44,15 @@ interface EmailTemplate {
   title: string;
   htmlContent: string;
   createdAt: any;
+}
+
+interface EmailCampaign {
+  id: string;
+  subject: string;
+  htmlContent: string;
+  targetGroup: string;
+  sentCount: number;
+  sentAt: any;
 }
 
 export default function AdminEmailsPage() {
@@ -79,6 +88,9 @@ export default function AdminEmailsPage() {
     const templatesQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'emailTemplates')) : null), [firestore]);
     const { data: templates, isLoading: templatesLoading } = useCollection<EmailTemplate>(templatesQuery);
 
+    const campaignsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'emailCampaigns')) : null), [firestore]);
+    const { data: campaigns, isLoading: campaignsLoading } = useCollection<EmailCampaign>(campaignsQuery);
+
     if (userProfile?.role !== 'admin' && userProfile?.membership !== 'Admin') {
         return <div className="p-20 text-center font-bold text-rose-600">Adgang nægtet. Kun for administratorer.</div>;
     }
@@ -113,6 +125,27 @@ export default function AdminEmailsPage() {
 </html>
     `;
 
+    // -- HELPERS --
+    const getRecipientCount = (group: TargetGroup): number => {
+        if (group === 'institutions') return institutions?.length || 0;
+        if (!users) return 0;
+        return users.filter(u => {
+            if (!u.email) return false;
+            if (group === 'specific') return selectedEmails.length;
+            if (group === 'all') return true;
+            
+            const m = u.membership?.trim() || '';
+            if (group === 'premium') return ['Kollega+', 'Kollega++', 'Semesterpakken', 'Group Pro'].includes(m);
+            if (group === 'Kollega') return m === 'Kollega' || m === '';
+            if (group === 'Kollega+') return m === 'Kollega+';
+            if (group === 'Kollega++') return m === 'Kollega++';
+            if (group === 'Semesterpakken') return m === 'Semesterpakken';
+            if (group === 'Group Pro') return m === 'Group Pro';
+            
+            return u.profession?.trim() === group;
+        }).length;
+    };
+
     // -- ACTIONS --
     const handleSendEmail = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -133,9 +166,16 @@ export default function AdminEmailsPage() {
                 if (!u.email) return false;
                 if (targetGroup === 'specific') return selectedEmails.includes(u.email);
                 if (targetGroup === 'all') return true;
-                if (targetGroup === 'premium') return ['Kollega+', 'Kollega++', 'Semesterpakken', 'Group Pro'].includes(u.membership || '');
-                if (targetGroup === 'free') return u.membership === 'Kollega' || !u.membership;
-                return u.profession === targetGroup;
+                
+                const m = u.membership?.trim() || '';
+                if (targetGroup === 'premium') return ['Kollega+', 'Kollega++', 'Semesterpakken', 'Group Pro'].includes(m);
+                if (targetGroup === 'Kollega+') return m === 'Kollega+';
+                if (targetGroup === 'Kollega++') return m === 'Kollega++';
+                if (targetGroup === 'Semesterpakken') return m === 'Semesterpakken';
+                if (targetGroup === 'Group Pro') return m === 'Group Pro';
+                if (targetGroup === 'Kollega') return m === 'Kollega' || m === '';
+                
+                return u.profession?.trim() === targetGroup;
             }).map(u => ({
                 email: u.email,
                 name: u.username || 'Kollega'
@@ -159,6 +199,22 @@ export default function AdminEmailsPage() {
             });
 
             if (result.success) {
+                // Save to history
+                if (firestore) {
+                    try {
+                        await addDoc(collection(firestore, 'emailCampaigns'), {
+                            subject: subject.trim(),
+                            htmlContent: finalHtmlBytes,
+                            targetGroup: targetGroup,
+                            sentCount: result.sentCount,
+                            sentAt: serverTimestamp(),
+                            adminName: userProfile?.username || 'Admin'
+                        });
+                    } catch (e) {
+                        console.error("Failed to log campaign:", e);
+                    }
+                }
+
                 setSendStats({ count: result.sentCount, group: targetGroup });
                 setSubject('');
                 setHtmlContent('');
@@ -286,25 +342,54 @@ export default function AdminEmailsPage() {
                             <form onSubmit={handleSendEmail} className="flex flex-col flex-1 p-8 space-y-8">
                                 <div className="space-y-4">
                                     <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Målgruppe</label>
-                                    <div className="flex flex-wrap gap-3">
-                                        {[
-                                            { id: 'all', label: 'Alle' },
-                                            { id: 'premium', label: 'Premium' },
-                                            { id: 'free', label: 'Gratis' },
-                                            { id: 'Socialrådgiver', label: 'Soc.Rådg.' },
-                                            { id: 'Pædagog', label: 'Pædagog' },
-                                            { id: 'institutions', label: 'Institutioner' },
-                                            { id: 'specific', label: 'Specifikke Brugere' }
-                                        ].map((group) => (
-                                            <button
-                                                key={group.id}
-                                                type="button"
-                                                onClick={() => setTargetGroup(group.id as TargetGroup)}
-                                                className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all ${targetGroup === group.id ? 'bg-amber-950 text-white border-amber-950 shadow-md' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-amber-200'}`}
-                                            >
-                                                {group.label}
-                                            </button>
-                                        ))}
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <p className="text-[9px] font-black uppercase text-slate-400 px-1">Betaling / Niveau</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {[
+                                                    { id: 'all', label: 'Alle' },
+                                                    { id: 'premium', label: 'Premium (Samlet)' },
+                                                    { id: 'Kollega', label: 'Kollega' },
+                                                    { id: 'Kollega+', label: 'Kollega+' },
+                                                    { id: 'Kollega++', label: 'Kollega++' },
+                                                    { id: 'Semesterpakken', label: 'Semesterp.' },
+                                                    { id: 'Group Pro', label: 'Group Pro' },
+                                                ].map((group) => (
+                                                    <button
+                                                        key={group.id}
+                                                        type="button"
+                                                        onClick={() => setTargetGroup(group.id as TargetGroup)}
+                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${targetGroup === group.id ? 'bg-amber-950 text-white border-amber-950 shadow-md' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-amber-200'}`}
+                                                    >
+                                                        {group.label} ({getRecipientCount(group.id as TargetGroup)})
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <p className="text-[9px] font-black uppercase text-slate-400 px-1">Faggruppe / Type</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {[
+                                                    { id: 'Socialrådgiver', label: 'Soc.Rådg.' },
+                                                    { id: 'Pædagog', label: 'Pædagog' },
+                                                    { id: 'Lærer', label: 'Lærer' },
+                                                    { id: 'Sygeplejerske', label: 'Sygeplejerske' },
+                                                    { id: 'Andet', label: 'Andet' },
+                                                    { id: 'institutions', label: 'Institutioner' },
+                                                    { id: 'specific', label: 'Vælg Manuelt' }
+                                                ].map((group) => (
+                                                    <button
+                                                        key={group.id}
+                                                        type="button"
+                                                        onClick={() => setTargetGroup(group.id as TargetGroup)}
+                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${targetGroup === group.id ? 'bg-amber-800 text-white border-amber-800 shadow-md' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-amber-200'}`}
+                                                    >
+                                                        {group.label} ({getRecipientCount(group.id as TargetGroup)})
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {targetGroup === 'specific' && (
@@ -476,6 +561,41 @@ export default function AdminEmailsPage() {
                         </div>
                         
                         <p className="text-xs text-slate-400 font-medium leading-relaxed">Antallet af unikke modtagere på tværs af platformen.</p>
+                    </div>
+
+                    {/* Historik Box */}
+                    <div className="bg-white p-6 rounded-[2.5rem] border border-amber-100 shadow-sm space-y-6">
+                        <h3 className="font-bold text-amber-950 flex items-center gap-2"><Mail className="w-5 h-5" /> Udsendte Kampagner</h3>
+                        <div className="space-y-3">
+                            {campaignsLoading && <Loader2 className="w-5 h-5 animate-spin mx-auto text-amber-300" />}
+                            {!campaignsLoading && campaigns?.length === 0 && <p className="text-xs text-slate-400 italic text-center">Ingen historik endnu.</p>}
+                            <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                                {campaigns?.sort((a,b) => b.sentAt?.toMillis?.() - a.sentAt?.toMillis?.()).map(c => (
+                                    <div 
+                                        key={c.id} 
+                                        className="w-full text-left p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-amber-50 hover:border-amber-200 transition-colors group cursor-default"
+                                    >
+                                        <div className="flex justify-between items-start mb-1">
+                                            <p className="text-xs font-black text-amber-900 group-hover:text-amber-700 truncate max-w-[150px]">{c.subject}</p>
+                                            <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-md font-bold">{c.sentCount} modt.</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
+                                            <span>{c.sentAt?.toDate ? c.sentAt.toDate().toLocaleDateString('da-DK') : 'Dato ukendt'}</span>
+                                            <button 
+                                                onClick={() => {
+                                                    setSubject(c.subject);
+                                                    setHtmlContent(c.htmlContent);
+                                                    toast({ title: "Kampagne indlæst", description: "Indholdet er klar til redigering." });
+                                                }}
+                                                className="text-amber-600 hover:text-amber-800 font-bold hover:underline"
+                                            >
+                                                Genbrug
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     {sendStats && (
