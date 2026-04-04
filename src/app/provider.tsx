@@ -592,12 +592,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
+    // --- HEARTBEAT FOR REALTIME PRESENCE ---
+    let heartbeatInterval: any;
+    if (user && firestore && document.visibilityState === 'visible') {
+        const sendHeartbeat = () => {
+            const userRef = doc(firestore, 'users', user.uid);
+            updateDoc(userRef, { lastActivityAt: serverTimestamp() }).catch(() => {});
+        };
+        // Initial heartbeat
+        sendHeartbeat();
+        // Every 45 seconds
+        heartbeatInterval = setInterval(sendHeartbeat, 45000);
+    }
+
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible' && user && firestore) {
+            const userRef = doc(firestore, 'users', user.uid);
+            updateDoc(userRef, { lastActivityAt: serverTimestamp() }).catch(() => {});
+        }
+    };
+
     window.addEventListener('focus', reloadUserOnFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('focus', reloadUserOnFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
     };
-  }, [auth]);
+  }, [auth, user, firestore]);
 
   const effectiveTheme = useMemo(() => {
     if (campaigns && campaigns.length > 0 && campaigns[0].theme) {

@@ -51,6 +51,7 @@ const navigationGroups = [
     title: 'Operations',
     items: [
       { id: 'overview', href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'realtime', href: '/admin/realtime', label: 'Live Platform Puls', icon: Activity },
       { id: 'users', href: '/admin/users', label: 'Brugerstyring', icon: Users },
       { id: 'finans', href: '/admin/finans', label: 'Økonomi & MMR', icon: TrendingUp },
       { id: 'stats', href: '/admin/stats', label: 'Bruger-Analyse & Retention', icon: BarChart },
