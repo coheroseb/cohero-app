@@ -85,23 +85,10 @@ export const useUser = () => {
     };
     
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user && firestore) {
-        const userRef = doc(firestore, 'users', user.uid);
-        const docSnap = await getDoc(userRef);
-        if (!docSnap.exists()) {
-          await setDoc(userRef, {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            createdAt: serverTimestamp(),
-            role: 'user',
-            membership: 'Kollega',
-          });
-        }
-      }
       setUser(user);
       setIsLoading(false);
     });
+
 
     return () => unsubscribe();
   }, [auth, firestore]);

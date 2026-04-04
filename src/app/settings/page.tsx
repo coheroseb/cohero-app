@@ -339,21 +339,21 @@ export default function SettingsPage() {
         }
       }
 
-      // 2. Delete Firestore document
-      // Note: We do this while auth user still exists so Firestore rules allow it
-      const userRef = doc(firestore, 'users', user.uid);
-      await deleteDoc(userRef);
-
-      // 3. Delete Auth user
+      // 2. Delete Auth user - this is the point of no return.
+      // We do this first because if it fails (e.g. requires recent login),
+      // we don't want to have already deleted the Firestore document.
+      // The onUserDeleteCleanUp Cloud Function will handle deleting the 
+      // Firestore document and all its subcollections automatically.
       await deleteUser(auth.currentUser);
       
-      // 4. Logout and clean up
+      // 3. Logout and clean up navigation
       handleLogout();
     } catch (err: any) {
       setIsDeleting(false);
       throw err; // Re-throw to be caught by DeleteAccountModal
     }
   };
+
   
   const handleResendClick = async () => {
     setIsResending(true);

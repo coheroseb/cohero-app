@@ -145,5 +145,6 @@ export { checkFolketingetUpdates, incrementUserSemesters };
 import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";
 export { onAssistanceRequestUpdate, onAssistanceRequestCreate };
 
-import { onUserUpdateScanStudentCard } from "./users";
-export { onUserUpdateScanStudentCard };
+import { onUserUpdateScanStudentCard, onUserDeleteCleanUp } from "./users";
+export { onUserUpdateScanStudentCard, onUserDeleteCleanUp };
+

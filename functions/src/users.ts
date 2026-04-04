@@ -91,3 +91,21 @@ export const onUserUpdateScanStudentCard = functions.firestore
 
     return null;
   });
+
+export const onUserDeleteCleanUp = functions.auth.user().onDelete(async (user) => {
+  const userId = user.uid;
+  console.log(`Cleaning up Firestore data for deleted user ${userId}`);
+  
+  const firestore = admin.firestore();
+  const userRef = firestore.collection("users").doc(userId);
+  
+  try {
+    // Recursively delete the user document and all its subcollections
+    // This ensures that journals, cases, etc. are also removed.
+    await firestore.recursiveDelete(userRef);
+    console.log(`Successfully deleted all Firestore data for user ${userId}`);
+  } catch (error) {
+    console.error(`Error during Firestore cleanup for user ${userId}:`, error);
+  }
+});
+

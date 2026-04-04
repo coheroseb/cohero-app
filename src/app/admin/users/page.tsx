@@ -14,7 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import DeleteUserModal from '@/components/DeleteUserModal';
 import { useDebounce } from 'use-debounce';
 import { decryptData } from '@/lib/encryption';
-import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarketplaceBanAction, clearUserPaymentInfoAction } from '@/app/actions';
+import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarketplaceBanAction, clearUserPaymentInfoAction, adminDeleteUserAction } from '@/app/actions';
+
 import { StudentCardVerification } from '@/ai/flows/types';
 import { calculateStudyStarted } from '@/lib/education';
 import { writeBatch, serverTimestamp, updateDoc } from 'firebase/firestore';
@@ -275,21 +276,31 @@ const AdminUsersPage = () => {
     if (!userToDelete || !firestore) return;
 
     try {
+      // 1. Delete from Auth via Server Action
+      const result = await adminDeleteUserAction(userToDelete.id);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      // 2. Delete from Firestore locally for immediate UI feedback.
+      // (The Cloud Function onUserDeleteCleanUp also does this automatically)
       await deleteDoc(doc(firestore, 'users', userToDelete.id));
+      
       toast({
         title: 'Bruger slettet',
-        description: `Brugeren ${userToDelete.username} er blevet slettet fra databasen.`,
+        description: `Brugeren ${userToDelete.username} er blevet slettet permanent (Auth + Firestore).`,
       });
       setUserToDelete(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting user:', err);
       toast({
         variant: 'destructive',
         title: 'Fejl',
-        description: 'Kunne ikke slette brugeren.',
+        description: err.message || 'Kunne ikke slette brugeren.',
       });
     }
   };
+
 
   const [isBulkLoading, setIsBulkLoading] = useState(false);
   const handleBulkCalculateStartDates = async () => {

@@ -2046,3 +2046,17 @@ export async function clearUserPaymentInfoAction(userId: string, studentCardUrl?
         return { success: false, error: "Fejl ved sletning af oplysninger." };
     }
 }
+export async function adminDeleteUserAction(userId: string) {
+    try {
+        const { adminAuth } = await import('@/firebase/server-init');
+        
+        // Delete the Auth user.
+        // This will trigger the onUserDeleteCleanUp Cloud Function to clean up Firestore!
+        await adminAuth.deleteUser(userId);
+        
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to delete user in admin action:", e);
+        return { success: false, error: e.message || "Kunne ikke slette brugeren fra Auth." };
+    }
+}
