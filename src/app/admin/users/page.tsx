@@ -49,6 +49,9 @@ interface UserProfile {
   uf?: string;
   utm_source?: string;
   convertedAt?: { toDate: () => Date };
+  stripeSubscriptionId?: string;
+  stripeSubscriptionStatus?: string;
+  isPremium?: boolean;
 }
 
 const SourceBadge = ({ source }: { source?: string }) => {
@@ -678,15 +681,51 @@ const AdminUsersPage = () => {
                                             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Akademisk Status</h4>
                                         </div>
                                         <div className="space-y-4">
-                                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                                                <span className="text-xs font-bold text-slate-500">Plan:</span>
-                                                <span className="text-xs font-black uppercase tracking-widest text-indigo-600">{u.membership || 'Kollega (Gratis)'}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                                                <span className="text-xs font-bold text-slate-500">Semester:</span>
-                                                <span className={`text-xs font-black ${u.isQualified ? 'text-emerald-600' : 'text-slate-900'}`}>{u.semester || (u.isQualified ? 'Afsluttet' : 'N/A')}</span>
-                                            </div>
-                                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                                             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                                                 <div className="flex items-center justify-between">
+                                                     <span className="text-xs font-bold text-slate-500">Plan Status</span>
+                                                     {u.membership === 'Kollega+' || u.membership === 'Semesterpakken' ? (
+                                                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest rounded-lg border border-emerald-100/50">Active Subscription</span>
+                                                     ) : (
+                                                        <span className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[8px] font-black uppercase tracking-widest rounded-lg border border-slate-100">Free Tier</span>
+                                                     )}
+                                                 </div>
+                                                 <select 
+                                                    value={u.membership || 'Kollega'} 
+                                                    onChange={async (e) => {
+                                                        const newVal = e.target.value;
+                                                        if (!firestore) return;
+                                                        try {
+                                                            await updateDoc(doc(firestore, 'users', u.id), { 
+                                                                membership: newVal,
+                                                                // If manually setting to premium, also set the boolean if app uses it
+                                                                isPremium: newVal.includes('+') || newVal === 'Semesterpakken'
+                                                            });
+                                                            toast({ title: "Medlemskab opdateret", description: `${u.username} er nu ${newVal}` });
+                                                        } catch (err) {
+                                                            toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke opdatere plan" });
+                                                        }
+                                                    }}
+                                                    className="w-full h-10 px-4 bg-slate-50 border border-slate-100 rounded-xl text-xs font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                 >
+                                                    <option value="Kollega">Kollega (Gratis)</option>
+                                                    <option value="Kollega+">Kollega+</option>
+                                                    <option value="Kollega++">Kollega++</option>
+                                                    <option value="Semesterpakken">Semesterpakken</option>
+                                                    <option value="Mentor">Mentor</option>
+                                                 </select>
+                                                 {u.stripeSubscriptionId && (
+                                                     <div className="flex flex-col pt-2 border-t border-slate-50">
+                                                         <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-1">Stripe Billing ID</span>
+                                                         <code className="text-[9px] font-mono text-indigo-400 bg-indigo-50/30 px-3 py-1.5 rounded-lg border border-indigo-100/50 w-fit select-all cursor-copy" title="Klik for at kopiere">{u.stripeSubscriptionId}</code>
+                                                     </div>
+                                                 )}
+                                             </div>
+                                             <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                                 <span className="text-xs font-bold text-slate-500">Semester:</span>
+                                                 <span className={`text-xs font-black ${u.isQualified ? 'text-emerald-600' : 'text-slate-900'}`}>{u.semester || (u.isQualified ? 'Afsluttet' : 'N/A')}</span>
+                                             </div>
+                                             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-xs font-bold text-slate-500">Studie Start:</span>
                                                     <span className="text-xs font-black text-slate-900">{u.studyStarted || 'Ej beregnet'}</span>

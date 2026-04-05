@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { useApp } from '@/app/provider';
 import { logAdminAction } from '@/lib/audit-logger';
+import { getStripeDashboardMetricsAction } from '@/app/actions';
 import Link from 'next/link';
 
 interface PageView extends DocumentData {
@@ -59,6 +59,22 @@ const AdminSystemPage = () => {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
     const [isTogglingMaintenance, setIsTogglingMaintenance] = useState(false);
 
+    // Stripe data for dynamic economics
+    const [stripeMetrics, setStripeMetrics] = useState<any>(null);
+    const [isStripeLoading, setIsStripeLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchFinanceData() {
+            try {
+                const res = await getStripeDashboardMetricsAction();
+                if (res.success) setStripeMetrics(res);
+            } catch (err) {
+                console.error("Failed to fetch economics:", err);
+            } finally { setIsStripeLoading(false); }
+        }
+        fetchFinanceData();
+    }, []);
+
     const pageViewsQuery = useMemoFirebase(
         () => firestore ? query(collection(firestore, 'pageViews'), orderBy('timestamp', 'desc'), limit(200)) : null,
         [firestore]
@@ -70,6 +86,38 @@ const AdminSystemPage = () => {
         [firestore]
     );
     const { data: users, isLoading: usersLoading } = useCollection<UserData>(usersQuery);
+
+    const economyStats = useMemo(() => {
+        if (!users || isStripeLoading) return { multiplier: 0, margin: 0, totalRev: 0, premiumCount: 0, status: 'loading' };
+        
+        // Use the same robust filter as User Management
+        const premiumCount = users.filter((u: any) => {
+            const mem = u.membership || '';
+            return mem.includes('+') || mem === 'Semesterpakken' || mem === 'Group Pro';
+        }).length;
+        
+        // Use Stripe MRR if available (~ in DKK), else estimate from user count
+        const mrrInCents = stripeMetrics?.mrr || (premiumCount * 89 * 100);
+        const totalMonthlyRevenue = mrrInCents / 100;
+        
+        const technicalBurn = 1420; // Fixed estimation based on GCP rates
+        
+        // Safety check to avoid division by zero or weird math on no revenue
+        if (totalMonthlyRevenue < 10) {
+            return { multiplier: 0, margin: 0, totalRev: 0, premiumCount, status: 'no_revenue' };
+        }
+
+        const multiplier = totalMonthlyRevenue / technicalBurn;
+        const margin = ((totalMonthlyRevenue - technicalBurn) / totalMonthlyRevenue * 100);
+        
+        return { 
+            multiplier: Math.round(multiplier), 
+            margin: Number(margin.toFixed(1)), 
+            totalRev: Math.round(totalMonthlyRevenue),
+            premiumCount,
+            status: 'success'
+        };
+    }, [users, stripeMetrics, isStripeLoading]);
 
     const errorsQuery = useMemoFirebase(
         () => firestore ? query(collection(firestore, 'systemErrors'), orderBy('timestamp', 'desc'), limit(100)) : null,
@@ -764,18 +812,20 @@ const AdminSystemPage = () => {
                                      <div className="space-y-4">
                                          <h4 className="text-2xl font-black serif italic">Profitabilitets-Moment</h4>
                                          <p className="text-white/40 text-sm font-medium leading-relaxed max-w-lg">
-                                             Systemet kører med et ekstremt lavt footprint. For hver krone brugt på drift, genereres der <span className="text-emerald-400 font-black">26,2 kr.</span> i omsætning.
+                                             Systemet kører med et ekstremt lavt footprint. For hver krone brugt på drift, genereres der <span className="text-emerald-400 font-black">
+                                                 {economyStats.status === 'loading' ? '...' : economyStats.status === 'no_revenue' ? '0' : (economyStats.totalRev / 1420).toFixed(1)} kr.
+                                             </span> i omsætning {economyStats.status === 'no_revenue' ? '(Afventer data)' : '(Livedata)'}.
                                          </p>
                                      </div>
                                      <div className="flex flex-wrap justify-center gap-8 lg:gap-16">
                                          <div className="text-center">
-                                             <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2">Netto Margin</p>
-                                             <p className="text-4xl font-black tabular-nums">96.2%</p>
+                                             <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2">Netto Margin (Tech)</p>
+                                             <p className="text-4xl font-black tabular-nums">{economyStats.status === 'loading' ? '-%' : economyStats.status === 'no_revenue' ? '0%' : `${economyStats.margin}%`}</p>
                                          </div>
                                          <div className="h-12 w-px bg-white/10 hidden xl:block" />
                                          <div className="text-center">
                                              <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2">Scaling Multiplier</p>
-                                             <p className="text-4xl font-black tabular-nums">26x</p>
+                                             <p className="text-4xl font-black tabular-nums">{economyStats.status === 'loading' ? '..' : `${economyStats.multiplier}x`}</p>
                                          </div>
                                      </div>
                                  </div>
