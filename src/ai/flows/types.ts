@@ -1637,3 +1637,37 @@ export const OptimizeSeoOutputSchema = z.object({
 
 export type OptimizeSeoInput = z.infer<typeof OptimizeSeoInputSchema>;
 export type OptimizeSeoOutput = z.infer<typeof OptimizeSeoOutputSchema>;
+
+// ==========================================
+// LAW FLOWCHART SCHEMAS
+// ==========================================
+
+export const FlowchartNodeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  type: z.enum(['start', 'decision', 'action', 'end']),
+  description: z.string().optional(),
+});
+
+export const FlowchartEdgeSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  label: z.string().optional(),
+});
+
+export const LawFlowchartDataSchema = z.object({
+  title: z.string(),
+  nodes: z.array(FlowchartNodeSchema),
+  edges: z.array(FlowchartEdgeSchema),
+  summary: z.string().describe('En overordnet forklaring af den juridiske proces.'),
+});
+
+export const GenerateLawFlowchartOutputSchema = z.object({
+  data: LawFlowchartDataSchema,
+  usage: UsageSchema,
+});
+
+export type LawFlowchartData = z.infer<typeof LawFlowchartDataSchema>;
+export type FlowchartNode = z.infer<typeof FlowchartNodeSchema>;
+export type FlowchartEdge = z.infer<typeof FlowchartEdgeSchema>;
+export type GenerateLawFlowchartOutput = z.infer<typeof GenerateLawFlowchartOutputSchema>;

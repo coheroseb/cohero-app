@@ -97,16 +97,22 @@ import {
     fetchRelatedDocumentLinks,
     fetchRelatedDecisions,
     fetchOmbudsmandReports,
+    generateLawFlowchartAction,
 } from '@/app/actions';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { LiveStatusBadge } from './LiveStatusBadge';
 import LawQuizModal from './LawQuizModal';
 import ReadingGuideModal from './ReadingGuideModal';
+import LawFlowchartModal from './LawFlowchartModal';
+
 import { identifyReformAction, generateReformAnalysisAction } from '@/app/actions';
 import { Progress } from "@/components/ui/progress";
-import type { LawContentType, ParagraphAnalysisData, CollectionData, SavedParagraph, QuizResult, LawConfig, GenerateParagraphDiffData } from '@/ai/flows/types';
+import type { LawContentType, ParagraphAnalysisData, CollectionData, SavedParagraph, QuizResult, LawConfig, GenerateParagraphDiffData, LawFlowchartData } from '@/ai/flows/types';
+import * as Types from '@/ai/flows/types';
+
 import { MobileBottomNav } from './MobileBottomNav';
 
 // --- ENGINE: LOCAL CACHE (15 MIN) ---
@@ -1173,6 +1179,9 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   const [selectionRange, setSelectionRange] = useState<{ text: string; paraKey: string; rect: DOMRect } | null>(null);
   const [paraAnalysis, setParaAnalysis] = useState<Record<string, ParagraphAnalysisData>>({});
   const [isAnalysingPara, setIsAnalysingPara] = useState<Record<string, boolean>>({});
+  const [isGeneratingFlowchart, setIsGeneratingFlowchart] = useState<Record<string, boolean>>({});
+  const [paraFlowcharts, setParaFlowcharts] = useState<Record<string, LawFlowchartData>>({});
+  const [activeFlowchart, setActiveFlowchart] = useState<LawFlowchartData | null>(null);
 
   // Sagsindsigt States
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -1700,8 +1709,16 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   };
 
   const handleAnalyzeParagraph = async (para: any, lawData: LawContentType, paraKey: string) => {
-    if (!isPremium) return;
+    if (!isPremium) {
+        toast({
+            title: "Premium Funktion",
+            description: "AI Deep-Analyse er en del af Kollega+. Opgrader for at få adgang.",
+            variant: "destructive"
+        });
+        return;
+    }
     setIsAnalysingPara(prev => ({ ...prev, [paraKey]: true }));
+
     
     // Record Activity
     if (user && firestore) {
@@ -1727,7 +1744,37 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
     }
   };
 
+  const handleGenerateFlowchart = async (para: any, lawData: LawContentType, paraKey: string) => {
+    if (!isPremium) {
+        toast({
+            title: "Premium Funktion",
+            description: "Flowcharts er en del af Kollega+. Opgrader for at få adgang.",
+            variant: "destructive"
+        });
+        return;
+    }
+    setIsGeneratingFlowchart(prev => ({ ...prev, [paraKey]: true }));
+
+    
+    try {
+        const response = await generateLawFlowchartAction({ 
+            lovTitel: lawData.titel || '', 
+            paragrafNummer: para.nummer || '', 
+            paragrafTekst: para.tekst || '', 
+            fuldLovtekst: lawData.rawText || ''
+        });
+        setParaFlowcharts(prev => ({ ...prev, [paraKey]: response.data }));
+        setActiveFlowchart(response.data);
+    } catch (error) {
+        console.error("Failed to generate flowchart:", error);
+        toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke generere flowchart." });
+    } finally {
+        setIsGeneratingFlowchart(prev => ({ ...prev, [paraKey]: false }));
+    }
+  };
+
   const handleOpenReference = (ref: any) => {
+
     const path = ref.eliPath || ref.href || '';
     if (!path) {
         toast({ variant: 'destructive', title: "Fejl", description: "Dette dokument har ingen gyldig sti." });
@@ -1945,6 +1992,16 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
         activeLawId={activeLawId}
         activeReferenceId={activeReferenceId}
       />
+
+      {/* FLOWCHART MODAL */}
+      <AnimatePresence>
+        {activeFlowchart && (
+            <LawFlowchartModal 
+                data={activeFlowchart} 
+                onClose={() => setActiveFlowchart(null)} 
+            />
+        )}
+      </AnimatePresence>
 
       {/* MOBILE HEADER - Redesigned, cleaner */}
       <div className="lg:hidden h-16 bg-white/40 backdrop-blur-xl border-b border-amber-100 px-6 flex items-center justify-between sticky top-0 z-40 transition-shadow duration-300">
@@ -2943,36 +3000,53 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
                                                             exit={{ height: 0, opacity: 0 }}
                                                             className="bg-amber-50/20 border-t border-amber-50 p-4 md:p-14 space-y-12 animate-ink"
                                                         >
-                                                            <div className="flex flex-col md:flex-row gap-6">
-                                                                <Button 
-                                                                    onClick={() => handleAnalyzeParagraph(para, currentDocData, paraKey)} 
-                                                                    disabled={isAnalysingPara[paraKey]} 
-                                                                    className="flex-[2] h-20 text-lg rounded-[2.5rem] bg-amber-950 hover:bg-black shadow-2xl shadow-amber-950/20 group/ai relative overflow-hidden"
-                                                                >
-                                                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/ai:animate-shimmer transition-transform"></div>
-                                                                    {isAnalysingPara[paraKey] ? (
-                                                                        <div className="flex items-center gap-4">
-                                                                            <Loader2 className="animate-spin w-6 h-6 text-amber-400" />
-                                                                            <span className="font-black uppercase tracking-widest text-xs">Analyserer objektive betingelser...</span>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="flex items-center gap-4">
-                                                                            <div className="w-10 h-10 rounded-2xl bg-amber-400/20 flex items-center justify-center group-hover/ai:rotate-12 transition-transform">
-                                                                                <Brain className="w-5 h-5 text-amber-400" />
-                                                                            </div>
-                                                                            <span className="font-black uppercase tracking-widest text-xs">AI Deep-Analyse (Kollega+)</span>
-                                                                        </div>
-                                                                    )}
-                                                                </Button>
-                                                                <Button 
-                                                                    onClick={() => handleToggleSave(para, currentDocData, currentDocId!)} 
-                                                                    variant="outline" 
-                                                                    className={`flex-1 h-20 text-lg rounded-[2.5rem] border-2 transition-all shadow-xl shadow-amber-950/5 ${isSaved ? 'bg-amber-950 border-amber-950 text-white font-black' : 'bg-white border-amber-100 text-amber-950 hover:border-amber-950'}`}
-                                                                >
-                                                                    {isSaved ? <BookmarkCheck className="fill-amber-400 mr-3 w-6 h-6" /> : <Bookmark className="mr-3 w-6 h-6" />} 
-                                                                    <span className="font-black uppercase tracking-widest text-xs">{isSaved ? 'Gemt i samling' : 'Gem kilde'}</span>
-                                                                </Button>
-                                                            </div>
+                                                                 <div className="flex flex-col md:flex-row gap-4">
+                                                                     <Button 
+                                                                         onClick={() => handleAnalyzeParagraph(para, currentDocData, paraKey)} 
+                                                                         disabled={isAnalysingPara[paraKey]} 
+                                                                         className="flex-1 h-14 text-sm rounded-2xl bg-amber-950 hover:bg-black shadow-xl shadow-amber-950/20 group/ai relative overflow-hidden"
+                                                                     >
+                                                                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/ai:animate-shimmer transition-transform"></div>
+                                                                         {isAnalysingPara[paraKey] ? (
+                                                                             <div className="flex items-center gap-3">
+                                                                                 <Loader2 className="animate-spin w-4 h-4 text-amber-400" />
+                                                                                 <span className="font-black uppercase tracking-widest text-[10px]">Analyserer...</span>
+                                                                             </div>
+                                                                         ) : (
+                                                                             <div className="flex items-center gap-3">
+                                                                                 <Brain className="w-4 h-4 text-amber-400" />
+                                                                                 <span className="font-black uppercase tracking-widest text-[10px]">AI Deep-Analyse</span>
+                                                                             </div>
+                                                                         )}
+                                                                     </Button>
+                                                                     <Button 
+                                                                         onClick={() => handleGenerateFlowchart(para, currentDocData, paraKey)} 
+                                                                         disabled={isGeneratingFlowchart[paraKey]} 
+                                                                         className="flex-1 h-14 text-sm rounded-2xl bg-indigo-950 hover:bg-indigo-900 shadow-xl shadow-indigo-950/20 group/flow relative overflow-hidden"
+                                                                     >
+                                                                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/flow:animate-shimmer transition-transform"></div>
+                                                                         {isGeneratingFlowchart[paraKey] ? (
+                                                                             <div className="flex items-center gap-3">
+                                                                                 <Loader2 className="animate-spin w-4 h-4 text-indigo-400" />
+                                                                                 <span className="font-black uppercase tracking-widest text-[10px]">Bygger Flow...</span>
+                                                                             </div>
+                                                                         ) : (
+                                                                             <div className="flex items-center gap-3">
+                                                                                 <Navigation className="w-4 h-4 text-indigo-300 group-hover:rotate-12 transition-transform" />
+                                                                                 <span className="font-black uppercase tracking-widest text-[10px]">Proces-Flowchart</span>
+                                                                             </div>
+                                                                         )}
+                                                                     </Button>
+                                                                     <Button 
+                                                                         onClick={() => handleToggleSave(para, currentDocData, currentDocId!)} 
+                                                                         variant="outline" 
+                                                                         className={`flex-1 h-14 text-sm rounded-2xl border-2 transition-all shadow-lg ${isSaved ? 'bg-amber-950 border-amber-950 text-white' : 'bg-white border-amber-100 text-amber-950 hover:border-amber-950'}`}
+                                                                     >
+                                                                         {isSaved ? <BookmarkCheck className="fill-amber-400 mr-2 w-4 h-4" /> : <Bookmark className="mr-2 w-4 h-4" />} 
+                                                                         <span className="font-black uppercase tracking-widest text-[10px]">{isSaved ? 'Gemt' : 'Gem kilde'}</span>
+                                                                     </Button>
+                                                                 </div>
+
 
                                                             {paraAnalysis[paraKey] && (
                                                                 <motion.div 

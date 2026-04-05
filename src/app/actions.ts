@@ -74,7 +74,8 @@ if (!Promise.withResolvers) {
 
 
 
-import { adminFirestore } from '@/firebase/server-init';
+import { adminFirestore, admin } from '@/firebase/server-init';
+
 import { uploadMediaToStorage } from '@/lib/storage-utils';
 
 
@@ -2612,3 +2613,38 @@ export async function updateTermsConfigAction(content: string) { return updatePo
 export async function optimizeSeoAction(input: Types.OptimizeSeoInput): Promise<Types.OptimizeSeoOutput> {
     return callFirebaseFlow('optimizeSeoFlow', input);
 }
+
+export async function generateLawFlowchartAction(input: { lovTitel: string, paragrafNummer: string, paragrafTekst: string, fuldLovtekst?: string }): Promise<Types.GenerateLawFlowchartOutput> {
+    const cacheKey = `${input.lovTitel}_${input.paragrafNummer}`.replace(/[\/\s#§]/g, '_').toLowerCase();
+    
+    try {
+        const cacheRef = adminFirestore.collection('lawFlowcharts').doc(cacheKey);
+        const cacheDoc = await cacheRef.get();
+        
+        if (cacheDoc.exists) {
+            const cachedData = cacheDoc.data();
+            if (cachedData?.data) {
+                 return { 
+                    data: cachedData.data, 
+                    usage: { inputTokens: 0, outputTokens: 0 } 
+                 };
+            }
+        }
+        
+        const result = await callFirebaseFlow('generateLawFlowchartFlow', input);
+        
+        // Cache the result asynchronously (don't block the UI)
+        cacheRef.set({
+            data: result.data,
+            lovTitel: input.lovTitel,
+            paragrafNummer: input.paragrafNummer,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        }).catch(err => console.error("Flowchart caching failed:", err));
+        
+        return result;
+    } catch (e: any) {
+        console.error("generateLawFlowchartAction failed:", e);
+        return callFirebaseFlow('generateLawFlowchartFlow', input);
+    }
+}
+
