@@ -232,7 +232,7 @@ const FolketingetPageContent: React.FC = () => {
   const [sagerMetadata, setSagerMetadata] = useState<Record<number, { legalFields: string[], impactSummary: string, failed?: boolean }>>({});
 
   const isPremiumUser = useMemo(() => {
-    return !!(userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || ''));
+    return !!(userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || ''));
   }, [userProfile]);
 
 

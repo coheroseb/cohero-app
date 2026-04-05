@@ -29,7 +29,7 @@ const stripePromise = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_S
 
 interface PartnerDomainConfig {
     institutionName: string;
-    membershipLevel: 'Kollega+' | 'Semesterpakken' | 'Kollega++';
+    membershipLevel: 'Kollega+' | 'Semesterpakken' | 'Kollega+';
     durationInMonths?: number;
 }
 

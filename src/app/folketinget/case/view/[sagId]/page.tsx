@@ -97,7 +97,7 @@ const SagViewPage = () => {
     const { user, userProfile } = useApp();
     const firestore = useFirestore();
     const isPremiumUser = useMemo(() => {
-        return userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || '');
+        return userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || '');
     }, [userProfile]);
 
     const [sag, setSag] = useState<Sag | null>(null);

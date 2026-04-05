@@ -83,7 +83,7 @@ export default function MundtligEksamenstraenerPage() {
 
   const firestore = useFirestore();
 
-  const isPremiumUser = useMemo(() => !!userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership ?? ''), [userProfile]);
+  const isPremiumUser = useMemo(() => !!userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership ?? ''), [userProfile]);
 
   const getDailyCount = (lastUsage?: any, dailyCount?: number) => {
     if (!lastUsage) return 0;

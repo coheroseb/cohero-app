@@ -89,7 +89,7 @@ export default function SharedCategoryPage({ params }: { params: { name: string 
   const isPremium = useMemo(() => {
     if (!userProfile) return false;
     if (userProfile.isQualified) return true;
-    return ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || '');
+    return ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || '');
   }, [userProfile]);
 
   useEffect(() => {

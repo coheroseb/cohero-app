@@ -1302,7 +1302,7 @@ export async function processStripeSession(sessionId: string): Promise<{ success
         } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
             membershipLevel = 'Semesterpakken';
         } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-            membershipLevel = 'Kollega++';
+            membershipLevel = 'Kollega+';
         }
 
         const updateData = {
@@ -1421,7 +1421,7 @@ export async function syncSubscriptionStatusAction(stripeCustomerId: string): Pr
         } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
             membershipLevel = 'Semesterpakken';
         } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-            membershipLevel = 'Kollega++';
+            membershipLevel = 'Kollega+';
         }
 
         // We only grant premium membership if the status is active or trialing

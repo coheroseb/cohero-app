@@ -47,7 +47,6 @@ const getPriceId = (envValue: string | undefined, fallback: string) => {
 const PRICE_IDS = {
   PLUS: getPriceId(process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID, 'price_1SvHSKPzEHK36eTSIFYtGJxD'),
   SEMESTER: getPriceId(process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID, 'price_1SvHTOPzEHK36eTSoiTu8m3C'),
-  PLUS_PLUS: getPriceId(process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID, 'price_1SvHUKPzEHK36eTSO6fRLHli'),
 };
 
 const fadeIn = {
@@ -425,50 +424,6 @@ const UpgradePageContent: React.FC = () => {
                
                <div className="w-full py-4 mt-8 border-2 border-slate-900 text-slate-900 rounded-2xl font-black uppercase text-[10px] tracking-widest text-center group-hover:bg-slate-900 group-hover:text-white transition-colors">
                   {isSubscribing === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID ? <Loader2 className="w-4 h-4 animate-spin mx-auto"/> : 'Køb Semesterpakke'}
-               </div>
-             </div>
-          </motion.div>
-
-          {/* Kollega++ (Coach) */}
-          <motion.div 
-            variants={fadeIn}
-            onClick={() => handleSubscription(PRICE_IDS.PLUS_PLUS)}
-            className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 lg:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-all flex flex-col h-[600px] relative overflow-hidden group cursor-pointer hover:-translate-y-2 duration-500"
-          >
-             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-400 to-indigo-500"></div>
-             
-             <div className="absolute top-6 right-8 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
-                Personlig Coach
-             </div>
-             
-             <div className="relative z-10 flex flex-col h-full">
-                <div className="mb-8">
-                    <h3 className="text-2xl font-black text-slate-800 mb-2">Kollega++</h3>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-600">For den Ambitiøse</p>
-                </div>
-                <div className="mb-10">
-                    <div className="text-5xl font-black text-slate-800 tracking-tight">599 <span className="text-xl text-slate-400 font-medium">kr. / md</span></div>
-                </div>
-                
-                <ul className="space-y-4 mb-auto">
-                  {[
-                    "Alt fra Kollega+",
-                    "45 min. sparring m. socialrådgiver",
-                    "30 min. opgave-review",
-                    "Direkte mail-support",
-                    "Beta-adgang til nye tools"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-4 text-sm text-slate-600 font-medium leading-tight">
-                       <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                          <Check className="w-3 h-3 text-purple-700" />
-                       </div>
-                       <span>{item}</span>
-                    </li>
-                  ))}
-               </ul>
-               
-               <div className="w-full py-4 mt-8 bg-purple-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest text-center shadow-[0_10px_20px_-10px_rgba(147,51,234,0.5)] group-hover:bg-purple-700 transition-colors">
-                  {isSubscribing === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Start Coaching'}
                </div>
              </div>
           </motion.div>

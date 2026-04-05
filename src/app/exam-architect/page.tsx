@@ -86,7 +86,7 @@ const ExamArchitectPageContent: React.FC = () => {
   
   const isPremiumUser = useMemo(() => {
     if (userProfile?.role === 'admin') return true;
-    return userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++', 'Institutionspakken'].includes(userProfile.membership);
+    return userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership);
   }, [userProfile]);
 
   const seminarsQuery = useMemoFirebase(() => {

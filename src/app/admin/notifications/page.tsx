@@ -50,7 +50,7 @@ export default function AdminNotificationsPage() {
             if (!hasTokens) return false;
 
             if (targetGroup === 'all') return true;
-            if (targetGroup === 'premium') return ['Kollega+', 'Kollega++', 'Semesterpakken', 'Group Pro'].includes(u.membership || '');
+            if (targetGroup === 'premium') return ['Kollega+', 'Semesterpakken', 'Group Pro'].includes(u.membership || '');
             if (targetGroup === 'free') return u.membership === 'Kollega' || !u.membership;
             return u.profession === targetGroup;
         });

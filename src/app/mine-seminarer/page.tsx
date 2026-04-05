@@ -830,7 +830,7 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
   const isPremium = useMemo(() => {
     if (!userProfile) return false;
     if (userProfile.isQualified) return true;
-    return ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership || '');
+    return ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || '');
   }, [userProfile]);
 
 

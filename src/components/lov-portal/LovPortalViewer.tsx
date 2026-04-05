@@ -1223,7 +1223,7 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   const currentDocId = activeReferenceId || (activeGuidelineId ? `${activeLawId}-${activeGuidelineId}` : activeLawId);
   const currentDocData = currentDocId ? docsData[currentDocId] : null;
 
-  const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership), [userProfile]);
+  const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership), [userProfile]);
   const isFreeTier = !isPremium;
 
   // Removed filteredSuggestions

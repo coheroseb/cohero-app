@@ -16,7 +16,7 @@ interface Survey {
   title: string;
   description: string;
   type: 'poll' | 'question' | 'assessment';
-  targetGroup: 'all' | 'Kollega' | 'Kollega+' | 'Semesterpakken' | 'Kollega++';
+  targetGroup: 'all' | 'Kollega' | 'Kollega+' | 'Semesterpakken' | 'Kollega+';
   options?: string[];
   isActive: boolean;
   createdAt: { toDate: () => Date };
@@ -291,7 +291,7 @@ const AdminSurveysPage = () => {
                       <option value="Kollega">Free Tier Only</option>
                       <option value="Kollega+">Premium Alpha</option>
                       <option value="Semesterpakken">Semesterpakken</option>
-                      <option value="Kollega++">Ultimate Access</option>
+                      <option value="Kollega+">Ultimate Access</option>
                     </select>
                   </div>
                 </div>

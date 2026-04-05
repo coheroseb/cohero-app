@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
             } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
                 membershipLevel = 'Semesterpakken';
             } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-                membershipLevel = 'Kollega++';
+                membershipLevel = 'Kollega+';
             }
             
             await userRef.set({
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
             } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
                 membershipLevel = 'Semesterpakken';
             } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-                membershipLevel = 'Kollega++';
+                membershipLevel = 'Kollega+';
             }
 
             const updateData: any = {
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
                     } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
                         membershipLevel = 'Semesterpakken';
                     } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-                        membershipLevel = 'Kollega++';
+                        membershipLevel = 'Kollega+';
                     }
 
                     await userDoc.ref.set({

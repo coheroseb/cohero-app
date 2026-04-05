@@ -211,17 +211,19 @@ const AdminUsersPage = () => {
 
     let newCount = 0;
     let activeCount = 0;
-    let premiumCount = 0;
 
     nonAdmins.forEach(u => {
       const createdAt = u.createdAt?.toDate();
       const lastActivity = u.lastActivityAt?.toDate() || u.lastLogin?.toDate();
-      const mem = u.membership || '';
 
       if (createdAt && createdAt > thirtyDaysAgo) newCount++;
       if (lastActivity && lastActivity > twentyFourHoursAgo) activeCount++;
-      if (mem.includes('+') || mem === 'Semesterpakken' || mem === 'Group Pro') premiumCount++;
     });
+
+    const premiumCount = nonAdmins.filter(u => {
+        const mem = u.membership || '';
+        return mem.includes('+') || mem === 'Semesterpakken' || mem === 'Group Pro';
+    }).length;
 
     return { total: nonAdmins.length, new: newCount, active: activeCount, premium: premiumCount };
   }, [users]);
@@ -458,7 +460,7 @@ const AdminUsersPage = () => {
                         <option value="all">Alle Planer</option>
                         <option value="free">Kollega (Gratis)</option>
                         <option value="Kollega+">Kollega+</option>
-                        <option value="Kollega++">Kollega++</option>
+                        <option value="Kollega+">Kollega++</option>
                         <option value="Semesterpakken">Semesterpakken</option>
                       </select>
                   </div>
@@ -591,7 +593,7 @@ const AdminUsersPage = () => {
                                {u.cohéroPoints || 0}
                            </div>
                            <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors ${
-                                u.membership === 'Kollega++' || u.membership === 'Semesterpakken' ? 'bg-amber-950 text-amber-400 border-amber-900/50' : 
+                                u.membership === 'Kollega+' || u.membership === 'Semesterpakken' ? 'bg-amber-950 text-amber-400 border-amber-900/50' : 
                                 u.membership === 'Kollega+' ? 'bg-indigo-900 text-indigo-200 border-indigo-800' : 'bg-slate-50 text-slate-500 border-slate-100'
                            }`}>
                              {u.membership || 'Kollega (Gratis)'}
@@ -710,7 +712,6 @@ const AdminUsersPage = () => {
                                                  >
                                                     <option value="Kollega">Kollega (Gratis)</option>
                                                     <option value="Kollega+">Kollega+</option>
-                                                    <option value="Kollega++">Kollega++</option>
                                                     <option value="Semesterpakken">Semesterpakken</option>
                                                     <option value="Mentor">Mentor</option>
                                                  </select>

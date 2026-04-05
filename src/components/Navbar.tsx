@@ -229,7 +229,7 @@ const NavDropdownLink: React.FC<{
   isPremium?: boolean;
   userMembership?: string;
 }> = ({ href, icon, children, onClick, isPremium = false, userMembership }) => {
-  const hasAccess = !isPremium || (userMembership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userMembership));
+  const hasAccess = !isPremium || (userMembership && ['Kollega+', 'Semesterpakken'].includes(userMembership));
 
   if (!hasAccess) {
       return (

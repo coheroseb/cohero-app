@@ -421,7 +421,7 @@ const SecondOpinionPageContent = () => {
 
       const isPremiumUser = useMemo(() => {
         const m = userProfile?.membership;
-        return m && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(m);
+        return m && ['Kollega+', 'Semesterpakken'].includes(m);
     }, [userProfile]);
 
     const handleGetSecondOpinion = async (e?: React.FormEvent) => {
@@ -460,7 +460,7 @@ const SecondOpinionPageContent = () => {
                     limitVal = 100;
                     break;
                 case 'Kollega+':
-                case 'Kollega++':
+                
                 case 'Institution':
                     limitVal = 1000;
                     break;
@@ -470,7 +470,7 @@ const SecondOpinionPageContent = () => {
             
             const currentCount = isNewMonth ? 0 : (userData.monthlySecondOpinionCount || 0);
 
-            if (currentCount >= limitVal && !['Kollega+', 'Kollega++', 'Institution'].includes(userProfile.membership || '')) {
+            if (currentCount >= limitVal && !['Kollega+', 'Institution'].includes(userProfile.membership || '')) {
                  const planName = userProfile.membership || 'din plan';
                  setLimitError(`Månedlig grænse nået for ${planName}.`);
                  setIsAnalyzing(false);

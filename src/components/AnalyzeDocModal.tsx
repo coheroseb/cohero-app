@@ -26,7 +26,7 @@ const AnalyzeDocModal: React.FC<AnalyzeDocModalProps> = ({ isOpen, onClose, docu
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership);
+  const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership);
 
   const handleAnalyze = async () => {
     if (!isPremiumUser || !document.htmUrl) return;

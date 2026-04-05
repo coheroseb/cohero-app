@@ -119,7 +119,7 @@ function ConceptExplainerPageContent() {
 
   const resultsRef = useRef<HTMLElement>(null);
 
-  const isKollegaPlus = (userProfile?.role === 'admin') || (userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++'].includes(userProfile.membership));
+  const isKollegaPlus = (userProfile?.role === 'admin') || (userProfile?.membership && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership));
 
 
 

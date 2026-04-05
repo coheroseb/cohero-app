@@ -117,7 +117,7 @@ const ViveIndsigtPageContent: React.FC = () => {
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
-    const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Kollega++', 'Group Pro'].includes(userProfile.membership), [userProfile]);
+    const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Group Pro'].includes(userProfile.membership), [userProfile]);
 
     const savedArticlesQuery = useMemoFirebase(() => (
         user && firestore ? query(collection(firestore, 'users', user.uid, 'savedViveArticles')) : null
