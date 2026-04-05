@@ -1178,11 +1178,17 @@ export default function MineSeminarerPage() {
         });
 
         if (res?.data) {
-            await updateDoc(doc(firestore, 'users', user.uid), {
-                [`categoryStudyPlans.${category}`]: {
+            const currentPlans = userProfile?.categoryStudyPlans || {};
+            const updatedPlans = {
+                ...currentPlans,
+                [category]: {
                     plan: res.data,
                     checkedSteps: []
                 }
+            };
+
+            await updateDoc(doc(firestore, 'users', user.uid), {
+                categoryStudyPlans: updatedPlans
             });
             toast({
                 title: "Studieplan Genereret!",
@@ -1213,8 +1219,17 @@ export default function MineSeminarerPage() {
     }
 
     try {
+        const currentPlans = userProfile.categoryStudyPlans || {};
+        const updatedPlans = {
+            ...currentPlans,
+            [category]: {
+                ...currentPlan,
+                checkedSteps: newChecked
+            }
+        };
+
         await updateDoc(doc(firestore, 'users', user.uid), {
-            [`categoryStudyPlans.${category}.checkedSteps`]: newChecked
+            categoryStudyPlans: updatedPlans
         });
     } catch (e) {
         console.error('Error toggling step:', e);
