@@ -283,7 +283,7 @@ const UpgradePageContent: React.FC = () => {
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end"
+            className="max-w-[1240px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 items-end"
         >
           
           {/* Kollega (Free) */}
