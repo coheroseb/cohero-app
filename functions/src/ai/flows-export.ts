@@ -1,19 +1,17 @@
-import { analyzeFtDocument } from './flows/analyze-ft-document-flow';
 import { adminInsightFlow } from './flows/admin-insight-flow';
-import { nudgeEmailFlow } from './flows/nudge-email-flow';
-import { studyCompanionFlow } from './flows/study-companion-flow';
-import { blogPostFlow } from './flows/blog-post-flow';
-import { tiktokScriptFlow } from './flows/tiktok-script-flow';
 import { analyzeCasePdf } from './flows/analyze-case-pdf-flow';
+import { analyzeFtDocument } from './flows/analyze-ft-document-flow';
 import { analyzeLegalDecision } from './flows/analyze-legal-decision-flow';
 import { analyzeParagraph } from './flows/analyze-paragraph-flow';
 import { analyzeReformPdf } from './flows/analyze-reform-flow';
 import { analyzeStarData } from './flows/analyze-star-data-flow';
 import { analyzeTaskSchedule } from './flows/analyze-task-schedule-flow';
+import { blogPostFlow } from './flows/blog-post-flow';
 import { brainstormSpark } from './flows/brainstorm-spark-flow';
 import { getCareerMatch } from './flows/career-match-flow';
 import { getCaseConsequence } from './flows/case-consequence-flow';
 import { getCaseFeedback } from './flows/case-feedback-flow';
+import { complaintDraftFlow } from './flows/complaint-draft-flow';
 import { getConsensusAnalysis } from './flows/consensus-analysis-flow';
 import { recommendContent } from './flows/content-recommendations';
 import { designSectionOutlineFlow } from './flows/design-section-outline-flow';
@@ -34,11 +32,13 @@ import { getFagligtMycelium } from './flows/fagligt-mycelium-flow';
 import { generateFTSagMetadataFlow } from './flows/ft-case-metadata-flow';
 import { generateCase } from './flows/generate-case-flow';
 import { generateCaseUpdateEmail } from './flows/generate-case-update-email-flow';
+import { generateCategoryStudyPlanFlow } from './flows/generate-category-study-plan-flow';
 import { generateCommentNotificationEmail } from './flows/generate-comment-notification-email-flow';
 import { generateConceptVideoScript } from './flows/generate-concept-video-script-flow';
 import { generateEvidenceTags } from './flows/generate-evidence-tags-flow';
 import { generateFieldworkAgreement } from './flows/generate-fieldwork-agreement-flow';
 import { generateGroupInvitationEmail } from './flows/generate-group-invitation-email-flow';
+import { generateModuleExamPrep } from './flows/generate-module-exam-prep-flow';
 import { generateParagraphDiffFlow } from './flows/generate-paragraph-diff-flow';
 import { generateRawCaseSources } from './flows/generate-raw-case-sources-flow';
 import { generateReportQuestions } from './flows/generate-report-questions-flow';
@@ -54,6 +54,7 @@ import { journalSynthesisFeedback } from './flows/journal-synthesis-feedback-flo
 import { getRelevantLawContextFlow } from './flows/law-context-wrapper-flow';
 import { getLivePortfolioFeedback } from './flows/live-portfolio-feedback-flow';
 import { getMythBusterResponse } from './flows/myth-buster-flow';
+import { nudgeEmailFlow } from './flows/nudge-email-flow';
 import { oralExamAnalysis } from './flows/oral-exam-analysis-flow';
 import { organizeEvidenceIntoSeminarFlow } from './flows/organize-evidence-seminar';
 import { processExamRegulations } from './flows/process-exam-regulations-flow';
@@ -72,28 +73,25 @@ import { seminarChat } from './flows/seminar-chat-flow';
 import { simulateFeedbackFlow } from './flows/simulate-feedback-flow';
 import { simulateNextDayFlow } from './flows/simulate-next-day-flow';
 import { simulateStartFlow } from './flows/simulate-start-flow';
+import { studyCompanionFlow } from './flows/study-companion-flow';
 import { suggestConceptsForEvent } from './flows/suggest-concepts-for-event-flow';
+import { suggestExamTopic } from './flows/suggest-exam-topic-flow';
 import { textToSpeech } from './flows/text-to-speech-flow';
+import { tiktokScriptFlow } from './flows/tiktok-script-flow';
 import { transcribeAudio } from './flows/transcribe-audio-flow';
 import { translateSeminar } from './flows/translate-seminar-flow';
 import { twistBlueprintFlow } from './flows/twist-blueprint-flow';
 import { fetchVivePublications } from './flows/vive-indsigt-flow';
 import { getViveReportQa } from './flows/vive-report-qa-flow';
 import { getSocraticReflection } from './flows/sokratisk-refleksion/flow';
-import { complaintDraftFlow } from './flows/complaint-draft-flow';
-import { suggestExamTopic } from './flows/suggest-exam-topic-flow';
-import { generateModuleExamPrep } from './flows/generate-module-exam-prep-flow';
 
 export const allFlows: Record<string, any> = {
-  'blogPostFlow': blogPostFlow,
-  'tiktokScriptFlow': tiktokScriptFlow,
-  'studyCompanionFlow': studyCompanionFlow,
+  'adminInsightFlowFlow': adminInsightFlow,
   'adminInsightFlow': adminInsightFlow,
-  'nudgeEmailFlow': nudgeEmailFlow,
-  'analyzeFtDocumentFlow': analyzeFtDocument,
-  'analyzeFtDocument': analyzeFtDocument,
   'analyzeCasePdfFlow': analyzeCasePdf,
   'analyzeCasePdf': analyzeCasePdf,
+  'analyzeFtDocumentFlow': analyzeFtDocument,
+  'analyzeFtDocument': analyzeFtDocument,
   'analyzeLegalDecisionFlow': analyzeLegalDecision,
   'analyzeLegalDecision': analyzeLegalDecision,
   'analyzeParagraphFlow': analyzeParagraph,
@@ -104,6 +102,8 @@ export const allFlows: Record<string, any> = {
   'analyzeStarData': analyzeStarData,
   'analyzeTaskScheduleFlow': analyzeTaskSchedule,
   'analyzeTaskSchedule': analyzeTaskSchedule,
+  'blogPostFlowFlow': blogPostFlow,
+  'blogPostFlow': blogPostFlow,
   'brainstormSparkFlow': brainstormSpark,
   'brainstormSpark': brainstormSpark,
   'getCareerMatchFlow': getCareerMatch,
@@ -112,6 +112,8 @@ export const allFlows: Record<string, any> = {
   'getCaseConsequence': getCaseConsequence,
   'getCaseFeedbackFlow': getCaseFeedback,
   'getCaseFeedback': getCaseFeedback,
+  'complaintDraftFlowFlow': complaintDraftFlow,
+  'complaintDraftFlow': complaintDraftFlow,
   'getConsensusAnalysisFlow': getConsensusAnalysis,
   'getConsensusAnalysis': getConsensusAnalysis,
   'recommendContentFlow': recommendContent,
@@ -152,6 +154,8 @@ export const allFlows: Record<string, any> = {
   'generateCase': generateCase,
   'generateCaseUpdateEmailFlow': generateCaseUpdateEmail,
   'generateCaseUpdateEmail': generateCaseUpdateEmail,
+  'generateCategoryStudyPlanFlowFlow': generateCategoryStudyPlanFlow,
+  'generateCategoryStudyPlanFlow': generateCategoryStudyPlanFlow,
   'generateCommentNotificationEmailFlow': generateCommentNotificationEmail,
   'generateCommentNotificationEmail': generateCommentNotificationEmail,
   'generateConceptVideoScriptFlow': generateConceptVideoScript,
@@ -162,6 +166,8 @@ export const allFlows: Record<string, any> = {
   'generateFieldworkAgreement': generateFieldworkAgreement,
   'generateGroupInvitationEmailFlow': generateGroupInvitationEmail,
   'generateGroupInvitationEmail': generateGroupInvitationEmail,
+  'generateModuleExamPrepFlow': generateModuleExamPrep,
+  'generateModuleExamPrep': generateModuleExamPrep,
   'generateParagraphDiffFlowFlow': generateParagraphDiffFlow,
   'generateParagraphDiffFlow': generateParagraphDiffFlow,
   'generateRawCaseSourcesFlow': generateRawCaseSources,
@@ -192,14 +198,16 @@ export const allFlows: Record<string, any> = {
   'getLivePortfolioFeedback': getLivePortfolioFeedback,
   'getMythBusterResponseFlow': getMythBusterResponse,
   'getMythBusterResponse': getMythBusterResponse,
+  'nudgeEmailFlowFlow': nudgeEmailFlow,
+  'nudgeEmailFlow': nudgeEmailFlow,
   'oralExamAnalysisFlow': oralExamAnalysis,
   'oralExamAnalysis': oralExamAnalysis,
   'organizeEvidenceIntoSeminarFlowFlow': organizeEvidenceIntoSeminarFlow,
   'organizeEvidenceIntoSeminarFlow': organizeEvidenceIntoSeminarFlow,
   'processExamRegulationsFlow': processExamRegulations,
   'processExamRegulations': processExamRegulations,
+  'processStudyRegulationFlowFlow': processStudyRegulationFlow,
   'processStudyRegulationFlow': processStudyRegulationFlow,
-  'processStudyRegulation': processStudyRegulationFlow,
   'generateQuizFlow': generateQuiz,
   'generateQuiz': generateQuiz,
   'recommendTaskAssigneeFlow': recommendTaskAssignee,
@@ -228,10 +236,16 @@ export const allFlows: Record<string, any> = {
   'simulateNextDayFlow': simulateNextDayFlow,
   'simulateStartFlowFlow': simulateStartFlow,
   'simulateStartFlow': simulateStartFlow,
+  'studyCompanionFlowFlow': studyCompanionFlow,
+  'studyCompanionFlow': studyCompanionFlow,
   'suggestConceptsForEventFlow': suggestConceptsForEvent,
   'suggestConceptsForEvent': suggestConceptsForEvent,
+  'suggestExamTopicFlow': suggestExamTopic,
+  'suggestExamTopic': suggestExamTopic,
   'textToSpeechFlow': textToSpeech,
   'textToSpeech': textToSpeech,
+  'tiktokScriptFlowFlow': tiktokScriptFlow,
+  'tiktokScriptFlow': tiktokScriptFlow,
   'transcribeAudioFlow': transcribeAudio,
   'transcribeAudio': transcribeAudio,
   'translateSeminarFlow': translateSeminar,
@@ -244,10 +258,4 @@ export const allFlows: Record<string, any> = {
   'getViveReportQa': getViveReportQa,
   'getSocraticReflectionFlow': getSocraticReflection,
   'getSocraticReflection': getSocraticReflection,
-  'complaintDraftFlow': complaintDraftFlow,
-  'complaintDraft': complaintDraftFlow,
-  'suggestExamTopicFlow': suggestExamTopic,
-  'suggestExamTopic': suggestExamTopic,
-  'generateModuleExamPrepFlow': generateModuleExamPrep,
-  'generateModuleExamPrep': generateModuleExamPrep,
 };

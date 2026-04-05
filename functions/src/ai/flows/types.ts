@@ -173,6 +173,7 @@ export interface UserProfile {
   conversionSource?: string;
   convertedAt?: any;
   selectedElectives?: Record<string, string>;
+  categoryStudyPlans?: Record<string, { plan: CategoryStudyPlan; checkedSteps: string[] }>;
 }
 
 export interface StudentCardVerification {
@@ -961,6 +962,28 @@ export const GenerateStudyScheduleOutputSchema = z.object({
   usage: UsageSchema,
 });
 
+export const CategoryStudyPlanSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  steps: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    description: z.string(),
+    learningObjective: z.string(),
+    suggestedMethod: z.string(),
+  })),
+});
+
+export const GenerateCategoryStudyPlanInputSchema = z.object({
+  topic: z.string(),
+  context: z.string(),
+});
+
+export const GenerateCategoryStudyPlanOutputSchema = z.object({
+  data: CategoryStudyPlanSchema,
+  usage: UsageSchema,
+});
+
 export const SuggestConceptsForEventInputSchema = z.object({
   summary: z.string(),
   description: z.string(),
@@ -1149,6 +1172,9 @@ export type GenerateReportQuestionsInput = z.infer<typeof GenerateReportQuestion
 export type GenerateReportQuestionsOutput = z.infer<typeof GenerateReportQuestionsOutputSchema>;
 export type GenerateStudyScheduleInput = z.infer<typeof GenerateStudyScheduleInputSchema>;
 export type GenerateStudyScheduleOutput = z.infer<typeof GenerateStudyScheduleOutputSchema>;
+export type CategoryStudyPlan = z.infer<typeof CategoryStudyPlanSchema>;
+export type GenerateCategoryStudyPlanInput = z.infer<typeof GenerateCategoryStudyPlanInputSchema>;
+export type GenerateCategoryStudyPlanOutput = z.infer<typeof GenerateCategoryStudyPlanOutputSchema>;
 export type OralExamAnalysisInput = z.infer<typeof OralExamAnalysisInputSchema>;
 export type OralExamAnalysisOutput = z.infer<typeof OralExamAnalysisOutputSchema>;
 export type GroupInvitationEmailInput = z.infer<typeof GroupInvitationEmailInputSchema>;

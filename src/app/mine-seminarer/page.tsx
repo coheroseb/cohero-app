@@ -41,7 +41,8 @@ import {
   Share,
   BookOpen,
   FolderOpen,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Target
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -63,15 +64,16 @@ import { useDebounce } from 'use-debounce';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { SeminarAnalysis, QuizData } from '@/ai/flows/types';
-import { generateQuizAction, getUserUidByEmailAction, chatWithSeminarAction, saveQuizResultAction } from '@/app/actions';
+import { generateQuizAction, getUserUidByEmailAction, chatWithSeminarAction, saveQuizResultAction, generateStudyScheduleAction, generateCategoryStudyPlanAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import CategoryDeepDiveOverlay from '@/components/seminars/CategoryDeepDiveOverlay';
 
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-interface SavedSeminar extends DocumentData {
+export interface SavedSeminar extends DocumentData {
   id: string;
   overallTitle: string;
   fileName?: string;
@@ -261,7 +263,7 @@ const SeminarChatOverlay: React.FC<{
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[500] bg-slate-900/60 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, pointerEvents: 'none' }} className="fixed inset-0 z-[2000] bg-slate-900/60 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden">
       <div className="absolute top-8 right-8 z-10">
         <button onClick={onClose} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all active:scale-95 shadow-xl border border-white/10">
            <X className="w-6 h-6" />
@@ -408,8 +410,8 @@ const ConceptListOverlay: React.FC<{
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[400] bg-slate-900/60 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden"
+      exit={{ opacity: 0, pointerEvents: 'none' }}
+      className="fixed inset-0 z-[2000] bg-slate-900/60 backdrop-blur-3xl flex items-center justify-center p-4 md:p-12 overflow-hidden"
     >
       <div className="absolute top-8 right-8 z-10">
         <button onClick={onClose} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all active:scale-95 shadow-xl border border-white/10">
@@ -835,7 +837,7 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
 
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-0 sm:top-[80px] z-[200] bg-[#FDFCF8] overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-500">
+    <div className="fixed inset-x-0 bottom-0 top-0 sm:top-[80px] z-[1500] bg-[#FDFCF8] overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-500">
       <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-3 sm:px-6 md:px-10 py-3 sm:py-5 flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0 h-14 sm:h-16 md:h-24">
         <button onClick={quizData ? () => setQuizData(null) : onClose} className="p-2 sm:p-3 bg-slate-50 rounded-lg sm:rounded-[1.25rem] text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-90 shrink-0 shadow-sm border border-slate-100"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></button>
         <div className="flex-1 min-w-0">
@@ -1087,6 +1089,10 @@ export default function MineSeminarerPage() {
   const [categoryConceptListData, setCategoryConceptListData] = useState<{ title: string; slides: any[] } | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [categoryChatData, setCategoryChatData] = useState<{ title: string; seminars: any[] } | null>(null);
+  const [showCategoryDeepDive, setShowCategoryDeepDive] = useState(false);
+  const [categoryQuizData, setCategoryQuizData] = useState<QuizData | null>(null);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -1130,6 +1136,92 @@ export default function MineSeminarerPage() {
   const categories = useMemo(() => Array.from(new Set(seminars.map(s => s.category).filter(Boolean))) as string[], [seminars]);
 
 
+  const handleGenerateCategoryQuiz = async (category: string, catSeminars: any[]) => {
+    setIsGeneratingQuiz(true);
+    try {
+        const allContext = catSeminars.flatMap(s => s.slides.map((sl: any) => `Slide ${sl.slideNumber} (${sl.slideTitle}): ${sl.summary}`)).join('\n\n');
+        const res = await generateQuizAction({
+            topic: `Master Quiz: ${category}`,
+            numQuestions: 10,
+            difficulty: 'medium',
+            contextText: allContext
+        });
+
+        if (res?.data) {
+            setCategoryQuizData(res.data);
+            setShowCategoryDeepDive(false);
+            toast({
+                title: "Master Quiz Klar!",
+                description: "Vi har genereret en quiz baseret på hele kategorien.",
+            });
+        }
+    } catch (e) {
+        toast({
+            title: "Fejl",
+            description: "Kunne ikke generere kategori-quizzen.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsGeneratingQuiz(false);
+    }
+  };
+
+
+  const handleGenerateStudyPlan = async (category: string, catSeminars: any[]) => {
+    if (!user || !firestore) return;
+    setIsGeneratingPlan(true);
+    try {
+        const allContext = catSeminars.flatMap(s => s.slides.map((sl: any) => `Slide ${sl.slideNumber}: ${sl.summary}`)).join('\n\n');
+        const res = await generateCategoryStudyPlanAction({ 
+            topic: category, 
+            context: allContext 
+        });
+
+        if (res?.data) {
+            await updateDoc(doc(firestore, 'users', user.uid), {
+                [`categoryStudyPlans.${category}`]: {
+                    plan: res.data,
+                    checkedSteps: []
+                }
+            });
+            toast({
+                title: "Studieplan Genereret!",
+                description: "Din personlige læseplan for " + category + " er nu klar.",
+            });
+        }
+    } catch (e: any) {
+        toast({
+            title: "Fejl",
+            description: "Kunne ikke generere studieplanen: " + e.message,
+            variant: "destructive"
+        });
+    } finally {
+        setIsGeneratingPlan(false);
+    }
+  };
+
+  const handleToggleStudyPlanStep = async (category: string, stepId: string, isChecked: boolean) => {
+    if (!user || !firestore || !userProfile) return;
+    const currentPlan = userProfile.categoryStudyPlans?.[category];
+    if (!currentPlan) return;
+
+    let newChecked = [...(currentPlan.checkedSteps || [])];
+    if (isChecked) {
+        if (!newChecked.includes(stepId)) newChecked.push(stepId);
+    } else {
+        newChecked = newChecked.filter(id => id !== stepId);
+    }
+
+    try {
+        await updateDoc(doc(firestore, 'users', user.uid), {
+            [`categoryStudyPlans.${category}.checkedSteps`]: newChecked
+        });
+    } catch (e) {
+        console.error('Error toggling step:', e);
+    }
+  };
+
+
   const handleOpenCategoryConceptList = () => {
     if (!activeCategory) return;
     const filtered = seminars.filter(s => s.category === activeCategory);
@@ -1152,41 +1244,39 @@ export default function MineSeminarerPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFCF8]">
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-[40]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 md:px-10 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-6 min-w-0">
-            <Link href="/portal" className="p-2.5 sm:p-3 bg-slate-50 text-slate-400 rounded-xl sm:rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm shrink-0"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></Link>
-            <div className="min-w-0"><h1 className="text-lg sm:text-xl font-black text-slate-900 serif truncate">Mine Seminarer</h1><p className="text-[9px] sm:text-[10px] font-black uppercase text-indigo-500/60 tracking-widest mt-0.5 hidden sm:block">Vidensbibliotek</p></div>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
-             <div className="flex items-center gap-1.5 p-1 sm:p-1.5 bg-slate-50 rounded-lg sm:rounded-2xl border border-slate-100">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400'}`}><LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400'}`}><List className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
-             </div>
-             <Link href="/seminar-architect" className="shrink-0"><Button size="sm" className="rounded-lg sm:rounded-2xl bg-slate-900 hover:bg-indigo-900 text-white h-9 sm:h-10 md:h-12 px-2.5 sm:px-4 md:px-6 shadow-xl text-xs sm:text-sm md:text-base"><Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0 sm:mr-2" /><span className="hidden sm:inline">Ny analyse</span></Button></Link>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10">
-        <div className="mb-8 sm:mb-12 flex flex-col md:flex-row items-baseline justify-between gap-3 sm:gap-4">
-            <div className="space-y-1">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 serif tracking-tighter">Mit Vidensbibliotek</h1>
-                <p className="text-slate-400 font-medium text-xs sm:text-sm">Organiser, repetér og visualiser dine studier.</p>
+        <div className="mb-8 sm:mb-12 flex flex-col md:flex-row items-baseline justify-between gap-6 sm:gap-8">
+            <div className="flex items-start gap-4 sm:gap-6">
+                <Link href="/portal" className="mt-1 p-3.5 bg-white border border-slate-100 text-slate-400 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm shrink-0">
+                    <ArrowLeft className="w-5 h-5" />
+                </Link>
+                <div className="space-y-1">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 serif tracking-tighter">Mit Vidensbibliotek</h1>
+                    <p className="text-slate-400 font-medium text-xs sm:text-sm">Organiser, repetér og visualiser dine studier.</p>
+                </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-                <button 
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                 <div className="flex items-center gap-1.5 p-1.5 bg-slate-50/50 backdrop-blur-sm rounded-2xl border border-slate-100 shrink-0">
+                    <button onClick={() => setViewMode('grid')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <LayoutGrid className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setViewMode('list')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <List className="w-4 h-4" />
+                    </button>
+                 </div>
+                 <button 
                     onClick={() => setShowStats(!showStats)} 
-                    className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${showStats ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
-                >
-                    <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> <span className="hidden sm:inline">{showStats ? 'Skjul Statistik' : 'Vis Statistik'}</span><span className="sm:hidden">{showStats ? 'Skjul' : 'Vis'}</span>
-                </button>
-                <Link href="/seminar-architect">
-                    <Button className="rounded-xl bg-slate-900 hover:bg-indigo-900 text-white h-11 px-6 shadow-xl"><Plus className="w-4 h-4 mr-2" /> Ny Analyse</Button>
+                    className={`h-14 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${showStats ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-600/20' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                 >
+                    <Activity className="w-4 h-4" /> {showStats ? 'Skjul Statistik' : 'Vis Statistik'}
+                 </button>
+                 <Link href="/seminar-architect" className="flex-1 md:flex-none">
+                    <Button className="w-full md:w-auto rounded-2xl bg-slate-900 hover:bg-indigo-900 text-white h-14 px-8 shadow-2xl text-base font-black tracking-tight">
+                        <Plus className="w-5 h-5 mr-3" /> NY ANALYSE
+                    </Button>
                 </Link>
             </div>
         </div>
-
 
         <AnimatePresence>
             {showStats && (
@@ -1216,7 +1306,6 @@ export default function MineSeminarerPage() {
             )}
         </AnimatePresence>
 
-        {/* Unified Filter Bar - Only show for Mine Seminarer view */}
         <div className="mb-8 sm:mb-10 p-1.5 sm:p-2 bg-white rounded-lg sm:rounded-[2rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2">
             <div className="flex-1 relative w-full group">
                 <Search className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
@@ -1271,46 +1360,78 @@ export default function MineSeminarerPage() {
                 <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
                     <div className="absolute inset-0 bg-indigo-500/10 blur-3xl opacity-50 group-hover:scale-110 transition-transform duration-1000" />
                 </div>
-                <div className="bg-white/60 backdrop-blur-xl border border-slate-200/50 p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Kategori Analyse</p>
-                            <h4 className="text-lg font-black text-slate-900 serif">Visualiser {activeCategory}</h4>
+                <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/50 p-6 sm:p-8 rounded-[3rem] flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-2xl relative z-10 w-full">
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Intelligent Kategori Analyse</p>
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            </div>
+                            <h4 className="text-2xl font-black text-slate-900 serif tracking-tight">Dyk ned i {activeCategory}</h4>
+                            <p className="text-xs text-slate-400 font-medium">Få et panoramasyn over dine {filtered.length} seminarer og faglige forbindelser.</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-3">
                             <button 
-                                onClick={handleOpenCategoryConceptList}
-                                className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-600 shadow-lg shadow-amber-600/20 active:scale-95 transition-all"
+                                onClick={() => setShowCategoryDeepDive(true)}
+                                className="flex items-center gap-2.5 px-8 py-4 bg-slate-900 text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest hover:bg-indigo-950 shadow-xl shadow-slate-900/10 active:scale-95 transition-all group"
                             >
-                                <BookOpen className="w-4 h-4" /> Begreber
+                                <Target className="w-4 h-4 text-indigo-400 group-hover:scale-125 transition-transform" /> START ANALYSE
                             </button>
-                            <button 
-                                onClick={() => setCategoryChatData({ title: activeCategory || '', seminars: filtered })}
-                                className="flex items-center gap-2 px-6 py-3 bg-slate-700 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-lg shadow-slate-900/20 active:scale-95 transition-all"
-                            >
-                                <BrainCircuit className="w-4 h-4 text-indigo-400" /> Chat med viden
-                            </button>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={handleOpenCategoryConceptList}
+                                    className="p-4 bg-amber-50 text-amber-600 rounded-2xl hover:bg-amber-100 transition-colors border border-amber-100"
+                                    title="Vis Begreber"
+                                >
+                                    <BookOpen className="w-5 h-5" />
+                                </button>
+                                <button 
+                                    onClick={() => setCategoryChatData({ title: activeCategory || '', seminars: filtered })}
+                                    className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-colors border border-indigo-100"
+                                    title="Chat med viden"
+                                >
+                                    <BrainCircuit className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                     </div>
             </motion.div>
         )}
 
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                {filtered.map(s => <SeminarCard key={s.id} seminar={s} viewMode={viewMode} onOpen={() => setOpenSeminar(s)} onDelete={() => handleDelete(s.id)} onCategorize={cat => handleCategorize(s.id, cat)} existingCategories={categories} />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {filtered.map(s => <SeminarCard key={s.id} seminar={s} viewMode={viewMode} onOpen={() => setOpenSeminar(s)} onDelete={() => handleDelete(s.id)} onCategorize={cat => handleCategorize(s.id, cat)} existingCategories={categories} />)}
+        </div>
+
+        {!isLoading && filtered.length === 0 && (
+            <div className="py-40 text-center">
+                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mx-auto mb-8"><FileSearch className="w-12 h-12"/></div>
+                <h3 className="text-2xl font-black text-slate-900 serif mb-2">Ingen resultater</h3>
+                <p className="text-slate-400 italic">Prøv en anden søgning eller kategori.</p>
             </div>
-
-            {!isLoading && filtered.length === 0 && (
-                <div className="py-40 text-center"><div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mx-auto mb-8"><FileSearch className="w-12 h-12"/></div><h3 className="text-2xl font-black text-slate-900 serif mb-2">Ingen resultater</h3><p className="text-slate-400 italic">Prøv en anden søgning eller kategori.</p></div>
-            )}
-          </>
-
+        )}
       </main>
 
       {(() => {
           const s = seminars.find(s => s.id === openSeminar?.id);
           return s ? <SeminarDetailView seminar={s} user={user} userProfile={userProfile} onClose={() => setOpenSeminar(null)} /> : null;
       })()}
+      
       <AnimatePresence>
+            {showCategoryDeepDive && activeCategory && (
+                <CategoryDeepDiveOverlay 
+                    category={activeCategory}
+                    seminars={filtered}
+                    onClose={() => setShowCategoryDeepDive(false)}
+                    onStartMasterQuiz={() => handleGenerateCategoryQuiz(activeCategory, filtered)}
+                    userProfile={userProfile}
+                    isGeneratingPlan={isGeneratingPlan}
+                    onGenerateStudyPlan={() => handleGenerateStudyPlan(activeCategory, filtered)}
+                    onTogglePlanStep={(stepId, isChecked) => handleToggleStudyPlanStep(activeCategory, stepId, isChecked)}
+                    onOpenSeminar={(s) => {
+                        setOpenSeminar(s);
+                        setShowCategoryDeepDive(false);
+                    }}
+                />
+            )}
             {categoryConceptListData && (
                 <ConceptListOverlay 
                     title={categoryConceptListData.title}
@@ -1342,7 +1463,59 @@ export default function MineSeminarerPage() {
                     }}
                 />
             )}
-          </AnimatePresence>
+
+            {categoryQuizData && user && (
+                <div className="fixed inset-0 z-[2000] bg-[#FDFCF8] flex flex-col p-4 sm:p-10 lg:p-20 overflow-hidden">
+                    <div className="absolute top-6 right-6 z-[800]">
+                        <button 
+                            onClick={() => {
+                                if (window.confirm('Vil du afslutte quizen? Dine fremskridt gemmes kun hvis du færdiggør den.')) {
+                                    setCategoryQuizData(null);
+                                }
+                            }} 
+                            className="p-3 bg-slate-900 text-white rounded-2xl transition-all active:scale-95 shadow-xl hover:bg-slate-800"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+                    <div className="max-w-4xl mx-auto w-full h-full bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col relative">
+                        <div className="absolute inset-0 bg-indigo-500/5 blur-3xl pointer-events-none" />
+                        <div className="p-10 border-b border-slate-100 bg-white/80 backdrop-blur-xl shrink-0 z-10 flex items-center gap-4">
+                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-600/20">
+                                <Trophy className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900 serif tracking-tight">Kategori Master Quiz</h3>
+                                <p className="text-xs font-black uppercase tracking-widest text-indigo-500 mt-1">{activeCategory}</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]">
+                            <QuizView 
+                                quizData={categoryQuizData} 
+                                onFinish={() => setCategoryQuizData(null)} 
+                                userId={user.uid} 
+                                topic={`Kategori Master Quiz: ${activeCategory}`} 
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isGeneratingQuiz && (
+                <div className="fixed inset-0 z-[3000] bg-slate-900/60 backdrop-blur-2xl flex flex-col items-center justify-center p-10 text-center text-white">
+                    <div className="absolute top-8 right-8">
+                        <button onClick={() => setIsGeneratingQuiz(false)} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all">
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+                    <div className="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center mb-8 animate-pulse shadow-2xl">
+                        <Trophy className="w-12 h-12 text-indigo-600 animate-bounce" />
+                    </div>
+                    <h3 className="text-3xl font-black serif mb-2">Forbereder Master Quiz...</h3>
+                    <p className="text-indigo-200 font-medium max-w-sm">Vi analyserer alle dine seminarer i denne kategori og udvælger de mest relevante spørgsmål til dig.</p>
+                </div>
+            )}
+      </AnimatePresence>
     </div>
   );
 }

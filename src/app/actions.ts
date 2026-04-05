@@ -534,6 +534,7 @@ export async function chatWithSeminarAction(input: SeminarChatInput): Promise<Se
 export async function generateSemesterPlanAction(input: any) { return callFirebaseFlow('generateSemesterPlanFlow', input); }
 export async function suggestConceptsForEventAction(input: any) { return callFirebaseFlow('suggestConceptsForEventFlow', input); }
 export async function generateStudyScheduleAction(input: any) { return callFirebaseFlow('generateStudyScheduleFlow', input); }
+export async function generateCategoryStudyPlanAction(input: { topic: string, context: string }) { return callFirebaseFlow('generateCategoryStudyPlanFlow', input); }
 export async function explainFolketingetSagAction(input: any) { return callFirebaseFlow('explainFolketingetSagFlow', input); }
 
 export async function getFTSagMetadataAction(input: { sagId: number, title: string, resume?: string }) {

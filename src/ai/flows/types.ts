@@ -189,6 +189,7 @@ export interface UserProfile {
   hasSeenFeatureIntro?: boolean;
   learnedConcepts?: string[];
   selectedElectives?: Record<string, string>;
+  categoryStudyPlans?: Record<string, { plan: CategoryStudyPlan; checkedSteps: string[] }>;
 }
 
 export interface StudentCardVerification {
@@ -969,6 +970,28 @@ export const GenerateStudyScheduleOutputSchema = z.object({
   usage: UsageSchema,
 });
 
+export const CategoryStudyPlanSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  steps: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    description: z.string(),
+    learningObjective: z.string(),
+    suggestedMethod: z.string(),
+  })),
+});
+
+export const GenerateCategoryStudyPlanInputSchema = z.object({
+  topic: z.string(),
+  context: z.string(),
+});
+
+export const GenerateCategoryStudyPlanOutputSchema = z.object({
+  data: CategoryStudyPlanSchema,
+  usage: UsageSchema,
+});
+
 export const SuggestConceptsForEventInputSchema = z.object({
   summary: z.string(),
   description: z.string(),
@@ -1169,6 +1192,9 @@ export type GroupInvitationEmailOutput = z.infer<typeof GroupInvitationEmailOutp
 export type RecommendTaskAssigneeInput = z.infer<typeof RecommendTaskAssigneeInputSchema>;
 export type RecommendTaskAssigneeOutput = z.infer<typeof RecommendTaskAssigneeOutputSchema>;
 export type SemesterPlan = z.infer<typeof SemesterPlanSchema>;
+export type CategoryStudyPlan = z.infer<typeof CategoryStudyPlanSchema>;
+export type GenerateCategoryStudyPlanInput = z.infer<typeof GenerateCategoryStudyPlanInputSchema>;
+export type GenerateCategoryStudyPlanOutput = z.infer<typeof GenerateCategoryStudyPlanOutputSchema>;
 export type StudySchedule = z.infer<typeof StudyScheduleSchema>;
 export type SemanticLawSearchInput = z.infer<typeof SemanticLawSearchInputSchema>;
 export type SemanticLawSearchOutput = z.infer<typeof SemanticLawSearchOutputSchema>;
