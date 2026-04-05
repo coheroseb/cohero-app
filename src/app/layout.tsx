@@ -8,7 +8,6 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
 import GoogleTagManager from '@/components/GoogleTagManager';
 import { Suspense } from 'react';
-import PageViewTracker from '@/components/PageViewTracker';
 import { MaintenanceGuard } from '@/components/MaintenanceGuard';
 const siteUrl = 'https://cohero.dk';
 const siteTitle = 'Cohéro (Cohero) - Din Digitale Kollega for Socialrådgiverstuderende';
@@ -142,7 +141,6 @@ export default function RootLayout({
               <GoogleAnalytics />
               <MetaPixel />
               <GoogleTagManager />
-              <PageViewTracker />
             </Suspense>
             <MaintenanceGuard>
               {children}

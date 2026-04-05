@@ -96,7 +96,11 @@ export const processNotificationQueue = functions.firestore
 import { onRequest } from "firebase-functions/v2/https";
 import { logAiUsage } from "./lib/usage-tracker";
 
-export const runAiFlow = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, async (req, res) => {
+export const runAiFlow = onRequest({ 
+  timeoutSeconds: 300, 
+  memory: "1GiB",
+  minInstances: 1 // Optimize cold starts for better UX
+}, async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Allow-Methods', 'GET, POST');
@@ -143,7 +147,16 @@ import { incrementUserSemesters } from "./cron/semester-increment";
 import { weeklyAdminReport } from "./cron/weekly-admin-report";
 import { dailyAutomatedNudges } from "./cron/automated-nudges";
 import { weeklyStudyCompanion } from "./cron/study-companion-newsletter";
-export { checkFolketingetUpdates, incrementUserSemesters, weeklyAdminReport, dailyAutomatedNudges, weeklyStudyCompanion };
+import { cleanupStorageArtifacts } from "./cron/cleanup-storage";
+
+export { 
+  checkFolketingetUpdates, 
+  incrementUserSemesters, 
+  weeklyAdminReport, 
+  dailyAutomatedNudges, 
+  weeklyStudyCompanion,
+  cleanupStorageArtifacts
+};
 
 import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";
 export { onAssistanceRequestUpdate, onAssistanceRequestCreate };

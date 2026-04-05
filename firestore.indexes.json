@@ -61,5 +61,26 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "users",
+      "fieldPath": "fcmTokens",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "pageViews",
+      "fieldPath": "metadata",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "userActivities",
+      "fieldPath": "payload",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "seminarRooms",
+      "fieldPath": "activeUsers",
+      "indexes": []
+    }
+  ]
 }

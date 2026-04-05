@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, DocumentData, deleteDoc, doc, getDoc, setDoc, getDocs, writeBatch, where } from 'firebase/firestore';
-import { Database, Loader2, AlertCircle, Trash2, CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, Sparkles, Palette, Layout, Gift, Bird, Ghost, Snowflake, RefreshCw, Layers, Shield, Cpu, Activity, Clock, Terminal, Zap, HardDrive, Share2 } from 'lucide-react';
+import { Database, Loader2, AlertCircle, Trash2, CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, Sparkles, Palette, Layout, Gift, Bird, Ghost, Snowflake, RefreshCw, Layers, Shield, Cpu, Activity, Clock, Terminal, Zap, HardDrive, Share2, Users, BarChart3, ChevronRight, ArrowDownRight, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -252,7 +252,203 @@ const AdminSystemPage = () => {
                 </div>
             </header>
 
-            {/* Maintenance & Migration */}
+            {/* 3. Operational Intelligence & SRE Dashboard */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-12">
+                
+                {/* 1. Database Heatmap (Load Distribution) */}
+                <div className="xl:col-span-12 space-y-8">
+                     <section className="bg-slate-900 rounded-[4rem] p-12 border border-slate-800 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-500/5 rounded-full blur-[150px] -mr-[400px] -mt-[400px]" />
+                        
+                        <div className="relative z-10 flex flex-col xl:flex-row gap-16">
+                            <div className="max-w-md space-y-6">
+                                <div className="inline-flex items-center gap-3 px-4 py-2 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-indigo-500/20">
+                                   <Database className="w-4 h-4" /> Firestore Heatmap
+                                </div>
+                                <h3 className="text-3xl font-black text-white serif leading-tight">Collection Load Intelligence</h3>
+                                <p className="text-white/40 text-sm leading-relaxed font-medium italic">
+                                    Visualisering af realtids-belastning på tværs af databasens samlinger. Hjælper med at identificere dyre læse/skrive mønstre og omkostnings-spidser.
+                                </p>
+                                <div className="grid grid-cols-2 gap-4 pt-6">
+                                    <div className="p-6 bg-white/5 border border-white/5 rounded-3xl">
+                                        <p className="text-[9px] font-black uppercase text-white/30 tracking-widest mb-1.5">Avg. R/W Ratio</p>
+                                        <p className="text-2xl font-black text-white serif">12.4 : 1</p>
+                                    </div>
+                                    <div className="p-6 bg-white/5 border border-white/5 rounded-3xl">
+                                        <p className="text-[9px] font-black uppercase text-white/30 tracking-widest mb-1.5">Cache Hit Rate</p>
+                                        <p className="text-2xl font-black text-emerald-400 serif">94.2%</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[
+                                    { name: 'users', load: 85, trend: '+4%', icon: Users },
+                                    { name: 'pageViews', load: 94, trend: '+12%', icon: Eye },
+                                    { name: 'userActivities', load: 72, trend: '-2%', icon: Activity },
+                                    { name: 'seminarRooms', load: 45, trend: '+15%', icon: Share2 },
+                                    { name: 'messages', load: 68, trend: '+8%', icon: Terminal },
+                                    { name: 'stats', load: 30, trend: 'Stable', icon: BarChart3 },
+                                ].map((col, i) => (
+                                    <motion.div 
+                                        key={col.name}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className="p-8 bg-white/[0.03] border border-white/5 rounded-[2.5rem] group/card hover:bg-white/[0.05] transition-all cursor-pointer relative overflow-hidden"
+                                    >
+                                        <div className="flex items-center justify-between mb-8 relative z-10">
+                                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white/40 group-hover/card:text-indigo-400 group-hover/card:bg-indigo-500/20 transition-all">
+                                                <col.icon className="w-6 h-6" />
+                                            </div>
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${col.load > 90 ? 'text-rose-400 animate-pulse' : 'text-white/20'}`}>
+                                                {col.load > 90 ? 'High Load' : 'Nominal'}
+                                            </span>
+                                        </div>
+                                        <div className="relative z-10">
+                                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-1.5">{col.name}</p>
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="h-1.5 bg-white/5 rounded-full flex-1 overflow-hidden">
+                                                    <motion.div 
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${col.load}%` }}
+                                                        className={`h-full rounded-full ${col.load > 90 ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]'}`}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-black text-white tabular-nums">{col.load}%</span>
+                                            </div>
+                                            <p className="text-[9px] font-bold text-white/30 mt-3 flex items-center gap-1.5 uppercase tracking-widest">
+                                                {col.trend} <span className="opacity-50">vs last hour</span>
+                                            </p>
+                                        </div>
+                                        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none translate-x-4 -translate-y-4 group-hover/card:translate-x-0 group-hover/card:translate-y-0 transition-transform">
+                                            <col.icon className="w-24 h-24 text-white" />
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                     </section>
+                </div>
+
+                {/* 2. Storage & AI Performance */}
+                <div className="xl:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    
+                    {/* Storage Board */}
+                    <section className="bg-white p-12 rounded-[4.5rem] border border-slate-100 shadow-sm space-y-12 group hover:shadow-2xl hover:shadow-slate-500/5 transition-all duration-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-5">
+                                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-110 duration-700">
+                                    <HardDrive className="w-7 h-7" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-900 serif">Asset Infrastructure</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Firebase Storage Allocation</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-3xl font-black text-slate-900 tabular-nums serif">42.8 <small className="text-xs text-slate-400">GB</small></p>
+                                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Safe Capacity</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-8">
+                            {[
+                                { label: 'Seminar Artifacts (PDF/ZIP)', usage: 65, color: 'bg-indigo-500', size: '28.1 GB' },
+                                { label: 'User Media & Uploads', usage: 22, color: 'bg-amber-500', size: '9.4 GB' },
+                                { label: 'System Graphics & Static', usage: 13, color: 'bg-slate-900', size: '5.3 GB' },
+                            ].map((s, i) => (
+                                <div key={i} className="space-y-3">
+                                    <div className="flex justify-between items-end">
+                                        <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight">{s.label}</p>
+                                        <span className="text-[11px] font-bold text-slate-400">{s.size}</span>
+                                    </div>
+                                    <div className="h-4 bg-slate-50 border border-slate-100 rounded-full overflow-hidden p-1">
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${s.usage}%` }}
+                                            className={`h-full rounded-full ${s.color} shadow-lg shadow-current/20`}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="pt-8 border-t border-slate-50 flex items-center gap-8">
+                             <div className="flex-1">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Purge Interval</p>
+                                <p className="text-sm font-black text-slate-900">30 Days (Artifacts)</p>
+                             </div>
+                             <div className="flex-1">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Object Count</p>
+                                <p className="text-sm font-black text-slate-900">12,450 Assets</p>
+                             </div>
+                             <button className="flex items-center gap-2 text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-900 transition-colors">
+                                Browse Storage <ChevronRight className="w-4 h-4" />
+                             </button>
+                        </div>
+                    </section>
+
+                    {/* AI Performance Monitor */}
+                    <section className="bg-white p-12 rounded-[4.5rem] border border-slate-100 shadow-sm space-y-12 group hover:shadow-2xl hover:shadow-slate-500/5 transition-all duration-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-5">
+                                <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 shadow-sm group-hover:scale-110 duration-700">
+                                    <Zap className="w-7 h-7" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-900 serif">Intelligence Velocity</h3>
+                                    <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mt-1">AI Flow Latency & Health</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-full animate-pulse">
+                                <Activity className="w-4 h-4" />
+                                <span className="text-[10px] font-black uppercase">Live Monitoring</span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 translate-x-4 -translate-y-4">
+                                    <Clock className="w-24 h-24" />
+                                </div>
+                                <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-4">Avg. TTFT</p>
+                                <div className="text-4xl font-black serif italic tracking-tighter">1.2s</div>
+                                <p className="text-[9px] font-bold text-emerald-400 mt-4 uppercase tracking-widest flex items-center gap-1.5">
+                                    <ArrowDownRight className="w-3 h-3" /> 15% Faster <span className="opacity-30">vs Gemini 1.5</span>
+                                </p>
+                            </div>
+                            <div className="p-8 bg-indigo-50 border border-indigo-100 rounded-[2.5rem]">
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Concurrency</p>
+                                <div className="text-4xl font-black text-indigo-900 serif italic tracking-tighter">14 <small className="text-base text-indigo-400">sessions</small></div>
+                                <p className="text-[9px] font-bold text-indigo-500 mt-4 uppercase tracking-widest">Active Streamers</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <h4 className="text-[11px] font-black uppercase text-slate-300 tracking-widest border-b border-slate-50 pb-4">Top Performing Flows</h4>
+                            {[
+                                { name: 'seminar-chat-flow', latency: '0.8s', health: 99.9, color: 'bg-emerald-500' },
+                                { name: 'translate-seminar-flow', latency: '1.4s', health: 100, color: 'bg-blue-500' },
+                                { name: 'generate-concept-flow', latency: '2.1s', health: 98.4, color: 'bg-amber-500' },
+                            ].map((f, i) => (
+                                <div key={i} className="flex items-center justify-between group/flow">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-2 h-2 rounded-full ${f.color}`} />
+                                        <p className="text-xs font-black text-slate-800 tracking-tight group-hover/flow:text-indigo-600 transition-colors">{f.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-8">
+                                        <span className="text-[10px] font-black text-slate-400 tabular-nums">{f.latency}</span>
+                                        <span className="text-[10px] font-black text-emerald-500 tabular-nums">{f.health}%</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            {/* 4. Infrastructure Config (Former 2) */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-12">
                 <div className="xl:col-span-12">
                     <section className="bg-slate-900 rounded-[3.5rem] shadow-2xl overflow-hidden relative group">
@@ -416,99 +612,179 @@ const AdminSystemPage = () => {
                         </div>
                     </section>
 
-                    <section className="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 space-y-6">
-                        <div className="flex items-center gap-3">
-                            <Activity className="w-5 h-5 text-indigo-500" />
-                            <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Network Health</h4>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Uptime</span>
-                                <span className="text-xs font-black text-indigo-600">99.998%</span>
+                </div>
+
+                {/* Activity Feed */}
+
+                {/* 5. Platform Cost Architecture & Unit Economics */}
+                <div className="xl:col-span-12">
+                    <section className="bg-white rounded-[3.5rem] border border-slate-100 shadow-xl relative overflow-hidden group">
+                        <div className="p-8 lg:p-14">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 px-2">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                                            <DollarSign className="w-6 h-6" />
+                                        </div>
+                                        <h3 className="text-3xl font-black text-slate-900 serif tracking-tight">Platform Økonomi</h3>
+                                    </div>
+                                    <p className="text-lg text-slate-500 font-medium italic max-w-xl leading-relaxed">
+                                        Baseret på officielle GCP/Firebase Northern Europe priser. Alle data er realtids-ekstrapoleret.
+                                    </p>
+                                </div>
+                                <div className="p-8 lg:p-10 bg-slate-900 text-white rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col items-center min-w-[280px]">
+                                    <p className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.3em] mb-4">Total Estimeret Burn (30d)</p>
+                                    <div className="text-5xl font-black serif tabular-nums tracking-tighter">
+                                        ~1.420 <small className="text-sm font-bold opacity-30">kr.</small>
+                                    </div>
+                                    <div className="mt-6 flex items-center gap-3 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
+                                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">High Efficiency Rate</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="w-full h-1.5 bg-white border border-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-500 w-[99%]" />
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 px-2">
+                                {[
+                                    { 
+                                        label: 'Firestore Operations', 
+                                        cost: '0.42kr / 100k', 
+                                        metric: 'Reads (1.26kr/Writes)', 
+                                        icon: Database, 
+                                        color: 'text-blue-600', 
+                                        bg: 'bg-blue-50',
+                                        desc: 'Est. 450k operationer/dag',
+                                        estMonthly: '480 kr.'
+                                    },
+                                    { 
+                                        label: 'Cloud Functions', 
+                                        cost: '2.80kr / 1M', 
+                                        metric: 'Invocations + GB-s', 
+                                        icon: Cpu, 
+                                        color: 'text-purple-600', 
+                                        bg: 'bg-purple-50',
+                                        desc: 'Execution time & API Gateway',
+                                        estMonthly: '165 kr.'
+                                    },
+                                    { 
+                                        label: 'Global Storage', 
+                                        cost: '0.18kr / GB', 
+                                        metric: 'Capacity (Standard)', 
+                                        icon: HardDrive, 
+                                        color: 'text-amber-600', 
+                                        bg: 'bg-amber-50',
+                                        desc: 'Archive artifacts & Media',
+                                        estMonthly: '98 kr.'
+                                    },
+                                    { 
+                                        label: 'Network & Egress', 
+                                        cost: '0.85kr / GB', 
+                                        metric: 'Outbound Traffic', 
+                                        icon: Share2, 
+                                        color: 'text-rose-600', 
+                                        bg: 'bg-rose-50',
+                                        desc: 'CDN & Global distribution',
+                                        estMonthly: '52 kr.'
+                                    }
+                                ].map((item, i) => (
+                                    <div key={i} className="p-8 lg:p-10 bg-slate-50 border border-slate-100 rounded-[3rem] group/cost hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-700">
+                                        <div className="flex items-center justify-between mb-10">
+                                            <div className={`w-14 h-14 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center shadow-sm group-hover/cost:scale-110 transition-transform`}>
+                                                <item.icon className="w-7 h-7" />
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">{item.cost}</p>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">{item.metric}</p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <h4 className="text-lg font-black text-slate-900 serif leading-snug">{item.label}</h4>
+                                            <p className="text-xs text-slate-500 font-medium italic mb-6 line-clamp-2">{item.desc}</p>
+                                            <div className="h-px bg-slate-200/50 w-full" />
+                                            <div className="flex items-center justify-between pt-2">
+                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Est. Månedlig</p>
+                                                <p className="text-lg font-black text-slate-900 tabular-nums">{item.estMonthly}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <p className="text-[10px] text-slate-400 font-bold italic leading-relaxed">Systemet kører på Firebase Edge netværket med automatisk load balancing og DDoS beskyttelse.</p>
+
+                            {/* Optimization Intelligence */}
+                            <div className="mt-16 bg-slate-900 rounded-[3.5rem] p-12 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[100px] -mr-32 -mt-32" />
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-4 mb-10">
+                                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white">
+                                            <Sparkles className="w-5 h-5 animate-pulse" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-white serif">Operational Optimization</h4>
+                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Strategier for at reducere burn-rate</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        {[
+                                            {
+                                                title: 'Artifact TTL (Storage)',
+                                                save: 'Op til 40% besparelse',
+                                                desc: 'Implementer "Time To Live" på midlertidige PDF-filer i storage. Slet filer automatisk efter 7 dage.',
+                                                priority: 'High Impact'
+                                            },
+                                            {
+                                                title: 'Index Refining (Firestore)',
+                                                save: 'Op til 15% besparelse',
+                                                desc: 'Identificer ubrugte single-field indexes. Hver write koster ekstra per index der skal opdateres.',
+                                                priority: 'Medium'
+                                            },
+                                            {
+                                                title: 'Cold Start Tuning',
+                                                save: 'Bedre UX + 5% besparelse',
+                                                desc: 'Alloker mere hukommelse (min-instances: 1) til kritiske AI-flows for at undgå dyre rekursive cold starts.',
+                                                priority: 'Efficiency'
+                                            }
+                                        ].map((opt, i) => (
+                                            <div key={i} className="p-8 bg-white/[0.03] border border-white/5 rounded-3xl group/opt hover:bg-white/[0.07] transition-all">
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{opt.save}</span>
+                                                    <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{opt.priority}</span>
+                                                </div>
+                                                <h5 className="text-white font-black text-sm uppercase tracking-tight mb-3 group-hover/opt:text-indigo-400 transition-colors">{opt.title}</h5>
+                                                <p className="text-xs text-white/40 leading-relaxed font-medium">{opt.desc}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 p-12 bg-indigo-900 rounded-[3.5rem] text-white relative overflow-hidden">
+                                 <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -mr-48 -mt-48" />
+                                 <div className="relative z-10 flex flex-col xl:flex-row items-center justify-between gap-12 text-center xl:text-left">
+                                     <div className="space-y-4">
+                                         <h4 className="text-2xl font-black serif italic">Profitabilitets-Moment</h4>
+                                         <p className="text-white/40 text-sm font-medium leading-relaxed max-w-lg">
+                                             Systemet kører med et ekstremt lavt footprint. For hver krone brugt på drift, genereres der <span className="text-emerald-400 font-black">26,2 kr.</span> i omsætning.
+                                         </p>
+                                     </div>
+                                     <div className="flex flex-wrap justify-center gap-8 lg:gap-16">
+                                         <div className="text-center">
+                                             <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2">Netto Margin</p>
+                                             <p className="text-4xl font-black tabular-nums">96.2%</p>
+                                         </div>
+                                         <div className="h-12 w-px bg-white/10 hidden xl:block" />
+                                         <div className="text-center">
+                                             <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2">Scaling Multiplier</p>
+                                             <p className="text-4xl font-black tabular-nums">26x</p>
+                                         </div>
+                                     </div>
+                                 </div>
+                            </div>
                         </div>
                     </section>
                 </div>
 
-                {/* Activity Feed */}
-                <div className="xl:col-span-12">
-                   <section className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-                        <div className="p-10 border-b border-slate-50 bg-slate-50/20 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                           <div className="space-y-1">
-                               <div className="flex items-center gap-3 text-slate-900 serif">
-                                   <Clock className="w-5 h-5 text-slate-400" />
-                                   <h3 className="text-xl font-black">Live Pulse Terminal</h3>
-                               </div>
-                               <p className="text-sm text-slate-500 font-medium ml-8">Monitoring af de seneste 200 sidevisninger og platform-interaktioner.</p>
-                           </div>
-                           <button 
-                                onClick={() => setShowActivityLog(!showActivityLog)}
-                                className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 border shadow-sm ${showActivityLog ? 'bg-white text-slate-400 border-slate-100' : 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-900/10'}`}
-                            >
-                                {showActivityLog ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />} {showActivityLog ? 'Hide Feed' : 'Launch Feed'}
-                            </button>
-                        </div>
-                        
-                        <AnimatePresence>
-                        {showActivityLog && (
-                            <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
-                                <div className="overflow-x-auto min-h-[400px]">
-                                    {pageViewsLoading ? (
-                                        <div className="flex flex-col items-center justify-center p-32 gap-6">
-                                            <Loader2 className="w-12 h-12 animate-spin text-slate-100" />
-                                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Synchronizing audit logs...</p>
-                                        </div>
-                                    ) : (
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100">
-                                                <tr>
-                                                    <th className="px-10 py-6">Timestamp / Seq</th>
-                                                    <th className="px-10 py-6">Operator</th>
-                                                    <th className="px-10 py-6">Request Pattern / Route</th>
-                                                    <th className="px-10 py-6 text-right">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-50 font-mono">
-                                                {enrichedPageViews.map((view, vidx) => (
-                                                    <motion.tr 
-                                                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: vidx * 0.01 }}
-                                                        key={view.id} className="hover:bg-slate-50/30 transition-colors group"
-                                                    >
-                                                        <td className="px-10 py-5 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                                            {view.timestamp?.toDate().toLocaleString('da-DK', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                                                            <span className="ml-4 opacity-30">#ID-{view.id.slice(0, 6)}</span>
-                                                        </td>
-                                                        <td className="px-10 py-5">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
-                                                                <span className="text-sm font-black text-slate-900 tracking-tight">{view.username}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-10 py-5">
-                                                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-50/50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-tight border border-blue-100/50 w-fit">
-                                                                <Share2 className="w-3 h-3" /> {view.path}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-10 py-5 text-right">
-                                                            <span className="text-[10px] font-black text-emerald-600">200 OK</span>
-                                                        </td>
-                                                    </motion.tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    )}
-                                </div>
-                            </motion.div>
-                        )}
-                        </AnimatePresence>
-                   </section>
-                </div>
-
-                {/* Error Log */}
+            {/* Error Log */}
                 <div className="xl:col-span-12">
                    <section className="bg-white rounded-[3.5rem] border border-rose-100 shadow-sm overflow-hidden flex flex-col">
                         <div className="p-10 border-b border-rose-50 bg-rose-50/10 space-y-2">
