@@ -10,6 +10,7 @@ import GoogleTagManager from '@/components/GoogleTagManager';
 import { Suspense } from 'react';
 import { MaintenanceGuard } from '@/components/MaintenanceGuard';
 import SourceKeeper from '@/components/SourceKeeper';
+import PageViewTracker from '@/components/PageViewTracker';
 const siteUrl = 'https://cohero.dk';
 const siteTitle = 'Cohéro (Cohero) - Din Digitale Kollega for Socialrådgiverstuderende';
 const siteDescription = 'Cohéro (Cohero) er en AI-drevet platform for socialrådgiverstuderende, der tilbyder værktøjer som case-træner, journal-feedback og lovportal for at bygge bro mellem teori og praksis.';
@@ -143,6 +144,7 @@ export default function RootLayout({
               <MetaPixel />
               <GoogleTagManager />
               <SourceKeeper />
+              <PageViewTracker />
             </Suspense>
             <MaintenanceGuard>
               {children}
