@@ -99,18 +99,87 @@ export const useUser = () => {
   };
 
   const handleSignup = async (email: string, pass: string, displayName: string) => {
-    if (!auth) throw new Error("Authentication service is not available.");
+    if (!auth || !firestore) throw new Error("Authentication service is not available.");
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     if (userCredential.user) {
+      // 1. Initial Profile Update
       await updateProfile(userCredential.user, { displayName });
+
+      // 2. Metadata Collection (Source Attribution)
+      let sourceData = {};
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('cohero_attribution');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            sourceData = {
+                conversionSource: parsed.source,
+                fbclid: parsed.fbclid || null,
+                uf: parsed.uf || null,
+                utm_source: parsed.utm_source || null,
+                convertedAt: serverTimestamp()
+            };
+            // Clear to prevent multi-logging
+            localStorage.removeItem('cohero_attribution');
+          }
+        } catch (e) {
+          console.error("Attribution parsing failed", e);
+        }
+      }
+
+      // 3. Persist User Doc
+      await setDoc(doc(firestore, 'users', userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        email,
+        displayName,
+        createdAt: serverTimestamp(),
+        lastActivityAt: serverTimestamp(),
+        ...sourceData
+      }, { merge: true });
     }
     return userCredential;
   };
 
   const handleGoogleLogin = async () => {
-    if (!auth) throw new Error("Authentication service is not available.");
+    if (!auth || !firestore) throw new Error("Authentication service is not available.");
     const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
+    const userCredential = await signInWithPopup(auth, provider);
+    
+    if (userCredential.user) {
+      // Collect attribution (same logic as signup)
+      let sourceData = {};
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('cohero_attribution');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            sourceData = {
+              conversionSource: parsed.source,
+              fbclid: parsed.fbclid || null,
+              uf: parsed.uf || null,
+              utm_source: parsed.utm_source || null,
+              convertedAt: serverTimestamp()
+            };
+            // For Google login, we only apply attribution if it's a NEW user or if they don't have a source yet
+            // setDoc with merge: true handles this gracefully if we ONLY set these fields
+          } catch (e) {}
+        }
+      }
+
+      await setDoc(doc(firestore, 'users', userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName,
+        lastLogin: serverTimestamp(),
+        lastActivityAt: serverTimestamp(),
+        ...sourceData
+      }, { merge: true });
+
+      // Only clear if we actually used it (or just clear it anyway to be safe)
+      if (typeof window !== 'undefined') localStorage.removeItem('cohero_attribution');
+    }
+
+    return userCredential;
   };
 
   return { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin };

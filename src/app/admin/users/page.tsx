@@ -8,7 +8,7 @@ import { ref, getDownloadURL } from 'firebase/storage';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
   Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle,
-  CheckCircle2, XCircle, GraduationCap
+  CheckCircle2, XCircle, GraduationCap, Music, Facebook, Globe, Compass
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +44,31 @@ interface UserProfile {
   isQualified?: boolean;
   profession?: string;
   studyStarted?: string;
+  conversionSource?: string;
+  fbclid?: string;
+  uf?: string;
+  utm_source?: string;
+  convertedAt?: { toDate: () => Date };
 }
+
+const SourceBadge = ({ source }: { source?: string }) => {
+    if (!source) return <div className="w-5 h-5 flex items-center justify-center text-slate-200" title="Organisk / Ukendt"><Compass className="w-3.5 h-3.5" /></div>;
+    
+    const config = {
+        tiktok: { icon: Music, color: 'text-black', bg: 'bg-slate-100', label: 'TikTok' },
+        facebook: { icon: Facebook, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Meta Ads' },
+        google: { icon: Globe, color: 'text-rose-600', bg: 'bg-rose-50', label: 'Google' },
+        direct: { icon: Compass, color: 'text-slate-400', bg: 'bg-slate-50', label: 'Direkte' }
+    }[source.toLowerCase()] || { icon: Globe, color: 'text-indigo-600', bg: 'bg-indigo-50', label: source };
+
+    const Icon = config.icon;
+
+    return (
+        <div className={`w-6 h-6 rounded-lg ${config.bg} ${config.color} flex items-center justify-center shadow-sm border border-black/5`} title={`Kilde: ${config.label}`}>
+            <Icon className="w-3.5 h-3.5" />
+        </div>
+    );
+};
 
 const STAT_CARDS = [
   { label: 'Totale Brugere', key: 'total', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50/50 border-indigo-100/50' },
@@ -526,7 +550,10 @@ const AdminUsersPage = () => {
                                  {isAdmin ? <Shield className="w-6 h-6" /> : (u.username?.charAt(0) || u.email?.charAt(0) || '?').toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                 <p className="font-bold text-slate-900 text-lg leading-tight mb-1 group-hover:text-indigo-600 transition-colors serif">{u.username}</p>
+                                 <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-bold text-slate-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors serif">{u.username}</p>
+                                    <SourceBadge source={u.conversionSource} />
+                                 </div>
                                  <p className="text-xs text-slate-400 font-medium tracking-tight truncate">{u.email}</p>
                               </div>
                            </div>
@@ -627,6 +654,18 @@ const AdminUsersPage = () => {
                                                 <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-1">Unikt Bruger ID (UID)</span>
                                                 <code className="text-[10px] font-mono text-slate-400 bg-white px-3 py-1.5 rounded-lg border border-slate-100 w-fit">{u.id}</code>
                                             </div>
+                                            {u.conversionSource && (
+                                                <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-xl mt-4">
+                                                   <span className="text-[8px] font-black uppercase text-indigo-400 tracking-widest block mb-2">Marketing Attribution</span>
+                                                   <div className="flex items-center gap-2">
+                                                      <SourceBadge source={u.conversionSource} />
+                                                      <span className="text-xs font-bold text-white uppercase tracking-tight">{u.conversionSource}</span>
+                                                   </div>
+                                                   {u.convertedAt && (
+                                                      <p className="text-[9px] text-white/40 mt-2 italic">Konverteret {u.convertedAt.toDate().toLocaleString('da-DK')}</p>
+                                                   )}
+                                                </div>
+                                             )}
                                         </div>
                                     </div>
 
