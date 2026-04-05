@@ -1618,3 +1618,22 @@ export const ModuleExamPrepOutputSchema = z.object({
 export type ModuleExamPrepInput = z.infer<typeof ModuleExamPrepInputSchema>;
 export type ModuleExamPrepOutput = z.infer<typeof ModuleExamPrepOutputSchema>;
 export type ModuleExamPrepData = ModuleExamPrepOutput['data'];
+export const OptimizeSeoInputSchema = z.object({
+  currentTitle: z.string().optional(),
+  currentDescription: z.string().optional(),
+  currentKeywords: z.string().optional(),
+});
+
+export const OptimizeSeoDataSchema = z.object({
+  optimizedTitle: z.string(),
+  optimizedDescription: z.string(),
+  optimizedKeywords: z.string(),
+});
+
+export const OptimizeSeoOutputSchema = z.object({
+  data: OptimizeSeoDataSchema,
+  usage: UsageSchema,
+});
+
+export type OptimizeSeoInput = z.infer<typeof OptimizeSeoInputSchema>;
+export type OptimizeSeoOutput = z.infer<typeof OptimizeSeoOutputSchema>;

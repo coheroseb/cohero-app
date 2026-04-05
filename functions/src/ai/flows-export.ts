@@ -84,6 +84,7 @@ import { twistBlueprintFlow } from './flows/twist-blueprint-flow';
 import { fetchVivePublications } from './flows/vive-indsigt-flow';
 import { getViveReportQa } from './flows/vive-report-qa-flow';
 import { getSocraticReflection } from './flows/sokratisk-refleksion/flow';
+import { optimizeSeoFlow } from './flows/optimize-seo-flow';
 
 export const allFlows: Record<string, any> = {
   'adminInsightFlowFlow': adminInsightFlow,
@@ -258,4 +259,6 @@ export const allFlows: Record<string, any> = {
   'getViveReportQa': getViveReportQa,
   'getSocraticReflectionFlow': getSocraticReflection,
   'getSocraticReflection': getSocraticReflection,
+  'optimizeSeoFlow': optimizeSeoFlow,
+  'optimizeSeo': optimizeSeoFlow,
 };

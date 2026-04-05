@@ -16,62 +16,87 @@ const siteDescription = 'Cohéro (Cohero) er en AI-drevet platform for socialrå
 const ogImageUrl = '/team_cohero.png';
 
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: siteTitle,
-    template: `%s | Cohéro`,
-  },
-  description: siteDescription,
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Cohéro',
-  },
-  other: {
-    'mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'black-translucent',
-  },
-  keywords: ['cohero', 'socialrådgiverstuderende', 'socialrådgiver', 'socialt arbejde', 'case-træning', 'jura', 'pædagogik', 'studieværktøjer', 'AI', 'Barnets Lov', 'Serviceloven', 'Forvaltningsloven', 'VUM', 'ICS', 'journalføring', 'eksamenshjælp', 'socialfaglig', 'kollega', 'sparring', 'generative engine optimization', 'GEO'],
-  authors: [{ name: 'Cohéro Team', url: `${siteUrl}/om-os` }],
-  creator: 'Cohéro I/S',
-  publisher: 'Cohéro I/S',
-  openGraph: {
-    title: siteTitle,
-    description: siteDescription,
-    url: siteUrl,
-    siteName: 'Cohéro / Cohero',
-    images: [
-      {
-        url: ogImageUrl,
-        width: 1200,
-        height: 630,
-        alt: 'Teamet bag Cohéro - din digitale kollega.',
-      },
-    ],
-    locale: 'da_DK',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: siteTitle,
-    description: siteDescription,
-    images: [ogImageUrl],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+
+async function getSeoData() {
+  try {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    const seoRef = adminFirestore.collection('systemSettings').doc('seo');
+    const snapshot = await seoRef.get();
+    if (snapshot.exists) {
+      return snapshot.data();
+    }
+  } catch (error) {
+    console.error('Error fetching SEO data:', error);
+  }
+  return null;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const customSeo = await getSeoData();
+  
+  const title = customSeo?.siteTitle || siteTitle;
+  const description = customSeo?.siteDescription || siteDescription;
+  const keywords = customSeo?.keywords ? customSeo.keywords.split(',').map((s: string) => s.trim()) : ['cohero', 'socialrådgiverstuderende', 'socialrådgiver', 'socialt arbejde', 'case-træning', 'jura', 'pædagogik', 'studieværktøjer', 'AI', 'Barnets Lov', 'Serviceloven', 'Forvaltningsloven', 'VUM', 'ICS', 'journalføring', 'eksamenshjælp', 'socialfaglig', 'kollega', 'sparring', 'generative engine optimization', 'GEO'];
+  const ogImage = customSeo?.ogImage || ogImageUrl;
+  const indexing = customSeo?.indexing !== undefined ? customSeo.indexing : true;
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: title,
+      template: `%s | Cohéro`,
     },
-  },
-};
+    description: description,
+    manifest: '/manifest.json',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'Cohéro',
+    },
+    other: {
+      'mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    },
+    keywords: keywords,
+    authors: [{ name: 'Cohéro Team', url: `${siteUrl}/om-os` }],
+    creator: 'Cohéro I/S',
+    publisher: 'Cohéro I/S',
+    openGraph: {
+      title: title,
+      description: description,
+      url: siteUrl,
+      siteName: 'Cohéro / Cohero',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: 'Cohéro - Din digitale kollega.',
+        },
+      ],
+      locale: 'da_DK',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: title,
+      description: description,
+      images: [ogImage],
+    },
+    robots: {
+      index: indexing,
+      follow: indexing,
+      googleBot: {
+        index: indexing,
+        follow: indexing,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#451a03',

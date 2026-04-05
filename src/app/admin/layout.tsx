@@ -36,7 +36,8 @@ import {
     Inbox,
     ShieldAlert,
     Trophy,
-    Gavel
+    Gavel,
+    Globe
 } from 'lucide-react';
 
 import { useApp } from '@/app/provider';
@@ -66,6 +67,7 @@ const navigationGroups = [
         { id: 'emails', href: '/admin/emails', label: 'E-mail Blasts', icon: Mail },
         { id: 'inbox', href: '/admin/inbox', label: 'Indbakke (Simply)', icon: Inbox },
         { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
+        { id: 'seo', href: '/admin/seo', label: 'SEO & Meta-Data', icon: Globe },
     ]
   },
   {

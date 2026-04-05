@@ -2608,3 +2608,7 @@ export async function updateTermsConfigAction(content: string) { return updatePo
 
 
 
+
+export async function optimizeSeoAction(input: Types.OptimizeSeoInput): Promise<Types.OptimizeSeoOutput> {
+    return callFirebaseFlow('optimizeSeoFlow', input);
+}
