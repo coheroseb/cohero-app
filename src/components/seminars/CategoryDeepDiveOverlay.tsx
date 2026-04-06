@@ -917,100 +917,118 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                   )}
 
                   {researchResult && (
-                    <div className="space-y-12 pb-20">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="md:col-span-2 space-y-6">
-                                <p className="text-[10px] font-black uppercase text-indigo-500 tracking-[0.2em] px-2">Nuværende Forskningsfelt</p>
-                                <div className="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-8 text-slate-50 group-hover:text-indigo-50 transition-colors">
-                                        <Search className="w-16 h-16" />
-                                    </div>
-                                    <p className="text-lg text-slate-700 leading-relaxed font-medium serif relative z-10">
+                    <div className="space-y-16 pb-24">
+                        {/* Summary Card */}
+                        <section className="space-y-6">
+                            <div className="flex items-center justify-between px-4">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase text-indigo-500 tracking-[0.2em]">Status Quo</p>
+                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">Forskningsmæssigt Overblik</h3>
+                                </div>
+                                <div className="px-4 py-2 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-2">
+                                    <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Global Indsigt</span>
+                                </div>
+                            </div>
+
+                            <div className="p-12 bg-white border border-slate-100 rounded-[4rem] shadow-sm relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-12 text-slate-50 group-hover:text-indigo-50/50 transition-colors pointer-events-none">
+                                    <Search className="w-24 h-24" />
+                                </div>
+                                <div className="max-w-3xl space-y-8 relative z-10">
+                                    <p className="text-2xl text-slate-800 leading-relaxed font-medium serif italic">
                                         "{researchResult.stateOfResearch}"
                                     </p>
-                                    <div className="mt-8 flex flex-wrap gap-4 relative z-10">
-                                        {researchResult.existingSources.map((s: any, sj: number) => (
-                                            <div key={sj} className="flex flex-col gap-1.5">
-                                                <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold text-slate-500 italic max-w-sm">
-                                                    {s.apa}
-                                                </div>
-                                                {s.url && (
-                                                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="px-4 text-[10px] text-indigo-600 font-black flex items-center gap-1.5 hover:underline">
-                                                        <LinkIcon className="w-3 h-3" />
-                                                        Se kilde
-                                                    </a>
-                                                )}
-                                            </div>
-                                        ))}
+                                    
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Hentet Litteratur & Kilder</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {researchResult.existingSources.map((s: any, sj: number) => (
+                                                <motion.div 
+                                                    key={sj}
+                                                    whileHover={{ x: 4 }}
+                                                    className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-start gap-4 group/kilde"
+                                                >
+                                                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex flex-shrink-0 items-center justify-center text-slate-400">
+                                                        <FileText className="w-4 h-4" />
+                                                    </div>
+                                                    <div className="space-y-1 overflow-hidden">
+                                                        <p className="text-[11px] font-bold text-slate-600 break-words leading-tight">{s.apa}</p>
+                                                        {s.url && (
+                                                            <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-600 font-black flex items-center gap-1 hover:underline">
+                                                                <LinkIcon className="w-3 h-3" />
+                                                                Åben Publikation
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-indigo-50/50 rounded-[3rem] p-10 flex flex-col justify-center gap-6 border border-indigo-100">
-                                <div className="w-14 h-14 bg-white rounded-3xl border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
-                                    <TrendingUp className="w-7 h-7" />
-                                </div>
-                                <div>
-                                    <h4 className="text-xl font-black text-slate-900 serif leading-snug">Viden-huller identificeret</h4>
-                                    <p className="text-sm text-slate-500 font-medium mt-3 leading-relaxed">Vi har fundet 2 områder hvor dine seminarer rækker ud over den nuværende gængse forskning.</p>
+                        </section>
+
+                        {/* Innovation Paths */}
+                        <section className="space-y-10">
+                            <div className="flex flex-col items-center text-center space-y-4">
+                                <div className="w-12 h-1 bg-indigo-600 rounded-full" />
+                                <div className="space-y-1">
+                                    <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Fremtidige Forskningsstier</h3>
+                                    <p className="text-slate-500 text-sm font-medium">Potentiale for nye AI-understøttede opdagelser i materialet</p>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="space-y-8">
-                             <div className="flex items-center justify-between px-4">
-                                <p className="text-[10px] font-black uppercase text-indigo-900 tracking-[0.2em]">Nye Forskningsomraåder & Problemstillinger</p>
-                                <div className="h-[1px] flex-1 bg-slate-100 ml-6" />
-                             </div>
-                             
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {researchResult.proposals.map((prop: any, pi: number) => (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {researchResult.proposals.map((path: any, pi: number) => (
                                     <motion.div 
                                         key={pi}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: pi * 0.1 }}
-                                        className="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-xl hover:shadow-2xl transition-all group"
+                                        whileHover={{ y: -8 }}
+                                        className="bg-white border border-slate-100 p-8 rounded-[3.5rem] shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all space-y-8 flex flex-col h-full relative group"
                                     >
-                                        <div className="flex items-center justify-between mb-8">
-                                            <div className="px-4 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-[9px] font-black uppercase tracking-widest border border-indigo-100">
-                                                Forslag #{pi + 1}
-                                            </div>
-                                            <Sparkles className="w-5 h-5 text-indigo-200 group-hover:text-indigo-400 transition-colors" />
+                                        <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-500 shadow-sm">
+                                            {pi === 0 ? <BrainCircuit className="w-8 h-8" /> : pi === 1 ? <Target className="w-8 h-8" /> : <Zap className="w-8 h-8" />}
                                         </div>
                                         
-                                        <h4 className="text-2xl font-black text-slate-900 serif mb-6 group-hover:text-indigo-600 transition-colors">{prop.title}</h4>
-                                        
-                                        <div className="space-y-6">
-                                            <div className="space-y-2">
-                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Problemformulering</p>
-                                                <p className="text-sm text-slate-600 font-medium leading-relaxed italic border-l-4 border-indigo-100 pl-4">
-                                                    "{prop.problemStatement}"
+                                        <div className="space-y-4 flex-grow">
+                                            <h4 className="text-xl font-black text-slate-900 leading-tight">
+                                                {path.title}
+                                            </h4>
+                                            <div className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 relative overflow-hidden group-hover:bg-white transition-colors">
+                                                <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/5 rounded-full -mr-8 -mt-8" />
+                                                <p className="text-xs font-bold text-slate-500 italic leading-relaxed relative z-10">
+                                                    "{path.problemStatement}"
                                                 </p>
                                             </div>
-                                            
+                                        </div>
+
+                                        <div className="pt-8 border-t border-slate-50 space-y-6">
                                             <div className="space-y-3">
-                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Forskningsspørgsmål</p>
-                                                <ul className="space-y-3">
-                                                    {prop.questions.map((q: string, qi: number) => (
-                                                        <li key={qi} className="flex gap-3 text-sm text-slate-700 font-medium">
-                                                            <div className="w-5 h-5 rounded-full bg-slate-50 flex-shrink-0 flex items-center justify-center text-[10px] text-slate-400 font-bold">{qi + 1}</div>
+                                                <p className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">Key Questions</p>
+                                                <ul className="space-y-2">
+                                                    {path.questions.map((q: string, qi: number) => (
+                                                        <li key={qi} className="text-[11px] text-slate-600 font-medium flex gap-2">
+                                                            <span className="text-indigo-300">•</span>
                                                             {q}
                                                         </li>
                                                     ))}
                                                 </ul>
                                             </div>
-                                            <div className="pt-4 flex items-center justify-between">
+                                            
+                                            <div className="flex items-center justify-between gap-4">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-black uppercase text-slate-300">Teoretisk Ramme:</span>
-                                                    <span className="text-[11px] font-bold text-indigo-500">{prop.theory}</span>
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest overflow-hidden whitespace-nowrap text-ellipsis max-w-[80px]">
+                                                        {path.theory}
+                                                    </span>
                                                 </div>
                                                 <Button 
                                                     onClick={() => {
-                                                        const content = `# Forsknings-Brief: ${prop.title}\n\n` +
+                                                        const content = `# Forsknings-Brief: ${path.title}\n\n` +
                                                             `**Kategori:** ${category}\n` +
-                                                            `**Teoretisk Ramme:** ${prop.theory}\n\n` +
-                                                            `## Problemformulering\n${prop.problemStatement}\n\n` +
-                                                            `## Forskningsspørgsmål\n${prop.questions.map((q: string, i: number) => `${i+1}. ${q}`).join('\n')}\n\n` +
+                                                            `**Teoretisk Ramme:** ${path.theory}\n\n` +
+                                                            `## Problemformulering\n${path.problemStatement}\n\n` +
+                                                            `## Forskningsspørgsmål\n${path.questions.map((q: string, i: number) => `${i+1}. ${q}`).join('\n')}\n\n` +
                                                             `## Baggrund & Kontekst\n${researchResult.stateOfResearch}\n\n` +
                                                             `## Kilder\n${researchResult.existingSources.map((s: any) => `- ${s.apa}${s.url ? ` (${s.url})` : ''}`).join('\n')}\n\n` +
                                                             `--- \nGenereret af Cohéro Intelligence`;
@@ -1019,23 +1037,31 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                                                         const url = URL.createObjectURL(blob);
                                                         const a = document.createElement('a');
                                                         a.href = url;
-                                                        a.download = `Forskningsbrief-${prop.title.replace(/\s+/g, '-')}.md`;
+                                                        a.download = `Forskningsbrief-${path.title.replace(/\s+/g, '-')}.md`;
                                                         a.click();
                                                         URL.revokeObjectURL(url);
-                                                        toast({ title: "Brief Downloadet", description: "Din forskningsplan er nu gemt lokalt." });
+                                                        toast({ title: "Brief Downloadet", description: "Analysen er nu gemt." });
                                                     }}
                                                     size="sm" 
-                                                    variant="outline" 
-                                                    className="rounded-xl font-black uppercase tracking-widest h-9 text-[10px] bg-slate-900 text-white border-none hover:bg-slate-800 transition-all px-5 shadow-lg shadow-slate-900/10"
+                                                    variant="ghost" 
+                                                    className="rounded-xl font-black uppercase tracking-widest h-10 text-[10px] hover:bg-slate-900 hover:text-white transition-all px-4"
                                                 >
-                                                    <FileText className="w-3.5 h-3.5 mr-2" />
-                                                    Download Brief
+                                                    <FileText className="w-4 h-4 mr-2" />
+                                                    Get Brief
                                                 </Button>
                                             </div>
                                         </div>
                                     </motion.div>
                                 ))}
-                             </div>
+                            </div>
+                        </section>
+
+                        {/* Analysis Note */}
+                        <div className="flex justify-center flex-col items-center gap-4 text-center">
+                            <div className="w-16 h-1 bg-slate-100 rounded-full" />
+                            <p className="text-[10px] text-slate-400 font-medium max-w-sm">
+                                Deep Search kombinerer dine seminarer med peer-reviewed data fra {researchResult.existingSources.length} kilder fundet via Google Scholar for at skabe et felt-uafhængigt overblik.
+                            </p>
                         </div>
                     </div>
                   )}
