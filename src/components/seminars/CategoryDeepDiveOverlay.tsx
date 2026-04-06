@@ -26,7 +26,8 @@ import {
   Search,
   Sparkles,
   Link as LinkIcon,
-  FileText
+  FileText,
+  FileCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SavedSeminar } from '@/app/mine-seminarer/page'; 
@@ -65,8 +66,28 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [selectedLaw, setSelectedLaw] = useState<string | null>(null);
   const [selectedApa, setSelectedApa] = useState<string | null>(null);
-  const [researchResult, setResearchResult] = useState<any | null>(userProfile?.categoryResearch?.[category] || null);
   const [isGeneratingResearch, setIsGeneratingResearch] = useState(false);
+  const [researchResult, setResearchResult] = useState<any | null>(userProfile?.categoryResearch?.[category] || null);
+  const [researchLoadingStep, setResearchLoadingStep] = useState(0);
+
+  const researchSteps = [
+    { title: "Akademisk Crawling", desc: "Søger efter relevante publikationer på Google Scholar...", icon: <Search className="w-4 h-4" /> },
+    { title: "Curriculum Mapping", desc: "Analyserer dine seminarnotater og slides for centrale temaer...", icon: <BookOpen className="w-4 h-4" /> },
+    { title: "Hul-identifikation", desc: "Leder efter mangler i den nuværende videnskabelige konsensus...", icon: <Target className="w-4 h-4" /> },
+    { title: "Problem-formulering", desc: "Udformer innovative problemstillinger baseret på fund...", icon: <Sparkles className="w-4 h-4" /> },
+    { title: "Kilde-validering", desc: "Sikrer at alle links fungerer og kilder er peer-reviewed...", icon: <FileCheck className="w-4 h-4" /> },
+  ];
+
+  useEffect(() => {
+    let interval: any;
+    if (isGeneratingResearch) {
+        setResearchLoadingStep(0);
+        interval = setInterval(() => {
+            setResearchLoadingStep(prev => (prev + 1) % researchSteps.length);
+        }, 3500);
+    }
+    return () => clearInterval(interval);
+  }, [isGeneratingResearch]);
 
   const isKollegaPlus = userProfile?.membership === 'Kollega+';
   const isResearchLocked = !isKollegaPlus;
@@ -804,19 +825,94 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                   </section>
 
                   {isGeneratingResearch && (
-                    <div className="py-24 text-center space-y-8 bg-white rounded-[3rem] border border-slate-100 shadow-sm animate-pulse">
-                        <div className="flex justify-center flex-col items-center gap-6">
+                    <div className="py-20 px-10 bg-white rounded-[3rem] border border-slate-100 shadow-2xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-b from-indigo-50/30 to-transparent" />
+                        
+                        <div className="relative z-10 flex flex-col items-center gap-12">
+                            {/* Animated Scanner Hub */}
                             <div className="relative">
-                                <div className="absolute inset-0 bg-indigo-500 rounded-full blur-xl opacity-20 animate-ping" />
-                                <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white/40 mx-auto relative z-10">
-                                    <Globe className="w-8 h-8 animate-spin-slow" />
+                                <motion.div 
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                                    className="w-32 h-32 rounded-full border-2 border-dashed border-indigo-100 flex items-center justify-center"
+                                >
+                                    <div className="w-24 h-24 rounded-full border border-indigo-200/50 flex items-center justify-center p-4">
+                                        <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-indigo-400 shadow-2xl shadow-indigo-500/20">
+                                            {researchSteps[researchLoadingStep].icon}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                                
+                                {/* Orbiting Dots */}
+                                {[0, 72, 144, 216, 288].map((angle, i) => (
+                                    <motion.div
+                                        key={i}
+                                        className="absolute top-1/2 left-1/2 w-2 h-2 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                                        animate={{ 
+                                            x: 70 * Math.cos(angle * Math.PI / 180),
+                                            y: 70 * Math.sin(angle * Math.PI / 180),
+                                            opacity: [0.2, 1, 0.2]
+                                        }}
+                                        transition={{ 
+                                            duration: 3, 
+                                            repeat: Infinity, 
+                                            delay: i * 0.5,
+                                            ease: "easeInOut"
+                                        }}
+                                    />
+                                ))}
+                            </div>
+
+                            <div className="w-full max-w-sm space-y-8">
+                                <div className="text-center space-y-2">
+                                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Deep Search i gang</h4>
+                                    <div className="h-1 w-24 bg-indigo-100 rounded-full mx-auto overflow-hidden">
+                                        <motion.div 
+                                            className="h-full bg-indigo-600"
+                                            animate={{ x: [-100, 100] }}
+                                            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Steps List */}
+                                <div className="space-y-4">
+                                    {researchSteps.map((step, idx) => {
+                                        const isCurrent = idx === researchLoadingStep;
+                                        const isPast = idx < researchLoadingStep;
+                                        
+                                        return (
+                                            <motion.div 
+                                                key={idx}
+                                                initial={false}
+                                                animate={{ 
+                                                    opacity: isCurrent ? 1 : (isPast ? 0.5 : 0.2),
+                                                    scale: isCurrent ? 1.02 : 1
+                                                }}
+                                                className={`flex items-start gap-4 p-4 rounded-2xl transition-colors ${isCurrent ? 'bg-indigo-50/50 border border-indigo-100 shadow-sm' : ''}`}
+                                            >
+                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${isCurrent ? 'bg-indigo-600 text-white' : (isPast ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400')}`}>
+                                                    {isPast ? <FileCheck className="w-3 h-3" /> : idx + 1}
+                                                </div>
+                                                <div className="text-left">
+                                                    <h5 className={`text-[11px] font-black uppercase tracking-wider ${isCurrent ? 'text-indigo-900' : 'text-slate-500'}`}>
+                                                        {step.title}
+                                                    </h5>
+                                                    {isCurrent && (
+                                                        <p className="text-[10px] text-slate-400 font-medium leading-relaxed mt-1 animate-pulse">
+                                                            {step.desc}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <p className="text-slate-900 font-black uppercase tracking-widest text-xs">Søger i videnskabelige databaser...</p>
-                                <p className="text-slate-400 text-xs font-medium italic">Globale databaser & akademiske kilder analyseres</p>
-                            </div>
                         </div>
+
+                        {/* Background Scanning Effect */}
+                        <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-indigo-50/20 pointer-events-none" />
                     </div>
                   )}
 
