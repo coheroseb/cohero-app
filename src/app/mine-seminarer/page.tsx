@@ -817,7 +817,12 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
     setIsGeneratingQuiz(true);
     try {
       const contextText = slides.map(s => `Slide ${s.slideNumber}: ${s.summary}`).join('\n');
-      const result = await generateQuizAction({ topic: seminar.overallTitle, numQuestions: 5, contextText });
+      const result = await generateQuizAction({ 
+        topic: seminar.overallTitle, 
+        numQuestions: 5, 
+        contextText,
+        profession: userProfile?.profession
+      });
       setQuizData(result.data);
     } catch { toast({ title: 'Fejl', description: 'Quiz kunne ikke genereres.', variant: 'destructive' }); }
     finally { setIsGeneratingQuiz(false); }
@@ -1144,7 +1149,8 @@ export default function MineSeminarerPage() {
             topic: `Master Quiz: ${category}`,
             numQuestions: 10,
             difficulty: 'medium',
-            contextText: allContext
+            contextText: allContext,
+            profession: userProfile?.profession
         });
 
         if (res?.data) {

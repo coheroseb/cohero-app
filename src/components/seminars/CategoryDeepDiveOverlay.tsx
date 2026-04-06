@@ -95,12 +95,13 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
 
   // Sync with user profile on mount or category change
   useEffect(() => {
+    if (userProfile === undefined) return;
     if (userProfile?.categoryResearch?.[category]) {
         setResearchResult(userProfile.categoryResearch[category]);
     } else {
         setResearchResult(null);
     }
-  }, [category]);
+  }, [category, userProfile]);
 
   // Handle incoming data from profile updates (only if we don't have local result)
   useEffect(() => {
@@ -748,7 +749,8 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
 
                                         const result = await researchDiscoveryAction({
                                             category,
-                                            seminarContext
+                                            seminarContext,
+                                            profession: userProfile?.profession
                                         });
 
                                         if (result?.data) {
@@ -895,7 +897,11 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                                                     const slidesText = (s.slides || []).map((sl: any) => `- Slide ${sl.slideNumber}: ${sl.summary}`).join('\n');
                                                     return `SEMINAR: ${s.overallTitle}\nKATEGORI: ${s.category}\nINDHOLD:\n${slidesText}`;
                                                 }).join('\n\n---\n\n');
-                                                const result = await researchDiscoveryAction({ category, seminarContext });
+                                                const result = await researchDiscoveryAction({ 
+                                                    category, 
+                                                    seminarContext,
+                                                    profession: userProfile?.profession
+                                                });
                                                 if (result?.data) {
                                                     setResearchResult(result.data);
                                                     if (onSaveResearch) onSaveResearch(result.data);
@@ -1017,82 +1023,151 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                                                     onClick={() => {
                                                         const doc = new jsPDF();
                                                         const margin = 20;
+                                                        const pageWidth = doc.internal.pageSize.getWidth();
+                                                        const pageHeight = doc.internal.pageSize.getHeight();
                                                         let yPos = 20;
 
-                                                        // Header
+                                                        const checkPageBreak = (neededHeight: number) => {
+                                                            if (yPos + neededHeight > pageHeight - margin) {
+                                                                doc.addPage();
+                                                                yPos = 20;
+                                                                return true;
+                                                            }
+                                                            return false;
+                                                        };
+
+                                                        // --- PAGE 1: COVER ---
+                                                        // Accent Bar
+                                                        doc.setFillColor(15, 23, 42); // Indigo/Slate 900
+                                                        doc.rect(0, 0, pageWidth, 60, 'F');
+                                                        
+                                                        doc.setTextColor(255, 255, 255);
                                                         doc.setFont("helvetica", "bold");
-                                                        doc.setFontSize(22);
-                                                        doc.text("FORSKNINGS-BRIEF", margin, yPos);
-                                                        yPos += 15;
-
-                                                        doc.setFontSize(14);
-                                                        doc.setTextColor(100, 100, 100);
-                                                        doc.text(path.title.toUpperCase(), margin, yPos);
-                                                        yPos += 12;
-
-                                                        // Metadata
+                                                        doc.setFontSize(28);
+                                                        doc.text("RESEARCH BRIEF", margin, 35);
+                                                        
                                                         doc.setFontSize(10);
                                                         doc.setFont("helvetica", "normal");
-                                                        doc.text(`Kategori: ${category}`, margin, yPos);
-                                                        yPos += 6;
-                                                        doc.text(`Teori: ${path.theory}`, margin, yPos);
-                                                        yPos += 15;
+                                                        doc.text(`COHÉRO INTELLIGENCE HUB | ${new Date().toLocaleDateString('da-DK')}`, margin, 45);
 
-                                                        // Problemformulering
+                                                        yPos = 80;
+                                                        doc.setTextColor(15, 23, 42);
+                                                        doc.setFontSize(18);
                                                         doc.setFont("helvetica", "bold");
-                                                        doc.setFontSize(12);
-                                                        doc.setTextColor(0, 0, 0);
-                                                        doc.text("PROBLEMFORMULERING", margin, yPos);
-                                                        yPos += 8;
-                                                        doc.setFont("helvetica", "italic");
-                                                        doc.setFontSize(10);
-                                                        const splitProblem = doc.splitTextToSize(path.problemStatement, 170);
-                                                        doc.text(splitProblem, margin, yPos);
-                                                        yPos += (splitProblem.length * 5) + 10;
+                                                        const splitTitle = doc.splitTextToSize(path.title.toUpperCase(), pageWidth - (margin * 2));
+                                                        doc.text(splitTitle, margin, yPos);
+                                                        yPos += (splitTitle.length * 8) + 10;
 
-                                                        // Spørgsmål
-                                                        doc.setFont("helvetica", "bold");
-                                                        doc.text("FORSKNINGSSPØRGSMÅL", margin, yPos);
-                                                        yPos += 8;
-                                                        doc.setFont("helvetica", "normal");
-                                                        path.questions.forEach((q: string, i: number) => {
-                                                            const splitQ = doc.splitTextToSize(`${i+1}. ${q}`, 170);
-                                                            doc.text(splitQ, margin, yPos);
-                                                            yPos += (splitQ.length * 5) + 2;
-                                                        });
+                                                        // Metadata Box
+                                                        doc.setDrawColor(226, 232, 240); // Slate 200
+                                                        doc.line(margin, yPos, pageWidth - margin, yPos);
                                                         yPos += 10;
-
-                                                        // Baggrund
+                                                        
+                                                        doc.setFontSize(10);
                                                         doc.setFont("helvetica", "bold");
-                                                        doc.text("AKADEMISK KONTEKST", margin, yPos);
-                                                        yPos += 8;
+                                                        doc.text("KATEGORI:", margin, yPos);
                                                         doc.setFont("helvetica", "normal");
-                                                        const splitBackground = doc.splitTextToSize(researchResult.stateOfResearch, 170);
-                                                        doc.text(splitBackground, margin, yPos);
-                                                        yPos += (splitBackground.length * 5) + 15;
-
-                                                        // Sources
+                                                        doc.text(category.toUpperCase(), margin + 25, yPos);
+                                                        yPos += 6;
+                                                        
                                                         doc.setFont("helvetica", "bold");
-                                                        doc.text("LITTERATUR-LISTE", margin, yPos);
-                                                        yPos += 8;
-                                                        doc.setFontSize(8);
+                                                        doc.text("TEORI:", margin, yPos);
                                                         doc.setFont("helvetica", "normal");
-                                                        doc.setTextColor(100, 100, 100);
+                                                        doc.text(path.theory.toUpperCase(), margin + 25, yPos);
+                                                        yPos += 10;
+                                                        
+                                                        doc.line(margin, yPos, pageWidth - margin, yPos);
+                                                        yPos += 20;
+
+                                                        // Section: Problem Statement
+                                                        doc.setFontSize(14);
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.text("01. PROBLEMSTILLING", margin, yPos);
+                                                        yPos += 10;
+                                                        
+                                                        doc.setFont("helvetica", "oblique");
+                                                        doc.setFontSize(11);
+                                                        doc.setTextColor(71, 85, 105); // Slate 600
+                                                        const splitProblem = doc.splitTextToSize(`"${path.problemStatement}"`, pageWidth - (margin * 2));
+                                                        doc.text(splitProblem, margin, yPos);
+                                                        yPos += (splitProblem.length * 6) + 20;
+
+                                                        // Section: Research Questions
+                                                        checkPageBreak(50);
+                                                        doc.setTextColor(15, 23, 42);
+                                                        doc.setFontSize(14);
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.text("02. FORSKNINGSSPØRGSMÅL", margin, yPos);
+                                                        yPos += 10;
+                                                        
+                                                        doc.setFont("helvetica", "normal");
+                                                        doc.setFontSize(10);
+                                                        path.questions.forEach((q: string, i: number) => {
+                                                            const qText = `${i + 1}. ${q}`;
+                                                            const splitQ = doc.splitTextToSize(qText, pageWidth - (margin * 2) - 5);
+                                                            checkPageBreak(splitQ.length * 5);
+                                                            doc.text(splitQ, margin + 5, yPos);
+                                                            yPos += (splitQ.length * 5) + 3;
+                                                        });
+                                                        yPos += 15;
+
+                                                        // Section: Academic Context
+                                                        checkPageBreak(60);
+                                                        doc.setFontSize(14);
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.text("03. AKADEMISK STATE-OF-RESEARCH", margin, yPos);
+                                                        yPos += 10;
+                                                        
+                                                        doc.setFont("helvetica", "normal");
+                                                        doc.setFontSize(10);
+                                                        doc.setTextColor(30, 41, 59); // Slate 800
+                                                        const splitBackground = doc.splitTextToSize(researchResult.stateOfResearch, pageWidth - (margin * 2));
+                                                        // Handle page breaks within long text
+                                                        splitBackground.forEach((line: string) => {
+                                                            if (checkPageBreak(6)) {
+                                                                // If break, reset text color/font just in case
+                                                                doc.setFont("helvetica", "normal");
+                                                                doc.setFontSize(10);
+                                                                doc.setTextColor(30, 41, 59);
+                                                            }
+                                                            doc.text(line, margin, yPos);
+                                                            yPos += 6;
+                                                        });
+                                                        yPos += 20;
+
+                                                        // Section: Bibliography
+                                                        checkPageBreak(40);
+                                                        doc.setFontSize(14);
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.text("04. LITTERATURLISTE (APA)", margin, yPos);
+                                                        yPos += 10;
+                                                        
+                                                        doc.setFontSize(9);
+                                                        doc.setFont("helvetica", "normal");
+                                                        doc.setTextColor(100, 116, 139); // Slate 400
                                                         researchResult.existingSources.forEach((s: any) => {
-                                                            if (yPos > 270) { doc.addPage(); yPos = 20; }
-                                                            const sourceText = `${s.apa}${s.url ? ` (${s.url})` : ''}`;
-                                                            const splitSource = doc.splitTextToSize(sourceText, 170);
-                                                            doc.text(splitSource, margin, yPos);
-                                                            yPos += (splitSource.length * 4) + 2;
+                                                            const sourceText = `${s.apa}${s.url ? ` [LINK: ${s.url}]` : ''}`;
+                                                            const splitSource = doc.splitTextToSize(sourceText, pageWidth - (margin * 2) - 5);
+                                                            if (checkPageBreak(splitSource.length * 5)) {
+                                                                doc.setFontSize(9);
+                                                                doc.setTextColor(100, 116, 139);
+                                                            }
+                                                            doc.text(splitSource, margin + 5, yPos);
+                                                            yPos += (splitSource.length * 5) + 2;
                                                         });
 
-                                                        // Footer
-                                                        doc.setTextColor(200, 200, 200);
-                                                        doc.setFontSize(8);
-                                                        doc.text("Genereret af Cohéro Intelligence - cohero.dk", margin, 285);
+                                                        // Footer on every page
+                                                        const pageCount = (doc as any).internal.getNumberOfPages();
+                                                        for (let i = 1; i <= pageCount; i++) {
+                                                            doc.setPage(i);
+                                                            doc.setFontSize(8);
+                                                            doc.setTextColor(203, 213, 225);
+                                                            doc.text("Generated by Cohéro Intelligence - Premium Research Discovery Module", margin, pageHeight - 10);
+                                                            doc.text(`Side ${i} af ${pageCount}`, pageWidth - margin - 15, pageHeight - 10);
+                                                        }
 
-                                                        doc.save(`Forskningsbrief-${path.title.replace(/\s+/g, '-')}.pdf`);
-                                                        toast({ title: "PDF Brief Downloadet", description: "Analysen er nu gemt som PDF." });
+                                                        doc.save(`Cohéro-Brief-${path.title.replace(/\s+/g, '-')}.pdf`);
+                                                        toast({ title: "PDF Brief Downloadet", description: "Din professionelle analyse er klar." });
                                                     }}
                                                     size="sm" 
                                                     variant="ghost" 

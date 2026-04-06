@@ -21,6 +21,7 @@ const SocraticPromptInputSchema = z.object({
   reflectionText: z.string().describe("The user's reflection text."),
   books: z.array(BookSchemaForPrompt).optional().describe('A list of available textbooks.'),
   ethicsContext: z.string().optional().describe('The professional ethics guidelines.'),
+  profession: z.string().optional().describe('The user\'s profession.'),
 });
 
 
@@ -32,7 +33,13 @@ const prompt = ai.definePrompt({
   name: 'socraticReflectionPrompt',
   input: { schema: SocraticPromptInputSchema },
   output: { schema: SocraticDataSchema },
-  prompt: `You are an experienced social work supervisor and mentor for a Danish social work student. A social work student has shared this reflection from their daily life or internship: "{{{reflectionText}}}".
+  prompt: `Du er en erfaren vejleder og mentor for en {{{profession}}}studerende i Danmark (standard: socialrådgiver). En studerende har delt denne refleksion fra deres hverdag eller praktik: "{{{reflectionText}}}".
+
+{{#if profession}}
+VIGTIGT:
+- For en "Pædagog", fokuser på pædagogisk teori, relationsarbejde, udvikling, dannelse og professionelt skøn i en pædagogisk kontekst. 
+- For en "Socialrådgiver", fokuser på socialfaglig metode, myndighedsudøvelse, etiske dilemmaer og borgerens rettigheder.
+{{/if}}
   
   Your response MUST be grounded in the following ethical guidelines from the Danish Association of Social Workers:
   ---
@@ -73,6 +80,7 @@ const socraticFlow = ai.defineFlow(
       reflectionText: lastMessageContent,
       books: input.books,
       ethicsContext: input.ethicsContext,
+      profession: input.profession,
     });
     
     return {

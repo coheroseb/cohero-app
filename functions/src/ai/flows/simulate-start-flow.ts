@@ -29,22 +29,23 @@ const SimulateStartInputSchema = z.object({
     theme: z.string().describe("The general theme or focus for this simulation round (e.g. 'Blandet', 'Udsatte Børn')."),
     lawContext: z.string().optional().describe("Background legal context if relevant."),
     userName: z.string().describe("The name of the user playing the simulation."),
-    currentDateStr: z.string().describe("E.g. 'mandag den 22. marts 2026'")
+    currentDateStr: z.string().describe("E.g. 'mandag den 22. marts 2026'"),
+    profession: z.string().optional().describe("The profession of the user (e.g., Socialrådgiver, Pædagog).")
 });
 
 const prompt = ai.definePrompt({
     name: 'simulateStartPrompt',
     input: { schema: SimulateStartInputSchema },
     output: { schema: SimulateStartOutputSchema },
-    prompt: `Du er en avanceret fagsystem-generator, og du er 'Game Master' for Sags-simulatoren. Spilleren ("Socialrådgiveren") hedder {{{userName}}}. 
+    prompt: `Du er en avanceret fagsystem-generator, og du er 'Game Master' for Sags-simulatoren. Spilleren (en "{{#if profession}}{{profession}}{{else}}Socialrådgiver{{/if}}") hedder {{{userName}}}. 
 Din opgave er at generere START-TILSTANDEN for simulationen.
 
 Tema for simulationen: {{{theme}}}
 Relevant jura baggrund (valgfrit): {{{lawContext}}}
 
-Opret præcis 3 unikke og yderst realistiske sager indenfor dansk socialrådgivning. Sagerne skal have ET HØJT NIVEAU AF KOMPLEKSITET. Sørg for at integrere svære sværgange (f.eks. tvangsanbringelser vs. forældresamarbejde, stramme lovpligtige frister, psykiatri, ressourcemangel, eller uklare underretninger).
+Opret præcis 3 unikke og yderst realistiske sager indenfor dansk {{#if (eq profession "Pædagog")}}pædagogisk arbejde (f.eks. døgninstitution, specialområdet eller udsatte børn){{else}}socialrådgivning{{/if}}. Sagerne skal have ET HØJT NIVEAU AF KOMPLEKSITET. Sørg for at integrere svære sværgange (f.eks. {{#if (eq profession "Pædagog")}}magtanvendelser, forældregrupper, pædagogiske handleplaner, tværfagligt samarbejde eller akutte kriser{{else}}tvangsanbringelser vs. forældresamarbejde, stramme lovpligtige frister, psykiatri, ressourcemangel, eller uklare underretninger{{/if}}).
 For disse 3 sager genererer du de indledende indbakke-beskeder (3-5 i alt) for starten på simulationen.
-Den rigtige aktuelle dato lige nu er: {{{currentDateStr}}}. Dater beskedernes felt 'date' realistisk (f.eks. "{{{currentDateStr}}} kl. 08:15" eller "I går kl. 14:30").
+Den rigtige aktuelle dato lige nu er: {{{currentDateStr}}}. Dater beskedernes felt 'date' realistisk (f.eks. "{{{currentDateStr}}} kl. 08:15" or "I går kl. 14:30").
 Beskederne skal være "rå data" - dvs. e-mails, telefonnotater osv. Nogle afspendere MÅ MEGET GERNE henvende sig direkte til "{{userName}}". Gør dem frustrerede, udokumenterede eller modsigende, ligesom den virkelige verden. Husk at knytte dem til de rigtige case ID'er.`
 });
 

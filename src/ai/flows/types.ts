@@ -328,6 +328,7 @@ export const CaseFeedbackInputSchema = z.object({
   goals: z.string(),
   actionPlan: z.string(),
   lawContext: z.string(),
+  profession: z.string().optional(),
 });
 
 export const CaseFeedbackOutputSchema = z.object({
@@ -341,6 +342,7 @@ export const JournalFeedbackInputSchema = z.object({
   initialObservation: z.string(),
   journalEntry: z.string(),
   lawContext: z.string(),
+  profession: z.string().optional(),
 });
 
 export const JournalFeedbackOutputSchema = z.object({
@@ -390,6 +392,7 @@ export const ExamArchitectInputSchema = z.object({
     problemStatement: z.string(),
     lawContext: z.string().optional(),
     seminarContext: z.string().optional(),
+    profession: z.string().optional(),
 });
 
 export const PromptInputSchema = z.object({
@@ -399,6 +402,7 @@ export const PromptInputSchema = z.object({
     problemStatement: z.string(),
     lawContext: z.string().optional(),
     seminarContext: z.string().optional(),
+    profession: z.string().optional(),
     books: z.array(BookSchemaForPrompt).optional(),
 });
 
@@ -794,6 +798,7 @@ export const SocraticInputSchema = z.object({
   history: z.array(z.object({ role: z.enum(['user', 'model']), content: z.string() })),
   books: z.array(z.any()).optional(),
   ethicsContext: z.string().optional(),
+  profession: z.string().optional(),
 });
 
 export const SocraticDataSchema = z.object({
@@ -842,6 +847,7 @@ export const QuizGeneratorInputSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   lawContext: z.string().optional(),
   contextText: z.string().optional(),
+  profession: z.string().optional(),
 });
 
 export const QuizDataSchema = z.object({
@@ -1566,6 +1572,7 @@ export type AnalyzeCasePdfOutput = z.infer<typeof AnalyzeCasePdfOutputSchema>;
 export const SuggestExamTopicInputSchema = z.object({
   semester: z.string(),
   seminarContext: z.string(),
+  profession: z.string().optional(),
 });
 
 export const SuggestExamTopicDataSchema = z.object({
@@ -1680,6 +1687,7 @@ export type GenerateLawFlowchartOutput = z.infer<typeof GenerateLawFlowchartOutp
 export const ResearchDiscoveryInputSchema = z.object({
   category: z.string(),
   seminarContext: z.string(),
+  profession: z.string().optional(),
 });
 
 export const ResearchProposalSchema = z.object({

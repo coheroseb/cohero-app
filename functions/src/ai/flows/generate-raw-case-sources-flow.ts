@@ -7,8 +7,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const GenerateRawCaseSourcesInputSchema = z.object({
-  topic: z.string().describe('A specific area of social work to focus the dynamic case on (e.g., utsatte børn, misbrug).'),
-  lawContext: z.string().describe('Relevant Danish law texts for context.')
+  topic: z.string().describe('A specific area of social work or pedagogy to focus the dynamic case on (e.g., utsatte børn, misbrug).'),
+  lawContext: z.string().describe('Relevant Danish law texts for context.'),
+  profession: z.string().optional().describe('The user\'s profession (e.g., "Socialrådgiver", "Pædagog").')
 });
 export type GenerateRawCaseSourcesInput = z.infer<typeof GenerateRawCaseSourcesInputSchema>;
 
@@ -51,13 +52,13 @@ const prompt = ai.definePrompt({
   name: 'generateRawCaseSourcesPrompt',
   input: { schema: GenerateRawCaseSourcesInputSchema },
   output: { schema: RawCaseSourcesDataSchema },
-  prompt: `You are an expert social work supervisor in Denmark designing an advanced training simulation.
+  prompt: `{{#if profession}}Du er en erfaren {{profession}}-supervisor i Danmark, der designer en avanceret træningssimulation for vordende {{profession}}er.{{else}}You are an expert social work supervisor in Denmark designing an advanced training simulation.{{/if}}
 Instead of giving the student a neat, polished summary of a case, you will simulate a "messy inbox" containing 3-4 raw, unpolished sources.
 
 The goal is to test the student's ability to:
 1. Extract objective facts from subjective narratives.
 2. Identify contradictions between sources.
-3. Synthesize a professional journal entry.
+3. Synthesize a professional journal entry {{#if (eq profession "Pædagog")}}fokuseret på den pædagogiske indsats og observation{{else}}fokuseret på den juridiske og sagsbehandlingsmæssige ramme{{/if}}.
 
 The topic for this case is: {{{topic}}}.
 
@@ -68,7 +69,7 @@ You MUST ground the scenario in the legal and ethical context of the following D
 
 Rules for generating the sources:
 1. Generate exactly 3 or 4 distinct sources. Use diverse types ('email', 'phone', 'note', 'sms', 'report').
-2. The senders should speak realistically—they are NOT social workers. A neighbor might be angry, a teacher might be over-extended, a parent might be defensive.
+2. The senders should speak realistically—they are NOT {{#if profession}}{{profession}}er{{else}}social workers{{/if}}. A neighbor might be angry, a teacher might be over-extended, a parent might be defensive.
 3. Include subtle contradictions. For example, a teacher says the child is "always tired", while the parent says "the child sleeps 10 hours".
 4. The content should be in HTML paragraphs.
 5. Provide a fictional 'caseNumber', 'citizenName', and 'citizenBirthday'.

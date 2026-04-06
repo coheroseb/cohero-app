@@ -48,7 +48,7 @@ import { generateRawCaseSourcesAction, journalSynthesisFeedbackAction, reviseJou
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { socialWorkTopics } from './data/topics';
+import { socialWorkTopics, pedagogicalTopics } from './data/topics';
 import { GlassCard, HistoryItem, SourceViewer, FeedbackItemCard, ScoreCard, HighlightableText } from './components/JournalComponents';
 
 const JournalTrainerPageContent: React.FC = () => {
@@ -133,7 +133,10 @@ const JournalTrainerPageContent: React.FC = () => {
 
     const userRef = doc(firestore, 'users', user.uid);
     try {
-        const response = await generateRawCaseSourcesAction({ topic: selectedTopic });
+        const response = await generateRawCaseSourcesAction({ 
+            topic: selectedTopic,
+            profession: userProfile?.profession
+        });
         const scenarioData = {
             ...response.data,
             topic: selectedTopic,
@@ -191,6 +194,7 @@ const JournalTrainerPageContent: React.FC = () => {
             sources: activeScenario.sources,
             journalEntry: journalContent,
             complexityHints: activeScenario.complexityHints,
+            profession: userProfile?.profession
         });
 
         if (!response?.data) {
@@ -498,7 +502,7 @@ const JournalTrainerPageContent: React.FC = () => {
 
                         <div className="w-full space-y-16">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                                {socialWorkTopics.map((topic, i) => (
+                                {(userProfile?.profession === 'Pædagog' ? pedagogicalTopics : socialWorkTopics).map((topic, i) => (
                                     <motion.button
                                         key={topic.id}
                                         initial={{ opacity: 0, y: 20 }}

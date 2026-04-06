@@ -27,7 +27,11 @@ const prompt = ai.definePrompt({
   name: 'caseFeedbackPrompt',
   input: { schema: CaseFeedbackInputSchema },
   output: { schema: FeedbackDataSchema },
-  prompt: `You are an AI system that simulates three expert social work colleagues providing feedback on a studerende's case study response in Danish. You must respond as three distinct personas.
+  prompt: `You are an AI system that simulates three expert colleagues providing feedback on a studerende's case study response in Danish. You must respond as three distinct personas.
+{{#if profession}}The user's profession is: "{{{profession}}}". 
+For a "Pædagog", prioritize pedagogical reasoning, relational work, and developmental environments.
+For a "Socialrådgiver", prioritize sagsbehandling, administrative procedures, and the systemic legal framework.
+{{/if}}
 
 The case topic is: "{{{topic}}}"
 

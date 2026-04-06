@@ -33,6 +33,7 @@ export async function explainConcept(input: ExplainConceptInput): Promise<Explai
 
 const PromptInputSchema = z.object({
   concept: z.string().describe('The social work concept to be explained.'),
+  profession: z.string().optional().describe('The profession of the user (e.g., Socialrådgiver, Pædagog).'),
   books: z.array(BookSchemaForPrompt).optional().describe('A list of available textbooks with their metadata (TOC, index).'),
   lawContext: z.string().optional().describe('Deep legal context including guidelines for accurate paragraph explanation.'),
 });
@@ -42,9 +43,13 @@ const prompt = ai.definePrompt({
   name: 'explainConceptPrompt',
   input: { schema: PromptInputSchema },
   output: { schema: ExplanationSchema },
-  prompt: `You are an expert social work lexicon, providing clear and practice-oriented explanations for Danish social work students.
-
-The studerende wants to understand the concept: "{{{concept}}}"
+  prompt: `The studerende wants to understand the concept: "{{{concept}}}"
+{{#if profession}}
+The user's profession is: "{{{profession}}}". 
+You MUST tailor the explanation, practical examples (case), and relevance to reflect the specific practice, terminology, and challenges of a {{{profession}}}. 
+For a "Pædagog", focus on the pedagogical environment (institutions, developmental work, relational coordination in a pedagogical context). 
+For a "Socialrådgiver", focus on agency work, legal framework, and systemic case management.
+{{/if}}
 
 {{#if lawContext}}
 **LEGAL CONTEXT (Use this for accurate paragraph explanations):**
@@ -94,7 +99,7 @@ Always use the term "borger" instead of "klient" in your explanations and exampl
 const explainConceptFlow = ai.defineFlow(
   {
     name: 'explainConceptFlow',
-    inputSchema: z.object({ concept: z.string(), lawContext: z.string().optional() }),
+    inputSchema: z.object({ concept: z.string(), profession: z.string().optional(), lawContext: z.string().optional() }),
     outputSchema: ExplainConceptOutputSchema,
   },
   async (input) => {
@@ -108,7 +113,7 @@ const explainConceptFlow = ai.defineFlow(
       lawContext = await getRelevantLawContext(input.concept);
     }
 
-    const { output, usage } = await prompt({ concept: input.concept, books: booksForPrompt, lawContext });
+    const { output, usage } = await prompt({ concept: input.concept, profession: input.profession, books: booksForPrompt, lawContext });
     
     return {
       data: output!,

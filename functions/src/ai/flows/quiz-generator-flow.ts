@@ -28,7 +28,15 @@ const prompt = ai.definePrompt({
   name: 'quizGeneratorPrompt',
   input: { schema: QuizGeneratorInputSchema },
   output: { schema: QuizDataSchema },
-  prompt: `You are an expert educator in social work in Denmark, skilled at creating challenging test questions. Your task is to create a multiple-choice quiz for a social work student designed to test deep understanding, not just surface-level knowledge.
+  prompt: `Du er en ekspertunderviser for {{{profession}}}studerende i Danmark (standard: socialrådgiver). Din opgave er at lave en multiple-choice quiz, der tester dyb forståelse for faglighed, teori og praksis.
+
+{{#if profession}}
+VIGTIGT:
+- For en "Pædagog", fokuser på pædagogisk teori (f.eks. om læring, dannelse, udvikling), pædagogiske metoder (inklusion, anerkendelse, relationsarbejde), pædagogisk psykologi og institutionel praksis.
+- For en "Socialrådgiver", fokuser på socialfaglig metode (sagsbehandling, myndighedsarbejde), juridisk stringens (f.eks. Serviceloven, Barnets Lov) og forvaltningsretlige principper.
+{{/if}}
+
+Dine spørgsmål skal udfordre den studerende til at tænke reflekteret, ikke blot huske fakta.
 
 The quiz topic is: "{{{topic}}}"
 Number of questions: {{{numQuestions}}}

@@ -695,8 +695,8 @@ const PortalPageContent: React.FC = () => {
           { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse", limit: limits.caseAnalyser },
           { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
           { title: "Second Opinion", desc: "Vurdering af klagegrundlag", icon: SearchCode, path: "/second-opinion", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Klage-Tjek", limit: limits.opinion, limitText: 'denne md.' },
-          { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Job" },
-        ]
+          (userProfile?.profession === 'Socialrådgiver' || userProfile?.role === 'admin') ? { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Job" } : null,
+        ].filter(Boolean) as any
       },
       {
         title: "Vidensportalen",

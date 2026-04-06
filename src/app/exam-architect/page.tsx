@@ -108,7 +108,11 @@ const ExamArchitectPageContent: React.FC = () => {
       const filtered = seminars.filter(s => s.category === selectedCategory);
       const context = filtered.map(s => `Seminar: ${s.overallTitle}\n${s.slides?.map((sl: any) => `Slide ${sl.slideNumber}: ${sl.summary}`).join('\n')}`).join('\n\n---\n\n');
       
-      const result = await suggestExamTopicAction({ semester, seminarContext: context });
+      const result = await suggestExamTopicAction({ 
+        semester, 
+        seminarContext: context,
+        profession: userProfile?.profession 
+      });
       if (result?.data) {
         setTopic(result.data.suggestedTopic);
         setProblemStatement(result.data.suggestedProblemStatement);
@@ -169,7 +173,14 @@ const ExamArchitectPageContent: React.FC = () => {
     }
 
     try {
-      const input: Omit<ExamArchitectInput, 'lawContext'> = { topic, problemStatement, semester, assignmentType: type, seminarContext: seminarContext || undefined };
+      const input: Omit<ExamArchitectInput, 'lawContext'> = { 
+        topic, 
+        problemStatement, 
+        semester, 
+        assignmentType: type, 
+        seminarContext: seminarContext || undefined,
+        profession: userProfile?.profession
+      };
       const response = await generateExamBlueprintAction(input);
       setBlueprint(response.data);
       

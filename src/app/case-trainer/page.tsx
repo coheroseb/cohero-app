@@ -55,6 +55,17 @@ const socialWorkTopics = [
     "Ældre (hjemmepleje, demens)",
 ];
 
+const pedagogicalTopics = [
+    "Daginstitutioner (0-6 år)",
+    "Skole- og fritidspædagogik",
+    "Specialpædagogik (handicap, autisme)",
+    "Socialpædagogisk støtte (botilbud, § 85)",
+    "Udsatte børn og unge (døgninstitutioner)",
+    "Ældrepædagogik og demensomsorg",
+    "Kultur- og fritidspædagogik",
+    "Neuropsykologisk pædagogik",
+];
+
 const PersonaCard = ({ icon, title, color, feedback, score, subtitle }: { icon: React.ReactNode, title: string, color: string, feedback: string, score: number, subtitle: string }) => (
     <div className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-500 animate-ink">
       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
@@ -138,7 +149,7 @@ const CaseTrainerPageContent: React.FC = () => {
     setLimitError(null);
 
     try {
-      const response = await generateNewCase({ topic: selectedTopic });
+      const response = await generateNewCase({ topic: selectedTopic, profession: userProfile?.profession });
       
       const newCaseData = {
         topic: selectedTopic,
@@ -219,7 +230,8 @@ const CaseTrainerPageContent: React.FC = () => {
             initialObservation: activeCase.initialObservation,
             assessment: 'Brugeren valgte handlinger og begrundelser baseret på dilemmaer.',
             goals: 'At navigere i casen med fagligt skøn.',
-            actionPlan: newChoices.map(c => `VALG: ${c.choice}\nBEGRUNDELSE: ${c.justification || 'Ingen'}`).join('\n\n---\n\n')
+            actionPlan: newChoices.map(c => `VALG: ${c.choice}\nBEGRUNDELSE: ${c.justification || 'Ingen'}`).join('\n\n---\n\n'),
+            profession: userProfile?.profession
         });
         updates.finalFeedback = feedback.data;
       }
@@ -421,7 +433,7 @@ const CaseTrainerPageContent: React.FC = () => {
                                     className="w-full h-16 px-8 bg-white border border-amber-100 rounded-3xl appearance-none focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 focus:outline-none transition-all text-base font-bold text-amber-950 shadow-sm cursor-pointer"
                                 >
                                     <option value="" disabled>Vælg sagsområde...</option>
-                                    {socialWorkTopics.map(t => <option key={t} value={t}>{t}</option>)}
+                                    {(userProfile?.profession === 'Pædagog' ? pedagogicalTopics : socialWorkTopics).map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                                 <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300 pointer-events-none group-hover:text-amber-950 transition-colors" />
                             </div>

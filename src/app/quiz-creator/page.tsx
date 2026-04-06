@@ -117,7 +117,8 @@ function QuizCreatorPageContent() {
             topic: sourceType === 'topic' ? topic : "Baseret på kildemateriale", 
             numQuestions,
             difficulty,
-            contextText: sourceType === 'text' ? contextText : undefined
+            contextText: sourceType === 'text' ? contextText : undefined,
+            profession: userProfile?.profession
         });
 
         if (result.data) {

@@ -39,7 +39,8 @@ export const weeklyStudyCompanion = functions.pubsub
                 userName,
                 semester,
                 institution,
-                recentToolsUsed: recentTools
+                recentToolsUsed: recentTools,
+                profession: u.profession
             });
 
             const { subject, content } = companionResult.data;

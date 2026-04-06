@@ -26,7 +26,8 @@ const SimulateNextDayInputSchema = z.object({
   currentDay: z.number().describe("The new day number we are jumping to (e.g., 2)."),
   daysPassed: z.number().describe("Number of days passed since last login."),
   userName: z.string().describe("The name of the user."),
-  newDateStr: z.string().describe("Real exact date string right now.")
+  newDateStr: z.string().describe("Real exact date string right now."),
+  profession: z.string().optional().describe("The profession of the user (e.g., Socialrådgiver, Pædagog).")
 });
 
 const SimulateNextDayOutputSchema = z.object({
@@ -37,7 +38,7 @@ const prompt = ai.definePrompt({
     name: 'simulateNextDayPrompt',
     input: { schema: SimulateNextDayInputSchema },
     output: { schema: SimulateNextDayOutputSchema },
-    prompt: `Du er 'Game Master' for Sags-simulatoren. En socialrådgiver ved navn {{{userName}}} logger ind.
+    prompt: `Du er 'Game Master' for Sags-simulatoren. En {{#if profession}}{{profession}}{{else}}socialrådgiver{{/if}} ved navn {{{userName}}} logger ind.
 Der er gået {{{daysPassed}}} dag(e) siden {{{userName}}} sidst var her. I dag er simulationens Dag {{{currentDay}}}, og den Rigtige Dato i dag er: {{{newDateStr}}}.
     
 Aktive Sager:
@@ -57,7 +58,7 @@ Ud fra hvad {{{userName}}} HAR journaliseret, og især hvad der ligger i Indbakk
 
 VIGTIGT: Læs indbakken! Hvis der ligger en e-mail i indbakken, hvor sender er "{{{userName}}}" (brugeren har trykket "besvar"), SKAL DU LADE MODPARTEN REAGERE på dette svar! Hvis brugeren tværtimod ignorerer folks opkald/mails, skal de blive frustrerede.
 
-Udfordr vitterligt {{{userName}}}! Hvis der mangler lovpligtige handlinger (f.eks. partshøring ikke nævnt) SKAL DER SKE ESKALERING (f.eks. Ankestyrelsen klager, politiet ringer m.v.).
+Udfordr vitterligt {{{userName}}}! Hvis der mangler {{#if (eq profession "Pædagog")}}pædagogiske observationer, handleplaner eller nødvendig omsorg/støtte{{else}}lovpligtige handlinger (f.eks. partshøring ikke nævnt){{/if}} SKAL DER SKE ESKALERING (f.eks. {{#if (eq profession "Pædagog")}}tilsyn ringer, forældre klager, kolleger er bekymrede{{else}}Ankestyrelsen klager, politiet ringer m.v.{{/if}}).
 Hvis der er gået flere dage ({{{daysPassed}}} > 1), og der ikke er journaliseret handlinger for de forgangne dage, forventes massiv utålmodighed ("Kære {{{userName}}}, jeg har ventet længe på svar!").
 Hændelserne skal inkorporere høj faglig, etisk eller juridisk kompleksitet.
 Dater de nye beskeder troværdigt vha. aktuel dato: "{{{newDateStr}}} kl. XX:XX". Giv dem nye (unikke) ID'er.`

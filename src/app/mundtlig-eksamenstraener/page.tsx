@@ -124,7 +124,8 @@ export default function MundtligEksamenstraenerPage() {
         examType,
         presentationText,
         ethicsContext,
-        lawContext
+        lawContext,
+        profession: userProfile?.profession
       });
 
       if (response && response.data) {

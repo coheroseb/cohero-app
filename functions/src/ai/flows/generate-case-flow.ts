@@ -10,41 +10,13 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-
-const GenerateCaseInputSchema = z.object({
-  topic: z.string().describe('A specific topic or area of social work to focus the case on (e.g., child neglect, substance abuse in a family, youth crime).'),
-  lawContext: z.string().describe('A list of relevant laws for context.'),
-});
-export type GenerateCaseInput = z.infer<typeof GenerateCaseInputSchema>;
-
-const ChoiceSchema = z.object({
-    id: z.enum(['A', 'B', 'C']),
-    text: z.string().describe("The text describing the action for this choice.")
-});
-
-const DilemmaSchema = z.object({
-  dilemma: z.string().describe("The core professional dilemma the social work student must address at this step."),
-  choices: z.array(ChoiceSchema).length(3).describe("An array of three distinct, plausible actions for this dilemma.")
-});
-
-const CaseDataSchema = z.object({
-  title: z.string().describe('A concise title for the case study.'),
-  topic: z.string().describe('The topic of the case study.'),
-  scenario: z.string().describe('A detailed, realistic, and fictional scenario describing the situation. It should be written from the perspective of a social worker encountering the case. It must be in Danish and use HTML <p> tags for paragraph breaks.'),
-  protagonists: z.array(z.string()).describe('A list of the key individuals involved in the case (e.g., "Mette, 34, mor", "Lars, 8, søn").'),
-  initialObservation: z.string().describe('A brief, initial observation or report that kicks off the case, like a note from a teacher or a police report. It must be in Danish.'),
-  dilemmas: z.array(DilemmaSchema).length(3).describe("An array of exactly 3 sequential dilemmas the social work student will face.")
-});
-export type CaseData = z.infer<typeof CaseDataSchema>;
-
-const GenerateCaseOutputSchema = z.object({
-  caseData: CaseDataSchema,
-  usage: z.object({
-      inputTokens: z.number(),
-      outputTokens: z.number(),
-  })
-});
-export type GenerateCaseOutput = z.infer<typeof GenerateCaseOutputSchema>;
+import { 
+    GenerateCaseInputSchema,
+    GenerateCaseOutputSchema,
+    type CaseData,
+    type GenerateCaseInput,
+    type GenerateCaseOutput,
+} from './types';
 
 
 export async function generateCase(input: GenerateCaseInput): Promise<GenerateCaseOutput> {
@@ -55,8 +27,14 @@ const prompt = ai.definePrompt({
   name: 'generateCasePrompt',
   input: { schema: GenerateCaseInputSchema },
   output: { schema: CaseDataSchema },
-  prompt: `You are an expert social work supervisor in Denmark, tasked with creating a high-stakes, realistic training case for a social work student.
-The case must be fictional but highly nuanced, grounded in the context of Danish social work and the provided legislation.
+  prompt: `{{#if profession}}
+You are an expert supervisor for the profession: "{{{profession}}}". 
+For a "Pædagog", you MUST create a case centered around a pedagogical institutional setting (e.g., daycare, school, group home, youth club). Focus on developmental pedagogy, relational work, inclusive environments, and the pedagogue's unique role in the borger's life.
+For a "Socialrådgiver", you MUST create a case centered around agency work (e.g., Børne- og Familieafdeling, Jobcenter, Socialafdeling). Focus on case management, legal authority, administrative procedures, and the social worker's systemic role.
+{{else}}
+You are an expert social work supervisor in Denmark, tasked with creating a high-stakes, realistic training case for a social work student.
+{{/if}}
+The case must be fictional but highly nuanced, grounded in the context of Danish welfare work and the provided legislation.
 
 The topic for this case is: {{{topic}}}.
 

@@ -182,7 +182,7 @@ function ConceptExplainerPageContent() {
         if (snap.exists()) {
             finalExplanation = snap.data().explanation;
         } else {
-            const res = await explainConceptAction({ concept: term });
+            const res = await explainConceptAction({ concept: term, profession: userProfile?.profession });
             finalExplanation = res.data;
             await setDoc(docRef, { conceptName: term, explanation: res.data, createdAt: serverTimestamp() });
         }
@@ -552,7 +552,9 @@ function ConceptExplainerPageContent() {
                                                         <Info className="w-5 h-5" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-950/40 leading-none">Pædagogisk Definition</h3>
+                                                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-950/40 leading-none">
+                                                            {userProfile?.profession === 'Pædagog' ? 'Pædagogisk Definition' : 'Socialfaglig Definition'}
+                                                        </h3>
                                                         <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-2 last:mb-0">Essensen af {searchQuery}</p>
                                                     </div>
                                                 </div>
@@ -614,7 +616,9 @@ function ConceptExplainerPageContent() {
                                                     <Target className="w-6 h-6" />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-2xl font-black text-amber-950 serif tracking-tight">Socialfaglig Praksis</h3>
+                                                    <h3 className="text-2xl font-black text-amber-950 serif tracking-tight">
+                                                        {userProfile?.profession === 'Pædagog' ? 'Pædagogisk Praksis' : 'Socialfaglig Praksis'}
+                                                    </h3>
                                                     <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-1">Hvordan begrebet anvendes i virkeligheden</p>
                                                 </div>
                                             </div>

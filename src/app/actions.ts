@@ -305,17 +305,17 @@ export async function syncCalendarAvailability(
 // AI Actions (wrapping flows)
 export async function recommendContentAction(input: any) { return callFirebaseFlow('recommendContentFlow', input); }
 
-export async function generateNewCase(input: { topic: string }): Promise<any> {
+export async function generateNewCase(input: Types.GenerateCaseInput): Promise<Types.GenerateCaseOutput> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
     const lawContext = fetchRes?.data || '';
-    return callFirebaseFlow('generateCaseFlow', { topic: input.topic, lawContext });
+    return callFirebaseFlow('generateCaseFlow', { ...input, lawContext });
 }
 
 export const generateCaseAction = generateNewCase;
 
 export async function getSecondOpinionAction(input: any) { return callFirebaseFlow('getSecondOpinionFlow', input); }
 
-export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string, complexityHints?: string }): Promise<any> {
+export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string, complexityHints?: string, profession?: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
     const lawContext = fetchRes?.data || '';
     return callFirebaseFlow('journalSynthesisFeedbackFlow', { 
@@ -323,11 +323,12 @@ export async function journalSynthesisFeedbackAction(input: { topic: string, sou
         sources: input.sources,
         journalEntry: input.journalEntry,
         complexityHints: input.complexityHints || '',
-        lawContext: lawContext
+        lawContext: lawContext,
+        profession: input.profession
     });
 }
 
-export async function getCaseFeedbackAction(input: { topic: string, scenario: string, initialObservation: string, assessment: string, goals: string, actionPlan: string }): Promise<Types.CaseFeedbackOutput> {
+export async function getCaseFeedbackAction(input: { topic: string, scenario: string, initialObservation: string, assessment: string, goals: string, actionPlan: string, profession?: string }): Promise<Types.CaseFeedbackOutput> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
     const lawContext = fetchRes?.data || '';
     return callFirebaseFlow('getCaseFeedbackFlow', { ...input, lawContext });
@@ -427,8 +428,8 @@ export async function analyzeParagraphAction(input: { lovTitel: string, paragraf
 
 export async function recommendTechniqueAction(input: any) { return callFirebaseFlow('recommendTechniqueFlow', input); }
 export async function explainTechniqueWithAnalogyAction(input: any) { return callFirebaseFlow('explainTechniqueWithAnalogyFlow', input); }
-export async function generateExamBlueprintAction(input: any) { return callFirebaseFlow('generateExamBlueprintFlow', input); }
-export async function suggestExamTopicAction(input: any) { return callFirebaseFlow('suggestExamTopicFlow', input); }
+export async function generateExamBlueprintAction(input: Types.ExamArchitectInput) { return callFirebaseFlow('generateExamBlueprintFlow', input); }
+export async function suggestExamTopicAction(input: Types.SuggestExamTopicInput) { return callFirebaseFlow('suggestExamTopicFlow', input); }
 export async function getIntroCaseConsequenceAction(input: any) { return callFirebaseFlow('getIntroCaseConsequenceFlow', input); }
 export async function getMythBusterResponseAction(input: any) { return callFirebaseFlow('getMythBusterResponseFlow', input); }
 export async function getCareerMatchAction(input: any) { return callFirebaseFlow('getCareerMatchFlow', input); }
@@ -457,9 +458,9 @@ export async function generateVerificationEmailAction(input: Types.VerificationE
 }
 
 export async function getConsensusAnalysisAction(input: any) { return callFirebaseFlow('getConsensusAnalysisFlow', input); }
-export async function getSocraticReflectionAction(input: any) { return callFirebaseFlow('getSocraticReflectionFlow', input); }
+export async function getSocraticReflectionAction(input: Types.SocraticInput) { return callFirebaseFlow('getSocraticReflectionFlow', input); }
 
-export async function explainConceptAction(input: { concept: string }): Promise<Types.ExplainConceptOutput> {
+export async function explainConceptAction(input: { concept: string, profession?: string }): Promise<Types.ExplainConceptOutput> {
     // Concept explainer now focuses only on non-legal social work concepts.
     return callFirebaseFlow('explainConceptFlow', { ...input });
 }
@@ -467,11 +468,9 @@ export async function explainConceptAction(input: { concept: string }): Promise<
 export async function explainConceptWithAnalogyAction(input: any) { return callFirebaseFlow('explainConceptWithAnalogyFlow', input); }
 export async function getCaseConsequenceAction(input: any) { return callFirebaseFlow('getCaseConsequenceFlow', input); }
 
-export async function generateQuizAction(input: { topic: string, numQuestions: number, difficulty?: 'easy' | 'medium' | 'hard', lawId?: string, contextText?: string }): Promise<Types.QuizGeneratorOutput> {
+export async function generateQuizAction(input: { topic: string, numQuestions: number, difficulty?: 'easy' | 'medium' | 'hard', lawId?: string, contextText?: string, profession?: string }): Promise<Types.QuizGeneratorOutput> {
     let lawContext = '';
     if (input.lawId) {
-        // This helper fetches both the main law and all its associated guidelines
-        // including their XML URLs as text in the prompt.
         const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: input.lawId, name: input.topic });
         lawContext = fetchRes.data;
     }
@@ -481,7 +480,8 @@ export async function generateQuizAction(input: { topic: string, numQuestions: n
         numQuestions: input.numQuestions,
         difficulty: input.difficulty || 'medium',
         lawContext: lawContext || undefined,
-        contextText: input.contextText
+        contextText: input.contextText,
+        profession: input.profession
     });
 }
 
@@ -572,7 +572,9 @@ export async function getFTSagMetadataAction(input: { sagId: number, title: stri
 }
 
 
-export async function oralExamAnalysisAction(input: any) { return callFirebaseFlow('oralExamAnalysisFlow', input); }
+export async function oralExamAnalysisAction(input: Types.OralExamAnalysisInput): Promise<Types.OralExamAnalysisOutput> {
+    return callFirebaseFlow('oralExamAnalysisFlow', input);
+}
 export async function unifiedChatAction(input: Types.UnifiedChatInput): Promise<Types.UnifiedChatOutput> { 
     return callFirebaseFlow('unifiedChatFlow', input); 
 }
@@ -619,23 +621,23 @@ export async function generateReformAnalysisAction(bill: Types.ReformCandidate, 
     return result;
 }
 
-export async function generateRawCaseSourcesAction(input: { topic: string }): Promise<any> {
+export async function generateRawCaseSourcesAction(input: { topic: string, profession?: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
     const lawContext = fetchRes.data;
-    return callFirebaseFlow('generateRawCaseSourcesFlow', { topic: input.topic, lawContext });
+    return callFirebaseFlow('generateRawCaseSourcesFlow', { topic: input.topic, lawContext, profession: input.profession });
 }
 
-export async function simulateStartAction(input: { theme: string, userName: string, currentDateStr: string }): Promise<any> {
+export async function simulateStartAction(input: { theme: string, userName: string, currentDateStr: string, profession?: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.theme });
     const lawContext = fetchRes.data;
-    return callFirebaseFlow('simulateStartFlowFlow', { theme: input.theme, lawContext, userName: input.userName, currentDateStr: input.currentDateStr });
+    return callFirebaseFlow('simulateStartFlowFlow', { theme: input.theme, lawContext, userName: input.userName, currentDateStr: input.currentDateStr, profession: input.profession });
 }
 
-export async function simulateNextDayAction(input: { cases: any[], previousInbox: any[], userJournals: Record<string, string>, currentDay: number, daysPassed: number, userName: string, newDateStr: string }): Promise<any> {
+export async function simulateNextDayAction(input: { cases: any[], previousInbox: any[], userJournals: Record<string, string>, currentDay: number, daysPassed: number, userName: string, newDateStr: string, profession?: string }): Promise<any> {
     return callFirebaseFlow('simulateNextDayFlowFlow', input);
 }
 
-export async function simulateFeedbackAction(input: { cases: any[], inbox: any[], userJournals: Record<string, string>, totalDays: number, userName: string }): Promise<any> {
+export async function simulateFeedbackAction(input: { cases: any[], inbox: any[], userJournals: Record<string, string>, totalDays: number, userName: string, profession?: string }): Promise<any> {
     return callFirebaseFlow('simulateFeedbackFlowFlow', input);
 }
 

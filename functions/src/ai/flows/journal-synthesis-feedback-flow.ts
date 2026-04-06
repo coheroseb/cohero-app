@@ -11,7 +11,8 @@ const JournalSynthesisFeedbackInputSchema = z.object({
   sources: z.any().describe('The array of raw sources the user had to read.'),
   complexityHints: z.string().optional().describe('Hints about the case complexity to guide the AI.'),
   journalEntry: z.string(),
-  lawContext: z.string()
+  lawContext: z.string(),
+  profession: z.string().optional().describe('The profession of the user (e.g., Socialrådgiver, Pædagog).')
 });
 export type JournalSynthesisFeedbackInput = z.infer<typeof JournalSynthesisFeedbackInputSchema>;
 
@@ -52,7 +53,11 @@ const prompt = ai.definePrompt({
   name: 'journalSynthesisFeedbackPrompt',
   input: { schema: JournalSynthesisFeedbackInputSchema },
   output: { schema: JournalSynthesisFeedbackDataSchema },
-  prompt: `You are an expert social work supervisor in Denmark. Your task is to provide strict, pedagogically valuable feedback on a student's journal note, with a heavy focus on professional objectivity and legal correctness.
+  prompt: `You are an expert supervisor for the profession: "{{{profession}}}" (default to Socialrådgiver if not specified). Your task is to provide strict, pedagogically valuable feedback on a student's journal note, with a heavy focus on professional objectivity and legal correctness.
+{{#if profession}}
+For a "Pædagog", you MUST focus on pedagogical documentation, observations of child development, relational coordination, and institutional practice.
+For a "Socialrådgiver", you MUST focus on sagsbehandling, administrative objectivity, and statutory documentation.
+{{/if}}
 
 CASE TOPIC: "{{{topic}}}"
 COMPLEXITY HINTS: "{{{complexityHints}}}" (Verify if the student caught these "traps" or contradictions).

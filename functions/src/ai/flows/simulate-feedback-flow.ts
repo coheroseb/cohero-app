@@ -23,7 +23,8 @@ const SimulateFeedbackInputSchema = z.object({
   inbox: z.array(InboxEventSchema),
   userJournals: z.record(z.string(), z.string()).describe("A map from case ID to the user's final journal text."),
   totalDays: z.number().describe("The number of days the simulation lasted."),
-  userName: z.string().describe("The name of the user.")
+  userName: z.string().describe("The name of the user."),
+  profession: z.string().optional().describe("The profession of the user (e.g., Socialrådgiver, Pædagog).")
 });
 
 const SimulateFeedbackOutputSchema = z.object({
@@ -41,7 +42,7 @@ const prompt = ai.definePrompt({
     name: 'simulateFeedbackPrompt',
     input: { schema: SimulateFeedbackInputSchema },
     output: { schema: SimulateFeedbackOutputSchema },
-    prompt: `Du er censor og 'Game Master' for Sags-simulatoren. Socialrådgiveren {{{userName}}} har netop afsluttet en simulation, der varede i {{{totalDays}}} dage.
+    prompt: `Du er censor og 'Game Master' for Sags-simulatoren. {{#if profession}}{{profession}}en{{else}}Socialrådgiveren{{/if}} {{{userName}}} har netop afsluttet en simulation, der varede i {{{totalDays}}} dage.
 
 Her er de sager, de håndterede:
 {{#each cases}}
@@ -61,8 +62,8 @@ Journal: {{this}}
 
 Din opgave er at evaluere {{{userName}}}. Vær streng og professionel.
 1. Syntetiserede {{{userName}}} informationerne godt i journalerne?
-2. Reagerede de rettidigt på de mest kritiske/etiske dilemmaer (f.eks. tvang, underretninger) i indbakken? (Tidsstyring og prioritering).
-3. Hvad mangler der juridisk eller fagligt? Blev vigtig lovgivning ignoreret?
+2. Reagerede de rettidigt på de mest kritiske/etiske dilemmaer (f.eks. {{#if (eq profession "Pædagog")}}magtanvendelse, omsorgssvigt, akutte kriser{{else}}tvang, underretninger{{/if}}) i indbakken? (Tidsstyring og prioritering).
+3. Hvad mangler der {{#if (eq profession "Pædagog")}}pædagogisk eller metodisk{{else}}juridisk eller fagligt{{/if}}? Blev {{#if (eq profession "Pædagog")}}pædagogiske handleplaner eller barnets/borgerens trivsel{{else}}vigtig lovgivning{{/if}} ignoreret?
 
 Giv konkrete karakterer og specifik formateret feedback direkte stilet til {{{userName}}}.`
 });

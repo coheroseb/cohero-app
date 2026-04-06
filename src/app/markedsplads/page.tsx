@@ -315,6 +315,49 @@ const AssistanceMarketplaceContent = () => {
           </div>
       );
   }
+
+  const isSocialWorker = userProfile?.profession === 'Socialrådgiver';
+  const isAdmin = userProfile?.role === 'admin';
+
+  if (!isSocialWorker && !isAdmin && userProfile !== undefined) {
+    return (
+        <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6">
+            <div className="max-w-2xl w-full bg-white rounded-[4rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-12 sm:p-20 text-center space-y-10 border border-amber-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-50 rounded-full blur-3xl -mr-32 -mt-32 opacity-50" />
+                <div className="relative z-10 space-y-8">
+                    <div className="w-24 h-24 bg-amber-50 text-amber-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner border border-amber-100/50">
+                        <Lock className="w-10 h-10" />
+                    </div>
+                    <div className="space-y-4">
+                        <h1 className="text-4xl font-black text-slate-900 serif tracking-tight">Eksklusiv Markedsplads</h1>
+                        <p className="text-slate-500 text-lg font-medium leading-relaxed italic max-w-md mx-auto">
+                            Cohéro Markedspladsen er i øjeblikket kun tilgængelig for <span className="text-amber-700 font-black">Socialrådgivere</span>.
+                        </p>
+                    </div>
+                    <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-4">
+                        <p className="text-xs font-bold text-slate-400 leading-relaxed">
+                            Vi arbejder på at åbne for flere faggrupper løbende. Er du socialrådgiver studerende? Sørg for at vælge den korrekte profession i din profil.
+                        </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button 
+                            onClick={() => router.push('/indstillinger')} 
+                            className="flex-1 py-5 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-slate-900 transition-all active:scale-95"
+                        >
+                            Rediger Profil
+                        </button>
+                        <button 
+                            onClick={() => router.push('/')} 
+                            className="flex-1 py-5 bg-white text-slate-400 border border-slate-200 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 transition-all active:scale-95"
+                        >
+                            Tilbage til Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-[#FDFCF8] flex flex-col selection:bg-amber-100">
       {/* Dynamic Navigation Header */}

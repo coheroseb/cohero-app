@@ -101,8 +101,9 @@ export default function PageClient() {
                       userJournals: journalInputs,
                       currentDay: realDay,
                       daysPassed: daysPassed,
-                      userName: simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || 'Socialrådgiver',
-                      newDateStr: getFormatDateStr(now)
+                      userName: simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || (userProfile?.profession || 'Socialrådgiver'),
+                      newDateStr: getFormatDateStr(now),
+                      profession: userProfile?.profession
                   });
                   
                   const newInboxEvents = res.data.newEvents.map((i: any) => ({ ...i, isRead: false }));
@@ -133,9 +134,14 @@ export default function PageClient() {
     if (!user || !firestore || !simDocRef || isGenerating) return;
     setIsGenerating(true);
     try {
-        const userName = userProfile?.username || user?.displayName?.split(' ')[0] || 'Socialrådgiver';
+        const userName = userProfile?.username || user?.displayName?.split(' ')[0] || (userProfile?.profession || 'Socialrådgiver');
         const currentDateStr = getFormatDateStr();
-        const res = await simulateStartAction({ theme: selectedTopic, userName, currentDateStr });
+        const res = await simulateStartAction({ 
+            theme: selectedTopic, 
+            userName, 
+            currentDateStr,
+            profession: userProfile?.profession 
+        });
         const newSim = {
             status: 'active',
             userName,
@@ -170,7 +176,8 @@ export default function PageClient() {
             inbox: simulation.inbox,
             userJournals: journalInputs,
             totalDays: simulation.currentDay,
-            userName: simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || 'Socialrådgiver'
+            userName: simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || (userProfile?.profession || 'Socialrådgiver'),
+            profession: userProfile?.profession
         });
         
         await updateDoc(simDocRef, {
@@ -198,7 +205,7 @@ export default function PageClient() {
   const handleSendReply = async (eventId: string, relatedCaseId: string, originalTitle: string) => {
       if (!replyContent.trim() || !simulation || !simDocRef) return;
       
-      const userName = simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || 'Socialrådgiver';
+      const userName = simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || (userProfile?.profession || 'Socialrådgiver');
       const newEvent = {
           id: `evt_reply_${Date.now()}`,
           relatedCaseId,
@@ -274,7 +281,7 @@ export default function PageClient() {
                     </div>
                     <h1 className="text-5xl font-black text-slate-900 tracking-tight">Sags-simulator</h1>
                     <p className="text-lg text-slate-500 font-medium">
-                        Træd ind i rollen som socialrådgiver. Tiden i spillet følger virkeligheden. Beslut dig, journalisér, og kom tilbage i morgen for at se konsekvenserne.
+                        Træd ind i rollen som {userProfile?.profession || 'socialrådgiver'}. Tiden i spillet følger virkeligheden. Beslut dig, journalisér, og kom tilbage i morgen for at se konsekvenserne.
                     </p>
                     
                     <div className="pt-8">
@@ -377,7 +384,7 @@ export default function PageClient() {
                             </p>
                             <div className="space-y-4">
                                 {simulation.inbox?.sort((a: any, b: any) => b.id.localeCompare(a.id)).map((item: any) => {
-                                    const isUserMessage = item.sender === (simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || 'Socialrådgiver');
+                                    const isUserMessage = item.sender === (simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || (userProfile?.profession || 'Socialrådgiver'));
                                     
                                     return (
                                     <div 
@@ -454,7 +461,7 @@ export default function PageClient() {
                                         <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-6">Sagens historik ({caseHistory.length})</h3>
                                         <div className="space-y-6">
                                             {caseHistory.map((item: any) => {
-                                                const isUserMessage = item.sender === (simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || 'Socialrådgiver');
+                                                const isUserMessage = item.sender === (simulation.userName || userProfile?.username || user?.displayName?.split(' ')[0] || (userProfile?.profession || 'Socialrådgiver'));
                                                 
                                                 return (
                                                 <div key={item.id} className={`flex gap-4 ${isUserMessage ? 'ml-8' : ''}`}>

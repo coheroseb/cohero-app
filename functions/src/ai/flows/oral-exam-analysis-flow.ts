@@ -24,7 +24,13 @@ const prompt = ai.definePrompt({
   name: 'oralExamAnalysisPrompt',
   input: { schema: OralExamAnalysisInputSchema },
   output: { schema: OralExamAnalysisDataSchema },
-  prompt: `You are an expert examiner in social work in Denmark. Your task is to provide a "X-ray analysis" of a student's oral exam presentation. The analysis should be structured, pedagogical, and focus on professional development.
+  prompt: `You are an expert examiner in {{{#if profession}}}{{{profession}}}{{{else}}}social work{{{/if}}} in Denmark. Your task is to provide a "X-ray analysis" of a student's oral exam presentation. The analysis should be structured, pedagogical, and focus on professional development.
+
+{{#if (eq profession "Pædagog")}}
+VIGTIGT: Din feedback skal tage udgangspunkt i pædagogens faglighed. Fokuser på pædagogiske teorier, relationsarbejde, inklusion og dannelse. Terminology-analysen skal identificere pædagogiske fagtermer.
+{{else}}
+VIGTIGT: Din feedback skal tage udgangspunkt i socialrådgiverens faglighed. Fokuser på socialfaglig metode, sagsbehandling og juridisk stringens.
+{{/if}}
 
 **Exam Type:** {{{examType}}}
 **Presentation Text:**

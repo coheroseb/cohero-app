@@ -147,6 +147,9 @@ export interface UserProfile {
   monthlyTokenTimestamp?: any;
   isHighUsage?: boolean;
   streakReminderSentAt?: any;
+  learnedConcepts?: string[];
+  categoryResearch?: Record<string, ResearchDiscoveryData>;
+  categoryChatHistory?: Record<string, { role: 'user' | 'assistant'; content: string }[]>;
   mementoLevels?: {
     theorist?: number;
     paragraph?: number;
@@ -305,6 +308,7 @@ export const CaseFeedbackInputSchema = z.object({
   goals: z.string(),
   actionPlan: z.string(),
   lawContext: z.string(),
+  profession: z.string().optional(),
 });
 
 export const CaseFeedbackOutputSchema = z.object({
@@ -318,6 +322,7 @@ export const JournalFeedbackInputSchema = z.object({
   initialObservation: z.string(),
   journalEntry: z.string(),
   lawContext: z.string(),
+  profession: z.string().optional(),
 });
 
 export const JournalFeedbackOutputSchema = z.object({
@@ -367,6 +372,7 @@ export const ExamArchitectInputSchema = z.object({
     problemStatement: z.string(),
     lawContext: z.string().optional(),
     seminarContext: z.string().optional(),
+    profession: z.string().optional(),
 });
 
 export const PromptInputSchema = z.object({
@@ -376,6 +382,7 @@ export const PromptInputSchema = z.object({
     problemStatement: z.string(),
     lawContext: z.string().optional(),
     seminarContext: z.string().optional(),
+    profession: z.string().optional(),
     books: z.array(BookSchemaForPrompt).optional(),
 });
 
@@ -771,6 +778,7 @@ export const SocraticInputSchema = z.object({
   history: z.array(z.object({ role: z.enum(['user', 'model']), content: z.string() })),
   books: z.array(z.any()).optional(),
   ethicsContext: z.string().optional(),
+  profession: z.string().optional(),
 });
 
 export const SocraticDataSchema = z.object({
@@ -818,6 +826,7 @@ export const QuizGeneratorInputSchema = z.object({
   numQuestions: z.number(),
   lawContext: z.string().optional(),
   contextText: z.string().optional(),
+  profession: z.string().optional(),
 });
 
 export const QuizDataSchema = z.object({
@@ -1003,6 +1012,7 @@ export const OralExamAnalysisInputSchema = z.object({
   presentationText: z.string(),
   ethicsContext: z.string().optional(),
   lawContext: z.string().optional(),
+  profession: z.string().optional(),
 });
 
 export const OralExamAnalysisDataSchema = z.object({
@@ -1514,6 +1524,7 @@ export type SeminarChatOutput = z.infer<typeof SeminarChatOutputSchema>;// =====
 export const SuggestExamTopicInputSchema = z.object({
   semester: z.string(),
   seminarContext: z.string(),
+  profession: z.string().optional(),
 });
 
 export const SuggestExamTopicDataSchema = z.object({
@@ -1619,7 +1630,38 @@ export const StudyCompanionInputSchema = z.object({
   semester: z.string().optional(),
   institution: z.string().optional(),
   recentToolsUsed: z.array(z.string()).optional(),
+  profession: z.string().optional().describe("The profession of the user (e.g., Socialrådgiver, Pædagog).")
 });
+
+export const CaseDataSchema = z.object({
+  title: z.string().describe('A concise title for the case study.'),
+  topic: z.string().describe('The topic of the case study.'),
+  scenario: z.string().describe('A detailed, realistic, and fictional scenario describing the situation. It must be in Danish and use HTML <p> tags for paragraph breaks.'),
+  protagonists: z.array(z.string()).describe('A list of the key individuals involved in the case (e.g., "Mette, 34, mor", "Lars, 8, søn").'),
+  initialObservation: z.string().describe('A brief, initial observation or report that kicks off the case, like a note from a teacher or a police report. It must be in Danish.'),
+  dilemmas: z.array(z.object({
+    dilemma: z.string().describe("The core professional dilemma the social work student must address at this step."),
+    choices: z.array(z.object({
+      id: z.enum(['A', 'B', 'C']),
+      text: z.string().describe("The text describing the action for this choice.")
+    })).length(3).describe("An array of three distinct, plausible actions for this dilemma.")
+  })).length(3).describe("An array of exactly 3 sequential dilemmas the user will face.")
+});
+
+export const GenerateCaseInputSchema = z.object({
+  topic: z.string().describe('A specific topic or area of social work to focus the case on (e.g., child neglect, substance abuse in a family, youth crime).'),
+  profession: z.string().optional().describe('The profession of the user (e.g., Socialrådgiver, Pædagog).'),
+  lawContext: z.string().describe('A list of relevant laws for context.'),
+});
+
+export const GenerateCaseOutputSchema = z.object({
+  caseData: CaseDataSchema,
+  usage: UsageSchema,
+});
+
+export type GenerateCaseInput = z.infer<typeof GenerateCaseInputSchema>;
+export type CaseData = z.infer<typeof CaseDataSchema>;
+export type GenerateCaseOutput = z.infer<typeof GenerateCaseOutputSchema>;
 
 export type StudyCompanionInput = z.infer<typeof StudyCompanionInputSchema>;
 
@@ -1740,6 +1782,7 @@ export type GenerateLawFlowchartOutput = z.infer<typeof GenerateLawFlowchartOutp
 export const ResearchDiscoveryInputSchema = z.object({
   category: z.string(),
   seminarContext: z.string(),
+  profession: z.string().optional(),
 });
 
 export const ResearchProposalSchema = z.object({

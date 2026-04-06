@@ -26,6 +26,7 @@ GOOGLE SCHOLAR DATA:
 
 STUDERENDES KONTEKST:
 Kategori: {{category}}
+Profession: {{profession}}
 Uddrag: {{seminarContext}}
 
 OPGAVE:
@@ -38,7 +39,8 @@ VIGTIGT:
 - Du SKAL inkludere URL'er til kilderne.
 - BRUG KUN kilder fra den kontekst du har fået stillet til rådighed (Google Scholar Data).
 - Sørg for at alle links fungerer og er direkte (ingen redirects).
-- VIGTIGT: Lav din vurdering udelukkende på baggrund af seminarmaterialet og de fundne kilder. Foretag ingen antagelser om felt (f.eks. socialt arbejde) medmindre det fremgår direkte af materialet.`
+- Du SKAL tilpasse din analyse til professionen {{profession}}. Hvis det er "Pædagog", skal du fokusere på pædagogisk forskning og pædagogiske metoder. Hvis det er "Socialrådgiver", skal du fokusere på socialfaglige metoder, myndighedsarbejde og sociallovgivning.
+- VIGTIGT: Lav din vurdering udelukkende på baggrund af materialet og de fundne kilder.`
 });
 
 /**
@@ -73,7 +75,7 @@ export const researchDiscovery = ai.defineFlow(
       
       // Fetch Scholar data via SerpApi
       const scholarResults = await serpApiResearchTool({
-        query: `${input.category} academic research peer reviewed`,
+        query: `${input.category} ${input.profession || ''} academic research Danish peer reviewed`,
         numResults: 6
       });
 
@@ -88,6 +90,7 @@ export const researchDiscovery = ai.defineFlow(
       
       const textResult = await groundedTextPrompt({
         category: input.category,
+        profession: input.profession,
         seminarContext: truncatedContext,
         scholarContext
       });

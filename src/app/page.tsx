@@ -137,7 +137,7 @@ export default function LandingPage() {
                 {/* Mobile top badge */}
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-amber-50 border border-amber-200/50 rounded-full shadow-sm mb-2">
                    <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-500" />
-                   <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-900">Din nye digitale makker</span>
+                   <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-900">Uundværlig for velfærdsuddannelserne</span>
                 </div>
 
                 <motion.h1 
@@ -202,7 +202,7 @@ export default function LandingPage() {
                 </motion.h1>
                 
                 <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
-                  Din komplette platform til socialrådgiverstudiet. Fra AI-sparring på dine journalnotater til direkte borger-rådgivning og eksamens-værktøjer. 
+                  Den ultimative platform til velfærdsstudierne. Uanset om du læser til socialrådgiver, pædagog, lærer eller sygeplejerske, får du AI-drevet sparring, direkte borger-rådgivning og eksamens-værktøjer. 
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -259,7 +259,7 @@ export default function LandingPage() {
                
                {/* Founder Reference (Optional, but kept as a subtle trust element or removed if preferred) */}
                <div className="absolute -bottom-8 right-0 text-[10px] font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity whitespace-nowrap">
-                 <Users className="w-3 h-3" /> Stiftet af socialrådgivere
+                 <Users className="w-3 h-3" /> Udviklet til fremtidens velfærd
                </div>
             </div>
           </motion.div>
@@ -593,7 +593,7 @@ export default function LandingPage() {
                         <Zap className="w-3.5 h-3.5 fill-current" /> Sagens kerne i realtid
                      </div>
                      <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Folketinget Direkte</h3>
-                     <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium max-w-2xl">Overvågning af nye lovforslag med direkte analyse af betydningen for dit faglige virke som socialrådgiver.</p>
+                     <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium max-w-2xl">Overvågning af nye lovforslag med direkte analyse af betydningen for velfærdsstaten og dit faglige virke.</p>
                      <div className="flex items-center gap-2 text-rose-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
                           Overvåg lovgivning <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                      </div>
