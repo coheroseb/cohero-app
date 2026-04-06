@@ -173,18 +173,26 @@ function ConceptExplainerPageContent() {
         // Fetch VIVE research parallel
         fetchVivePublicationsAction({ searchTerm: term, limit: 3 }).then(res => setViveArticles(res.publications));
 
-        // Get AI Explanation
+        // Get AI Explanation — profession-aware caching
+        const userProfession = userProfile?.profession || 'Socialrådgiver';
         const normalizedTerm = term.toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
-        const docRef = doc(firestore, 'conceptExplanations-v2', normalizedTerm);
+        // Use a profession-specific document key so each profession gets its own cached explanation
+        const professionKey = userProfession.toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
+        const docRef = doc(firestore, 'conceptExplanations-v2', `${normalizedTerm}--${professionKey}`);
         const snap = await getDoc(docRef);
 
         let finalExplanation: Explanation;
         if (snap.exists()) {
             finalExplanation = snap.data().explanation;
         } else {
-            const res = await explainConceptAction({ concept: term, profession: userProfile?.profession });
+            const res = await explainConceptAction({ concept: term, profession: userProfession });
             finalExplanation = res.data;
-            await setDoc(docRef, { conceptName: term, explanation: res.data, createdAt: serverTimestamp() });
+            await setDoc(docRef, { 
+                conceptName: term, 
+                explanation: res.data, 
+                profession: userProfession,
+                createdAt: serverTimestamp() 
+            });
         }
         setExplanation(finalExplanation);
 
