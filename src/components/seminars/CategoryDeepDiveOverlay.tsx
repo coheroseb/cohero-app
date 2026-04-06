@@ -29,6 +29,7 @@ import {
   FileText,
   FileCheck
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { Button } from '@/components/ui/button';
 import type { SavedSeminar } from '@/app/mine-seminarer/page'; 
 import type { UserProfile, CategoryStudyPlan } from '@/ai/flows/types';
@@ -724,105 +725,65 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-12"
                 >
-                  <section className="relative p-10 bg-slate-900 rounded-[3rem] text-white shadow-2xl overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent pointer-events-none" />
-                    <div className="relative z-10 max-w-2xl">
-                      {!researchResult && (
-                        <>
-                          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-300 mb-4">Akademisk Innovation</h3>
-                          <p className="text-xl sm:text-2xl font-black serif leading-relaxed mb-8">
-                            Dyk ned i den nyeste forskning inden for <span className="text-indigo-200">{category}</span> og udtænk din næste store problemstilling.
-                          </p>
-                        </>
-                      )}
-
-                      {researchResult && (
-                        <div className="flex items-center justify-between gap-6">
-                            <div>
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-300 mb-2">Forskningsanalyse</h3>
-                                <p className="text-lg font-black serif text-white">Akademisk status for <span className="text-indigo-400">{category}</span></p>
-                            </div>
+                  {!researchResult && !isGeneratingResearch && (
+                    <section className="relative p-10 bg-slate-900 rounded-[3rem] text-white shadow-2xl overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent pointer-events-none" />
+                      <div className="relative z-10 max-w-2xl">
+                          <>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-300 mb-4">Akademisk Innovation</h3>
+                            <p className="text-xl sm:text-2xl font-black serif leading-relaxed mb-8">
+                              Dyk ned i den nyeste forskning inden for <span className="text-indigo-200">{category}</span> og udtænk din næste store problemstilling.
+                            </p>
                             <Button 
                                 onClick={async () => {
                                     setIsGeneratingResearch(true);
                                     try {
+                                        // Aggregate seminar context for the AI
                                         const seminarContext = seminars.map(s => {
-                                            const slidesText = (s.slides || []).map((sl: any) => `- Slide ${sl.slideNumber}: ${sl.summary}`).join('\n');
+                                            const slidesText = (s.slides || [])
+                                                .map((sl: any) => `- Slide ${sl.slideNumber}: ${sl.summary}`)
+                                                .join('\n');
                                             return `SEMINAR: ${s.overallTitle}\nKATEGORI: ${s.category}\nINDHOLD:\n${slidesText}`;
                                         }).join('\n\n---\n\n');
-                                        const result = await researchDiscoveryAction({ category, seminarContext });
+
+                                        const result = await researchDiscoveryAction({
+                                            category,
+                                            seminarContext
+                                        });
+
                                         if (result?.data) {
                                             setResearchResult(result.data);
                                             if (onSaveResearch) onSaveResearch(result.data);
-                                            toast({ title: "Analyse genopfrisket", description: "Vi har fundet nye vinkler." });
+                                            toast({
+                                                title: "Forskningsanalyse færdig",
+                                                description: "Vi har fundet nye vinkler til din forskning.",
+                                            });
+                                        } else {
+                                            throw new Error("Ingen data modtaget");
                                         }
-                                    } catch (err) {
-                                        console.error(err);
-                                        toast({ title: "Fejl", description: "Kunne ikke forbinde til forsknings-motoren.", variant: "destructive" });
+                                    } catch (error) {
+                                        console.error("Research discovery failed:", error);
+                                        toast({
+                                            title: "Fejl under analyse",
+                                            description: "Kunne ikke forbinde til forsknings-motoren.",
+                                            variant: "destructive"
+                                        });
                                     } finally {
                                         setIsGeneratingResearch(false);
                                     }
                                 }}
-                                size="sm" 
-                                variant="outline" 
-                                className="bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl font-black uppercase text-[10px] tracking-widest px-4 h-9"
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl h-14 px-8 text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-900/20 active:scale-95 flex items-center gap-3 group/btn"
                             >
-                                <Zap className="w-3 h-3 mr-2" />
-                                Genopfrisk Analyse
+                                <Sparkles className="w-5 h-5 group-hover/btn:animate-pulse" />
+                                Start Forskningsanalyse
                             </Button>
-                        </div>
-                      )}
-
-                      {!researchResult && !isGeneratingResearch && (
-                        <Button 
-                            onClick={async () => {
-                                setIsGeneratingResearch(true);
-                                try {
-                                    // Aggregate seminar context for the AI
-                                    const seminarContext = seminars.map(s => {
-                                        const slidesText = (s.slides || [])
-                                            .map((sl: any) => `- Slide ${sl.slideNumber}: ${sl.summary}`)
-                                            .join('\n');
-                                        return `SEMINAR: ${s.overallTitle}\nKATEGORI: ${s.category}\nINDHOLD:\n${slidesText}`;
-                                    }).join('\n\n---\n\n');
-
-                                    const result = await researchDiscoveryAction({
-                                        category,
-                                        seminarContext
-                                    });
-
-                                    if (result?.data) {
-                                        setResearchResult(result.data);
-                                        if (onSaveResearch) onSaveResearch(result.data);
-                                        toast({
-                                            title: "Forskningsanalyse færdig",
-                                            description: "Vi har fundet nye vinkler til din forskning.",
-                                        });
-                                    } else {
-                                        throw new Error("Ingen data modtaget");
-                                    }
-                                } catch (error) {
-                                    console.error("Research discovery failed:", error);
-                                    toast({
-                                        title: "Fejl under analyse",
-                                        description: "Kunne ikke forbinde til forsknings-motoren.",
-                                        variant: "destructive"
-                                    });
-                                } finally {
-                                    setIsGeneratingResearch(false);
-                                }
-                            }}
-                            className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl h-14 px-8 text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-900/20 active:scale-95 flex items-center gap-3 group/btn"
-                        >
-                            <Sparkles className="w-5 h-5 group-hover/btn:animate-pulse" />
-                            Start Forskningsanalyse
-                        </Button>
-                      )}
-                    </div>
-                    <div className="absolute bottom-0 right-0 p-10 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Globe className="w-48 h-48" />
-                    </div>
-                  </section>
+                          </>
+                      </div>
+                      <div className="absolute bottom-0 right-0 p-10 opacity-10 group-hover:opacity-20 transition-opacity">
+                          <Globe className="w-48 h-48" />
+                      </div>
+                    </section>
+                  )}
 
                   {isGeneratingResearch && (
                     <div className="py-20 px-10 bg-white rounded-[3rem] border border-slate-100 shadow-2xl relative overflow-hidden">
@@ -925,9 +886,39 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                                     <p className="text-[10px] font-black uppercase text-indigo-500 tracking-[0.2em]">Status Quo</p>
                                     <h3 className="text-2xl font-black text-slate-900 tracking-tight">Forskningsmæssigt Overblik</h3>
                                 </div>
-                                <div className="px-4 py-2 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-2">
-                                    <Globe className="w-3.5 h-3.5 text-indigo-600" />
-                                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Global Indsigt</span>
+                                <div className="flex items-center gap-4">
+                                    <Button 
+                                        onClick={async () => {
+                                            setIsGeneratingResearch(true);
+                                            try {
+                                                const seminarContext = seminars.map(s => {
+                                                    const slidesText = (s.slides || []).map((sl: any) => `- Slide ${sl.slideNumber}: ${sl.summary}`).join('\n');
+                                                    return `SEMINAR: ${s.overallTitle}\nKATEGORI: ${s.category}\nINDHOLD:\n${slidesText}`;
+                                                }).join('\n\n---\n\n');
+                                                const result = await researchDiscoveryAction({ category, seminarContext });
+                                                if (result?.data) {
+                                                    setResearchResult(result.data);
+                                                    if (onSaveResearch) onSaveResearch(result.data);
+                                                    toast({ title: "Analyse genopfrisket", description: "Vi har fundet de nyeste data." });
+                                                }
+                                            } catch (err) {
+                                                console.error(err);
+                                                toast({ title: "Fejl", description: "Kunne ikke forbinde til motoren.", variant: "destructive" });
+                                            } finally {
+                                                setIsGeneratingResearch(false);
+                                            }
+                                        }}
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="rounded-full border-slate-200 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all font-black uppercase text-[10px] tracking-widest px-4 h-9"
+                                    >
+                                        <Zap className="w-3.5 h-3.5 mr-2" />
+                                        Genopfrisk
+                                    </Button>
+                                    <div className="px-4 py-2 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-2">
+                                        <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                                        <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Global Indsigt</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1024,30 +1015,91 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                                                 </div>
                                                 <Button 
                                                     onClick={() => {
-                                                        const content = `# Forsknings-Brief: ${path.title}\n\n` +
-                                                            `**Kategori:** ${category}\n` +
-                                                            `**Teoretisk Ramme:** ${path.theory}\n\n` +
-                                                            `## Problemformulering\n${path.problemStatement}\n\n` +
-                                                            `## Forskningsspørgsmål\n${path.questions.map((q: string, i: number) => `${i+1}. ${q}`).join('\n')}\n\n` +
-                                                            `## Baggrund & Kontekst\n${researchResult.stateOfResearch}\n\n` +
-                                                            `## Kilder\n${researchResult.existingSources.map((s: any) => `- ${s.apa}${s.url ? ` (${s.url})` : ''}`).join('\n')}\n\n` +
-                                                            `--- \nGenereret af Cohéro Intelligence`;
-                                                        
-                                                        const blob = new Blob([content], { type: 'text/markdown' });
-                                                        const url = URL.createObjectURL(blob);
-                                                        const a = document.createElement('a');
-                                                        a.href = url;
-                                                        a.download = `Forskningsbrief-${path.title.replace(/\s+/g, '-')}.md`;
-                                                        a.click();
-                                                        URL.revokeObjectURL(url);
-                                                        toast({ title: "Brief Downloadet", description: "Analysen er nu gemt." });
+                                                        const doc = new jsPDF();
+                                                        const margin = 20;
+                                                        let yPos = 20;
+
+                                                        // Header
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.setFontSize(22);
+                                                        doc.text("FORSKNINGS-BRIEF", margin, yPos);
+                                                        yPos += 15;
+
+                                                        doc.setFontSize(14);
+                                                        doc.setTextColor(100, 100, 100);
+                                                        doc.text(path.title.toUpperCase(), margin, yPos);
+                                                        yPos += 12;
+
+                                                        // Metadata
+                                                        doc.setFontSize(10);
+                                                        doc.setFont("helvetica", "normal");
+                                                        doc.text(`Kategori: ${category}`, margin, yPos);
+                                                        yPos += 6;
+                                                        doc.text(`Teori: ${path.theory}`, margin, yPos);
+                                                        yPos += 15;
+
+                                                        // Problemformulering
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.setFontSize(12);
+                                                        doc.setTextColor(0, 0, 0);
+                                                        doc.text("PROBLEMFORMULERING", margin, yPos);
+                                                        yPos += 8;
+                                                        doc.setFont("helvetica", "italic");
+                                                        doc.setFontSize(10);
+                                                        const splitProblem = doc.splitTextToSize(path.problemStatement, 170);
+                                                        doc.text(splitProblem, margin, yPos);
+                                                        yPos += (splitProblem.length * 5) + 10;
+
+                                                        // Spørgsmål
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.text("FORSKNINGSSPØRGSMÅL", margin, yPos);
+                                                        yPos += 8;
+                                                        doc.setFont("helvetica", "normal");
+                                                        path.questions.forEach((q: string, i: number) => {
+                                                            const splitQ = doc.splitTextToSize(`${i+1}. ${q}`, 170);
+                                                            doc.text(splitQ, margin, yPos);
+                                                            yPos += (splitQ.length * 5) + 2;
+                                                        });
+                                                        yPos += 10;
+
+                                                        // Baggrund
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.text("AKADEMISK KONTEKST", margin, yPos);
+                                                        yPos += 8;
+                                                        doc.setFont("helvetica", "normal");
+                                                        const splitBackground = doc.splitTextToSize(researchResult.stateOfResearch, 170);
+                                                        doc.text(splitBackground, margin, yPos);
+                                                        yPos += (splitBackground.length * 5) + 15;
+
+                                                        // Sources
+                                                        doc.setFont("helvetica", "bold");
+                                                        doc.text("LITTERATUR-LISTE", margin, yPos);
+                                                        yPos += 8;
+                                                        doc.setFontSize(8);
+                                                        doc.setFont("helvetica", "normal");
+                                                        doc.setTextColor(100, 100, 100);
+                                                        researchResult.existingSources.forEach((s: any) => {
+                                                            if (yPos > 270) { doc.addPage(); yPos = 20; }
+                                                            const sourceText = `${s.apa}${s.url ? ` (${s.url})` : ''}`;
+                                                            const splitSource = doc.splitTextToSize(sourceText, 170);
+                                                            doc.text(splitSource, margin, yPos);
+                                                            yPos += (splitSource.length * 4) + 2;
+                                                        });
+
+                                                        // Footer
+                                                        doc.setTextColor(200, 200, 200);
+                                                        doc.setFontSize(8);
+                                                        doc.text("Genereret af Cohéro Intelligence - cohero.dk", margin, 285);
+
+                                                        doc.save(`Forskningsbrief-${path.title.replace(/\s+/g, '-')}.pdf`);
+                                                        toast({ title: "PDF Brief Downloadet", description: "Analysen er nu gemt som PDF." });
                                                     }}
                                                     size="sm" 
                                                     variant="ghost" 
                                                     className="rounded-xl font-black uppercase tracking-widest h-10 text-[10px] hover:bg-slate-900 hover:text-white transition-all px-4"
                                                 >
                                                     <FileText className="w-4 h-4 mr-2" />
-                                                    Get Brief
+                                                    Download PDF
                                                 </Button>
                                             </div>
                                         </div>
