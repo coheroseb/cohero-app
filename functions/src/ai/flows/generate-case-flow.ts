@@ -11,6 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { 
+    CaseDataSchema,
     GenerateCaseInputSchema,
     GenerateCaseOutputSchema,
     type CaseData,
