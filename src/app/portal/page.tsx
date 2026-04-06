@@ -322,7 +322,7 @@ const CareerTransitionView = ({ semester }: { semester: string }) => {
 };
 
 const PortalPageContent: React.FC = () => {
-  const { user, userProfile, isUserLoading: isAppLoading, refetchUserProfile, usageLimits, activeTheme } = useApp();
+  const { user, userProfile, isUserLoading: isAppLoading, refetchUserProfile, usageLimits, effectiveTheme } = useApp();
   const router = useRouter();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -1131,15 +1131,15 @@ const PortalPageContent: React.FC = () => {
                         href={item.limit && item.limit.used >= item.limit.total ? '/upgrade' : item.path}
                         style={{ 
                             borderColor: 'var(--theme-border, rgba(241, 245, 249, 1))', 
-                            backgroundColor: activeTheme !== 'default' ? 'var(--theme-accent, rgba(255, 255, 255, 1))' : 'white' 
+                            backgroundColor: effectiveTheme !== 'default' ? 'var(--theme-accent, rgba(255, 255, 255, 1))' : 'white' 
                         }}
                         className={`group p-8 rounded-[40px] border outline-none focus-visible:ring-4 focus-visible:ring-slate-900/5 transition-all duration-500 relative overflow-hidden flex flex-col justify-between h-[260px] sm:h-[280px] ${
                             item.limit && item.limit.used >= item.limit.total 
                               ? 'opacity-80 border-slate-200 cursor-not-allowed shadow-none' 
                               : `active:scale-[0.98] lg:hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] lg:hover:border-slate-300 cursor-pointer shadow-sm shadow-slate-200/50 ${
-                                  activeTheme === 'christmas' ? 'lg:hover:-translate-y-1 lg:hover:shadow-white/20' :
-                                  activeTheme === 'easter' ? 'lg:hover:-translate-y-4' :
-                                  activeTheme === 'halloween' ? 'lg:hover:-translate-y-1 lg:hover:shadow-orange-500/20' :
+                                  effectiveTheme === 'christmas' ? 'lg:hover:-translate-y-1 lg:hover:shadow-white/20' :
+                                  effectiveTheme === 'easter' ? 'lg:hover:-translate-y-4' :
+                                  effectiveTheme === 'halloween' ? 'lg:hover:-translate-y-1 lg:hover:shadow-orange-500/20' :
                                   'lg:hover:-translate-y-1'
                                 }`
                         }`}
@@ -1149,11 +1149,11 @@ const PortalPageContent: React.FC = () => {
                            {React.createElement(item.icon, { className: 'w-7 h-7' })}
                         </div>
                         {/* Thematic Accent Icon */}
-                        {activeTheme !== 'default' && (
+                        {effectiveTheme !== 'default' && (
                              <div className="absolute -right-4 -top-4 opacity-[0.05] group-hover:opacity-10 group-hover:scale-125 transition-all duration-700 pointer-events-none">
-                                {activeTheme === 'christmas' ? <Snowflake className="w-24 h-24" /> :
-                                 activeTheme === 'easter' ? <Egg className="w-24 h-24" /> :
-                                 activeTheme === 'halloween' ? <Ghost className="w-24 h-24" /> : null}
+                                {effectiveTheme === 'christmas' ? <Snowflake className="w-24 h-24" /> :
+                                 effectiveTheme === 'easter' ? <Egg className="w-24 h-24" /> :
+                                 effectiveTheme === 'halloween' ? <Ghost className="w-24 h-24" /> : null}
                              </div>
                         )}
                         {item.limit && item.limit.total !== Infinity && (
@@ -1369,7 +1369,7 @@ const PortalPageContent: React.FC = () => {
 
 
 const PortalPage: React.FC = () => {
-  const { user, isUserLoading, userProfile } = useApp();
+  const { user, isUserLoading, userProfile, effectiveTheme } = useApp();
   const router = useRouter();
 
   const memoizedHooks = useMemo(() => {
@@ -1377,7 +1377,7 @@ const PortalPage: React.FC = () => {
       return null;
     }
     return <PortalPageContent />;
-  }, [isUserLoading, user, userProfile]);
+  }, [isUserLoading, user, userProfile, effectiveTheme]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
