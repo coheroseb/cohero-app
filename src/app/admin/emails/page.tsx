@@ -3,8 +3,8 @@
 
 import React, { useState } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, addDoc, serverTimestamp, where } from 'firebase/firestore';
-import { Mail, Send, Users, Loader2, CheckCircle, Save, LayoutTemplate, Eye, Edit3, Plus, MousePointerClick, MessageSquareWarning, Trash2, Sparkles, Building2, X, ChevronRight, Target, Zap } from 'lucide-react';
+import { collection, query, addDoc, serverTimestamp, where, orderBy, limit } from 'firebase/firestore';
+import { Mail, Send, Users, Loader2, CheckCircle, Save, LayoutTemplate, Eye, Edit3, Plus, MousePointerClick, MessageSquareWarning, Trash2, Sparkles, Building2, X, ChevronRight, Target, Zap, Bot, Clock, BellRing } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +57,20 @@ interface EmailCampaign {
   adminName?: string;
 }
 
+interface MailLog {
+  id: string;
+  userId: string;
+  email: string;
+  type: 'nudge_email' | 'activation_nudge' | 'study_companion' | string;
+  subject: string;
+  sentAt: any;
+  automated?: boolean;
+  daysInactive?: number;
+  daysSinceSignup?: number;
+  wave?: number;
+  semester?: string;
+}
+
 export default function AdminEmailsPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -91,6 +105,11 @@ export default function AdminEmailsPage() {
 
     const campaignsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'emailCampaigns')) : null), [firestore]);
     const { data: campaigns, isLoading: campaignsLoading } = useCollection<EmailCampaign>(campaignsQuery);
+
+    const mailLogsQuery = useMemoFirebase(() => (
+        firestore ? query(collection(firestore, 'mail_logs'), orderBy('sentAt', 'desc'), limit(50)) : null
+    ), [firestore]);
+    const { data: mailLogs, isLoading: mailLogsLoading } = useCollection<MailLog>(mailLogsQuery);
 
     // -- WRAPPER HTML --
     const wrapEmailHtml = (inner: string, showFooter: boolean) => `
@@ -452,6 +471,90 @@ export default function AdminEmailsPage() {
             </div>
 
             {/* Global Styles */}
+            {/* ==================== AUTOMATION LOGS ==================== */}
+            <section className="space-y-8 mt-12">
+                <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-600">
+                            <Bot className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-900 serif">Automation Logs</h2>
+                            <p className="text-sm text-slate-400 font-medium">Automatisk udsendte mails fra alle AI-drevne cron-flows</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-violet-50 border border-violet-100 rounded-xl">
+                        <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-violet-700">{mailLogs?.length || 0} Sendte (seneste 50)</span>
+                    </div>
+                </div>
+
+                {/* Type counters */}
+                <div className="flex flex-wrap gap-3 px-2">
+                    {[
+                        { type: 'activation_nudge', label: 'Aktiverings-nudge (Kollega)', color: 'text-amber-700 bg-amber-50 border-amber-100' },
+                        { type: 'nudge_email', label: 'Churn-nudge (Kollega+)', color: 'text-rose-700 bg-rose-50 border-rose-100' },
+                        { type: 'study_companion', label: 'Studie-Makker', color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+                    ].map(({ type, label, color }) => {
+                        const count = mailLogs?.filter(l => l.type === type).length || 0;
+                        return (
+                            <div key={type} className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-widest ${color}`}>
+                                <BellRing className="w-3.5 h-3.5" />
+                                {label}
+                                <span className="font-black ml-1 text-sm">{count}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+                    {mailLogsLoading ? (
+                        <div className="p-16 text-center"><Loader2 className="w-8 h-8 text-slate-300 animate-spin mx-auto" /></div>
+                    ) : !mailLogs || mailLogs.length === 0 ? (
+                        <div className="p-16 text-center space-y-3">
+                            <Bot className="w-12 h-12 text-slate-200 mx-auto" />
+                            <p className="text-slate-400 font-bold">Ingen automatiske mails endnu</p>
+                            <p className="text-slate-300 text-sm">Vises her når et cron-job kører.</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-slate-50">
+                            {mailLogs.map((log) => {
+                                const typeConfig: Record<string, { label: string; color: string }> = {
+                                    activation_nudge: { label: `Aktivering Wave ${log.wave || 1}`, color: 'text-amber-700 bg-amber-50' },
+                                    nudge_email: { label: 'Churn Nudge', color: 'text-rose-700 bg-rose-50' },
+                                    study_companion: { label: 'Studie-Makker', color: 'text-emerald-700 bg-emerald-50' },
+                                };
+                                const cfg = typeConfig[log.type] || { label: log.type, color: 'text-slate-500 bg-slate-50' };
+                                const sentDate = log.sentAt?.toDate ? log.sentAt.toDate() : null;
+                                return (
+                                    <div key={log.id} className="flex items-center gap-5 px-8 py-4 hover:bg-slate-50/50 transition-colors">
+                                        <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shrink-0 ${cfg.color}`}>
+                                            <BellRing className="w-3.5 h-3.5" />{cfg.label}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-slate-800 text-sm truncate">{log.subject || '(intet emnefelt)'}</p>
+                                            <p className="text-[11px] text-slate-400 font-medium truncate">{log.email}</p>
+                                        </div>
+                                        {log.daysSinceSignup !== undefined && (
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0">Dag {log.daysSinceSignup}</span>
+                                        )}
+                                        {log.daysInactive !== undefined && (
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0">{log.daysInactive}d inaktiv</span>
+                                        )}
+                                        <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold shrink-0">
+                                            <Clock className="w-3.5 h-3.5" />
+                                            {sentDate ? sentDate.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {/* Global Styles */}
+
             <style dangerouslySetInnerHTML={{ __html: `
                 .custom-quill .ql-container {
                     min-height: 500px;
