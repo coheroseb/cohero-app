@@ -623,19 +623,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [auth, user, firestore]);
 
   const effectiveTheme = useMemo(() => {
+    // 1. If admin has MANUALLY set a theme (Ember/Spring/Void), it wins
+    if (activeTheme !== 'default') return activeTheme;
+
+    // 2. If a campaign is active and has a theme, it takes priority over auto-fallbacks
     if (campaigns && campaigns.length > 0 && campaigns[0].theme) {
       return campaigns[0].theme;
     }
-    if (activeTheme !== 'default') return activeTheme;
     
-    // Auto-fallbacks based on date to ensure the platform feels alive
-    const now = new Date();
-    const month = now.getMonth(); // 0-indexed (0 is Jan, 3 is April, 11 is Dec)
-    
-    if (month === 11) return 'christmas';
-    if (month === 3) return 'easter'; // April (Show Easter for early Spring!)
-    if (month === 9) return 'halloween'; // October
-    
+    // 3. No auto-fallbacks anymore as per user request
     return 'default';
   }, [campaigns, activeTheme]);
 
@@ -708,20 +704,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         )}
         <style dangerouslySetInnerHTML={{ __html: `
             ${effectiveTheme === 'christmas' ? `
-                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #be123c !important; }
-                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover { background-color: #9f1239 !important; }
-                .text-amber-600, .text-amber-500 { color: #facc15 !important; }
+                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-\\[\\#0f172a\\], .bg-\\[\\#020617\\], .bg-slate-800, .bg-slate-950 { background-color: #be123c !important; }
+                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover, .hover\\:bg-\\[\\#0f172a\\]:hover { background-color: #9f1239 !important; }
+                .text-amber-600, .text-amber-500, .text-amber-400 { color: #facc15 !important; }
                 .accent-color { color: #be123c !important; }
+                .border-amber-200, .border-amber-100 { border-color: #fb7185 !important; }
             ` : effectiveTheme === 'easter' ? `
-                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #047857 !important; color: white !important; font-weight: 800 !important; }
-                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover { background-color: #065f46 !important; }
-                .text-amber-600, .text-amber-500 { color: #047857 !important; font-weight: 600 !important; }
+                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-\\[\\#0f172a\\], .bg-\\[\\#020617\\], .bg-slate-800, .bg-slate-950 { background-color: #047857 !important; color: white !important; font-weight: 800 !important; }
+                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover, .hover\\:bg-\\[\\#0f172a\\]:hover { background-color: #065f46 !important; }
+                .text-amber-600, .text-amber-500, .text-amber-400 { color: #047857 !important; font-weight: 600 !important; }
                 .accent-color { color: #047857 !important; }
+                .border-amber-200, .border-amber-100 { border-color: #6ee7b7 !important; }
             ` : effectiveTheme === 'halloween' ? `
-                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-slate-800 { background-color: #7c3aed !important; }
-                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover { background-color: #6d28d9 !important; }
-                .text-amber-600, .text-amber-500 { color: #f97316 !important; }
+                .bg-slate-900, .bg-\\[\\#1E293B\\], .bg-\\[\\#0f172a\\], .bg-\\[\\#020617\\], .bg-slate-800, .bg-slate-950 { background-color: #7c3aed !important; }
+                .hover\\:bg-slate-800:hover, .hover\\:bg-slate-900:hover, .hover\\:bg-\\[\\#0f172a\\]:hover { background-color: #6d28d9 !important; }
+                .text-amber-600, .text-amber-500, .text-amber-400 { color: #f97316 !important; }
                 .accent-color { color: #ea580c !important; }
+                .border-amber-200, .border-amber-100 { border-color: #a78bfa !important; }
             ` : ''}
         ` }} />
         {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isNavbarHidden && showBannerOverlays && (
