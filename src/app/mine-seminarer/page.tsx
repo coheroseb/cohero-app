@@ -1445,6 +1445,15 @@ export default function MineSeminarerPage() {
                         setOpenSeminar(s);
                         setShowCategoryDeepDive(false);
                     }}
+                    onSaveResearch={async (data) => {
+                        if (!user || !firestore) return;
+                        try {
+                            const ref = doc(firestore, 'users', user.uid);
+                            await updateDoc(ref, { 
+                                [`categoryResearch.${activeCategory}`]: data 
+                            });
+                        } catch (e) { console.error('Error saving category research:', e); }
+                    }}
                 />
             )}
             {categoryConceptListData && (

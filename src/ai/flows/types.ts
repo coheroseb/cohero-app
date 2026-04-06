@@ -190,6 +190,7 @@ export interface UserProfile {
   learnedConcepts?: string[];
   selectedElectives?: Record<string, string>;
   categoryStudyPlans?: Record<string, { plan: CategoryStudyPlan; checkedSteps: string[] }>;
+  categoryResearch?: Record<string, ResearchDiscoveryData>;
 }
 
 export interface StudentCardVerification {
@@ -1671,3 +1672,39 @@ export type LawFlowchartData = z.infer<typeof LawFlowchartDataSchema>;
 export type FlowchartNode = z.infer<typeof FlowchartNodeSchema>;
 export type FlowchartEdge = z.infer<typeof FlowchartEdgeSchema>;
 export type GenerateLawFlowchartOutput = z.infer<typeof GenerateLawFlowchartOutputSchema>;
+
+// ==========================================
+// RESEARCH & DISCOVERY SCHEMAS
+// ==========================================
+
+export const ResearchDiscoveryInputSchema = z.object({
+  category: z.string(),
+  seminarContext: z.string(),
+});
+
+export const ResearchProposalSchema = z.object({
+  title: z.string(),
+  problemStatement: z.string(),
+  questions: z.array(z.string()),
+  theory: z.string(),
+});
+
+export const ResearchSourceSchema = z.object({
+  apa: z.string(),
+  url: z.string().optional(),
+});
+
+export const ResearchDiscoveryDataSchema = z.object({
+  stateOfResearch: z.string(),
+  existingSources: z.array(ResearchSourceSchema),
+  proposals: z.array(ResearchProposalSchema),
+});
+
+export const ResearchDiscoveryOutputSchema = z.object({
+  data: ResearchDiscoveryDataSchema,
+  usage: UsageSchema,
+});
+
+export type ResearchDiscoveryInput = z.infer<typeof ResearchDiscoveryInputSchema>;
+export type ResearchDiscoveryData = z.infer<typeof ResearchDiscoveryDataSchema>;
+export type ResearchDiscoveryOutput = z.infer<typeof ResearchDiscoveryOutputSchema>;

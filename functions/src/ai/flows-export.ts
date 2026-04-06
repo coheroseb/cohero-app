@@ -86,9 +86,12 @@ import { getViveReportQa } from './flows/vive-report-qa-flow';
 import { getSocraticReflection } from './flows/sokratisk-refleksion/flow';
 import { optimizeSeoFlow } from './flows/optimize-seo-flow';
 import { generateLawFlowchart } from './flows/generate-law-flowchart-flow';
+import { researchDiscovery } from './flows/research-discovery-flow';
 
 
 export const allFlows: Record<string, any> = {
+  'researchDiscoveryFlow': researchDiscovery,
+  'researchDiscovery': researchDiscovery,
   'adminInsightFlowFlow': adminInsightFlow,
   'adminInsightFlow': adminInsightFlow,
   'analyzeCasePdfFlow': analyzeCasePdf,

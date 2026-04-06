@@ -50,7 +50,8 @@ import {
   PieChart,
   Pie,
   Line,
-  ComposedChart
+  ComposedChart,
+  ReferenceDot
 } from 'recharts';
 import { jsPDF } from 'jspdf';
 import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction } from '@/app/actions';
@@ -83,16 +84,25 @@ const FinStatCard = ({ title, value, trend, icon: Icon, color, loading }: any) =
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-slate-900 text-white p-5 rounded-[2rem] shadow-2xl border border-white/10 backdrop-blur-xl">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">{label}</p>
-                <div className="space-y-2">
+            <div className="bg-white border border-slate-100 p-6 rounded-[2.5rem] shadow-2xl space-y-4 min-w-[200px]">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50 pb-3 mb-3">{label}</p>
+                <div className="space-y-3">
                     {payload.map((p: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between gap-8">
-                            <span className="text-[10px] font-bold text-white/60 tracking-wider uppercase">{p.name === 'revenue' ? 'Faktisk' : 'Prognose'}</span>
-                            <span className="text-sm font-black text-white">{Math.round(p.value).toLocaleString('da-DK')} kr.</span>
+                        <div key={i} className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-2.5 h-2.5 rounded-full ${p.name === 'revenue' ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+                                <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">{p.name === 'revenue' ? 'Historisk' : 'Prognose'}</span>
+                            </div>
+                            <span className="text-sm font-black text-slate-900">{Math.round(p.value).toLocaleString('da-DK')} kr.</span>
                         </div>
                     ))}
                 </div>
+                {payload[0]?.payload?.isExamMonth && (
+                    <div className="mt-4 pt-3 border-t border-amber-50 flex items-center gap-2">
+                        <Zap className="w-3.5 h-3.5 text-amber-500" />
+                        <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Eksamens-Boost Aktiv</span>
+                    </div>
+                )}
             </div>
         );
     }
@@ -134,19 +144,52 @@ export default function AdminFinansPage() {
         fetchData();
     }, []);
 
-    // Advanced Projections Logic
+    // Advanced Projections Logic with Seasonality (Exam Periods)
     const projections = useMemo(() => {
         if (!metrics || !history.length) return [];
         const baseMRR = metrics.mrr;
-        const result = [...history.slice(-4)]; 
+        const result = [...history.slice(-4)].map(h => ({ ...h, isExamMonth: false })); 
+        
         let currentMRR = baseMRR;
+        const examMonths = [0, 5]; // Jan (0), Jun (5)
+
         for (let i = 1; i <= 12; i++) {
-            currentMRR = currentMRR * (1 + (growthRate / 100 / 12)); // Monthly compounding
-            const date = new Date(); date.setMonth(date.getMonth() + i);
-            result.push({ name: date.toLocaleString('da-DK', { month: 'short' }).toUpperCase(), revenue: null, projected: currentMRR });
+            const date = new Date(); 
+            date.setMonth(date.getMonth() + i);
+            const isExamMonth = examMonths.includes(date.getMonth());
+            
+            // Apply a seasonal boost if it's an exam month
+            // We assume growth is 60% higher during these months due to high platform relevance
+            const monthlyGrowth = (growthRate / 100 / 12);
+            const boost = isExamMonth ? 1.6 : 1.0;
+            
+            currentMRR = currentMRR * (1 + (monthlyGrowth * boost));
+            
+            result.push({ 
+                name: date.toLocaleString('da-DK', { month: 'short', year: '2-digit' }).toUpperCase(), 
+                revenue: null, 
+                projected: currentMRR,
+                isExamMonth
+            });
         }
         return result;
     }, [metrics, history, growthRate]);
+
+    const examPeriodImpact = useMemo(() => {
+        const exams = projections.filter(p => p.isExamMonth && p.projected);
+        if (exams.length === 0) return null;
+
+        const nextExam = exams[0];
+        const prevMonth = projections[projections.indexOf(nextExam) - 1];
+        const growth = prevMonth?.projected ? ((nextExam.projected - prevMonth.projected) / prevMonth.projected) * 100 : 0;
+        
+        return {
+            name: nextExam.name,
+            projectedMrr: nextExam.projected,
+            growth: growth,
+            delta: nextExam.projected - (prevMonth?.projected || 0)
+        };
+    }, [projections]);
 
     const milestones = useMemo(() => {
         if (!metrics) return [];
@@ -393,88 +436,130 @@ export default function AdminFinansPage() {
                 <FinStatCard title="Betalende Brugere" value={metrics ? metrics.activeSubs : 0} icon={Users} color="bg-blue-50 text-blue-600" loading={loading} />
             </div>
 
-            {/* 3. Deep Dive Analytics & Milestones Workspace */}
-            <div className="grid lg:grid-cols-12 gap-12 items-stretch">
-                <div className="lg:col-span-8 flex flex-col gap-12">
-                    <section className="bg-slate-950 p-12 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex-1">
-                        <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-indigo-500/5 rounded-full blur-[150px] -mr-[500px] -mt-[500px]" />
-                        <div className="absolute bottom-0 left-0 w-[1000px] h-[1000px] bg-emerald-500/5 rounded-full blur-[150px] -ml-[500px] -mb-[500px]" />
-                        <div className="relative z-10 space-y-12 h-full flex flex-col">
-                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
-                                <div>
-                                    <div className="inline-flex items-center gap-3 px-4 py-2 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 border border-indigo-500/20">
-                                       <LineChart className="w-4 h-4" /> Predictive Revenue Simulation
-                                    </div>
-                                    <h2 className="text-3xl font-black serif">Fremskrivning af Økonomien</h2>
-                                    <p className="text-white/30 mt-2 font-bold uppercase text-[10px] tracking-[0.3em]">Historisk Performance + 12 Mdrs. Vækstsimulering</p>
-                                </div>
-                                <div className="flex bg-white/5 p-2 rounded-[2rem] border border-white/10 backdrop-blur-xl">
-                                    {[5, 10, 20, 40].map(r => (
-                                        <button key={r} onClick={() => setGrowthRate(r)} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${growthRate === r ? 'bg-indigo-600 text-white shadow-2xl' : 'text-white/30 hover:text-white'}`}>
-                                            {r}% Årlig
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="flex-1 min-h-[400px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart data={projections} margin={{ top: 20, right: 0, left: 0, bottom: 20 }}>
-                                        <defs>
-                                            <linearGradient id="actualRevGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#4f46e5" stopOpacity={0.4}/><stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/></linearGradient>
-                                            <linearGradient id="projRevGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="10 10" stroke="#ffffff05" vertical={false} />
-                                        <XAxis dataKey="name" stroke="#ffffff10" fontSize={10} fontWeight="900" tickLine={false} axisLine={false} dy={20} />
-                                        <YAxis hide />
-                                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#ffffff10' }} />
-                                        <Area name="revenue" type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={5} fill="url(#actualRevGrad)" animationDuration={2000} strokeLinecap="round" />
-                                        <Area name="projected" type="monotone" dataKey="projected" stroke="#10b981" strokeWidth={3} strokeDasharray="12 12" fill="url(#projRevGrad)" animationDuration={2500} strokeLinecap="round" />
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 pt-10 border-t border-white/5">
-                                 <div><p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1.5">Projected ARR (12m)</p><p className="text-2xl font-black text-emerald-400 serif">{Math.round((projections[projections.length - 1]?.projected || 0) * 12).toLocaleString('da-DK')} <small className="text-xs text-white/20">kr.</small></p></div>
-                                 <div><p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1.5">Estimated Churn</p><p className="text-2xl font-black text-rose-400 serif">3.2%</p></div>
-                                 <div className="col-span-2 text-right"><p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1.5">Calculated Path</p><p className="text-sm font-bold text-white/60">Baseret på en aggressiv {growthRate}% årlig ekspansion med eksisterende bruger-mikstur.</p></div>
+            {/* 3. Global Growth Visualization */}
+            <div className="w-full">
+                <section className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm flex flex-col">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                        <div>
+                            <h2 className="text-3xl font-black text-slate-900 serif">Strategisk Vækst-Prognose</h2>
+                            <p className="text-sm text-slate-400 font-medium mt-2">Visualisering af Cohero's MRR-momentum inklusive intelligente sæson-korrektioner for de danske eksamensperioder.</p>
+                        </div>
+                        <div className="flex bg-slate-50 p-2 rounded-2xl border border-slate-100 items-center gap-4">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-3">Simuler Vækst:</span>
+                            <div className="flex gap-1">
+                                {[5, 10, 20, 40].map(r => (
+                                    <button 
+                                        key={r} 
+                                        onClick={() => setGrowthRate(r)} 
+                                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${growthRate === r ? 'bg-white text-indigo-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                                    >
+                                        {r}% 
+                                    </button>
+                                ))}
                             </div>
                         </div>
-                    </section>
-                </div>
+                    </div>
 
-                <div className="lg:col-span-4 flex flex-col gap-8">
-                    <section className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-sm flex flex-col h-full overflow-hidden">
-                        <div className="space-y-3 mb-10 px-2">
-                            <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600"><Target className="w-5 h-5" /></div><h3 className="text-2xl font-black text-slate-900 serif">Revenue Milestones</h3></div>
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed">Strategiske mål for MRR. Vejen til næste niveau baseret på din nuværende vækst.</p>
-                        </div>
-                        {nextMilestone && (
-                            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white mb-10 relative overflow-hidden shadow-2xl shadow-indigo-900/10">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl -mr-16 -mt-16" />
-                                <p className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.3em] mb-4">Næste Målspot</p>
-                                <div className="text-3xl font-black serif mb-6">{nextMilestone.target.toLocaleString('da-DK')} <span className="text-sm text-white/40">kr. / mdr</span></div>
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-widest text-white/40"><span>Fremdrift</span><span>{Math.round(nextMilestone.progress || 0)}%</span></div>
-                                    <div className="h-2 bg-white/10 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${nextMilestone.progress}%` }} transition={{ duration: 1.5 }} className="h-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]" /></div>
-                                    <p className="text-[11px] font-bold text-white/60 leading-relaxed italic mt-4">Du mangler <span className="text-white font-black">{nextMilestone.missing.toLocaleString('da-DK')} kr.</span>, hvilket svarer til ca. <span className="text-indigo-300 font-black">{nextMilestone.usersNeeded}</span> nye premium-medlemmer.</p>
+                    <div className="h-[500px] w-full relative">
+                        {loading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-20 rounded-[2.5rem]">
+                                <div className="flex flex-col items-center gap-4">
+                                    <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Henter Finansiel Data...</p>
                                 </div>
                             </div>
                         )}
-                        <div className="flex-1 space-y-4 custom-scrollbar pr-2">
-                            {milestones.map((m, i) => (
-                                <div key={i} className={`p-6 rounded-[2.5rem] border transition-all duration-500 relative group overflow-hidden ${m.status === 'reached' ? 'bg-emerald-50 border-emerald-100/50 grayscale-[0.5]' : 'bg-white border-slate-100 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5'}`}>
-                                    <div className="flex items-center justify-between relative z-10">
-                                        <div className="flex items-center gap-5">
-                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${m.status === 'reached' ? 'bg-emerald-500 text-white' : 'bg-slate-50 text-slate-300 border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white'}`}>{m.status === 'reached' ? <CheckCircle2 className="w-5 h-5" /> : <TrendingUp className="w-5 h-5" />}</div>
-                                            <div><p className="text-[16px] font-black text-slate-900 serif leading-none">{m.target.toLocaleString('da-DK')} kr.</p><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5">{m.status === 'reached' ? 'Målsætning Opnået' : `Estimeret: ${m.date}`}</p></div>
-                                        </div>
-                                        {m.status === 'pending' && <ChevronRight className="w-4 h-4 text-slate-200 group-hover:text-indigo-400 transition-colors" />}
-                                    </div>
-                                    {m.status === 'pending' && <div className="mt-4 pt-4 border-t border-slate-50 hidden group-hover:block animate-in slide-in-from-top-2 duration-300"><p className="text-[10px] font-bold text-slate-500 italic">"Kræver ca. {m.usersNeeded} nye konverteringer baseret på din nuværende ARPU."</p></div>}
-                                </div>
-                            ))}
+                        <ResponsiveContainer width="100%" height={500}>
+                            <ComposedChart data={projections} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+                                <defs>
+                                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.15}/><stop offset="95%" stopColor="#6366f1" stopOpacity={0}/></linearGradient>
+                                    <linearGradient id="colorProj" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis 
+                                    dataKey="name" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} 
+                                    dy={10}
+                                />
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
+                                    tickFormatter={(val) => `${Math.round(val / 1000)}k`}
+                                />
+                                <Tooltip 
+                                    content={<CustomTooltip />} 
+                                    cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }}
+                                />
+                                
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="revenue" 
+                                    stroke="#6366f1" 
+                                    strokeWidth={4} 
+                                    fillOpacity={1} 
+                                    fill="url(#colorRev)" 
+                                    name="revenue"
+                                />
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="projected" 
+                                    stroke="#10b981" 
+                                    strokeWidth={3} 
+                                    strokeDasharray="8 8"
+                                    fillOpacity={1} 
+                                    fill="url(#colorProj)" 
+                                    name="projected"
+                                />
+                                
+                                {projections.map((entry, index) => entry.isExamMonth ? (
+                                    <ReferenceDot 
+                                        key={index} 
+                                        x={entry.name} 
+                                        y={entry.projected || entry.revenue} 
+                                        r={6} 
+                                        fill="#fbbf24" 
+                                        stroke="#fff" 
+                                        strokeWidth={3} 
+                                    />
+                                ) : null)}
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 mt-16 pt-10 border-t border-slate-50">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Årlig Target (12M)</p>
+                            <p className="text-3xl font-black text-slate-900 serif">
+                                {Math.round((projections[projections.length - 1]?.projected || 0) * 12).toLocaleString('da-DK')} 
+                                <small className="text-sm font-medium text-slate-300 ml-2">kr.</small>
+                            </p>
                         </div>
-                    </section>
-                </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none">Næste Sæson Boost</p>
+                            <p className="text-3xl font-black text-slate-900 serif">
+                                +{Math.round(examPeriodImpact?.growth || 0)}% 
+                                <small className="text-sm font-medium text-amber-300 ml-2">impact</small>
+                            </p>
+                        </div>
+                        <div className="col-span-2 flex items-center justify-end gap-10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-4 h-4 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/20" />
+                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Historisk MRR</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" />
+                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Vækst Prognose</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-4 h-4 rounded-full bg-amber-400 animate-pulse shadow-lg shadow-amber-400/20" />
+                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Eksamen</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-amber-950 p-16 md:p-24 rounded-[5rem] shadow-2xl relative overflow-hidden group">

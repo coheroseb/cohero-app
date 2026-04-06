@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { 
   X, 
   BrainCircuit, 
@@ -19,11 +20,19 @@ import {
   CheckCircle2,
   ClipboardList,
   Loader2,
-  ListChecks
+  ListChecks,
+  FileSearch,
+  Globe,
+  Search,
+  Sparkles,
+  Link as LinkIcon,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SavedSeminar } from '@/app/mine-seminarer/page'; 
 import type { UserProfile, CategoryStudyPlan } from '@/ai/flows/types';
+import { researchDiscoveryAction } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 interface CategoryDeepDiveProps {
   category: string;
@@ -35,6 +44,7 @@ interface CategoryDeepDiveProps {
   onGenerateStudyPlan: () => void;
   onTogglePlanStep: (stepId: string, isChecked: boolean) => void;
   isGeneratingPlan?: boolean;
+  onSaveResearch?: (data: any) => void;
 }
 
 const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({ 
@@ -46,11 +56,36 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
   userProfile,
   onGenerateStudyPlan,
   onTogglePlanStep,
-  isGeneratingPlan
+  isGeneratingPlan,
+  onSaveResearch
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'knowledge' | 'timeline' | 'plan'>('overview');
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'overview' | 'knowledge' | 'timeline' | 'plan' | 'legal' | 'apa' | 'research'>('overview');
   const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [selectedLaw, setSelectedLaw] = useState<string | null>(null);
+  const [selectedApa, setSelectedApa] = useState<string | null>(null);
+  const [researchResult, setResearchResult] = useState<any | null>(userProfile?.categoryResearch?.[category] || null);
+  const [isGeneratingResearch, setIsGeneratingResearch] = useState(false);
+
+  const isKollegaPlus = userProfile?.membership === 'Kollega+';
+  const isResearchLocked = !isKollegaPlus;
+
+  // Sync with user profile on mount or category change
+  useEffect(() => {
+    if (userProfile?.categoryResearch?.[category]) {
+        setResearchResult(userProfile.categoryResearch[category]);
+    } else {
+        setResearchResult(null);
+    }
+  }, [category]);
+
+  // Handle incoming data from profile updates (only if we don't have local result)
+  useEffect(() => {
+    if (!researchResult && userProfile?.categoryResearch?.[category]) {
+        setResearchResult(userProfile.categoryResearch[category]);
+    }
+  }, [userProfile]);
 
   const studyPlanData = useMemo(() => {
     return userProfile?.categoryStudyPlans?.[category] || null;
@@ -63,6 +98,12 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
     const laws = Array.from(new Set(allSlides.flatMap(s => (s.legalFrameworks || []).map((l: any) => l.law))));
     const tools = Array.from(new Set(allSlides.flatMap(s => (s.practicalTools || []).map((t: any) => t.tool))));
     
+    // Filter for APA references (containing a year in parentheses)
+    const apaRefsList = Array.from(new Set(
+        allSlides.flatMap(s => (s.keyConcepts || []).map((c: any) => c.source))
+        .filter(s => !!s && /\(\d{4}\)/.test(s))
+    ));
+    
     // Sort seminars by date
     const sortedSeminars = [...seminars].sort((a, b) => {
         const dateA = a.createdAt?.toDate?.()?.getTime() || 0;
@@ -72,18 +113,20 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
 
     const totalSteps = studyPlanData?.plan?.steps?.length || 0;
     const completedSteps = studyPlanData?.checkedSteps?.length || 0;
-    const progression = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+    const progressionPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
     return {
       slidesCount: allSlides.length,
       conceptsCount: concepts.length,
       lawsCount: laws.length,
       toolsCount: tools.length,
+      apaCount: apaRefsList.length,
       concepts,
       laws,
       tools,
+      apaRefs: apaRefsList,
       sortedSeminars,
-      progression
+      progression: progressionPercent
     };
   }, [seminars, studyPlanData]);
 
@@ -132,6 +175,13 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
               {[
                 { id: 'overview', label: 'Overblik', icon: <Zap className="w-4 h-4" /> },
                 { id: 'knowledge', label: 'Videnskort', icon: <BrainCircuit className="w-4 h-4" /> },
+                { id: 'legal', label: 'Jura', icon: <Scale className="w-4 h-4" /> },
+                { id: 'apa', label: 'Referencer', icon: <BookOpen className="w-4 h-4" /> },
+                { 
+                  id: 'research', 
+                  label: 'Forskning', 
+                  icon: isResearchLocked ? <div className="relative"><Globe className="w-4 h-4" /><div className="absolute -top-1 -right-1 bg-amber-500 w-2 h-2 rounded-full border border-white" /></div> : <Globe className="w-4 h-4" /> 
+                },
                 { id: 'timeline', label: 'Tidslinje', icon: <Calendar className="w-4 h-4" /> },
                 { id: 'plan', label: 'Studieplan', icon: <ClipboardList className="w-4 h-4" /> },
               ].map(tab => (
@@ -389,6 +439,538 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                 </motion.div>
               )}
 
+              {activeTab === 'legal' && (
+                <motion.div 
+                    key="legal"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-12"
+                >
+                  <section className="relative p-10 bg-indigo-900 rounded-[3rem] text-white shadow-2xl overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-transparent pointer-events-none" />
+                    <div className="relative z-10 max-w-2xl">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-300 mb-4">Juridisk Grundlag</h3>
+                      <p className="text-xl sm:text-2xl font-black serif leading-relaxed mb-6">
+                        Analyse af <span className="text-white/60">{stats.lawsCount}</span> juridiske rammer og lovgivningsmæssige fundamenter identificeret i dine studier inden for <span className="text-indigo-200">{category}</span>.
+                      </p>
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/10">
+                            <Scale className="w-5 h-5 text-indigo-300" />
+                         </div>
+                         <p className="text-xs font-bold text-indigo-100 italic">"Alle kilder er baseret på de seminarmaterialer du har uploadet og bearbejdet."</p>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 right-0 p-10 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Scale className="w-48 h-48" />
+                    </div>
+                  </section>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {stats.laws.map((law, i) => (
+                      <motion.div 
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        onClick={() => setSelectedLaw(law)}
+                        className={`group p-8 rounded-[2.5rem] border transition-all cursor-pointer ${
+                          selectedLaw === law ? 'bg-indigo-600 border-indigo-400 text-white shadow-2xl' : 'bg-white border-slate-100 hover:border-indigo-200 shadow-sm'
+                        }`}
+                      >
+                        <div className="flex flex-col h-full space-y-6">
+                           <div className="flex items-center justify-between">
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                                selectedLaw === law ? 'bg-white text-indigo-600' : 'bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'
+                              }`}>
+                                 <BookOpen className="w-6 h-6" />
+                              </div>
+                              <ArrowRight className={`w-4 h-4 transition-transform ${selectedLaw === law ? 'text-white/40 rotate-90' : 'text-slate-200 group-hover:translate-x-1'}`} />
+                           </div>
+                           <div>
+                              <h4 className={`text-lg font-black serif leading-tight ${selectedLaw === law ? 'text-white' : 'text-slate-900 group-hover:text-indigo-600'}`}>{law}</h4>
+                              <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${selectedLaw === law ? 'text-white/40' : 'text-slate-400'}`}>Lovgrundlag</p>
+                           </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <AnimatePresence>
+                    {selectedLaw && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 30 }}
+                        className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl p-10 space-y-8"
+                      >
+                         <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-5">
+                               <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-[1.5rem] flex items-center justify-center border border-indigo-100">
+                                  <Scale className="w-7 h-7" />
+                               </div>
+                               <div>
+                                  <h4 className="text-2xl font-black text-slate-900 serif leading-none">{selectedLaw}</h4>
+                                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-2">Dybdegående Juridisk Gennemgang</p>
+                               </div>
+                            </div>
+                            <button onClick={() => setSelectedLaw(null)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl border border-slate-100 transition-all active:scale-95">
+                               <X className="w-6 h-6" />
+                            </button>
+                         </div>
+
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="space-y-4">
+                               <p className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">Lovens Relevans i Kategori</p>
+                               <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                  <p className="text-sm font-medium text-slate-600 leading-relaxed italic">
+                                     "{selectedLaw} udgør en central brik i forståelsen af {category}. I dit materiale anvendes denne lovmæssige ramme primært til at definere vilkårene for den overordnede metode."
+                                  </p>
+                               </div>
+                            </div>
+                             <div className="space-y-4">
+                               <p className="text-[10px] font-black uppercase text-emerald-500 tracking-widest">Kontekst fra dine seminarer</p>
+                               <div className="max-h-[300px] overflow-y-auto pr-4 custom-scrollbar space-y-4">
+                                  {seminars
+                                    .filter(s => s.slides?.some((sl: any) => sl.legalFrameworks?.some((l: any) => l.law === selectedLaw)))
+                                    .map((s, si) => (
+                                      <div key={si} className="p-5 bg-white border border-slate-100 rounded-2xl group/item hover:border-emerald-200 transition-all">
+                                         <p className="text-[9px] font-black text-emerald-600 uppercase mb-2">{s.overallTitle}</p>
+                                         <div className="flex flex-col gap-3">
+                                            {s.slides?.filter((sl: any) => sl.legalFrameworks?.some((l: any) => l.law === selectedLaw)).map((sl: any, sli: number) => {
+                                                const lawMatch = sl.legalFrameworks?.find((l: any) => l.law === selectedLaw);
+                                                return (
+                                                    <div key={sli} className="space-y-2">
+                                                        <p className="text-[10px] font-black text-slate-400">Slide {sl.slideNumber}: {sl.slideTitle}</p>
+                                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-50">
+                                                            <p className="text-sm text-slate-700 font-medium leading-relaxed italic">
+                                                               "{lawMatch?.relevance || lawMatch?.description || 'Ingen kontekst angivet.'}"
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                         </div>
+                                      </div>
+                                    ))}
+                               </div>
+                            </div>
+                         </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+
+              {activeTab === 'apa' && (
+                <motion.div 
+                    key="apa"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-12"
+                >
+                  <section className="relative p-10 bg-emerald-900 rounded-[3rem] text-white shadow-2xl overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 to-transparent pointer-events-none" />
+                    <div className="relative z-10 max-w-2xl">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300 mb-4">Referencer (APA)</h3>
+                      <p className="text-xl sm:text-2xl font-black serif leading-relaxed mb-6">
+                        Din akademiske bibliografi for <span className="text-emerald-200">{category}</span>. Vi har identificeret <span className="text-white/60">{stats.apaCount}</span> APA-henvisninger i dit materiale.
+                      </p>
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/10">
+                            <BookOpen className="w-5 h-5 text-emerald-300" />
+                         </div>
+                         <p className="text-xs font-bold text-emerald-100 italic">"Alle henvisninger er udtrukket direkte fra dine studier og sorteret efter APA 7 standard."</p>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 right-0 p-10 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <BookOpen className="w-48 h-48" />
+                    </div>
+                  </section>
+
+                  {stats.apaCount === 0 ? (
+                    <div className="py-20 text-center space-y-4 bg-white rounded-[3rem] border border-slate-100 shadow-sm">
+                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mx-auto">
+                            <BookOpen className="w-8 h-8" />
+                        </div>
+                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Ingen APA-referencer fundet i dette materiale endnu</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {stats.apaRefs.map((ref, i) => (
+                        <motion.div 
+                            key={i}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            onClick={() => setSelectedApa(ref)}
+                            className={`group p-8 rounded-[2.5rem] border transition-all cursor-pointer ${
+                            selectedApa === ref ? 'bg-emerald-600 border-emerald-400 text-white shadow-2xl' : 'bg-white border-slate-100 hover:border-emerald-200 shadow-sm'
+                            }`}
+                        >
+                            <div className="flex flex-col h-full space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                                    selectedApa === ref ? 'bg-white text-emerald-600' : 'bg-slate-50 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600'
+                                }`}>
+                                    <FileSearch className="w-6 h-6" />
+                                </div>
+                                <ArrowRight className={`w-4 h-4 transition-transform ${selectedApa === ref ? 'text-white/40 rotate-90' : 'text-slate-200 group-hover:translate-x-1'}`} />
+                            </div>
+                            <div>
+                                <h4 className={`text-sm font-bold serif leading-relaxed ${selectedApa === ref ? 'text-white' : 'text-slate-900 group-hover:text-emerald-600'}`}>{ref}</h4>
+                                <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${selectedApa === ref ? 'text-white/40' : 'text-slate-400'}`}>APA Ref.</p>
+                            </div>
+                            </div>
+                        </motion.div>
+                        ))}
+                    </div>
+                  )}
+
+                  <AnimatePresence>
+                    {selectedApa && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 30 }}
+                        className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl p-10 space-y-8"
+                      >
+                         <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-5">
+                               <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center border border-emerald-100">
+                                  <BookOpen className="w-7 h-7" />
+                               </div>
+                               <div>
+                                  <h4 className="text-xl font-black text-slate-900 serif leading-relaxed max-w-2xl">{selectedApa}</h4>
+                                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-2">APA 7 Reference-detaljer</p>
+                               </div>
+                            </div>
+                            <button onClick={() => setSelectedApa(null)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl border border-slate-100 transition-all active:scale-95">
+                               <X className="w-6 h-6" />
+                            </button>
+                         </div>
+
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="space-y-4">
+                               <p className="text-[10px] font-black uppercase text-emerald-500 tracking-widest">Kildens Betydning</p>
+                               <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                  <p className="text-sm font-medium text-slate-600 leading-relaxed italic">
+                                     Denne reference er udtrukket som en central kilde for teorierne i dine seminarer. Den bruges her som det akademiske fundament for dine begreber og metoder.
+                                  </p>
+                               </div>
+                               
+                               <div className="space-y-3 pt-4">
+                                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Relaterede Begreber</p>
+                                  <div className="flex flex-wrap gap-2">
+                                     {Array.from(new Set(seminars.flatMap(s => s.slides || []).flatMap(sl => (sl.keyConcepts || []).filter((c: any) => c.source === selectedApa).map((c: any) => c.term)))).map((term, ti) => (
+                                       <span key={ti} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-bold border border-emerald-100">{term}</span>
+                                     ))}
+                                  </div>
+                               </div>
+                            </div>
+                            
+                            <div className="space-y-4">
+                               <p className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Optræder i følgende seminarer</p>
+                               <div className="max-h-[300px] overflow-y-auto pr-4 custom-scrollbar space-y-3">
+                                  {seminars
+                                    .filter(s => s.slides?.some((sl: any) => sl.keyConcepts?.some((c: any) => c.source === selectedApa)))
+                                    .map((s, si) => (
+                                      <div key={si} className="p-4 bg-white border border-slate-100 rounded-2xl group/item hover:border-indigo-200 transition-all flex items-center justify-between">
+                                         <div>
+                                            <p className="text-sm font-black text-slate-900 serif">{s.overallTitle}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">{s.slides?.length} slides i alt</p>
+                                         </div>
+                                         <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover/item:text-indigo-600 transition-colors">
+                                            <ChevronRight className="w-4 h-4" />
+                                         </div>
+                                      </div>
+                                    ))}
+                               </div>
+                            </div>
+                         </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+
+              {activeTab === 'research' && !isResearchLocked && (
+                <motion.div 
+                    key="research"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-12"
+                >
+                  <section className="relative p-10 bg-slate-900 rounded-[3rem] text-white shadow-2xl overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent pointer-events-none" />
+                    <div className="relative z-10 max-w-2xl">
+                      {!researchResult && (
+                        <>
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-300 mb-4">Akademisk Innovation</h3>
+                          <p className="text-xl sm:text-2xl font-black serif leading-relaxed mb-8">
+                            Dyk ned i den nyeste forskning inden for <span className="text-indigo-200">{category}</span> og udtænk din næste store problemstilling.
+                          </p>
+                        </>
+                      )}
+
+                      {researchResult && (
+                        <div className="flex items-center justify-between gap-6">
+                            <div>
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-300 mb-2">Forskningsanalyse</h3>
+                                <p className="text-lg font-black serif text-white">Akademisk status for <span className="text-indigo-400">{category}</span></p>
+                            </div>
+                            <Button 
+                                onClick={async () => {
+                                    setIsGeneratingResearch(true);
+                                    try {
+                                        const seminarContext = seminars.map(s => {
+                                            const slidesText = (s.slides || []).map((sl: any) => `- Slide ${sl.slideNumber}: ${sl.summary}`).join('\n');
+                                            return `SEMINAR: ${s.overallTitle}\nKATEGORI: ${s.category}\nINDHOLD:\n${slidesText}`;
+                                        }).join('\n\n---\n\n');
+                                        const result = await researchDiscoveryAction({ category, seminarContext });
+                                        if (result?.data) {
+                                            setResearchResult(result.data);
+                                            if (onSaveResearch) onSaveResearch(result.data);
+                                            toast({ title: "Analyse genopfrisket", description: "Vi har fundet nye vinkler." });
+                                        }
+                                    } catch (err) {
+                                        console.error(err);
+                                        toast({ title: "Fejl", description: "Kunne ikke forbinde til forsknings-motoren.", variant: "destructive" });
+                                    } finally {
+                                        setIsGeneratingResearch(false);
+                                    }
+                                }}
+                                size="sm" 
+                                variant="outline" 
+                                className="bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl font-black uppercase text-[10px] tracking-widest px-4 h-9"
+                            >
+                                <Zap className="w-3 h-3 mr-2" />
+                                Genopfrisk Analyse
+                            </Button>
+                        </div>
+                      )}
+
+                      {!researchResult && !isGeneratingResearch && (
+                        <Button 
+                            onClick={async () => {
+                                setIsGeneratingResearch(true);
+                                try {
+                                    // Aggregate seminar context for the AI
+                                    const seminarContext = seminars.map(s => {
+                                        const slidesText = (s.slides || [])
+                                            .map((sl: any) => `- Slide ${sl.slideNumber}: ${sl.summary}`)
+                                            .join('\n');
+                                        return `SEMINAR: ${s.overallTitle}\nKATEGORI: ${s.category}\nINDHOLD:\n${slidesText}`;
+                                    }).join('\n\n---\n\n');
+
+                                    const result = await researchDiscoveryAction({
+                                        category,
+                                        seminarContext
+                                    });
+
+                                    if (result?.data) {
+                                        setResearchResult(result.data);
+                                        if (onSaveResearch) onSaveResearch(result.data);
+                                        toast({
+                                            title: "Forskningsanalyse færdig",
+                                            description: "Vi har fundet nye vinkler til din forskning.",
+                                        });
+                                    } else {
+                                        throw new Error("Ingen data modtaget");
+                                    }
+                                } catch (error) {
+                                    console.error("Research discovery failed:", error);
+                                    toast({
+                                        title: "Fejl under analyse",
+                                        description: "Kunne ikke forbinde til forsknings-motoren.",
+                                        variant: "destructive"
+                                    });
+                                } finally {
+                                    setIsGeneratingResearch(false);
+                                }
+                            }}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl h-14 px-8 text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-900/20 active:scale-95 flex items-center gap-3 group/btn"
+                        >
+                            <Sparkles className="w-5 h-5 group-hover/btn:animate-pulse" />
+                            Start Forskningsanalyse
+                        </Button>
+                      )}
+                    </div>
+                    <div className="absolute bottom-0 right-0 p-10 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Globe className="w-48 h-48" />
+                    </div>
+                  </section>
+
+                  {isGeneratingResearch && (
+                    <div className="py-24 text-center space-y-8 bg-white rounded-[3rem] border border-slate-100 shadow-sm animate-pulse">
+                        <div className="flex justify-center flex-col items-center gap-6">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-indigo-500 rounded-full blur-xl opacity-20 animate-ping" />
+                                <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white/40 mx-auto relative z-10">
+                                    <Globe className="w-8 h-8 animate-spin-slow" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <p className="text-slate-900 font-black uppercase tracking-widest text-xs">Søger i videnskabelige databaser...</p>
+                                <p className="text-slate-400 text-xs font-medium italic">Globale databaser & akademiske kilder analyseres</p>
+                            </div>
+                        </div>
+                    </div>
+                  )}
+
+                  {researchResult && (
+                    <div className="space-y-12 pb-20">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="md:col-span-2 space-y-6">
+                                <p className="text-[10px] font-black uppercase text-indigo-500 tracking-[0.2em] px-2">Nuværende Forskningsfelt</p>
+                                <div className="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-8 text-slate-50 group-hover:text-indigo-50 transition-colors">
+                                        <Search className="w-16 h-16" />
+                                    </div>
+                                    <p className="text-lg text-slate-700 leading-relaxed font-medium serif relative z-10">
+                                        "{researchResult.stateOfResearch}"
+                                    </p>
+                                    <div className="mt-8 flex flex-wrap gap-4 relative z-10">
+                                        {researchResult.existingSources.map((s: any, sj: number) => (
+                                            <div key={sj} className="flex flex-col gap-1.5">
+                                                <div className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold text-slate-500 italic max-w-sm">
+                                                    {s.apa}
+                                                </div>
+                                                {s.url && (
+                                                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="px-4 text-[10px] text-indigo-600 font-black flex items-center gap-1.5 hover:underline">
+                                                        <LinkIcon className="w-3 h-3" />
+                                                        Se kilde
+                                                    </a>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-indigo-50/50 rounded-[3rem] p-10 flex flex-col justify-center gap-6 border border-indigo-100">
+                                <div className="w-14 h-14 bg-white rounded-3xl border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
+                                    <TrendingUp className="w-7 h-7" />
+                                </div>
+                                <div>
+                                    <h4 className="text-xl font-black text-slate-900 serif leading-snug">Viden-huller identificeret</h4>
+                                    <p className="text-sm text-slate-500 font-medium mt-3 leading-relaxed">Vi har fundet 2 områder hvor dine seminarer rækker ud over den nuværende gængse forskning.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-8">
+                             <div className="flex items-center justify-between px-4">
+                                <p className="text-[10px] font-black uppercase text-indigo-900 tracking-[0.2em]">Nye Forskningsomraåder & Problemstillinger</p>
+                                <div className="h-[1px] flex-1 bg-slate-100 ml-6" />
+                             </div>
+                             
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {researchResult.proposals.map((prop: any, pi: number) => (
+                                    <motion.div 
+                                        key={pi}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: pi * 0.1 }}
+                                        className="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-xl hover:shadow-2xl transition-all group"
+                                    >
+                                        <div className="flex items-center justify-between mb-8">
+                                            <div className="px-4 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-[9px] font-black uppercase tracking-widest border border-indigo-100">
+                                                Forslag #{pi + 1}
+                                            </div>
+                                            <Sparkles className="w-5 h-5 text-indigo-200 group-hover:text-indigo-400 transition-colors" />
+                                        </div>
+                                        
+                                        <h4 className="text-2xl font-black text-slate-900 serif mb-6 group-hover:text-indigo-600 transition-colors">{prop.title}</h4>
+                                        
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Problemformulering</p>
+                                                <p className="text-sm text-slate-600 font-medium leading-relaxed italic border-l-4 border-indigo-100 pl-4">
+                                                    "{prop.problemStatement}"
+                                                </p>
+                                            </div>
+                                            
+                                            <div className="space-y-3">
+                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Forskningsspørgsmål</p>
+                                                <ul className="space-y-3">
+                                                    {prop.questions.map((q: string, qi: number) => (
+                                                        <li key={qi} className="flex gap-3 text-sm text-slate-700 font-medium">
+                                                            <div className="w-5 h-5 rounded-full bg-slate-50 flex-shrink-0 flex items-center justify-center text-[10px] text-slate-400 font-bold">{qi + 1}</div>
+                                                            {q}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                            <div className="pt-4 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black uppercase text-slate-300">Teoretisk Ramme:</span>
+                                                    <span className="text-[11px] font-bold text-indigo-500">{prop.theory}</span>
+                                                </div>
+                                                <Button 
+                                                    onClick={() => {
+                                                        const content = `# Forsknings-Brief: ${prop.title}\n\n` +
+                                                            `**Kategori:** ${category}\n` +
+                                                            `**Teoretisk Ramme:** ${prop.theory}\n\n` +
+                                                            `## Problemformulering\n${prop.problemStatement}\n\n` +
+                                                            `## Forskningsspørgsmål\n${prop.questions.map((q: string, i: number) => `${i+1}. ${q}`).join('\n')}\n\n` +
+                                                            `## Baggrund & Kontekst\n${researchResult.stateOfResearch}\n\n` +
+                                                            `## Kilder\n${researchResult.existingSources.map((s: any) => `- ${s.apa}${s.url ? ` (${s.url})` : ''}`).join('\n')}\n\n` +
+                                                            `--- \nGenereret af Cohéro Intelligence`;
+                                                        
+                                                        const blob = new Blob([content], { type: 'text/markdown' });
+                                                        const url = URL.createObjectURL(blob);
+                                                        const a = document.createElement('a');
+                                                        a.href = url;
+                                                        a.download = `Forskningsbrief-${prop.title.replace(/\s+/g, '-')}.md`;
+                                                        a.click();
+                                                        URL.revokeObjectURL(url);
+                                                        toast({ title: "Brief Downloadet", description: "Din forskningsplan er nu gemt lokalt." });
+                                                    }}
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="rounded-xl font-black uppercase tracking-widest h-9 text-[10px] bg-slate-900 text-white border-none hover:bg-slate-800 transition-all px-5 shadow-lg shadow-slate-900/10"
+                                                >
+                                                    <FileText className="w-3.5 h-3.5 mr-2" />
+                                                    Download Brief
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                             </div>
+                        </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+              {activeTab === 'research' && isResearchLocked && (
+                <motion.div 
+                    key="research-locked"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="py-24 px-10 text-center space-y-10 bg-white rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-indigo-500/5 blur-3xl" />
+                    <div className="relative z-10 max-w-sm mx-auto space-y-8">
+                        <div className="w-24 h-24 bg-indigo-50 rounded-[2.5rem] flex items-center justify-center text-indigo-600 mx-auto border-2 border-white shadow-xl">
+                            <Sparkles className="w-12 h-12" />
+                        </div>
+                        <div className="space-y-4">
+                            <h3 className="text-3xl font-black text-slate-900 serif leading-tight">Lås op for Forskning</h3>
+                            <p className="text-slate-500 font-medium leading-relaxed">Forskning og Deep-Search er eksklusivt for vores <span className="text-indigo-600 font-black">Kollega+</span> medlemmer.</p>
+                        </div>
+                        <Link href="/upgrade" className="block w-full text-center">
+                            <Button className="w-full bg-slate-900 hover:bg-indigo-950 text-white rounded-2xl h-16 font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all">
+                                OPGRADER TIL KOLLEGA+
+                            </Button>
+                        </Link>
+                        <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em]">Få adgang til SerpApi & Deep Intelligence</p>
+                    </div>
+                </motion.div>
+              )}
               {activeTab === 'timeline' && (
                 <motion.div 
                     key="timeline"

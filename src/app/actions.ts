@@ -434,6 +434,9 @@ export async function getMythBusterResponseAction(input: any) { return callFireb
 export async function getCareerMatchAction(input: any) { return callFirebaseFlow('getCareerMatchFlow', input); }
 export async function reviseJournalEntryAction(input: any) { return callFirebaseFlow('reviseJournalEntryFlow', input); }
 export async function reviseCaseAction(input: any) { return callFirebaseFlow('reviseCaseFlow', input); }
+export async function researchDiscoveryAction(input: Types.ResearchDiscoveryInput): Promise<Types.ResearchDiscoveryOutput> {
+    return callFirebaseFlow('researchDiscoveryFlow', input);
+}
 
 export async function generateVerificationEmailAction(input: Types.VerificationEmailInput): Promise<{ success: boolean; message: string; }> {
     try {
