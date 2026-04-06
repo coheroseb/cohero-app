@@ -15,15 +15,19 @@ const SecondOpinionInputSchema = z.object({
   studyRegulations: z.string().describe("The relevant sections of the study regulations or course description, including learning objectives."),
   examRegulations: z.string().describe("The relevant sections of the exam regulations."),
   assignmentText: z.string().describe("The full text of the social work student's submitted assignment."),
-  grade: z.string().describe('The grade the social work student received (e.g., "7", "10", "B").'),
+  grade: z.string().optional().describe('The grade the social work student received, if any (e.g., "7", "10").'),
   feedback: z.string().optional().describe("Optional feedback from the examiner."),
+  mode: z.enum(['audit', 'feedback']).optional().default('audit').describe("The mode of analysis: 'audit' for checking an existing grade, 'feedback' for assessing an ungraded work."),
 });
+
 export type SecondOpinionInput = z.infer<typeof SecondOpinionInputSchema>;
 
 const AnalysisSchema = z.object({
   isComplaintJustified: z.boolean().describe('A boolean indicating whether there is a plausible basis for a complaint.'),
-  isGradeAccurate: z.boolean().describe('A boolean indicating if the given grade is considered accurate/fair based on the analysis.'),
-  gradeAccuracyArgument: z.string().describe("A detailed, concrete argument explaining why the grade is or isn't accurate. Must reference specific parts of the assignment and learning goals. Use HTML for formatting."),
+  isGradeAccurate: z.boolean().describe('A boolean indicating if the given grade is considered accurate/fair based on the analysis. In feedback mode, set this to true if you are confident in your suggestion.'),
+  suggestedGrade: z.string().optional().describe("The grade you suggest for the work (e.g., '7', '10', '12'). Mandatory in 'feedback' mode."),
+  gradeAccuracyArgument: z.string().describe("A detailed, concrete argument explaining your assessment. Reference specific parts of the assignment and learning goals. Use HTML for formatting."),
+
   riskAssessment: z.array(z.string()).describe("An assessment of the risk of receiving a lower grade upon re-evaluation, presented as bullet points. Explain why the risk is low, medium, or high. Must be in Danish."),
   strengths: z.array(z.string()).describe("A list of bullet points summarizing the assignment's strengths and what the social work student did well, referencing the learning objectives. Must be in Danish."),
   weaknesses: z.array(z.string()).describe("A list of bullet points summarizing the assignment's weaknesses and areas for improvement, referencing the learning objectives. Must be in Danish."),
@@ -51,8 +55,11 @@ const prompt = ai.definePrompt({
   output: { schema: AnalysisSchema },
   prompt: `You are an impartial and expert external examiner (censor) and university lecturer in the Danish higher education system. Your task is to provide a highly concrete, document-based analysis of a student's graded assignment.
 
-**YOUR OBJECTIVE:**
-Determine if the received grade accurately reflects the quality of the assignment based on the provided documents. You must take a definitive stand and argue for or against the grade's accuracy.
+**YOUR OBJECTIVE (MODE: {{{mode}}}):**
+- **Hvis mode er 'audit':** Afgør om den modtagne karakter ({{{grade}}}) er retvisende i forhold til opgavens kvalitet og læringsmålene. Indstil 'suggestedGrade' til din vurdering af den korrekte karakter.
+- **Hvis mode er 'feedback':** Analysér opgavens kvalitet i forhold til læringsmålene og giv en præcis vurdering af, hvilken karakter arbejdet vil lande på i 'suggestedGrade'. Fokusér her på pædagogisk feedback og konkrete forbedringsforslag.
+
+
 
 **INSTRUCTIONS FOR ANALYSIS:**
 1.  **Context Identification:** Scan the 'examRegulations' and 'assignmentText' to identify the specific context (e.g., semester, module, or specific exam type). 
@@ -80,6 +87,8 @@ Determine if the received grade accurately reflects the quality of the assignmen
 - Opgavebesvarelse: {{{assignmentText}}}
 - Modtaget karakter: {{{grade}}}
 - Eventuel feedback: {{{feedback}}}
+- Mode: {{{mode}}}
+
 `,
   config: {
     temperature: 0.2,

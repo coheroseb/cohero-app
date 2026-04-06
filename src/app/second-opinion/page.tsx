@@ -68,7 +68,9 @@ import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 interface Analysis {
   isComplaintJustified: boolean;
   isGradeAccurate: boolean;
+  suggestedGrade?: string;
   gradeAccuracyArgument: string;
+
   strengths: string[];
   weaknesses: string[];
   riskAssessment: string[];
@@ -325,6 +327,8 @@ const SecondOpinionPageContent = () => {
     const [pastOpinions, setPastOpinions] = useState<SecondOpinionRecord[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
     const [showHistory, setShowHistory] = useState(false);
+    const [analysisMode, setAnalysisMode] = useState<'audit' | 'feedback'>('audit');
+
 
     // Fetch curriculums for the user's institution and profession
     useEffect(() => {
@@ -416,8 +420,13 @@ const SecondOpinionPageContent = () => {
     }, [user, firestore]);
 
     const isFormValid = useMemo(() => {
-        return matchedModule && assignmentFile && grade.trim();
-    }, [matchedModule, assignmentFile, grade]);
+        const baseValid = matchedModule && assignmentFile;
+        if (analysisMode === 'audit') {
+            return baseValid && grade.trim();
+        }
+        return baseValid;
+    }, [matchedModule, assignmentFile, grade, analysisMode]);
+
 
       const isPremiumUser = useMemo(() => {
         const m = userProfile?.membership;
@@ -495,9 +504,11 @@ const SecondOpinionPageContent = () => {
                 studyRegulations: studyText,
                 examRegulations: examText,
                 assignmentText: assignmentText,
-                grade: grade,
-                feedback: feedbackText
+                grade: analysisMode === 'audit' ? grade : undefined,
+                feedback: feedbackText,
+                mode: analysisMode
             });
+
 
             const analysisResult = response.data;
             setResult(analysisResult);
@@ -549,7 +560,23 @@ const SecondOpinionPageContent = () => {
                 </div>
             </div>
 
+            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                <button 
+                    onClick={() => setAnalysisMode('audit')}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${analysisMode === 'audit' ? 'bg-white text-rose-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    Grade Audit
+                </button>
+                <button 
+                    onClick={() => setAnalysisMode('feedback')}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${analysisMode === 'feedback' ? 'bg-white text-rose-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    Preview & Feedback
+                </button>
+            </div>
+
             <div className="flex items-center gap-4">
+
                 <button 
                   onClick={() => setShowHistory(!showHistory)}
                   className={`p-3 rounded-2xl transition-all border ${showHistory ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}
@@ -580,11 +607,18 @@ const SecondOpinionPageContent = () => {
                                     <Sparkles className="w-4 h-4 text-rose-500" /> AI-drevet karakter-audit
                                 </div>
                                 <h2 className="text-5xl md:text-7xl font-black text-amber-950 serif tracking-tighter leading-none">
-                                    Er din karakter <span className="text-rose-700 italic">retvisende</span>?
+                                    {analysisMode === 'audit' ? (
+                                        <>Er din karakter <span className="text-rose-700 italic">retvisende</span>?</>
+                                    ) : (
+                                        <>Hvad vil din <span className="text-rose-700 italic">karakter</span> blive?</>
+                                    )}
                                 </h2>
                                 <p className="text-lg text-slate-500 font-medium italic leading-relaxed">
-                                    Upload din opgave og pensumkrav for at få en uvildig analyse af din bedømmelse – før du beslutter dig for at klage.
+                                    {analysisMode === 'audit' 
+                                        ? 'Upload din opgave og pensumkrav for at få en uvildig analyse af din bedømmelse – før du beslutter dig for at klage.'
+                                        : 'Upload dit udkast eller færdige opgave for at få en kvalificeret karakter-forudsigelse og dybdegående feedback inden aflevering.'}
                                 </p>
+
                             </div>
 
                             {/* HISTORY DRAWER (Inline on Desktop) */}
@@ -630,23 +664,26 @@ const SecondOpinionPageContent = () => {
                                 </div>
 
                                 <div className="flex flex-col md:flex-row items-center gap-8 pt-8 border-t border-amber-50">
-                                    <div className="flex-1 w-full space-y-3">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-amber-900/50">Modtaget Karakter</label>
-                                        <input 
-                                            value={grade} 
-                                            onChange={e => setGrade(e.target.value)}
-                                            placeholder="f.eks. 4 el. 7" 
-                                            className="w-full bg-slate-50 border border-amber-100 py-6 px-10 rounded-[2.5rem] text-2xl font-black text-amber-950 focus:ring-4 focus:ring-rose-100 outline-none transition-all placeholder:text-slate-200"
-                                        />
-                                    </div>
+                                    {analysisMode === 'audit' && (
+                                        <div className="flex-1 w-full space-y-3">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-amber-900/50">Modtaget Karakter</label>
+                                            <input 
+                                                value={grade} 
+                                                onChange={e => setGrade(e.target.value)}
+                                                placeholder="f.eks. 4 el. 7" 
+                                                className="w-full bg-slate-50 border border-amber-100 py-6 px-10 rounded-[2.5rem] text-2xl font-black text-amber-950 focus:ring-4 focus:ring-rose-100 outline-none transition-all placeholder:text-slate-200"
+                                            />
+                                        </div>
+                                    )}
                                     <button 
                                         type="submit"
                                         disabled={!isFormValid || isAnalyzing}
-                                        className="h-20 w-full md:w-auto px-12 bg-rose-950 text-white rounded-[2.5rem] font-black uppercase text-xs tracking-[0.3em] shadow-2xl hover:bg-rose-900 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30"
+                                        className={`h-20 w-full md:w-auto px-12 bg-rose-950 text-white rounded-[2.5rem] font-black uppercase text-xs tracking-[0.3em] shadow-2xl hover:bg-rose-900 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30 ${analysisMode === 'feedback' ? 'flex-1' : ''}`}
                                     >
-                                        Start Analysen <Zap className="w-5 h-5 text-amber-400" />
+                                        {analysisMode === 'audit' ? 'Start Analysen' : 'Få Feedback & Bedømmelse'} <Zap className="w-5 h-5 text-amber-400" />
                                     </button>
                                 </div>
+
 
                                 {limitError && (
                                     <div className="p-6 bg-amber-950 text-white rounded-3xl text-center space-y-4">
@@ -724,10 +761,14 @@ const SecondOpinionPageContent = () => {
                                                  </div>
                                              </div>
                                              <h2 className="text-4xl md:text-6xl font-black text-white serif tracking-tighter leading-none">
-                                                 {result.isGradeAccurate 
-                                                    ? 'Karakteren er pædagogisk retvisende.' 
-                                                    : 'Din karakter er potentielt under vurderet.'}
-                                             </h2>
+                                                  {analysisMode === 'audit' ? (
+                                                     result.isGradeAccurate 
+                                                        ? 'Karakteren er pædagogisk retvisende.' 
+                                                        : <>Din karakter er potentielt undervurderet <span className="text-rose-400">(Vurderet til {result.suggestedGrade})</span></>
+                                                  ) : (
+                                                     <>Din vurderede karakter er: <span className="text-rose-400">{result.suggestedGrade || 'Ej fastsat'}</span></>
+                                                  )}
+                                              </h2>
                                          </div>
                                      </div>
                                      <div className="p-12 md:p-20 space-y-8 bg-black/10">
