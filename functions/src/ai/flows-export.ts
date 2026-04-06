@@ -55,6 +55,7 @@ import { getRelevantLawContextFlow } from './flows/law-context-wrapper-flow';
 import { getLivePortfolioFeedback } from './flows/live-portfolio-feedback-flow';
 import { getMythBusterResponse } from './flows/myth-buster-flow';
 import { nudgeEmailFlow } from './flows/nudge-email-flow';
+import { newUserActivationEmailFlow } from './flows/new-user-activation-email-flow';
 import { oralExamAnalysis } from './flows/oral-exam-analysis-flow';
 import { organizeEvidenceIntoSeminarFlow } from './flows/organize-evidence-seminar';
 import { processExamRegulations } from './flows/process-exam-regulations-flow';
@@ -206,6 +207,8 @@ export const allFlows: Record<string, any> = {
   'getMythBusterResponse': getMythBusterResponse,
   'nudgeEmailFlowFlow': nudgeEmailFlow,
   'nudgeEmailFlow': nudgeEmailFlow,
+  'newUserActivationEmailFlowFlow': newUserActivationEmailFlow,
+  'newUserActivationEmailFlow': newUserActivationEmailFlow,
   'oralExamAnalysisFlow': oralExamAnalysis,
   'oralExamAnalysis': oralExamAnalysis,
   'organizeEvidenceIntoSeminarFlowFlow': organizeEvidenceIntoSeminarFlow,
