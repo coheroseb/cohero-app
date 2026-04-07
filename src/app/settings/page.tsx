@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/app/provider';
 import { useAuth, useFirestore } from '@/firebase';
-import { doc, getDoc, writeBatch, serverTimestamp, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, writeBatch, serverTimestamp, deleteDoc, updateDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, ChevronDown, ShieldAlert, Users2, Send, Info, Award, Sparkles, Bell, BellOff, Smartphone, Navigation, Mail, Briefcase, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -222,15 +222,21 @@ export default function SettingsPage() {
       setIsRedeeming(true);
       setRedeemStatus(null);
       
-      const codeRef = doc(firestore, 'redemptionCodes', redemptionCode.trim().toUpperCase());
+      const cleanCode = redemptionCode.trim().toUpperCase();
       const userRef = doc(firestore, 'users', user.uid);
       
       try {
-          const codeSnap = await getDoc(codeRef);
-          if (!codeSnap.exists()) {
+          const q = query(collection(firestore, 'redemptionCodes'), where('code', '==', cleanCode), limit(1));
+          const snap = await getDocs(q);
+          
+          if (snap.empty) {
               throw new Error('Koden er ikke gyldig.');
           }
-          const codeData = codeSnap.data();
+          
+          const codeDoc = snap.docs[0];
+          const codeRef = doc(firestore, 'redemptionCodes', codeDoc.id);
+          const codeData = codeDoc.data();
+          
           if (codeData.redeemedBy) {
               throw new Error('Koden er allerede blevet brugt.');
           }

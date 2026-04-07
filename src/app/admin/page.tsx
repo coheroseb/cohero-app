@@ -230,7 +230,7 @@ export default function AdminOverviewPage() {
                                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                             </div>
                         </div>
-                        <div className="p-10 flex-1 min-h-[350px]">
+                        <div className="p-10 flex-1 h-[400px] min-h-[400px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={history} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                                     <defs>

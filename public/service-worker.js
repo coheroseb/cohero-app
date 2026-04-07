@@ -102,8 +102,9 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cachedResponse => {
       if (cachedResponse) return cachedResponse;
       return fetch(event.request).catch(error => {
-        // Fail gracefully without spamming the console 
-        throw error;
+        // Return an empty response for failed fetches to prevent console error spam
+        // This is safe because we already checked for a cached response above.
+        return new Response('', { status: 408, statusText: 'Network Error' });
       });
     })
   );
