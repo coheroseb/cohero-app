@@ -79,8 +79,23 @@ export async function POST(req: NextRequest) {
                 updateData.membership = membershipLevel;
                 updateData.stripePriceId = price.id;
             } else if (subscription.status === 'unpaid' || subscription.status === 'past_due' || subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
-                // Downgrade to free tier on payment issues or cancellation
-                updateData.membership = 'Kollega';
+                // Before downgrading, check if they have ANOTHER active/trialing subscription.
+                const subs = await stripe.subscriptions.list({
+                    customer: subscription.customer as string,
+                    status: 'active',
+                });
+                const trials = await stripe.subscriptions.list({
+                    customer: subscription.customer as string,
+                    status: 'trialing',
+                });
+
+                // We only downgrade if there are ZERO active/trialing subs remaining for this customer.
+                // We exclude the current one from the check if it's currently considered active/trialing, 
+                // but since we are in the 'past_due' etc branch, it's already NOT in those lists or will be soon.
+                const totalActive = subs.data.length + trials.data.length;
+                if (totalActive === 0) {
+                     updateData.membership = 'Kollega';
+                }
             }
 
             await userDoc.ref.set(updateData, { merge: true });
@@ -117,12 +132,33 @@ export async function POST(req: NextRequest) {
             
             if (!userRefSnap.empty) {
                 const userDoc = userRefSnap.docs[0];
-                // Immediate downgrade on payment failure as per user request
-                await userDoc.ref.set({
-                    membership: 'Kollega', // Downgrade to free tier
-                    stripeLastPaymentFailed: true,
-                    stripeLastPaymentError: invoice.last_finalization_error?.message || 'Payment failed'
-                }, { merge: true });
+                
+                // CRITICAL: Before downgrading, check if they have ANOTHER active/trialing subscription.
+                const subscriptions = await stripe.subscriptions.list({
+                    customer: invoice.customer as string,
+                    status: 'active',
+                });
+                const trialingSubscriptions = await stripe.subscriptions.list({
+                    customer: invoice.customer as string,
+                    status: 'trialing',
+                });
+
+                const totalActiveCount = subscriptions.data.length + trialingSubscriptions.data.length;
+
+                if (totalActiveCount === 0) {
+                     // Only downgrade if they have NO other valid subscriptions
+                     await userDoc.ref.set({
+                        membership: 'Kollega',
+                        stripeLastPaymentFailed: true,
+                        stripeLastPaymentError: invoice.last_finalization_error?.message || 'Payment failed'
+                    }, { merge: true });
+                } else {
+                    // They have another active sub, so just log the failure but don't downgrade
+                    await userDoc.ref.set({
+                        stripeLastPaymentFailed: true,
+                        stripeLastPaymentError: invoice.last_finalization_error?.message || 'Payment failed (but other active subscription found)'
+                    }, { merge: true });
+                }
             }
             break;
         }
@@ -133,14 +169,30 @@ export async function POST(req: NextRequest) {
 
           if (!userRefSnap.empty) {
               const userDoc = userRefSnap.docs[0];
-              await userDoc.ref.set({
+              
+              const updateData: any = {
                   stripeSubscriptionStatus: subscription.status,
-                  membership: 'Kollega',
                   stripeCancelAtPeriodEnd: null,
                   stripeCurrentPeriodEnd: null,
                   stripePriceId: null,
                   stripeSubscriptionId: null,
-              }, { merge: true });
+              };
+
+              // Check if they have ANY other active subscriptions before removing membership
+              const activeSubs = await stripe.subscriptions.list({
+                  customer: subscription.customer as string,
+                  status: 'active',
+              });
+              const activeTrials = await stripe.subscriptions.list({
+                  customer: subscription.customer as string,
+                  status: 'trialing',
+              });
+
+              if (activeSubs.data.length === 0 && activeTrials.data.length === 0) {
+                  updateData.membership = 'Kollega';
+              }
+
+              await userDoc.ref.set(updateData, { merge: true });
           }
           break;
         }
