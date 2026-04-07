@@ -221,6 +221,7 @@ service cloud.firestore {
       match /quizResults/{resultId} { allow read, write: if isOwner(userId); }
       match /notifications/{notificationId} { allow read, write: if isOwner(userId); }
       match /viveAnalyses/{analysisId} { allow read, write: if isOwner(userId); }
+      match /caseAnalyses/{analysisId} { allow read, write: if isOwner(userId); }
       match /conversations/{conversationId} { 
         allow read, write: if isOwner(userId); 
         match /messages/{messageId} { allow read, write: if isOwner(userId); }
