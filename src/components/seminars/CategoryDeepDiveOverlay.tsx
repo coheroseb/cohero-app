@@ -68,8 +68,21 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
   const [selectedLaw, setSelectedLaw] = useState<string | null>(null);
   const [selectedApa, setSelectedApa] = useState<string | null>(null);
   const [isGeneratingResearch, setIsGeneratingResearch] = useState(false);
-  const [researchResult, setResearchResult] = useState<any | null>(userProfile?.categoryResearch?.[category] || null);
+  const [researchResult, setResearchResult] = useState<any | null>(null);
   const [researchLoadingStep, setResearchLoadingStep] = useState(0);
+
+  // Load initial result for category
+  useEffect(() => {
+      setResearchResult(userProfile?.categoryResearch?.[category] || null);
+  }, [category]);
+
+  // Keep synced with profile updates (only if profile provides it)
+  // This avoids accidental resets during Firestore write latency
+  useEffect(() => {
+    if (userProfile?.categoryResearch?.[category]) {
+        setResearchResult(userProfile.categoryResearch[category]);
+    }
+  }, [userProfile?.categoryResearch?.[category]]);
 
   const researchSteps = [
     { title: "Akademisk Crawling", desc: "Søger efter relevante publikationer på Google Scholar...", icon: <Search className="w-4 h-4" /> },
@@ -93,22 +106,6 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
   const isKollegaPlus = userProfile?.membership === 'Kollega+';
   const isResearchLocked = !isKollegaPlus;
 
-  // Sync with user profile on mount or category change
-  useEffect(() => {
-    if (userProfile === undefined) return;
-    if (userProfile?.categoryResearch?.[category]) {
-        setResearchResult(userProfile.categoryResearch[category]);
-    } else {
-        setResearchResult(null);
-    }
-  }, [category, userProfile]);
-
-  // Handle incoming data from profile updates (only if we don't have local result)
-  useEffect(() => {
-    if (!researchResult && userProfile?.categoryResearch?.[category]) {
-        setResearchResult(userProfile.categoryResearch[category]);
-    }
-  }, [userProfile]);
 
   const studyPlanData = useMemo(() => {
     return userProfile?.categoryStudyPlans?.[category] || null;
