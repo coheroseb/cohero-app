@@ -204,7 +204,7 @@ async function extractDataFromPptx(file: File): Promise<{ text: string, images: 
 
       if (paragraphs.length === 0) {
         const rawMatches = xml.match(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g) || [];
-        rawMatches.forEach(m => {
+        (rawMatches as string[]).forEach(m => {
           const txt = m.replace(/<[^>]+>/g, '').trim();
           if (txt) paragraphs.push(txt);
         });
@@ -486,13 +486,7 @@ function SeminarArchitectPageContent() {
     });
   };
 
-  useEffect(() => {
-    if (files.length === 1 && !isAnalyzing && !analysisResult) {
-      handleAnalyze();
-    }
-  }, [files]);
-
-  const handleAnalyze = async () => {
+  const handleAnalyze = useCallback(async () => {
     if (files.length === 0 || !user || !firestore || !userProfile || isAnalyzing) return;
 
     setIsAnalyzing(true);
@@ -655,7 +649,13 @@ function SeminarArchitectPageContent() {
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [files, user, firestore, userProfile, isAnalyzing, isPremiumUser, storage, refetchUserProfile, toast, router, extractData]);
+
+  useEffect(() => {
+    if (files.length === 1 && !isAnalyzing && !analysisResult) {
+      handleAnalyze();
+    }
+  }, [files, isAnalyzing, analysisResult, handleAnalyze]);
 
   const handleTranslate = async (lang: 'da' | 'en') => {
     if (!analysisResult || isTranslating) return;

@@ -1375,7 +1375,7 @@ const PortalPage: React.FC = () => {
       return null;
     }
     return <PortalPageContent />;
-  }, [isUserLoading, user, userProfile, effectiveTheme]);
+  }, [isUserLoading, user, userProfile]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {

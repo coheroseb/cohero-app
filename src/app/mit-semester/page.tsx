@@ -170,7 +170,7 @@ function WeeklyCalendar({ plan, activeModule, user, firestore }: { plan: SavedPl
     updateDoc(doc(firestore, 'users', user.uid, 'semesterPlans', plan.id), { weeklyBreakdown: updated })
       .then(() => { setSaveStatus('saved'); setTimeout(() => setSaveStatus('idle'), 2000); })
       .catch(() => setSaveStatus('idle'));
-  }, [debouncedNotes]);
+  }, [debouncedNotes, user, firestore, plan.id, plan.weeklyBreakdown]);
 
   // Learning goals as prompts for note-taking, pulled from studieordning
   const learningGoalTips = activeModule?.learningGoals?.slice(0, 2) ?? [];
