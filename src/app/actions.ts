@@ -2777,3 +2777,116 @@ export async function generateLawFlowchartAction(input: { lovTitel: string, para
     }
 }
 
+/**
+ * sendReferralInviteAction:
+ * Sends invitation emails to classmates with a unique referral link.
+ * Each successful signup using the link contributes to the inviter's referralCount.
+ */
+export async function sendReferralInviteAction(input: { 
+    emails: string[], 
+    inviterName: string, 
+    referralCode: string 
+}) {
+    const { emails, inviterName, referralCode } = input;
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
+    // Referral URL (Point to auth with mode=signup and ref=CODE)
+    const referralUrl = `https://platform.cohero.dk/auth?mode=signup&ref=${referralCode}`;
+    
+    const results: { email: string, success: boolean }[] = [];
+    
+    for (const email of emails) {
+        try {
+            const { data, error } = await resend.emails.send({
+                from: 'Cohéro <kontakt@cohero.dk>',
+                to: [email],
+                subject: `${inviterName} har inviteret dig til Cohéro 🚀`,
+                html: `
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1e293b; background-color: #fdfbf7;">
+                        <div style="text-align: center; margin-bottom: 32px;">
+                            <h2 style="color: #0f172a; font-size: 28px; font-weight: 900; letter-spacing: -0.025em; margin: 0;">Cohéro</h2>
+                            <p style="color: #64748b; font-size: 14px; font-weight: 600; text-transform: uppercase; tracking: 0.1em; margin-top: 4px;">Din digitale kollega</p>
+                        </div>
+                        
+                        <div style="background-color: #ffffff; border-radius: 24px; padding: 40px; border: 1px solid #e2e8f0; shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            <h1 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 16px; line-height: 1.2;">
+                                Hej! Din medstuderende har en gave til dig... 🎁
+                            </h1>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 24px; color: #475569;">
+                                <strong>${inviterName}</strong> bruger Cohéro til at gøre studiet nemmere og mener, at du også vil få stor glæde af det.
+                            </p>
+                            
+                            <div style="background-color: #f8fafc; border-radius: 16px; padding: 20px; margin-bottom: 32px; border-left: 4px solid #f59e0b;">
+                                <p style="font-size: 14px; color: #475569; margin: 0; font-weight: 500;">
+                                    "Cohéro hjælper mig med alt fra lynhurtige opslag i lovportalen til AI-sparring på mine cases. Det er som at have en erfaren kollega ved sin side."
+                                </p>
+                            </div>
+
+                            <a href="${referralUrl}" style="display: block; background-color: #0f172a; color: #ffffff; padding: 18px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 16px; text-align: center; transition: all 0.2s;">
+                                Opret din gratis konto nu
+                            </a>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 32px;">
+                            <p style="font-size: 13px; color: #94a3b8; line-height: 1.5;">
+                                Du modtager denne mail fordi ${inviterName} har inviteret dig via Cohéro Invitations-systemet.<br>
+                                Har du spørgsmål? Skriv til <a href="mailto:kontakt@cohero.dk" style="color: #64748b; text-decoration: underline;">kontakt@cohero.dk</a>
+                            </p>
+                        </div>
+                    </div>
+                `
+            });
+            
+            if (error) throw error;
+            results.push({ email, success: true });
+        } catch (err) {
+            console.error(`Referral invite failed for ${email}:`, err);
+            results.push({ email, success: false });
+        }
+    }
+    
+    return { success: true, results };
+}
+
+/**
+ * processReferralAction:
+ * Securely increments the referrer's count and optionally grants a reward.
+ * This runs on the server to prevent client-side manipulation of referral counts.
+ */
+export async function processReferralAction(input: { referralCode: string, newUserId: string }) {
+    const { referralCode, newUserId } = input;
+    
+    try {
+        const usersRef = adminFirestore.collection('users');
+        const q = await usersRef.where('referralCode', '==', referralCode).limit(1).get();
+        
+        if (q.empty) return { success: false, message: 'Referral code not found' };
+        
+        const referrerDoc = q.docs[0];
+        const data = referrerDoc.data();
+        
+        // Prevent referring oneself (security check)
+        if (referrerDoc.id === newUserId) return { success: false, message: 'Self-referral not allowed' };
+        
+        const newCount = (data.referralCount || 0) + 1;
+        const update: any = { referralCount: newCount };
+        
+        // Reward: 10 referrals = 1 month Kollega+
+        if (newCount === 10) {
+            const expiryDate = new Date();
+            expiryDate.setMonth(expiryDate.getMonth() + 1);
+            
+            update.membership = 'Kollega+';
+            update.membershipSource = 'referral_bonus';
+            update.membershipExpires = expiryDate.toISOString();
+            update.referralBonusActive = true;
+        }
+        
+        await referrerDoc.ref.update(update);
+        return { success: true };
+    } catch (error: any) {
+        console.error("processReferralAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
