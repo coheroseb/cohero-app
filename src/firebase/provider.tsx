@@ -132,6 +132,7 @@ export const useUser = () => {
         uid: userCredential.user.uid,
         email,
         displayName,
+        role: 'user', // Ensure default role is set
         createdAt: serverTimestamp(),
         lastActivityAt: serverTimestamp(),
         ...sourceData
@@ -174,6 +175,12 @@ export const useUser = () => {
         lastActivityAt: serverTimestamp(),
         ...sourceData
       }, { merge: true });
+
+      // 4. Ensure role exists if not already present (handled by merge, but we explicitly set user if it's a new or undefined role)
+      const userDoc = await getDoc(doc(firestore, 'users', userCredential.user.uid));
+      if (!userDoc.exists() || !userDoc.data().role) {
+          await setDoc(doc(firestore, 'users', userCredential.user.uid), { role: 'user' }, { merge: true });
+      }
 
       // Only clear if we actually used it (or just clear it anyway to be safe)
       if (typeof window !== 'undefined') localStorage.removeItem('cohero_attribution');

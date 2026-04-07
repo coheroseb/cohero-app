@@ -124,7 +124,7 @@ export default function StatsPage() {
     const [blogKeywords, setBlogKeywords] = useState("");
 
     const usersQuery = useMemoFirebase(
-        () => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'user')) : null),
+        () => (firestore ? query(collection(firestore, 'users')) : null),
         [firestore]
     );
     const { data: users, isLoading: isUsersLoading } = useCollection<any>(usersQuery);
@@ -149,8 +149,7 @@ export default function StatsPage() {
 
     const stats = useMemo(() => {
       if (!users) return null;
-      const now = new Date();
-      const allUsers = users;
+      const allUsers = users.filter((u: any) => u.role !== 'admin');
       const totalUsers = allUsers.length;
       
       const getDateDaysAgo = (days: number) => {
@@ -284,15 +283,16 @@ export default function StatsPage() {
     ];
 
     // Funnel Calculations
+    const studentUsers = (users || []).filter((u: any) => u.role !== 'admin');
     const totalClicks = (stats.totalFbClicks || 0) + (stats.totalTikTokClicks || 0);
-    const totalSubscribers = (users || []).filter((u: any) => u.membership === 'Kollega+' && u.stripeSubscriptionStatus === 'active').length;
-    const clickToUserRate = totalClicks > 0 ? (((users || []).length / totalClicks) * 100).toFixed(1) : 0;
-    const userToSubRate = (users || []).length > 0 ? ((totalSubscribers / (users || []).length) * 100).toFixed(1) : 0;
+    const totalSubscribers = studentUsers.filter((u: any) => u.membership === 'Kollega+' && u.stripeSubscriptionStatus === 'active').length;
+    const clickToUserRate = totalClicks > 0 ? ((studentUsers.length / totalClicks) * 100).toFixed(1) : 0;
+    const userToSubRate = studentUsers.length > 0 ? ((totalSubscribers / studentUsers.length) * 100).toFixed(1) : 0;
     const overallConvRate = totalClicks > 0 ? ((totalSubscribers / totalClicks) * 100).toFixed(1) : 0;
 
     // Marketing ROI Deep Dive Calculations
-    const fbUsers = (users || []).filter((u: any) => u.conversionSource === 'facebook');
-    const tiktokUsers = (users || []).filter((u: any) => u.conversionSource === 'tiktok');
+    const fbUsers = studentUsers.filter((u: any) => u.conversionSource === 'facebook');
+    const tiktokUsers = studentUsers.filter((u: any) => u.conversionSource === 'tiktok');
     
     const calculateRetentionStats = (sourceUsers: any[]) => {
         if (sourceUsers.length === 0) return { churn: 0, avgLife: 0, cvr: 0 };
