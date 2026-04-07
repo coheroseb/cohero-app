@@ -281,7 +281,11 @@ export default function AdminOverviewPage() {
                             {isActivitiesLoading ? (
                                 <div className="p-10 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-slate-200" /></div>
                             ) : (
-                                activities?.map((act: any, idx: number) => <UserActivityItem key={act.id} activity={act} idx={idx} />)
+                                (() => {
+                                    const adminIds = new Set(users?.filter(u => u.role === 'admin').map(u => u.uid));
+                                    const studentActivities = activities?.filter((act: any) => !adminIds.has(act.userId)) || [];
+                                    return studentActivities.map((act: any, idx: number) => <UserActivityItem key={act.id} activity={act} idx={idx} />);
+                                })()
                             )}
                         </div>
                         <Link href="/admin/users" className="p-6 bg-slate-50 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-all">

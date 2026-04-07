@@ -147,13 +147,13 @@ export default function RealtimeDashboard() {
                         <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg"><Users className="w-5 h-5" /></div>
                         <div>
                             <h3 className="text-xl font-black text-slate-900 serif leading-none">Vagtstuen</h3>
-                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-2">Kolleger aktive Netop Nu ({activeUsers?.length || 0})</p>
+                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-2">Kolleger aktive Netop Nu ({activeUsers?.filter((u: any) => u.role !== 'admin').length || 0})</p>
                         </div>
                     </div>
                 </div>
                 
                 <div className="flex items-center gap-6 overflow-x-auto pb-4 px-2 custom-scrollbar scroll-smooth">
-                    {activeUsers?.map((u: any) => (
+                    {activeUsers?.filter((u: any) => u.role !== 'admin').map((u: any) => (
                         <motion.div 
                             key={u.uid}
                             initial={{ scale: 0.9, opacity: 0 }}
@@ -172,7 +172,7 @@ export default function RealtimeDashboard() {
                             </div>
                         </motion.div>
                     ))}
-                    {(!activeUsers || activeUsers.length === 0) && (
+                    {(!activeUsers || activeUsers.filter((u: any) => u.role !== 'admin').length === 0) && (
                         <div className="w-full py-6 flex items-center justify-center gap-4 opacity-20">
                             <Users className="w-6 h-6" />
                             <p className="text-[10px] font-black uppercase tracking-widest">Ingen logged-in brugere på vagt pt.</p>
