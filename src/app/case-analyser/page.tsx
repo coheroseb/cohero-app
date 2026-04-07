@@ -664,42 +664,42 @@ const CaseAnalyserPage: React.FC = () => {
                             <span className="text-[10px] font-black uppercase text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">Visningsmode</span>
                         </div>
                     </div>
-                    <div className="flex-1 bg-slate-100 flex items-center justify-center p-4">
+                    <div className="flex-1 bg-slate-100 flex flex-col p-4 gap-4 overflow-hidden">
+                        {/* Red Flags Section - Now placed clearly above the PDF */}
+                        {analysis?.redFlags && analysis.redFlags.length > 0 && (
+                            <div className="shrink-0 flex gap-3 overflow-x-auto pb-2 custom-scrollbar no-scrollbar">
+                                {analysis.redFlags.map((flag, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ y: -10, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className="flex items-center gap-3 bg-rose-600 text-white px-5 py-3 rounded-2xl shadow-lg border border-rose-500 shrink-0 min-w-[280px] max-w-[400px]"
+                                    >
+                                        <div className="relative flex items-center justify-center shrink-0">
+                                            <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute opacity-50" />
+                                            <div className="w-2.5 h-2.5 bg-white rounded-full relative" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-[8px] font-black uppercase tracking-widest text-white/70">Rød Lampe</span>
+                                                <span className="text-[8px] font-black uppercase tracking-widest bg-white/20 px-1.5 py-0.5 rounded text-white">{flag.type}</span>
+                                            </div>
+                                            <span className="text-[11px] font-bold leading-tight">{flag.description}</span>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+
                         <iframe 
                             src={`${pdfUrl}#toolbar=0`} 
-                            className="w-full h-full rounded-xl shadow-inner bg-white border border-slate-200"
+                            className="flex-1 w-full rounded-xl shadow-inner bg-white border border-slate-200"
                         />
                     </div>
                 </motion.div>
             )}
         </AnimatePresence>
-        
-        {/* Røde Lamper (Blinking Red Flags) */}
-        <div className="absolute top-12 left-12 flex flex-wrap gap-3 z-30 pointer-events-none pr-32">
-            {analysis?.redFlags?.map((flag, i) => (
-                <motion.div
-                    key={i}
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: i * 0.1 }}
-                    whileHover={{ scale: 1.05 }}
-                    className="pointer-events-auto flex items-center gap-3 bg-rose-600/90 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-rose-400 backdrop-blur-md cursor-help group"
-                    title={flag.description}
-                >
-                    <div className="relative flex items-center justify-center shrink-0">
-                        <div className="w-3 h-3 bg-white rounded-full animate-ping absolute opacity-50" />
-                        <div className="w-3 h-3 bg-white rounded-full relative" />
-                    </div>
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white/70 leading-none">Rød Lampe</span>
-                            <span className="text-[9px] font-black uppercase tracking-widest bg-white/20 px-1.5 py-0.5 rounded text-white leading-none">{flag.type}</span>
-                        </div>
-                        <span className="text-xs font-bold leading-tight mt-1">{flag.description}</span>
-                    </div>
-                </motion.div>
-            ))}
-        </div>
 
         {/* Floating action for history if needed */}
         {pdfUrl && !isAnalyzing && (
