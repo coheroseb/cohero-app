@@ -54,7 +54,7 @@ import {
   ReferenceDot
 } from 'recharts';
 import { jsPDF } from 'jspdf';
-import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction } from '@/app/actions';
+import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction } from '@/app/actions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 // --- Improved Components ---
@@ -119,6 +119,7 @@ export default function AdminFinansPage() {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isExporting, setIsExporting] = useState<string | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [growthRate, setGrowthRate] = useState(15); 
 
     useEffect(() => {
@@ -355,7 +356,31 @@ export default function AdminFinansPage() {
             doc.save(`Cohero_Financial_Report_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (err) {
             console.error("PDF generation failed:", err);
-        } finally { setIsExporting(null); }
+        } finally {
+            setIsExporting(null);
+        }
+    };
+
+    const handleSyncSubscriptions = async () => {
+        if (!window.confirm('Vil du synkronisere alle abonnementsstatusser med Stripe? Dette vil gennemgå alle brugere og sikre, at deres adgang matcher deres Stripe-betaling.')) return;
+        
+        setIsSyncing(true);
+        try {
+            const res = await syncAllSubscriptionsAction();
+            if (res.success) {
+                // Successful sync notification
+                const mRes = await getStripeDashboardMetricsAction();
+                if (mRes.success) setMetrics(mRes);
+                alert(res.message);
+            } else {
+                alert('Synkronisering fejlede: ' + res.message);
+            }
+        } catch (err: any) {
+            console.error("Sync error:", err);
+            alert('Der skete en fejl under synkronisering.');
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
     if (isUserLoading || !userProfile || userProfile.role !== 'admin') {
@@ -380,6 +405,20 @@ export default function AdminFinansPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
+                    <button 
+                        onClick={handleSyncSubscriptions}
+                        disabled={isSyncing || loading}
+                        className="flex items-center gap-6 p-6 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all group active:scale-95 disabled:opacity-50"
+                    >
+                        <div className="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all">
+                            {isSyncing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
+                        </div>
+                        <div className="text-left">
+                            <p className="text-[10px] font-black uppercase text-emerald-600/50 tracking-widest leading-none mb-1.5">System Audit</p>
+                            <p className="text-sm font-black text-emerald-900 leading-none">Sync Betalinger</p>
+                        </div>
+                    </button>
+
                     <button 
                         onClick={handleDownloadCSV}
                         disabled={!!isExporting || loading}

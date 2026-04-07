@@ -217,6 +217,76 @@ export async function redeemCodeAction(input: { code: string, userId: string }) 
     }
 }
 
+/**
+ * syncAllSubscriptionsAction:
+ * Admin tool to iterate through all paying users and ensure their 
+ * Firestore status matches their actual Stripe subscription state.
+ */
+export async function syncAllSubscriptionsAction() {
+    try {
+        // Find all users who have an active (or previously active) subscription ID
+        const usersSnap = await adminFirestore.collection('users')
+            .where('stripeSubscriptionId', '!=', null)
+            .get();
+
+        if (usersSnap.empty) return { success: true, message: "Ingen betalende brugere fundet.", updatedCount: 0 };
+
+        let updatedCount = 0;
+        let errorCount = 0;
+
+        // Sequence these slightly to avoid hitting Stripe rate limits if hundreds of users exist
+        for (const userDoc of usersSnap.docs) {
+            const userData = userDoc.data();
+            const subId = userData.stripeSubscriptionId;
+
+            try {
+                const subscription = await stripe.subscriptions.retrieve(subId as string);
+                const price = subscription.items.data[0].price;
+                let membershipLevel = 'Kollega+'; // Baseline for paying users
+
+                // Price to membership level mapping
+                if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
+                    membershipLevel = 'Group Pro';
+                } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
+                    membershipLevel = 'Kollega+';
+                } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
+                    membershipLevel = 'Semesterpakken';
+                } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
+                    membershipLevel = 'Kollega+';
+                }
+
+                const isActive = subscription.status === 'active' || subscription.status === 'trialing';
+
+                await userDoc.ref.set({
+                    stripeSubscriptionStatus: subscription.status,
+                    // If not active/trialing, downgrade them to free tier
+                    membership: isActive ? membershipLevel : 'Kollega',
+                    stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+                    stripeCancelAtPeriodEnd: subscription.cancel_at_period_end,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                updatedCount++;
+            } catch (err) {
+                console.error(`[SYNC-SUB] Failed for user ${userDoc.id}:`, err);
+                errorCount++;
+            }
+        }
+
+        return { 
+            success: true, 
+            message: `Synkronisering færdig: ${updatedCount} opdateret, ${errorCount} fejl.`,
+            updatedCount,
+            errorCount
+        };
+    } catch (error: any) {
+        console.error('Master sync failed:', error);
+        return { success: false, message: 'Kunne ikke fuldføre synkronisering.' };
+    }
+}
+
+
+
 
 import type Stripe from 'stripe';
 
