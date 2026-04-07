@@ -1375,6 +1375,25 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
              finalTrialDays = membership === 'Kollega+' ? 7 : 0;
         }
 
+        // --- FIRST TIME CUSTOMER CHECK ---
+        // If they already have a customer ID, check if they have (or had) any subscriptions before
+        if (customerId && finalTrialDays > 0) {
+            try {
+                const pastSubscriptions = await stripe.subscriptions.list({
+                    customer: customerId,
+                    status: 'all',
+                    limit: 1,
+                });
+                if (pastSubscriptions.data.length > 0) {
+                    console.log(`[StripeCheckout] Returning customer ${customerId} detected. Disabling trial.`);
+                    finalTrialDays = 0;
+                }
+            } catch (err) {
+                console.warn("[StripeCheckout] Could not verify past subscriptions, defaulting to 0 trial for safety:", err);
+                finalTrialDays = 0;
+            }
+        }
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             customer: customerId || undefined,
