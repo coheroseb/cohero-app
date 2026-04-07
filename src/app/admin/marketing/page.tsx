@@ -124,8 +124,8 @@ export default function AdminMarketingPage() {
             c.membershipLevel,
             `${c.durationInMonths} mdr`,
             c.redeemedBy ? 'Brugt' : 'Aktiv',
-            c.createdAt.toDate().toLocaleDateString('da-DK'),
-            c.redeemedAt ? c.redeemedAt.toDate().toLocaleDateString('da-DK') : '-'
+            c.createdAt?.toDate() ? c.createdAt.toDate().toLocaleDateString('da-DK') : 'Afventer...',
+            c.redeemedAt?.toDate() ? c.redeemedAt.toDate().toLocaleDateString('da-DK') : '-'
         ]);
         
         const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");

@@ -556,34 +556,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [showFeatureIntroRedirect, router, pathname]);
 
-  const openAuthPage = (mode: 'signin' | 'signup' = 'signup', priceId?: string) => {
+  const openAuthPage = useCallback((mode: 'signin' | 'signup' = 'signup', priceId?: string) => {
     const authUrl = isStandaloneGroups ? `/rum/groups/auth` : `/auth`;
     const callbackPart = pathname?.includes('/join/') ? `&callbackUrl=${encodeURIComponent(pathname)}` : '';
     router.push(`${authUrl}?mode=${mode}${priceId ? `&priceId=${priceId}` : ''}${callbackPart}`);
-  };
+  }, [isStandaloneGroups, pathname, router]);
   
-  const openTeamModal = () => {
+  const openTeamModal = useCallback(() => {
     if (user) {
       setIsTeamModalOpen(true);
     } else {
       openAuthPage('signin');
     }
-  };
+  }, [user, openAuthPage]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     if (auth) signOut(auth);
     if (isStandaloneGroups) {
       router.push('/rum/groups');
     } else {
       router.push('/');
     }
-  };
+  }, [auth, isStandaloneGroups, router]);
   
-  const handleResendVerification = async () => {
+  const handleResendVerification = useCallback(async () => {
     if (user && auth) {
       await sendEmailVerification(user);
     }
-  };
+  }, [user, auth]);
 
   useEffect(() => {
     const reloadUserOnFocus = async () => {

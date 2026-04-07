@@ -589,158 +589,156 @@ const PortalPageContent: React.FC = () => {
       }
   }, [user, userProfile]);
 
-  if (isAppLoading || !user || userProfile === undefined) {
-    return <AuthLoadingScreen />;
-  }
-
-  const handleSearch = (e?: React.FormEvent, overrideTerm?: string) => {
-    if (e) e.preventDefault();
-    const term = overrideTerm || searchQuery.trim();
-    if (!term) return;
-
-    const isLaw = term.includes('§') || 
-                  /(\d+)/.test(term) || 
-                  term.toLowerCase().includes('lov') || 
-                  term.toLowerCase().includes('bekendtgørelse') ||
-                  term.toLowerCase().includes('vejledning');
-
-    if (isLaw) {
-      // Record Activity
-      if (user && firestore) {
-        addDoc(collection(firestore, 'userActivities'), {
-            userId: user.uid,
-            userName: userProfile?.username || user.displayName || 'Anonym bruger',
-            actionText: `slog ${term} op.`,
-            createdAt: serverTimestamp(),
-        }).catch(err => console.error("Failed to record activity:", err));
-      }
-      router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
-      return;
-    }
-
-    if (isConceptLimitReached) {
-        toast({
-            variant: 'destructive',
-            title: 'Dagsgrænse nået',
-            description: 'Som Kollega-medlem har du 1 dagligt opslag i Begrebsguiden. Opgradér til Kollega+ for fri adgang.',
-        });
-        return;
-    }
-
-    // Record Activity
-    if (user && firestore) {
-        addDoc(collection(firestore, 'userActivities'), {
-            userId: user.uid,
-            userName: userProfile?.username || user.displayName || 'Anonym bruger',
-            actionText: `slog begrebet "${term}" op.`,
-            createdAt: serverTimestamp(),
-        }).catch(err => console.error("Failed to record activity:", err));
-    }
-    router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        const searchInput = document.getElementById('portal-search-input');
-        if (searchInput) {
-          searchInput.focus();
-        }
-      }
+    const getTimeOfDayGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 10) return "Godmorgen";
+        if (hour < 18) return "Goddag";
+        return "Godaften";
     };
 
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
-  }, []);
+    const handleSearch = (e?: React.FormEvent, overrideTerm?: string) => {
+        if (e) e.preventDefault();
+        const term = overrideTerm || searchQuery.trim();
+        if (!term) return;
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    if (value.trim().length > 1) {
-        setSuggestions(allKeywords.filter(c => c.toLowerCase().includes(value.toLowerCase())).slice(0, 5));
-        setShowSuggestions(true);
-    } else {
+        const isLaw = term.includes('§') || 
+                      /(\d+)/.test(term) || 
+                      term.toLowerCase().includes('lov') || 
+                      term.toLowerCase().includes('bekendtgørelse') ||
+                      term.toLowerCase().includes('vejledning');
+
+        if (isLaw) {
+            if (user && firestore) {
+                addDoc(collection(firestore, 'userActivities'), {
+                    userId: user.uid,
+                    userName: userProfile?.username || user.displayName || 'Anonym bruger',
+                    actionText: `slog ${term} op.`,
+                    createdAt: serverTimestamp(),
+                }).catch(err => console.error("Failed to record activity:", err));
+            }
+            router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+            return;
+        }
+
+        if (isConceptLimitReached) {
+            toast({
+                variant: 'destructive',
+                title: 'Dagsgrænse nået',
+                description: 'Som Kollega-medlem har du 1 dagligt opslag i Begrebsguiden. Opgradér til Kollega+ for fri adgang.',
+            });
+            return;
+        }
+
+        if (user && firestore) {
+            addDoc(collection(firestore, 'userActivities'), {
+                userId: user.uid,
+                userName: userProfile?.username || user.displayName || 'Anonym bruger',
+                actionText: `slog begrebet "${term}" op.`,
+                createdAt: serverTimestamp(),
+            }).catch(err => console.error("Failed to record activity:", err));
+        }
+        router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        if (value.trim().length > 1) {
+            setSuggestions(allKeywords.filter(c => c.toLowerCase().includes(value.toLowerCase())).slice(0, 5));
+            setShowSuggestions(true);
+        } else {
+            setShowSuggestions(false);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
+    const handleSuggestionClick = (term: string) => {
+        setSearchQuery(term);
         setShowSuggestions(false);
+        handleSearch(undefined, term);
+    };
+
+    useEffect(() => {
+        const down = (e: KeyboardEvent) => {
+            if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                const searchInput = document.getElementById('portal-search-input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+        };
+
+        document.addEventListener('keydown', down);
+        return () => document.removeEventListener('keydown', down);
+    }, []);
+
+    const toolCategories = useMemo(() => {
+        const categories = [
+            {
+                title: "Praksis & Myndighed",
+                subtitle: "Værktøjer til din daglige myndighedsudøvelse",
+                icon: <Gavel className="w-6 h-6 text-slate-700" />,
+                items: [
+                    { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
+                    { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse", limit: limits.caseAnalyser },
+                    { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
+                    { title: "Second Opinion", desc: "Vurdering af klagegrundlag", icon: SearchCode, path: "/second-opinion", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Klage-Tjek", limit: limits.opinion, limitText: 'denne md.' },
+                    (userProfile?.profession === 'Socialrådgiver' || userProfile?.role === 'admin') ? { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Job" } : null,
+                ].filter(Boolean) as any
+            },
+            {
+                title: "Vidensportalen",
+                subtitle: "Dyk ned i jura, forskning og data",
+                icon: <Scale className="w-6 h-6 text-rose-500" />,
+                items: [
+                    { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
+                    { title: "VIVE Indsigt", desc: "Dansk velfærdsforskning", icon: Building, path: "/vive-indsigt", color: "text-cyan-600 bg-cyan-50 border-cyan-100", badge: "Forskning" },
+                    { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
+                    { title: "Politisk Puls", desc: "Seneste nyt fra Folketinget", icon: Gavel, path: "/folketinget", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Live" },
+                    { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
+                    { title: "Statslig Myndighed", desc: "Forstå arbejdet i staten", icon: Globe, path: "/statslig-myndighed", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Akademi" },
+                ]
+            },
+            {
+                title: "Akademisk & Studieværktøjer",
+                subtitle: "Styrk den røde tråd i dit studie",
+                icon: <GraduationCap className="w-6 h-6 text-indigo-500" />,
+                items: [
+                    { title: "Eksamens-Arkitekten", desc: "Design din opgavestruktur", icon: Layout, path: "/exam-architect", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "AI-Draft", limit: limits.architect, limitText: 'denne md.' },
+                    { title: "Mundtlig Eksamenstræner", desc: "Gennemgang af dit oplæg", icon: Mic, path: "/mundtlig-eksamenstraener", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Træning", limit: limits.oralExam, limitText: 'i dag' },
+                    { title: "Seminar-Arkitekten", desc: "Fra slides til videnskort", icon: FileSearch, path: "/seminar-architect", color: "text-violet-600 bg-violet-50 border-violet-100", badge: "Transform" },
+                    { title: "Kilde-Generator", desc: "Perfekte kildehenvisninger", icon: Quote, path: "/kilde-generator", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Ref" },
+                    { title: "Pensum", desc: "Oversigt over din litteratur", icon: BookMarked, path: "/pensum", color: "text-slate-600 bg-slate-50 border-slate-100", badge: "Bøger" },
+                    { title: "Quiz-Creator", desc: "Test din viden med AI-quiz", icon: Play, path: "/quiz-creator", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Test" },
+                    { title: "Mit Semester", desc: "Dybdegående semesteroverblik", icon: Layers, path: "/mit-semester", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Ny" },
+                    { title: "Semester-Planlægger", desc: "Intelligent planlægning", icon: CalendarDays, path: "/semester-planlaegger", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sync" }
+                ]
+            },
+            {
+                title: "Karriere & Netværk",
+                subtitle: "Forbered dig på arbejdslivet",
+                icon: <Compass className="w-6 h-6 text-amber-500" />,
+                items: [
+                    { title: "Jobopslag", desc: "Se målrettede stillinger fra arbejdsgivere", icon: Briefcase, path: "/jobopslag", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Nyt" },
+                    { title: "Institutionssøgning", desc: "Find din næste praktikplads", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
+                    { title: "Praktik-Rating", desc: "Se andres erfaringer i praktik", icon: Star, path: "/praktik-rating", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Reviews" },
+                    { title: "Faglige Tendenser", desc: "Hvad rører sig på studiet?", icon: Compass, path: "/tendenser", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Insights" }
+                ]
+            }
+        ];
+
+        return categories;
+    }, [limits, userProfile?.profession, userProfile?.role]);
+
+    if (isAppLoading || !user || userProfile === undefined) {
+        return <AuthLoadingScreen />;
     }
-  };
-
-  const handleSuggestionClick = (term: string) => {
-    setSearchQuery(term);
-    setShowSuggestions(false);
-    handleSearch(undefined, term);
-  };
-
-  const getTimeOfDayGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 10) return "Godmorgen";
-    if (hour < 18) return "Goddag";
-    return "Godaften";
-  };
-  
-  const toolCategories = useMemo(() => {
-    const categories = [
-      {
-        title: "Praksis & Myndighed",
-        subtitle: "Værktøjer til din daglige myndighedsudøvelse",
-        icon: <Gavel className="w-6 h-6 text-slate-700" />,
-        items: [
-          { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
-          { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse", limit: limits.caseAnalyser },
-          { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
-          { title: "Second Opinion", desc: "Vurdering af klagegrundlag", icon: SearchCode, path: "/second-opinion", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Klage-Tjek", limit: limits.opinion, limitText: 'denne md.' },
-          (userProfile?.profession === 'Socialrådgiver' || userProfile?.role === 'admin') ? { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Job" } : null,
-        ].filter(Boolean) as any
-      },
-      {
-        title: "Vidensportalen",
-        subtitle: "Dyk ned i jura, forskning og data",
-        icon: <Scale className="w-6 h-6 text-rose-500" />,
-        items: [
-          { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
-          { title: "VIVE Indsigt", desc: "Dansk velfærdsforskning", icon: Building, path: "/vive-indsigt", color: "text-cyan-600 bg-cyan-50 border-cyan-100", badge: "Forskning" },
-          { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
-          { title: "Politisk Puls", desc: "Seneste nyt fra Folketinget", icon: Gavel, path: "/folketinget", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Live" },
-          { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
-          { title: "Statslig Myndighed", desc: "Forstå arbejdet i staten", icon: Globe, path: "/statslig-myndighed", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Akademi" },
-        ]
-      },
-      {
-        title: "Akademisk & Studieværktøjer",
-        subtitle: "Styrk den røde tråd i dit studie",
-        icon: <GraduationCap className="w-6 h-6 text-indigo-500" />,
-        items: [
-          { title: "Eksamens-Arkitekten", desc: "Design din opgavestruktur", icon: Layout, path: "/exam-architect", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "AI-Draft", limit: limits.architect, limitText: 'denne md.' },
-          { title: "Mundtlig Eksamenstræner", desc: "Gennemgang af dit oplæg", icon: Mic, path: "/mundtlig-eksamenstraener", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Træning", limit: limits.oralExam, limitText: 'i dag' },
-          { title: "Seminar-Arkitekten", desc: "Fra slides til videnskort", icon: FileSearch, path: "/seminar-architect", color: "text-violet-600 bg-violet-50 border-violet-100", badge: "Transform" },
-          { title: "Kilde-Generator", desc: "Perfekte kildehenvisninger", icon: Quote, path: "/kilde-generator", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Ref" },
-          { title: "Pensum", desc: "Oversigt over din litteratur", icon: BookMarked, path: "/pensum", color: "text-slate-600 bg-slate-50 border-slate-100", badge: "Bøger" },
-          { title: "Quiz-Creator", desc: "Test din viden med AI-quiz", icon: Play, path: "/quiz-creator", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Test" },
-          { title: "Mit Semester", desc: "Dybdegående semesteroverblik", icon: Layers, path: "/mit-semester", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Ny" },
-          { title: "Semester-Planlægger", desc: "Intelligent planlægning", icon: CalendarDays, path: "/semester-planlaegger", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sync" }
-        ]
-      },
-      {
-        title: "Karriere & Netværk",
-        subtitle: "Forbered dig på arbejdslivet",
-        icon: <Compass className="w-6 h-6 text-amber-500" />,
-        items: [
-          { title: "Jobopslag", desc: "Se målrettede stillinger fra arbejdsgivere", icon: Briefcase, path: "/jobopslag", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Nyt" },
-          { title: "Institutionssøgning", desc: "Find din næste praktikplads", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
-          { title: "Praktik-Rating", desc: "Se andres erfaringer i praktik", icon: Star, path: "/praktik-rating", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Reviews" },
-          { title: "Faglige Tendenser", desc: "Hvad rører sig på studiet?", icon: Compass, path: "/tendenser", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Insights" }
-        ]
-      }
-    ];
-
-    return categories;
-  }, [limits]);
 
   const handleTrendClick = (tag: string) => {
     const isLaw = tag.includes('§') || 

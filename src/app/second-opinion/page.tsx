@@ -383,16 +383,16 @@ const SecondOpinionPageContent = () => {
         if (!curr) return null;
 
         const modId = selectedModuleId.toLowerCase();
-        const module = curr.modules?.find((m: any) => {
+        const foundModule = curr.modules?.find((m: any) => {
             const id = (m.id || '').toLowerCase();
             const name = (m.name || '').toLowerCase();
             return id === modId || name === modId || id.includes(modId) || name.includes(modId);
         }) || curr.modules?.[parseInt(selectedModuleId) - 1];
 
-        if (!module) return null;
+        if (!foundModule) return null;
 
         return {
-            ...module,
+            ...foundModule,
             curriculumTitle: curr.title || 'Studieordning'
         };
     }, [curriculums, selectedCurriculumId, selectedModuleId]);
