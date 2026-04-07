@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
-import { stripe } from '@/lib/stripe';
+import { stripe, getMembershipFromPriceId } from '@/lib/stripe';
 import { initializeServerFirebase } from '@/firebase/server-init';
 
 const relevantEvents = new Set([
@@ -44,18 +44,7 @@ export async function POST(req: NextRequest) {
             const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
             const userRef = firestore.collection('users').doc(userId);
             const price = subscription.items.data[0].price;
-            let membershipLevel = price.nickname || 'Kollega+';
-
-            // Explicit mapping for specific price IDs to ensure reliability
-            if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
-                membershipLevel = 'Group Pro';
-            } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
-                membershipLevel = 'Kollega+';
-            } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
-                membershipLevel = 'Semesterpakken';
-            } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-                membershipLevel = 'Kollega+';
-            }
+            const membershipLevel = getMembershipFromPriceId(price.id);
             
             await userRef.set({
                 stripeCustomerId: session.customer as string,
@@ -77,17 +66,7 @@ export async function POST(req: NextRequest) {
           if (!userRefSnap.empty) {
             const userDoc = userRefSnap.docs[0];
             const price = subscription.items.data[0].price;
-            let membershipLevel = price.nickname || 'Kollega+';
-
-            if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
-                membershipLevel = 'Group Pro';
-            } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
-                membershipLevel = 'Kollega+';
-            } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
-                membershipLevel = 'Semesterpakken';
-            } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-                membershipLevel = 'Kollega+';
-            }
+            const membershipLevel = getMembershipFromPriceId(price.id);
 
             const updateData: any = {
                 stripeSubscriptionStatus: subscription.status,
@@ -118,17 +97,7 @@ export async function POST(req: NextRequest) {
                 if (!userRefSnap.empty) {
                     const userDoc = userRefSnap.docs[0];
                     const price = subscription.items.data[0].price;
-                    let membershipLevel = 'Kollega+';
-
-                    if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
-                        membershipLevel = 'Group Pro';
-                    } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
-                        membershipLevel = 'Kollega+';
-                    } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
-                        membershipLevel = 'Semesterpakken';
-                    } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-                        membershipLevel = 'Kollega+';
-                    }
+                    const membershipLevel = getMembershipFromPriceId(price.id);
 
                     await userDoc.ref.set({
                         membership: membershipLevel,

@@ -242,18 +242,7 @@ export async function syncAllSubscriptionsAction() {
             try {
                 const subscription = await stripe.subscriptions.retrieve(subId as string);
                 const price = subscription.items.data[0].price;
-                let membershipLevel = 'Kollega+'; // Baseline for paying users
-
-                // Price to membership level mapping
-                if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
-                    membershipLevel = 'Group Pro';
-                } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
-                    membershipLevel = 'Kollega+';
-                } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
-                    membershipLevel = 'Semesterpakken';
-                } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-                    membershipLevel = 'Kollega+';
-                }
+                const membershipLevel = getMembershipFromPriceId(price.id);
 
                 const isActive = subscription.status === 'active' || subscription.status === 'trialing';
 
@@ -292,7 +281,7 @@ import type Stripe from 'stripe';
 
 
 // Third-party and utility imports
-import { stripe, isStripeConfigured } from '@/lib/stripe';
+import { stripe, isStripeConfigured, getMembershipFromPriceId } from '@/lib/stripe';
 import { Resend } from 'resend';
 
 import { headers } from 'next/headers';
@@ -595,7 +584,7 @@ export async function explainConceptAction(input: { concept: string, profession?
     return callFirebaseFlow('explainConceptFlow', { ...input });
 }
 
-export async function explainConceptWithAnalogyAction(input: any) { return callFirebaseFlow('explainConceptWithAnalogyFlow', input); }
+export async function explainConceptWithAnalogyAction(input: any) { return callFirebaseFlow('explainConceptWithAnalogyAction', input); }
 export async function getCaseConsequenceAction(input: any) { return callFirebaseFlow('getCaseConsequenceFlow', input); }
 
 export async function generateQuizAction(input: { topic: string, numQuestions: number, difficulty?: 'easy' | 'medium' | 'hard', lawId?: string, contextText?: string, profession?: string }): Promise<Types.QuizGeneratorOutput> {
@@ -1379,6 +1368,13 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
     }
 
     try {
+        // Determine trial days based on price type if not explicitly provided
+        let finalTrialDays = trialDays;
+        if (finalTrialDays === undefined) {
+             const membership = getMembershipFromPriceId(priceId);
+             finalTrialDays = membership === 'Kollega+' ? 7 : 0;
+        }
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             customer: customerId || undefined,
@@ -1389,9 +1385,9 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
                     quantity: 1,
                 },
             ],
-            subscription_data: {
-                trial_period_days: trialDays !== undefined ? trialDays : 7,
-            },
+            subscription_data: finalTrialDays > 0 ? {
+                trial_period_days: finalTrialDays,
+            } : undefined,
             mode: 'subscription',
             allow_promotion_codes: true,
             success_url: success_url,
@@ -1429,18 +1425,7 @@ export async function processStripeSession(sessionId: string): Promise<{ success
         }
 
         const price = subscription.items.data[0].price;
-        let membershipLevel = price.nickname || 'Kollega+';
-
-        // Explicit mapping for specific price IDs to ensure reliability
-        if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
-            membershipLevel = 'Group Pro';
-        } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
-            membershipLevel = 'Kollega+';
-        } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
-            membershipLevel = 'Semesterpakken';
-        } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-            membershipLevel = 'Kollega+';
-        }
+        const membershipLevel = getMembershipFromPriceId(price.id);
 
         const updateData = {
             stripeSubscriptionId: subscription.id,
@@ -1549,17 +1534,7 @@ export async function syncSubscriptionStatusAction(stripeCustomerId: string): Pr
 
         const sub = subscriptions.data[0];
         const price = sub.items.data[0].price;
-        let membershipLevel = price.nickname || 'Kollega+';
-
-        if (price.id === process.env.STRIPE_GROUP_PRO_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_GROUP_PRO_PRICE_ID) {
-            membershipLevel = 'Group Pro';
-        } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID) {
-            membershipLevel = 'Kollega+';
-        } else if (price.id === process.env.STRIPE_SEMESTERPAKKEN_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID) {
-            membershipLevel = 'Semesterpakken';
-        } else if (price.id === process.env.STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID || price.id === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PLUS_PRICE_ID) {
-            membershipLevel = 'Kollega+';
-        }
+        const membershipLevel = getMembershipFromPriceId(price.id);
 
         // We only grant premium membership if the status is active or trialing
         const isActive = sub.status === 'active' || sub.status === 'trialing';
