@@ -99,11 +99,9 @@ export async function POST(req: NextRequest) {
             if (subscription.status === 'active' || subscription.status === 'trialing') {
                 updateData.membership = membershipLevel;
                 updateData.stripePriceId = price.id;
-            } else if (subscription.status === 'unpaid' || subscription.status === 'past_due' || subscription.status === 'canceled') {
-                // Graceful degradation instead of instant hard block
-                if (subscription.status === 'canceled') {
-                    updateData.membership = 'Kollega';
-                }
+            } else if (subscription.status === 'unpaid' || subscription.status === 'past_due' || subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
+                // Downgrade to free tier on payment issues or cancellation
+                updateData.membership = 'Kollega';
             }
 
             await userDoc.ref.set(updateData, { merge: true });
@@ -135,7 +133,9 @@ export async function POST(req: NextRequest) {
                     await userDoc.ref.set({
                         membership: membershipLevel,
                         stripeSubscriptionStatus: 'active',
-                        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString()
+                        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+                        stripeLastPaymentFailed: false, // Reset failure flag
+                        stripeLastPaymentError: null
                     }, { merge: true });
                 }
             }
@@ -148,9 +148,9 @@ export async function POST(req: NextRequest) {
             
             if (!userRefSnap.empty) {
                 const userDoc = userRefSnap.docs[0];
-                // We keep the membership for now until the subscription status actually changes to 'unpaid' or 'canceled'
-                // But we log the failure in the user document
+                // Immediate downgrade on payment failure as per user request
                 await userDoc.ref.set({
+                    membership: 'Kollega', // Downgrade to free tier
                     stripeLastPaymentFailed: true,
                     stripeLastPaymentError: invoice.last_finalization_error?.message || 'Payment failed'
                 }, { merge: true });
