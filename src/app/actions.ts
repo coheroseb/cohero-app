@@ -160,6 +160,63 @@ export async function callFirebaseFlow(flowName: string, data: any) {
   }
 }
 
+/**
+ * redeemCodeAction:
+ * Handles the server-side logic for redeeming internal Cohéro marketing codes.
+ * This bypasses Firestore client-side permission issues as it uses the Admin SDK.
+ */
+export async function redeemCodeAction(input: { code: string, userId: string }) {
+    const { code, userId } = input;
+    const cleanCode = code.trim().toUpperCase();
+    
+    try {
+        const redemptionRef = adminFirestore.collection('redemptionCodes');
+        const q = await redemptionRef.where('code', '==', cleanCode).limit(1).get();
+        
+        if (q.empty) {
+            throw new Error('Koden er ikke gyldig.');
+        }
+        
+        const codeDoc = q.docs[0];
+        const codeData = codeDoc.data();
+        
+        if (codeData.redeemedBy) {
+            throw new Error('Koden er allerede blevet brugt.');
+        }
+
+        const expiryDate = new Date();
+        expiryDate.setMonth(expiryDate.getMonth() + (codeData.durationInMonths || 1));
+
+        const batch = adminFirestore.batch();
+        
+        // Mark code as used
+        batch.update(codeDoc.ref, {
+            redeemedBy: userId,
+            redeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        
+        // Update user membership
+        const userRef = adminFirestore.collection('users').doc(userId);
+        batch.update(userRef, {
+            membership: codeData.membershipLevel,
+            stripeCurrentPeriodEnd: expiryDate.toISOString(),
+            stripePriceId: `redeemed-${cleanCode}`,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        await batch.commit();
+        
+        return { 
+            success: true, 
+            message: `Tillykke! Du har nu ${codeData.membershipLevel} indtil ${expiryDate.toLocaleDateString('da-DK')}.`,
+            membership: codeData.membershipLevel
+        };
+    } catch (error: any) {
+        console.error('Redemption error:', error);
+        return { success: false, message: error.message || 'Der skete en fejl under indløsning.' };
+    }
+}
+
 
 import type Stripe from 'stripe';
 
@@ -305,13 +362,7 @@ export async function syncCalendarAvailability(
 // AI Actions (wrapping flows)
 export async function recommendContentAction(input: any) { return callFirebaseFlow('recommendContentFlow', input); }
 
-export async function generateNewCase(input: Types.GenerateCaseInput): Promise<Types.GenerateCaseOutput> {
-    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
-    const lawContext = fetchRes?.data || '';
-    return callFirebaseFlow('generateCaseFlow', { ...input, lawContext });
-}
 
-export const generateCaseAction = generateNewCase;
 
 export async function getSecondOpinionAction(input: any) { return callFirebaseFlow('getSecondOpinionFlow', input); }
 
@@ -438,6 +489,15 @@ export async function reviseCaseAction(input: any) { return callFirebaseFlow('re
 export async function researchDiscoveryAction(input: Types.ResearchDiscoveryInput): Promise<Types.ResearchDiscoveryOutput> {
     return callFirebaseFlow('researchDiscoveryFlow', input);
 }
+
+export async function generateNewCase(input: Types.GenerateCaseInput): Promise<any> {
+    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
+    const lawContext = fetchRes?.data || '';
+    return callFirebaseFlow('generateCaseFlow', { ...input, lawContext });
+}
+
+export const generateCaseAction = generateNewCase;
+
 
 export async function generateVerificationEmailAction(input: Types.VerificationEmailInput): Promise<{ success: boolean; message: string; }> {
     try {

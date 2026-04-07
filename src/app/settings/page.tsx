@@ -8,7 +8,7 @@ import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, C
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { cancelSubscription, createPortalSessionAction } from '@/app/actions';
+import { cancelSubscription, createPortalSessionAction, redeemCodeAction } from '@/app/actions';
 import DeleteAccountModal from '@/components/DeleteAccountModal';
 import { deleteUser, updateProfile } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
@@ -217,51 +217,25 @@ export default function SettingsPage() {
 
   const handleRedeemCode = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!user || !firestore || !redemptionCode) return;
+      if (!user || !redemptionCode) return;
 
       setIsRedeeming(true);
       setRedeemStatus(null);
       
-      const cleanCode = redemptionCode.trim().toUpperCase();
-      const userRef = doc(firestore, 'users', user.uid);
-      
       try {
-          const q = query(collection(firestore, 'redemptionCodes'), where('code', '==', cleanCode), limit(1));
-          const snap = await getDocs(q);
-          
-          if (snap.empty) {
-              throw new Error('Koden er ikke gyldig.');
-          }
-          
-          const codeDoc = snap.docs[0];
-          const codeRef = doc(firestore, 'redemptionCodes', codeDoc.id);
-          const codeData = codeDoc.data();
-          
-          if (codeData.redeemedBy) {
-              throw new Error('Koden er allerede blevet brugt.');
-          }
-
-          const expiryDate = new Date();
-          expiryDate.setMonth(expiryDate.getMonth() + codeData.durationInMonths);
-
-          const batch = writeBatch(firestore);
-          
-          batch.update(codeRef, {
-              redeemedBy: user.uid,
-              redeemedAt: serverTimestamp(),
+          const result = await redeemCodeAction({
+              code: redemptionCode,
+              userId: user.uid
           });
           
-          batch.update(userRef, {
-              membership: codeData.membershipLevel,
-              stripeCurrentPeriodEnd: expiryDate.toISOString(),
-              stripePriceId: `redeemed-${redemptionCode}`
-          });
-          
-          await batch.commit();
+          if (!result.success) {
+              throw new Error(result.message);
+          }
 
           await refetchUserProfile();
-          setRedeemStatus({ type: 'success', message: `Tillykke! Du har nu ${codeData.membershipLevel} indtil ${expiryDate.toLocaleDateString('da-DK')}.`});
+          setRedeemStatus({ type: 'success', message: result.message! });
           setRedemptionCode('');
+          toast({ title: "Kode indløst!", description: result.message });
 
       } catch (err: any) {
           console.error("Redemption error:", err);

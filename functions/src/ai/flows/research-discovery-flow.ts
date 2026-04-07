@@ -8,116 +8,91 @@ import { serpApiResearchTool } from '../tools/serpapi-tool';
 import { z } from 'genkit';
 
 /**
- * STEP 1: Grounded Text Generation (Using SerpApi results as context)
- * we provide external search results manually to avoid built-in grounding redirect issues.
+ * Research Discovery Flow
+ * Pipeline: SerpApi Search -> Structured Research Generation
  */
-const groundedTextPrompt = ai.definePrompt({
-  name: 'groundedTextPrompt',
-  input: { 
-    schema: ResearchDiscoveryInputSchema.extend({
-      scholarContext: z.string().optional()
-    })
-  },
-  prompt: `Du er en førende akademisk forsker. Din opgave er at lave en dybdegående analyse af dette emne.
-Brug følgende søgeresultater fra Google Scholar til at understøtte din analyse.
+const researchDiscoveryPrompt = ai.definePrompt({
+    name: 'researchDiscoveryPrompt',
+    input: {
+        schema: ResearchDiscoveryInputSchema.extend({
+            scholarContext: z.string().optional()
+        })
+    },
+    output: { schema: ResearchDiscoveryDataSchema },
+    prompt: `Du er en førende akademisk forsker med speciale i {{profession}} og {{category}}. 
+Din opgave er at udarbejde en dybdegående forskningsanalyse baseret på både nyere eksterne kilder og den studerendes eget materiale.
 
-GOOGLE SCHOLAR DATA:
+GOOGLE SCHOLAR DATA (Nyeste forskning):
+---
 {{scholarContext}}
+---
 
-STUDERENDES KONTEKST:
-Kategori: {{category}}
-Profession: {{profession}}
-Uddrag: {{seminarContext}}
+STUDERENDES KONTEKST (Indhold fra seminarer):
+---
+{{seminarContext}}
+---
 
 OPGAVE:
-1. Beskriv "State of Research" (aktuel viden og videnskabelig konsensus).
-2. Find 3-5 ægte kilder med fungerende URL'er fra ovenstående data. 
-3. Foreslå 3 innovative forskningsveje (titel, problemformulering, spørgsmål, teori).
+1. State of Research: Giv en præcis beskrivelse af den aktuelle videnskabelige konsensus og viden inden for {{category}} i en dansk kontekst. Inddrag både den eksterne forskning fra Google Scholar og hvordan den studerendes materiale taler ind i dette.
+2. Kilder: Identificer 3-5 konkrete kilder med fungerende URL'er fra Google Scholar dataen. Sørg for at APA-referencen er korrekt.
+3. Forskningsveje: Foreslå 3 innovative og akademisk stærke forskningsveje (problemstillinger). Disse skal tage udgangspunkt i "huller" i den studerendes nuværende seminar-materiale sammenholdt med den nyeste forskning.
 
 VIGTIGT: 
-- Skriv dit svar i et klart akademisk sprog. 
-- Du SKAL inkludere URL'er til kilderne.
-- BRUG KUN kilder fra den kontekst du har fået stillet til rådighed (Google Scholar Data).
-- Sørg for at alle links fungerer og er direkte (ingen redirects).
-- Du SKAL tilpasse din analyse til professionen {{profession}}. Hvis det er "Pædagog", skal du fokusere på pædagogisk forskning og pædagogiske metoder. Hvis det er "Socialrådgiver", skal du fokusere på socialfaglige metoder, myndighedsarbejde og sociallovgivning.
-- VIGTIGT: Lav din vurdering udelukkende på baggrund af materialet og de fundne kilder.`
+- Svaret SKAL være på dansk og i et klart akademisk sprog.
+- Du må bruge din egen dybe viden om {{profession}}, men konkrete kilde-henvisninger skal primært stamme fra den leverede Google Scholar data.
+- Sørg for at alle links fungerer og er direkte.
+- Tilpas analysen specifikt til professionen {{profession}}.`
 });
 
-/**
- * STEP 2: JSON Structuring
- */
-const structureResearchPrompt = ai.definePrompt({
-    name: 'structureResearchPrompt',
-    input: { schema: z.object({ text: z.string() }) },
-    output: { schema: ResearchDiscoveryDataSchema },
-    prompt: `Konverter følgende forsknings-analyse til en struktureret JSON-data pakke.
-Vær omhyggelig med at bevare alle kilder, URL'er og de 3 forskningsforslag præcis som de er beskrevet.
-
-TEKST DER SKAL KONVERTERES:
----
-{{text}}
----`
-});
-
-/**
- * The main flow for research discovery.
- * Pipeline: SerpApi Search -> Grounded Text Gen -> JSON Structuring
- */
 export const researchDiscovery = ai.defineFlow(
-  {
-    name: 'researchDiscoveryFlow',
-    inputSchema: ResearchDiscoveryInputSchema,
-    outputSchema: ResearchDiscoveryOutputSchema,
-  },
-  async (input) => {
-    try {
-      console.log(`[RESEARCH-DISCOVERY] Phase 1: SerpApi Lookup...`);
-      
-      // Fetch Scholar data via SerpApi
-      const scholarResults = await serpApiResearchTool({
-        query: `${input.category} ${input.profession || ''} academic research Danish peer reviewed`,
-        numResults: 6
-      });
+    {
+        name: 'researchDiscoveryFlow',
+        inputSchema: ResearchDiscoveryInputSchema,
+        outputSchema: ResearchDiscoveryOutputSchema,
+    },
+    async (input) => {
+        try {
+            console.log(`[RESEARCH-DISCOVERY] Phase 1: SerpApi Lookup for ${input.category}...`);
+            
+            // Fetch Scholar data via SerpApi with improved Danish-centric query
+            const searchQuery = `${input.category} ${input.profession || ''} forskning dansk peer reviewed`;
+            const scholarResults = await serpApiResearchTool({
+                query: searchQuery,
+                numResults: 8 // Slightly more results for better coverage
+            });
 
-      const scholarContext = scholarResults.results.length > 0
-        ? scholarResults.results.map(r => `- ${r.title} (${r.source}): ${r.link} | ${r.snippet}`).join('\n')
-        : "Ingen specifikke scholar-resultater fundet.";
+            const scholarContext = scholarResults.results.length > 0
+                ? scholarResults.results.map(r => `- ${r.title} (${r.source}): ${r.link} | ${r.snippet}`).join('\n')
+                : "Ingen specifikke nyere scholar-resultater fundet. Brug din generelle viden om feltet.";
 
-      // Truncate seminar context
-      const truncatedContext = input.seminarContext?.substring(0, 8000) || '';
+            // Remove the 8000 char bottleneck - Gemini can handle much more. 
+            // We still cap it at a reasonable safety limit (e.g., 100k) to avoid extreme cases.
+            const safeContext = input.seminarContext?.substring(0, 100000) || '';
 
-      console.log(`[RESEARCH-DISCOVERY] Phase 2: Grounded Text Generation (via Manual Context)...`);
-      
-      const textResult = await groundedTextPrompt({
-        category: input.category,
-        profession: input.profession,
-        seminarContext: truncatedContext,
-        scholarContext
-      });
+            console.log(`[RESEARCH-DISCOVERY] Phase 2: Generating Structured Research Analysis...`);
+            
+            const result = await researchDiscoveryPrompt({
+                category: input.category,
+                profession: input.profession,
+                seminarContext: safeContext,
+                scholarContext
+            });
 
-      const groundedText = textResult.text;
-      if (!groundedText) throw new Error("Grounded generation failed to return text");
-
-      console.log(`[RESEARCH-DISCOVERY] Phase 3: JSON Structuring...`);
-
-      const jsonResult = await structureResearchPrompt({ text: groundedText });
-
-      if (!jsonResult.output) {
-          throw new Error("Structuring failed to return valid data");
-      }
-
-      const data = jsonResult.output;
-      
-      return {
-        data,
-        usage: {
-          inputTokens: (textResult.usage?.inputTokens || 0) + (jsonResult.usage?.inputTokens || 0),
-          outputTokens: (textResult.usage?.outputTokens || 0) + (jsonResult.usage?.outputTokens || 0),
+            if (!result.output) {
+                throw new Error("Generation failed to return valid structured data");
+            }
+            
+            return {
+                data: result.output,
+                usage: {
+                    inputTokens: result.usage?.inputTokens || 0,
+                    outputTokens: result.usage?.outputTokens || 0,
+                }
+            };
+        } catch (error: any) {
+            console.error(`[RESEARCH-DISCOVERY] Pipeline failed:`, error);
+            throw error;
         }
-      };
-    } catch (error: any) {
-      console.error(`[RESEARCH-DISCOVERY] pipeline failed:`, error);
-      throw error;
     }
-  }
 );
+

@@ -382,6 +382,41 @@ export const ReviseCaseOutputSchema = z.object({
 });
 
 // ==========================================
+// CASE GENERATION SCHEMAS
+// ==========================================
+
+export const CaseDataSchema = z.object({
+  title: z.string().describe('A concise title for the case study.'),
+  topic: z.string().describe('The topic of the case study.'),
+  scenario: z.string().describe('A detailed, realistic, and fictional scenario describing the situation. It must be in Danish and use HTML <p> tags for paragraph breaks.'),
+  protagonists: z.array(z.string()).describe('A list of the key individuals involved in the case (e.g., "Mette, 34, mor", "Lars, 8, søn").'),
+  initialObservation: z.string().describe('A brief, initial observation or report that kicks off the case, like a note from a teacher or a police report. It must be in Danish.'),
+  dilemmas: z.array(z.object({
+    dilemma: z.string().describe("The core professional dilemma the social work student must address at this step."),
+    choices: z.array(z.object({
+      id: z.enum(['A', 'B', 'C']),
+      text: z.string().describe("The text describing the action for this choice.")
+    })).length(3).describe("An array of three distinct, plausible actions for this dilemma.")
+  })).length(3).describe("An array of exactly 3 sequential dilemmas the user will face.")
+});
+
+export const GenerateCaseInputSchema = z.object({
+  topic: z.string().describe('A specific topic or area of social work to focus the case on (e.g., child neglect, substance abuse in a family, youth crime).'),
+  profession: z.string().optional().describe('The profession of the user (e.g., Socialrådgiver, Pædagog).'),
+  lawContext: z.string().describe('A list of relevant laws for context.'),
+});
+
+export const GenerateCaseOutputSchema = z.object({
+  caseData: CaseDataSchema,
+  usage: UsageSchema,
+});
+
+export type GenerateCaseInput = z.infer<typeof GenerateCaseInputSchema>;
+export type CaseData = z.infer<typeof CaseDataSchema>;
+export type GenerateCaseOutput = z.infer<typeof GenerateCaseOutputSchema>;
+
+
+// ==========================================
 // EXAM & STUDY SCHEMAS
 // ==========================================
 
