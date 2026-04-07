@@ -642,6 +642,12 @@ function SeminarArchitectPageContent() {
 
       setProcessingSteps(prev => prev.map((s, idx) => idx === files.length ? { ...s, status: 'completed' } : s));
       toast({ title: 'Videnskort Gemt!', description: `Analyserede ${response.data.slides.length} slides fra ${files.length} filer.` });
+      
+      // Navigate to overview after a short delay so the user sees the success state
+      setTimeout(() => {
+        router.push('/mine-seminarer');
+      }, 1500);
+
     } catch (err: any) {
       console.error('[SeminarArchitect]', err);
       setError(err.message || 'Der opstod en fejl under analysen. Prøv venligst igen.');
