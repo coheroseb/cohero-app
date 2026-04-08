@@ -2685,7 +2685,8 @@ export async function getPolicyAction(type: PolicyType) {
             success: true, 
             data: {
                 ...data,
-                updatedAt: data.updatedAt?.toDate()?.toISOString() || new Date().toISOString()
+                createdAt: (data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null))?.toISOString() || null,
+                updatedAt: (data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : new Date()))?.toISOString()
             }
         };
     } catch (e) {
@@ -2872,7 +2873,8 @@ export async function getSecondOpinionDecisionsAction() {
             return { 
                 id: d.id, 
                 ...data, 
-                createdAt: (data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()))?.toISOString() 
+                createdAt: (data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()))?.toISOString(),
+                updatedAt: (data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : new Date()))?.toISOString()
             };
         });
         return { success: true, data: docs };
