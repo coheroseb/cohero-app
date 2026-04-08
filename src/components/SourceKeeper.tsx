@@ -28,10 +28,9 @@ export default function SourceKeeper() {
     const fbclid = searchParams?.get('fbclid');
     const uf = searchParams?.get('uf');
     const utmSource = searchParams?.get('utm_source');
-    const referredBy = searchParams?.get('ref');
 
     let source: string | null = null;
-    let data: any = {};
+    let data: Partial<AttributionData> = {};
 
     if (fbclid) {
       source = 'facebook';
@@ -44,13 +43,8 @@ export default function SourceKeeper() {
       data.utm_source = utmSource;
     }
 
-    if (referredBy) {
-      data.referredBy = referredBy;
-      if (!source) source = 'referral';
-    }
-
     if (source) {
-      const attribution: any = {
+      const attribution: AttributionData = {
         source,
         ...data,
         timestamp: Date.now()

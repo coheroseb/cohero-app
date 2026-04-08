@@ -186,12 +186,6 @@ export interface UserProfile {
   conversionSource?: string;
   convertedAt?: any;
   createdAt?: any;
-  referralCode?: string;
-  referredBy?: string | null;
-  referralCount?: number;
-  referralBonusActive?: boolean;
-  membershipSource?: 'stripe' | 'referral_bonus' | string;
-  membershipExpires?: any;
   hasSeenFeatureIntro?: boolean;
   learnedConcepts?: string[];
   selectedElectives?: Record<string, string>;

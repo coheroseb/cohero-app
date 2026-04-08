@@ -11,8 +11,7 @@ import {
   GoogleAuthProvider,
   type User 
 } from 'firebase/auth';
-import { getFirestore, initializeFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { processReferralAction } from '@/app/actions';
+import { getFirestore, initializeFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import type { Auth } from 'firebase/auth';
@@ -99,8 +98,6 @@ export const useUser = () => {
     return signInWithEmailAndPassword(auth, email, pass);
   };
 
-
-
   const handleSignup = async (email: string, pass: string, displayName: string) => {
     if (!auth || !firestore) throw new Error("Authentication service is not available.");
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
@@ -109,7 +106,7 @@ export const useUser = () => {
       await updateProfile(userCredential.user, { displayName });
 
       // 2. Metadata Collection (Source Attribution)
-      let sourceData: any = {};
+      let sourceData = {};
       if (typeof window !== 'undefined') {
         try {
           const stored = localStorage.getItem('cohero_attribution');
@@ -120,7 +117,6 @@ export const useUser = () => {
                 fbclid: parsed.fbclid || null,
                 uf: parsed.uf || null,
                 utm_source: parsed.utm_source || null,
-                referredBy: parsed.referredBy || null,
                 convertedAt: serverTimestamp()
             };
             // Clear to prevent multi-logging
@@ -131,23 +127,12 @@ export const useUser = () => {
         }
       }
 
-      // 3. Referral Logic: If this user was referred, notify the server
-      if (sourceData.referredBy) {
-          processReferralAction({ 
-              referralCode: sourceData.referredBy, 
-              newUserId: userCredential.user.uid 
-          }).catch(err => console.error("Referral processing failed:", err));
-      }
-
-      // 4. Persist User Doc
+      // 3. Persist User Doc
       await setDoc(doc(firestore, 'users', userCredential.user.uid), {
         uid: userCredential.user.uid,
         email,
         displayName,
-        role: 'user', 
-        referralCode: generateReferralCode(),
-        referralCount: 0,
-        referredBy: sourceData.referredBy || null,
+        role: 'user', // Ensure default role is set
         createdAt: serverTimestamp(),
         lastActivityAt: serverTimestamp(),
         ...sourceData
@@ -162,12 +147,8 @@ export const useUser = () => {
     const userCredential = await signInWithPopup(auth, provider);
     
     if (userCredential.user) {
-      // 1. Check if user already exists to avoid re-running referral logic/overwriting referral code
-      const existingDoc = await getDoc(doc(firestore, 'users', userCredential.user.uid));
-      const alreadyExists = existingDoc.exists();
-
-      // 2. Collect attribution
-      let sourceData: any = {};
+      // Collect attribution (same logic as signup)
+      let sourceData = {};
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('cohero_attribution');
         if (stored) {
@@ -178,19 +159,12 @@ export const useUser = () => {
               fbclid: parsed.fbclid || null,
               uf: parsed.uf || null,
               utm_source: parsed.utm_source || null,
-              referredBy: parsed.referredBy || null,
               convertedAt: serverTimestamp()
             };
+            // For Google login, we only apply attribution if it's a NEW user or if they don't have a source yet
+            // setDoc with merge: true handles this gracefully if we ONLY set these fields
           } catch (e) {}
         }
-      }
-
-      // 3. If new user, handle referral logic
-      if (!alreadyExists && sourceData.referredBy) {
-          processReferralAction({ 
-              referralCode: sourceData.referredBy, 
-              newUserId: userCredential.user.uid 
-          }).catch(err => console.error("Referral processing failed:", err));
       }
 
       await setDoc(doc(firestore, 'users', userCredential.user.uid), {
@@ -199,15 +173,16 @@ export const useUser = () => {
         displayName: userCredential.user.displayName,
         lastLogin: serverTimestamp(),
         lastActivityAt: serverTimestamp(),
-        ...(alreadyExists ? {} : { 
-            referralCode: generateReferralCode(), 
-            referralCount: 0, 
-            referredBy: sourceData.referredBy || null,
-            role: 'user' 
-        }),
         ...sourceData
       }, { merge: true });
 
+      // 4. Ensure role exists if not already present (handled by merge, but we explicitly set user if it's a new or undefined role)
+      const userDoc = await getDoc(doc(firestore, 'users', userCredential.user.uid));
+      if (!userDoc.exists() || !userDoc.data().role) {
+          await setDoc(doc(firestore, 'users', userCredential.user.uid), { role: 'user' }, { merge: true });
+      }
+
+      // Only clear if we actually used it (or just clear it anyway to be safe)
       if (typeof window !== 'undefined') localStorage.removeItem('cohero_attribution');
     }
 
@@ -216,16 +191,3 @@ export const useUser = () => {
 
   return { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin };
 };
-
-/**
- * generateReferralCode:
- * Creates a unique, easy-to-read referral code for marketing tracking.
- */
-function generateReferralCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded similar looking chars (0/O, 1/I/L)
-  let code = 'COHERO-';
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}

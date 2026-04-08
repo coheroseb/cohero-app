@@ -34,11 +34,9 @@ import {
   Target,
   Sparkles,
   ChevronRight,
-  Mail,
   ArrowRight,
   HandHelping,
-  Star,
-  Gift
+  Star
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { DocumentData } from 'firebase/firestore';
@@ -319,7 +317,6 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
-          { title: "Inviter en ven", path: "/inviter", icon: <Gift className="w-5 h-5" /> },
         ]
       }
     ];
@@ -412,14 +409,6 @@ const Navbar: React.FC<NavbarProps> = ({
                     <CalendarDays className="w-3.5 h-3.5"/>
                   </div>
                   <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-amber-950 transition-colors">Mit Semester</span>
-                </Link>
-
-                <Link href="/inviter" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 relative ${scrolled ? 'hover:bg-rose-50' : 'hover:bg-white/40'}`}>
-                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-rose-100 group-hover:text-rose-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
-                    <Gift className="w-3.5 h-3.5"/>
-                  </div>
-                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-rose-950 transition-colors">Inviter</span>
-                  <span className="absolute -top-1 -right-2 px-1.5 py-0.5 bg-rose-600 text-[8px] font-black text-white rounded-full uppercase tracking-tighter">Gratis</span>
                 </Link>
                 
                 {userProfile?.role === 'admin' && (
