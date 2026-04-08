@@ -137,11 +137,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
     
     const finalUsername = displayName || user.displayName || 'Ny Bruger';
 
+    const termsRef = doc(firestore, 'globalConfigs', 'terms');
+    const termsSnap = await getDoc(termsRef);
+    const latestTermsVersion = termsSnap.exists() ? (termsSnap.data()?.version || '1.0.0') : '1.0.0';
+
     const newUserDoc: any = {
       id: user.uid,
       username: finalUsername,
       email: user.email,
       email_verified: user.emailVerified,
+      acceptedTermsVersion: latestTermsVersion,
+      acceptedTermsAt: serverTimestamp(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       lastLogin: serverTimestamp(),

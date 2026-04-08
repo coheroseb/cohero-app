@@ -76,6 +76,7 @@ const navigationGroups = [
         { id: 'education', href: '/admin/education', label: 'Uddannelsesdata', icon: GraduationCap },
         { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
         { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
+        { id: 'second-opinion-decisions', href: '/admin/second-opinions/decisions', label: 'S.O. Afgørelser', icon: Gavel },
         { id: 'gamification', href: '/admin/gamification', label: 'Challenges & Ritualer', icon: Trophy },
     ]
   },

@@ -21,6 +21,7 @@ import TeamModal from '@/components/TeamModal';
 import CookieConsent from '@/components/CookieConsent';
 import { ThemeDecorations } from '@/components/ThemeDecorations';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
+import TermsConsentModal from '@/components/TermsConsentModal';
 import { useUser, useAuth, useFirestore } from '@/firebase';
 import { ErrorLogger } from '@/components/ErrorLogger';
 import { 
@@ -287,6 +288,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [activeTheme, setActiveTheme] = useState<string>('default');
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+  const [latestTermsVersion, setLatestTermsVersion] = useState<string | null>(null);
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
@@ -300,6 +302,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const isRaadgivning = useMemo(() => pathname?.startsWith('/raadgivning'), [pathname]);
   const isLovPortal = useMemo(() => pathname?.startsWith('/lov-portal'), [pathname]);
   const isMitSemester = useMemo(() => pathname?.startsWith('/mit-semester'), [pathname]);
+  const isAdminPage = useMemo(() => pathname?.startsWith('/admin'), [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -404,12 +407,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setCampaigns(campaignData);
     });
 
+    const termsRef = doc(firestore, 'globalConfigs', 'terms');
+    const unsubscribeTerms = onSnapshot(termsRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setLatestTermsVersion(docSnap.data().version || '1.0.0');
+        } else {
+            setLatestTermsVersion('1.0.0');
+        }
+    });
+
     return () => {
         unsubscribeLimits();
         unsubscribeTheme();
         unsubscribeCampaigns();
+        unsubscribeTerms();
     };
-  }, [firestore]);
+}, [firestore]);
 
   const refetchUserProfile = useCallback(async () => {
     // Keep this as a no-op or simple trigger for backward compatibility if needed,
@@ -540,6 +553,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     return userProfile === null || (!userProfile.isQualified && (!userProfile.institution || !userProfile.semester || !userProfile.studyStarted));
   }, [isUserLoading, userProfile, user, isStandaloneGroups, pathname]);
+
+  const showTermsModal = useMemo(() => {
+    if (isUserLoading || userProfile === undefined || !user || !latestTermsVersion || isStandaloneGroups || pathname === '/' || isAdminPage) {
+        return false;
+    }
+    // If onboarding is being shown, hide terms modal to avoid overlap
+    if (showOnboardingModal) return false;
+
+    // Check if user has accepted the latest version
+    const acceptedVersion = userProfile?.acceptedTermsVersion;
+    return acceptedVersion !== latestTermsVersion;
+  }, [isUserLoading, userProfile, user, latestTermsVersion, isStandaloneGroups, pathname, showOnboardingModal, isAdminPage]);
 
   const showFeatureIntroRedirect = useMemo(() => {
     if (isUserLoading || userProfile === undefined || !user || isStandaloneGroups || pathname === '/' || pathname?.startsWith('/velkommen')) {
@@ -680,7 +705,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return <ComingSoon />;
   }
 
-  const isAdminPage = pathname?.startsWith('/admin');
   const showPaymentFailedBanner = mounted && userProfile?.stripeLastPaymentFailed && !isAdminPage;
   const showCampaignBanner = mounted && campaigns.length > 0 && (!user || userProfile?.membership !== 'Kollega+') && !isBannerDismissed;
   
@@ -758,6 +782,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             {/* AuthModal has been removed */}
         </Suspense>
         {!isStandaloneGroups && showOnboardingModal && showBannerOverlays && <OnboardingModal onComplete={refetchUserProfile} />}
+        {user && latestTermsVersion && showTermsModal && !showOnboardingModal && (
+            <TermsConsentModal 
+                isOpen={showTermsModal} 
+                userId={user.uid} 
+                latestVersion={latestTermsVersion}
+                onAccepted={refetchUserProfile}
+            />
+        )}
         {isTeamModalOpen && showBannerOverlays && <TeamModal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} />}
         <ErrorLogger user={user} userProfile={userProfile} />
         {showBannerOverlays && <ThemeDecorations />}

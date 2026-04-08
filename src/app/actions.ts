@@ -423,7 +423,24 @@ export async function recommendContentAction(input: any) { return callFirebaseFl
 
 
 
-export async function getSecondOpinionAction(input: any) { return callFirebaseFlow('getSecondOpinionFlow', input); }
+export async function getSecondOpinionAction(input: any) { 
+    // Fetch relevant decisions to provide context to the AI
+    let decisionContext = "";
+    try {
+        if (adminFirestore) {
+            const snap = await adminFirestore.collection('secondOpinionDecisions').limit(10).get();
+            const decisions = snap.docs.map(d => d.data());
+            if (decisions.length > 0) {
+                decisionContext = "TIDLIGERE AFGØRELSER (Brug disse til at forstå vægtning og outcome-mønstre):\n" + 
+                    decisions.map(d => `- [${d.outcome.toUpperCase()}] ${d.title}: ${d.aiAnalysis?.criticalPoint || d.content.substring(0, 200)}`).join('\n');
+            }
+        }
+    } catch (e) {
+        console.error("Failed to fetch decision context:", e);
+    }
+
+    return callFirebaseFlow('getSecondOpinionFlow', { ...input, decisionContext }); 
+}
 
 export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string, complexityHints?: string, profession?: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
@@ -2569,13 +2586,16 @@ export async function getComplianceLogsAction() {
             .limit(100)
             .get();
         
-        const logs = snap.docs.map(doc => ({
-            userId: doc.id,
-            userName: doc.data().username || 'Kollega',
-            email: doc.data().email,
-            acceptedAt: doc.data().createdAt?.toDate()?.toISOString() || null,
-            termsVersion: 'v1.0.0'
-        }));
+        const logs = snap.docs.map(doc => {
+            const data = doc.data();
+            return {
+                userId: doc.id,
+                userName: data.username || 'Kollega',
+                email: data.email,
+                acceptedAt: (data.acceptedTermsAt?.toDate ? data.acceptedTermsAt.toDate() : (data.acceptedTermsAt ? new Date(data.acceptedTermsAt) : data.createdAt?.toDate?.() || null))?.toISOString() || null,
+                termsVersion: data.acceptedTermsVersion || 'v1.0.0'
+            };
+        });
         
         return { success: true, data: logs };
     } catch (e) {
@@ -2732,6 +2752,27 @@ export async function getPolicyHistoryAction(type: PolicyType) {
     }
 }
 
+export async function acceptLatestTermsAction(userId: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const termsSnap = await adminFirestore.collection('globalConfigs').doc('terms').get();
+        if (!termsSnap.exists) return { success: false, message: 'Terms document not found' };
+        
+        const latestVersion = termsSnap.data()?.version || '1.0.0';
+        
+        await adminFirestore.collection('users').doc(userId).update({
+            acceptedTermsVersion: latestVersion,
+            acceptedTermsAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp()
+        });
+        
+        return { success: true, version: latestVersion };
+    } catch (e: any) {
+        console.error("Failed to accept latest terms:", e);
+        return { success: false, message: e.message };
+    }
+}
+
 // Aliases for compatibility
 export async function getTermsConfigAction() { return getPolicyAction('terms'); }
 export async function updateTermsConfigAction(content: string) { return updatePolicyAction('terms', content); }
@@ -2774,6 +2815,129 @@ export async function generateLawFlowchartAction(input: { lovTitel: string, para
     } catch (e: any) {
         console.error("generateLawFlowchartAction failed:", e);
         return callFirebaseFlow('generateLawFlowchartFlow', input);
+    }
+}
+
+export async function addSecondOpinionDecisionAction(decision: { title: string, content: string, outcome: 'justified' | 'unsupported', tags?: string[] }) {
+    if (!adminFirestore) return { success: false };
+    try {
+        // AI Analysis call
+        let aiAnalysis = { weightingFactors: [], criticalPoint: "Analyseres..." };
+        try {
+            const analysisResult = await callFirebaseFlow('analyzeSecondOpinionDecisionFlow', { content: decision.content });
+            if (analysisResult.success) {
+                aiAnalysis = analysisResult.data;
+            }
+        } catch (aiError) {
+            console.warn("AI Analysis flow failed, saving without analysis:", aiError);
+        }
+        
+        const decisionData = {
+            ...decision,
+            aiAnalysis,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp()
+        };
+        
+        const docRef = await adminFirestore.collection('secondOpinionDecisions').add(decisionData);
+        
+        // After adding, we trigger a refresh of the global error summary
+        await generateSecondOpinionErrorSummaryAction();
+
+        return { success: true, id: docRef.id };
+    } catch (e: any) {
+        console.error("Failed to add decision:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function deleteSecondOpinionDecisionAction(id: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        await adminFirestore.collection('secondOpinionDecisions').doc(id).delete();
+        await generateSecondOpinionErrorSummaryAction(); // Refresh summary
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to delete decision:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function getSecondOpinionDecisionsAction() {
+    if (!adminFirestore) return { success: false };
+    try {
+        const snap = await adminFirestore.collection('secondOpinionDecisions').orderBy('createdAt', 'desc').get();
+        const docs = snap.docs.map(d => {
+            const data = d.data();
+            return { 
+                id: d.id, 
+                ...data, 
+                createdAt: (data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()))?.toISOString() 
+            };
+        });
+        return { success: true, data: docs };
+    } catch (e: any) {
+        console.error("Failed to fetch decisions:", e);
+        return { success: false };
+    }
+}
+
+export async function generateSecondOpinionErrorSummaryAction() {
+    if (!adminFirestore) return { success: false };
+    try {
+        // Fetch all decisions
+        const snap = await adminFirestore.collection('secondOpinionDecisions').get();
+        const decisions = snap.docs.map(d => d.data());
+        
+        if (decisions.length === 0) return { success: true };
+
+        // Call AI to summarize frequent errors leading to student wins
+        const winDecisions = decisions.filter(d => d.outcome === 'justified');
+        let summary = "Der er endnu ikke genereret et AI-overblik. Tilføj flere afgørelser for at se mønstre her.";
+        
+        try {
+            const summaryResult = await callFirebaseFlow('summarizeSecondOpinionErrorsFlow', { winDecisions });
+            if (summaryResult.success) {
+                summary = summaryResult.data;
+            }
+        } catch (aiError) {
+            console.warn("Summary AI flow failed:", aiError);
+        }
+        
+        await adminFirestore.collection('systemSettings').doc('secondOpinionSummary').set({
+            summary,
+            updatedAt: FieldValue.serverTimestamp(),
+            decisionCount: decisions.length,
+            winCount: winDecisions.length
+        });
+
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to generate error summary:", e);
+        return { success: false };
+    }
+}
+
+export async function getSecondOpinionErrorSummaryAction() {
+    if (!adminFirestore) return { success: false };
+    try {
+        const doc = await adminFirestore.collection('systemSettings').doc('secondOpinionSummary').get();
+        if (!doc.exists) return { success: false };
+        
+        const data = doc.data();
+        if (data) {
+            return { 
+                success: true, 
+                data: {
+                    ...data,
+                    updatedAt: (data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : new Date()))?.toISOString()
+                } 
+            };
+        }
+        return { success: false };
+    } catch (e: any) {
+        console.error("Failed to get error summary:", e);
+        return { success: false };
     }
 }
 
