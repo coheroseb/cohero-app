@@ -61,6 +61,7 @@ export default function SecondOpinionDecisionsAdmin() {
     const [newDecision, setNewDecision] = useState({
         title: '',
         content: '',
+        pdfBase64: '',
         outcome: 'justified' as 'justified' | 'unsupported',
         tags: [] as string[]
     });
@@ -71,21 +72,18 @@ export default function SecondOpinionDecisionsAdmin() {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
             setSelectedFile(file);
-            setIsExtracting(true);
-            try {
-                const text = await extractTextFromPdf(file);
+            
+            // Read as Base64 for direct AI processing
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64String = event.target?.result as string;
                 setNewDecision(prev => ({ 
                     ...prev, 
-                    content: text,
+                    pdfBase64: base64String.split(',')[1],
                     title: prev.title || file.name.replace('.pdf', '')
                 }));
-                toast({ title: 'Tekst ekstraheret', description: 'Vi har udtrukket teksten fra PDF-dokumentet.' });
-            } catch (err) {
-                console.error("PDF extraction error:", err);
-                toast({ variant: 'destructive', title: 'Fejl', description: 'Kunne ikke læse PDF-filen.' });
-            } finally {
-                setIsExtracting(false);
-            }
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -111,14 +109,14 @@ export default function SecondOpinionDecisionsAdmin() {
 
     const handleAddDecision = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newDecision.title || !newDecision.content) return;
+        if (!newDecision.title || (!newDecision.content && !newDecision.pdfBase64)) return;
 
         setIsSaving(true);
         const result = await addSecondOpinionDecisionAction(newDecision);
         if (result.success) {
             toast({ title: 'Afgørelse tilføjet!', description: 'AI har analyseret dokumentet og opdateret overblikket.' });
             setIsAdding(false);
-            setNewDecision({ title: '', content: '', outcome: 'justified', tags: [] });
+            setNewDecision({ title: '', content: '', pdfBase64: '', outcome: 'justified', tags: [] });
             setSelectedFile(null);
             fetchData();
         } else {
@@ -369,8 +367,8 @@ export default function SecondOpinionDecisionsAdmin() {
                                             <div className="space-y-4">
                                                 <UploadCloud className="w-10 h-10 text-rose-200 group-hover/upload:text-rose-500 transition-colors mx-auto" />
                                                 <div>
-                                                    <p className="text-sm font-black text-rose-900 uppercase tracking-widest">Upload selve afgørelsen (PDF)</p>
-                                                    <p className="text-[10px] font-bold text-rose-400 mt-1 uppercase tracking-tighter">Vi udtaler automatisk teksten til AI-analysen</p>
+                                                 <p className="text-sm font-black text-rose-900 uppercase tracking-widest">Upload selve afgørelsen (PDF)</p>
+                                                 <p className="text-[10px] font-bold text-rose-400 mt-1 uppercase tracking-tighter text-center">AI læser dokumentet direkte uden manuel ekstraktion</p>
                                                 </div>
                                             </div>
                                         )}
@@ -424,13 +422,12 @@ export default function SecondOpinionDecisionsAdmin() {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 px-2 tracking-widest">Afgørelsestekst / Resume (Auto-udfyldt fra PDF)</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 px-2 tracking-widest">Eget Resume / Note (Valgfri)</label>
                                     <textarea 
-                                        required
-                                        rows={10}
+                                        rows={6}
                                         value={newDecision.content}
                                         onChange={e => setNewDecision(prev => ({ ...prev, content: e.target.value }))}
-                                        placeholder="Beskriv sagens indhold, begrundelse og præcis hvorfor udfaldet blev som det blev..."
+                                        placeholder="Tilføj evt. dine egne noter til sagen her..."
                                         className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-8 font-medium text-slate-700 text-sm focus:ring-4 focus:ring-rose-500/5 focus:border-rose-500/30 transition-all leading-relaxed outline-none"
                                     />
                                 </div>

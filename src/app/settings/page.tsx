@@ -16,7 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { requestNotificationPermission } from '@/firebase/messaging';
 import { encryptData } from '@/lib/encryption';
 import { motion, AnimatePresence } from 'framer-motion';
-import { INSTITUTIONS, PROFESSION_OPTIONS } from '@/lib/constants';
+import { INSTITUTIONS, PROFESSION_OPTIONS, SEMESTER_OPTIONS } from '@/lib/constants';
 
 export default function SettingsPage() {
   const { user, userProfile, refetchUserProfile, handleLogout, handleResendVerification } = useApp();
@@ -490,9 +490,20 @@ export default function SettingsPage() {
 
                                         <div className="space-y-2">
                                             <label htmlFor="semester" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
-                                            <div className="relative">
+                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
                                                 <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                                <Input id="semester" value={semester} onChange={(e) => setSemester(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-amber-500/20" placeholder="F.eks. 4. semester" />
+                                                <select
+                                                    id="semester"
+                                                    value={semester}
+                                                    onChange={(e) => setSemester(e.target.value)}
+                                                    className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer"
+                                                >
+                                                    <option value="" disabled>Vælg semester...</option>
+                                                    {SEMESTER_OPTIONS.map(sem => (
+                                                        <option key={sem} value={sem}>{sem}. semester</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                             </div>
                                         </div>
 

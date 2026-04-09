@@ -54,10 +54,76 @@ import {
   ReferenceDot
 } from 'recharts';
 import { jsPDF } from 'jspdf';
-import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction } from '@/app/actions';
+import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction, getSystemLogsAction } from '@/app/actions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 // --- Improved Components ---
+
+const PaymentSyncLog = ({ log }: { log: any }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    
+    const statusColors = {
+        'running': 'bg-amber-50 text-amber-600 border-amber-100',
+        'completed': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+        'completed_with_errors': 'bg-rose-50 text-rose-600 border-rose-100'
+    }[log.status as string] || 'bg-slate-50 text-slate-600 border-slate-100';
+
+    return (
+        <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+            <div 
+                className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 cursor-pointer select-none"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center gap-5">
+                    <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${statusColors}`}>
+                        {log.status === 'completed_with_errors' ? 'Færdig med fejl' : log.status === 'completed' ? 'Færdig' : 'Kører...'}
+                    </div>
+                    <div>
+                        <p className="text-sm font-black text-slate-900 leading-none mb-1">
+                            {new Date(log.startTime).toLocaleString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Daglig Betalingssync</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-10">
+                    <div className="text-center">
+                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Processed</p>
+                        <p className="text-sm font-black text-slate-900">{log.processedCount || 0}</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-[9px] font-black text-rose-300 uppercase tracking-widest mb-1">Downgrades</p>
+                        <p className="text-sm font-black text-rose-600">{log.downgradeCount || 0}</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Errors</p>
+                        <p className="text-sm font-black text-slate-900">{log.errorCount || 0}</p>
+                    </div>
+                    <ChevronRight className={`w-5 h-5 text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                </div>
+            </div>
+
+            <AnimatePresence>
+                {isExpanded && log.details && log.details.length > 0 && (
+                    <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="border-t border-slate-50 bg-slate-50/50 p-6"
+                    >
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
+                            {log.details.map((detail: string, i: number) => (
+                                <div key={i} className={`p-3 rounded-xl border text-[11px] font-medium font-mono ${detail.startsWith('ERROR') ? 'bg-rose-50 border-rose-100 text-rose-700' : detail.startsWith('DOWNGRADE') ? 'bg-amber-50 border-amber-100 text-amber-700' : 'bg-white border-slate-100 text-slate-600'}`}>
+                                    {detail}
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
 
 const FinStatCard = ({ title, value, trend, icon: Icon, color, loading }: any) => (
     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden">
@@ -121,6 +187,8 @@ export default function AdminFinansPage() {
     const [isExporting, setIsExporting] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [growthRate, setGrowthRate] = useState(15); 
+    const [syncLogs, setSyncLogs] = useState<any[]>([]);
+    const [isLogsLoading, setIsLogsLoading] = useState(false);
 
     useEffect(() => {
         if (!isUserLoading && (!user || userProfile?.role !== 'admin')) {
@@ -142,7 +210,21 @@ export default function AdminFinansPage() {
                 console.error("Failed to load financial data:", err);
             } finally { setLoading(false); }
         }
+
+        async function fetchLogs() {
+            setIsLogsLoading(true);
+            try {
+                const res = await getSystemLogsAction('payment_sync', 10);
+                if (res.success && res.data) setSyncLogs(res.data);
+            } catch (err) {
+                console.error("Failed to fetch sync logs:", err);
+            } finally {
+                setIsLogsLoading(false);
+            }
+        }
+
         fetchData();
+        fetchLogs();
     }, []);
 
     // Advanced Projections Logic with Seasonality (Exam Periods)
@@ -371,6 +453,11 @@ export default function AdminFinansPage() {
                 // Successful sync notification
                 const mRes = await getStripeDashboardMetricsAction();
                 if (mRes.success) setMetrics(mRes);
+                
+                // Refresh logs to show the new run
+                const lRes = await getSystemLogsAction('payment_sync', 10);
+                if (lRes.success && lRes.data) setSyncLogs(lRes.data);
+                
                 alert(res.message);
             } else {
                 alert('Synkronisering fejlede: ' + res.message);
@@ -647,6 +734,42 @@ export default function AdminFinansPage() {
                     <div className="space-y-12"><div className="flex items-center gap-5"><div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 shadow-sm group-hover:scale-110 duration-700"><Zap className="w-7 h-7" /></div><h3 className="text-2xl font-black text-slate-900 serif">Strategisk Fokus</h3></div><div className="space-y-10"><div className="space-y-4"><div className="flex justify-between items-end"><p className="text-5xl font-black text-slate-900 serif">82%</p><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Efficiency Score</p></div><div className="h-4 bg-slate-50 border border-slate-100 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: '82%' }} transition={{ duration: 1.5, delay: 0.5 }} className="h-full bg-amber-500 rounded-full shadow-lg shadow-amber-500/20" /></div></div></div></div><div className="mt-12 p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex items-center justify-between gap-6"><p className="text-xs text-slate-500 font-bold leading-relaxed italic">Fokuser på <span className="text-amber-600 font-black italic">Churn Reduction</span> de næste 30 dage for at accelerere ARR milestenen.</p><TrendingDown className="w-6 h-6 text-rose-300" /></div>
                 </section>
             </div>
+
+            {/* 5. Payment Sync History */}
+            <section className="space-y-10 pt-10 border-t border-slate-50">
+                <div className="flex items-center justify-between px-4">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center shadow-xl">
+                            <Activity className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <h3 className="text-3xl font-black text-slate-900 serif">Historik over Betalingssync</h3>
+                            <p className="text-sm text-slate-400 font-medium italic">Oversigt over automatiske og manuelle system-synkroniseringer.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-6">
+                    {isLogsLoading && syncLogs.length === 0 ? (
+                        <div className="p-20 bg-white rounded-[3rem] border border-dashed border-slate-200 flex flex-col items-center justify-center gap-4">
+                            <Loader2 className="w-10 h-10 animate-spin text-slate-200" />
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Henter log-historik...</p>
+                        </div>
+                    ) : syncLogs.length === 0 ? (
+                        <div className="p-20 bg-white rounded-[3rem] border border-dashed border-slate-200 flex flex-col items-center justify-center text-center space-y-4">
+                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
+                                <Activity className="w-10 h-10" />
+                            </div>
+                            <p className="text-xl font-bold text-slate-400 serif">Ingen log-historik fundet</p>
+                            <p className="text-sm text-slate-300 max-w-sm">Systemet har endnu ikke logget nogen automatiske synkroniseringer.</p>
+                        </div>
+                    ) : (
+                        syncLogs.map((log) => (
+                            <PaymentSyncLog key={log.id} log={log} />
+                        ))
+                    )}
+                </div>
+            </section>
         </div>
     );
 }

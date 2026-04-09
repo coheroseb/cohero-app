@@ -16,3 +16,5 @@ export const PROFESSION_OPTIONS = [
   'Sygeplejerske', 
   'Andet'
 ];
+
+export const SEMESTER_OPTIONS = ['1', '2', '3', '4', '5', '6', '7'];

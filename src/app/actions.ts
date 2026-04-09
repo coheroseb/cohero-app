@@ -223,16 +223,39 @@ export async function redeemCodeAction(input: { code: string, userId: string }) 
  * Firestore status matches their actual Stripe subscription state.
  */
 export async function syncAllSubscriptionsAction() {
+    const logRef = adminFirestore.collection('systemLogs').doc();
+    const startTime = new Date();
+    
     try {
         // Find all users who have an active (or previously active) subscription ID
         const usersSnap = await adminFirestore.collection('users')
             .where('stripeSubscriptionId', '!=', null)
             .get();
 
-        if (usersSnap.empty) return { success: true, message: "Ingen betalende brugere fundet.", updatedCount: 0 };
+        if (usersSnap.empty) {
+            await logRef.set({
+                type: 'payment_sync',
+                status: 'completed',
+                startTime: admin.firestore.Timestamp.fromDate(startTime),
+                endTime: admin.firestore.FieldValue.serverTimestamp(),
+                processedCount: 0,
+                message: "Ingen betalende brugere fundet."
+            });
+            return { success: true, message: "Ingen betalende brugere fundet.", updatedCount: 0 };
+        }
 
         let updatedCount = 0;
+        let downgradeCount = 0;
         let errorCount = 0;
+        const details: string[] = [];
+
+        // Save initial state
+        await logRef.set({
+            type: 'payment_sync',
+            status: 'running',
+            startTime: admin.firestore.Timestamp.fromDate(startTime),
+            details: []
+        });
 
         // Sequence these slightly to avoid hitting Stripe rate limits if hundreds of users exist
         for (const userDoc of usersSnap.docs) {
@@ -245,10 +268,16 @@ export async function syncAllSubscriptionsAction() {
                 const membershipLevel = getMembershipFromPriceId(price.id);
 
                 const isActive = subscription.status === 'active' || subscription.status === 'trialing';
+                const wasPaying = userData.membership !== 'Kollega' && userData.membership !== 'Gratis Plan';
+
+                if (!isActive && wasPaying) {
+                    const reason = `Stripe status: ${subscription.status}`;
+                    details.push(`MANUAL DOWNGRADE: ${userData.email || userDoc.id}. Årsag: ${reason}`);
+                    downgradeCount++;
+                }
 
                 await userDoc.ref.set({
                     stripeSubscriptionStatus: subscription.status,
-                    // If not active/trialing, downgrade them to free tier
                     membership: isActive ? membershipLevel : 'Kollega',
                     stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
                     stripeCancelAtPeriodEnd: subscription.cancel_at_period_end,
@@ -256,21 +285,68 @@ export async function syncAllSubscriptionsAction() {
                 }, { merge: true });
 
                 updatedCount++;
-            } catch (err) {
+            } catch (err: any) {
                 console.error(`[SYNC-SUB] Failed for user ${userDoc.id}:`, err);
+                details.push(`ERROR: Fejl ved ${userData.email || userDoc.id}: ${err.message}`);
                 errorCount++;
             }
         }
 
+        await logRef.update({
+            status: errorCount > 0 ? 'completed_with_errors' : 'completed',
+            endTime: admin.firestore.FieldValue.serverTimestamp(),
+            processedCount: updatedCount,
+            downgradeCount: downgradeCount,
+            errorCount: errorCount,
+            details: details.slice(0, 100)
+        });
+
         return { 
             success: true, 
-            message: `Synkronisering færdig: ${updatedCount} opdateret, ${errorCount} fejl.`,
+            message: `Synkronisering færdig: ${updatedCount} opdateret, ${downgradeCount} nedgraderet, ${errorCount} fejl.`,
             updatedCount,
+            downgradeCount,
             errorCount
         };
     } catch (error: any) {
         console.error('Master sync failed:', error);
+        await logRef.set({
+            type: 'payment_sync',
+            status: 'failed',
+            startTime: admin.firestore.Timestamp.fromDate(startTime),
+            endTime: admin.firestore.FieldValue.serverTimestamp(),
+            error: error.message
+        }, { merge: true });
         return { success: false, message: 'Kunne ikke fuldføre synkronisering.' };
+    }
+}
+
+/**
+ * getSystemLogsAction:
+ * Fetches recent logs from the systemLogs collection.
+ */
+export async function getSystemLogsAction(type?: string, limitCount: number = 20) {
+    try {
+        let q = adminFirestore.collection('systemLogs')
+            .orderBy('startTime', 'desc');
+            
+        if (type) {
+            q = q.where('type', '==', type);
+        }
+        
+        const snap = await q.limit(limitCount).get();
+        return { 
+            success: true, 
+            data: snap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                startTime: doc.data().startTime?.toDate().toISOString(),
+                endTime: doc.data().endTime?.toDate().toISOString(),
+            }))
+        };
+    } catch (error: any) {
+        console.error('Failed to fetch system logs:', error);
+        return { success: false, message: error.message };
     }
 }
 
@@ -2819,18 +2895,29 @@ export async function generateLawFlowchartAction(input: { lovTitel: string, para
     }
 }
 
-export async function addSecondOpinionDecisionAction(decision: { title: string, content: string, outcome: 'justified' | 'unsupported', tags?: string[] }) {
+export async function addSecondOpinionDecisionAction(decision: { title: string, content?: string, pdfBase64?: string, outcome: 'justified' | 'unsupported', tags?: string[] }) {
     if (!adminFirestore) return { success: false };
     try {
         // AI Analysis call
         let aiAnalysis = { weightingFactors: [], criticalPoint: "Analyseres..." };
         try {
-            const analysisResult = await callFirebaseFlow('analyzeSecondOpinionDecisionFlow', { content: decision.content });
+            const flowInput = decision.pdfBase64 
+                ? { title: decision.title, pdfBase64: decision.pdfBase64 }
+                : { content: decision.content };
+            
+            const flowName = decision.pdfBase64 ? 'analyzeLegalDecisionPdfFlow' : 'analyzeLegalDecisionFlow';
+            
+            const analysisResult = await callFirebaseFlow(flowName, flowInput);
             if (analysisResult.success) {
-                aiAnalysis = analysisResult.data;
+                // Map the output fields to our internal format
+                const raw = analysisResult.data;
+                aiAnalysis = {
+                    weightingFactors: [raw.hvadErAfgørelsen].filter(Boolean),
+                    criticalPoint: raw.påBaggrundAfHvad || "Ingen specifik begrundelse udtrukket."
+                };
             }
         } catch (aiError) {
-            console.warn("AI Analysis flow failed, saving without analysis:", aiError);
+            console.error("AI Analysis flow failed, falling back to basic data:", aiError);
         }
         
         const decisionData = {
@@ -2839,6 +2926,15 @@ export async function addSecondOpinionDecisionAction(decision: { title: string, 
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp()
         };
+
+        // Remove the heavy base64 before saving to Firestore to keep doc sizes small
+        if (decisionData.pdfBase64) {
+            delete decisionData.pdfBase64;
+            // Optionally save the file content to a 'content' field if AI returned a summary
+            if (!decisionData.content && aiAnalysis.criticalPoint) {
+                decisionData.content = `${aiAnalysis.weightingFactors.join('\n')}\n\n${aiAnalysis.criticalPoint}`;
+            }
+        }
         
         const docRef = await adminFirestore.collection('secondOpinionDecisions').add(decisionData);
         

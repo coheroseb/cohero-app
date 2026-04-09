@@ -88,6 +88,7 @@ import { getSocraticReflection } from './flows/sokratisk-refleksion/flow';
 import { optimizeSeoFlow } from './flows/optimize-seo-flow';
 import { generateLawFlowchart } from './flows/generate-law-flowchart-flow';
 import { researchDiscovery } from './flows/research-discovery-flow';
+import { analyzeLegalDecisionPdfFlow } from './flows/analyze-legal-decision-pdf-flow';
 
 
 export const allFlows: Record<string, any> = {
@@ -271,5 +272,6 @@ export const allFlows: Record<string, any> = {
   'optimizeSeo': optimizeSeoFlow,
   'generateLawFlowchartFlow': generateLawFlowchart,
   'generateLawFlowchart': generateLawFlowchart,
+  'analyzeLegalDecisionPdfFlow': analyzeLegalDecisionPdfFlow,
 };
 

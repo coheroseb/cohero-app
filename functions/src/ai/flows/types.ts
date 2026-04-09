@@ -505,6 +505,11 @@ export const AnalyzeLegalDecisionInputSchema = z.object({
   fullText: z.string(),
 });
 
+export const AnalyzeLegalDecisionPdfInputSchema = z.object({
+  title: z.string(),
+  pdfBase64: z.string(),
+});
+
 export const LegalDecisionAnalysisDataSchema = z.object({
   hvadErAfgørelsen: z.string(),
   påBaggrundAfHvad: z.string(),

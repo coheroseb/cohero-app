@@ -149,6 +149,7 @@ import { dailyAutomatedNudges } from "./cron/automated-nudges";
 import { dailyNewUserActivationNudge } from "./cron/new-user-activation-nudge";
 import { weeklyStudyCompanion } from "./cron/study-companion-newsletter";
 import { cleanupStorageArtifacts } from "./cron/cleanup-storage";
+import { syncPaymentStatus } from "./cron/payment-sync";
 
 export { 
   checkFolketingetUpdates, 
@@ -157,7 +158,8 @@ export {
   dailyAutomatedNudges,
   dailyNewUserActivationNudge,
   weeklyStudyCompanion,
-  cleanupStorageArtifacts
+  cleanupStorageArtifacts,
+  syncPaymentStatus
 };
 
 import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";

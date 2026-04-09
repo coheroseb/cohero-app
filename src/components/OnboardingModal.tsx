@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { updateProfile } from 'firebase/auth';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { INSTITUTIONS, PROFESSION_OPTIONS } from '@/lib/constants';
+import { INSTITUTIONS, PROFESSION_OPTIONS, SEMESTER_OPTIONS } from '@/lib/constants';
 import { calculateStudyStarted } from '@/lib/education';
 
 interface OnboardingModalProps {
@@ -303,15 +303,19 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                             exit={{ opacity: 0, height: 0 }}
                             className="space-y-4 overflow-hidden"
                           >
-                             <div className="relative group">
-                                <BookOpen className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-amber-950 transition-colors" />
-                                <Input 
-                                  type="text" 
-                                  placeholder="Hvilket semester er du på? (f.eks. 3)"
+                             <div className="relative group bg-slate-50 rounded-[1.25rem] focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-950/5 transition-all">
+                                <BookOpen className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none group-focus-within:text-amber-950 transition-colors" />
+                                <select
                                   value={semester}
                                   onChange={(e) => setSemester(e.target.value)}
-                                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border-transparent rounded-[1.25rem] focus:bg-white focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 transition-all text-sm h-14 font-bold text-slate-900"
-                                />
+                                  className="w-full appearance-none pl-12 pr-10 py-4 bg-transparent border-transparent rounded-[1.25rem] focus:outline-none text-sm h-14 font-bold text-slate-900 cursor-pointer"
+                                >
+                                  <option value="" disabled className="text-slate-400">Vælg semester</option>
+                                  {SEMESTER_OPTIONS.map(sem => (
+                                    <option key={sem} value={sem}>{sem}. semester</option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
                              </div>
                              
                              <div className="relative group bg-slate-50 rounded-[1.25rem] focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-950/5 transition-all">
