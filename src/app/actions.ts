@@ -3039,3 +3039,139 @@ export async function getSecondOpinionErrorSummaryAction() {
     }
 }
 
+export async function getFeatureRequestsAction() {
+    if (!adminFirestore) return { success: false };
+    try {
+        const snap = await adminFirestore.collection('featureRequests')
+            .orderBy('votes', 'desc')
+            .limit(50)
+            .get();
+            
+        const requests = snap.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                title: data.title || '',
+                description: data.description || '',
+                votes: data.votes || 0,
+                status: data.status || 'suggested',
+                authorName: data.authorName || 'Anonym Kollega',
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+            };
+        });
+        
+        return { success: true, data: requests };
+    } catch (e: any) {
+        console.error("Failed to fetch feature requests:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function submitFeatureRequestAction(input: { title: string, description: string, authorName?: string, userId?: string }) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const res = await adminFirestore.collection('featureRequests').add({
+            title: input.title,
+            description: input.description,
+            authorName: input.authorName || 'Anonym Kollega',
+            authorId: input.userId || null,
+            votes: 1,
+            status: 'suggested',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        return { success: true, id: res.id };
+    } catch (e: any) {
+        console.error("Failed to submit feature request:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function voteForFeatureAction(requestId: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const ref = adminFirestore.collection('featureRequests').doc(requestId);
+        await ref.update({
+            votes: admin.firestore.FieldValue.increment(1),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to vote for feature:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function updateFeatureRequestStatusAction(requestId: string, status: 'suggested' | 'planned' | 'in-progress' | 'completed') {
+    if (!adminFirestore) return { success: false };
+    try {
+        await adminFirestore.collection('featureRequests').doc(requestId).update({
+            status,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to update feature request status:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function deleteFeatureRequestAction(requestId: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        await adminFirestore.collection('featureRequests').doc(requestId).delete();
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to delete feature request:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function generateAIFeatureRequestsAction() {
+    if (!adminFirestore) return { success: false };
+    
+    // Some realistic ideas for a social worker platform
+    const ideas = [
+        { title: "Mobil app med offline adgang", description: "Mulighed for at læse lovparagraffer og egne noter i toget uden internetforbindelse." },
+        { title: "AI-coach til borger-samtaler", description: "Træn svære samtaler med en AI-repræsentant for en vildledt eller vred borger før praksis." },
+        { title: "Skabeloner til VUM-udredninger", description: "Standardiserede skabeloner der gør det lettere at strukturere sine første udredninger." },
+        { title: "Eksamens-simulator til Jura", description: "Simulerede eksamensspørgsmål baseret på tidligere års opgaver og gældende retspraksis." },
+        { title: "Praktik-matching algoritme", description: "Find det perfekte praktiksted baseret på dine faglige interesser og tidligere studerendes anmeldelser." },
+        { title: "Studiegruppe-finder", description: "Find medstuderende på dit eget semester der gerne vil læse sammen i de svære moduler." },
+        { title: "Podcast: 'Fra teori til virkelighed'", description: "Ugentlige afsnit hvor færdiguddannede socialrådgivere fortæller om deres første år i marken." },
+        { title: "Notat-samarbejde", description: "Mulighed for at dele og redigere noter live med sin studiegruppe direkte i Cohéro." },
+        { title: "Mental sundhed for studerende", description: "Et lukket forum med fokus på de psykiske belastninger der kan opstå i socialt arbejde." },
+        { title: "Lovgivnings-overblik (Tidslinje)", description: "Se hvordan Barnets Lov har ændret sig over tid med en interaktiv tidslinje." },
+        { title: "Karriere-vejviser", description: "Oversigt over specialiseringsmuligheder efter uddannelsen med lønstatistik og jobbeskrivelser." },
+        { title: "Interaktivt ICS-kort", description: "Visualisering af barnets behov jf. ICS-modellen med direkte links til relevante paragraffer." }
+    ];
+
+    try {
+        const batch = adminFirestore.batch();
+        const now = admin.firestore.FieldValue.serverTimestamp();
+        
+        // Pick 6 random unique ideas
+        const shuffled = [...ideas].sort(() => 0.5 - Math.random()).slice(0, 6);
+        
+        shuffled.forEach(idea => {
+            const ref = adminFirestore.collection('featureRequests').doc();
+            batch.set(ref, {
+                ...idea,
+                votes: Math.floor(Math.random() * 25) + 5, // 5 to 30 votes
+                status: 'suggested',
+                authorName: 'AI Kollega',
+                createdAt: now,
+                updatedAt: now
+            });
+        });
+
+        await batch.commit();
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to generate AI requests:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+

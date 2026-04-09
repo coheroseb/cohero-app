@@ -37,7 +37,8 @@ import {
     ShieldAlert,
     Trophy,
     Gavel,
-    Globe
+    Globe,
+    Lightbulb
 } from 'lucide-react';
 
 import { useApp } from '@/app/provider';
@@ -78,6 +79,7 @@ const navigationGroups = [
         { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
         { id: 'second-opinion-decisions', href: '/admin/second-opinions/decisions', label: 'S.O. Afgørelser', icon: Gavel },
         { id: 'gamification', href: '/admin/gamification', label: 'Challenges & Ritualer', icon: Trophy },
+        { id: 'medbestemmelse', href: '/admin/medbestemmelse', label: 'Medbestemmelse', icon: Lightbulb },
     ]
   },
   {

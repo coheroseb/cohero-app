@@ -127,7 +127,18 @@ export const useUser = () => {
         }
       }
 
-      // 3. Persist User Doc
+      // 3. Compliance: Automatically accept the latest terms version during creation
+      let latestTermsVersion = '1.0.0';
+      try {
+        const termsSnap = await getDoc(doc(firestore, 'globalConfigs', 'terms'));
+        if (termsSnap.exists()) {
+          latestTermsVersion = termsSnap.data().version || '1.0.0';
+        }
+      } catch (e) {
+        console.error("Failed to fetch terms version during signup:", e);
+      }
+
+      // 4. Persist User Doc
       await setDoc(doc(firestore, 'users', userCredential.user.uid), {
         uid: userCredential.user.uid,
         email,
@@ -135,6 +146,8 @@ export const useUser = () => {
         role: 'user', // Ensure default role is set
         createdAt: serverTimestamp(),
         lastActivityAt: serverTimestamp(),
+        acceptedTermsVersion: latestTermsVersion,
+        acceptedTermsAt: serverTimestamp(),
         ...sourceData
       }, { merge: true });
     }
@@ -161,28 +174,44 @@ export const useUser = () => {
               utm_source: parsed.utm_source || null,
               convertedAt: serverTimestamp()
             };
-            // For Google login, we only apply attribution if it's a NEW user or if they don't have a source yet
-            // setDoc with merge: true handles this gracefully if we ONLY set these fields
           } catch (e) {}
         }
       }
 
-      await setDoc(doc(firestore, 'users', userCredential.user.uid), {
+      // Compliance: Fetch latest terms version for new users
+      let latestTermsVersion = '1.0.0';
+      try {
+        const termsSnap = await getDoc(doc(firestore, 'globalConfigs', 'terms'));
+        if (termsSnap.exists()) {
+          latestTermsVersion = termsSnap.data().version || '1.0.0';
+        }
+      } catch (e) {
+        console.error("Failed to fetch terms version during Google login:", e);
+      }
+      
+      const userDocRef = doc(firestore, 'users', userCredential.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      const isNewUser = !userDocSnap.exists();
+
+      const updateData: any = {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
         displayName: userCredential.user.displayName,
         lastLogin: serverTimestamp(),
         lastActivityAt: serverTimestamp(),
         ...sourceData
-      }, { merge: true });
+      };
 
-      // 4. Ensure role exists if not already present (handled by merge, but we explicitly set user if it's a new or undefined role)
-      const userDoc = await getDoc(doc(firestore, 'users', userCredential.user.uid));
-      if (!userDoc.exists() || !userDoc.data().role) {
-          await setDoc(doc(firestore, 'users', userCredential.user.uid), { role: 'user' }, { merge: true });
+      // Only set terms acceptance for new users to avoid unintended updates for existing users
+      if (isNewUser) {
+        updateData.acceptedTermsVersion = latestTermsVersion;
+        updateData.acceptedTermsAt = serverTimestamp();
+        updateData.role = 'user';
+        updateData.createdAt = serverTimestamp();
       }
 
-      // Only clear if we actually used it (or just clear it anyway to be safe)
+      await setDoc(userDocRef, updateData, { merge: true });
+
       if (typeof window !== 'undefined') localStorage.removeItem('cohero_attribution');
     }
 

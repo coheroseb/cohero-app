@@ -33,11 +33,13 @@ import {
   BrainCircuit,
   Target,
   Sparkles,
+  Lightbulb,
   ChevronRight,
   ArrowRight,
   HandHelping,
   Star
 } from 'lucide-react';
+
 import { User } from 'firebase/auth';
 import { DocumentData } from 'firebase/firestore';
 import { Button } from './ui/button';
@@ -317,9 +319,11 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
+          { title: "Form fremtiden", path: "/medbestemmelse", icon: <Lightbulb className="w-5 h-5" /> },
         ]
       }
     ];
+
   }, []);
 
   return (
@@ -381,88 +385,48 @@ const Navbar: React.FC<NavbarProps> = ({
                 transition={{ delay: 0.1 }}
                 className="flex items-center space-x-1"
               >
-                <Link href="/portal" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
-                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-amber-100 group-hover:text-amber-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
-                    <Home className="w-3.5 h-3.5"/>
-                  </div>
-                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-amber-950 transition-colors">Hjem</span>
-                </Link>
+                {[
+                  { label: "Hjem", href: "/portal", icon: <Home className="w-5 h-5"/>, color: "bg-amber-100 text-amber-700" },
+                  { label: "Slides", href: "/mine-seminarer", icon: <Presentation className="w-5 h-5"/>, color: "bg-emerald-100 text-emerald-700" },
+                  { label: "Jura", href: "/lov-portal", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" },
+                  { label: "Semester", href: "/mit-semester", icon: <CalendarDays className="w-5 h-5"/>, color: "bg-indigo-100 text-indigo-700" }
+                ].map((item) => (
+                  <Link key={item.label} href={item.href} className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
+                    <div className={`p-1.5 rounded-lg transition-all group-hover:scale-110 ${item.color} ${scrolled ? '' : 'bg-white/60 shadow-sm'}`}>
+                      {React.cloneElement(item.icon as React.ReactElement, { className: "w-3.5 h-3.5" })}
+                    </div>
+                    <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-slate-950 transition-colors whitespace-nowrap">{item.label}</span>
+                  </Link>
+                ))}
 
-                <Link href="/mine-seminarer" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
-                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-emerald-100 group-hover:text-emerald-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
-                    <Presentation className="w-3.5 h-3.5"/>
-                  </div>
-                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-emerald-950 transition-colors">Slides</span>
-                </Link>
-
-                <Link href="/lov-portal" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
-                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-sky-100 group-hover:text-sky-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
-                    <Scale className="w-3.5 h-3.5"/>
-                  </div>
-                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-sky-950 transition-colors">Jura</span>
-                </Link>
-
-
-
-                <Link href="/mit-semester" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
-                  <div className={`p-1.5 rounded-lg transition-colors group-hover:bg-amber-100 group-hover:text-amber-700 ${scrolled ? 'bg-slate-100 text-slate-500' : 'bg-white/60 text-slate-600'}`}>
-                    <CalendarDays className="w-3.5 h-3.5"/>
-                  </div>
-                  <span className="text-[13px] font-black uppercase tracking-widest text-slate-700 group-hover:text-amber-950 transition-colors">Mit Semester</span>
-                </Link>
-                
-                {userProfile?.role === 'admin' && (
-                  <>
-                    <div className="w-[1px] h-4 bg-slate-200/50 mx-2"></div>
-                    <Link href="/admin" className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-rose-50' : 'hover:bg-rose-50/40'}`}>
-                      <div className="p-1.5 rounded-lg bg-rose-100 text-rose-600">
-                        <Shield className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-[13px] font-black uppercase tracking-widest text-rose-500">Admin</span>
-                    </Link>
-                  </>
-                )}
+                <NavDropdown title="Mere" icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}>
+                   <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
+                   <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
+                   {userProfile?.role === 'admin' && (
+                     <NavDropdownLink href="/admin" icon={<Shield className="w-4 h-4 text-rose-500" />}>Admin Panel</NavDropdownLink>
+                   )}
+                </NavDropdown>
               </motion.div>
             ) : (
               <motion.div 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="flex items-center space-x-1"
+                className="flex items-center space-x-2"
               >
-                {[
-                  { label: "Få hjælp fra en studerende", href: "https://ask.cohero.dk", type: "link", highlight: true },
-                  { label: "Få en Second Opinion", href: "/om-second-opinion", type: "link" },
-                  { label: "Giv din praktik stjerner", href: "/praktik-rating", type: "link" }
-                ].map((link, idx) => (
-                  <motion.div key={link.label} className="relative group overflow-hidden">
-                    {link.type === 'link' ? (
-                      <Link 
-                        href={link.href} 
-                        className={`block px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all relative z-10 
-                        ${link.highlight ? 'text-rose-600' : 'text-slate-600'}
-                        ${scrolled ? 'hover:text-slate-950' : 'hover:text-slate-950'}
-                      `}>
-                        {link.label}
-                      </Link>
-                    ) : (
-                      <a 
-                        href={link.href} 
-                        className={`block px-5 py-2.5 rounded-xl text-[13px] font-bold text-slate-600 transition-all relative z-10
-                        ${scrolled ? 'hover:text-slate-950' : 'hover:text-slate-950'}
-                      `}>
-                        {link.label}
-                      </a>
-                    )}
-                    {/* Animated Underline */}
-                    <div className="absolute bottom-1 left-5 right-5 h-[2px] bg-amber-500 translate-y-[4px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out" />
-                    
-                    {/* Hover Glow */}
-                    <div className="absolute inset-0 bg-amber-50/50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 rounded-xl -z-0" />
-                  </motion.div>
-                ))}
+                <Link href="/hvorfor" className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Hvorfor Cohéro?</Link>
+                
+                <NavDropdown title="Udforsk" icon={<Wand2 className="w-4 h-4 text-amber-500" />}>
+                   <NavDropdownLink href="https://ask.cohero.dk" icon={<HandHelping className="w-4 h-4 text-rose-500" />}>Spørg en studerende</NavDropdownLink>
+                   <NavDropdownLink href="/om-second-opinion" icon={<Scale className="w-4 h-4 text-emerald-500" />}>Få en Second Opinion</NavDropdownLink>
+                   <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Giv praktik stjerner</NavDropdownLink>
+                   <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-indigo-500" />}>Form platformen</NavDropdownLink>
+                </NavDropdown>
+
+                <div className="w-[1px] h-4 bg-slate-200/50 mx-4"></div>
               </motion.div>
             )}
+
           </div>
 
 
@@ -637,7 +601,13 @@ const Navbar: React.FC<NavbarProps> = ({
                             Giv din praktik stjerner <Star className="w-5 h-5 text-amber-400" />
                         </Link>
                     </motion.li>
+                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>
+                        <Link href="/medbestemmelse" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-slate-50 border border-slate-100 rounded-[24px] text-[18px] font-extrabold text-slate-600 shadow-sm active:scale-[0.98] transition-all">
+                            Vær med til at forme Cohéro <Lightbulb className="w-5 h-5 text-amber-500" />
+                        </Link>
+                    </motion.li>
                   </ul>
+
                 )}
               </nav>
 
