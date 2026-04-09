@@ -7,7 +7,7 @@ import { collection, query, orderBy } from 'firebase/firestore';
 import { 
   Loader2, Search, Trash2, CheckCircle2, 
   Lightbulb, Calendar, ArrowRight, Filter,
-  TrendingUp, Star, Clock, Trash
+  TrendingUp, Star, Clock, Trash, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
