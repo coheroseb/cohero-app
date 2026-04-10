@@ -57,7 +57,7 @@ import {
   addDoc,
   where
 } from 'firebase/firestore';
-import { getSecondOpinionAction, getSecondOpinionErrorSummaryAction } from '@/app/actions';
+import { getSecondOpinionAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { calculateStudyStarted } from '@/lib/education';
@@ -328,8 +328,7 @@ const SecondOpinionPageContent = () => {
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
     const [showHistory, setShowHistory] = useState(false);
     const [analysisMode, setAnalysisMode] = useState<'audit' | 'feedback'>('audit');
-    const [errorSummary, setErrorSummary] = useState<any>(null);
-    const [isLoadingSummary, setIsLoadingSummary] = useState(true);
+
 
 
     // Fetch curriculums for the user's institution and profession
@@ -422,16 +421,7 @@ const SecondOpinionPageContent = () => {
     }, [user, firestore]);
 
     // Fetch error summary
-    useEffect(() => {
-        const fetchSummary = async () => {
-            const res = await getSecondOpinionErrorSummaryAction();
-            if (res.success) {
-                setErrorSummary(res.data);
-            }
-            setIsLoadingSummary(false);
-        };
-        fetchSummary();
-    }, []);
+
 
     const isFormValid = useMemo(() => {
         const baseValid = matchedModule && assignmentFile;
@@ -615,42 +605,7 @@ const SecondOpinionPageContent = () => {
                         className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start"
                     >
                         {/* BOTTOM / FULL WIDTH: AI INSIGHTS FROM PREVIOUS DECISIONS */}
-                        {errorSummary && (
-                            <div className="lg:col-span-12">
-                                <section className="bg-amber-950 p-10 md:p-14 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-[80px] -mr-32 -mt-32" />
-                                    <div className="relative z-10 flex flex-col md:flex-row gap-12 items-center">
-                                        <div className="shrink-0 space-y-4 text-center md:text-left">
-                                            <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center text-rose-400 border border-white/5 mx-auto md:mx-0">
-                                                <Sparkles className="w-8 h-8" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-2xl font-black serif">AI Erfaringsopsamling</h3>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-rose-400/60 mt-2">Baseret på {errorSummary.decisionCount} sagsafgørelser</p>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex-1 space-y-6">
-                                            <p className="text-[10px] font-black uppercase text-white/30 tracking-[0.2em]">Hyppige fejl der giver medhold</p>
-                                            <div className="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] prose prose-invert max-w-none text-sm leading-relaxed italic text-white/80">
-                                                {errorSummary.summary}
-                                            </div>
-                                        </div>
 
-                                        <div className="grid grid-cols-2 md:flex md:flex-col gap-4 shrink-0">
-                                            <div className="p-6 bg-white/5 rounded-3xl border border-white/5 text-center px-8">
-                                                <p className="text-[9px] font-black uppercase text-white/30 mb-1">Impact</p>
-                                                <p className="text-2xl font-black text-white leading-none">Høj</p>
-                                            </div>
-                                            <div className="p-6 bg-emerald-500/10 rounded-3xl border border-emerald-500/10 text-center px-8">
-                                                <p className="text-[9px] font-black uppercase text-emerald-500/40 mb-1">Medhold</p>
-                                                <p className="text-2xl font-black text-emerald-400 leading-none">{errorSummary.winCount}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        )}
 
                         {/* LEFT: HERO & INFO */}
                         <div className="lg:col-span-4 space-y-10">
