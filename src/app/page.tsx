@@ -136,8 +136,8 @@ export default function LandingPage() {
               >
                 {/* Mobile top badge */}
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-amber-50 border border-amber-200/50 rounded-full shadow-sm mb-2">
-                   <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-500" />
-                   <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-900">Uundværlig for velfærdsuddannelserne</span>
+                   <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-500/20" />
+                   <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-900">Din professionelle rygdækning</span>
                 </div>
 
                 <motion.h1 
@@ -151,7 +151,7 @@ export default function LandingPage() {
                   }}
                   className="text-[40px] leading-[1.05] sm:text-6xl md:text-7xl xl:text-[88px] font-extrabold text-slate-900 tracking-[-0.04em] w-full max-w-[20ch] lg:max-w-none"
                 >
-                  Gør dit studieliv <br className="hidden sm:block" />
+                  Gør din faglighed <br className="hidden sm:block" />
                   <span className="relative inline-block mt-2 md:mt-4 px-2 sm:px-4 shrink-0 overflow-hidden py-2">
                     <motion.span 
                       animate={{ 
@@ -164,7 +164,7 @@ export default function LandingPage() {
                       }}
                       className="relative z-10"
                     >
-                      meget lettere.
+                      helt skudsikker.
                     </motion.span>
                     
                     {/* Continuous Underline Pulse */}
@@ -202,7 +202,7 @@ export default function LandingPage() {
                 </motion.h1>
                 
                 <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
-                  Den ultimative platform til velfærdsstudierne. Uanset om du læser til socialrådgiver, pædagog, lærer eller sygeplejerske, får du AI-drevet sparring, direkte borger-rådgivning og eksamens-værktøjer. 
+                  Aldrig mere usikker på paragraffer, teorier eller din karakter. Med AI-drevet rygdækning får du tryghed i din faglighed — fra første semester til din færdige uddannelse.
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -532,11 +532,11 @@ export default function LandingPage() {
           <div className="max-w-3xl mb-12 sm:mb-20 text-center lg:text-left mx-auto lg:mx-0">
             <Reveal>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] mb-4 sm:mb-6 leading-tight">
-                Værktøjer der <span className="text-amber-500 line-through decoration-amber-200 decoration-4 sm:decoration-8">skærper</span><br/> 
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400 italic">udvikler</span> din dømmekraft.
+                Værktøjer der sikrer <br/> 
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400 italic">din faglige præcision.</span>
               </h2>
               <p className="text-[17px] sm:text-xl text-slate-500 leading-relaxed font-medium">
-                Vores digitale økosystem er bygget 'mobile first', mod at støtte dig der, hvor teorien møder virkeligheden.
+                Du køber ikke bare adgang til AI. Du køber visheden om, at det du skriver, er fagligt korrekt og metodisk stærkt.
               </p>
             </Reveal>
           </div>
@@ -696,10 +696,10 @@ export default function LandingPage() {
           <div className="text-center mb-12 sm:mb-20 space-y-4 sm:space-y-6">
             <Reveal>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-none px-2">
-                Prøv <span className="text-amber-500">Kollega+</span> i dag.
+                Sov trygt med <span className="text-amber-500">Kollega+</span>.
               </h2>
               <p className="text-[17px] sm:text-xl text-slate-500 font-medium max-w-xl mx-auto px-4">
-                Fuld rygdækning i studietet. Start gratis – ingen binding.
+                Fuld rygdækning gennem hele semesteret. Start din 7 dages tryghedspakke i dag.
               </p>
             </Reveal>
           </div>

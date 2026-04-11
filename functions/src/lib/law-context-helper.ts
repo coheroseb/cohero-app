@@ -3,7 +3,6 @@ import path from 'path';
 import { adminFirestore } from '@/firebase/server-init';
 import { ai } from '@/ai/genkit';
 import { getLawContent } from '@/ai/flows/get-law-content-flow';
-import { LAW_METADATA } from './law-metadata';
 
 async function getEthicsContext(): Promise<string> {
     try {
