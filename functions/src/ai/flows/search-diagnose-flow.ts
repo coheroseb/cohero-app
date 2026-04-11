@@ -1,6 +1,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { searchIcdEntities } from '../../lib/icd-helper';
+import { searchIcdEntities, getIcdEntityDetails } from '../../lib/icd-helper';
 
 const SearchDiagnoseInputSchema = z.object({
   query: z.string().describe('The name of the diagnosis or symptoms to search for.'),
@@ -42,19 +42,34 @@ export const searchDiagnoseFlow = ai.defineFlow(
             return { success: true, diagnoses: [] };
         }
 
-        // 2. Map raw API results to our format
-        const diagnoses = icdResults.destinationEntities.slice(0, 10).map((entity: any) => {
-            return {
-                id: entity.id,
-                code: entity.theCode || 'N/A',
-                titleDa: entity.title, // Fallback to English since AI translation is removed
-                titleEn: entity.title,
-                descriptionDa: 'Information fra WHO ICD-11 registeret.', 
-                symptomsDa: [],
-                socialWorkContext: 'Socialfaglig guide er deaktiveret.',
-                legalAnchors: []
-            };
-        });
+        // 2. Map raw API results to our format and fetch deep details
+        const diagnoses = await Promise.all(icdResults.destinationEntities.slice(0, 5).map(async (entity: any) => {
+            try {
+                const details = await getIcdEntityDetails(entity.id);
+                
+                return {
+                    id: entity.id,
+                    code: details.theCode || entity.theCode || 'N/A',
+                    titleDa: details.title?.['@value'] || entity.title, 
+                    titleEn: entity.title,
+                    descriptionDa: details.definition?.['@value'] || 'Ingen yderligere beskrivelse tilgængelig fra WHO.', 
+                    symptomsDa: details.synonyms?.map((s: any) => s.label?.['@value']) || [],
+                    socialWorkContext: 'Officiel WHO definition.',
+                    legalAnchors: []
+                };
+            } catch (e) {
+                return {
+                    id: entity.id,
+                    code: entity.theCode || 'N/A',
+                    titleDa: entity.title,
+                    titleEn: entity.title,
+                    descriptionDa: 'Kunne ikke hente yderligere detaljer fra WHO.', 
+                    symptomsDa: [],
+                    socialWorkContext: 'Socialfaglig guide er deaktiveret.',
+                    legalAnchors: []
+                };
+            }
+        }));
 
         return {
             success: true,

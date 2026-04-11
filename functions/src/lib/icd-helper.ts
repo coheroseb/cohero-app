@@ -63,8 +63,10 @@ export async function searchIcdEntities(query: string) {
 
 export async function getIcdEntityDetails(entityId: string) {
     const token = await getIcdToken();
-    const url = `https://id.who.int/icd/entity/${entityId}`;
+    // Handle both numeric IDs and full WHO URLs
+    const url = entityId.startsWith('http') ? entityId : `https://id.who.int/icd/entity/${entityId}`;
     
+    console.log(`[ICD-API] Fetching details for: ${url}`);
     const response = await axios.get(url, {
         headers: {
             'Authorization': `Bearer ${token}`,
