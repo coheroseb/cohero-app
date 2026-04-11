@@ -327,7 +327,6 @@ function ConceptExplainerPageContent() {
     }
   }, [explanation, user, firestore, isSaving, isSaved, searchQuery, toast]);
 
-
   return (
     <div className="min-h-screen bg-[#FDFCF8] selection:bg-amber-100 flex flex-col items-center">
       
@@ -910,6 +909,8 @@ function ConceptExplainerPageContent() {
                 onClose={() => setShowVideoPlayer(false)} 
               />
           )}
+      </AnimatePresence>
+
       {/* CONCEPT MODEL MODAL */}
       <AnimatePresence>
           {showModelModal && explanation?.conceptModel && (
@@ -966,7 +967,7 @@ function ConceptExplainerPageContent() {
     </div>
 
   );
-};
+}
 
 export default function ConceptExplainerPage() {
     const { user, isUserLoading, userProfile } = useApp();
