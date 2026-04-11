@@ -40,7 +40,7 @@ export const searchDiagnoseFlow = ai.defineFlow(
         
         const enrichedDiagnoses = await Promise.all(topResults.map(async (entity: any) => {
             const { output } = await ai.generate({
-                model: 'googleai/gemini-2.0-flash',
+                model: 'googleai/gemini-2.5-flash',
                 prompt: `Du er en ekspert i både psykiatri og dansk socialret. 
                 Her er data på en diagnose fra WHO (ICD-11):
                 Engelsk Titel: ${entity.title}
