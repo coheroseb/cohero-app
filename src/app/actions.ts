@@ -748,6 +748,7 @@ export async function saveQuizResultAction(params: { userId: string, result: Omi
 
 export async function getFagligtMyceliumAction(input: any) { return callFirebaseFlow('getFagligtMyceliumFlow', input); }
 export async function analyzeReformPdfAction(input: any) { return callFirebaseFlow('analyzeReformPdfFlow', input); }
+export async function searchDiagnoseAction(input: { query: string, profession?: string }) { return callFirebaseFlow('searchDiagnoseFlow', input); }
 export async function seminarArchitectAction(input: SeminarArchitectInput): Promise<SeminarArchitectOutput> { return callFirebaseFlow('seminarArchitectFlow', input); }
 export async function translateSeminarAction(input: TranslateSeminarInput): Promise<TranslateSeminarOutput> { return callFirebaseFlow('translateSeminarFlow', input); }
 export async function chatWithSeminarAction(input: SeminarChatInput): Promise<SeminarChatOutput> { return callFirebaseFlow('seminarChatFlow', input); }
