@@ -319,6 +319,39 @@ export default function DiagnoseGuidePage() {
                                 </div>
                             )}
 
+                            {diag.relevantLegalParagraphs && diag.relevantLegalParagraphs.length > 0 && (
+                                <div className="p-8 bg-slate-900 rounded-[32px] text-white shadow-2xl relative overflow-hidden group mb-8">
+                                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <Scale className="w-24 h-24" />
+                                    </div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="p-2 bg-rose-500 rounded-lg">
+                                                <Shield className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-rose-400 block">Socialfaglig Lov-kobling</span>
+                                                <h4 className="text-lg font-black tracking-tight text-white">Relevante Paragraffer & Kilder</h4>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid gap-4">
+                                            {diag.relevantLegalParagraphs.map((law, i) => (
+                                                <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                                        <span className="text-sm font-black text-rose-300">{law.paragraph}</span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                                        {law.description}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Inclusions & Exclusions */}
                             <div className="grid md:grid-cols-2 gap-8">
                                 {diag.inclusions && diag.inclusions.length > 0 && (

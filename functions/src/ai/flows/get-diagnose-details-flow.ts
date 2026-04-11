@@ -26,7 +26,11 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
                 title: z.string()
             })).optional(),
             socialWorkContext: z.string(),
-            legalAnchors: z.array(z.string()).optional()
+            legalAnchors: z.array(z.string()).optional(),
+            relevantLegalParagraphs: z.array(z.object({
+                paragraph: z.string(),
+                description: z.string()
+            })).optional(),
         }).optional(),
         error: z.string().optional()
     }),
@@ -35,6 +39,42 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
     try {
         console.log(`[Flow-Details] Fetching details for: "${input.id}"`);
         const details = await getIcdEntityDetails(input.id);
+        
+        // Parallel data retrieval for speed and depth
+        const [narrowerTerms, legalMapping] = await Promise.all([
+          // 1. Resolve child titles as before
+          Promise.all((details.child?.slice(0, 10) || []).map(async (c: any) => {
+              try {
+                  const isString = typeof c === 'string';
+                  const childId = isString ? c : (c['@id'] || '');
+                  if (!isString && c.title?.['@value']) return { id: childId, title: c.title['@value'] };
+                  const childDetails = await getIcdEntityDetails(childId);
+                  return { id: childId, title: childDetails.title?.['@value'] || 'Underkategori' };
+              } catch (e) { return { id: '', title: '' }; }
+          })).then(terms => terms.filter(t => t.id && t.title)),
+
+          // 2. High-speed AI mapping to Danish Social Law/Ankestyrelsen principles
+          ai.generate({
+              model: 'googleai/gemini-1.5-flash',
+              prompt: `Du er en ekspert i dansk socialret og ICD-11.
+              Givet denne kliniske diagnose fra WHO ICD-11:
+              Navn: "${details.title?.['@value']}"
+              Definition: "${details.definition?.['@value']}"
+              
+              Find de 3-5 mest centrale paragraffer i den danske lovgivning (Serviceloven, Barnets Lov, Sundhedsloven m.fl.) eller Principafgørelser, der typisk bringes i anvendelse for at yde hjælp til denne diagnosegruppe.
+              Fokusér på praktisk socialt arbejde (støtte, hjælpemidler, tabt arbejdsfortjeneste, botilbud).
+              Giv et kortvarigt pædagogisk input til hver kilde.
+              Svar på dansk.`,
+              output: {
+                  schema: z.object({
+                      paragraphs: z.array(z.object({
+                          paragraph: z.string().describe('Lov og paragraf, f.eks. Serviceloven § 85'),
+                          description: z.string().describe('Hvorfor er denne relevant?')
+                      }))
+                  })
+              }
+          })
+        ]);
         
         const diagnosis = {
             id: input.id,
@@ -47,23 +87,10 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
             inclusions: details.inclusion?.map((i: any) => i.label?.['@value']) || [],
             exclusions: details.exclusion?.map((e: any) => e.label?.['@value']) || [],
             diagnosticCriteria: details.diagnosticCriteria?.['@value'] || '',
-            narrowerTerms: await Promise.all((details.child?.slice(0, 10) || []).map(async (c: any) => {
-                try {
-                    const isString = typeof c === 'string';
-                    const childId = isString ? c : (c['@id'] || '');
-                    
-                    if (!isString && c.title?.['@value']) {
-                        return { id: childId, title: c.title['@value'] };
-                    }
-
-                    const childDetails = await getIcdEntityDetails(childId);
-                    return { id: childId, title: childDetails.title?.['@value'] || 'Underkategori' };
-                } catch (e) {
-                    return { id: '', title: '' };
-                }
-            })).then(terms => terms.filter(t => t.id && t.title)),
-            socialWorkContext: 'Officiel WHO definition.',
-            legalAnchors: []
+            narrowerTerms,
+            socialWorkContext: 'Officiel WHO definition med pædagogisk lov-kobling.',
+            legalAnchors: [],
+            relevantLegalParagraphs: legalMapping.output?.paragraphs || []
         };
 
         return {
