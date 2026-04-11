@@ -15,7 +15,9 @@ const SearchDiagnoseOutputSchema = z.object({
     titleDa: z.string(),
     titleEn: z.string(),
     descriptionDa: z.string(),
-    socialWorkContext: z.string().describe('How this diagnosis affects social work or the citizens rights.')
+    symptomsDa: z.array(z.string()).optional(),
+    socialWorkContext: z.string(),
+    legalAnchors: z.array(z.string()).optional()
   })),
   error: z.string().optional()
 });
@@ -43,23 +45,28 @@ export const searchDiagnoseFlow = ai.defineFlow(
         const enrichedDiagnoses = await Promise.all(topResults.map(async (entity: any) => {
             const { output } = await ai.generate({
                 model: 'googleai/gemini-2.5-flash',
-                prompt: `Du er en ekspert i både psykiatri og dansk socialret. 
-                Her er data på en diagnose fra WHO (ICD-11):
+                prompt: `Du er en top-ekspert i psykiatri, klinisk psykologi og dansk socialret (Serviceloven og Barnets Lov).
+                Brugeren er en ${input.profession || 'socialrådgiver'}.
+                
+                Her er data fra WHO (ICD-11):
                 Engelsk Titel: ${entity.title}
                 Id: ${entity.id}
                 
                 Dine opgaver:
                 1. Oversæt titlen til præcis dansk fagterminologi.
-                2. Giv en kort, letforståelig beskrivelse på dansk af diagnosen (2-3 sætninger).
-                3. Forklar hvad denne diagnose betyder i en dansk socialfaglig kontekst for en ${input.profession || 'socialrådgiver'}. 
-                   Tænk på: Hvilke paragraffer i serviceloven/barnets lov kan være relevante? Hvilke udfordringer kan borgeren have i hverdagen?
+                2. Beskrivelse: Giv en professionel definition af diagnosen.
+                3. Kernesymptomer: Oplist de 3-5 vigtigste kliniske tegn på denne diagnose.
+                4. Socialfaglig betydning: Forklar dybdegående hvad dette betyder for borgerens funktionsevne. Hvordan påvirker det evnen til at arbejde, gå i skole eller være forælder?
+                5. Lovgivning: Nævn de mest relevante paragraffer (f.eks. § 82, 85, 114 i Serviceloven eller specifikke dele af Barnets Lov), der typisk kommer i spil ved denne diagnose.
                 
-                Returner svaret på dansk.`,
+                Returner svaret på dansk i et struktureret JSON format.`,
                 output: {
                     schema: z.object({
                         titleDa: z.string(),
                         descriptionDa: z.string(),
-                        socialWorkContext: z.string()
+                        symptomsDa: z.array(z.string()),
+                        socialWorkContext: z.string(),
+                        legalAnchors: z.array(z.string()).describe('List specific paragraphs or laws')
                     })
                 }
             });
@@ -70,7 +77,9 @@ export const searchDiagnoseFlow = ai.defineFlow(
                 titleDa: output?.titleDa || entity.title,
                 titleEn: entity.title,
                 descriptionDa: output?.descriptionDa || '',
-                socialWorkContext: output?.socialWorkContext || ''
+                symptomsDa: output?.symptomsDa || [],
+                socialWorkContext: output?.socialWorkContext || '',
+                legalAnchors: output?.legalAnchors || []
             };
         }));
 
