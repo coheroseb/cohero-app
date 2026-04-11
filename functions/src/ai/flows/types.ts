@@ -733,17 +733,30 @@ export const AnalyzeStarDataOutputSchema = z.object({
   usage: UsageSchema,
 });
 
-// ==========================================
-// OTHER FLOW SCHEMAS
-// ==========================================
+export const ConceptModelSchema = z.object({
+  nodes: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    type: z.enum(['concept', 'actor', 'process', 'law', 'outcome']),
+    description: z.string().optional(),
+  })),
+  edges: z.array(z.object({
+    fromId: z.string(),
+    toId: z.string(),
+    label: z.string(),
+    description: z.string().optional(),
+  })),
+});
 
 export const ExplanationSchema = z.object({
   definition: z.string(),
+  isModel: z.boolean().describe('Whether this concept is a theoretical model or framework that can be visualized.'),
   etymology: z.string().optional(),
   relevance: z.string(),
   practicalExample: z.string(),
   legalAnchor: z.string().optional(),
   criticalReflection: z.string().optional(),
+  conceptModel: ConceptModelSchema.optional().describe('A structured graph visualization of the concept. ONLY populate this if isModel is true.'),
   suggestedLiterature: z.array(z.object({
     title: z.string(),
     author: z.string(),
