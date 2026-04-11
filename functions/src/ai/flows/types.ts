@@ -513,6 +513,10 @@ export const AnalyzeLegalDecisionPdfInputSchema = z.object({
 export const LegalDecisionAnalysisDataSchema = z.object({
   hvadErAfgørelsen: z.string(),
   påBaggrundAfHvad: z.string(),
+  diagnoser: z.array(z.object({
+    navn: z.string(),
+    id: z.string().optional().describe('WHO ID hvis det kan findes, ellers blank')
+  })).optional().describe('Eventuelle diagnoser nævnt i afgørelsen')
 });
 
 export const AnalyzeLegalDecisionOutputSchema = z.object({

@@ -236,6 +236,22 @@ export default function DiagnoseGuidePage() {
                     <div className="p-8 sm:p-12 border-b border-slate-50">
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-8 mb-8">
                             <div>
+                                                                {diag.breadcrumbs && diag.breadcrumbs.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-2 mb-6 opacity-60 overflow-hidden">
+                                        {diag.breadcrumbs.map((bc, i) => (
+                                            <React.Fragment key={i}>
+                                                <button 
+                                                    onClick={() => handleDrillDown(bc.id)}
+                                                    className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-rose-600 transition-colors whitespace-nowrap"
+                                                >
+                                                    {bc.title}
+                                                </button>
+                                                {i < diag.breadcrumbs.length - 1 && <ChevronRight className="w-3 h-3 text-slate-300 shrink-0" />}
+                                            </React.Fragment>
+                                        ))}
+                                        <ChevronRight className="w-3 h-3 text-slate-300 shrink-0" />
+                                    </div>
+                                )}
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900 text-white rounded-full text-[12px] font-black uppercase tracking-[0.15em] mb-6">
                                     ICD-11 Kode: {diag.code}
                                 </div>

@@ -25,6 +25,10 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
                 id: z.string(),
                 title: z.string()
             })).optional(),
+            breadcrumbs: z.array(z.object({
+                id: z.string(),
+                title: z.string()
+            })).optional(),
             socialWorkContext: z.string(),
             legalAnchors: z.array(z.string()).optional(),
             relevantLegalParagraphs: z.array(z.object({
@@ -41,7 +45,8 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
         const details = await getIcdEntityDetails(input.id);
         
         // Parallel data retrieval for speed and depth
-        const [narrowerTerms, legalMapping] = await Promise.all([
+        const [narrowerTerms,
+            breadcrumbs, legalMapping] = await Promise.all([
           // 1. Resolve child titles as before
           Promise.all((details.child?.slice(0, 10) || []).map(async (c: any) => {
               try {
@@ -75,6 +80,24 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
               }
           })
         ]);
+
+        // 3. Resolve Breadcrumbs (Ancestor path)
+        const breadcrumbs: { id: string, title: string }[] = [];
+        let currentParentUrl = details.parent?.[0];
+        
+        for (let i = 0; i < 4; i++) {
+            if (!currentParentUrl || currentParentUrl.includes('root')) break;
+            try {
+                const pDetails = await getIcdEntityDetails(currentParentUrl);
+                breadcrumbs.unshift({
+                    id: currentParentUrl,
+                    title: pDetails.title?.['@value'] || 'Overkategori'
+                });
+                currentParentUrl = pDetails.parent?.[0];
+            } catch (e) {
+                break;
+            }
+        }
         
         const diagnosis = {
             id: input.id,

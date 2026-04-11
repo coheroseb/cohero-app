@@ -32,7 +32,8 @@ Analyser teksten og udfyld et JSON-objekt med følgende:
 4.  **Tidslinje (tidslinje):** Lav en kronologisk liste over de vigtigste hændelser med dato (hvis muligt) og beskrivelse.
 5.  **Relevante Paragraffer (relevanteParagraffer):** Foreslå konkrete lovparagraffer, der er relevante for at løse eller vurdere denne case (f.eks. fra Barnets Lov, Serviceloven eller Forvaltningsloven). Forklar kort hvorfor de er relevante.
 6.  **Sammenfatning (sammenfatning):** En kort faglig opsummering af sagen (ca. 3-5 sætninger).
-7.  **Røde Lamper (redFlags):** Identificer kritiske advarsler eller risici, der kræver øjeblikkelig opmærksomhed. Dette inkluderer:
+7.  **Diagnoser (diagnoser):** Identificer eventuelle medicinske eller psykiatriske diagnoser nævnt i sagen (f.eks. ADHD, PTSD, Skizofreni). Hvis du kan identificere en specifik ICD-10 eller ICD-11 kode, så medtag den.
+8.  **Røde Lamper (redFlags):** Identificer kritiske advarsler eller risici, der kræver øjeblikkelig opmærksomhed. Dette inkluderer:
     - Sagsbehandlingsfejl (f.eks. overskridelse af frister, manglende partshøring).
     - Sundhedsrisiko (f.eks. akutte helbredsproblemer, misbrug).
     - Vold (f.eks. fysisk eller psykisk vold, overgreb).

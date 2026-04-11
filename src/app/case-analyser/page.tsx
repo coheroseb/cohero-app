@@ -533,6 +533,36 @@ const CaseAnalyserPage: React.FC = () => {
                         </div>
                     </section>
 
+                    
+                    {/* Diagnoser */}
+                    {analysis.diagnoser && analysis.diagnoser.length > 0 && (
+                        <section>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1 flex items-center gap-2">
+                               <BrainCircuit className="w-3.5 h-3.5 text-rose-500" /> Kliniske Diagnoser
+                            </h3>
+                            <div className="space-y-3">
+                                {analysis.diagnoser.map((diag, i) => (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => router.push("/diagnose-guide?query=" + encodeURIComponent(diag.navn))}
+                                        className="w-full p-4 bg-white border border-rose-50 rounded-2xl shadow-sm hover:shadow-md hover:border-rose-200 transition-all text-left flex items-center justify-between group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center group-hover:bg-rose-100 transition-colors">
+                                                <Activity className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-700">{diag.navn}</p>
+                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Klik for ICD-11 opslag</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-rose-500 transition-colors" />
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+                    )
+
                     {/* Relevante Paragraffer */}
                     <section>
                         <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1 flex items-center gap-2">

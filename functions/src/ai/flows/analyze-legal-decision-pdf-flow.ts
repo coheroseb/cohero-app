@@ -28,6 +28,7 @@ Udfyld følgende to felter i et JSON-objekt. Brug et letforståeligt men profess
 
 1.  **Hvad er afgørelsen? (hvadErAfgørelsen):** Forklar selve konklusionen eller resultatet af sagen. Hvad blev der besluttet? Gør det konkret og praksisnært.
 2.  **På baggrund af hvad? (påBaggrundAfHvad):** Forklar præmisserne for afgørelsen. Hvilke specifikke paragraffer, juridiske principper eller faktiske omstændigheder i sagen blev lagt til grund? 
+3.  **Diagnoser (diagnoser):** Identificer eventuelle medicinske eller psykiatriske diagnoser nævnt i sagen. Hvis du kan identificere en specifik ICD-10 eller ICD-11 kode, så medtag den.
 
 Dit svar SKAL være et JSON-objekt, der matcher output-skemaet.`
         }
