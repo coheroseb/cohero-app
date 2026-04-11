@@ -190,97 +190,39 @@ export default function DiagnoseGuidePage() {
                 >
                     {/* Diagnosis Header */}
                     <div className="p-8 sm:p-12 border-b border-slate-50">
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-8 mb-10">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-8">
                             <div>
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-rose-600 text-white rounded-full text-[12px] font-black uppercase tracking-[0.15em] mb-6 shadow-lg shadow-rose-600/20">
-                                    ICD-11 Systemet
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900 text-white rounded-full text-[12px] font-black uppercase tracking-[0.15em] mb-6">
+                                    ICD-11 Kode: {diag.code}
                                 </div>
-                                <h3 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.1] mb-4">
-                                    <span className="text-rose-600 mr-4 font-black">{diag.code}</span>
+                                <h3 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6">
                                     {diag.titleDa}
                                 </h3>
-                                <p className="text-slate-400 text-lg font-medium italic mb-6">{diag.titleEn}</p>
                                 
-                                <div className="flex gap-4">
-                                    <div className="px-5 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-xs font-bold text-slate-600">WHO Officiel</span>
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex items-center gap-3 text-slate-400">
+                                        <Info className="w-5 h-5" />
+                                        <span className="text-xs font-bold uppercase tracking-widest leading-none">WHO Identifier</span>
                                     </div>
-                                    <div className="px-5 py-2.5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
-                                        <Zap className="w-4 h-4 text-rose-500" />
-                                        <span className="text-xs font-bold text-rose-900">Socialfaglig Guide</span>
+                                    <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl break-all">
+                                        <code className="text-[10px] font-mono text-slate-500">{diag.id}</code>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Description & Symptoms */}
-                        <div className="grid md:grid-cols-2 gap-8">
-                            <div className="bg-slate-50/50 p-8 rounded-[32px] border border-slate-100/50">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-4">Beskrivelse</span>
-                                <p className="text-slate-600 font-medium leading-relaxed">{diag.descriptionDa}</p>
-                            </div>
-
-                            {diag.symptomsDa && diag.symptomsDa.length > 0 && (
-                                <div className="bg-amber-50/30 p-8 rounded-[32px] border border-amber-100/30">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 block mb-4">Kernesymptomer</span>
-                                    <ul className="space-y-3">
-                                        {diag.symptomsDa.map((symptom, i) => (
-                                            <li key={i} className="flex gap-3 text-sm font-bold text-slate-700">
-                                                <div className="w-5 h-5 bg-white rounded-full border border-amber-100 flex items-center justify-center shrink-0">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                                </div>
-                                                {symptom}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
                         </div>
                     </div>
 
-                    {/* Social Work Context Area */}
-                    <div className="p-8 sm:p-12 bg-rose-50/20">
-                        <div className="grid md:grid-cols-3 gap-8">
-                            <div className="md:col-span-2">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 bg-rose-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-rose-600/20">
-                                        <Shield className="w-5 h-5" />
-                                    </div>
-                                    <h4 className="text-xl font-black text-slate-900 tracking-tight">Socialfaglig Betydning</h4>
-                                </div>
-                                <div className="bg-white p-8 rounded-[32px] border border-rose-100/50 shadow-sm relative overflow-hidden h-full">
-                                    <div className="relative z-10 prose prose-slate max-w-none">
-                                        <p className="text-slate-700 font-medium leading-[1.8] whitespace-pre-wrap">
-                                            {diag.socialWorkContext}
-                                        </p>
-                                    </div>
-                                </div>
+                    {/* Meta Area */}
+                    <div className="p-8 sm:p-12 bg-slate-50/30">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                            <div className="flex items-center gap-2 text-slate-400">
+                                <Activity className="w-4 h-4" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Officiel WHO Data Opslag</span>
                             </div>
-
-                            <div className="flex flex-col gap-6">
-                                <div className="flex items-center gap-3 mb-1">
-                                    <h4 className="text-lg font-black text-slate-900 tracking-tight">Juridisk Forankring</h4>
-                                </div>
-                                
-                                {diag.legalAnchors && diag.legalAnchors.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {diag.legalAnchors.map((law, i) => (
-                                            <div key={i} className="p-4 bg-white border border-slate-100 rounded-2xl flex items-center gap-3 group hover:border-rose-200 transition-all cursor-default">
-                                                <ScaleIcon className="w-4 h-4 text-rose-400 group-hover:text-rose-600 transition-colors" />
-                                                <span className="text-xs font-black text-slate-700 uppercase tracking-wide">{law}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-xs font-bold text-slate-400 italic">Ingen specifikke paragraffer fundet.</p>
-                                )}
-
-                                <Link href="/lov-portal" className="mt-auto px-6 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-600 transition-all text-center shadow-lg shadow-slate-900/10 active:scale-95 flex items-center justify-center gap-2">
-                                    Åbn Lovportalen
-                                    <ChevronRight className="w-4 h-4" />
-                                </Link>
-                            </div>
+                            <Link href={diag.id} target="_blank" className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:border-slate-900 hover:text-slate-900 transition-all shadow-sm active:scale-95 flex items-center gap-2">
+                                Se i WHO Browser
+                                <ChevronRight className="w-4 h-4" />
+                            </Link>
                         </div>
                     </div>
                 </motion.div>
