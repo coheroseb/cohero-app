@@ -319,7 +319,7 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
-          { title: "Diagnoser", path: "/diagnose-guide", icon: <Shield className="w-5 h-5" /> },
+          
           { title: "Form fremtiden", path: "/medbestemmelse", icon: <Lightbulb className="w-5 h-5" /> },
         ]
       }
@@ -390,7 +390,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   { label: "Hjem", href: "/portal", icon: <Home className="w-5 h-5"/>, color: "bg-amber-100 text-amber-700" },
                   { label: "Slides", href: "/mine-seminarer", icon: <Presentation className="w-5 h-5"/>, color: "bg-emerald-100 text-emerald-700" },
                   { label: "Jura", href: "/lov-portal", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" },
-                  { label: "Diagnoser", href: "/diagnose-guide", icon: <Shield className="w-5 h-5"/>, color: "bg-rose-100 text-rose-700" },
+                  
                   { label: "Semester", href: "/mit-semester", icon: <CalendarDays className="w-5 h-5"/>, color: "bg-indigo-100 text-indigo-700" }
                 ].map((item) => (
                   <Link key={item.label} href={item.href} className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
