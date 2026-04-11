@@ -3283,3 +3283,7 @@ export async function deleteCurriculumAction(id: string) {
 export async function translateDiagnoseAction(input: { text: string, context?: string }) {
     return await callFirebaseFlow('translateDiagnoseFlow', input);
 }
+
+export async function getDiagnoseDetailsAction(input: { id: string }) {
+    return await callFirebaseFlow('getDiagnoseDetailsFlow', input);
+}

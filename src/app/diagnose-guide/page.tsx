@@ -23,7 +23,8 @@ import {
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
-import { searchDiagnoseAction, translateDiagnoseAction } from '@/app/actions';
+import { useApp } from '@/app/provider';
+import { searchDiagnoseAction, translateDiagnoseAction, getDiagnoseDetailsAction } from '@/app/actions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 export default function DiagnoseGuidePage() {
@@ -67,6 +68,24 @@ export default function DiagnoseGuidePage() {
       }
     } catch (err: any) {
       setError('Kunne ikke forbinde til serveren.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleDrillDown = async (id: string) => {
+    setIsSearching(true);
+    setError(null);
+    try {
+      const res = await getDiagnoseDetailsAction({ id });
+      if (res.success && res.data?.diagnosis) {
+        setResults([res.data.diagnosis]);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setError(res.error || 'Kunne ikke hente detaljer for denne kategori.');
+      }
+    } catch (err: any) {
+      setError('Der skete en fejl ved overgangen til denne kategori.');
     } finally {
       setIsSearching(false);
     }
@@ -286,10 +305,7 @@ export default function DiagnoseGuidePage() {
                                         {diag.narrowerTerms.map((term, i) => (
                                             <button 
                                                 key={i} 
-                                                onClick={() => {
-                                                    setQuery(term.title);
-                                                    handleSearch(undefined, term.title);
-                                                }}
+                                                onClick={() => handleDrillDown(term.id)}
                                                 className="p-4 bg-white border border-slate-100 rounded-2xl text-left hover:border-rose-400 group transition-all active:scale-95 shadow-sm"
                                             >
                                                 <div className="flex items-center gap-3">
