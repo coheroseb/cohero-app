@@ -561,7 +561,7 @@ const CaseAnalyserPage: React.FC = () => {
                                 ))}
                             </div>
                         </section>
-                    )
+                    )}
 
                     {/* Relevante Paragraffer */}
                     <section>
