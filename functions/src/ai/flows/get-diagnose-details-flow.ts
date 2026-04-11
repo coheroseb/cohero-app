@@ -59,7 +59,7 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
 
           // 2. High-speed AI mapping to Danish Social Law/Ankestyrelsen principles
           ai.generate({
-              model: 'googleai/gemini-1.5-flash',
+              model: 'googleai/gemini-2.0-flash',
               prompt: `Du er en ekspert i dansk socialret og ICD-11.
               Givet denne kliniske diagnose fra WHO ICD-11:
               Navn: "${details.title?.['@value']}"
