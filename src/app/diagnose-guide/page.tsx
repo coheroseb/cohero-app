@@ -217,16 +217,47 @@ export default function DiagnoseGuidePage() {
 
                             {diag.symptomsDa && diag.symptomsDa.length > 0 && (
                                 <div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-4 ml-2">Nøgleord & Synonymer</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-4 ml-1">Nøgleord & Synonymer</span>
                                     <div className="flex flex-wrap gap-2">
                                         {diag.symptomsDa.map((s, i) => (
-                                            <div key={i} className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-600 shadow-sm">
+                                            <div key={i} className="px-4 py-2 bg-white border border-slate-100 rounded-xl text-xs font-bold text-slate-600 shadow-sm">
                                                 {s}
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             )}
+
+                            {/* Inclusions & Exclusions */}
+                            <div className="grid md:grid-cols-2 gap-8">
+                                {diag.inclusions && diag.inclusions.length > 0 && (
+                                    <div className="p-8 bg-emerald-50/30 border border-emerald-100/50 rounded-[32px]">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block mb-4">Indbefattet</span>
+                                        <ul className="space-y-3">
+                                            {diag.inclusions.map((inc, i) => (
+                                                <li key={i} className="text-xs font-bold text-emerald-900 flex gap-3">
+                                                    <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[8px] font-black shrink-0">+</div>
+                                                    {inc}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {diag.exclusions && diag.exclusions.length > 0 && (
+                                    <div className="p-8 bg-rose-50/30 border border-rose-100/50 rounded-[32px]">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-600 block mb-4">Ekskluderet</span>
+                                        <ul className="space-y-3">
+                                            {diag.exclusions.map((exc, i) => (
+                                                <li key={i} className="text-xs font-bold text-rose-900 flex gap-3">
+                                                    <div className="w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[8px] font-black shrink-0">-</div>
+                                                    {exc}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 

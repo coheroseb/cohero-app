@@ -16,6 +16,8 @@ const SearchDiagnoseOutputSchema = z.object({
     titleEn: z.string(),
     descriptionDa: z.string(),
     symptomsDa: z.array(z.string()).optional(),
+    inclusions: z.array(z.string()).optional(),
+    exclusions: z.array(z.string()).optional(),
     socialWorkContext: z.string(),
     legalAnchors: z.array(z.string()).optional()
   })),
@@ -54,6 +56,8 @@ export const searchDiagnoseFlow = ai.defineFlow(
                     titleEn: entity.title,
                     descriptionDa: details.definition?.['@value'] || 'Ingen yderligere beskrivelse tilgængelig fra WHO.', 
                     symptomsDa: details.synonyms?.map((s: any) => s.label?.['@value']) || [],
+                    inclusions: details.inclusion?.map((i: any) => i.label?.['@value']) || [],
+                    exclusions: details.exclusion?.map((e: any) => e.label?.['@value']) || [],
                     socialWorkContext: 'Officiel WHO definition.',
                     legalAnchors: []
                 };
