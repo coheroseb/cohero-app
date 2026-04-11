@@ -175,20 +175,37 @@ function ConceptExplainerPageContent() {
         // Fetch VIVE research parallel
         fetchVivePublicationsAction({ searchTerm: term, limit: 3 }).then(res => setViveArticles(res.publications));
 
-        // Get AI Explanation — profession-aware caching
         const userProfession = userProfile?.profession || 'Socialrådgiver';
-        const normalizedTerm = term.toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
-        // Use a profession-specific document key so each profession gets its own cached explanation
+        const normalizedTerm = term.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
         const professionKey = userProfession.toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
+        
+        // 0. QUICK CHECK: Local cache for immediate response
+        const sessionCacheKey = `cohero-explainer-${normalizedTerm}-${professionKey}`;
+        const cached = sessionStorage.getItem(sessionCacheKey);
+        if (cached) {
+            setSearchProgress({ step: 3, label: 'Indlæser lynhurtigt fra cache...' });
+            const data = JSON.parse(cached);
+            setExplanation(data);
+            if (data.isModel) setShowModelModal(true);
+            setIsLoading(false);
+            setSearchProgress({ step: 0, label: '' });
+            return;
+        }
+
         const docRef = doc(firestore, 'conceptExplanations-v2', `${normalizedTerm}--${professionKey}`);
+        setSearchProgress({ step: 1, label: 'Søger i Cohero Vidensbase...' });
         const snap = await getDoc(docRef);
 
         let finalExplanation: Explanation;
         if (snap.exists()) {
+            setSearchProgress({ step: 2, label: 'Henter ekspert-forklaring...' });
             finalExplanation = snap.data().explanation;
         } else {
+            setSearchProgress({ step: 2, label: 'Aktiverer AI Deep Scan...' });
             const res = await explainConceptAction({ concept: term, profession: userProfession });
             finalExplanation = res.data;
+            
+            setSearchProgress({ step: 3, label: 'Gemmer til fremtidig brug...' });
             await setDoc(docRef, { 
                 conceptName: term, 
                 explanation: res.data, 
@@ -196,6 +213,11 @@ function ConceptExplainerPageContent() {
                 createdAt: serverTimestamp() 
             });
         }
+        
+        // Save to session cache
+        sessionStorage.setItem(sessionCacheKey, JSON.stringify(finalExplanation));
+        
+        setSearchProgress({ step: 4, label: 'Færdiggør visuel præsentation...' });
         setExplanation(finalExplanation);
         
         // Auto-show model if it is an identified framework/model

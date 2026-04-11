@@ -69,75 +69,56 @@ export async function getSpecificLawAndGuidelinesContext(data: { id: string, nam
     }
 }
 
-/**
- * Main helper to get relevant law context for a query.
- */
 export async function getRelevantLawContext(topicOrQuery: string): Promise<string> {
     console.log(`[LAW-CONTEXT] Question: "${topicOrQuery}"`);
+    const lowerQuery = topicOrQuery.toLowerCase();
     
+    // QUICK EXIT: If it's a theoretical model without legal indicators, skip deep law search
+    const hasLegalIndicators = /§|lov|pgr|stk|kap|retssikkerhed|servicelov|barnets lov/i.test(lowerQuery);
+    if (!hasLegalIndicators && lowerQuery.length > 3) {
+        console.log(`[LAW-CONTEXT] No legal indicators found. Skipping deep law search.`);
+        return '';
+    }
+
     const snapshot = await adminFirestore.collection('laws').get();
     const allLaws = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
     
-    console.log(`[LAW-CONTEXT] Found ${allLaws.length} laws.`);
-
     if (allLaws.length === 0) return '';
 
     let detectedIds: string[] = [];
-    
-    try {
-        const detectionResponse = await ai.generate({
-            model: 'googleai/gemini-2.5-flash',
-            system: "Du er en dansk juridisk bibliotekar. Din opgave er at identificere hvilke love der er mest relevante for en klients spørgsmål. Du svarer KUN med en komma-separeret liste af ID'er. Du SKAL vælge de 1-2 mest relevante love fra listen nedenfor. Svar kun 'none' hvis spørgsmålet overhovedet ikke omhandler jura eller socialt arbejde.",
-            prompt: `Find de love der kan besvare dette spørgsmål: "${topicOrQuery}"
-            
-            Liste over tilgængelige love:
-            ${allLaws.map(l => {
-                const meta = LAW_METADATA[l.id];
-                const desc = meta ? `Beskrivelse: ${meta.description} Nøgleord: ${meta.keywords.join(', ')}` : 'Søg efter relevante paragraffer i denne lov.';
-                return `- ID: ${l.id}, Navn: ${l.name} (${l.abbreviation}). ${desc}`;
-            }).join('\n')}
-            
-            Svar KUN med ID'erne på de 1-2 mest relevante love, separeret af komma.`
-        });
 
-        const rawIds = detectionResponse.text;
-        console.log(`[LAW-CONTEXT] AI Raw Response: "${rawIds}"`);
-
-        if (rawIds && rawIds.toLowerCase() !== 'none') {
-            const potentialIds = rawIds.split(',').map(id => id.trim());
-            potentialIds.forEach(p => {
-                const found = allLaws.find(l => 
-                    l.id.toLowerCase() === p.toLowerCase() || 
-                    l.name.toLowerCase().includes(p.toLowerCase()) || 
-                    l.abbreviation.toLowerCase() === p.toLowerCase()
-                );
-                if (found && !detectedIds.includes(found.id)) {
-                    detectedIds.push(found.id);
-                }
-            });
+    // 1. FAST MATCH: Priority abbreviations (e.g., "SEL", "BL", "RSL")
+    allLaws.forEach(l => {
+        if (l.abbreviation && lowerQuery.includes(l.abbreviation.toLowerCase())) {
+            detectedIds.push(l.id);
         }
-    } catch (error) {
-        console.error('[LAW-CONTEXT] AI detection error:', error);
-    }
+    });
 
-    // --- FALLBACK: KEYWORD SEARCH ---
+    // 2. AI DISAMBIGUATION (Only if no fast match or query is complex)
     if (detectedIds.length === 0) {
-        console.log(`[LAW-CONTEXT] No AI matches. Using keyword fallback...`);
-        const lowerQuery = topicOrQuery.toLowerCase();
-        allLaws.forEach(l => {
-            const meta = LAW_METADATA[l.id];
-            const searchTerms = [
-                l.name.toLowerCase(),
-                l.abbreviation.toLowerCase(),
-                ...(meta ? meta.keywords.map(k => k.toLowerCase()) : [])
-            ];
-            if (searchTerms.some(term => lowerQuery.includes(term))) {
-                detectedIds.push(l.id);
-            }
-        });
-    }
+        try {
+            const detectionResponse = await ai.generate({
+                model: 'googleai/gemini-2.5-flash',
+                system: "Du er en dansk juridisk bibliotekar. Identificer de 1-2 mest relevante love for spørgsmålet. Svar kun med en komma-separeret liste af ID'er eller 'none'.",
+                prompt: `Find relevante love for: "${topicOrQuery}"
+                
+                Tilgængelige love:
+                ${allLaws.map(l => `- ID: ${l.id}, Navn: ${l.name} (${l.abbreviation})`).join('\n')}
+                
+                Svar KUN med ID'erne.`
+            });
 
-    console.log(`[LAW-CONTEXT] Final Detected Law IDs:`, detectedIds);
+            const rawIds = detectionResponse.text;
+            if (rawIds && rawIds.toLowerCase() !== 'none') {
+                rawIds.split(',').map(id => id.trim()).forEach(p => {
+                    const found = allLaws.find(l => l.id.toLowerCase() === p.toLowerCase());
+                    if (found && !detectedIds.includes(found.id)) detectedIds.push(found.id);
+                });
+            }
+        } catch (error) {
+            console.error('[LAW-CONTEXT] AI detection error:', error);
+        }
+    }
 
     // Filter and fetch context
     let legalContext = '';

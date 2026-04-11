@@ -98,6 +98,7 @@ Always use the term "borger" instead of "klient" in your explanations and exampl
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
     ],
+    model: 'googleai/gemini-2.5-flash',
   },
 });
 
