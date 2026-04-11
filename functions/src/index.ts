@@ -117,8 +117,10 @@ export const runAiFlow = onRequest({
 
   try {
      const { allFlows } = await import("./ai/flows-export.js");
+     console.log(`[runAiFlow] Request for: "${flowName}". Available flows:`, Object.keys(allFlows));
+     
      if (!allFlows[flowName]) {
-        res.status(404).json({ error: "Flow not found" });
+        res.status(404).json({ error: `Flow not found: ${flowName}` });
         return;
      }
 
