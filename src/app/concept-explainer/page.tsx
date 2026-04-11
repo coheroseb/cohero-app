@@ -131,6 +131,13 @@ function ConceptExplainerPageContent() {
   const handleExplain = useCallback(async (term: string) => {
     if (!term || !user || !userProfile || !firestore) return;
 
+    // REDIRECT: If searching for a paragraph or specific law, go to Lov-Portalen instead
+    const isLegalSearch = /§|SEL|BL|RSL| Barnets Lov|Serviceloven|Forvaltningslov|Retssikkerhedslov|lov/i.test(term);
+    if (isLegalSearch && term.length > 2) {
+        router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+        return;
+    }
+
     setSearchQuery(term);
     setIsLoading(true);
     setExplanation(null);
