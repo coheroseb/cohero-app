@@ -49,7 +49,8 @@ export async function searchIcdEntities(query: string) {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'API-Version': 'v2',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Accept-Language': 'en'
             }
         });
 
@@ -68,7 +69,8 @@ export async function getIcdEntityDetails(entityId: string) {
         headers: {
             'Authorization': `Bearer ${token}`,
             'API-Version': 'v2',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Accept-Language': 'en'
         }
     });
 
