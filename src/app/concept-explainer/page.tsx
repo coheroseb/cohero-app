@@ -197,6 +197,11 @@ function ConceptExplainerPageContent() {
             });
         }
         setExplanation(finalExplanation);
+        
+        // Auto-show model if it is an identified framework/model
+        if (finalExplanation.isModel) {
+            setShowModelModal(true);
+        }
 
         // Update User Activity
         const batch = writeBatch(firestore);
