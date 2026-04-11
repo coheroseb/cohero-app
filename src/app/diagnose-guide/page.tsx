@@ -200,9 +200,6 @@ export default function DiagnoseGuidePage() {
                                 </h3>
                                 <p className="text-slate-400 text-sm font-medium italic mt-2">{diag.titleEn}</p>
                             </div>
-                            <Link href={diag.id} target="_blank" className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center hover:border-slate-400 transition-all group shrink-0">
-                                <Activity className="w-5 h-5 text-slate-400 group-hover:text-slate-900" />
-                            </Link>
                         </div>
 
                         {/* Description & Detail */}
@@ -274,15 +271,9 @@ export default function DiagnoseGuidePage() {
 
                     {/* Meta Footer */}
                     <div className="p-8 sm:p-12 bg-slate-50/20">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">WHO Path</span>
-                                <code className="text-[10px] font-mono text-slate-400 truncate max-w-xs">{diag.id}</code>
-                            </div>
-                            <Link href={diag.id} target="_blank" className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95 flex items-center gap-2">
-                                Se i WHO Browser
-                                <ChevronRight className="w-4 h-4" />
-                            </Link>
+                        <div className="flex items-center gap-2 text-slate-400">
+                             <Activity className="w-4 h-4" />
+                             <span className="text-[10px] font-black uppercase tracking-widest">Officiel WHO Data Opslag</span>
                         </div>
                     </div>
                 </motion.div>
