@@ -29,7 +29,9 @@ export const searchDiagnoseFlow = ai.defineFlow(
   async (input) => {
     try {
         // 1. Search ICD-11
+        console.log(`[Flow] Starting search for: "${input.query}"`);
         const icdResults = await searchIcdEntities(input.query);
+        console.log(`[Flow] ICD Results found: ${icdResults.destinationEntities?.length || 0}`);
         
         if (!icdResults.destinationEntities || icdResults.destinationEntities.length === 0) {
             return { success: true, diagnoses: [] };
@@ -78,11 +80,11 @@ export const searchDiagnoseFlow = ai.defineFlow(
         };
         
     } catch (error: any) {
-        console.error('Error in searchDiagnoseFlow:', error);
+        console.error('[Flow] Error in searchDiagnoseFlow:', error);
         return {
             success: false,
             diagnoses: [],
-            error: error.message
+            error: error.message || 'Ukendt fejl i Diagnose-flowet'
         };
     }
   }
