@@ -20,6 +20,10 @@ const SearchDiagnoseOutputSchema = z.object({
     inclusions: z.array(z.string()).optional(),
     exclusions: z.array(z.string()).optional(),
     diagnosticCriteria: z.string().optional(),
+    narrowerTerms: z.array(z.object({
+        id: z.string(),
+        title: z.string()
+    })).optional(),
     socialWorkContext: z.string(),
     legalAnchors: z.array(z.string()).optional()
   })),
@@ -62,6 +66,10 @@ export const searchDiagnoseFlow = ai.defineFlow(
                     inclusions: details.inclusion?.map((i: any) => i.label?.['@value']) || [],
                     exclusions: details.exclusion?.map((e: any) => e.label?.['@value']) || [],
                     diagnosticCriteria: details.diagnosticCriteria?.['@value'] || '',
+                    narrowerTerms: details.child?.map((c: any) => ({
+                        id: c['@id'] || '',
+                        title: c.title?.['@value'] || 'Unavngiven underkategori'
+                    })) || [],
                     socialWorkContext: 'Officiel WHO definition.',
                     legalAnchors: []
                 };

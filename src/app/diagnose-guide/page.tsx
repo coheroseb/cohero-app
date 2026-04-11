@@ -279,6 +279,31 @@ export default function DiagnoseGuidePage() {
                                 </div>
                             )}
 
+                            {diag.narrowerTerms && diag.narrowerTerms.length > 0 && (
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-4 ml-1">Underkategorier (Narrower Terms)</span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {diag.narrowerTerms.map((term, i) => (
+                                            <button 
+                                                key={i} 
+                                                onClick={() => {
+                                                    setQuery(term.title);
+                                                    handleSearch(undefined, term.title);
+                                                }}
+                                                className="p-4 bg-white border border-slate-100 rounded-2xl text-left hover:border-rose-400 group transition-all active:scale-95 shadow-sm"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-600 transition-colors">
+                                                        <ChevronRight className="w-4 h-4" />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-slate-700 group-hover:text-rose-900">{term.title}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Inclusions & Exclusions */}
                             <div className="grid md:grid-cols-2 gap-8">
                                 {diag.inclusions && diag.inclusions.length > 0 && (
