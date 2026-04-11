@@ -51,7 +51,7 @@ export const searchDiagnoseFlow = ai.defineFlow(
         }
 
         // 2. Map raw API results to our format and fetch deep details
-        const diagnoses = await Promise.all(icdResults.destinationEntities.slice(0, 5).map(async (entity: any) => {
+        const diagnoses = await Promise.all(icdResults.destinationEntities.slice(0, 3).map(async (entity: any) => {
             try {
                 const details = await getIcdEntityDetails(entity.id);
                 
@@ -66,19 +66,23 @@ export const searchDiagnoseFlow = ai.defineFlow(
                     inclusions: details.inclusion?.map((i: any) => i.label?.['@value']) || [],
                     exclusions: details.exclusion?.map((e: any) => e.label?.['@value']) || [],
                     diagnosticCriteria: details.diagnosticCriteria?.['@value'] || '',
-                    narrowerTerms: details.child?.map((c: any) => {
-                        const isString = typeof c === 'string';
-                        const id = isString ? c : (c['@id'] || '');
-                        let title = isString ? '' : (c.title?.['@value'] || '');
-                        
-                        // Fallback title: extract from ID url
-                        if (!title && id) {
-                            const parts = id.split('/');
-                            title = `Kategori: ${parts[parts.length - 1]}`;
-                        }
+                    narrowerTerms: await Promise.all((details.child?.slice(0, 8) || []).map(async (c: any) => {
+                        try {
+                            const isString = typeof c === 'string';
+                            const id = isString ? c : (c['@id'] || '');
+                            
+                            // To get the title, we unfortunately need a secondary fetch for MMS linearization
+                            // unless it's already in the object (unlikely for MMS)
+                            if (!isString && c.title?.['@value']) {
+                                return { id, title: c.title['@value'] };
+                            }
 
-                        return { id, title: title || 'Underkategori' };
-                    }).filter((t: any) => t.id) || [],
+                            const childDetails = await getIcdEntityDetails(id);
+                            return { id, title: childDetails.title?.['@value'] || 'Underkategori' };
+                        } catch (e) {
+                            return { id: typeof c === 'string' ? c : '', title: 'Underkategori' };
+                        }
+                    })).then(terms => terms.filter(t => t.id && t.title !== 'Underkategori')),
                     socialWorkContext: 'Officiel WHO definition.',
                     legalAnchors: []
                 };
