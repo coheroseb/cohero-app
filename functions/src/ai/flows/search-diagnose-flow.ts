@@ -11,7 +11,7 @@ const SearchDiagnoseOutputSchema = z.object({
   success: z.boolean(),
   diagnoses: z.array(z.object({
     id: z.string(),
-    code: z.string().optional(),
+    code: z.string().nullable().optional(),
     titleDa: z.string(),
     titleEn: z.string(),
     descriptionDa: z.string(),
