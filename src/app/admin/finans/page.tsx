@@ -35,7 +35,7 @@ import {
   Area,
   ReferenceDot
 } from 'recharts';
-import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction, getSystemLogsAction, getLiveMarketAnalysisAction } from '@/app/actions';
+import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction, getSystemLogsAction, getLiveMarketAnalysisAction, getLatestMarketAnalysisAction } from '@/app/actions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 // --- Improved Components ---
@@ -109,7 +109,7 @@ export default function AdminFinansPage() {
     ];
 
     const [stratScores, setStratScores] = useState({
-        technology: 5, architecture: 5, ip: 5, team: 4, data: 5
+        technology: 5, architecture: 5, ip: 5, team: 3, data: 5
     });
 
     const [isMounted, setIsMounted] = useState(false);
@@ -123,12 +123,18 @@ export default function AdminFinansPage() {
         async function fetchData() {
             setLoading(true);
             try {
-                const [mRes, hRes] = await Promise.all([
+                const [mRes, hRes, aRes] = await Promise.all([
                     getStripeDashboardMetricsAction(),
-                    getStripeHistoricalRevenueAction()
+                    getStripeHistoricalRevenueAction(),
+                    getLatestMarketAnalysisAction()
                 ]);
                 if (mRes.success) setMetrics(mRes);
                 if (hRes.success && hRes.data) setHistory(hRes.data);
+                if (aRes.success && aRes.data) {
+                    setLiveAnalysis(aRes.data);
+                    if (aRes.data.estimatedAssetValue) setPlatformAssetValue(aRes.data.estimatedAssetValue);
+                    if (aRes.data.inputUsed?.strategicScores) setStratScores(aRes.data.inputUsed.strategicScores);
+                }
             } catch (err) { console.error(err); } finally { setLoading(false); }
         }
         async function fetchLogs() {
@@ -403,7 +409,17 @@ export default function AdminFinansPage() {
                              <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none"><Rocket className="w-64 h-64 text-indigo-400 rotate-12" /></div>
                              <div className="flex flex-col md:flex-row items-center gap-8 mb-16 relative z-10">
                                 <div className="p-6 bg-indigo-600 rounded-[2.5rem] shadow-2xl animate-pulse"><BrainCircuit className="w-10 h-10 text-white" /></div>
-                                <div className="text-center md:text-left"><h3 className="text-4xl font-black text-white serif tracking-tight">AI Intelligence Console</h3><p className="text-indigo-400 text-xs font-black uppercase tracking-[0.4em] mt-2 italic">Analyse Færdig — Strategisk Opsamling</p></div>
+                                <div className="text-center md:text-left">
+                                    <h3 className="text-4xl font-black text-white serif tracking-tight">AI Intelligence Console</h3>
+                                    <p className="text-indigo-400 text-xs font-black uppercase tracking-[0.4em] mt-2 italic flex items-center gap-2">
+                                        Analyse Færdig — Strategisk Opsamling 
+                                        {liveAnalysis?.savedAt && (
+                                            <span className="text-[10px] text-white/20 normal-case tracking-normal ml-4 font-medium">
+                                                (Analyse fra: {new Date(liveAnalysis.savedAt).toLocaleString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })})
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
                              </div>
 
                              {isAnalyzing ? (

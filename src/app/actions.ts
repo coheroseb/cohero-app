@@ -2310,10 +2310,44 @@ export async function getLiveMarketAnalysisAction(input: {
     strategicScores: { technology: number, architecture: number, ip: number, team: number, data: number }
 }) {
     try {
-        return await callFirebaseFlow('marketAnalysisFlow', input);
+        const analysis = await callFirebaseFlow('marketAnalysisFlow', input);
+        if (analysis) {
+            // Automatically save the latest successful analysis with its inputs
+            await saveMarketAnalysisAction({ 
+                ...analysis, 
+                inputUsed: input 
+            });
+        }
+        return analysis;
     } catch (e: any) {
         console.error("Market analysis failed:", e);
         throw new Error(`Fejl ved markedsanalyse: ${e.message}`);
+    }
+}
+
+export async function saveMarketAnalysisAction(analysis: any) {
+    try {
+        const { adminFirestore } = await import('@/firebase/server-init');
+        await adminFirestore.collection('system_intelligence').doc('latest_market_analysis').set({
+            ...analysis,
+            savedAt: new Date().toISOString()
+        });
+        return { success: true };
+    } catch (e) {
+        console.error("Failed to save market analysis:", e);
+        return { success: false };
+    }
+}
+
+export async function getLatestMarketAnalysisAction() {
+    try {
+        const { adminFirestore } = await import('@/firebase/server-init');
+        const doc = await adminFirestore.collection('system_intelligence').doc('latest_market_analysis').get();
+        if (doc.exists) return { success: true, data: doc.data() };
+        return { success: false };
+    } catch (e) {
+        console.error("Failed to fetch market analysis:", e);
+        return { success: false };
     }
 }
 
