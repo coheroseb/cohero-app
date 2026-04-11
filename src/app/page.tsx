@@ -202,7 +202,7 @@ export default function LandingPage() {
                 </motion.h1>
                 
                 <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
-                  Aldrig mere usikker på paragraffer, teorier eller din karakter. Med AI-drevet rygdækning får du tryghed i din faglighed — fra første semester til din færdige uddannelse.
+                  Aldrig mere usikker på paragraffer, teorier eller din karakter. Med professionsorienteret rygdækning får du tryghed i din faglighed — fra første semester til din færdige uddannelse.
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -479,7 +479,7 @@ export default function LandingPage() {
                 Fik du en lavere<br className="hidden sm:block" /> karakter end fortjent?
               </h2>
               <p className="text-xl text-slate-500 font-medium leading-relaxed mt-6">
-                Få en lynhurtig, AI-drevet vurdering af din eksamensopgave. Censorer laver fejl, og vi giver dig magten tilbage med en objektiv faglig analyse — før du klager.
+                Få en lynhurtig, automatiseret vurdering af din eksamensopgave. Censorer laver fejl, og vi giver dig magten tilbage med en objektiv faglig analyse — før du klager.
               </p>
             </Reveal>
             <Reveal delay={0.2}>
@@ -536,7 +536,7 @@ export default function LandingPage() {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400 italic">din faglige præcision.</span>
               </h2>
               <p className="text-[17px] sm:text-xl text-slate-500 leading-relaxed font-medium">
-                Du køber ikke bare adgang til AI. Du køber visheden om, at det du skriver, er fagligt korrekt og metodisk stærkt.
+                Du køber ikke bare adgang til værktøjer. Du køber visheden om, at det du skriver, er fagligt korrekt og metodisk stærkt.
               </p>
             </Reveal>
           </div>
@@ -574,7 +574,7 @@ export default function LandingPage() {
                       <Scale className="w-8 h-8 sm:w-10 sm:h-10 text-amber-300 sm:group-hover:text-amber-950 transition-colors" />
                     </div>
                     <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-extrabold tracking-tight mb-3">Lovportalen</h3>
-                    <p className="text-slate-300 text-[15px] sm:text-base leading-relaxed font-medium max-w-[280px]">Slå op i de mest relevante love med indbygget AI-fortolkning i øjenhøjde.</p>
+                    <p className="text-slate-300 text-[15px] sm:text-base leading-relaxed font-medium max-w-[280px]">Slå op i de mest relevante love med indbygget sprog-fortolkning i øjenhøjde.</p>
                   </div>
                   <div className="pt-10 flex items-center justify-between border-t border-white/10 mt-auto relative z-10">
                      <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400">Åbn Portalen</span>
