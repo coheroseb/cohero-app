@@ -66,7 +66,8 @@ export const searchDiagnoseFlow = ai.defineFlow(
 
                 Dine opgaver:
                 1. Oversæt titlen til præcis dansk fagterminologi.
-                2. Beskrivelse: Giv en professionel definition af diagnosen.
+                2. ICD-11 Kode: Find den præcise ICD-11 kode (f.eks. 6A02). Hvis koden ikke er oplyst, skal du forsøge at identificere den korrekt ud fra din kliniske viden.
+                3. Beskrivelse: Giv en professionel definition af diagnosen.
                 3. Kernesymptomer: Oplist de 3-5 vigtigste kliniske tegn på denne diagnose.
                 4. Socialfaglig betydning: Forklar dybdegående hvad dette betyder for borgerens funktionsevne. Hvordan påvirker det evnen til at arbejde, gå i skole eller være forælder?
                 5. Lovgivning: Nævn de absolut mest relevante paragraffer (f.eks. § 82, 85, 114 i Serviceloven eller specifikke dele af Barnets Lov), DER FINDES i ovenstående lovkontekst eller er alment kendte for denne diagnose.
@@ -75,6 +76,7 @@ export const searchDiagnoseFlow = ai.defineFlow(
                 output: {
                     schema: z.object({
                         titleDa: z.string(),
+                        code: z.string().optional().describe('The ICD-11 code (e.g. 6A02)'),
                         descriptionDa: z.string(),
                         symptomsDa: z.array(z.string()),
                         socialWorkContext: z.string(),
@@ -87,7 +89,7 @@ export const searchDiagnoseFlow = ai.defineFlow(
 
             return {
                 id: entity.id,
-                code: entity.theCode,
+                code: output?.code || entity.theCode || 'ICD-11',
                 titleDa: output?.titleDa || entity.title,
                 titleEn: entity.title,
                 descriptionDa: output?.descriptionDa || '',

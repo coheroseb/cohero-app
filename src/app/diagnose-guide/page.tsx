@@ -193,9 +193,12 @@ export default function DiagnoseGuidePage() {
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-8 mb-10">
                             <div>
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-rose-600 text-white rounded-full text-[12px] font-black uppercase tracking-[0.15em] mb-6 shadow-lg shadow-rose-600/20">
-                                    Diagnose: {diag.code || 'ICD-11'}
+                                    ICD-11 Systemet
                                 </div>
-                                <h3 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.1] mb-4">{diag.titleDa}</h3>
+                                <h3 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.1] mb-4">
+                                    <span className="text-rose-600 mr-4 font-black">{diag.code}</span>
+                                    {diag.titleDa}
+                                </h3>
                                 <p className="text-slate-400 text-lg font-medium italic mb-6">{diag.titleEn}</p>
                                 
                                 <div className="flex gap-4">
