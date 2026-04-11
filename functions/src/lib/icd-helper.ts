@@ -63,10 +63,18 @@ export async function searchIcdEntities(query: string) {
 
 export async function getIcdEntityDetails(entityId: string) {
     const token = await getIcdToken();
-    // Handle both numeric IDs and full WHO URLs
-    const url = entityId.startsWith('http') ? entityId : `https://id.who.int/icd/entity/${entityId}`;
     
-    console.log(`[ICD-API] Fetching details for: ${url}`);
+    // Extract ID from full URL if provided
+    let idValue = entityId;
+    if (entityId.startsWith('http')) {
+        const parts = entityId.split('/');
+        idValue = parts[parts.length - 1];
+    }
+
+    // Use MMS linearization for richer metadata (including child titles)
+    const url = `https://id.who.int/icd/release/11/2024-01/mms/${idValue}`;
+    
+    console.log(`[ICD-API] Fetching MMS details for: ${url}`);
     const response = await axios.get(url, {
         headers: {
             'Authorization': `Bearer ${token}`,
