@@ -193,25 +193,43 @@ function ConceptExplainerPageContent() {
         }
 
         const docRef = doc(firestore, 'conceptExplanations-v2', `${normalizedTerm}--${professionKey}`);
+        const genericDocRef = doc(firestore, 'conceptExplanations-v2', normalizedTerm);
+        
         setSearchProgress({ step: 1, label: 'Søger i Cohero Vidensbase...' });
-        const snap = await getDoc(docRef);
+        
+        // Try profession-specific first, then generic fallback
+        const snaps = await Promise.all([getDoc(docRef), getDoc(genericDocRef)]);
+        const professionSnap = snaps[0];
+        const genericSnap = snaps[1];
 
         let finalExplanation: Explanation;
-        if (snap.exists()) {
-            setSearchProgress({ step: 2, label: 'Henter ekspert-forklaring...' });
-            finalExplanation = snap.data().explanation;
+        if (professionSnap.exists()) {
+            setSearchProgress({ step: 2, label: 'Henter skræddersyet forklaring...' });
+            finalExplanation = professionSnap.data().explanation;
+        } else if (genericSnap.exists()) {
+            setSearchProgress({ step: 2, label: 'Henter global forklaring...' });
+            finalExplanation = genericSnap.data().explanation;
         } else {
             setSearchProgress({ step: 2, label: 'Aktiverer AI Deep Scan...' });
             const res = await explainConceptAction({ concept: term, profession: userProfession });
             finalExplanation = res.data;
             
-            setSearchProgress({ step: 3, label: 'Gemmer til fremtidig brug...' });
-            await setDoc(docRef, { 
+            setSearchProgress({ step: 3, label: 'Deler viden med netværket...' });
+            
+            const saveData = { 
                 conceptName: term, 
                 explanation: res.data, 
                 profession: userProfession,
                 createdAt: serverTimestamp() 
-            });
+            };
+
+            // Save both specific and as a seed for generic search
+            const batch = writeBatch(firestore);
+            batch.set(docRef, saveData);
+            if (!genericSnap.exists()) {
+                batch.set(genericDocRef, { ...saveData, profession: 'Generel' });
+            }
+            await batch.commit();
         }
         
         // Save to session cache
