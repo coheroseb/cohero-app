@@ -23,7 +23,6 @@ import {
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
-import { useApp } from '@/app/provider';
 import { searchDiagnoseAction, translateDiagnoseAction, getDiagnoseDetailsAction } from '@/app/actions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
@@ -78,8 +77,8 @@ export default function DiagnoseGuidePage() {
     setError(null);
     try {
       const res = await getDiagnoseDetailsAction({ id });
-      if (res.success && res.data?.diagnosis) {
-        setResults([res.data.diagnosis]);
+      if (res.success && res.diagnosis) {
+        setResults([res.diagnosis]);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setError(res.error || 'Kunne ikke hente detaljer for denne kategori.');
