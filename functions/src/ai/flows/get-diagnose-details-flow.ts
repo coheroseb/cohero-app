@@ -45,8 +45,7 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
         const details = await getIcdEntityDetails(input.id);
         
         // Parallel data retrieval for speed and depth
-        const [narrowerTerms,
-            breadcrumbs, legalMapping] = await Promise.all([
+        const [narrowerTerms, legalMapping] = await Promise.all([
           // 1. Resolve child titles as before
           Promise.all((details.child?.slice(0, 10) || []).map(async (c: any) => {
               try {
@@ -113,7 +112,7 @@ export const getDiagnoseDetailsFlow = ai.defineFlow(
             narrowerTerms,
             socialWorkContext: 'Officiel WHO definition med pædagogisk lov-kobling.',
             legalAnchors: [],
-            relevantLegalParagraphs: legalMapping.output?.paragraphs || []
+            relevantLegalParagraphs: legalMapping?.output?.paragraphs || []
         };
 
         return {
