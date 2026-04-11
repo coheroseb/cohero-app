@@ -228,14 +228,14 @@ export default function DiagnoseGuidePage() {
                                 </div>
                             )}
 
-                            {diag.diagnosticRequirements && (
+                            {diag.diagnosticCriteria && (
                                 <div className="bg-slate-900 p-8 rounded-[32px] text-white shadow-xl shadow-slate-900/10">
                                     <div className="flex items-center gap-3 mb-4">
                                         <List className="w-5 h-5 text-rose-400" />
                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Diagnostiske Krav</span>
                                     </div>
                                     <div className="prose prose-invert max-w-none text-sm font-medium leading-relaxed opacity-90"
-                                         dangerouslySetInnerHTML={{ __html: diag.diagnosticRequirements }} />
+                                         dangerouslySetInnerHTML={{ __html: diag.diagnosticCriteria }} />
                                 </div>
                             )}
 
