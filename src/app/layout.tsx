@@ -12,7 +12,7 @@ import { MaintenanceGuard } from '@/components/MaintenanceGuard';
 import SourceKeeper from '@/components/SourceKeeper';
 const siteUrl = 'https://cohero.dk';
 const siteTitle = 'Cohéro (Cohero) - Din Digitale Kollega for Socialrådgiverstuderende';
-const siteDescription = 'Cohéro (Cohero) er en AI-drevet platform for socialrådgiverstuderende, der tilbyder værktøjer som case-træner, journal-feedback og lovportal for at bygge bro mellem teori og praksis.';
+const siteDescription = 'Cohéro er din professionelle rygdækning på velfærdsstudierne. Vi tilbyder intelligente værktøjer som sags-analytiker, journal-feedback og lovportal, der sikrer din faglige præcision og tryghed fra studiestart til eksamen.';
 const ogImageUrl = '/team_cohero.png';
 
 
@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   
   const title = customSeo?.siteTitle || siteTitle;
   const description = customSeo?.siteDescription || siteDescription;
-  const keywords = customSeo?.keywords ? customSeo.keywords.split(',').map((s: string) => s.trim()) : ['cohero', 'socialrådgiverstuderende', 'socialrådgiver', 'socialt arbejde', 'case-træning', 'jura', 'pædagogik', 'studieværktøjer', 'AI', 'Barnets Lov', 'Serviceloven', 'Forvaltningsloven', 'VUM', 'ICS', 'journalføring', 'eksamenshjælp', 'socialfaglig', 'kollega', 'sparring', 'generative engine optimization', 'GEO'];
+  const keywords = customSeo?.keywords ? customSeo.keywords.split(',').map((s: string) => s.trim()) : ['cohero', 'socialrådgiverstuderende', 'socialrådgiver', 'socialt arbejde', 'case-træning', 'jura', 'pædagogik', 'studieværktøjer', 'intelligent rygdækning', 'Barnets Lov', 'Serviceloven', 'Forvaltningsloven', 'VUM', 'ICS', 'journalføring', 'eksamenshjælp', 'socialfaglig', 'kollega', 'sparring', 'generative engine optimization', 'GEO'];
   const ogImage = customSeo?.ogImage || ogImageUrl;
   const indexing = customSeo?.indexing !== undefined ? customSeo.indexing : true;
 
