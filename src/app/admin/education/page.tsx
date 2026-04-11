@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { 
@@ -162,7 +163,10 @@ export default function EducationStatsPage() {
                    <h1 className="text-3xl font-black text-slate-900 serif mb-2">Education Demographics</h1>
                    <p className="text-slate-500 font-medium">Deep-dive i platformens akademiske fundment og dimittend-forecasts.</p>
                 </div>
-                <div className="flex items-center gap-3 bg-white p-2 rounded-[1.5rem] border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <Link href="/admin/education/studieordninger" className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all group">
+                        Administrér Studieordninger <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                     <div className="px-5 py-2.5 bg-slate-900 rounded-xl text-white">
                         <p className="text-[10px] font-black tracking-widest leading-none mb-1">TOTAL USERS</p>
                         <p className="text-xl font-black leading-none">{stats.totalUsers}</p>

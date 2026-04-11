@@ -14,15 +14,13 @@ export const dailyAutomatedNudges = functions.pubsub
     const d14 = new Date();
     d14.setDate(d14.getDate() - 14);
 
-    // Limit to 10 users per run to avoid timeout/API limits
-    const subscribersSnap = await db.collection('users')
+    // Limit to 50 users per run to handle larger base while staying safe
+    const inactiveSnap = await db.collection('users')
         .where('role', '==', 'user')
-        .where('membership', '==', 'Kollega+')
-        .where('stripeSubscriptionStatus', '==', 'active')
-        .limit(10)
+        .limit(50)
         .get();
 
-    for (const doc of subscribersSnap.docs) {
+    for (const doc of inactiveSnap.docs) {
         const u = doc.data() as any;
         const lastAct = u.lastActivityAt || u.lastLogin;
         
@@ -39,17 +37,19 @@ export const dailyAutomatedNudges = functions.pubsub
         }
 
         const daysInactive = Math.floor((now.getTime() - lastActDate.getTime()) / (1000 * 60 * 60 * 24));
-        const userName = u.username || "Kollega";
+        const userName = u.username || u.displayName || "Kollega";
+        const membership = u.membership || "Kollega";
 
         try {
-            console.log(`Generating automated nudge for ${userName} (${u.email}). Inactive for ${daysInactive} days.`);
+            console.log(`Generating automated nudge for ${userName} (${u.email}). Inactive for ${daysInactive} days. Membership: ${membership}`);
             
             const { allFlows } = await import("../ai/flows-export.js");
             if (!allFlows["nudgeEmailFlow"]) continue;
 
             const nudgeResult = await allFlows["nudgeEmailFlow"]({
                 userName,
-                daysInactive
+                daysInactive,
+                membership
             });
 
             const { subject, content } = nudgeResult.data;
@@ -64,7 +64,7 @@ export const dailyAutomatedNudges = functions.pubsub
                         <br/><br/>
                         <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;"/>
                         <p style="font-size: 11px; color: #94a3b8;">
-                            Du modtager denne mail, fordi du er Kollega+ medlem hos Cohéro.<br/>
+                            Du modtager denne mail, fordi du er ${membership} medlem hos Cohéro.<br/>
                             <a href="https://cohero.dk/settings" style="color: #6366f1; text-decoration: none;">Administrer dine indstillinger her</a>
                         </p>
                     </div>

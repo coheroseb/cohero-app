@@ -8,7 +8,7 @@ import { ref, getDownloadURL } from 'firebase/storage';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
   Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle,
-  CheckCircle2, XCircle, GraduationCap, Music, Facebook, Globe, Compass
+  CheckCircle2, XCircle, GraduationCap, Music, Facebook, Globe, Compass, Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +52,7 @@ interface UserProfile {
   stripeSubscriptionId?: string;
   stripeSubscriptionStatus?: string;
   isPremium?: boolean;
+  fcmTokens?: string[];
 }
 
 const SourceBadge = ({ source }: { source?: string }) => {
@@ -78,6 +79,7 @@ const STAT_CARDS = [
   { label: 'Nye (30 dage)', key: 'new', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50/50 border-emerald-100/50' },
   { label: 'Aktive (24t)', key: 'active', icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50/50 border-amber-100/50' },
   { label: 'Premium', key: 'premium', icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50/50 border-purple-100/50' },
+  { label: 'Push Aktiveret', key: 'push', icon: Smartphone, color: 'text-emerald-600', bg: 'bg-emerald-50/50 border-emerald-100/50' },
 ];
 
 const BankRow = ({ label, value }: { label: string, value?: string }) => {
@@ -225,7 +227,9 @@ const AdminUsersPage = () => {
         return mem.includes('+') || mem === 'Semesterpakken' || mem === 'Group Pro';
     }).length;
 
-    return { total: nonAdmins.length, new: newCount, active: activeCount, premium: premiumCount };
+    const pushCount = nonAdmins.filter(u => u.fcmTokens && u.fcmTokens.length > 0).length;
+
+    return { total: nonAdmins.length, new: newCount, active: activeCount, premium: premiumCount, push: pushCount };
   }, [users]);
 
   // Filter & Sort Users
@@ -397,7 +401,7 @@ const AdminUsersPage = () => {
       </div>
 
       {/* 2. Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
         {STAT_CARDS.map((statCard) => {
           const Icon = statCard.icon;
           return (
@@ -528,6 +532,7 @@ const AdminUsersPage = () => {
                     <th className="px-10 py-6">Kollega & Profil</th>
                     <th className="px-10 py-6">Studie & Status</th>
                     <th className="px-10 py-6">Engagement</th>
+                    <th className="px-10 py-6">Push</th>
                     <th className="px-10 py-6">Sidst Aktiv</th>
                     <th className="px-10 py-6 text-right pr-14">Handlinger</th>
                   </tr>
@@ -598,6 +603,22 @@ const AdminUsersPage = () => {
                            }`}>
                              {u.membership || 'Kollega (Gratis)'}
                            </span>
+                        </td>
+                        <td className="px-10 py-6">
+                           <div className="flex flex-col items-center justify-center gap-1">
+                               {u.fcmTokens && u.fcmTokens.length > 0 ? (
+                                   <>
+                                       <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm" title={`${u.fcmTokens.length} enheder forbundet`}>
+                                           <Smartphone className="w-4 h-4" />
+                                       </div>
+                                       <span className="text-[9px] font-black text-emerald-600 uppercase tracking-tighter">{u.fcmTokens.length} Enh.</span>
+                                   </>
+                               ) : (
+                                   <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300" title="Ingen enheder forbundet">
+                                       <Smartphone className="w-4 h-4" />
+                                   </div>
+                               )}
+                           </div>
                         </td>
                         <td className="px-10 py-6">
                             <div className="flex items-center gap-3">
@@ -671,6 +692,38 @@ const AdminUsersPage = () => {
                                                    )}
                                                 </div>
                                              )}
+                                             
+                                            {/* Enhedsstyring */}
+                                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 mt-4">
+                                                <div className="flex items-center justify-between border-b border-slate-50 pb-2 mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Smartphone className="w-3.5 h-3.5 text-slate-400" />
+                                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Push Enheder</span>
+                                                    </div>
+                                                    <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${u.fcmTokens?.length ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
+                                                        {u.fcmTokens?.length || 0} Aktive
+                                                    </span>
+                                                </div>
+                                                {u.fcmTokens && u.fcmTokens.length > 0 ? (
+                                                    <Button 
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            if (!firestore) return;
+                                                            if (confirm(`Er du sikker på du vil fjerne alle enheder for ${u.username}? Brugeren skal logge ind igen på mobilen for at modtage push.`)) {
+                                                                await updateDoc(doc(firestore, 'users', u.id), { fcmTokens: [] });
+                                                                toast({ title: "Enheder ryddet" });
+                                                            }
+                                                        }}
+                                                        className="w-full rounded-xl h-8 bg-rose-50 text-rose-600 hover:bg-rose-100 text-[10px] font-black uppercase tracking-widest border border-rose-100 shrink-0"
+                                                    >
+                                                        Ryd Alle Enheder
+                                                    </Button>
+                                                ) : (
+                                                    <p className="text-[10px] text-slate-400 italic text-center py-1">Ingen enheder registreret</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 

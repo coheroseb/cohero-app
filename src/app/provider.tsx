@@ -300,7 +300,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const maintenanceThrottleRef = React.useRef(0);
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
   const isRaadgivning = useMemo(() => pathname?.startsWith('/raadgivning'), [pathname]);
-  const isLovPortal = useMemo(() => pathname?.startsWith('/lov-portal'), [pathname]);
+  const isLovPortal = useMemo(() => pathname?.startsWith('/lov-portal') && !pathname?.includes('/lov-stien'), [pathname]);
   const isMitSemester = useMemo(() => pathname?.startsWith('/mit-semester'), [pathname]);
   const isAdminPage = useMemo(() => pathname?.startsWith('/admin'), [pathname]);
 

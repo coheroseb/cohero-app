@@ -1614,8 +1614,8 @@ export type AdminInsightOutput = z.infer<typeof AdminInsightOutputSchema>;
 
 export const NudgeEmailInputSchema = z.object({
   userName: z.string(),
-  lastActivityAt: z.string().optional(),
   daysInactive: z.number(),
+  membership: z.string().optional(),
 });
 
 export type NudgeEmailInput = z.infer<typeof NudgeEmailInputSchema>;

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/app/provider';
@@ -14,54 +14,34 @@ import {
   ShieldCheck, 
   Activity, 
   ArrowUpRight, 
-  ArrowDownRight,
-  Calendar,
-  CreditCard,
-  PieChart as PieChartIcon,
-  BarChart3,
   Loader2,
   Zap,
   Target,
-  LineChart,
   Rocket,
   BrainCircuit,
   Boxes,
   ArrowRight,
   ChevronRight,
-  TrendingDown,
-  Users,
-  CheckCircle2,
-  Download,
-  FileSpreadsheet,
-  FileText
+  Users
 } from 'lucide-react';
 
 import { 
-  AreaChart, 
-  Area, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell,
-  PieChart,
-  Pie,
-  Line,
   ComposedChart,
+  Area,
   ReferenceDot
 } from 'recharts';
-import { jsPDF } from 'jspdf';
-import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction, getSystemLogsAction } from '@/app/actions';
+import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction, getSystemLogsAction, getLiveMarketAnalysisAction } from '@/app/actions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 // --- Improved Components ---
 
 const PaymentSyncLog = ({ log }: { log: any }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    
     const statusColors = {
         'running': 'bg-amber-50 text-amber-600 border-amber-100',
         'completed': 'bg-emerald-50 text-emerald-600 border-emerald-100',
@@ -70,10 +50,7 @@ const PaymentSyncLog = ({ log }: { log: any }) => {
 
     return (
         <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
-            <div 
-                className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 cursor-pointer select-none"
-                onClick={() => setIsExpanded(!isExpanded)}
-            >
+            <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 cursor-pointer select-none" onClick={() => setIsExpanded(!isExpanded)}>
                 <div className="flex items-center gap-5">
                     <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${statusColors}`}>
                         {log.status === 'completed_with_errors' ? 'Færdig med fejl' : log.status === 'completed' ? 'Færdig' : 'Kører...'}
@@ -82,38 +59,21 @@ const PaymentSyncLog = ({ log }: { log: any }) => {
                         <p className="text-sm font-black text-slate-900 leading-none mb-1">
                             {new Date(log.startTime).toLocaleString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Daglig Betalingssync</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">System Sync</p>
                     </div>
                 </div>
-
                 <div className="flex items-center gap-10">
-                    <div className="text-center">
-                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Processed</p>
-                        <p className="text-sm font-black text-slate-900">{log.processedCount || 0}</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-[9px] font-black text-rose-300 uppercase tracking-widest mb-1">Downgrades</p>
-                        <p className="text-sm font-black text-rose-600">{log.downgradeCount || 0}</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Errors</p>
-                        <p className="text-sm font-black text-slate-900">{log.errorCount || 0}</p>
-                    </div>
+                    <div className="text-center"><p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Processed</p><p className="text-sm font-black text-slate-900">{log.processedCount || 0}</p></div>
+                    <div className="text-center"><p className="text-[9px] font-black text-rose-300 uppercase tracking-widest mb-1">Errors</p><p className="text-sm font-black text-rose-600">{log.errorCount || 0}</p></div>
                     <ChevronRight className={`w-5 h-5 text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
                 </div>
             </div>
-
             <AnimatePresence>
                 {isExpanded && log.details && log.details.length > 0 && (
-                    <motion.div 
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="border-t border-slate-50 bg-slate-50/50 p-6"
-                    >
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-slate-50 bg-slate-50/50 p-6">
                         <div className="space-y-2 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
                             {log.details.map((detail: string, i: number) => (
-                                <div key={i} className={`p-3 rounded-xl border text-[11px] font-medium font-mono ${detail.startsWith('ERROR') ? 'bg-rose-50 border-rose-100 text-rose-700' : detail.startsWith('DOWNGRADE') ? 'bg-amber-50 border-amber-100 text-amber-700' : 'bg-white border-slate-100 text-slate-600'}`}>
+                                <div key={i} className="p-3 rounded-xl border border-slate-100 bg-white text-[11px] font-medium font-mono text-slate-600">
                                     {detail}
                                 </div>
                             ))}
@@ -125,58 +85,6 @@ const PaymentSyncLog = ({ log }: { log: any }) => {
     );
 };
 
-const FinStatCard = ({ title, value, trend, icon: Icon, color, loading }: any) => (
-    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden">
-        <div className="flex items-center justify-between mb-8 relative z-10">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${color} shadow-lg shadow-current/10`}>
-                <Icon className="w-7 h-7" />
-            </div>
-            {trend && (
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${trend.isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                    {trend.isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                    <span className="text-[11px] font-black uppercase tracking-wider">{trend.value}</span>
-                </div>
-            )}
-        </div>
-        <div className="relative z-10">
-            <p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em]">{title}</p>
-            <div className="text-4xl font-black text-slate-900 serif flex items-center gap-2">
-                {loading ? <Loader2 className="w-8 h-8 animate-spin text-slate-200" /> : value}
-            </div>
-        </div>
-    </div>
-);
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-        return (
-            <div className="bg-white border border-slate-100 p-6 rounded-[2.5rem] shadow-2xl space-y-4 min-w-[200px]">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50 pb-3 mb-3">{label}</p>
-                <div className="space-y-3">
-                    {payload.map((p: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between gap-6">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-2.5 h-2.5 rounded-full ${p.name === 'revenue' ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
-                                <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">{p.name === 'revenue' ? 'Historisk' : 'Prognose'}</span>
-                            </div>
-                            <span className="text-sm font-black text-slate-900">{Math.round(p.value).toLocaleString('da-DK')} kr.</span>
-                        </div>
-                    ))}
-                </div>
-                {payload[0]?.payload?.isExamMonth && (
-                    <div className="mt-4 pt-3 border-t border-amber-50 flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 text-amber-500" />
-                        <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Eksamens-Boost Aktiv</span>
-                    </div>
-                )}
-            </div>
-        );
-    }
-    return null;
-};
-
-// --- Main Page ---
-
 export default function AdminFinansPage() {
     const { user, isUserLoading, userProfile } = useApp();
     const router = useRouter();
@@ -184,16 +92,31 @@ export default function AdminFinansPage() {
     const [metrics, setMetrics] = useState<any>(null);
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isExporting, setIsExporting] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [growthRate, setGrowthRate] = useState(15); 
     const [syncLogs, setSyncLogs] = useState<any[]>([]);
     const [isLogsLoading, setIsLogsLoading] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [liveAnalysis, setLiveAnalysis] = useState<any>(null);
+    const [platformAssetValue, setPlatformAssetValue] = useState(5000000); 
+
+    const platformFeatures = [
+        { id: 'legal_ai', name: 'Legal AI Suite', description: 'Analyser & Decision Support', marketValue: 1850000 },
+        { id: 'edtech_suite', name: 'EdTech Architect', description: 'Exam & Training Ecosystem', marketValue: 1250000 },
+        { id: 'gov_live', name: 'Legal Monitoring', description: 'Live Intelligence & Indexing', marketValue: 950000 },
+        { id: 'marketplace', name: 'Justice Marketplace', description: 'Collaboration Task Hub', marketValue: 450000 },
+        { id: 'infrastructure', name: 'Internal IP/System', description: 'Core Engine & Architecture', marketValue: 650000 }
+    ];
+
+    const [stratScores, setStratScores] = useState({
+        technology: 5, architecture: 5, ip: 5, team: 4, data: 5
+    });
+
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => { setIsMounted(true); }, []);
 
     useEffect(() => {
-        if (!isUserLoading && (!user || userProfile?.role !== 'admin')) {
-            router.replace('/portal');
-        }
+        if (!isUserLoading && (!user || userProfile?.role !== 'admin')) router.replace('/portal');
     }, [user, userProfile, isUserLoading, router]);
 
     useEffect(() => {
@@ -206,53 +129,33 @@ export default function AdminFinansPage() {
                 ]);
                 if (mRes.success) setMetrics(mRes);
                 if (hRes.success && hRes.data) setHistory(hRes.data);
-            } catch (err) {
-                console.error("Failed to load financial data:", err);
-            } finally { setLoading(false); }
+            } catch (err) { console.error(err); } finally { setLoading(false); }
         }
-
         async function fetchLogs() {
             setIsLogsLoading(true);
             try {
                 const res = await getSystemLogsAction('payment_sync', 10);
                 if (res.success && res.data) setSyncLogs(res.data);
-            } catch (err) {
-                console.error("Failed to fetch sync logs:", err);
-            } finally {
-                setIsLogsLoading(false);
-            }
+            } catch (err) { console.error(err); } finally { setIsLogsLoading(false); }
         }
-
-        fetchData();
-        fetchLogs();
+        fetchData(); fetchLogs();
     }, []);
 
-    // Advanced Projections Logic with Seasonality (Exam Periods)
     const projections = useMemo(() => {
         if (!metrics || !history.length) return [];
         const baseMRR = metrics.mrr;
         const result = [...history.slice(-4)].map(h => ({ ...h, isExamMonth: false })); 
-        
         let currentMRR = baseMRR;
-        const examMonths = [0, 5]; // Jan (0), Jun (5)
-
+        const examMonths = [0, 5]; 
         for (let i = 1; i <= 12; i++) {
-            const date = new Date(); 
-            date.setMonth(date.getMonth() + i);
+            const date = new Date(); date.setMonth(date.getMonth() + i);
             const isExamMonth = examMonths.includes(date.getMonth());
-            
-            // Apply a seasonal boost if it's an exam month
-            // We assume growth is 60% higher during these months due to high platform relevance
             const monthlyGrowth = (growthRate / 100 / 12);
             const boost = isExamMonth ? 1.6 : 1.0;
-            
             currentMRR = currentMRR * (1 + (monthlyGrowth * boost));
-            
             result.push({ 
                 name: date.toLocaleString('da-DK', { month: 'short', year: '2-digit' }).toUpperCase(), 
-                revenue: null, 
-                projected: currentMRR,
-                isExamMonth
+                revenue: null, projected: currentMRR, isExamMonth
             });
         }
         return result;
@@ -261,512 +164,353 @@ export default function AdminFinansPage() {
     const examPeriodImpact = useMemo(() => {
         const exams = projections.filter(p => p.isExamMonth && p.projected);
         if (exams.length === 0) return null;
-
         const nextExam = exams[0];
         const prevMonth = projections[projections.indexOf(nextExam) - 1];
-        const growth = prevMonth?.projected ? ((nextExam.projected - prevMonth.projected) / prevMonth.projected) * 100 : 0;
-        
         return {
-            name: nextExam.name,
-            projectedMrr: nextExam.projected,
-            growth: growth,
-            delta: nextExam.projected - (prevMonth?.projected || 0)
+            growth: prevMonth?.projected ? ((nextExam.projected - prevMonth.projected) / prevMonth.projected) * 100 : 0
         };
     }, [projections]);
 
     const milestones = useMemo(() => {
         if (!metrics) return [];
-        const targets = [25000, 50000, 100000, 250000, 500000, 1000000];
+        const targets = [50000, 100000, 250000, 500000];
         const currentMRR = metrics.mrr;
         const avgPrice = metrics.mrr / (metrics.activeSubs || 1);
-
         return targets.map(t => {
-            if (currentMRR >= t) return { target: t, status: 'reached', date: 'Opnået', missing: 0, usersNeeded: 0 };
+            if (currentMRR >= t) return { target: t, status: 'reached', date: 'Opnået', progress: 100 };
             const months = Math.log(t / currentMRR) / Math.log(1 + growthRate / 100 / 12);
             const date = new Date(); date.setMonth(date.getMonth() + Math.ceil(months));
             return {
-                target: t,
-                status: 'pending',
-                date: date.toLocaleString('da-DK', { month: 'long', year: 'numeric' }).toUpperCase(),
-                missing: t - currentMRR,
-                usersNeeded: Math.ceil((t - currentMRR) / avgPrice),
+                target: t, status: 'pending', date: date.toLocaleString('da-DK', { month: 'short', year: '2-digit' }).toUpperCase(),
+                usersNeeded: Math.ceil((t - currentMRR) / (avgPrice || 299)),
                 progress: (currentMRR / t) * 100
             };
         });
     }, [metrics, growthRate]);
 
-    const handleDownloadCSV = () => {
-        if (!metrics || !history.length) return;
-        setIsExporting('csv');
-        
-        try {
-            const timestamp = new Date().toISOString().split('T')[0];
-            const filename = `Cohero_Financial_Report_${timestamp}.csv`;
-            let csv = "Cohero Financial Report & Projections\n";
-            csv += `Generated At: ${new Date().toLocaleString('da-DK')}\n\n`;
-            csv += "CORE METRICS\n";
-            csv += `MRR;${Math.round(metrics.mrr)} kr.\n`;
-            csv += `ARR;${Math.round(metrics.arr)} kr.\n`;
-            csv += `Net Revenue (30d);${Math.round(metrics.netRevenue30d)} kr.\n`;
-            csv += `Active Subscribers;${metrics.activeSubs}\n`;
-            csv += `Estimated Valuation (8x ARR);${Math.round(metrics.arr * 8)} kr.\n\n`;
-            csv += "HISTORICAL REVENUE\nMonth;Revenue (DKK)\n";
-            history.forEach(h => csv += `${h.name};${Math.round(h.revenue)}\n`);
-            csv += "\nPROJECTIONS (${growthRate}% Growth)\nMonth;Projected MRR (DKK)\n";
-            projections.filter(p => p.projected).forEach(p => csv += `${p.name};${Math.round(p.projected)}\n`);
-            csv += "\nREVENUE MILESTONES\nTarget;Status;Estimated Date;Missing;Users Needed\n";
-            milestones.forEach(m => csv += `${m.target};${m.status};${m.date};${Math.round(m.missing)};${m.usersNeeded}\n`);
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename);
-            link.click();
-        } finally { setIsExporting(null); }
-    };
-
-    const handleDownloadPDF = async () => {
-        if (!metrics) return;
-        setIsExporting('pdf');
-        
-        try {
-            const doc = new jsPDF();
-            const timestamp = new Date().toLocaleDateString('da-DK');
-            const pageWidth = doc.internal.pageSize.getWidth();
-
-            // 1. Header (Cohero Branding)
-            doc.setFillColor(15, 23, 42); // slate-900
-            doc.rect(0, 0, pageWidth, 40, 'F');
-            doc.setFontSize(24);
-            doc.setTextColor(255, 255, 255);
-            doc.setFont("helvetica", "bold");
-            doc.text("COHERO", 20, 25);
-            doc.setFontSize(10);
-            doc.setTextColor(251, 191, 36); // amber-400
-            doc.text("FINANCIAL INTELLIGENCE REPORT", 20, 32);
-            doc.setTextColor(255, 255, 255);
-            doc.text(`DATE: ${timestamp}`, pageWidth - 60, 28);
-
-            // 2. Summary
-            doc.setTextColor(15, 23, 42);
-            doc.setFontSize(16);
-            doc.text("Executive Summary", 20, 60);
-            doc.setDrawColor(241, 245, 249);
-            doc.line(20, 65, pageWidth - 20, 65);
-
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            const stats = [
-                { label: "Monthly Recurring Revenue (MRR)", value: `${Math.round(metrics.mrr).toLocaleString('da-DK')} kr.` },
-                { label: "Annual Recurring Revenue (ARR)", value: `${Math.round(metrics.arr).toLocaleString('da-DK')} kr.` },
-                { label: "Net Revenue (Last 30 days)", value: `${Math.round(metrics.netRevenue30d).toLocaleString('da-DK')} kr.` },
-                { label: "Active Paying Users", value: `${metrics.activeSubs} members` },
-                { label: "Estimated Fair Value (8x Multiplier)", value: `${Math.round(metrics.arr * 8).toLocaleString('da-DK')} kr.` }
-            ];
-
-            let yPos = 75;
-            stats.forEach(s => {
-                doc.setFont("helvetica", "bold");
-                doc.text(s.label, 20, yPos);
-                doc.setFont("helvetica", "normal");
-                doc.text(s.value, pageWidth - 70, yPos);
-                yPos += 10;
-            });
-
-            // 3. Projections Table
-            yPos += 15;
-            doc.setFontSize(16);
-            doc.setFont("helvetica", "bold");
-            doc.text(`Projections (${growthRate}% Annual Growth)`, 20, yPos);
-            yPos += 8;
-            doc.line(20, yPos, pageWidth - 20, yPos);
-            yPos += 10;
-
-            doc.setFontSize(9);
-            doc.setTextColor(100, 116, 139);
-            doc.text("MONTH / PERIOD", 20, yPos);
-            doc.text("PROJECTED MRR (DKK)", 80, yPos);
-            doc.text("ESTIMATED YEARLY BASIS", 140, yPos);
-            yPos += 5;
-
-            const projItems = projections.filter(p => p.projected).slice(0, 10);
-            projItems.forEach(p => {
-                yPos += 8;
-                doc.setTextColor(15, 23, 42);
-                doc.text(p.name, 20, yPos);
-                doc.text(`${Math.round(p.projected).toLocaleString('da-DK')} kr.`, 80, yPos);
-                doc.text(`${Math.round((p.projected as number) * 12).toLocaleString('da-DK')} kr.`, 140, yPos);
-            });
-
-            // 4. Milestones & Strategic Guidance
-            yPos += 20;
-            if (yPos > 240) { doc.addPage(); yPos = 20; }
-            doc.setFontSize(16);
-            doc.setFont("helvetica", "bold");
-            doc.text("Strategic Milestones", 20, yPos);
-            yPos += 8;
-            doc.line(20, yPos, pageWidth - 20, yPos);
-            yPos += 12;
-
-            milestones.forEach(m => {
-                if (yPos > 260) { doc.addPage(); yPos = 20; }
-                doc.setFont("helvetica", "bold");
-                if (m.status === 'reached') {
-                    doc.setTextColor(16, 185, 129); // emerald-500
-                } else {
-                    doc.setTextColor(15, 23, 42); // slate-900
-                }
-                doc.text(`${m.target.toLocaleString('da-DK')} kr. MRR`, 20, yPos);
-                doc.setFont("helvetica", "normal");
-                doc.setTextColor(100, 116, 139);
-                doc.text(m.status === 'reached' ? "[REACHED]" : `[ESTIMATED: ${m.date}]`, 85, yPos);
-                
-                if (m.status === 'pending') {
-                    doc.setFontSize(8);
-                    doc.text(`Required conversions: ~${m.usersNeeded} members`, 140, yPos);
-                    doc.setFontSize(9);
-                }
-                yPos += 8;
-            });
-
-            // 5. Footer Analytics
-            doc.setFontSize(8);
-            doc.setTextColor(148, 163, 184);
-            doc.text("This report is generated automatically by the Cohero Admin Engine and is intended for internal strategic use only.", 20, pageWidth + 80);
-
-            doc.save(`Cohero_Financial_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-        } catch (err) {
-            console.error("PDF generation failed:", err);
-        } finally {
-            setIsExporting(null);
-        }
-    };
-
     const handleSyncSubscriptions = async () => {
-        if (!window.confirm('Vil du synkronisere alle abonnementsstatusser med Stripe? Dette vil gennemgå alle brugere og sikre, at deres adgang matcher deres Stripe-betaling.')) return;
-        
         setIsSyncing(true);
         try {
             const res = await syncAllSubscriptionsAction();
             if (res.success) {
-                // Successful sync notification
                 const mRes = await getStripeDashboardMetricsAction();
                 if (mRes.success) setMetrics(mRes);
-                
-                // Refresh logs to show the new run
-                const lRes = await getSystemLogsAction('payment_sync', 10);
-                if (lRes.success && lRes.data) setSyncLogs(lRes.data);
-                
                 alert(res.message);
-            } else {
-                alert('Synkronisering fejlede: ' + res.message);
             }
-        } catch (err: any) {
-            console.error("Sync error:", err);
-            alert('Der skete en fejl under synkronisering.');
-        } finally {
-            setIsSyncing(false);
-        }
+        } finally { setIsSyncing(false); }
     };
 
-    if (isUserLoading || !userProfile || userProfile.role !== 'admin') {
-        return <AuthLoadingScreen />;
-    }
+    const handleLiveAnalysis = async () => {
+        setIsAnalyzing(true); setLiveAnalysis(null);
+        try {
+            const res = await getLiveMarketAnalysisAction({
+                features: platformFeatures.map(f => f.name),
+                currentArr: metrics?.arr || 0,
+                strategicScores: stratScores
+            });
+            if (res) {
+                setLiveAnalysis(res);
+                if (res.estimatedAssetValue) setPlatformAssetValue(res.estimatedAssetValue);
+            }
+        } catch (err) { console.error(err); } finally { setIsAnalyzing(false); }
+    };
 
-    const nextMilestone = milestones.find(m => m.status === 'pending');
+    if (isUserLoading || !userProfile || userProfile.role !== 'admin') return <AuthLoadingScreen />;
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-16 animate-ink pb-20 pt-8">
-            {/* 1. Header with Global Context */}
-            <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-12 px-2">
-                <div className="space-y-4">
+        <div className="max-w-[1700px] mx-auto space-y-12 animate-ink pb-20 pt-8 px-4">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                <header className="xl:col-span-2 space-y-6">
                     <div className="flex items-center gap-4">
-                        <Link href="/admin" className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-[1.25rem] transition-all border border-transparent hover:border-slate-200 active:scale-95">
+                        <Link href="/admin" className="p-3 bg-slate-900 text-white rounded-2xl hover:scale-110 duration-500 transition-all active:scale-95 shadow-xl shadow-slate-900/20">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
-                        <div className="px-4 py-1.5 bg-indigo-50 text-indigo-700 text-[10px] font-black rounded-full uppercase tracking-widest border border-indigo-100 shadow-sm shadow-indigo-500/5">Fintech Intelligence Engine</div>
+                        <div className="px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest border border-indigo-400 shadow-lg shadow-indigo-600/20">FINANCE / CORE INTELLIGENCE</div>
                     </div>
-                    <h1 className="text-5xl font-black text-slate-900 serif tracking-tight">Finansiel Arkitektur</h1>
-                    <p className="text-xl text-slate-500 font-medium italic">Monitorering af realtids omsætning, værdiansættelse og strategisk projektion.</p>
-                </div>
+                    <div>
+                        <h1 className="text-6xl font-black text-slate-900 serif tracking-tight">Værdiansættelse</h1>
+                        <p className="text-lg text-slate-500 font-medium italic mt-2">Strategisk overblik over enterprise værdi, omsætning & markeds-moat.</p>
+                    </div>
+                </header>
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <button 
-                        onClick={handleSyncSubscriptions}
-                        disabled={isSyncing || loading}
-                        className="flex items-center gap-6 p-6 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all group active:scale-95 disabled:opacity-50"
-                    >
-                        <div className="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all">
-                            {isSyncing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
+                <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
+                    <div className="p-8 bg-slate-950 rounded-[3rem] shadow-2xl relative overflow-hidden group border border-slate-800">
+                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-1000">
+                            <Crown className="w-32 h-32 text-amber-400" />
                         </div>
-                        <div className="text-left">
-                            <p className="text-[10px] font-black uppercase text-emerald-600/50 tracking-widest leading-none mb-1.5">System Audit</p>
-                            <p className="text-sm font-black text-emerald-900 leading-none">Sync Betalinger</p>
-                        </div>
-                    </button>
-
-                    <button 
-                        onClick={handleDownloadCSV}
-                        disabled={!!isExporting || loading}
-                        className="flex items-center gap-6 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group active:scale-95 disabled:opacity-50"
-                    >
-                        <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                            {isExporting === 'csv' ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileSpreadsheet className="w-6 h-6" />}
-                        </div>
-                        <div className="text-left">
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1.5">CSV Rapport</p>
-                            <p className="text-sm font-black text-slate-900 leading-none">Download Excel</p>
-                        </div>
-                    </button>
-
-                    <button 
-                        onClick={handleDownloadPDF}
-                        disabled={!!isExporting || loading}
-                        className="flex items-center gap-6 p-6 bg-slate-900 border border-slate-900 rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 hover:shadow-indigo-900/30 transition-all group active:scale-95 disabled:opacity-50"
-                    >
-                        <div className="w-12 h-12 bg-white/10 text-white rounded-2xl flex items-center justify-center group-hover:bg-white group-hover:text-slate-900 transition-all">
-                            {isExporting === 'pdf' ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileText className="w-6 h-6" />}
-                        </div>
-                        <div className="text-left text-white">
-                            <p className="text-[10px] font-black uppercase text-white/40 tracking-widest leading-none mb-1.5">PDF Strategi</p>
-                            <p className="text-sm font-black leading-none">Hent PDF Rapport</p>
-                        </div>
-                    </button>
-                    
-                    <div className="hidden sm:flex items-center gap-8 p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100">
-                        <div className="flex flex-col items-center gap-1">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Global Status</p>
+                        <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                            <div>
+                                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                                    <ShieldCheck className="w-3 h-3" /> Enterprise Valuation
+                                </p>
+                                <p className="text-4xl font-black text-white serif tracking-tighter">
+                                    {metrics ? `${Math.round(metrics.arr * (liveAnalysis?.marketMultiplier || 8) + platformAssetValue).toLocaleString('da-DK')} DKK` : '---'}
+                                </p>
+                            </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse" />
-                                <span className="text-sm font-black text-slate-900 uppercase tracking-tighter">Live Connection</span>
+                                <span className="px-2 py-0.5 bg-white/10 rounded-full text-[8px] font-black text-white/40 uppercase tracking-tighter">Multiplier: {liveAnalysis?.marketMultiplier || 8}x ARR</span>
+                                <span className="px-2 py-0.5 bg-white/10 rounded-full text-[8px] font-black text-white/40 uppercase tracking-tighter">Asset: {Math.round(platformAssetValue / 1000000 * 10) / 10}M DKK</span>
                             </div>
                         </div>
                     </div>
+                    <div className="flex flex-col gap-4">
+                        <button onClick={handleSyncSubscriptions} disabled={isSyncing} className="p-6 bg-white border border-slate-200 rounded-[2rem] shadow-sm hover:shadow-xl hover:bg-slate-50 transition-all flex items-center justify-between group active:scale-95 disabled:opacity-50">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:rotate-12 transition-all">
+                                    {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
+                                </div>
+                                <span className="text-[11px] font-black uppercase text-slate-900">Sync Betalinger</span>
+                            </div>
+                        </button>
+                        <button onClick={handleLiveAnalysis} disabled={isAnalyzing} className="p-6 bg-indigo-600 text-white rounded-[2rem] shadow-2xl shadow-indigo-600/30 hover:bg-indigo-700 transition-all flex items-center justify-between group active:scale-95 disabled:opacity-50">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-all">
+                                    {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <BrainCircuit className="w-5 h-5" />}
+                                </div>
+                                <span className="text-[11px] font-black uppercase tracking-widest">AI Markedsanalyse</span>
+                            </div>
+                        </button>
+                    </div>
                 </div>
-            </header>
-
-            {/* 2. Top-Level Performance Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-                <FinStatCard title="Monthly Recurring (MRR)" value={metrics ? `${Math.round(metrics.mrr).toLocaleString('da-DK')} kr.` : '0 kr.'} icon={TrendingUp} color="bg-indigo-50 text-indigo-600" loading={loading} />
-                <FinStatCard 
-                    title="Trial Pipeline (MRR +)" 
-                    value={metrics ? `${Math.round(metrics.potentialMrrFromTrials || 0).toLocaleString('da-DK')} kr.` : '0 kr.'} 
-                    trend={metrics?.trialSubs > 0 ? { value: `${metrics.trialSubs} trials`, isPositive: true } : null}
-                    icon={Activity} 
-                    color="bg-rose-50 text-rose-600" 
-                    loading={loading} 
-                />
-                <FinStatCard title="Net Omsætning (30d)" value={metrics ? `${Math.round(metrics.netRevenue30d).toLocaleString('da-DK')} kr.` : '0 kr.'} icon={DollarSign} color="bg-emerald-50 text-emerald-600" loading={loading} />
-                <FinStatCard title="Estimated ARR" value={metrics ? `${Math.round(metrics.arr).toLocaleString('da-DK')} kr.` : '0 kr.'} icon={Rocket} color="bg-amber-50 text-amber-600" loading={loading} />
-                <FinStatCard title="Betalende Brugere" value={metrics ? metrics.activeSubs : 0} icon={Users} color="bg-blue-50 text-blue-600" loading={loading} />
             </div>
 
-            {/* 3. Global Growth Visualization */}
-            <div className="w-full">
-                <section className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm flex flex-col">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-                        <div>
-                            <h2 className="text-3xl font-black text-slate-900 serif">Strategisk Vækst-Prognose</h2>
-                            <p className="text-sm text-slate-400 font-medium mt-2">Visualisering af Cohero's MRR-momentum inklusive intelligente sæson-korrektioner for de danske eksamensperioder.</p>
-                        </div>
-                        <div className="flex bg-slate-50 p-2 rounded-2xl border border-slate-100 items-center gap-4">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-3">Simuler Vækst:</span>
-                            <div className="flex gap-1">
-                                {[5, 10, 20, 40].map(r => (
-                                    <button 
-                                        key={r} 
-                                        onClick={() => setGrowthRate(r)} 
-                                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${growthRate === r ? 'bg-white text-indigo-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
-                                    >
-                                        {r}% 
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <StatCard title="MRR (Realtid)" value={metrics ? `${Math.round(metrics.mrr).toLocaleString('da-DK')} DKK` : '---'} trend="+1.2%" icon={TrendingUp} color="bg-blue-50 text-blue-600" />
+                <StatCard title="ARR (Løbende)" value={metrics ? `${Math.round(metrics.arr).toLocaleString('da-DK')} DKK` : '---'} trend="+14.5%" icon={Rocket} color="bg-indigo-50 text-indigo-600" />
+                <StatCard title="Net Revenue (30d)" value={metrics ? `${Math.round(metrics.netRevenue30d).toLocaleString('da-DK')} DKK` : '---'} icon={DollarSign} color="bg-emerald-50 text-emerald-600" />
+                <StatCard title="Aktive Brugere" value={metrics?.activeSubs || 0} icon={Users} color="bg-slate-50 text-slate-900" />
+            </div>
 
-                    <div className="h-[500px] w-full relative">
-                        {loading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-20 rounded-[2.5rem]">
-                                <div className="flex flex-col items-center gap-4">
-                                    <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Henter Finansiel Data...</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div className="lg:col-span-2 space-y-12">
+                    <section className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
+                            <div>
+                                <h3 className="text-3xl font-black text-slate-900 serif">Vækst-Momentum</h3>
+                                <p className="text-sm text-slate-400 font-medium">Inkluderer seasonal boost for danske eksamensmåneder (Jun/Jan).</p>
+                            </div>
+                            <div className="flex bg-slate-50 p-2 rounded-2xl border border-slate-100 items-center justify-between gap-4">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-3">Vækstrate:</span>
+                                <div className="flex gap-1">
+                                    {[5, 10, 20, 40].map(r => (
+                                        <button key={r} onClick={() => setGrowthRate(r)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black transition-all ${growthRate === r ? 'bg-white text-indigo-600 shadow-md border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}>
+                                            {r}% 
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
-                        )}
-                        <ResponsiveContainer width="100%" height={500}>
-                            <ComposedChart data={projections} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
-                                <defs>
-                                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.15}/><stop offset="95%" stopColor="#6366f1" stopOpacity={0}/></linearGradient>
-                                    <linearGradient id="colorProj" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis 
-                                    dataKey="name" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} 
-                                    dy={10}
-                                />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
-                                    tickFormatter={(val) => `${Math.round(val / 1000)}k`}
-                                />
-                                <Tooltip 
-                                    content={<CustomTooltip />} 
-                                    cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }}
-                                />
-                                
-                                <Area 
-                                    type="monotone" 
-                                    dataKey="revenue" 
-                                    stroke="#6366f1" 
-                                    strokeWidth={4} 
-                                    fillOpacity={1} 
-                                    fill="url(#colorRev)" 
-                                    name="revenue"
-                                />
-                                <Area 
-                                    type="monotone" 
-                                    dataKey="projected" 
-                                    stroke="#10b981" 
-                                    strokeWidth={3} 
-                                    strokeDasharray="8 8"
-                                    fillOpacity={1} 
-                                    fill="url(#colorProj)" 
-                                    name="projected"
-                                />
-                                
-                                {projections.map((entry, index) => entry.isExamMonth ? (
-                                    <ReferenceDot 
-                                        key={index} 
-                                        x={entry.name} 
-                                        y={entry.projected || entry.revenue} 
-                                        r={6} 
-                                        fill="#fbbf24" 
-                                        stroke="#fff" 
-                                        strokeWidth={3} 
-                                    />
-                                ) : null)}
-                            </ComposedChart>
-                        </ResponsiveContainer>
-                    </div>
+                        </div>
+                        <div className="h-[500px] w-full relative min-h-[500px]">
+                            {isMounted && (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart data={projections} margin={{ top: 20, right: 30, left: 10, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.15}/><stop offset="95%" stopColor="#6366f1" stopOpacity={0}/></linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 800, fill: '#94a3b8' }} dy={10} />
+                                        <YAxis hide />
+                                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }} />
+                                        <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={5} fillOpacity={1} fill="url(#colorRev)" animationDuration={1500} />
+                                        <Area type="monotone" dataKey="projected" stroke="#6366f1" strokeWidth={5} strokeDasharray="10 10" fillOpacity={0} animationDuration={2000} />
+                                        {projections.map((entry, index) => entry.isExamMonth ? <ReferenceDot key={index} x={entry.name} y={entry.projected || entry.revenue} r={6} fill="#f59e0b" stroke="#fff" strokeWidth={3} /> : null )}
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </section>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 mt-16 pt-10 border-t border-slate-50">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Årlig Target (12M)</p>
-                            <p className="text-3xl font-black text-slate-900 serif">
-                                {Math.round((projections[projections.length - 1]?.projected || 0) * 12).toLocaleString('da-DK')} 
-                                <small className="text-sm font-medium text-slate-300 ml-2">kr.</small>
-                            </p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none">Næste Sæson Boost</p>
-                            <p className="text-3xl font-black text-slate-900 serif">
-                                +{Math.round(examPeriodImpact?.growth || 0)}% 
-                                <small className="text-sm font-medium text-amber-300 ml-2">impact</small>
-                            </p>
-                        </div>
-                        <div className="col-span-2 flex items-center justify-end gap-10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/20" />
-                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Historisk MRR</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" />
-                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Vækst Prognose</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 rounded-full bg-amber-400 animate-pulse shadow-lg shadow-amber-400/20" />
-                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Eksamen</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-amber-950 p-16 md:p-24 rounded-[5rem] shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.05),transparent_70%)]" />
-                <div className="relative z-10 grid xl:grid-cols-2 gap-24 items-center">
-                    <div className="space-y-12">
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-6"><div className="w-16 h-16 bg-amber-400 rounded-3xl flex items-center justify-center text-amber-950 shadow-2xl shadow-amber-400/30 group-hover:rotate-12 duration-700 transition-transform"><Crown className="w-8 h-8" /></div><h3 className="text-5xl font-black text-white serif tracking-tight">Platform Valuation</h3></div>
-                            <p className="text-2xl text-white/40 font-medium leading-relaxed italic max-w-xl">Hvad er Cohéro værd i dagens marked? Et strategisk estimat baseret på din ARR-momentum.</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-8">
-                             <div className="bg-white/5 p-8 rounded-[3rem] border border-white/10 backdrop-blur-3xl hover:bg-white/10 transition-all duration-700"><p className="text-[11px] font-black uppercase text-amber-400/50 tracking-[0.2em] mb-4">Konservativ (4x)</p><p className="text-4xl font-black text-white serif">{metrics ? Math.round(metrics.arr * 4).toLocaleString('da-DK') : '0'} <small className="text-sm font-bold text-white/20 ml-1">kr.</small></p></div>
-                             <div className="bg-white/5 p-8 rounded-[3rem] border border-white/10 backdrop-blur-3xl hover:bg-white/10 transition-all duration-700"><p className="text-[11px] font-black uppercase text-emerald-400/50 tracking-[0.2em] mb-4">Aggressiv (12x)</p><p className="text-4xl font-black text-white serif">{metrics ? Math.round(metrics.arr * 12).toLocaleString('da-DK') : '0'} <small className="text-sm font-bold text-white/20 ml-1">kr.</small></p></div>
-                        </div>
-                    </div>
-                    <div className="p-20 bg-white/[0.02] border border-white/10 rounded-[5rem] backdrop-blur-3xl flex flex-col items-center text-center relative shadow-inner group-hover:border-amber-400/20 transition-all duration-1000">
-                         <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-amber-400/10 rounded-full blur-[80px]" /><p className="text-[11px] font-black uppercase text-amber-400 tracking-[0.5em] mb-8">Current Enterprise Value</p><h4 className="text-8xl md:text-9xl font-black text-white serif mb-6 tracking-tighter shadow-sm">{metrics ? `${(metrics.arr * 8 / 1000000).toFixed(1)}M` : '0M'}</h4><p className="text-3xl font-black text-amber-400/60 serif italic mb-12">Danske Kroner (8.0x Multiplier)</p><div className="w-full h-px bg-white/10 mb-12" /><div className="flex gap-16"><div><p className="text-[10px] font-black uppercase text-white/20 tracking-widest mb-2">Base ARR</p><p className="text-2xl font-black text-white">{Math.round(metrics?.arr || 0).toLocaleString('da-DK')} kr.</p></div><div className="w-px h-full bg-white/10" /><div><p className="text-[10px] font-black uppercase text-white/20 tracking-widest mb-2">Platform Score</p><p className="text-2xl font-black text-emerald-400">Excellent</p></div></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <section className="bg-indigo-600 p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-all"><Target className="w-24 h-24 text-white" /></div>
+                            <h4 className="text-xl font-black serif mb-8">Næste Milestone</h4>
+                            {milestones.find(m => m.status === 'pending') && (
+                                <div className="space-y-8 relative z-10">
+                                    <div className="flex items-end justify-between">
+                                        <div>
+                                            <p className="text-4xl font-black serif tracking-tight">{milestones.find(m => m.status === 'pending')!.target.toLocaleString('da-DK')} DKK</p>
+                                            <p className="text-[10px] font-black uppercase text-indigo-300 tracking-widest mt-1">Estimering: {milestones.find(m => m.status === 'pending')!.date}</p>
+                                        </div>
+                                        <p className="text-2xl font-black text-white/40 serif italic">8{Math.round(milestones.find(m => m.status === 'pending')!.progress)}%</p>
+                                    </div>
+                                    <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                                        <motion.div initial={{ width: 0 }} animate={{ width: `${milestones.find(m => m.status === 'pending')!.progress}%` }} className="h-full bg-white" />
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+                        <section className="bg-slate-950 p-10 rounded-[3.5rem] text-white space-y-8 relative overflow-hidden border border-slate-800">
+                             <div className="flex justify-between items-center"><h4 className="text-xl font-black serif">System Audit Log</h4><Activity className="w-5 h-5 text-slate-600" /></div>
+                             <div className="space-y-3 max-h-[180px] overflow-y-auto custom-scrollbar pr-2">
+                                {syncLogs.slice(0, 5).map((log, i) => (
+                                    <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/10 transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-2 h-2 rounded-full ${log.status === 'completed' ? 'bg-emerald-500' : 'bg-rose-500'} shadow-lg shadow-current/50`} />
+                                            <p className="text-[10px] font-bold text-slate-300">{new Date(log.startTime).toLocaleDateString('da-DK')}</p>
+                                        </div>
+                                        <p className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">{log.processedCount} users</p>
+                                    </div>
+                                ))}
+                             </div>
+                        </section>
                     </div>
                 </div>
-            </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-                <section className="bg-white p-12 rounded-[4.5rem] border border-slate-100 shadow-sm space-y-12 group hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-700">
-                    <div className="flex items-center gap-5"><div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-110 duration-700"><BrainCircuit className="w-7 h-7" /></div><h3 className="text-2xl font-black text-slate-900 serif">AI Økonomi</h3></div>
-                    <div className="space-y-8">
-                        <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">LTV per Bruger (Est)</p>
-                            <p className="text-3xl font-black text-slate-900 serif italic">
-                                {metrics?.arpu && metrics?.churnRate 
-                                    ? `${Math.round(metrics.arpu / metrics.churnRate).toLocaleString('da-DK')} kr.` 
-                                    : '---'}
-                            </p>
-                            <p className="text-[9px] font-bold text-slate-300 mt-3 italic">Beregnet over realtid ARPU & Churn Rate</p>
-                        </div>
-                        <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Netto Margin (AI)</p>
-                            <p className="text-3xl font-black text-emerald-600 serif italic">92.4%</p>
-                            <p className="text-[9px] font-bold text-indigo-400 mt-3 uppercase tracking-tighter font-black">Optimized with Gemini 2.0</p>
-                        </div>
-                    </div>
-                </section>
-                <section className="bg-indigo-900 p-12 rounded-[4.5rem] text-white shadow-2xl space-y-12 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" /><div className="flex items-center gap-5"><div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-white shadow-sm"><Boxes className="w-7 h-7" /></div><h3 className="text-2xl font-black serif">Eksponentiel Vækst</h3></div><div className="space-y-8 relative z-10"><div className="space-y-4"><div className="flex justify-between items-end"><span className="text-[10px] font-black uppercase tracking-widest text-white/40">Expansion Capacity</span><span className="text-xl font-black">12.5k Brugere</span></div><div className="h-2 bg-white/10 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: '15%' }} transition={{ duration: 2, delay: 0.5 }} className="h-full bg-white shadow-lg shadow-white" /></div></div><p className="text-sm text-white/50 leading-relaxed italic">Systemet kan skalere til de næste 10.000 aktive brugere uden behov for yderligere arkitektonisk udvidelse.</p><button className="flex items-center justify-between w-full p-6 bg-white text-indigo-900 rounded-[2rem] font-black uppercase text-[11px] tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-indigo-900/40">Ekspander Kapacitet <ArrowRight className="w-5 h-5" /></button></div>
-                </section>
-                <section className="bg-white p-12 rounded-[4.5rem] border border-slate-100 shadow-sm flex flex-col justify-between group h-full">
-                    <div className="space-y-12"><div className="flex items-center gap-5"><div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 shadow-sm group-hover:scale-110 duration-700"><Zap className="w-7 h-7" /></div><h3 className="text-2xl font-black text-slate-900 serif">Strategisk Fokus</h3></div><div className="space-y-10"><div className="space-y-4"><div className="flex justify-between items-end"><p className="text-5xl font-black text-slate-900 serif">82%</p><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Efficiency Score</p></div><div className="h-4 bg-slate-50 border border-slate-100 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: '82%' }} transition={{ duration: 1.5, delay: 0.5 }} className="h-full bg-amber-500 rounded-full shadow-lg shadow-amber-500/20" /></div></div></div></div><div className="mt-12 p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex items-center justify-between gap-6"><p className="text-xs text-slate-500 font-bold leading-relaxed italic">Fokuser på <span className="text-amber-600 font-black italic">Churn Reduction</span> de næste 30 dage for at accelerere ARR milestenen.</p><TrendingDown className="w-6 h-6 text-rose-300" /></div>
-                </section>
+                <div className="space-y-12">
+                    <section className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-10 group overflow-hidden relative">
+                         <div className="absolute -bottom-20 -right-20 opacity-5 group-hover:scale-110 duration-1000 transition-all"><Boxes className="w-64 h-64 text-indigo-900" /></div>
+                         <div className="relative z-10 flex items-center justify-between">
+                            <div><h3 className="text-2xl font-black text-slate-900 serif">Platform-Assets</h3><p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Beregnet unik markedspris</p></div>
+                            <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg"><ShieldCheck className="w-6 h-6" /></div>
+                         </div>
+                         <div className="space-y-4 relative z-10">
+                            {platformFeatures.map(f => (
+                                <div key={f.id} className="p-5 bg-slate-50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-xl hover:border-indigo-100 transition-all group/feat duration-500">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <p className="text-[11px] font-black text-slate-900">{f.name}</p>
+                                        <p className="text-[10px] font-black text-indigo-600 italic tracking-tighter">{Math.round(f.marketValue).toLocaleString('da-DK')} DKK</p>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-medium italic group-hover/feat:text-slate-500">{f.description}</p>
+                                </div>
+                            ))}
+                         </div>
+                    </section>
+
+                    <section className="bg-slate-50 p-12 rounded-[4rem] border border-slate-100 space-y-10 group hover:bg-white hover:shadow-2xl transition-all duration-700">
+                         <div><h4 className="text-xl font-black text-slate-900 serif italic">Strategiske Faktorer</h4><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Værdiansættelse & Moat</p></div>
+                         <div className="space-y-6">
+                            {[
+                                { key: 'technology', label: '🧠 Teknologi' }, { key: 'ip', label: '🔐 IP Rettigheder' }, { key: 'data', label: '📊 Unik Data' }, { key: 'team', label: '👥 Team Drift' }, { key: 'architecture', label: '⚙️ Arkitektur' },
+                            ].map((s) => (
+                                <div key={s.key} className="space-y-3">
+                                    <div className="flex justify-between items-end"><p className="text-[11px] font-black text-slate-900 uppercase tracking-tighter">{s.label}</p><span className="text-[10px] font-black text-indigo-600">{stratScores[s.key as keyof typeof stratScores]}/5</span></div>
+                                    <div className="flex gap-1.5">
+                                        {[1,2,3,4,5].map(v => (
+                                            <button key={v} onClick={() => setStratScores(prev => ({ ...prev, [s.key]: v }))} className={`flex-1 h-2 rounded-full transition-all duration-500 ${stratScores[s.key as keyof typeof stratScores] >= v ? 'bg-indigo-600 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-slate-200'}`} />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                         </div>
+                    </section>
+                </div>
             </div>
 
-            {/* 5. Payment Sync History */}
+            <AnimatePresence>
+                {(isAnalyzing || liveAnalysis) && (
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full">
+                        <section className="bg-slate-950 p-12 rounded-[5rem] border border-indigo-500/30 shadow-3xl shadow-indigo-500/10 relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none"><Rocket className="w-64 h-64 text-indigo-400 rotate-12" /></div>
+                             <div className="flex flex-col md:flex-row items-center gap-8 mb-16 relative z-10">
+                                <div className="p-6 bg-indigo-600 rounded-[2.5rem] shadow-2xl animate-pulse"><BrainCircuit className="w-10 h-10 text-white" /></div>
+                                <div className="text-center md:text-left"><h3 className="text-4xl font-black text-white serif tracking-tight">AI Intelligence Console</h3><p className="text-indigo-400 text-xs font-black uppercase tracking-[0.4em] mt-2 italic">Analyse Færdig — Strategisk Opsamling</p></div>
+                             </div>
+
+                             {isAnalyzing ? (
+                                <div className="py-24 flex flex-col items-center gap-8">
+                                    <div className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                                    <p className="text-indigo-300 text-xs font-black uppercase tracking-[0.3em] animate-pulse">Scanner globale SaaS multiplikatorer & 2026 trends...</p>
+                                </div>
+                             ) : (
+                                <div className="space-y-16 animate-ink relative z-10">
+                                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
+                                        {/* 1. SUMMARY (OPSUMMERING) */}
+                                        <div className="xl:col-span-2 space-y-8">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-black text-white">01</div>
+                                                <h4 className="text-xl font-black text-white serif italic uppercase tracking-widest">Strategisk Opsummering</h4>
+                                            </div>
+                                            <div className="p-10 bg-white/5 rounded-[3rem] border border-white/5 backdrop-blur-2xl">
+                                                <div className="text-indigo-100/90 leading-loose italic whitespace-pre-wrap font-medium prose prose-invert prose-sm max-w-none">
+                                                    {liveAnalysis.report}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 2. CALCULATIONS (MELLEMREGNINGER) */}
+                                        <div className="space-y-8">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-[10px] font-black text-white">02</div>
+                                                <h4 className="text-xl font-black text-white serif italic uppercase tracking-widest">Mellemregninger</h4>
+                                            </div>
+                                            <div className="p-10 bg-indigo-600 rounded-[3rem] shadow-2xl space-y-8 border border-white/10 relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-all duration-1000"><DollarSign className="w-24 h-24 text-white" /></div>
+                                                
+                                                <div className="space-y-6 relative z-10">
+                                                    <div className="flex justify-between items-start pb-4 border-b border-white/10">
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Indtjeningsværdi</p>
+                                                            <p className="text-xs text-white/60 font-medium">{Math.round(metrics?.arr || 0).toLocaleString('da-DK')} ARR x {liveAnalysis.marketMultiplier}x</p>
+                                                        </div>
+                                                        <p className="text-lg font-black text-white">{Math.round((metrics?.arr || 0) * liveAnalysis.marketMultiplier).toLocaleString('da-DK')} DKK</p>
+                                                    </div>
+
+                                                    <div className="flex justify-between items-start pb-4 border-b border-white/10">
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Platform Assets</p>
+                                                            <p className="text-xs text-white/60 font-medium">Replacement Cost (AI Est.)</p>
+                                                        </div>
+                                                        <p className="text-lg font-black text-white">{Math.round(platformAssetValue).toLocaleString('da-DK')} DKK</p>
+                                                    </div>
+
+                                                    <div className="pt-4 flex justify-between items-end">
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">Total Valuation</p>
+                                                            <p className="text-[9px] text-white/40 font-black italic uppercase">Beregnet Enterprise Værdi</p>
+                                                        </div>
+                                                        <p className="text-3xl font-black text-white serif tracking-tighter">
+                                                            {Math.round((metrics?.arr || 0) * (liveAnalysis.marketMultiplier) + platformAssetValue).toLocaleString('da-DK')} DKK
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 space-y-4">
+                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Beslutningsgrundlag</p>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-white/5 rounded-xl text-indigo-400"><Target className="w-5 h-5" /></div>
+                                                    <p className="text-[10px] text-white/60 leading-relaxed italic">Vurderingen vægter teknologi-moat (Score: {stratScores.technology}/5) over ren omsætning.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 3. BENCHMARKS */}
+                                    <div className="space-y-8">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-[10px] font-black text-white">03</div>
+                                            <h4 className="text-xl font-black text-white serif italic uppercase tracking-widest">Konkurrent Benchmarks</h4>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                            {liveAnalysis.competitorBenchmarks?.map((b: any, i: number) => (
+                                                <div key={i} className="p-10 bg-white/5 rounded-[3rem] border border-white/5 hover:border-indigo-500/50 transition-all hover:bg-white/10 group/c backdrop-blur-sm">
+                                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4">{b.name}</p>
+                                                    <p className="text-2xl font-black text-white serif mb-3">{b.estimatedValue}</p>
+                                                    <div className="h-1px w-12 bg-white/10 mb-4 group-hover/c:w-full transition-all duration-500" />
+                                                    <p className="text-[11px] text-white/40 italic font-medium leading-relaxed group-hover/c:text-white/60">{b.featureOverlap}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                             )}
+                        </section>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <section className="space-y-10 pt-10 border-t border-slate-50">
-                <div className="flex items-center justify-between px-4">
-                    <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center shadow-xl">
-                            <Activity className="w-7 h-7" />
-                        </div>
-                        <div>
-                            <h3 className="text-3xl font-black text-slate-900 serif">Historik over Betalingssync</h3>
-                            <p className="text-sm text-slate-400 font-medium italic">Oversigt over automatiske og manuelle system-synkroniseringer.</p>
-                        </div>
-                    </div>
+                <div className="flex items-center px-4 gap-5">
+                    <div className="w-14 h-14 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center shadow-xl"><Activity className="w-7 h-7" /></div>
+                    <div><h3 className="text-3xl font-black text-slate-900 serif">Betalingssync Historik</h3><p className="text-sm text-slate-400 font-medium italic">Oversigt over automatiske og manuelle system-synkroniseringer.</p></div>
                 </div>
-
                 <div className="space-y-6">
-                    {isLogsLoading && syncLogs.length === 0 ? (
-                        <div className="p-20 bg-white rounded-[3rem] border border-dashed border-slate-200 flex flex-col items-center justify-center gap-4">
-                            <Loader2 className="w-10 h-10 animate-spin text-slate-200" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Henter log-historik...</p>
-                        </div>
-                    ) : syncLogs.length === 0 ? (
+                    {syncLogs.length === 0 ? (
                         <div className="p-20 bg-white rounded-[3rem] border border-dashed border-slate-200 flex flex-col items-center justify-center text-center space-y-4">
-                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
-                                <Activity className="w-10 h-10" />
-                            </div>
-                            <p className="text-xl font-bold text-slate-400 serif">Ingen log-historik fundet</p>
-                            <p className="text-sm text-slate-300 max-w-sm">Systemet har endnu ikke logget nogen automatiske synkroniseringer.</p>
+                            <Activity className="w-10 h-10 text-slate-200" /><p className="text-xl font-bold text-slate-400 serif">Ingen log-historik fundet</p>
                         </div>
                     ) : (
-                        syncLogs.map((log) => (
-                            <PaymentSyncLog key={log.id} log={log} />
-                        ))
+                        syncLogs.map((log) => <PaymentSyncLog key={log.id} log={log} />)
                     )}
                 </div>
             </section>
@@ -774,3 +518,38 @@ export default function AdminFinansPage() {
     );
 }
 
+const StatCard = ({ title, value, trend, icon: Icon, color, loading }: any) => (
+    <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-700 group relative overflow-hidden">
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 mb-8 ${color} shadow-lg shadow-current/10`}>
+            <Icon className="w-7 h-7" />
+        </div>
+        <div>
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">{title}</p>
+                {trend && <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">{trend}</span>}
+            </div>
+            <div className="text-3xl font-black text-slate-900 serif tracking-tight">
+                {loading ? <div className="w-24 h-8 bg-slate-100 animate-pulse rounded-lg" /> : value}
+            </div>
+        </div>
+    </div>
+);
+
+const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-slate-900/95 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-3xl">
+                <div className="flex items-center gap-3 mb-4"><p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{payload[0].payload.name}</p></div>
+                <div className="space-y-3">
+                    {payload[0].value && (
+                        <div><p className="text-[9px] font-black text-white/40 uppercase tracking-tighter">Faktisk MRR</p><p className="text-xl font-black text-white italic">{Math.round(payload[0].value).toLocaleString('da-DK')} DKK</p></div>
+                    )}
+                    {payload[1]?.value && (
+                        <div><p className="text-[9px] font-black text-indigo-300 uppercase tracking-tighter">Prognose</p><p className="text-xl font-black text-emerald-400 italic">{Math.round(payload[1].value).toLocaleString('da-DK')} DKK</p></div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};

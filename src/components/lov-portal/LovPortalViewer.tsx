@@ -2303,7 +2303,31 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
                             <div><h2 className="text-4xl font-bold text-amber-950 serif tracking-tight">Træning & Fremskridt</h2><p className="text-slate-500 mt-2 font-medium italic">Se din udvikling i de faglige test.</p></div>
                         </div>
 
+                        <div className="bg-amber-950 p-8 md:p-12 rounded-[3rem] text-amber-400 relative overflow-hidden group shadow-2xl">
+                            <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                                <GraduationCap className="w-48 h-48" />
+                            </div>
+                            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                            <Sparkles className="w-3 h-3" /> NYHED
+                                        </div>
+                                        <div className="text-amber-200/60 text-[10px] font-black uppercase tracking-[0.2em]">Juridisk Gamificering</div>
+                                    </div>
+                                    <h3 className="text-4xl md:text-5xl font-black serif-premium leading-tight">Mester Lov-Stien</h3>
+                                    <p className="max-w-md text-amber-200/80 font-medium text-lg">Gør Jura-læring til en leg med vores nye gamificerede forløb. Optjen XP, hold din streak og lær loven på den sjove måde.</p>
+                                </div>
+                                <Link href="/lov-portal/traening/lov-stien">
+                                    <Button className="h-20 px-12 rounded-2xl bg-amber-400 text-amber-950 hover:bg-white hover:scale-105 transition-all font-black serif-premium text-xl shadow-xl shadow-amber-950/20">
+                                        Start Din Rejse <ArrowRight className="w-6 h-6 ml-4" />
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+
                         {quizResultsLoading ? (
+
                             <div className="h-64 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-amber-200"/></div>
                         ) : !trainingStats ? (
                             <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed border-amber-200 shadow-inner">

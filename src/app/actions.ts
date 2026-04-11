@@ -683,8 +683,12 @@ export async function getCaseConsequenceAction(input: any) { return callFirebase
 export async function generateQuizAction(input: { topic: string, numQuestions: number, difficulty?: 'easy' | 'medium' | 'hard', lawId?: string, contextText?: string, profession?: string }): Promise<Types.QuizGeneratorOutput> {
     let lawContext = '';
     if (input.lawId) {
-        const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: input.lawId, name: input.topic });
-        lawContext = fetchRes.data;
+        try {
+            const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: input.lawId, name: input.topic });
+            lawContext = fetchRes?.data || '';
+        } catch (e) {
+            console.error("[generateQuizAction] Law context fetch error:", e);
+        }
     }
 
     return callFirebaseFlow('generateQuizFlow', {
@@ -2300,6 +2304,19 @@ export async function clearUserPaymentInfoAction(userId: string, studentCardUrl?
         return { success: false, error: "Fejl ved sletning af oplysninger." };
     }
 }
+export async function getLiveMarketAnalysisAction(input: { 
+    features: string[], 
+    currentArr: number,
+    strategicScores: { technology: number, architecture: number, ip: number, team: number, data: number }
+}) {
+    try {
+        return await callFirebaseFlow('marketAnalysisFlow', input);
+    } catch (e: any) {
+        console.error("Market analysis failed:", e);
+        throw new Error(`Fejl ved markedsanalyse: ${e.message}`);
+    }
+}
+
 export async function adminDeleteUserAction(userId: string) {
     try {
         const { adminAuth } = await import('@/firebase/server-init');
@@ -3173,5 +3190,50 @@ export async function generateAIFeatureRequestsAction() {
         return { success: false, message: e.message };
     }
 }
+
+export async function saveCurriculumAction(curriculum: any) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const { id, ...data } = curriculum;
+        const now = admin.firestore.FieldValue.serverTimestamp();
+        
+        // Ensure all modules have an ID if they don't have one
+        if (data.modules) {
+           data.modules = data.modules.map((m: any, idx: number) => ({
+               ...m,
+               id: m.id || `modul-${idx + 1}`
+           }));
+        }
+
+        const finalData = {
+            ...data,
+            updatedAt: now
+        };
+        
+        if (!id) {
+            finalData.createdAt = now;
+            const res = await adminFirestore.collection('curriculums').add(finalData);
+            return { success: true, id: res.id };
+        } else {
+            await adminFirestore.collection('curriculums').doc(id).set(finalData, { merge: true });
+            return { success: true, id };
+        }
+    } catch (e: any) {
+        console.error("Failed to save curriculum:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function deleteCurriculumAction(id: string) {
+    if (!adminFirestore) return { success: false };
+    try {
+        await adminFirestore.collection('curriculums').doc(id).delete();
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to delete curriculum:", e);
+        return { success: false, message: e.message };
+    }
+}
+
 
 

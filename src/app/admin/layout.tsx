@@ -75,6 +75,7 @@ const navigationGroups = [
     title: 'Intelligence',
     items: [
         { id: 'education', href: '/admin/education', label: 'Uddannelsesdata', icon: GraduationCap },
+        { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: BookOpen },
         { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
         { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
         { id: 'second-opinion-decisions', href: '/admin/second-opinions/decisions', label: 'S.O. Afgørelser', icon: Gavel },
