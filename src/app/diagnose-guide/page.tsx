@@ -16,12 +16,14 @@ import {
   Bookmark,
   History,
   Scale as ScaleIcon,
-  BookOpen
+  BookOpen,
+  List,
+  Languages
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
-import { searchDiagnoseAction } from '@/app/actions';
+import { searchDiagnoseAction, translateDiagnoseAction } from '@/app/actions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 export default function DiagnoseGuidePage() {
@@ -31,6 +33,8 @@ export default function DiagnoseGuidePage() {
   const [results, setResults] = useState<any[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [isTranslating, setIsTranslating] = useState<Record<string, boolean>>({});
 
   // Load history from localStorage
   useEffect(() => {
@@ -65,6 +69,28 @@ export default function DiagnoseGuidePage() {
       setError('Kunne ikke forbinde til serveren.');
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleTranslate = async (id: string, text: string) => {
+    if (translations[id]) {
+        // Clear translation to toggle back to English
+        const newTrans = { ...translations };
+        delete newTrans[id];
+        setTranslations(newTrans);
+        return;
+    }
+
+    setIsTranslating(prev => ({ ...prev, [id]: true }));
+    try {
+        const res = await translateDiagnoseAction({ text });
+        if (res.data?.translatedText) {
+            setTranslations(prev => ({ ...prev, [id]: res.data.translatedText }));
+        }
+    } catch (err) {
+        console.error("Translation failed:", err);
+    } finally {
+        setIsTranslating(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -204,11 +230,28 @@ export default function DiagnoseGuidePage() {
 
                         {/* Description & Detail */}
                         <div className="space-y-8">
-                            <div className="bg-slate-50 p-8 rounded-[32px] border border-slate-100">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-4">Klinisk Definition (Engelsk)</span>
+                            <div className="bg-slate-50 p-8 rounded-[32px] border border-slate-100 relative group overflow-hidden">
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        {translations[`desc_${diag.id}`] ? 'Dansk Oversættelse' : 'Klinisk Definition (Engelsk)'}
+                                    </span>
+                                    <button 
+                                        onClick={() => handleTranslate(`desc_${diag.id}`, diag.longDefinition || diag.descriptionDa)}
+                                        disabled={isTranslating[`desc_${diag.id}`]}
+                                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:border-rose-300 hover:text-rose-600 transition-all active:scale-95 disabled:opacity-50"
+                                    >
+                                        {isTranslating[`desc_${diag.id}`] ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                            <Languages className="w-3 h-3" />
+                                        )}
+                                        {translations[`desc_${diag.id}`] ? 'Vis Engelsk' : 'Oversæt til Dansk'}
+                                    </button>
+                                </div>
+                                
                                 <div className="prose prose-slate max-w-none">
                                     <p className="text-slate-700 font-medium leading-relaxed" 
-                                       dangerouslySetInnerHTML={{ __html: diag.descriptionDa }} />
+                                       dangerouslySetInnerHTML={{ __html: translations[`desc_${diag.id}`] || diag.longDefinition || diag.descriptionDa }} />
                                 </div>
                             </div>
 

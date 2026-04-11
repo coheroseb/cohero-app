@@ -91,6 +91,7 @@ import { researchDiscovery } from './flows/research-discovery-flow';
 import { analyzeLegalDecisionPdfFlow } from './flows/analyze-legal-decision-pdf-flow';
 import { marketAnalysisFlow } from './flows/market-analysis-flow';
 import { searchDiagnoseFlow } from './flows/search-diagnose-flow';
+import { translateDiagnoseFlow } from './flows/translate-diagnose-flow';
 
 
 export const allFlows: Record<string, any> = {
@@ -277,5 +278,6 @@ export const allFlows: Record<string, any> = {
   'analyzeLegalDecisionPdfFlow': analyzeLegalDecisionPdfFlow,
   'marketAnalysisFlow': marketAnalysisFlow,
   'searchDiagnoseFlow': searchDiagnoseFlow,
+  'translateDiagnoseFlow': translateDiagnoseFlow,
 };
 
