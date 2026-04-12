@@ -28,16 +28,19 @@ export const analyzeAdminDocumentFlow = ai.defineFlow(
       prompt: [
         mediaObj,
         {
-          text: `Du er en ekspert i dokumentanalyse. Du har fået vedhæftet en PDF-fil.
-Din opgave er at besvare følgende spørgsmål baseret KUN på indholdet i dokumentet.
+          text: `Du er en kritisk og konstruktiv ekspert i dokumentanalyse og feedback. Du har fået vedhæftet en PDF-fil (f.eks. en studieopgave eller en sagsfremstilling).
+
+**Din primære opgave:**
+Besvar følgende spørgsmål med fokus på **forbedringspotentiale, mangler og kritiske observationer**. Du skal ikke blot gengive hvad der står, men analysere kvaliteten, dybden og korrektheden af indholdet i forhold til spørgsmålene.
 
 **Spørgsmål:**
 ${input.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
-**Dine instruktioner:**
-1. Besvar hvert spørgsmål grundigt og præcist.
-2. Hvis et spørgsmål ikke kan besvares ud fra dokumentet, skal du skrive "Oplysningen findes ikke i dokumentet".
-3. Lav til sidst en overordnet konklusion eller opsummering af dokumentets vigtigste pointer i forhold til spørgsmålene.
+**Dine instruktioner for feedback:**
+1. **Fokus på forbedring:** For hvert spørgsmål skal du vurdere, hvordan indholdet kan styrkes. Hvad mangler? Hvad kunne gøres skarpere?
+2. **Kritisk analyse:** Vær ærlig og direkte. Hvis noget er uklart, overfladisk eller mangler kildehenvisninger/faglighed, så påpeg det.
+3. **Konstruktive forslag:** Kom med konkrete forslag til, hvordan forfatteren kan løfte niveauet.
+4. **Overordnet vurdering:** Lav til sidst en opsummering, der fokuserer på de 3 vigtigste områder, dokumentet skal forbedre for at opnå et højere niveau.
 
 Dit svar SKAL være et JSON-objekt, der matcher formatet:
 {
