@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { 
   Mic, 
+  Wand2, 
   ArrowLeft, 
   Sparkles, 
   Loader2, 
@@ -64,6 +65,7 @@ interface AnalysisResult {
 
 export default function MundtligEksamenstraenerPage() {
   const { user, userProfile, isUserLoading } = useApp();
+  const isUnderDevelopment = true;
   const router = useRouter();
   const { toast } = useToast();
 
@@ -282,7 +284,57 @@ export default function MundtligEksamenstraenerPage() {
 
       <main className="max-w-7xl mx-auto px-5 sm:px-8 py-8 md:py-12">
         <AnimatePresence mode="wait">
-          {isOverLimit ? (
+          {isUnderDevelopment ? (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center min-h-[60vh] p-8 sm:p-12 text-center"
+            >
+              <div className="max-w-2xl w-full bg-white rounded-[40px] border border-amber-100 shadow-2xl shadow-amber-900/5 p-12 sm:p-20 flex flex-col items-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] rotate-12">
+                    <Wand2 className="w-64 h-64" />
+                </div>
+                <div className="w-24 h-24 bg-amber-50 rounded-[32px] flex items-center justify-center text-amber-600 mb-10 shadow-inner relative">
+                  <Timer className="w-10 h-10 animate-pulse" />
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-950 text-amber-400 rounded-full flex items-center justify-center border-4 border-white">
+                      <Sparkles className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="space-y-4 max-w-md">
+                    <h3 className="text-3xl font-black text-slate-900 serif tracking-tight">Arbejdet er i fuld gang! 🛠️</h3>
+                    <p className="text-slate-500 leading-relaxed font-bold text-lg italic">
+                      Vi fintuner algoritmerne til at analysere dit eksamensoplæg i realtid.
+                    </p>
+                    <p className="text-slate-400 text-sm leading-relaxed px-4">
+                      Mundtlig Eksamenstræner bliver din hemmelige makker til bachelorforsvar og semesterprøver. Glæd dig til terminologianalyse, tempo-tracking og AI-genererede modspørgsmål.
+                    </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-12">
+                   <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+                       <div className="flex items-center gap-2 mb-2">
+                           <Activity className="w-4 h-4 text-blue-500" />
+                           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Feature #1</span>
+                       </div>
+                       <p className="text-sm font-bold text-slate-700">Terminologi & Akademisk niveau</p>
+                   </div>
+                   <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+                       <div className="flex items-center gap-2 mb-2">
+                           <MessageSquare className="w-4 h-4 text-emerald-500" />
+                           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Feature #2</span>
+                       </div>
+                       <p className="text-sm font-bold text-slate-700">Sokratiske Modspørgsmål</p>
+                   </div>
+                </div>
+                <div className="mt-12">
+                    <Link href="/portal">
+                        <Button variant="ghost" className="rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-slate-400 hover:text-slate-900">
+                            Gå tilbage til portalen
+                        </Button>
+                    </Link>
+                </div>
+              </div>
+            </motion.div>
+          ) : isOverLimit ? (
             <motion.div 
               key="limit-state"
               initial={{ opacity: 0, scale: 0.95 }}
