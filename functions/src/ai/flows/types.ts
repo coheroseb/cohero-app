@@ -511,7 +511,8 @@ export const AnalyzeLegalDecisionPdfInputSchema = z.object({
 });
 
 export const AnalyzeAdminDocumentInputSchema = z.object({
-  pdfBase64: z.string(),
+  pdfBase64: z.string().optional(),
+  pdfUrl: z.string().optional(),
   questions: z.array(z.string()),
 });
 

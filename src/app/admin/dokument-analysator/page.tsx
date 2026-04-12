@@ -27,10 +27,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import { analyzeAdminDocumentAction } from '@/app/actions';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { initializeFirebase } from '@/firebase';
+import { useApp } from '@/app/provider';
 
 export default function AdminDocumentAnalyzerPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State
@@ -44,11 +48,11 @@ export default function AdminDocumentAnalyzerPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === 'application/pdf') {
-      if (selectedFile.size > 4 * 1024 * 1024) { // 8MB Limit for Vercel Server Actions
+      if (selectedFile.size > 20 * 1024 * 1024) { // 8MB Limit for Vercel Server Actions
           toast({
             variant: 'destructive',
             title: "Filen er for stor",
-            description: "Vælg venligst en PDF under 4MB (systembegrænsning). Prøv at komprimere filen hvis den er for stor.",
+            description: "Vælg venligst en PDF under 20MB. Prøv at komprimere filen hvis den er for stor.",
           });
           return;
       }
@@ -81,7 +85,7 @@ export default function AdminDocumentAnalyzerPage() {
   };
 
   const runAnalysis = async () => {
-    if (!pdfBase64) {
+    if (!file) {
       toast({
         variant: 'destructive',
         title: "Fil mangler",
@@ -103,8 +107,19 @@ export default function AdminDocumentAnalyzerPage() {
     setAnalysisResult(null);
 
     try {
+      let pdfUrl = '';
+      
+      // If file is larger than 1MB, upload to storage for better handling
+      if (file.size > 1 * 1024 * 1024) {
+        const { storage } = initializeFirebase();
+        const storageRef = ref(storage, `admin_temp_analysis/${user?.uid || 'anon'}/${Date.now()}_${file.name}`);
+        const uploadResult = await uploadBytes(storageRef, file);
+        pdfUrl = await getDownloadURL(uploadResult.ref);
+      }
+
       const response = await analyzeAdminDocumentAction({
-        pdfBase64,
+        pdfBase64: pdfUrl ? undefined : pdfBase64,
+        pdfUrl: pdfUrl || undefined,
         questions
       });
 

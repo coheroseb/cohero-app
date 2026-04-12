@@ -1,3 +1,4 @@
+import axios from 'axios';
 // @ts-nocheck
 import { ai } from '@/ai/genkit';
 import {
@@ -13,10 +14,19 @@ export const analyzeAdminDocumentFlow = ai.defineFlow(
     outputSchema: AnalyzeAdminDocumentOutputSchema,
   },
   async (input) => {
+    let mediaObj;
+    if (input.pdfUrl) {
+      const response = await axios.get(input.pdfUrl, { responseType: 'arraybuffer' });
+      const base64 = Buffer.from(response.data).toString('base64');
+      mediaObj = { media: { url: `data:application/pdf;base64,${base64}`, contentType: 'application/pdf' } };
+    } else {
+      mediaObj = { media: { url: `data:application/pdf;base64,${input.pdfBase64}`, contentType: 'application/pdf' } };
+    }
+
     const { output, usage } = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
       prompt: [
-        { media: { url: `data:application/pdf;base64,${input.pdfBase64}`, contentType: 'application/pdf' } },
+        mediaObj,
         {
           text: `Du er en ekspert i dokumentanalyse. Du har fået vedhæftet en PDF-fil.
 Din opgave er at besvare følgende spørgsmål baseret KUN på indholdet i dokumentet.
