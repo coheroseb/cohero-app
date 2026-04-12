@@ -321,6 +321,86 @@ const CareerTransitionView = ({ semester }: { semester: string }) => {
     );
 };
 
+
+const SupportWidget = () => {
+    const { user, userProfile } = useApp();
+    const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+    const firestore = useFirestore();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!message.trim() || !user || !firestore) return;
+
+        setIsSubmitting(true);
+        try {
+            await addDoc(collection(firestore, 'supportReports'), {
+                userId: user.uid,
+                userName: userProfile?.username || user.displayName || 'Anonym',
+                userEmail: user.email || 'Ingen email',
+                message: message.trim(),
+                status: 'open',
+                createdAt: serverTimestamp(),
+            });
+            setMessage('');
+            toast({
+                title: 'Tak for din besked!',
+                description: 'Vi kigger på det hurtigst muligt.',
+            });
+        } catch (error) {
+            console.error('Error submitting report:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Ups!',
+                description: 'Der skete en fejl. Prøv igen senere.',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <section className="max-w-4xl mx-auto mt-20 px-5">
+            <div className="bg-white rounded-[40px] border border-slate-200 p-8 sm:p-12 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-110 transition-transform duration-700">
+                    <HandHelping className="w-32 h-32 text-indigo-600" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex flex-col md:flex-row gap-8 items-start mb-8">
+                        <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center border border-indigo-100/50">
+                            <MessageSquare className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black text-slate-900 serif mb-2">Oplever du problemer?</h3>
+                            <p className="text-sm text-slate-500 font-medium max-w-lg">Er der noget der ikke virker, eller har du forslag til forbedringer? Skriv direkte til os her.</p>
+                        </div>
+                    </div>
+                    
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <textarea 
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="Beskriv problemet her..."
+                            className="w-full min-h-[120px] p-6 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-medium focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none resize-none"
+                            required
+                        />
+                        <div className="flex justify-end">
+                            <Button 
+                                type="submit" 
+                                disabled={isSubmitting || !message.trim()}
+                                className="bg-slate-900 text-white px-8 py-4 h-auto rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all"
+                            >
+                                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send besked'}
+                            </Button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    );
+};
+
 const PortalPageContent: React.FC = () => {
   const { user, userProfile, isUserLoading: isAppLoading, refetchUserProfile, usageLimits, effectiveTheme } = useApp();
   const router = useRouter();
@@ -1360,6 +1440,7 @@ const PortalPageContent: React.FC = () => {
             </div>
           </section>
         </aside>
+          <SupportWidget />
       </main>
     </div>
   );

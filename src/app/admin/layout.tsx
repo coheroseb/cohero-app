@@ -79,6 +79,7 @@ const navigationGroups = [
         { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: BookOpen },
         { id: 'dokument-analysator', href: '/admin/dokument-analysator', label: 'PDF Dokument Analysator', icon: FileSearch },
         { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
+        { id: 'support', href: '/admin/support', label: 'Support & Tickets', icon: ShieldAlert },
         { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
         { id: 'second-opinion-decisions', href: '/admin/second-opinions/decisions', label: 'S.O. Afgørelser', icon: Gavel },
         { id: 'gamification', href: '/admin/gamification', label: 'Challenges & Ritualer', icon: Trophy },
