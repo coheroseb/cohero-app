@@ -108,19 +108,21 @@ const UserActivityItem = ({ activity, idx }: any) => (
 // --- Main Page ---
 
 export default function AdminOverviewPage() {
-    const { user: currentUser } = useApp();
+    const { user: currentUser, userProfile } = useApp();
     const firestore = useFirestore();
     
-    // Firestore Data
-    const usersQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'users')) : null), [firestore]);
+    // Firestore Data - Only run if admin to avoid permission errors
+    const isAdmin = userProfile?.role === 'admin';
+    
+    const usersQuery = useMemoFirebase(() => (firestore && isAdmin ? query(collection(firestore, 'users')) : null), [firestore, isAdmin]);
     const { data: users, isLoading: isUsersBatchLoading } = useCollection<any>(usersQuery);
 
-    const aiUsageRef = useMemoFirebase(() => (firestore ? doc(firestore, 'stats', 'ai_usage') : null), [firestore]);
+    const aiUsageRef = useMemoFirebase(() => (firestore && isAdmin ? doc(firestore, 'stats', 'ai_usage') : null), [firestore, isAdmin]);
     const { data: aiUsage, isLoading: isUsageLoading } = useDoc(aiUsageRef);
 
     const activitiesQuery = useMemoFirebase(() => (
-        firestore ? query(collection(firestore, 'userActivities'), orderBy('createdAt', 'desc'), limit(8)) : null
-    ), [firestore]);
+        firestore && isAdmin ? query(collection(firestore, 'userActivities'), orderBy('createdAt', 'desc'), limit(8)) : null
+    ), [firestore, isAdmin]);
     const { data: activities, isLoading: isActivitiesLoading } = useCollection(activitiesQuery);
 
     // Stripe Data
@@ -232,7 +234,7 @@ export default function AdminOverviewPage() {
                             </div>
                         </div>
                         <div className="p-10 flex-1 h-[400px] min-h-[400px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height={400} minWidth={0}>
                                 <AreaChart data={history} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">

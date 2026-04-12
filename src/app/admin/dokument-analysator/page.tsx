@@ -1,5 +1,7 @@
 'use client';
 
+export const maxDuration = 300;
+
 import React, { useState, useRef } from 'react';
 import { 
   FileText, 
@@ -42,6 +44,14 @@ export default function AdminDocumentAnalyzerPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === 'application/pdf') {
+      if (selectedFile.size > 8 * 1024 * 1024) { // 8MB Limit for Vercel Server Actions
+          toast({
+            variant: 'destructive',
+            title: "Filen er for stor",
+            description: "Vælg venligst en PDF under 8MB (Vercel begrænsning).",
+          });
+          return;
+      }
       setFile(selectedFile);
       setAnalysisResult(null);
       const reader = new FileReader();
