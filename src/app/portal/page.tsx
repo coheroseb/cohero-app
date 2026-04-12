@@ -47,6 +47,8 @@ import {
   SearchCode,
   Bookmark,
   ArrowRight,
+  AlertCircle,
+  AlertTriangle,
   BarChart3,
   BookCheck,
   Mic,
@@ -361,7 +363,7 @@ const SupportWidget = () => {
     };
 
         return (
-        <section className="max-w-5xl mx-auto mt-32 px-5 mb-20">
+        <section id="support-section" className="max-w-5xl mx-auto mt-32 px-5 mb-20">
             <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[48px] p-10 sm:p-16 shadow-2xl shadow-indigo-500/20 relative overflow-hidden group border border-white/10">
                 {/* Decorative elements */}
                 <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
@@ -1009,12 +1011,14 @@ const PortalPageContent: React.FC = () => {
                         <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Grupper</span>
                     </Link>
                 </Button>
-                <Button asChild variant="outline" className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden">
-                    <Link href="/velkommen?restart=true">
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                        <Compass className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-500 shrink-0 group-hover:scale-110 transition-transform relative z-10"/>
-                        <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Guide</span>
-                    </Link>
+                <Button 
+                    onClick={() => document.getElementById("support-section")?.scrollIntoView({ behavior: "smooth" })}
+                    variant="outline" 
+                    className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                    <AlertCircle className="w-7 h-7 sm:w-8 sm:h-8 text-rose-500 shrink-0 group-hover:scale-110 transition-transform relative z-10"/>
+                    <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Fejl</span>
                 </Button>
                 <div className="hidden md:block w-px h-16 bg-slate-200/50 mx-2" />
                 <Link href="/settings" passHref>
