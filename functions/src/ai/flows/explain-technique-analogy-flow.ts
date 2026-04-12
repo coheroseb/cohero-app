@@ -62,7 +62,7 @@ Your response MUST be a JSON object with a single key, "analogy", containing the
 
 const explainTechniqueAnalogyFlow = ai.defineFlow(
   {
-    name: 'explainTechniqueAnalogyFlow',
+    name: 'explainTechniqueWithAnalogyFlow',
     inputSchema: ExplainTechniqueAnalogyInputSchema,
     outputSchema: ExplainTechniqueAnalogyOutputSchema,
   },

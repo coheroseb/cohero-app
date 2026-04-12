@@ -677,7 +677,7 @@ export async function explainConceptAction(input: { concept: string, profession?
     return callFirebaseFlow('explainConceptFlow', { ...input });
 }
 
-export async function explainConceptWithAnalogyAction(input: any) { return callFirebaseFlow('explainConceptWithAnalogyAction', input); }
+export async function explainConceptWithAnalogyAction(input: any) { return callFirebaseFlow('explainConceptWithAnalogyFlow', input); }
 export async function getCaseConsequenceAction(input: any) { return callFirebaseFlow('getCaseConsequenceFlow', input); }
 
 export async function generateQuizAction(input: { topic: string, numQuestions: number, difficulty?: 'easy' | 'medium' | 'hard', lawId?: string, contextText?: string, profession?: string }): Promise<Types.QuizGeneratorOutput> {
