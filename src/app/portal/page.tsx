@@ -360,41 +360,56 @@ const SupportWidget = () => {
         }
     };
 
-    return (
-        <section className="max-w-4xl mx-auto mt-20 px-5">
-            <div className="bg-white rounded-[40px] border border-slate-200 p-8 sm:p-12 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-110 transition-transform duration-700">
-                    <HandHelping className="w-32 h-32 text-indigo-600" />
+        return (
+        <section className="max-w-5xl mx-auto mt-32 px-5 mb-20">
+            <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[48px] p-10 sm:p-16 shadow-2xl shadow-indigo-500/20 relative overflow-hidden group border border-white/10">
+                {/* Decorative elements */}
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
+                <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl"></div>
+                
+                <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000 ease-out">
+                    <HandHelping className="w-48 h-48 text-white" />
                 </div>
-                <div className="relative z-10">
-                    <div className="flex flex-col md:flex-row gap-8 items-start mb-8">
-                        <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center border border-indigo-100/50">
-                            <MessageSquare className="w-7 h-7" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-center">
+                    <div className="flex-1 text-center lg:text-left">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em] mb-6 border border-white/10">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                            Direkte linje til os
                         </div>
-                        <div>
-                            <h3 className="text-2xl font-black text-slate-900 serif mb-2">Oplever du problemer?</h3>
-                            <p className="text-sm text-slate-500 font-medium max-w-lg">Er der noget der ikke virker, eller har du forslag til forbedringer? Skriv direkte til os her.</p>
-                        </div>
+                        <h3 className="text-4xl sm:text-5xl font-black text-white serif mb-6 leading-tight tracking-tight">
+                            Oplever du <span className="text-indigo-200">udfordringer</span> eller har du ideer?
+                        </h3>
+                        <p className="text-lg text-indigo-100/80 font-medium max-w-xl leading-relaxed mb-8">
+                            Vi sidder klar til at forbedre din oplevelse. Skriv direkte til admin-teamet herunder – vi læser alt og svarer hurtigt.
+                        </p>
                     </div>
                     
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <textarea 
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Beskriv problemet her..."
-                            className="w-full min-h-[120px] p-6 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-medium focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none resize-none"
-                            required
-                        />
-                        <div className="flex justify-end">
+                    <div className="w-full lg:w-[450px]">
+                        <form onSubmit={handleSubmit} className="space-y-4 bg-white/10 backdrop-blur-xl p-8 rounded-[40px] border border-white/20 shadow-2xl">
+                            <textarea 
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                placeholder="Beskriv hvad vi kan hjælpe med..."
+                                className="w-full min-h-[140px] p-6 bg-white/10 border border-white/10 rounded-3xl text-sm font-medium text-white placeholder:text-indigo-200/50 focus:ring-4 focus:ring-white/10 transition-all outline-none resize-none shadow-inner"
+                                required
+                            />
                             <Button 
                                 type="submit" 
                                 disabled={isSubmitting || !message.trim()}
-                                className="bg-slate-900 text-white px-8 py-4 h-auto rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all"
+                                className="w-full bg-white text-indigo-600 hover:bg-indigo-50 px-8 py-6 h-auto rounded-2xl font-black text-[15px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-indigo-900/20 group/btn overflow-hidden relative"
                             >
-                                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send besked'}
+                                {isSubmitting ? (
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                ) : (
+                                    <span className="flex items-center justify-center gap-3 relative z-10">
+                                        Send besked <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                                    </span>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                             </Button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         </section>
