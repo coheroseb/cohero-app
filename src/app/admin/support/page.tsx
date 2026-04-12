@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { CheckCircle2, Clock, Trash2, User, Mail, MessageSquare, AlertCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,9 @@ export default function AdminSupportPage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
 
-    const supportQuery = firestore ? query(collection(firestore, 'supportReports'), orderBy('createdAt', 'desc')) : null;
+    const supportQuery = useMemoFirebase(() => (
+        firestore ? query(collection(firestore, 'supportReports'), orderBy('createdAt', 'desc')) : null
+    ), [firestore]);
     const { data: reports, isLoading } = useCollection<any>(supportQuery);
 
     const updateStatus = async (id: string, newStatus: string) => {
