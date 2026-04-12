@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
     LayoutDashboard, 
+    FileSearch,
     Users, 
     BookOpen, 
     Sparkles, 
@@ -76,6 +77,7 @@ const navigationGroups = [
     items: [
         { id: 'education', href: '/admin/education', label: 'Uddannelsesdata', icon: GraduationCap },
         { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: BookOpen },
+        { id: 'dokument-analysator', href: '/admin/dokument-analysator', label: 'PDF Dokument Analysator', icon: FileSearch },
         { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
         { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
         { id: 'second-opinion-decisions', href: '/admin/second-opinions/decisions', label: 'S.O. Afgørelser', icon: Gavel },
