@@ -42,3 +42,4 @@ import '@/ai/flows/generate-journal-scenario-flow.ts';
 import '@/ai/flows/generate-case-update-email-flow.ts';
 import '@/ai/flows/analyze-ft-document-flow.ts';
 import '@/ai/flows/vive-indsigt-flow.ts';
+import '@/ai/flows/analyze-admin-document-flow.ts';

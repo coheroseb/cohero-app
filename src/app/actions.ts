@@ -3287,3 +3287,4 @@ export async function translateDiagnoseAction(input: { text: string, context?: s
 export async function getDiagnoseDetailsAction(input: { id: string }) {
     return await callFirebaseFlow('getDiagnoseDetailsFlow', input);
 }
+export async function analyzeAdminDocumentAction(input: any) { return callFirebaseFlow('analyzeAdminDocumentFlow', input); }

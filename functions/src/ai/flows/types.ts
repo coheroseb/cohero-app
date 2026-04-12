@@ -510,6 +510,24 @@ export const AnalyzeLegalDecisionPdfInputSchema = z.object({
   pdfBase64: z.string(),
 });
 
+export const AnalyzeAdminDocumentInputSchema = z.object({
+  pdfBase64: z.string(),
+  questions: z.array(z.string()),
+});
+
+export const AdminDocumentAnalysisSchema = z.object({
+  results: z.array(z.object({
+    question: z.string(),
+    answer: z.string(),
+  })),
+  overallConclusion: z.string().optional(),
+});
+
+export const AnalyzeAdminDocumentOutputSchema = z.object({
+  data: AdminDocumentAnalysisSchema,
+  usage: UsageSchema,
+});
+
 export const LegalDecisionAnalysisDataSchema = z.object({
   hvadErAfgørelsen: z.string(),
   påBaggrundAfHvad: z.string(),

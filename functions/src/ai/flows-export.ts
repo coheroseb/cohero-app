@@ -1,3 +1,4 @@
+import { analyzeAdminDocumentFlow } from './flows/analyze-admin-document-flow';
 import { adminInsightFlow } from './flows/admin-insight-flow';
 import { analyzeCasePdf } from './flows/analyze-case-pdf-flow';
 import { analyzeFtDocument } from './flows/analyze-ft-document-flow';
@@ -96,6 +97,8 @@ import { getDiagnoseDetailsFlow } from './flows/get-diagnose-details-flow';
 
 
 export const allFlows: Record<string, any> = {
+  'analyzeAdminDocumentFlow': analyzeAdminDocumentFlow,
+
   'researchDiscoveryFlow': researchDiscovery,
   'researchDiscovery': researchDiscovery,
   'adminInsightFlowFlow': adminInsightFlow,
