@@ -63,8 +63,8 @@ Dit svar SKAL være et JSON-objekt, der matcher formatet:
     return {
       data: output!,
       usage: {
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
+        inputTokens: usage.inputTokens || 0,
+        outputTokens: usage.outputTokens || 0,
       },
     };
   }
