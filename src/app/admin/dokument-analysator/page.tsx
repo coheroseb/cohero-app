@@ -44,11 +44,11 @@ export default function AdminDocumentAnalyzerPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === 'application/pdf') {
-      if (selectedFile.size > 8 * 1024 * 1024) { // 8MB Limit for Vercel Server Actions
+      if (selectedFile.size > 4 * 1024 * 1024) { // 8MB Limit for Vercel Server Actions
           toast({
             variant: 'destructive',
             title: "Filen er for stor",
-            description: "Vælg venligst en PDF under 8MB (Vercel begrænsning).",
+            description: "Vælg venligst en PDF under 4MB (systembegrænsning). Prøv at komprimere filen hvis den er for stor.",
           });
           return;
       }
@@ -252,6 +252,18 @@ export default function AdminDocumentAnalyzerPage() {
                 <Plus className="w-5 h-5" />
               </Button>
             </div>
+          </section>
+
+                    <section className="bg-amber-50 rounded-3xl border border-amber-100 p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+                <h4 className="font-bold text-amber-900">Tips til store filer</h4>
+            </div>
+            <p className="text-xs text-amber-800/70 leading-relaxed">
+                Hvis dit dokument er for stort (over 4MB), kan du bruge et værktøj som <strong>iLovePDF</strong> eller <strong>Adobe Acrobat Online</strong> til at komprimere PDF'en før upload. 
+                <br /><br />
+                Store scanninger fylder ofte meget, men en hurtig komprimering fjerner unødvendig data uden at AI'en mister evnen til at læse teksten.
+            </p>
           </section>
 
           <Button 
