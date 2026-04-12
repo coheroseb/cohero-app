@@ -404,6 +404,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 <NavDropdown title="Mere" icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}>
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
+                   <NavDropdownLink href="/videnskabsteori" icon={<Scale className="w-4 h-4 text-indigo-500" />}>Videnskabsteori</NavDropdownLink>
                    {userProfile?.role === 'admin' && (
                      <NavDropdownLink href="/admin" icon={<Shield className="w-4 h-4 text-rose-500" />}>Admin Panel</NavDropdownLink>
                    )}

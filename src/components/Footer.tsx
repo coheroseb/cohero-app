@@ -66,6 +66,7 @@ const Footer: React.FC = () => {
                   { name: 'Vores filosofi', href: '/hvorfor' },
                   { name: 'Pensum Bank', href: '/pensum' },
                   { name: 'FAQ', href: '/faq' },
+                  { name: 'Videnskabsteori', href: '/videnskabsteori' },
                   { name: 'Ambassadør', href: '/ambassadoer', highlight: true }
                 ].map(link => (
                   <li key={link.name}>

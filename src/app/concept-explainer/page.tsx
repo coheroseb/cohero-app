@@ -193,7 +193,6 @@ function ConceptExplainerPageContent() {
             setSearchProgress({ step: 3, label: 'Indlæser lynhurtigt fra cache...' });
             const data = JSON.parse(cached);
             setExplanation(data);
-            if (data.isModel) setShowModelModal(true);
             setIsLoading(false);
             setSearchProgress({ step: 0, label: '' });
             return;
@@ -245,11 +244,6 @@ function ConceptExplainerPageContent() {
         setSearchProgress({ step: 4, label: 'Færdiggør visuel præsentation...' });
         setExplanation(finalExplanation);
         
-        // Auto-show model if it is an identified framework/model
-        if (finalExplanation.isModel) {
-            setShowModelModal(true);
-        }
-
         // Update User Activity
         const batch = writeBatch(firestore);
         const recent = [term, ...(userProfile.recentConcepts || [])].filter((t, i, self) => self.indexOf(t) === i).slice(0, 10);
@@ -423,14 +417,6 @@ function ConceptExplainerPageContent() {
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/40">Faglig Analyse</span>
                         </div>
                         <h2 className="text-4xl md:text-6xl font-black text-amber-950 serif tracking-tighter leading-none">{searchQuery}</h2>
-                        {explanation?.isModel && explanation?.conceptModel && (
-                            <button 
-                                onClick={() => setShowModelModal(true)}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-amber-950 text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95"
-                            >
-                                <Layout className="w-4 h-4" /> Se Interaktiv Model
-                            </button>
-                        )}
                     </div>
                 )}
                 
@@ -958,58 +944,14 @@ function ConceptExplainerPageContent() {
           )}
       </AnimatePresence>
 
-      {/* CONCEPT MODEL MODAL */}
+      {/* CONCEPT MODEL MODAL - TEMPORARILY DISABLED BY REQUEST */}
+      {/* 
       <AnimatePresence>
           {showModelModal && explanation?.conceptModel && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-12 bg-amber-950/40 backdrop-blur-md"
-              >
-                  <motion.div 
-                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                    animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="w-full max-w-6xl bg-white/95 rounded-[4rem] shadow-2xl border border-white/20 overflow-hidden flex flex-col relative"
-                  >
-                      <button 
-                        onClick={() => setShowModelModal(false)}
-                        className="absolute top-8 right-8 p-4 bg-amber-50 text-amber-950 rounded-2xl hover:bg-amber-100 transition-all border border-amber-100 z-10"
-                      >
-                          <X className="w-6 h-6" />
-                      </button>
-
-                      <div className="p-12 sm:p-16 flex flex-col gap-12 h-screen max-h-[90vh]">
-                          <div className="space-y-4">
-                              <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-lg"><BrainCircuit className="w-5 h-5" /></div>
-                                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/40">Visual Mental Map</span>
-                              </div>
-                              <h3 className="text-4xl sm:text-5xl font-black text-amber-950 serif tracking-tight">Modellen for: {searchQuery}</h3>
-                              <p className="text-slate-500 font-medium italic max-w-2xl">En interaktiv visuel gennemgang af de mest centrale aktører, processer og sammenhænge i begrebet.</p>
-                          </div>
-
-                          <div className="flex-1 min-h-0 bg-[#FDFCF8] rounded-[3rem] border border-amber-50 shadow-inner relative">
-                             <ConceptModelMap model={explanation.conceptModel} />
-                          </div>
-
-                          <div className="flex flex-wrap gap-6 items-center justify-between border-t border-amber-50 pt-8">
-                             <div className="flex items-center gap-4">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Tip: Hold musen over kasserne for at se detaljerede forklaringer.</span>
-                             </div>
-                             <button 
-                                onClick={() => setShowModelModal(false)}
-                                className="px-10 py-5 bg-amber-950 text-white rounded-[2rem] text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-amber-950/20"
-                             >
-                                Luk Model
-                             </button>
-                          </div>
-                      </div>
-                  </motion.div>
-              </motion.div>
+              ... (modal code) ...
           )}
       </AnimatePresence>
+      */}
 
     </div>
 

@@ -483,6 +483,45 @@ export const AnalyzeTaskScheduleOutputSchema = z.object({
 });
 
 // ==========================================
+// SCIENCE THEORY & PARADIGM SCHEMAS
+// ==========================================
+
+export const AnalyzeScientificParadigmInputSchema = z.object({
+  problemStatement: z.string().describe('Brugerens problemformulering eller forskningsspørgsmål.'),
+});
+
+export const ScientificParadigmAnalysisSchema = z.object({
+  ontologi: z.object({
+    perspective: z.string().describe('Det ontologiske perspektiv (f.eks. hvad er virkeligheden i denne problemformulering?)'),
+    explanation: z.string().describe('Uddybende forklaring af det ontologiske valg.'),
+  }),
+  epistemologi: z.object({
+    perspective: z.string().describe('Det epistemologiske perspektiv (hvordan opnår vi viden i denne problemformulering?)'),
+    explanation: z.string().describe('Uddybende forklaring af det epistemologiske valg.'),
+  }),
+  recommendedParadigms: z.array(z.object({
+    name: z.string().describe('Navn på paradigmet, f.eks. "Fænomenologi"'),
+    why: z.string().describe('Hvorfor passer dette paradigme til problemformuleringen?'),
+    strength: z.string().describe('Styrken ved at vælge dette paradigme.'),
+  })),
+  methodologicalAdvice: z.string().describe('Gode råd til metodevalg baseret på problemformuleringen.'),
+  criticalReflection: z.string().describe('En kritisk refleksion over udeladte perspektiver eller begrænsninger.'),
+});
+
+export const AnalyzeScientificParadigmOutputSchema = z.object({
+  data: ScientificParadigmAnalysisSchema,
+  usage: UsageSchema,
+});
+
+export type AnalyzeScientificParadigmInput = z.infer<typeof AnalyzeScientificParadigmInputSchema>;
+export type AnalyzeScientificParadigmOutput = z.infer<typeof AnalyzeScientificParadigmOutputSchema>;
+export type ScientificParadigmAnalysis = z.infer<typeof ScientificParadigmAnalysisSchema>;
+
+// ==========================================
+// KNOWLEDGE GRAPH & CONCEPT SCHEMAS
+// ==========================================
+
+// ==========================================
 // LEGAL & REFORM SCHEMAS
 // ==========================================
 

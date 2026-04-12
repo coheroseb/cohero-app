@@ -40,7 +40,8 @@ import {
     Settings2,
     DollarSign,
     Target,
-    FileSearch
+    FileSearch,
+    BrainCircuit
 } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, limit, doc } from 'firebase/firestore';
@@ -322,6 +323,7 @@ export default function AdminOverviewPage() {
 
                     {/* Research & Core */}
                     <div className="col-span-1 lg:col-span-1 space-y-4">
+                        <NexusCard title="Begreber" icon={BrainCircuit} color="text-amber-600" bg="bg-amber-50" href="/admin/begreber" desc="Vidensbase & Modeller" />
                         <NexusCard title="Dokument-Tjek" icon={FileSearch} color="text-indigo-600" bg="bg-indigo-50" href="/admin/dokument-analysator" desc="PDF AI Analyse" />
                         <NexusCard title="Surveys" icon={MessageSquare} color="text-rose-500" bg="bg-rose-50" href="/admin/surveys" desc="NPS, Feedback" />
                         <NexusCard title="System" icon={Zap} color="text-slate-100" bg="bg-slate-900" href="/admin/system" desc="Infrastruktur, Arkitektur" />

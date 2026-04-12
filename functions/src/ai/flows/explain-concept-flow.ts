@@ -84,9 +84,10 @@ Your response must be a JSON object with the following keys, all in Danish. Use 
 10. **socraticQuestion**: Stil ét udfordrende, sokratisk spørgsmål til den studerende, der får dem til at reflektere over begrebet i deres fremtidige praksis.
 11. **isModel**: Identificer om der er tale om en specifik teoretisk model eller framework (f.eks. SMART, Gensvarsmodellen, SWOT, Maslows behovspyramide). Sæt denne til true, hvis begrebet har en fast struktur, der kan visualiseres.
 12. **conceptModel**: Create a structured graph model of the concept. ONLY generate this if **isModel** is true.
-    - **nodes**: Identify the key "building blocks" of the concept (core concepts, actors involved, specific processes, or legal requirements).
-    - **edges**: Define how these blocks connect. Use clear labels for the relationships (e.g., "påvirker", "fører til", "kræver", "er en del af").
-    - Make the model descriptive and pedagogical so it works as a mental map.
+    - **nodes**: Identify the 5-7 most critical "building blocks". Keep labels very short (max 2-3 words). Use Sentence Case.
+    - **edges**: Define how these blocks connect. Use clear, short labels (e.g., "påvirker", "fører til", "kræver").
+    - Layout the nodes in a logical conceptual flow (e.g. Initiator -> Action -> Result).
+    - Make the model descriptive and pedagogical, ensuring it works as a clear mental map without visual clutter.
 13. **legalContext**: If the concept is a law paragraph (e.g., "§ 42"), or if you have found highly relevant legal text in the 'LEGAL CONTEXT' above, you MUST populate this field with verbatim law text.
 
 Always use the term "borger" instead of "klient" in your explanations and examples.

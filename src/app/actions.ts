@@ -796,6 +796,11 @@ export async function getFTSagMetadataAction(input: { sagId: number, title: stri
 }
 
 
+
+export async function analyzeScientificParadigmAction(input: Types.AnalyzeScientificParadigmInput): Promise<Types.AnalyzeScientificParadigmOutput> {
+    return callFirebaseFlow('analyzeScientificParadigmFlow', input);
+}
+
 export async function oralExamAnalysisAction(input: Types.OralExamAnalysisInput): Promise<Types.OralExamAnalysisOutput> {
     return callFirebaseFlow('oralExamAnalysisFlow', input);
 }
