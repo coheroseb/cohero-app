@@ -50,6 +50,7 @@ export function initializeFirebase() {
   const firestore = getFirestore(firebaseApp);
   const storage = getStorage(firebaseApp);
   
+
   // Initialize Analytics and Messaging only in the browser
   let analytics;
   let messaging;

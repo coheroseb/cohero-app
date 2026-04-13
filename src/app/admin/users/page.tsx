@@ -53,6 +53,7 @@ interface UserProfile {
   stripeSubscriptionStatus?: string;
   isPremium?: boolean;
   fcmTokens?: string[];
+  dailyChallengeStreak?: number;
 }
 
 const SourceBadge = ({ source }: { source?: string }) => {
@@ -283,6 +284,7 @@ const AdminUsersPage = () => {
             case 'oldest': return dateA - dateB;
             case 'points_desc': return pointsB - pointsA;
             case 'points_asc': return pointsA - pointsB;
+            case 'streak_desc': return (b.dailyChallengeStreak || 0) - (a.dailyChallengeStreak || 0);
             case 'last_active_desc': return activityB - activityA;
             case 'newest':
             default: return dateB - dateA;
@@ -496,6 +498,7 @@ const AdminUsersPage = () => {
                         <option value="newest">Nyeste</option>
                         <option value="oldest">Ældste</option>
                         <option value="points_desc">Flest Point</option>
+                        <option value="streak_desc">Højeste Streak</option>
                         <option value="last_active_desc">Senest Aktiv</option>
                       </select>
                   </div>
@@ -593,16 +596,24 @@ const AdminUsersPage = () => {
                             </div>
                         </td>
                         <td className="px-10 py-6">
-                           <div className="flex items-center gap-2 mb-2 font-black text-slate-900 italic">
-                               <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-                               {u.cohéroPoints || 0}
+                           <div className="flex flex-col gap-1.5">
+                               <div className="flex items-center gap-2 font-black text-slate-900 italic">
+                                   <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                                   {u.cohéroPoints || 0}
+                               </div>
+                               {u.dailyChallengeStreak !== undefined && u.dailyChallengeStreak > 0 && (
+                                   <div className="flex items-center gap-2 text-[10px] font-black text-rose-600 bg-rose-50 w-fit px-2 py-0.5 rounded-lg border border-rose-100/50 shadow-sm" title="Aktiv login streak">
+                                       <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]"></div>
+                                       {u.dailyChallengeStreak} DAGE 🔥
+                                   </div>
+                               )}
+                               <span className={`w-fit px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors mt-1 ${
+                                    u.membership === 'Kollega+' || u.membership === 'Semesterpakken' || u.membership === 'Group Pro' ? 'bg-amber-950 text-amber-400 border-amber-900/50' : 
+                                    u.membership === 'Kollega+' ? 'bg-indigo-900 text-indigo-200 border-indigo-800' : 'bg-slate-50 text-slate-500 border-slate-100'
+                               }`}>
+                                 {u.membership || 'Kollega (Gratis)'}
+                               </span>
                            </div>
-                           <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors ${
-                                u.membership === 'Kollega+' || u.membership === 'Semesterpakken' ? 'bg-amber-950 text-amber-400 border-amber-900/50' : 
-                                u.membership === 'Kollega+' ? 'bg-indigo-900 text-indigo-200 border-indigo-800' : 'bg-slate-50 text-slate-500 border-slate-100'
-                           }`}>
-                             {u.membership || 'Kollega (Gratis)'}
-                           </span>
                         </td>
                         <td className="px-10 py-6">
                            <div className="flex flex-col items-center justify-center gap-1">
@@ -793,6 +804,30 @@ const AdminUsersPage = () => {
                                                         Kør Beregning
                                                     </Button>
                                                 )}
+                                            </div>
+
+                                            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+                                                <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+                                                        <span className="text-[10px] font-black uppercase text-amber-400 tracking-widest">Gamification</span>
+                                                    </div>
+                                                    <div className="px-2 py-0.5 bg-amber-400/10 text-amber-400 text-[9px] font-black uppercase tracking-widest rounded-lg border border-amber-400/20">
+                                                        Level 1
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-1">
+                                                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Total Point</span>
+                                                        <p className="text-lg font-black text-white italic leading-none">{u.cohéroPoints || 0}</p>
+                                                    </div>
+                                                    <div className="space-y-1 text-right">
+                                                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Streak</span>
+                                                        <p className="text-lg font-black text-rose-500 leading-none">
+                                                            {u.dailyChallengeStreak || 0} <span className="text-[10px]">dage</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

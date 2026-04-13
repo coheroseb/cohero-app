@@ -1786,3 +1786,53 @@ export const ResearchDiscoveryOutputSchema = z.object({
 export type ResearchDiscoveryInput = z.infer<typeof ResearchDiscoveryInputSchema>;
 export type ResearchDiscoveryData = z.infer<typeof ResearchDiscoveryDataSchema>;
 export type ResearchDiscoveryOutput = z.infer<typeof ResearchDiscoveryOutputSchema>;
+
+// ==========================================
+// SIMULATION SCHEMAS (Den Digitale Borger)
+// ==========================================
+
+export const SimulationCitizenSchema = z.object({
+  name: z.string(),
+  age: z.number().optional(),
+  background: z.string(),
+  currentSituation: z.string(),
+  userObjective: z.string().describe('Hvad brugeren (den professionelle) skal forsøge at opnå i denne samtale.'),
+  hiddenAgendas: z.array(z.string()).optional(),
+  emotionalState: z.string().describe('F.eks. Frustreret, Håbefuld, Utryg, Aggressiv, Samarbejdsvillig'),
+  initialTrustLevel: z.number().min(0).max(100).default(30),
+});
+
+export const SimulationTurnInputSchema = z.object({
+  citizen: SimulationCitizenSchema,
+  chatHistory: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() })),
+  userInput: z.string(),
+  profession: z.string().optional(),
+});
+
+export const SimulationTurnOutputSchema = z.object({
+  data: z.object({
+    citizenResponse: z.string(),
+    currentEmotionalState: z.string(),
+    trustLevel: z.number(),
+    internalThought: z.string().describe('Hvad borgeren tænker men ikke siger'),
+    isSimulationEnded: z.boolean().default(false),
+  }),
+  usage: UsageSchema,
+});
+
+export const SimulationReportSchema = z.object({
+  data: z.object({
+    overallPerformance: z.string(),
+    score: z.number().min(1).max(100),
+    legalFeedback: z.string(),
+    communicationFeedback: z.string(),
+    citizenExperience: z.string(),
+    learningPoints: z.array(z.string()),
+  }),
+  usage: UsageSchema,
+});
+
+export type SimulationCitizen = z.infer<typeof SimulationCitizenSchema>;
+export type SimulationTurnInput = z.infer<typeof SimulationTurnInputSchema>;
+export type SimulationTurnOutput = z.infer<typeof SimulationTurnOutputSchema>;
+export type SimulationReport = z.infer<typeof SimulationReportSchema>;

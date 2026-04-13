@@ -150,6 +150,7 @@ service cloud.firestore {
     }
 
     match /partnerDomains/{domainId} { allow read: if isSignedIn(); }
+    match /globalConfigs/{document=**} { allow read: if true; }
     match /lawExplanations/{explanationId} { allow read: if true; allow create: if isSignedIn(); }
     match /conceptExplanations-v2/{explanationId} { allow read: if true; allow create, update: if isSignedIn(); }
     match /conceptVideos/{videoId} { allow read: if true; }
@@ -222,6 +223,7 @@ service cloud.firestore {
       match /notifications/{notificationId} { allow read, write: if isOwner(userId); }
       match /viveAnalyses/{analysisId} { allow read, write: if isOwner(userId); }
       match /caseAnalyses/{analysisId} { allow read, write: if isOwner(userId); }
+      match /savedConcepts/{conceptId} { allow read, write: if isOwner(userId); }
       match /conversations/{conversationId} { 
         allow read, write: if isOwner(userId); 
         match /messages/{messageId} { allow read, write: if isOwner(userId); }

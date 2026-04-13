@@ -324,6 +324,8 @@ function ConceptExplainerPageContent() {
             if (snap.exists()) {
                 setVideoScript(snap.data() as ConceptVideoScript);
             }
+        }).catch(err => {
+            console.error('[ConceptExplainer] Error fetching cached video:', err);
         });
     }
   }, [explanation, searchQuery, firestore]);
@@ -333,7 +335,10 @@ function ConceptExplainerPageContent() {
     if (explanation && user && firestore && searchQuery) {
         const normalizedTerm = searchQuery.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
         const savedRef = doc(firestore, 'users', user.uid, 'savedConcepts', normalizedTerm);
-        getDoc(savedRef).then(snap => setIsSaved(snap.exists()));
+        getDoc(savedRef).then(snap => setIsSaved(snap.exists()))
+        .catch(err => {
+            console.error('[ConceptExplainer] Error checking saved status:', err);
+        });
     }
   }, [explanation, user, firestore, searchQuery]);
 

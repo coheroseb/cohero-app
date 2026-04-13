@@ -499,23 +499,62 @@ export async function recommendContentAction(input: any) { return callFirebaseFl
 
 
 
-export async function getSecondOpinionAction(input: any) { 
-    // Fetch relevant decisions to provide context to the AI
+export async function getSecondOpinionAction(input: { 
+    userId: string,
+    profession?: string, 
+    assignmentPdf?: string, // base64
+    feedbackPdf?: string,   // base64
+    [key: string]: any 
+}) { 
+    // 1. Upload files to Storage if provided
+    let assignmentUrl = "";
+    try {
+        if (input.assignmentPdf) {
+            const fileName = `assignments/${input.userId}/${Date.now()}_opgave.pdf`;
+            assignmentUrl = await uploadMediaToStorage(input.assignmentPdf, fileName);
+        }
+    } catch (e) {
+        console.error("Failed to upload assignment to storage:", e);
+    }
+
+    // 2. Fetch relevant decisions to provide context to the AI
     let decisionContext = "";
     try {
         if (adminFirestore) {
-            const snap = await adminFirestore.collection('secondOpinionDecisions').limit(10).get();
-            const decisions = snap.docs.map(d => d.data());
-            if (decisions.length > 0) {
-                decisionContext = "TIDLIGERE AFGØRELSER (Brug disse til at forstå vægtning og outcome-mønstre):\n" + 
-                    decisions.map(d => `- [${d.outcome.toUpperCase()}] ${d.title}: ${d.aiAnalysis?.criticalPoint || d.content.substring(0, 200)}`).join('\n');
+            let q = adminFirestore.collection('secondOpinionDecisions')
+                .orderBy('createdAt', 'desc');
+            
+            if (input.profession) {
+                const profSnap = await q.where('profession', '==', input.profession).limit(5).get();
+                const generalSnap = await q.limit(5).get();
+                
+                const decisions = [
+                    ...profSnap.docs.map(d => d.data()),
+                    ...generalSnap.docs.map(d => d.data())
+                ].slice(0, 8);
+
+                if (decisions.length > 0) {
+                    decisionContext = "TIDLIGERE AFGØRELSER (Brug disse til at forstå vægtning og outcome-mønstre):\n" + 
+                        decisions.map(d => `- [${d.outcome?.toUpperCase() || 'UKENDT'}] ${d.title}: ${d.aiAnalysis?.criticalPoint || d.content?.substring(0, 200)}`).join('\n');
+                }
+            } else {
+                const snap = await q.limit(10).get();
+                const decisions = snap.docs.map(d => d.data());
+                if (decisions.length > 0) {
+                    decisionContext = "TIDLIGERE AFGØRELSER (Brug disse til at forstå vægtning og outcome-mønstre):\n" + 
+                        decisions.map(d => `- [${d.outcome?.toUpperCase() || 'UKENDT'}] ${d.title}: ${d.aiAnalysis?.criticalPoint || d.content?.substring(0, 200)}`).join('\n');
+                }
             }
         }
     } catch (e) {
         console.error("Failed to fetch decision context:", e);
     }
 
-    return callFirebaseFlow('getSecondOpinionFlow', { ...input, decisionContext }); 
+    // 3. Call AI Flow (We pass the base64 string directly to Genkit/Gemini for analysis)
+    const result = await callFirebaseFlow('getSecondOpinionFlow', { ...input, decisionContext }); 
+    
+    // Add the storage URL to the result so the frontend can save it
+    return { ...result, fileUrl: assignmentUrl };
 }
 
 export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string, complexityHints?: string, profession?: string }): Promise<any> {
@@ -799,6 +838,19 @@ export async function getFTSagMetadataAction(input: { sagId: number, title: stri
 
 export async function analyzeScientificParadigmAction(input: Types.AnalyzeScientificParadigmInput): Promise<Types.AnalyzeScientificParadigmOutput> {
     return callFirebaseFlow('analyzeScientificParadigmFlow', input);
+}
+
+// SIMULATION ACTIONS
+export async function runSimulationTurnAction(input: Types.SimulationTurnInput): Promise<Types.SimulationTurnOutput> {
+    return callFirebaseFlow('runSimulationTurnFlow', input);
+}
+
+export async function generateSimulationReportAction(input: { citizen: Types.SimulationCitizen, chatHistory: { role: 'user' | 'assistant', content: string }[], profession?: string }): Promise<Types.SimulationReport> {
+    return callFirebaseFlow('generateSimulationReportFlow', input);
+}
+
+export async function generateSimulationScenarioAction(input: { topic: string, profession?: string }): Promise<{ data: Types.SimulationCitizen }> {
+    return callFirebaseFlow('generateSimulationScenarioFlow', input);
 }
 
 export async function oralExamAnalysisAction(input: Types.OralExamAnalysisInput): Promise<Types.OralExamAnalysisOutput> {

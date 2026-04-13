@@ -14,9 +14,11 @@ import { z } from 'genkit';
 const SecondOpinionInputSchema = z.object({
   studyRegulations: z.string().describe("The relevant sections of the study regulations or course description, including learning objectives."),
   examRegulations: z.string().describe("The relevant sections of the exam regulations."),
-  assignmentText: z.string().describe("The full text of the social work student's submitted assignment."),
+  assignmentText: z.string().optional().describe("The text content of the assignment (if already extracted)."),
+  assignmentPdf: z.string().optional().describe("The base64 encoded PDF of the assignment for direct multimodal analysis."),
   grade: z.string().optional().describe('The grade the social work student received, if any (e.g., "7", "10").'),
   feedback: z.string().optional().describe("Optional feedback from the examiner."),
+  decisionContext: z.string().optional().describe("Contextual information from similar previous decisions to help the AI understand outcome patterns."),
   mode: z.enum(['audit', 'feedback']).optional().default('audit').describe("The mode of analysis: 'audit' for checking an existing grade, 'feedback' for assessing an ungraded work."),
 });
 
@@ -49,67 +51,6 @@ export async function getSecondOpinion(input: SecondOpinionInput): Promise<Secon
   return secondOpinionFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'secondOpinionPrompt',
-  input: { schema: SecondOpinionInputSchema },
-  output: { schema: AnalysisSchema },
-  prompt: `You are an impartial and expert external examiner (censor) and university lecturer in the Danish higher education system. Your task is to provide a highly concrete, document-based analysis of a student's graded assignment.
-
-**YOUR OBJECTIVE (MODE: {{{mode}}}):**
-- **Hvis mode er 'audit':** Afgør om den modtagne karakter ({{{grade}}}) er retvisende i forhold til opgavens kvalitet og læringsmålene. Indstil 'suggestedGrade' til din vurdering af den korrekte karakter.
-- **Hvis mode er 'feedback':** Analysér opgavens kvalitet i forhold til læringsmålene og giv en præcis vurdering af, hvilken karakter arbejdet vil lande på i 'suggestedGrade'. Fokusér her på pædagogisk feedback og konkrete forbedringsforslag.
-
-
-
-**YOUR PHILOSOPHY:**
-You are a conservative, strict, but fair examiner. Your goal is to ensure students are not misled into false hope. If an assignment is on the border between two grades, you must select the lower grade. Always prioritize evidence of deep understanding and critical thinking over simple repetition of theory. Be critical of documentation, hierarchy of sources, and the logical 'red thread' in the work.
-
-**CRITICAL REQUIREMENT:**
-You MUST use the specific learning objectives (læringsmål) and exam criteria provided in the 'studyRegulations' and 'examRegulations' as your absolute reference point. Your assessment should reflect exactly how well the work fulfills these specific requirements for the current semester and module. Disregard any general knowledge that contradicts the specific goals provided.
-
-
-**INSTRUCTIONS FOR ANALYSIS:**
-1.  **Context Identification:** Scan the 'examRegulations' and 'assignmentText' to identify the specific context (e.g., semester, module, or specific exam type). 
-2.  **Learning Goal Extraction:** Locate and extract ONLY the learning objectives (læringsmål) and criteria from the 'studyRegulations' that are directly relevant to this specific exam/context. Discard any irrelevant information from the regulations.
-3.  **Document-Based Assessment:** Analyze the 'assignmentText' point-by-point against the relevant learning goals identified in step 2.
-4.  **Grading Scale Alignment:** Use the official Danish 7-step scale descriptions below to determine which grade best matches the work's level of goal fulfillment.
-
-
-
-**7-TRINS-SKALAEN (Grading Scale):**
-- **12 (Den fremragende præstation):** Karakteren 12 gives for den fremragende præstation, der demonstrerer udtømmende opfyldelse af fagets mål, med ingen eller få uvæsentlige mangler.
-- **10 (Den fortrinlige præstation):** Karakteren 10 gives for den fortrinlige præstation, der demonstrerer omfattende opfyldelse af fagets mål, med nogle mindre væsentlige mangler.
-- **7 (Den gode præstation):** Karakteren 7 gives for den gode præstation, der demonstrerer opfyldelse af fagets mål, med en del mangler.
-- **4 (Den jævne præstation):** Karakteren 4 gives for den jævne præstation, der demonstrerer en mindre grad af opfyldelse af fagets mål, med adskillige væsentlige mangler.
-- **02 (Den tilstrækkelige præstation):** Karakteren 02 gives for den tilstrækkelige præstation, der demonstrerer den minimalt acceptable grad af opfyldelse af fagets mål.
-- **00 (Den utilstrækkelige præstation):** Karakteren 00 gives for den utilstrækkelige præstation, der ikke demonstrerer en acceptabel grad af opfyldelse af fagets mål.
-- **-3 (Den ringe præstation):** Karakteren -3 gives for den helt uacceptable præstation.
-
-**OUTPUT REQUIREMENTS:**
-- All output must be in Danish. 
-- Use simple HTML tags (<p>, <strong>, <ul>, <li>) in the 'gradeAccuracyArgument'.
-- The 'gradeAccuracyArgument' must explicitly mention which learning goals were focused on and how the work's fulfillment (or lack thereof) aligns with the specific terminology of the scale (e.g., "omfattende", "udtømmende", "adskillige mangler").
-
-**Input Data:**
-- Studieordning: {{{studyRegulations}}}
-- Eksamensbestemmelser: {{{examRegulations}}}
-- Opgavebesvarelse: {{{assignmentText}}}
-- Modtaget karakter: {{{grade}}}
-- Eventuel feedback: {{{feedback}}}
-- Mode: {{{mode}}}
-
-`,
-  config: {
-    temperature: 0.2,
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
-    ],
-  },
-});
-
 const secondOpinionFlow = ai.defineFlow(
   {
     name: 'secondOpinionFlow',
@@ -117,7 +58,47 @@ const secondOpinionFlow = ai.defineFlow(
     outputSchema: SecondOpinionOutputSchema,
   },
   async (input) => {
-    const { output, usage } = await prompt(input);
+    const { output, usage } = await ai.generate({
+      output: { schema: AnalysisSchema },
+      prompt: [
+        { text: `You are an impartial and expert external examiner (censor) and university lecturer in the Danish higher education system. Your task is to provide a highly concrete, document-based analysis of a student's graded assignment.
+
+**YOUR OBJECTIVE (MODE: ${input.mode}):**
+- **Hvis mode er 'audit':** Afgør om den modtagne karakter (${input.grade}) er retvisende i forhold til opgavens kvalitet og læringsmålene. Indstil 'suggestedGrade' til din vurdering af den korrekte karakter.
+- **Hvis mode er 'feedback':** Analysér opgavens kvalitet i forhold til læringsmålene og giv en præcis vurdering af, hvilken karakter arbejdet vil lande på i 'suggestedGrade'. Fokusér her på pædagogisk feedback og konkrete forbedringsforslag.
+
+**YOUR PHILOSOPHY:**
+You are a conservative, strict, but fair examiner. Your goal is to ensure students are not misled into false hope. If an assignment is on the border between two grades, you must select the lower grade. Always prioritize evidence of deep understanding and critical thinking over simple repetition of theory. Be critical of documentation, hierarchy of sources, and the logical 'red thread' in the work.
+
+**CRITICAL REQUIREMENT:**
+You MUST use the specific learning objectives (læringsmål) and exam criteria provided in the 'studyRegulations' and 'examRegulations' as your absolute reference point. Your assessment should reflect exactly how well the work fulfills these specific requirements for the current semester and module. Disregard any general knowledge that contradicts the specific goals provided.
+
+**7-TRINS-SKALAEN (Grading Scale):**
+- 12 (Den fremragende præstation), 10 (Den fortrinlige), 7 (Den gode), 4 (Den jævne), 02 (Den tilstrækkelige), 00 (Den utilstrækkelige), -3 (Den ringe).
+
+**OUTPUT REQUIREMENTS:**
+- All output must be in Danish. 
+- Use simple HTML tags (<p>, <strong>, <ul>, <li>) in the 'gradeAccuracyArgument'.
+
+**Input Data:**
+- Studieordning: ${input.studyRegulations}
+- Eksamensbestemmelser: ${input.examRegulations}
+- Modtaget karakter: ${input.grade}
+- Eventuel feedback: ${input.feedback}
+- Mode: ${input.mode}
+
+**Kontekst fra tidligere afgørelser:**
+${input.decisionContext || 'Ingen historisk kontekst fundet.'}
+
+Analysér den vedhæftede opgave herunder i forhold til ovenstående instruktioner:` },
+        ...(input.assignmentPdf ? [{ media: { url: `data:application/pdf;base64,${input.assignmentPdf}`, contentType: 'application/pdf' } }] : []),
+        ...(input.assignmentText ? [{ text: `OPGAVETEKST:\n${input.assignmentText}` }] : [])
+      ],
+      config: {
+        temperature: 0.2,
+      }
+    });
+
     return {
       data: output!,
       usage: {

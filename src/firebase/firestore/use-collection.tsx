@@ -95,6 +95,7 @@ export function useCollection<T = any>(
           operation: 'list',
           path,
         })
+        console.error(`[useCollection] Permission Denied for path: ${path}`, error);
 
         setError(contextualError)
         setData(null)

@@ -97,7 +97,12 @@ import { getDiagnoseDetailsFlow } from './flows/get-diagnose-details-flow';
 import { analyzeScientificParadigmFlow } from './flows/analyze-scientific-paradigm-flow';
 
 
+import { generateSimulationScenarioFlow, runSimulationTurnFlow, generateSimulationReportFlow } from './flows/simulation-flows';
+
 export const allFlows: Record<string, any> = {
+  'generateSimulationScenarioFlow': generateSimulationScenarioFlow,
+  'runSimulationTurnFlow': runSimulationTurnFlow,
+  'generateSimulationReportFlow': generateSimulationReportFlow,
   'analyzeAdminDocumentFlow': analyzeAdminDocumentFlow,
 
   'researchDiscoveryFlow': researchDiscovery,

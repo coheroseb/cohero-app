@@ -89,23 +89,15 @@ interface SecondOpinionRecord {
 
 // --- PDF EXTRACTION ---
 
-async function extractTextFromPdf(file: File): Promise<string> {
-  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist/build/pdf.mjs');
-  const pdfjsVersion = '4.10.38'; 
-  GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
-  
-  const buffer = await file.arrayBuffer();
-  const loadingTask = getDocument({data: new Uint8Array(buffer)});
-  const pdf = await loadingTask.promise;
-  let text = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const strings = content.items.map((item: any) => ('str' in item ? item.str : '')).join(' ');
-    text += strings + '\n';
-  }
-  return text;
-}
+// --- FILE UTILS ---
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
 
 // --- COMPONENTS ---
 
@@ -473,7 +465,6 @@ const SecondOpinionPageContent = () => {
                     limitVal = 100;
                     break;
                 case 'Kollega+':
-                
                 case 'Institution':
                     limitVal = 1000;
                     break;
@@ -491,7 +482,12 @@ const SecondOpinionPageContent = () => {
                  return;
             }
 
-            // Client-side extraction
+            // Convert files to base64 for transmission and server-side storage/analysis
+            const [assignmentB64, feedbackB64] = await Promise.all([
+                fileToBase64(assignmentFile!),
+                feedbackFile ? fileToBase64(feedbackFile) : Promise.resolve(undefined),
+            ]);
+
             const learningGoals = Array.isArray(matchedModule.learningGoals) 
                 ? matchedModule.learningGoals.join('\n') 
                 : (matchedModule.learningObjectives || '');
@@ -499,29 +495,34 @@ const SecondOpinionPageContent = () => {
             const studyText = `CURRICULUM: ${matchedModule.curriculumTitle}\nMODULE: ${matchedModule.name || ''}\n\nDESCRIPTION:\n${matchedModule.description || matchedModule.about || ''}\n\nLEARNING OBJECTIVES:\n${learningGoals}`;
             const examText = matchedModule.examForm || matchedModule.examInfo || matchedModule.description || matchedModule.about || 'Ingen specifikke eksamensbestemmelser fundet.';
 
-            const [assignmentText, feedbackText] = await Promise.all([
-                extractTextFromPdf(assignmentFile!),
-                feedbackFile ? extractTextFromPdf(feedbackFile) : Promise.resolve(undefined),
-            ]);
-
             const response = await getSecondOpinionAction({
+                userId: user.uid,
                 studyRegulations: studyText,
                 examRegulations: examText,
-                assignmentText: assignmentText,
+                assignmentPdf: assignmentB64,
+                feedbackPdf: feedbackB64,
                 grade: analysisMode === 'audit' ? grade : undefined,
-                feedback: feedbackText,
-                mode: analysisMode
+                mode: analysisMode,
+                profession: userProfile.profession
             });
 
 
             const analysisResult = response.data;
+            const savedFileUrl = response.fileUrl; // Hentet fra Storage-upload i server action
             setResult(analysisResult);
 
             // Save
             const batch = writeBatch(firestore);
             const secondOpinionRef = doc(collection(firestore, 'users', user.uid, 'secondOpinions'));
             const dataToSave = { 
-                input: { grade }, 
+                input: { 
+                    grade, 
+                    assignmentTitle: assignmentFile.name,
+                    fileUrl: savedFileUrl, // Gemmer linket til PDF'en så admin kan se den
+                    curriculumTitle: matchedModule.curriculumTitle,
+                    moduleName: matchedModule.name,
+                    analysisMode
+                }, 
                 analysis: analysisResult, 
                 isUndervalued: !analysisResult.isGradeAccurate, // Markeres hvis opgaven er undervurderet
                 createdAt: serverTimestamp() 
@@ -793,20 +794,20 @@ const SecondOpinionPageContent = () => {
                                          <DashboardCard title="Opgavens Styrker" icon={<ThumbsUp className="w-4 h-4 text-emerald-600" />} variant="slate">
                                             <ul className="space-y-4">
                                                 {result.strengths.map((s, i) => (
-                                                    <li key={i} className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-slate-100 text-sm text-slate-600 font-medium">
-                                                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                                        <span>{s}</span>
-                                                    </li>
+                                                     <li key={i} className="flex items-start gap-4 p-5 bg-white rounded-3xl border border-slate-100/50 shadow-sm text-sm text-slate-700 font-medium">
+                                                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                                         <span dangerouslySetInnerHTML={{ __html: s }} />
+                                                     </li>
                                                 ))}
                                             </ul>
                                          </DashboardCard>
                                          <DashboardCard title="Opgavens Svagheder" icon={<ThumbsDown className="w-4 h-4 text-rose-600" />} variant="rose">
                                             <ul className="space-y-4">
                                                 {result.weaknesses.map((w, i) => (
-                                                    <li key={i} className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-rose-100 text-sm text-rose-600 font-medium italic">
-                                                        <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                                                        <span>{w}</span>
-                                                    </li>
+                                                     <li key={i} className="flex items-start gap-4 p-5 bg-white rounded-3xl border border-rose-100 shadow-sm text-sm text-rose-800 font-medium italic">
+                                                         <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                                                         <span dangerouslySetInnerHTML={{ __html: w }} />
+                                                     </li>
                                                 ))}
                                             </ul>
                                          </DashboardCard>
@@ -831,10 +832,10 @@ const SecondOpinionPageContent = () => {
                                          <DashboardCard title="Risiko ved klage" icon={<AlertTriangle className="w-4 h-4 text-amber-600" />} variant="amber">
                                             <div className="space-y-4">
                                                 {result.riskAssessment.map((r, i) => (
-                                                    <div key={i} className="flex items-center gap-4 p-5 bg-white rounded-3xl border border-amber-100 text-xs font-bold text-amber-900 italic">
-                                                        <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                                                        {r}
-                                                    </div>
+                                                     <div key={i} className="flex items-start gap-4 p-5 bg-white rounded-3xl border border-amber-100 text-xs font-bold text-amber-900 italic shadow-sm">
+                                                         <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0 mt-1.5" />
+                                                         <span dangerouslySetInnerHTML={{ __html: r }} />
+                                                     </div>
                                                 ))}
                                             </div>
                                          </DashboardCard>
@@ -842,10 +843,10 @@ const SecondOpinionPageContent = () => {
                                          <DashboardCard title="Anbefalede skridt" icon={<ListChecks className="w-4 h-4 text-indigo-600" />} variant="slate">
                                             <div className="space-y-3">
                                                 {result.suggestedNextSteps.map((step, i) => (
-                                                    <button key={i} className="w-full text-left p-5 bg-white border border-slate-100 rounded-3xl flex items-center justify-between group hover:border-indigo-200 transition-all">
-                                                        <span className="text-[11px] font-black text-slate-500 group-hover:text-indigo-950 transition-colors">{step}</span>
-                                                        <ArrowUpRight className="w-4 h-4 text-slate-200 group-hover:text-indigo-400 group-hover:-translate-y-1 group-hover:translate-x-1" />
-                                                    </button>
+                                                     <button key={i} className="w-full text-left p-6 bg-white border border-slate-100 rounded-3xl flex items-center justify-between group hover:border-indigo-200 transition-all shadow-sm">
+                                                         <span className="text-[12px] font-black text-slate-500 group-hover:text-indigo-950 transition-colors leading-relaxed" dangerouslySetInnerHTML={{ __html: step }} />
+                                                         <ArrowUpRight className="w-5 h-5 text-slate-200 group-hover:text-indigo-400 group-hover:-translate-y-1 group-hover:translate-x-1 shrink-0 ml-4" />
+                                                     </button>
                                                 ))}
                                             </div>
                                          </DashboardCard>
