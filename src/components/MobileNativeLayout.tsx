@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Home, Search, Bookmark, User, Bell } from 'lucide-react';
+import { Home, Search, Bookmark, User, Bell, LogIn, Info } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { triggerHapticFeedback } from '@/lib/haptics';
 import { ImpactStyle } from '@capacitor/haptics';
+import { useApp } from '@/app/provider';
 
 interface MobileNativeLayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,8 @@ interface MobileNativeLayoutProps {
 const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => {
   const [isNative, setIsNative] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useApp();
 
   useEffect(() => {
     setIsNative(Capacitor.isNativePlatform());
@@ -25,15 +28,30 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
     }
   }, []);
 
+  // Redirect ulogget brugere til /auth i native app
+  useEffect(() => {
+    if (isNative && !loading && !user && pathname !== '/auth') {
+      router.replace('/auth');
+    }
+  }, [isNative, user, loading, pathname, router]);
+
   if (!isNative) return <>{children}</>;
 
-  const tabs = [
+  const authTabs = [
     { name: 'Hjem', icon: Home, href: '/portal' },
     { name: 'Søg', icon: Search, href: '/concept-explainer' },
     { name: 'Gemt', icon: Bookmark, href: '/mine-gemte-begreber' },
-    { name: 'Notifikationer', icon: Bell, href: '/notifications' },
+    { name: 'Beskeder', icon: Bell, href: '/notifications' },
     { name: 'Profil', icon: User, href: '/settings' },
   ];
+
+  const guestTabs = [
+    { name: 'Velkommen', icon: Home, href: '/' },
+    { name: 'Log Ind', icon: LogIn, href: '/auth' },
+    { name: 'Om Os', icon: Info, href: '/om-os' },
+  ];
+
+  const tabs = user ? authTabs : guestTabs;
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans select-none">
