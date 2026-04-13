@@ -190,3 +190,20 @@
 .is-native .mt-32 {
     margin-top: 1.5rem !important;
 }
+
+/* Fjern ekstra top-padding på sider i native app */
+.is-native main .py-8,
+.is-native main .pt-8,
+.is-native main .py-12,
+.is-native main .pt-12,
+.is-native main .py-20,
+.is-native main .pt-20 {
+    padding-top: 0.5rem !important;
+}
+
+/* Fix for Portalen header */
+.is-native main header {
+    padding-top: 1rem !important;
+    padding-bottom: 2rem !important;
+    margin-top: 0 !important;
+}
