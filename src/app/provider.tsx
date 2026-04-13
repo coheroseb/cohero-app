@@ -729,7 +729,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     <AppContext.Provider
       value={contextValue}
     >
-      <div className={`${(isLovPortal || pathname?.includes('/simulator')) ? 'h-screen overflow-hidden flex flex-col' : 'min-h-screen flex flex-col'} transition-all duration-500 ${pageBackground} ${isNativeApp ? 'native-app' : ''} selection:bg-amber-200`}>
+      <div className={`${((isLovPortal || pathname?.includes('/simulator')) && !isNativeApp) ? 'h-screen overflow-hidden flex flex-col' : 'min-h-screen flex flex-col'} transition-all duration-500 ${pageBackground} ${isNativeApp ? 'native-app' : ''} selection:bg-amber-200`}>
         {showPaymentFailedBanner && showBannerOverlays && <PaymentFailedBanner />}
         {showCampaignBanner && showBannerOverlays && (
             <div style={{ top: `${paymentOffset}px`, position: 'sticky', zIndex: 10000 }}>
@@ -764,7 +764,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           </>
         )}
         <main 
-          className={`relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${(isLovPortal || isMitSemester || pathname?.includes('/simulator')) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
+          className={`relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${((isLovPortal || isMitSemester || pathname?.includes('/simulator')) && !isNativeApp) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
           style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' ? `calc(${totalBannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (totalBannerOffset > 0 && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${totalBannerOffset}px` : undefined) }}
         >
             {/* Soft top gradient to blend with navbar when scrolling */}
