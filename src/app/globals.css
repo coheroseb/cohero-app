@@ -175,6 +175,12 @@
     padding-bottom: 1rem !important;
 }
 
+.is-native, .is-native body {
+    overflow: auto !important;
+    height: auto !important;
+    min-height: 100% !important;
+}
+
 .is-native .pt-20, 
 .is-native .py-20,
 .is-native .pt-32,

@@ -10,6 +10,7 @@ import React, {
   Suspense,
   useMemo,
 } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -306,9 +307,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setMounted(true);
-    // Check if running as PWA
+    // Check if running as PWA or Native App
     const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || document.referrer.includes('android-app://'));
-    setIsNativeApp(isStandalone);
+    setIsNativeApp(isStandalone || Capacitor.isNativePlatform());
   }, []);
 
   const dailyChallengeGameType: GameType = useMemo(() => {
@@ -777,7 +778,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="h-full"
+              className={isNativeApp ? "min-h-full" : "h-full"}
             >
                 {children}
             </motion.div>
