@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 🔥 KRITISK for Firebase SSR (reducerer bundle size markant)
+  // 🔥 KRITISK for Firebase SSR
   output: "standalone",
 
   // ⚠️ Midlertidigt – fjern senere når du har styr på types
@@ -17,6 +17,7 @@ const nextConfig = {
 
   // 🖼️ Images config (din eksisterende)
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

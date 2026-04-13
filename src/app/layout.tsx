@@ -10,6 +10,7 @@ import GoogleTagManager from '@/components/GoogleTagManager';
 import { Suspense } from 'react';
 import { MaintenanceGuard } from '@/components/MaintenanceGuard';
 import SourceKeeper from '@/components/SourceKeeper';
+import MobileNativeLayout from '@/components/MobileNativeLayout';
 const siteUrl = 'https://cohero.dk';
 const siteTitle = 'Cohéro (Cohero) - Din Digitale Kollega for Socialrådgiverstuderende';
 const siteDescription = 'Cohéro er din professionelle rygdækning på velfærdsstudierne. Vi tilbyder intelligente værktøjer som sags-analytiker, journal-feedback og lovportal, der sikrer din faglige præcision og tryghed fra studiestart til eksamen.';
@@ -170,7 +171,9 @@ export default function RootLayout({
               <SourceKeeper />
             </Suspense>
             <MaintenanceGuard>
-              {children}
+              <MobileNativeLayout>
+                {children}
+              </MobileNativeLayout>
             </MaintenanceGuard>
           </AppProvider>
         </FirebaseClientProvider>

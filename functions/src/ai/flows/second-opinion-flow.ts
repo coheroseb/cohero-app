@@ -41,9 +41,9 @@ export type Analysis = z.infer<typeof AnalysisSchema>;
 const SecondOpinionOutputSchema = z.object({
   data: AnalysisSchema,
   usage: z.object({
-    inputTokens: z.number(),
-    outputTokens: z.number(),
-  }),
+    inputTokens: z.number().optional(),
+    outputTokens: z.number().optional(),
+  }).optional(),
   input: SecondOpinionInputSchema,
 });
 export type SecondOpinionOutput = z.infer<typeof SecondOpinionOutputSchema>;
@@ -72,7 +72,7 @@ const secondOpinionFlow = ai.defineFlow(
 - **Hvis mode er 'feedback':** Analysér opgavens kvalitet i forhold til læringsmålene og giv en præcis vurdering af, hvilken karakter arbejdet vil lande på i 'suggestedGrade'. Fokusér her på pædagogisk feedback og konkrete forbedringsforslag.
 
 **YOUR PHILOSOPHY:**
-You are a conservative, strict, but fair examiner. Your goal is to ensure students are not misled into false hope. If an assignment is on the border between two grades, you must select the lower grade. Always prioritize evidence of deep understanding and critical thinking over simple repetition of theory. Be critical of documentation, hierarchy of sources, and the logical 'red thread' in the work.
+You are a conservative, strict, but fair examiner. Your goal is to ensure students are not misled into false hope. Din analyse skal være 100% konsekvent; det samme faglige niveau skal altid resultere i de samme argumenter og den samme karaktervurdering, uanset hvornår eller hvordan opgaven præsenteres. If an assignment is on the border between two grades, you must select the lower grade. Always prioritize evidence of deep understanding and critical thinking over simple repetition of theory. Be critical of documentation, hierarchy of sources, and the logical 'red thread' in the work.
 
 **CRITICAL REQUIREMENT:**
 You MUST use the specific learning objectives (læringsmål) and exam criteria provided in the 'studyRegulations' and 'examRegulations' as your absolute reference point. Your assessment should reflect exactly how well the work fulfills these specific requirements for the current semester and module. Disregard any general knowledge that contradicts the specific goals provided.
@@ -100,15 +100,15 @@ Analysér den vedhæftede opgave herunder i forhold til ovenstående instruktion
         ...(input.assignmentText ? [{ text: `OPGAVETEKST:\n${input.assignmentText}` }] : [])
       ],
       config: {
-        temperature: 0.2,
+        temperature: 0.0,
       }
     });
 
     return {
       data: output!,
       usage: {
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
+        inputTokens: usage.inputTokens || 0,
+        outputTokens: usage.outputTokens || 0,
       },
       input: input,
     };
