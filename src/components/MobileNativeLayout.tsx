@@ -78,14 +78,14 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans select-none">
       {/* iOS Header */}
-      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/90 backdrop-blur-xl border-b border-black/[0.05] h-[calc(60px+env(safe-area-inset-top))] flex flex-col justify-end pb-3 px-6">
+      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/90 backdrop-blur-xl border-b border-black/[0.05] h-[calc(44px+env(safe-area-inset-top))] flex flex-col justify-end pb-2 px-6">
         <h1 className="text-[17px] font-bold text-slate-900 tracking-tight text-center truncate">
           {tabs.find(t => t.href === pathname)?.name || 'Cohéro'}
         </h1>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pt-[calc(60px+env(safe-area-inset-top))] pb-[calc(84px+env(safe-area-inset-bottom))] relative z-10">
+      <main className="flex-1 pt-[calc(44px+env(safe-area-inset-top))] pb-[calc(84px+env(safe-area-inset-bottom))] relative z-10">
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           {children}
         </div>
