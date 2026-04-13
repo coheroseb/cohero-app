@@ -85,7 +85,7 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pt-[calc(44px+env(safe-area-inset-top))] pb-[calc(84px+env(safe-area-inset-bottom))] relative z-10">
+      <main className="flex-1 min-h-0 pt-[calc(44px+env(safe-area-inset-top))] pb-[calc(84px+env(safe-area-inset-bottom))] relative z-10">
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           {children}
         </div>

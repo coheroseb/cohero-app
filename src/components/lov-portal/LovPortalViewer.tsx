@@ -1968,7 +1968,7 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   }, [isLoadingDoc, viewMode, activeLawId]);
 
   return (
-    <div className={`min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 selection:text-amber-950 overflow-x-hidden lg:h-full lg:overflow-hidden`}>
+    <div className={`min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 font-sans selection:bg-amber-100 selection:text-amber-950 lg:h-full lg:overflow-hidden`}>
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
         .serif-premium { font-family: 'Playfair Display', serif; }
@@ -2004,7 +2004,7 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
       </AnimatePresence>
 
       {/* MOBILE HEADER - Redesigned, cleaner */}
-      <div className="lg:hidden h-16 bg-white/40 backdrop-blur-xl border-b border-amber-100 px-6 flex items-center justify-between sticky top-0 z-40 transition-shadow duration-300">
+      <div className="lg:hidden h-16 bg-white/40 backdrop-blur-xl border-b border-amber-100 px-6 flex items-center justify-between relative z-40 transition-shadow duration-300">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-amber-950 rounded-lg flex items-center justify-center text-amber-400 shadow-xl shrink-0">
             <ScaleIcon className="w-4 h-4" />
@@ -2185,7 +2185,7 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main ref={mainScrollRef as any} className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-32 h-full overflow-y-auto">
+      <div ref={mainScrollRef as any} className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-32 lg:h-full lg:overflow-y-auto">
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-0 z-50">
             <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
                 <div className="relative flex-1 group">
@@ -3170,7 +3170,7 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
                 )}
             </AnimatePresence>
         </div>
-      </main>
+      </div>
 
       {/* CONTEXT SIDEBAR */}
       <AnimatePresence>
