@@ -71,10 +71,7 @@
     @apply bg-background text-foreground;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     position: relative;
-    user-select: none;
-    -webkit-user-select: none;
     overflow-x: hidden;
-    overscroll-behavior-y: none; /* Prevents elastic bounce on body */
     -webkit-overflow-scrolling: touch;
     
     /* Safari Height Fix */
