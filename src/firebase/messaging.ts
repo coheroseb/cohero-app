@@ -1,4 +1,6 @@
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { initializeFirebase } from './config';
 
@@ -7,6 +9,38 @@ export const requestNotificationPermission = async (userId: string) => {
   if (!firestore) return;
 
   try {
+    if (Capacitor.isNativePlatform()) {
+        let permStatus = await PushNotifications.checkPermissions();
+
+        if (permStatus.receive === 'prompt') {
+            permStatus = await PushNotifications.requestPermissions();
+        }
+
+        if (permStatus.receive !== 'granted') {
+            throw new Error('Tilladelse blev ikke givet i appen. Gå til indstillinger for at aktivere.');
+        }
+
+        await PushNotifications.register();
+
+        return new Promise((resolve, reject) => {
+            PushNotifications.addListener('registration', async ({ value: token }) => {
+                try {
+                    const userRef = doc(firestore, 'users', userId);
+                    await updateDoc(userRef, {
+                        fcmTokens: arrayUnion(token)
+                    });
+                    resolve(token);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+
+            PushNotifications.addListener('registrationError', (error: any) => {
+                reject(new Error("Fejl ved registrering af push: " + JSON.stringify(error)));
+            });
+        });
+    }
+
     if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('Notification' in window)) {
         throw new Error("Push-notifikationer understøttes ikke i denne browser.");
     }
