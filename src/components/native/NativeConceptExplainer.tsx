@@ -10,7 +10,8 @@ import {
   Zap, 
   Check, 
   Bookmark,
-  ChevronDown
+  ChevronDown,
+  Loader2
 } from 'lucide-react';
 import { triggerHapticFeedback } from '@/lib/haptics';
 import { ImpactStyle } from '@capacitor/haptics';
@@ -23,7 +24,8 @@ const NativeConceptExplainer: React.FC<{
   explanation: any,
   isSaved: boolean,
   handleToggleSave: () => void,
-  limitError?: string | null
+  limitError?: string | null,
+  searchProgress?: { step: number, label: string }
 }> = ({ 
   searchQuery, 
   setSearchQuery, 
@@ -32,7 +34,8 @@ const NativeConceptExplainer: React.FC<{
   explanation,
   isSaved,
   handleToggleSave,
-  limitError
+  limitError,
+  searchProgress
 }) => {
 
   const [activeTab, setActiveTab] = useState<'def' | 'prac' | 'law'>('def');
@@ -75,13 +78,19 @@ const NativeConceptExplainer: React.FC<{
 
       {!explanation ? (
         <div className="px-5 pt-10 text-center space-y-8">
-           <div className="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center mx-auto shadow-xl border border-slate-100">
-             <Brain className="w-12 h-12 text-indigo-600" />
-           </div>
-           <div className="space-y-3">
-             <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Hvad vil du lære?</h2>
-             <p className="text-slate-500 font-medium px-4">Indtast et socialfagligt begreb eller en teori for at få en lynforklaring.</p>
-           </div>
+            <div className={`p-4 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center transition-all duration-300 ${isLoading ? 'scale-110' : ''}`}>
+              {isLoading ? <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" /> : <Brain className="w-12 h-12 text-indigo-600" />}
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
+                {isLoading ? "Analyserer..." : "Hvad vil du lære?"}
+              </h2>
+              <p className="text-slate-500 font-medium px-4">
+                {isLoading 
+                  ? (searchProgress?.label || "Finder den bedste forklaring til dig...") 
+                  : "Indtast et socialfagligt begreb eller en teori for at få en lynforklaring."}
+              </p>
+            </div>
            
            <div className="grid grid-cols-2 gap-3 pt-4">
              {['Mentalisering', 'Systemisk Teori', 'Retssikkerhed', 'Magtanvendelse'].map(t => (

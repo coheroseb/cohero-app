@@ -135,6 +135,7 @@ function ConceptExplainerPageContent() {
         isSaved={isSaved}
         handleToggleSave={() => handleToggleSave()}
         limitError={limitError}
+        searchProgress={searchProgress}
       />
     );
   }

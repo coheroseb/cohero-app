@@ -141,6 +141,7 @@ export async function callFirebaseFlow(flowName: string, data: any) {
   };
 
   try {
+    console.log(`[AI Flow] Calling ${flowName} at ${url}...`);
     const result = await performFetch(url);
     // Sanitize to ensure POJO for Next.js Client boundary
     return JSON.parse(JSON.stringify(result));
@@ -151,11 +152,11 @@ export async function callFirebaseFlow(flowName: string, data: any) {
 
     if (isConnRefused && isTargetingLocal && process.env.NODE_ENV !== 'production') {
         const prodUrl = prodBaseUrl + flowPath;
-        console.warn(`[Genkit] Emulator NOT found at ${url}. Falling back to production flows at ${prodUrl}.`);
+        console.warn(`[AI Flow] Emulator NOT found at ${url}. Falling back to production flows at ${prodUrl}.`);
         return await performFetch(prodUrl);
     }
     
-    console.error("Firebase Flow client error:", error);
+    console.error(`[AI Flow] Error calling ${flowName}:`, error);
     throw error;
   }
 }
