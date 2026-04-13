@@ -44,7 +44,7 @@ const NativeConceptExplainer: React.FC<{
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       {/* Search Input Bar */}
-      <div className="px-5 py-6 sticky top-0 bg-slate-50/80 backdrop-blur-xl z-20">
+      <div className="px-5 pt-1 pb-4 sticky top-0 bg-slate-50/80 backdrop-blur-xl z-20">
         <form onSubmit={handleSearch} className="relative group">
           <input 
             type="text"

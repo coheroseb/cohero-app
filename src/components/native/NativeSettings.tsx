@@ -70,7 +70,7 @@ const NativeSettings: React.FC = () => {
   return (
     <div className="pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Profile Header */}
-      <div className="px-5 py-8 flex items-center gap-4">
+      <div className="px-5 pt-2 pb-6 flex items-center gap-4">
         <div className="w-20 h-20 rounded-full bg-slate-900 text-white flex items-center justify-center text-3xl font-black border-4 border-slate-100 shadow-xl">
           {user?.displayName?.charAt(0) || user?.email?.charAt(0)}
         </div>

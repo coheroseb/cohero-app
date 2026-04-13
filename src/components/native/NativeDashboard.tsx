@@ -48,7 +48,7 @@ const NativeDashboard: React.FC = () => {
   return (
     <div className="px-5 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Welcome Area */}
-      <div className="py-8">
+      <div className="pt-2 pb-6">
         <h1 className="text-3xl font-black text-slate-950 tracking-tighter">
           Godmorgen, <span className="text-indigo-600">{user?.displayName?.split(' ')[0]}</span>
         </h1>

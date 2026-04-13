@@ -61,7 +61,7 @@ const NativeSavedConcepts: React.FC = () => {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       {/* Search Header */}
-      <div className="px-5 py-6">
+      <div className="px-5 pt-1 pb-4">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 
