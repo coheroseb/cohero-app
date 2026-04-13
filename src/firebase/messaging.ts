@@ -20,18 +20,12 @@ export const requestNotificationPermission = async (userId: string) => {
             throw new Error('Tilladelse blev ikke givet i appen. Gå til indstillinger for at aktivere.');
         }
 
-        // Request register
-        try {
-            await PushNotifications.register();
-        } catch (e: any) {
-            throw new Error("Kunne ikke registrere for push: " + e.message);
-        }
-
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
-                reject(new Error("Timeout: Systemet svarede ikke på anmodningen om notifikationer. Er din app konfigureret korrekt i Xcode?"));
+                reject(new Error("Timeout: Systemet svarede ikke på anmodningen om notifikationer. Er din app konfigureret korrekt i Xcode? (Husk at Push Notifications kræver en fysisk iPhone og 'Push Notifications' capability i Xcode)"));
             }, 10000);
 
+            // Add listeners BEFORE calling register()
             PushNotifications.addListener('registration', async ({ value: token }) => {
                 clearTimeout(timeout);
                 try {
@@ -48,6 +42,12 @@ export const requestNotificationPermission = async (userId: string) => {
             PushNotifications.addListener('registrationError', (error: any) => {
                 clearTimeout(timeout);
                 reject(new Error("Apple Push Fejl: " + JSON.stringify(error)));
+            });
+
+            // NOW call register
+            PushNotifications.register().catch(e => {
+                clearTimeout(timeout);
+                reject(new Error("Kunne ikke registrere for push: " + e.message));
             });
         });
     }
