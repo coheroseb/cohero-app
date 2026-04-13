@@ -37,21 +37,43 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
 
   if (!isNative) return <>{children}</>;
 
-  const authTabs = [
+  // Vis en ren splash screen mens vi tjekker login eller redirecter
+  if (loading || (!user && pathname !== '/auth')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white animate-in fade-in duration-500">
+         <div className="flex flex-col items-center gap-4">
+            <div className="flex -space-x-1 items-end mb-2">
+              <div className="w-2 h-8 bg-amber-800 rounded-t-sm shadow-lg" />
+              <div className="w-2 h-12 bg-amber-950 rounded-t-sm shadow-lg" />
+              <div className="w-2 h-10 bg-amber-700 rounded-t-sm shadow-lg" />
+            </div>
+            <h1 className="text-4xl font-black text-amber-950 serif tracking-tighter">Cohéro</h1>
+            <div className="w-12 h-1 bg-amber-100 rounded-full overflow-hidden mt-4">
+              <div className="w-full h-full bg-amber-500 animate-[loading-bar_1.5s_infinite]" />
+            </div>
+         </div>
+         <style jsx>{`
+            @keyframes loading-bar {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(100%); }
+            }
+         `}</style>
+      </div>
+    );
+  }
+
+  // Hvis man er på /auth og ikke logget ind, vis KUN indholdet (ingen barer)
+  if (!user && pathname === '/auth') {
+    return <main className="min-h-screen bg-white">{children}</main>;
+  }
+
+  const tabs = [
     { name: 'Hjem', icon: Home, href: '/portal' },
     { name: 'Søg', icon: Search, href: '/concept-explainer' },
     { name: 'Gemt', icon: Bookmark, href: '/mine-gemte-begreber' },
     { name: 'Beskeder', icon: Bell, href: '/notifications' },
     { name: 'Profil', icon: User, href: '/settings' },
   ];
-
-  const guestTabs = [
-    { name: 'Velkommen', icon: Home, href: '/' },
-    { name: 'Log Ind', icon: LogIn, href: '/auth' },
-    { name: 'Om Os', icon: Info, href: '/om-os' },
-  ];
-
-  const tabs = user ? authTabs : guestTabs;
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans select-none">
