@@ -76,7 +76,7 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-sans select-none">
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans select-none">
       {/* iOS Header */}
       <header className="fixed top-0 left-0 right-0 z-[100] bg-white/90 backdrop-blur-xl border-b border-black/[0.05] h-[calc(60px+env(safe-area-inset-top))] flex flex-col justify-end pb-3 px-6">
         <h1 className="text-[17px] font-bold text-slate-900 tracking-tight text-center truncate">

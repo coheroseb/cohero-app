@@ -68,7 +68,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8">
+    <div className="min-h-screen bg-slate-50 px-4 pt-4 pb-8">
       <div className="flex items-center justify-between mb-8 px-2">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Notifikationer</h1>
