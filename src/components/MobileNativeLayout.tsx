@@ -76,26 +76,26 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans select-none">
+    <div className="flex flex-col min-h-screen bg-white font-sans select-none">
       {/* iOS Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-black/5 pt-[env(safe-area-inset-top)]">
-        <div className="h-11 flex items-center justify-between px-4">
-          <h1 className="text-[17px] font-semibold text-black tracking-tight w-full text-center">
+      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-black/[0.05] pt-[env(safe-area-inset-top)] h-[calc(56px+env(safe-area-inset-top))]">
+        <div className="h-14 flex items-center justify-center px-6">
+          <h1 className="text-[17px] font-bold text-slate-900 tracking-tight text-center truncate">
             {tabs.find(t => t.href === pathname)?.name || 'Cohéro'}
           </h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pt-[calc(44px+env(safe-area-inset-top))] pb-[calc(84px+env(safe-area-inset-bottom))]">
+      <main className="flex-1 pt-[calc(48px+env(safe-area-inset-top))] pb-[calc(84px+env(safe-area-inset-bottom))] relative z-10">
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           {children}
         </div>
       </main>
 
       {/* iOS Tab Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-black/5 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_0_rgba(0,0,0,0.05)]">
-        <div className="h-[49px] flex items-center justify-around">
+      <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-white/90 backdrop-blur-2xl border-t border-black/[0.05] pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_12px_rgba(0,0,0,0.03)]">
+        <div className="h-[50px] flex items-center justify-around">
           {tabs.map((tab) => {
             const isActive = pathname === tab.href;
             const Icon = tab.icon;
@@ -105,13 +105,13 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
                 key={tab.name} 
                 href={tab.href}
                 onClick={() => triggerHapticFeedback(ImpactStyle.Light)}
-                className="flex flex-col items-center justify-center w-full h-full space-y-0.5 active:opacity-50 transition-opacity"
+                className="flex flex-col items-center justify-center w-full h-[50px] space-y-0.5 active:opacity-50 transition-opacity"
               >
                 <Icon 
                   className={`w-6 h-6 ${isActive ? 'text-indigo-600 fill-indigo-600/10' : 'text-slate-400'}`} 
                   strokeWidth={isActive ? 2.5 : 2}
                 />
-                <span className={`text-[10px] font-medium ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                <span className={`text-[10px] font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
                   {tab.name}
                 </span>
               </Link>
