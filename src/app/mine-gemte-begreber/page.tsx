@@ -37,8 +37,16 @@ interface SavedConcept {
   savedAt: { toDate: () => Date } | Timestamp;
 }
 
+import { Capacitor } from '@capacitor/core';
+import NativeSavedConcepts from '@/components/native/NativeSavedConcepts';
+
 export default function MineGemteBegreberPage() {
     const { user, isUserLoading } = useApp();
+    
+    if (Capacitor.isNativePlatform()) {
+      return <NativeSavedConcepts />;
+    }
+    
     const router = useRouter();
     const { toast } = useToast();
     const firestore = useFirestore();

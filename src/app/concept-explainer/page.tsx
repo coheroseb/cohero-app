@@ -95,8 +95,13 @@ const ContentSection = ({ title, icon, children, delay = 0 }: { title: string, i
 
 // --- MAIN COMPONENT ---
 
+import { Capacitor } from '@capacitor/core';
+import NativeConceptExplainer from '@/components/native/NativeConceptExplainer';
+
 function ConceptExplainerPageContent() {
   const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
+  
+  
   const firestore = useFirestore();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -117,6 +122,20 @@ function ConceptExplainerPageContent() {
   const [hasCachedVideo, setHasCachedVideo] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  if (Capacitor.isNativePlatform()) {
+    return (
+      <NativeConceptExplainer 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        handleExplain={(term) => handleExplain(term)}
+        isLoading={isLoading}
+        explanation={explanation}
+        isSaved={isSaved}
+        handleToggleSave={() => handleToggleSave()}
+      />
+    );
+  }
   const [showModelModal, setShowModelModal] = useState(false);
 
   const resultsRef = useRef<HTMLElement>(null);

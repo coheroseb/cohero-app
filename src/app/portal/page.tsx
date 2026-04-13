@@ -71,6 +71,8 @@ import {
   Gift
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
+import { Capacitor } from '@capacitor/core';
+import NativeDashboard from '@/components/native/NativeDashboard';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { processStripeSession, fetchPoliticalNews, fetchSocialMinistryNews, logUserSessionAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -1475,6 +1477,12 @@ const PortalPage: React.FC = () => {
     if (isUserLoading || !user || userProfile === undefined) {
       return null;
     }
+    
+    // Brug det nye native UI hvis vi kører som app
+    if (Capacitor.isNativePlatform()) {
+      return <NativeDashboard />;
+    }
+    
     return <PortalPageContent />;
   }, [isUserLoading, user, userProfile]);
 

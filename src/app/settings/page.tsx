@@ -18,8 +18,15 @@ import { encryptData } from '@/lib/encryption';
 import { motion, AnimatePresence } from 'framer-motion';
 import { INSTITUTIONS, PROFESSION_OPTIONS, SEMESTER_OPTIONS } from '@/lib/constants';
 
+import { Capacitor } from '@capacitor/core';
+import NativeSettings from '@/components/native/NativeSettings';
+
 export default function SettingsPage() {
   const { user, userProfile, refetchUserProfile, handleLogout, handleResendVerification } = useApp();
+  
+  if (Capacitor.isNativePlatform()) {
+    return <NativeSettings />;
+  }
   const firestore = useFirestore();
   const auth = useAuth();
   const { toast } = useToast();
