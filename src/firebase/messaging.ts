@@ -20,10 +20,20 @@ export const requestNotificationPermission = async (userId: string) => {
             throw new Error('Tilladelse blev ikke givet i appen. Gå til indstillinger for at aktivere.');
         }
 
-        await PushNotifications.register();
+        // Request register
+        try {
+            await PushNotifications.register();
+        } catch (e: any) {
+            throw new Error("Kunne ikke registrere for push: " + e.message);
+        }
 
         return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error("Timeout: Systemet svarede ikke på anmodningen om notifikationer. Er din app konfigureret korrekt i Xcode?"));
+            }, 10000);
+
             PushNotifications.addListener('registration', async ({ value: token }) => {
+                clearTimeout(timeout);
                 try {
                     const userRef = doc(firestore, 'users', userId);
                     await updateDoc(userRef, {
@@ -36,7 +46,8 @@ export const requestNotificationPermission = async (userId: string) => {
             });
 
             PushNotifications.addListener('registrationError', (error: any) => {
-                reject(new Error("Fejl ved registrering af push: " + JSON.stringify(error)));
+                clearTimeout(timeout);
+                reject(new Error("Apple Push Fejl: " + JSON.stringify(error)));
             });
         });
     }

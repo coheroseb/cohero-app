@@ -71,7 +71,12 @@ const NativeSettings: React.FC = () => {
         toast({ title: 'Notifikationer aktive', description: 'Du modtager nu push-beskeder.' });
       }
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Fejl', description: 'Kunne ikke aktivere notifikationer.' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Fejl', 
+        description: err.message || 'Kunne ikke aktivere notifikationer.' 
+      });
+      triggerHapticFeedback(ImpactStyle.Heavy);
     } finally {
       setIsRequestingNotifications(false);
     }
