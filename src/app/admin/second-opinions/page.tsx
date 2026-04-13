@@ -16,9 +16,11 @@ interface SecondOpinion extends DocumentData {
     grade: string;
     assignmentText: string;
     feedback?: string;
+    fileUrl?: string; // Link to the original PDF
   };
   analysis: {
     isComplaintJustified: boolean;
+    gradeAccuracyArgument: string;
     strengths: string[];
     weaknesses: string[];
     riskAssessment: string[];
@@ -45,20 +47,37 @@ const DetailView = ({ opinion }: { opinion: SecondOpinion }) => {
         <div className="p-12 bg-slate-50/50 space-y-12 border-b border-slate-100">
             <div className="grid lg:grid-cols-2 gap-12">
                 <div className="space-y-4">
-                    <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
-                        <FileText className="w-4 h-4" /> Opgavebesvarelse
+                    <div className="flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
+                        <div className="flex items-center gap-3">
+                            <FileText className="w-4 h-4" /> Opgavebesvarelse
+                        </div>
+                        {opinion.input.fileUrl && (
+                            <a 
+                                href={opinion.input.fileUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all border border-indigo-100"
+                            >
+                                <Zap className="w-3 h-3" /> Se original PDF
+                            </a>
+                        )}
                     </div>
                     <div className="p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm text-sm text-slate-600 leading-relaxed max-h-[400px] overflow-y-auto custom-scrollbar">
-                        {opinion.input.assignmentText}
+                        {opinion.input.assignmentText || (
+                            <div className="text-center py-8 text-slate-400 italic">
+                                Tekst ikke udtrukket særskilt. Se venligst den originale PDF for det fulde indhold.
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="space-y-4">
                     <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
-                        <Scale className="w-4 h-4" /> Bedømmers Feedback
+                        <Scale className="w-4 h-4" /> AI Argumentation for Bedømmelse
                     </div>
-                    <div className="p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm text-sm text-slate-600 italic leading-relaxed h-full min-h-[100px]">
-                        {opinion.input.feedback ? `"${opinion.input.feedback}"` : "Ingen feedback angivet."}
-                    </div>
+                    <div 
+                        className="p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm text-sm text-slate-600 leading-relaxed max-h-[400px] overflow-y-auto custom-scrollbar prose prose-slate prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: opinion.analysis.gradeAccuracyArgument || 'Ingen argumentation fundet.' }}
+                    />
                 </div>
             </div>
 

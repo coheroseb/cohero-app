@@ -550,8 +550,18 @@ export async function getSecondOpinionAction(input: {
         console.error("Failed to fetch decision context:", e);
     }
 
-    // 3. Call AI Flow (We pass the base64 string directly to Genkit/Gemini for analysis)
-    const result = await callFirebaseFlow('getSecondOpinionFlow', { ...input, decisionContext }); 
+    // 3. Call AI Flow
+    // We pass the Storage URL instead of the heavy base64 string to avoid body size limits and decoding errors.
+    const flowInput = { 
+        ...input, 
+        assignmentPdfUrl: assignmentUrl,
+        decisionContext 
+    };
+    // Remove the base64 strings to keep the request body small
+    delete flowInput.assignmentPdf;
+    delete flowInput.feedbackPdf;
+
+    const result = await callFirebaseFlow('getSecondOpinionFlow', flowInput); 
     
     // Add the storage URL to the result so the frontend can save it
     return { ...result, fileUrl: assignmentUrl };

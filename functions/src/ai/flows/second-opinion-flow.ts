@@ -15,7 +15,8 @@ const SecondOpinionInputSchema = z.object({
   studyRegulations: z.string().describe("The relevant sections of the study regulations or course description, including learning objectives."),
   examRegulations: z.string().describe("The relevant sections of the exam regulations."),
   assignmentText: z.string().optional().describe("The text content of the assignment (if already extracted)."),
-  assignmentPdf: z.string().optional().describe("The base64 encoded PDF of the assignment for direct multimodal analysis."),
+  assignmentPdf: z.string().optional().describe("The base64 encoded PDF of the assignment (fallback)."),
+  assignmentPdfUrl: z.string().optional().describe("The Storage URL of the assignment PDF for direct multimodal analysis."),
   grade: z.string().optional().describe('The grade the social work student received, if any (e.g., "7", "10").'),
   feedback: z.string().optional().describe("Optional feedback from the examiner."),
   decisionContext: z.string().optional().describe("Contextual information from similar previous decisions to help the AI understand outcome patterns."),
@@ -58,6 +59,9 @@ const secondOpinionFlow = ai.defineFlow(
     outputSchema: SecondOpinionOutputSchema,
   },
   async (input) => {
+    // Genkit/Gemini expects raw base64, so strip prefix if present
+    const cleanPdf = input.assignmentPdf?.replace(/^data:application\/pdf;base64,/, '');
+
     const { output, usage } = await ai.generate({
       output: { schema: AnalysisSchema },
       prompt: [
@@ -91,7 +95,8 @@ You MUST use the specific learning objectives (læringsmål) and exam criteria p
 ${input.decisionContext || 'Ingen historisk kontekst fundet.'}
 
 Analysér den vedhæftede opgave herunder i forhold til ovenstående instruktioner:` },
-        ...(input.assignmentPdf ? [{ media: { url: `data:application/pdf;base64,${input.assignmentPdf}`, contentType: 'application/pdf' } }] : []),
+        ...(input.assignmentPdfUrl ? [{ media: { url: input.assignmentPdfUrl, contentType: 'application/pdf' } }] : []),
+        ...(!input.assignmentPdfUrl && cleanPdf ? [{ media: { url: cleanPdf, contentType: 'application/pdf' } }] : []),
         ...(input.assignmentText ? [{ text: `OPGAVETEKST:\n${input.assignmentText}` }] : [])
       ],
       config: {
