@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/app/provider';
+import { useFirestore } from '@/firebase';
 import { 
   User, 
   CreditCard, 
@@ -13,23 +14,73 @@ import {
   Info,
   Smartphone,
   BookOpen,
-  GraduationCap
+  GraduationCap,
+  Loader2,
+  CheckCircle,
+  BellOff
 } from 'lucide-react';
 import { triggerHapticFeedback } from '@/lib/haptics';
 import { ImpactStyle } from '@capacitor/haptics';
+import { createPortalSessionAction } from '@/app/actions';
+import { useToast } from "@/hooks/use-toast";
+import { requestNotificationPermission } from '@/firebase/messaging';
 
 const NativeSettings: React.FC = () => {
   const { user, userProfile, handleLogout } = useApp();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState<string>('default');
+  const [isRequestingNotifications, setIsRequestingNotifications] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationStatus(Notification.permission);
+    }
+  }, []);
 
   const handleAction = (callback: () => void) => {
     triggerHapticFeedback(ImpactStyle.Light);
     callback();
   };
 
+  const handleManageSubscription = async () => {
+    if (!userProfile?.stripeCustomerId) {
+      toast({ title: "Ingen betalingsinfo", description: "Du har ikke tilknyttet en betalingsmetode endnu." });
+      return;
+    };
+    setIsPortalLoading(true);
+    try {
+      const { url } = await createPortalSessionAction(userProfile.stripeCustomerId);
+      window.location.href = url;
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Portal Fejl', description: 'Kunne ikke indlæse betalingsportalen.' });
+    } finally {
+      setIsPortalLoading(false);
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    if (!user) return;
+    setIsRequestingNotifications(true);
+    try {
+      const token = await requestNotificationPermission(user.uid);
+      if (token) {
+        setNotificationStatus('granted');
+        toast({ title: 'Notifikationer aktive', description: 'Du modtager nu push-beskeder.' });
+      }
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Fejl', description: 'Kunne ikke aktivere notifikationer.' });
+    } finally {
+      setIsRequestingNotifications(false);
+    }
+  };
+
   const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="mb-8">
-      <h2 className="px-5 mb-2 text-[13px] font-medium text-slate-500 uppercase tracking-wider">{title}</h2>
-      <div className="bg-white border-y border-slate-200 overflow-hidden">
+      <h2 className="px-5 mb-2 text-[13px] font-bold text-slate-400 uppercase tracking-[0.2em]">{title}</h2>
+      <div className="bg-white border-y border-slate-100 overflow-hidden">
         {children}
       </div>
     </div>
@@ -41,43 +92,47 @@ const NativeSettings: React.FC = () => {
     value, 
     onClick, 
     color = "indigo",
-    destructive = false 
+    destructive = false,
+    loading = false
   }: { 
     icon: any, 
     label: string, 
     value?: string, 
     onClick?: () => void,
     color?: string,
-    destructive?: boolean
+    destructive?: boolean,
+    loading?: boolean
   }) => (
     <button 
-      onClick={() => onClick && handleAction(onClick)}
-      className="w-full flex items-center px-4 py-3 active:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 text-left"
+      onClick={() => onClick && !loading && handleAction(onClick)}
+      disabled={loading}
+      className="w-full flex items-center px-4 py-4 active:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0 text-left"
     >
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mr-3 ${
         destructive ? 'bg-rose-50 text-rose-600' : `bg-${color}-50 text-${color}-600`
       }`}>
-        <Icon className="w-5 h-5" />
+        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Icon className="w-5 h-5" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-[16px] font-medium truncate ${destructive ? 'text-rose-600' : 'text-slate-900'}`}>{label}</p>
-        {value && <p className="text-[13px] text-slate-400 truncate mt-0.5">{value}</p>}
+        <p className={`text-[16px] font-bold truncate ${destructive ? 'text-rose-600' : 'text-slate-900'}`}>{label}</p>
+        {value && <p className="text-[12px] text-slate-400 font-medium truncate mt-0.5">{value}</p>}
       </div>
-      {onClick && <ChevronRight className="w-5 h-5 text-slate-300 ml-2" />}
+      {onClick && !loading && <ChevronRight className="w-5 h-5 text-slate-200 ml-2" />}
     </button>
   );
 
   return (
-    <div className="pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-50 min-h-screen">
       {/* Profile Header */}
-      <div className="px-5 pt-2 pb-6 flex items-center gap-4">
-        <div className="w-20 h-20 rounded-full bg-slate-900 text-white flex items-center justify-center text-3xl font-black border-4 border-slate-100 shadow-xl">
+      <div className="px-5 pt-4 pb-8 flex items-center gap-5">
+        <div className="w-20 h-20 rounded-[2rem] bg-slate-900 text-white flex items-center justify-center text-3xl font-black border-4 border-white shadow-2xl relative overflow-hidden">
           {user?.displayName?.charAt(0) || user?.email?.charAt(0)}
+          <div className="absolute top-0 right-0 p-2 text-white/10"><User className="w-12 h-12" /></div>
         </div>
         <div>
-          <h1 className="text-2xl font-black text-slate-950 tracking-tight">{user?.displayName || 'Bruger'}</h1>
-          <p className="text-sm font-medium text-slate-500">{user?.email}</p>
-          <div className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-widest">
+          <h1 className="text-2xl font-black text-slate-950 tracking-tight leading-none mb-2">{user?.displayName || 'Bruger'}</h1>
+          <p className="text-xs font-bold text-slate-400 truncate max-w-[200px] mb-3">{user?.email}</p>
+          <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest border border-amber-100">
             {userProfile?.membership || 'Gratis Plan'}
           </div>
         </div>
@@ -123,26 +178,27 @@ const NativeSettings: React.FC = () => {
         <Item 
           icon={CreditCard} 
           label="Abonnement" 
-          value={userProfile?.membership || 'Prøv Kollega+'} 
+          value={userProfile?.membership === 'Gratis Plan' ? 'Opgrader og lås alt op' : 'Administrer dit medlemskab'} 
           color="amber"
-          onClick={() => {}}
+          loading={isPortalLoading}
+          onClick={handleManageSubscription}
         />
       </Section>
 
       <Section title="App Indstillinger">
         <Item 
-          icon={Bell} 
+          icon={notificationStatus === 'granted' ? Bell : BellOff} 
           label="Notifikationer" 
-          value="Push-beskeder er aktive" 
+          value={notificationStatus === 'granted' ? "Push-beskeder er aktive ✅" : "Klik for at aktivere"} 
           color="rose"
-          onClick={() => {}}
+          loading={isRequestingNotifications}
+          onClick={handleEnableNotifications}
         />
         <Item 
           icon={ShieldAlert} 
           label="Sikkerhed" 
           value="Beskyt din konto" 
           color="slate"
-          onClick={() => {}}
         />
       </Section>
 
@@ -161,17 +217,17 @@ const NativeSettings: React.FC = () => {
         />
       </Section>
 
-      <div className="px-5 mt-4 space-y-4">
+      <div className="px-5 mt-6 space-y-4">
         <button 
           onClick={() => handleAction(handleLogout)}
-          className="w-full h-14 bg-white border border-slate-200 rounded-2xl flex items-center justify-center gap-2 font-black text-rose-600 uppercase tracking-widest text-sm active:bg-rose-50 transition-all shadow-sm"
+          className="w-full h-14 bg-white border border-slate-100 rounded-3xl flex items-center justify-center gap-3 font-black text-rose-500 uppercase tracking-widest text-[11px] active:bg-rose-50 transition-all shadow-sm"
         >
           <LogOut className="w-5 h-5" />
-          Log ud
+          Log ud af Cohéro
         </button>
         
-        <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] pt-4">
-          Version 4.0.0 (Native Build)
+        <p className="text-center text-[9px] text-slate-300 font-black uppercase tracking-[0.3em] pt-6">
+          Version 4.0.0 (Native iOS Build)
         </p>
       </div>
     </div>
