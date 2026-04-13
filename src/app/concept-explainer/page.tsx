@@ -103,8 +103,9 @@ function ConceptExplainerPageContent() {
   
   
   const firestore = useFirestore();
-  const { toast } = useToast();
+  const { toast = (p: any) => console.log(p) } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Core State
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,6 +134,7 @@ function ConceptExplainerPageContent() {
         explanation={explanation}
         isSaved={isSaved}
         handleToggleSave={() => handleToggleSave()}
+        limitError={limitError}
       />
     );
   }
@@ -288,10 +290,9 @@ function ConceptExplainerPageContent() {
     } finally {
         setIsLoading(false);
         setSearchProgress({ step: 0, label: '' });
-        // @ts-ignore
-        if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
+        if (progressInterval) clearInterval(progressInterval);
     }
-  }, [user, firestore, userProfile, refetchUserProfile, toast]);
+  }, [user, firestore, userProfile, refetchUserProfile, toast, router, usageLimits]);
 
   const handleGetAnalogy = useCallback(async () => {
     if (!explanation || isGettingAnalogy || !user) return;

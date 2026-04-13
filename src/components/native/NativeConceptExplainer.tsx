@@ -22,7 +22,8 @@ const NativeConceptExplainer: React.FC<{
   isLoading: boolean,
   explanation: any,
   isSaved: boolean,
-  handleToggleSave: () => void
+  handleToggleSave: () => void,
+  limitError?: string | null
 }> = ({ 
   searchQuery, 
   setSearchQuery, 
@@ -30,7 +31,8 @@ const NativeConceptExplainer: React.FC<{
   isLoading, 
   explanation,
   isSaved,
-  handleToggleSave
+  handleToggleSave,
+  limitError
 }) => {
 
   const [activeTab, setActiveTab] = useState<'def' | 'prac' | 'law'>('def');
@@ -62,6 +64,14 @@ const NativeConceptExplainer: React.FC<{
           </button>
         </form>
       </div>
+
+      {limitError && (
+        <div className="px-5 pt-4">
+          <div className="p-5 bg-rose-50 border border-rose-100 rounded-3xl text-rose-600 text-sm font-bold animate-in zoom-in-95 duration-300">
+            {limitError}
+          </div>
+        </div>
+      )}
 
       {!explanation ? (
         <div className="px-5 pt-10 text-center space-y-8">
