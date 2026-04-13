@@ -30,6 +30,7 @@ import { useFirestore, useCollection } from '@/firebase';
 import { 
     collection, 
     doc, 
+    getDoc,
     setDoc, 
     deleteDoc, 
     serverTimestamp, 
