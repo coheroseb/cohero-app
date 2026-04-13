@@ -284,6 +284,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [hasPlayedDailyChallenge, setHasPlayedDailyChallenge] = useState(false);
   const [cookieConsent, setCookieConsent] = useState<'granted' | 'denied' | 'pending'>('pending');
   const [isNativeApp, setIsNativeApp] = useState(false);
+  const [isCapacitorNative, setIsCapacitorNative] = useState(false);
   const [isNavbarHidden, setIsNavbarHidden] = useState(false);
   const [usageLimits, setUsageLimits] = useState<any>(null);
   const [activeTheme, setActiveTheme] = useState<string>('default');
@@ -309,7 +310,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setMounted(true);
     // Check if running as PWA or Native App
     const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || document.referrer.includes('android-app://'));
-    setIsNativeApp(isStandalone || Capacitor.isNativePlatform());
+    const isCap = Capacitor.isNativePlatform();
+    setIsNativeApp(isStandalone || isCap);
+    setIsCapacitorNative(isCap);
   }, []);
 
   const dailyChallengeGameType: GameType = useMemo(() => {
@@ -787,7 +790,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
 
         
-        {mounted && isNativeApp && user && <MobileTabNavigation userProfile={userProfile} />}
+        {/* Only show PWA navigation if standalone but NOT true native (which has its own layout) */}
+        {mounted && isNativeApp && !isCapacitorNative && user && <MobileTabNavigation userProfile={userProfile} />}
 
         <Suspense fallback={null}>
             {/* AuthModal has been removed */}
