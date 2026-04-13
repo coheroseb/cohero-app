@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Capacitor } from '@capacitor/core';
 import Link from 'next/link';
 import {
   LogOut,
@@ -287,6 +288,11 @@ const Navbar: React.FC<NavbarProps> = ({
   const { effectiveTheme } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isNative, setIsNative] = useState(false);
+
+  useEffect(() => {
+    setIsNative(Capacitor.isNativePlatform());
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -326,6 +332,8 @@ const Navbar: React.FC<NavbarProps> = ({
     ];
 
   }, []);
+
+  if (isNative) return null;
 
   return (
     <>

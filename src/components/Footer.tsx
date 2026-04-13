@@ -1,15 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Mail, Linkedin, Instagram, MapPin, Facebook, ArrowUpRight, Sparkles, ShieldCheck, Music } from 'lucide-react';
 import Link from 'next/link';
 
 const Footer: React.FC = () => {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [isNative, setIsNative] = useState(false);
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
+    setIsNative(Capacitor.isNativePlatform());
   }, []);
+
+  if (isNative) return null;
   
   return (
     <footer className="bg-[#FDFCF8] border-t border-amber-100 relative overflow-hidden">
