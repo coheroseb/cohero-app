@@ -49,7 +49,7 @@ const NativeConceptExplainer: React.FC<{
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       {/* Search Input Bar */}
-      <div className="px-5 pt-1 pb-4 sticky top-0 bg-slate-50/80 backdrop-blur-xl z-20">
+      <div className="px-5 pt-1 pb-4 sticky top-[calc(44px+env(safe-area-inset-top))] bg-slate-50/80 backdrop-blur-xl z-20">
         <form onSubmit={handleSearch} className="relative group">
           <input 
             type="text"
@@ -61,9 +61,10 @@ const NativeConceptExplainer: React.FC<{
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <button 
             type="submit"
+            onClick={() => !isLoading && handleSearch({ preventDefault: () => {} } as any)}
             className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition-transform"
           >
-            {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Zap className="w-4 h-4" />}
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-white/50" /> : <Zap className="w-4 h-4" />}
           </button>
         </form>
       </div>
