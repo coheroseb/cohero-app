@@ -26,7 +26,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLawContentAction, analyzeParagraphAction } from '@/app/actions';
 import { useApp } from '@/app/provider';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { 
     collection, 
     doc, 
@@ -189,9 +189,12 @@ export default function NativeLawViewer() {
         }
     }, [loading, initialPara]);
 
-    const { data: savedParasRaw } = useCollection(
-        user ? collection(firestore!, 'users', user.uid, 'savedParagraphs') : null
+    const savedParasRef = useMemoFirebase(
+        () => user && firestore ? collection(firestore, 'users', user.uid, 'savedParagraphs') : null,
+        [user, firestore]
     );
+
+    const { data: savedParasRaw } = useCollection(savedParasRef);
     const savedParagraphs = useMemo(() => (savedParasRaw || []).map(d => d.id), [savedParasRaw]);
 
     const handleToggleSave = async (paragraph: any) => {
@@ -226,7 +229,13 @@ export default function NativeLawViewer() {
         setAnalysisLoading(paragraph.id);
         
         try {
-            const result = await analyzeParagraphAction(lawId, paragraph.id);
+            const result = await analyzeParagraphAction({
+                lovTitel: lawData?.name || '',
+                paragrafNummer: paragraph.id,
+                paragrafTekst: paragraph.text,
+                fuldLovtekst: "",
+                uniqueDocumentId: lawId
+            });
             if (result.success && result.analysis) {
                 setAnalysisResult({ id: paragraph.id, data: result.analysis });
                 setIsAnalysisDrawerOpen(true);
