@@ -77,12 +77,6 @@
     overscroll-behavior-y: none; /* Prevents elastic bounce on body */
     -webkit-overflow-scrolling: touch;
     
-    /* Native App Safe Area Support */
-    padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    padding-left: env(safe-area-inset-left, 0);
-    padding-right: env(safe-area-inset-right, 0);
-
     /* Safari Height Fix */
     min-height: 100vh;
     min-height: -webkit-fill-available;
@@ -177,4 +171,22 @@
   .ql-editor.ql-blank::before{
     @apply text-slate-400 not-italic;
   }
+}
+
+/* Native App Compactness Overrides */
+.is-native header {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+.is-native .pt-20, 
+.is-native .py-20,
+.is-native .pt-32,
+.is-native .py-32 {
+    padding-top: 1.5rem !important;
+}
+
+.is-native .mt-20,
+.is-native .mt-32 {
+    margin-top: 1.5rem !important;
 }
