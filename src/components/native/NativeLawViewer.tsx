@@ -128,11 +128,32 @@ export default function NativeLawViewer() {
     // Fetch Law Data
     useEffect(() => {
         async function fetchLaw() {
+            if (!lawId || !firestore) return;
             setLoading(true);
             try {
-                const result = await getLawContentAction(lawId);
-                if (result.success && result.lawData) {
-                    setLawData(result.lawData);
+                // 1. Fetch metadata from 'laws' collection first
+                const lawRef = doc(firestore, 'laws', lawId);
+                const lawSnap = await getDoc(lawRef);
+                
+                if (!lawSnap.exists()) {
+                    console.error("Law metadata not found in Firestore");
+                    setLoading(false);
+                    return;
+                }
+
+                const lawMeta = { id: lawSnap.id, ...lawSnap.data() } as LawConfig;
+
+                // 2. Fetch full content using the server action
+                const result = await getLawContentAction({
+                    documentId: lawMeta.id,
+                    xmlUrl: lawMeta.xmlUrl,
+                    name: lawMeta.name,
+                    abbreviation: lawMeta.abbreviation,
+                    lbk: lawMeta.lbk
+                });
+
+                if (result.success && result.data) {
+                    setLawData(result.data);
                 }
             } catch (err) {
                 console.error("Error fetching law:", err);
@@ -140,8 +161,8 @@ export default function NativeLawViewer() {
                 setLoading(false);
             }
         }
-        if (lawId) fetchLaw();
-    }, [lawId]);
+        fetchLaw();
+    }, [lawId, firestore]);
 
     // Filtered Paragraphs based on search
     const filteredChapters = useMemo(() => {
