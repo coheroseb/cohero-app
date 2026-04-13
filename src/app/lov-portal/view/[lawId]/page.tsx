@@ -2,9 +2,19 @@
 'use client';
 
 import React from 'react';
-import { LovPortalViewer } from '@/components/lov-portal/LovPortalViewer';
-import NativeLawViewer from '@/components/native/NativeLawViewer';
+import dynamic from 'next/dynamic';
+import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { Capacitor } from '@capacitor/core';
+
+const LovPortalViewer = dynamic(
+    () => import('@/components/lov-portal/LovPortalViewer').then(mod => mod.LovPortalViewer),
+    { ssr: false, loading: () => <AuthLoadingScreen /> }
+);
+
+const NativeLawViewer = dynamic(
+    () => import('@/components/native/NativeLawViewer'),
+    { ssr: false, loading: () => <AuthLoadingScreen /> }
+);
 
 export default function LawViewPage() {
     const [isNative, setIsNative] = React.useState(false);
