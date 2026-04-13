@@ -29,10 +29,10 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
 
   const tabs = [
     { name: 'Hjem', icon: Home, href: '/portal' },
-    { name: 'Søg', icon: Search, href: '/search' },
-    { name: 'Gemt', icon: Bookmark, href: '/saved' },
+    { name: 'Søg', icon: Search, href: '/concept-explainer' },
+    { name: 'Gemt', icon: Bookmark, href: '/mine-gemte-begreber' },
     { name: 'Notifikationer', icon: Bell, href: '/notifications' },
-    { name: 'Profil', icon: User, href: '/profile' },
+    { name: 'Profil', icon: User, href: '/settings' },
   ];
 
   return (
