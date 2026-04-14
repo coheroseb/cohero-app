@@ -1,5 +1,5 @@
 import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
+import { googleAI, gemini15Flash } from '@genkit-ai/googleai';
 import { logAiUsage } from '../lib/usage-tracker';
 
 /**
@@ -58,3 +58,4 @@ export const ai = genkit({
   // @ts-ignore - Genkit 1.x middleware array
   middleware: [trackingMiddleware]
 });
+

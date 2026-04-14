@@ -1,14 +1,8 @@
-import { genkit } from 'genkit';
-import { gemini15Flash } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { 
   AnalyzeScientificParadigmInputSchema, 
   AnalyzeScientificParadigmOutputSchema 
 } from './types';
-
-const ai = genkit({
-  plugins: [],
-  model: gemini15Flash,
-});
 
 export const analyzeScientificParadigmFlow = ai.defineFlow(
   {
@@ -20,7 +14,6 @@ export const analyzeScientificParadigmFlow = ai.defineFlow(
     const { problemStatement } = input;
 
     const response = await ai.generate({
-      model: gemini15Flash,
       prompt: `
         Du er en ekspert i videnskabsteori, specifikt inden for socialt arbejde og samfundsvidenskab.
         Din opgave er at analysere en problemformulering og identificere dens videnskabsteoretiske fundament.
