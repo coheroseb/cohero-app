@@ -1,5 +1,5 @@
 import { genkit } from 'genkit';
-import { googleAI, gemini15Flash } from '@genkit-ai/googleai';
+import { googleAI } from '@genkit-ai/googleai';
 import { logAiUsage } from '../lib/usage-tracker';
 
 /**
