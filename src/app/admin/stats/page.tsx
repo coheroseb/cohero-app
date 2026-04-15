@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   MousePointer2,
+  Calendar,
   CalendarDays,
   Sparkles,
   AlertTriangle,
