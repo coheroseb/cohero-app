@@ -9,7 +9,7 @@ import {
   Loader2, 
   GraduationCap, 
   MapPin, 
-  Calendar,
+  CalendarDays,
   Layers,
   CheckCircle2,
   Users,
@@ -181,7 +181,7 @@ export default function EducationStatsPage() {
                     title="Time-to-Grad" 
                     value={`${stats.avgMonths} mdr.`} 
                     subValue="EST. AVERAGE"
-                    icon={Calendar} 
+                    icon={CalendarDays} 
                     colorClass="bg-blue-50 text-blue-600 border-blue-100/50"
                 />
                 <StatCard 

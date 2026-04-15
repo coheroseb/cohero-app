@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Bookmark, ChevronRight, Trash2, Mail, Phone, MessageSquare, FileText, AlertTriangle, CheckCircle, Lightbulb, User, Calendar, Hash } from 'lucide-react';
+import { Bookmark, ChevronRight, Trash2, Mail, Phone, MessageSquare, FileText, AlertTriangle, CheckCircle, Lightbulb, User, Hash } from 'lucide-react';
 
 export const GlassCard = memo(({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
     <div className={`backdrop-blur-xl bg-white/70 border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] rounded-[2.5rem] ${className}`}>

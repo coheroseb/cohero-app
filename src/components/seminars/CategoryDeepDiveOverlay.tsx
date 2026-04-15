@@ -8,7 +8,7 @@ import {
   BrainCircuit, 
   BookOpen, 
   Trophy, 
-  Calendar, 
+  CalendarDays, 
   Target, 
   Zap, 
   ChevronRight,
@@ -202,7 +202,7 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                   label: 'Forskning', 
                   icon: isResearchLocked ? <div className="relative"><Globe className="w-4 h-4" /><div className="absolute -top-1 -right-1 bg-amber-500 w-2 h-2 rounded-full border border-white" /></div> : <Globe className="w-4 h-4" /> 
                 },
-                { id: 'timeline', label: 'Tidslinje', icon: <Calendar className="w-4 h-4" /> },
+                { id: 'timeline', label: 'Tidslinje', icon: <CalendarDays className="w-4 h-4" /> },
                 { id: 'plan', label: 'Studieplan', icon: <ClipboardList className="w-4 h-4" /> },
               ].map(tab => (
                 <button
@@ -1233,7 +1233,7 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
                         
                         <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-indigo-200 hover:-translate-y-1 transition-all duration-500 cursor-pointer overflow-hidden relative" onClick={() => onOpenSeminar(s)}>
                              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                <Calendar className="w-16 h-16 text-slate-900" />
+                                <CalendarDays className="w-16 h-16 text-slate-900" />
                              </div>
                              <div className="flex items-center justify-between mb-4">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">

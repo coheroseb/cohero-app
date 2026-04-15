@@ -13,8 +13,7 @@ import {
   Scale, 
   Wrench, 
   BrainCircuit, 
-  CheckCircle,
-  Calendar,
+  CalendarDays,
   X,
   BookOpen,
   ArrowRight,
@@ -59,7 +58,7 @@ const SharedSeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void }>
         </div>
         <h3 className="text-xl font-black text-slate-900 serif leading-tight mb-2 truncate group-hover:text-indigo-800 transition-colors">{seminar.overallTitle}</h3>
         <div className="flex items-center gap-4 text-[11px] font-bold text-slate-400 mt-auto">
-          <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
+          <div className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
           <div className="flex items-center gap-1.5 tracking-widest uppercase text-[10px]">{seminar.slides?.length || 0} Slides</div>
         </div>
       </div>

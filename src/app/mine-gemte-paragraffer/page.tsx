@@ -11,7 +11,7 @@ import {
   Loader2, 
   Scale,
   FileText,
-  Calendar,
+  CalendarDays,
   History,
   ChevronRight,
   Gavel,
@@ -394,7 +394,7 @@ export default function MineGemteParagrafferPage() {
                                             <div className="flex items-center justify-between pt-6 border-t border-amber-50">
                                                 <div className="flex items-center gap-6">
                                                     <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                        <Calendar className="w-3.5 h-3.5" />
+                                                        <CalendarDays className="w-3.5 h-3.5" />
                                                         {para.savedAt?.toDate().toLocaleDateString('da-DK')}
                                                     </div>
                                                     {para.collectionId && (

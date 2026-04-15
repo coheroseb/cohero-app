@@ -20,7 +20,7 @@ import {
   CheckCircle,
   Trophy,
   ChevronRight,
-  Calendar,
+  CalendarDays,
   Sparkles,
   X,
   ChevronDown,
@@ -1009,7 +1009,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
             </span>
         )}
         <div className="flex items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-bold text-slate-400 mt-auto">
-          <div className="flex items-center gap-1 whitespace-nowrap"><Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
+          <div className="flex items-center gap-1 whitespace-nowrap"><CalendarDays className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
           <div className="flex items-center gap-1 tracking-widest uppercase text-[8px] sm:text-[10px] whitespace-nowrap">{seminar.slides?.length || 0} Slides</div>
         </div>
       </div>

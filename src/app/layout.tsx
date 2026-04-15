@@ -59,6 +59,9 @@ export async function generateMetadata(): Promise<Metadata> {
       'apple-mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-status-bar-style': 'black-translucent',
     },
+    icons: {
+      apple: '/App_Icon.png',
+    },
     keywords: keywords,
     authors: [{ name: 'Cohéro Team', url: `${siteUrl}/om-os` }],
     creator: 'Cohéro I/S',

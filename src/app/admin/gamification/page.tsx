@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-    Trophy, Sparkles, Plus, Calendar, Target, Gift, 
+    Trophy, Sparkles, Plus, CalendarDays, Target, Gift, 
     Trash2, Loader2, ChevronRight, Award, 
     Users, Activity, Timer, Zap, History,
     CheckCircle2, AlertCircle, TrendingUp
@@ -266,13 +266,13 @@ export default function GamificationAdminPage() {
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-4">
                                         <label className="text-[10px] font-black uppercase text-slate-400 px-2 tracking-widest flex items-center gap-2">
-                                            <Calendar className="w-3.5 h-3.5 text-indigo-500" /> Start Dato
+                                            <CalendarDays className="w-3.5 h-3.5 text-indigo-500" /> Start Dato
                                         </label>
                                         <input type="date" value={newStartDate} onChange={e => setNewStartDate(e.target.value)} className="w-full h-16 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-bold text-slate-900 text-sm" />
                                     </div>
                                     <div className="space-y-4">
                                         <label className="text-[10px] font-black uppercase text-slate-400 px-2 tracking-widest flex items-center gap-2">
-                                            <Calendar className="w-3.5 h-3.5 text-indigo-500" /> Slut Dato
+                                            <CalendarDays className="w-3.5 h-3.5 text-indigo-500" /> Slut Dato
                                         </label>
                                         <input type="date" value={newEndDate} onChange={e => setNewEndDate(e.target.value)} className="w-full h-16 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-bold text-slate-900 text-sm" />
                                     </div>
@@ -336,7 +336,7 @@ const EventCard = ({ event, onDelete, onViewLeaderboard, isSelected }: { event: 
 
             <div className="space-y-4">
                 <div className="flex items-center gap-3 text-slate-500">
-                    <Calendar className="w-4 h-4 text-slate-300" />
+                    <CalendarDays className="w-4 h-4 text-slate-300" />
                     <span className="text-[10px] font-black uppercase tracking-widest">{new Date(event.startDate).toLocaleDateString('da-DK')} — {new Date(event.endDate).toLocaleDateString('da-DK')}</span>
                 </div>
                 <div className="flex items-center gap-3 text-slate-500">

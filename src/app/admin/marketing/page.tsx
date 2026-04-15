@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { Gift, Loader2, Copy, Check, PlusCircle, TrendingUp, Users, Activity, Trash2, Search, Filter, Download, Zap, ChevronRight, Calendar, Sparkles } from 'lucide-react';
+import { Gift, Loader2, Copy, Check, PlusCircle, TrendingUp, Users, Activity, Trash2, Search, Filter, Download, Zap, ChevronRight, CalendarDays, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { nanoid } from 'nanoid';
@@ -228,7 +228,7 @@ export default function AdminMarketingPage() {
                                             onChange={e => setDuration(Math.max(1, Number(e.target.value)))}
                                             className="rounded-2xl border-white/5 bg-white/5 text-white h-14 pl-6 text-lg font-bold focus:ring-amber-500/20 focus:border-amber-500/50 transition-all"
                                         />
-                                        <Calendar className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/10" />
+                                        <CalendarDays className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/10" />
                                     </div>
                                 </div>
 

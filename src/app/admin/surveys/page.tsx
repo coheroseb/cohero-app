@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, orderBy } from 'firebase/firestore';
-import { Plus, Trash2, Loader2, MessageSquare, Star, Users, Check, X, BarChart, ChevronDown, ChevronUp, PieChart, Pencil, Sparkles, Target, Settings2, Zap, ArrowRight } from 'lucide-react';
+import { Plus, Trash2, Loader2, MessageSquare, Star, Users, Check, X, BarChart, ChevronDown, ChevronUp, PieChart, Pencil, Sparkles, Target, Settings2, Zap, ArrowRight, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -364,7 +364,7 @@ const AdminSurveysPage = () => {
                         <span className="text-xs font-black text-slate-800 uppercase tracking-tight">{s.targetGroup}</span>
                       </div>
                       <div className="flex items-center gap-3 px-4 py-2 bg-indigo-50/50 border border-indigo-100 rounded-2xl group/tag hover:bg-white transition-colors">
-                        <Calendar className="w-4 h-4 text-indigo-600" />
+                        <CalendarDays className="w-4 h-4 text-indigo-600" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300">Deployed:</span>
                         <span className="text-xs font-black text-indigo-600">{s.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}</span>
                       </div>

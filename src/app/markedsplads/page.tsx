@@ -10,7 +10,7 @@ import {
   CheckCircle2, 
   Circle,
   MapPin,
-  Calendar,
+  CalendarDays,
   Loader2, 
   X,
   CreditCard,
@@ -594,7 +594,7 @@ const AssistanceMarketplaceContent = () => {
                                 </div>
                            )}
                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300">
-                             <Calendar className="w-3.5 h-3.5" />
+                             <CalendarDays className="w-3.5 h-3.5" />
                              {req.createdAt?.toDate ? new Date(req.createdAt.toDate()).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) : 'Lige nu'}
                            </div>
                         </div>

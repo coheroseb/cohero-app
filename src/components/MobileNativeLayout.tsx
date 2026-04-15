@@ -41,13 +41,11 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
   if (loading || (!user && pathname !== '/auth')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white animate-in fade-in duration-500">
-         <div className="flex flex-col items-center gap-4">
-            <div className="flex -space-x-1 items-end mb-2">
-              <div className="w-2 h-8 bg-amber-800 rounded-t-sm shadow-lg" />
-              <div className="w-2 h-12 bg-amber-950 rounded-t-sm shadow-lg" />
-              <div className="w-2 h-10 bg-amber-700 rounded-t-sm shadow-lg" />
+          <div className="flex flex-col items-center gap-6">
+            <div className="w-16 h-16 relative mb-2">
+              <img src="/App_Icon.png" alt="Cohéro Logo" className="w-full h-full object-contain rounded-[2rem] shadow-xl" />
             </div>
-            <h1 className="text-4xl font-black text-amber-950 serif tracking-tighter">Cohéro</h1>
+            <h1 className="text-3xl font-black text-amber-950 serif tracking-tighter">Cohéro</h1>
             <div className="w-12 h-1 bg-amber-100 rounded-full overflow-hidden mt-4">
               <div className="w-full h-full bg-amber-500 animate-[loading-bar_1.5s_infinite]" />
             </div>
@@ -85,8 +83,8 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-0 pt-[calc(44px+env(safe-area-inset-top))] pb-[calc(84px+env(safe-area-inset-bottom))] relative z-10">
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <main className="flex-1 min-h-0 pt-[calc(44px+env(safe-area-inset-top))] pb-[calc(84px+env(safe-area-inset-bottom))] relative z-10 overflow-x-hidden">
+        <div className="w-full max-w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
           {children}
         </div>
       </main>

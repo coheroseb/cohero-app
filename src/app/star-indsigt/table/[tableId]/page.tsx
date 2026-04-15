@@ -9,7 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
   Loader2, 
-  Calendar,
+  CalendarDays,
   Table as TableIcon,
   BarChart3,
   ChevronLeft,
@@ -284,7 +284,7 @@ const StarChart = ({ data, type = 'bar' }: { data: StarDataResult, type?: 'bar' 
                                         </div>
                                         <div className="text-sm font-bold mb-1">{d.formattedValue}</div>
                                         <div className="text-[9px] text-slate-400 font-medium flex items-center gap-1.5">
-                                            <Calendar className="w-3 h-3" /> {d.period}
+                                            <CalendarDays className="w-3 h-3" /> {d.period}
                                         </div>
                                     </div>
                                     <div className="w-3 h-3 bg-amber-950 absolute left-1/2 -translate-x-1/2 -bottom-1.5 rotate-45 border-r border-b border-white/10"></div>
@@ -714,7 +714,7 @@ export default function StarTableDetailsPage() {
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2">
-                                            <Calendar className="w-4 h-4 text-indigo-600" /> Perioder
+                                            <CalendarDays className="w-4 h-4 text-indigo-600" /> Perioder
                                         </label>
                                         <div className="flex gap-2">
                                             <button onClick={() => selectLatestPeriods(12)} className="text-[8px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 hover:bg-indigo-100 transition-colors uppercase">Seneste 12</button>

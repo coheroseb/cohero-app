@@ -14,7 +14,7 @@ import {
   Wrench, 
   BrainCircuit, 
   CheckCircle,
-  Calendar,
+  CalendarDays,
   X,
   BookOpen,
   ArrowRight,
@@ -258,7 +258,7 @@ export default function SharedSeminarPage({ params }: { params: { id: string } }
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight serif italic">{seminar.overallTitle}</h1>
                 <div className="flex flex-wrap items-center gap-6 pt-2">
                     <div className="flex items-center gap-2 text-slate-400">
-                        <Calendar className="w-4 h-4" />
+                        <CalendarDays className="w-4 h-4" />
                         <span className="text-sm font-bold">{seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</span>
                     </div>
                     <div className="w-1.5 h-1.5 rounded-full bg-slate-200 hidden md:block"></div>

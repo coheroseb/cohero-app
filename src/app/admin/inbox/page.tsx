@@ -13,7 +13,7 @@ import {
   RefreshCw, 
   Inbox, 
   User, 
-  Calendar, 
+  CalendarDays, 
   Trash2, 
   ArrowLeft,
   ChevronRight,
@@ -237,7 +237,7 @@ export default function InboxPage() {
                                         <div className="flex items-center gap-4 text-slate-400">
                                             <p className="text-xs font-medium flex items-center gap-1.5"><Globe className="w-3 h-3" /> Overvejer at skifte til Cohéro</p>
                                             <div className="w-1 h-1 bg-slate-200 rounded-full" />
-                                            <p className="text-xs font-medium flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {new Date(selectedEmail.date).toLocaleString('da-DK')}</p>
+                                            <p className="text-xs font-medium flex items-center gap-1.5"><CalendarDays className="w-3 h-3" /> {new Date(selectedEmail.date).toLocaleString('da-DK')}</p>
                                         </div>
                                     </div>
                                 </div>

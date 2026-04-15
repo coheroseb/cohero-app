@@ -14,7 +14,7 @@ import {
   Building,
   ChevronRight,
   Library,
-  Calendar,
+  CalendarDays,
   ArrowUpRight,
   RefreshCw,
   UploadCloud,
@@ -470,7 +470,7 @@ const ViveIndsigtPageContent: React.FC = () => {
                                                     <div className="relative z-10 flex flex-col h-full">
                                                         <div className="flex items-center justify-between mb-10">
                                                             <div className="px-5 py-2 bg-slate-50 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 group-hover:text-cyan-600 transition-colors">
-                                                                <Calendar className="w-4 h-4" /> {new Date(pub.publicationDate).toLocaleDateString('da-DK', { year: 'numeric', month: 'short' })}
+                                                                <CalendarDays className="w-4 h-4" /> {new Date(pub.publicationDate).toLocaleDateString('da-DK', { year: 'numeric', month: 'short' })}
                                                             </div>
                                                             <div className="flex items-center gap-3">
                                                                 <button 

@@ -18,7 +18,7 @@ import {
   ArrowRight,
   ChevronLeft,
   Sparkles,
-  Calendar
+  CalendarDays
 } from 'lucide-react';
 import { createAssistanceRequestAction } from '@/app/markedsplads/actions';
 import { useRouter } from 'next/navigation';
@@ -328,7 +328,7 @@ export default function PublicAssistanceRequestPage() {
                         <div className="space-y-4">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Hvornår skal det være løst?</label>
                             <div className="relative">
-                                <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <CalendarDays className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                 <input 
                                     type="text" 
                                     placeholder="F.eks. Inden fredag eller Hurtigst muligt"

@@ -10,7 +10,7 @@ import {
   Loader2,
   AlertTriangle,
   Info,
-  Calendar,
+  CalendarDays as CalendarDaysIcon,
   Clock,
   Flag,
   ChevronRight,
@@ -144,7 +144,7 @@ const WeekCard = ({ week, isExpanded, onToggle }: { week: any, isExpanded: boole
               ))}
               {week.events.length === 0 && (
                 <div className="p-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                    <Calendar className="w-5 h-5 text-slate-300 mx-auto mb-2" />
+                    <CalendarDaysIcon className="w-5 h-5 text-slate-300 mx-auto mb-2" />
                     <p className="text-xs text-slate-400 italic">Ingen planlagte aktiviteter denne uge.</p>
                 </div>
               )}

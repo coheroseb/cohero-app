@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, Calendar, RefreshCw, Sparkles, MessageCircle, Play, ChevronDown, CheckCircle2, MoreVertical, Edit2, Brain, UserCheck } from 'lucide-react';
+import { BookOpen, Scale, Loader2, Plus, Trash2, Globe, FileText, Tag, Hash, Save, X, Link as LinkIcon, FileCode, Building, RefreshCw, Sparkles, MessageCircle, Play, ChevronDown, CheckCircle2, MoreVertical, Edit2, Brain, UserCheck } from 'lucide-react';
 import { INSTITUTIONS, PROFESSION_OPTIONS } from '@/lib/constants';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';

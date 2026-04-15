@@ -6,7 +6,7 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { 
   Loader2, Search, Trash2, CheckCircle2, 
-  Lightbulb, Calendar, ArrowRight, Filter,
+  Lightbulb, CalendarDays, ArrowRight, Filter,
   TrendingUp, Star, Clock, Trash, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ interface FeatureRequest {
 
 const STATUS_CONFIG = {
   suggested: { label: 'Forslag', color: 'bg-slate-100 text-slate-600', icon: Lightbulb },
-  planned: { label: 'Planlagt', color: 'bg-indigo-100 text-indigo-700', icon: Calendar },
+  planned: { label: 'Planlagt', color: 'bg-indigo-100 text-indigo-700', icon: CalendarDays },
   'in-progress': { label: 'I gang', color: 'bg-amber-100 text-amber-700', icon: Clock },
   completed: { label: 'Fuldført', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
 };

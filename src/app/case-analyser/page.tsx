@@ -12,7 +12,7 @@ import {
   MapPin, 
   AlertCircle, 
   Scale, 
-  Calendar,
+  CalendarDays,
   ChevronRight,
   BookOpen,
   Sparkles,
@@ -586,7 +586,7 @@ const CaseAnalyserPage: React.FC = () => {
                     {/* Tidslinje */}
                     <section>
                         <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1 flex items-center gap-2">
-                           <Calendar className="w-3.5 h-3.5" /> Hændelsesforløb
+                           <CalendarDays className="w-3.5 h-3.5" /> Hændelsesforløb
                         </h3>
                         <div className="space-y-6 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-amber-100">
                             {analysis.tidslinje.map((t, i) => (

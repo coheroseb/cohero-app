@@ -112,9 +112,9 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       {/* Tabs / Segmented Control */}
-      <div className="px-5 pt-1 pb-4 sticky top-[calc(44px+env(safe-area-inset-top))] bg-slate-50/80 backdrop-blur-xl z-20">
+      <div className="w-full max-w-full px-5 pt-1 pb-4 sticky top-[calc(44px+env(safe-area-inset-top))] bg-slate-50/80 backdrop-blur-xl z-20 overflow-hidden box-border">
         <div className="flex bg-slate-200/50 p-1 rounded-2xl">
           {[
             { id: 'browse', label: 'Lovbøger', icon: BookOpen },
@@ -133,13 +133,10 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <div>
         {activeTab === 'browse' && (
-          <motion.div 
+          <div 
             key="browse" 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0, y: -10 }}
             className="px-5 pt-4 space-y-6"
           >
             {/* Search Input */}
@@ -155,7 +152,7 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
             </div>
 
             {/* Law List */}
-            <div className="grid gap-3">
+            <div className="w-full max-w-full grid grid-cols-1 gap-4 overflow-hidden">
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="h-24 bg-white/50 animate-pulse rounded-3xl border border-slate-100" />
@@ -165,16 +162,16 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
                   <button
                     key={law.id}
                     onClick={() => { triggerHapticFeedback(ImpactStyle.Medium); onLawClick(law.id); }}
-                    className="flex items-center gap-4 p-5 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-[0.98] transition-all text-left group"
+                    className="w-full max-w-full flex items-center gap-4 p-5 bg-white rounded-3xl border border-slate-100 shadow-sm active:bg-slate-50 transition-all text-left group overflow-hidden"
                   >
                     <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 group-active:bg-indigo-600 group-active:text-white transition-colors">
                       {law.abbreviation || 'LAW'}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-black text-slate-900 leading-tight truncate">{law.name}</h3>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{law.id === 'vum-plus' ? 'Støtte & Indsatser' : 'Social Lovgivning'}</p>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <h3 className="text-base font-black text-slate-900 leading-tight break-words whitespace-normal w-full">{law.name}</h3>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1 break-words whitespace-normal w-full">{law.id === 'vum-plus' ? 'Støtte & Indsatser' : 'Social Lovgivning'}</p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-300" />
+                    <ChevronRight className="w-5 h-5 text-slate-300 shrink-0" />
                   </button>
                 ))
               ) : (
@@ -184,15 +181,12 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {activeTab === 'reform' && (
-          <motion.div 
+          <div 
             key="reform" 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0, y: -10 }}
             className="px-5 pt-4 space-y-8"
           >
             <div className="bg-indigo-950 p-8 rounded-[3rem] text-white relative overflow-hidden shadow-2xl">
@@ -284,15 +278,12 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
                 </div>
               </div>
             )}
-          </motion.div>
+          </div>
         )}
 
         {activeTab === 'guide' && (
-          <motion.div 
+          <div 
             key="guide" 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0, y: -10 }}
             className="px-5 pt-4 space-y-6"
           >
             <div className="space-y-1">
@@ -300,12 +291,12 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
               <p className="text-slate-400 font-medium text-sm px-1">Vælg en situation og få lyn-vejledning i relevante paragraffer.</p>
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 gap-4">
               {SITUATIONS.map(s => (
                 <button
                   key={s.id}
                   onClick={() => triggerHapticFeedback(ImpactStyle.Medium)}
-                  className={`flex flex-col gap-4 p-6 bg-white border ${s.borderColor} rounded-[2.5rem] shadow-sm active:scale-[0.98] transition-all text-left group`}
+                  className="w-full max-w-full flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-3xl shadow-sm active:bg-slate-50 transition-all text-left group overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <div className={`w-12 h-12 ${s.color} rounded-2xl flex items-center justify-center shadow-sm`}>
@@ -313,9 +304,9 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
                     </div>
                     <ArrowRight className="w-5 h-5 text-slate-300 group-active:translate-x-1 transition-transform" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900">{s.title}</h3>
-                    <p className="text-[13px] font-medium text-slate-500 mt-1 leading-snug">{s.description}</p>
+                  <div className="w-full">
+                    <h3 className="text-xl font-black text-slate-900 break-words whitespace-normal">{s.title}</h3>
+                    <p className="text-[13px] font-medium text-slate-500 mt-1 leading-snug break-words whitespace-normal">{s.description}</p>
                   </div>
                 </button>
               ))}
@@ -325,9 +316,9 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
                <MessageSquare className="w-10 h-10 text-slate-300 mx-auto" />
                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 max-w-[200px] mx-auto leading-relaxed">Flere scenarier er tilgængelige i den fulde web-version</p>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 };

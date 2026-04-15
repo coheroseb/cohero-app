@@ -7,7 +7,7 @@ import { collection, query, doc, deleteDoc } from 'firebase/firestore';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
-  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, Calendar, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle,
+  Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle,
   CheckCircle2, XCircle, GraduationCap, Music, Facebook, Globe, Compass, Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -395,7 +395,7 @@ const AdminUsersPage = () => {
             disabled={isBulkLoading}
             className="rounded-2xl border-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest h-12 px-6 shadow-sm hover:bg-slate-50 transition-all"
           >
-            {isBulkLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Calendar className="w-4 h-4 mr-2" />}
+            {isBulkLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CalendarDays className="w-4 h-4 mr-2" />}
             Bulk Beregn Startdatoer
           </Button>
         </div>
@@ -472,7 +472,7 @@ const AdminUsersPage = () => {
                   </div>
 
                   <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
                       <div className="h-4 w-px bg-slate-200 mx-2"></div>
                       <select 
                         value={semesterFilter} 

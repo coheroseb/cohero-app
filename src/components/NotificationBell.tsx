@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, BellOff, Check, Trash2, Calendar, Sparkles, AlertCircle, Info, Clock, Zap } from 'lucide-react';
+import { Bell, BellOff, Check, Trash2, CalendarDays, Sparkles, AlertCircle, Info, Clock, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
@@ -154,7 +154,7 @@ const NotificationBell = () => {
                                                     n.type === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                                     'bg-slate-50 text-slate-400 border-slate-100'
                                                 }`}>
-                                                    {n.type === 'plan' ? <Calendar className="w-5 h-5" /> :
+                                                    {n.type === 'plan' ? <CalendarDays className="w-5 h-5" /> :
                                                      n.type === 'schedule' ? <Zap className="w-5 h-5" /> :
                                                      n.type === 'warning' ? <AlertCircle className="w-5 h-5" /> :
                                                      <Info className="w-5 h-5" />}

@@ -16,7 +16,7 @@ import {
   GraduationCap, 
   BookOpen,
   School,
-  Calendar,
+  CalendarDays,
   MoreVertical,
   CheckCircle2,
   AlertCircle
@@ -227,7 +227,7 @@ export default function AdminStudieordningerPage() {
                       
                       <div className="flex items-center justify-between pt-6 border-t border-slate-50">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5 text-slate-300" />
+                          <CalendarDays className="w-3.5 h-3.5 text-slate-300" />
                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{c.validFrom}</span>
                         </div>
                         <div className="flex items-center gap-2">

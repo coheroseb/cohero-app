@@ -23,7 +23,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   MousePointer2,
-  Calendar,
+  CalendarDays,
   Sparkles,
   AlertTriangle,
   Mail,
@@ -723,7 +723,7 @@ export default function StatsPage() {
                                                 </td>
                                                 <td className="px-8 py-6">
                                                     <div className="flex items-center gap-2 text-slate-600 font-bold text-sm">
-                                                        <Calendar className="w-4 h-4 opacity-30" />
+                                                        <CalendarDays className="w-4 h-4 opacity-30" />
                                                         {lastAct ? (lastAct.toDate ? lastAct.toDate() : new Date(lastAct)).toLocaleDateString('da-DK') : 'Aldrig'}
                                                     </div>
                                                 </td>

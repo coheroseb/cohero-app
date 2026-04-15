@@ -11,7 +11,7 @@ import {
   Loader2, 
   Building,
   FileText,
-  Calendar,
+  CalendarDays,
   ExternalLink,
   History,
   BookOpen,
@@ -176,7 +176,7 @@ export default function MineGemteArtiklerPage() {
                                     <div className="relative z-10 flex flex-col h-full">
                                         <div className="flex items-center justify-between mb-8">
                                             <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                                <Calendar className="w-3.5 h-3.5" />
+                                                <CalendarDays className="w-3.5 h-3.5" />
                                                 {article.publicationDate ? new Date(article.publicationDate).toLocaleDateString('da-DK', { year: 'numeric', month: 'short' }) : 'Ukendt'}
                                             </div>
                                             <div className="flex items-center gap-3">

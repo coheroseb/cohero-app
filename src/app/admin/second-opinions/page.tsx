@@ -4,7 +4,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, DocumentData, getDocs, doc, deleteDoc } from 'firebase/firestore';
-import { Loader2, CheckCircle, XCircle, ChevronDown, FileText, ThumbsUp, ThumbsDown, AlertTriangle, ListChecks, Trash2, Search, Calendar, User, Scale, ShieldCheck, Zap, Users } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, ChevronDown, FileText, ThumbsUp, ThumbsDown, AlertTriangle, ListChecks, Trash2, Search, CalendarDays, User, Scale, ShieldCheck, Zap, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -259,7 +259,7 @@ const SecondOpinionsPage = () => {
                                             <td className="px-10 py-8">
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2 text-slate-500 font-bold text-xs">
-                                                        <Calendar className="w-3.5 h-3.5" />
+                                                        <CalendarDays className="w-3.5 h-3.5" />
                                                         {opinion.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                     </div>
                                                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">ID: {opinion.id.slice(0, 8)}</p>

@@ -8,7 +8,7 @@ import {
   Sparkles, 
   Clock, 
   Target, 
-  Calendar, 
+  CalendarDays, 
   CheckCircle, 
   Loader2, 
   BrainCircuit, 
@@ -301,7 +301,7 @@ function StudieplanlaeggerContent() {
                                 <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
-                                            <Calendar className="w-6 h-6" />
+                                            <CalendarDays className="w-6 h-6" />
                                         </div>
                                         <div>
                                             <h3 className="text-lg font-black text-slate-900">Tilgængelighed</h3>

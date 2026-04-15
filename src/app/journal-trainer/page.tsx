@@ -19,7 +19,7 @@ import {
   Wand2,
   LineChart,
   User,
-  Calendar,
+  CalendarDays,
   Hash,
   Activity
 } from 'lucide-react';
@@ -372,7 +372,7 @@ const JournalTrainerPageContent: React.FC = () => {
                                                 )}
                                                 {activeScenario.citizenBirthday && (
                                                     <div className="flex items-center gap-3">
-                                                        <Calendar className="w-3.5 h-3.5 text-amber-900/40" />
+                                                        <CalendarDays className="w-3.5 h-3.5 text-amber-900/40" />
                                                         <span className="text-[10px] font-bold text-amber-900/60 uppercase tracking-wider">{activeScenario.citizenBirthday}</span>
                                                     </div>
                                                 )}

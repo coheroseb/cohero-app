@@ -19,7 +19,7 @@ import {
   Save, 
   X, 
   Download, 
-  Calendar, 
+  CalendarDays as CalendarDaysIcon, 
   Wand2, 
   CheckCircle, 
   ListOrdered, 
@@ -211,7 +211,7 @@ const PlanDetailView: React.FC<{
 
             <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
                <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
-                  <Calendar className="w-6 h-6" />
+                  <CalendarDaysIcon className="w-6 h-6" />
                </div>
                <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aktuelle Uge</p>
@@ -763,7 +763,7 @@ function MineSemesterplanerPage() {
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                                             selectedId === p.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'
                                         }`}>
-                                            <Calendar className="w-5 h-5" />
+                                            <CalendarDaysIcon className="w-5 h-5" />
                                         </div>
                                         <div className="min-w-0 pr-6">
                                             <p className={`text-xs font-black truncate ${selectedId === p.id ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}>
