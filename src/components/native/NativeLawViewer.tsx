@@ -135,18 +135,22 @@ export default function NativeLawViewer() {
             if (!lawId || !firestore) return;
             setLoading(true);
             try {
-                // We call the server action immediately with the ID.
-                // The server is now equipped to resolve the missing metadata itself.
+                // We use params from URL as primary source to avoid database lookups if possible
+                const nameFallback = searchParams.get('name') || 'Henter...';
+                const abbrFallback = searchParams.get('abbr') || 'LOV';
+                const xmlFallback = searchParams.get('xml') || '';
+
                 const result = await getLawContentAction({
                     documentId: lawId.trim(),
-                    name: 'Henter...', 
-                    abbreviation: 'LOV'
+                    name: nameFallback,
+                    abbreviation: abbrFallback,
+                    xmlUrl: xmlFallback // Pass the URL directly from the click
                 });
 
                 if (result.success && result.data) {
                     setLawData(result.data);
                 } else {
-                    console.error("Server-side fetch failed for ID:", lawId);
+                    console.error("Server-side fetch failed for ID:", lawId, result.message);
                 }
             } catch (err) {
                 console.error("Fatal error fetching law:", err);

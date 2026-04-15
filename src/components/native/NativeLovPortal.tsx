@@ -161,7 +161,10 @@ const NativeLovPortal: React.FC<NativeLovPortalProps> = ({
                 filteredLaws.map((law, i) => (
                   <button
                     key={law.id}
-                    onClick={() => { triggerHapticFeedback(ImpactStyle.Medium); onLawClick(law.id); }}
+                    onClick={() => { 
+                      triggerHapticFeedback(ImpactStyle.Medium); 
+                      onLawClick(`${law.id}?name=${encodeURIComponent(law.name)}&abbr=${encodeURIComponent(law.abbreviation || '')}&xml=${encodeURIComponent(law.xmlUrl || '')}`); 
+                    }}
                     className="w-full max-w-full flex items-center gap-4 p-5 bg-white rounded-3xl border border-slate-100 shadow-sm active:bg-slate-50 transition-all text-left group overflow-hidden"
                   >
                     <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 group-active:bg-indigo-600 group-active:text-white transition-colors">
