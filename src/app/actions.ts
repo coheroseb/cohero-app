@@ -3438,6 +3438,25 @@ export async function sendProofreadingQuoteRequestAction(input: {
     try {
         const { name, email, charCount, estimatedPrice, deadline, message } = input;
         
+        // Save to Firestore for administration
+        try {
+            const { adminFirestore } = await import('@/firebase/server-init');
+            const { FieldValue } = await import('firebase-admin/firestore');
+            await adminFirestore.collection('proofreadingRequests').add({
+                name,
+                email,
+                charCount,
+                estimatedPrice,
+                deadline,
+                message: message || "",
+                status: 'pending', // pending, contact_made, completed, rejected
+                createdAt: FieldValue.serverTimestamp(),
+            });
+        } catch (fsError) {
+            console.error("Failed to save proofreading request to Firestore:", fsError);
+            // We continue anyway so the email is still sent even if logging fails
+        }
+
         await resend.emails.send({
             from: 'Cohéro Korrektur <info@platform.cohero.dk>',
             to: 'seb@cohero.dk',
@@ -3478,6 +3497,23 @@ export async function sendProofreadingQuoteRequestAction(input: {
     } catch (error: any) {
         console.error("Failed to send quote request email:", error);
         return { success: false, message: "Der skete en fejl. Prøv venligst igen senere." };
+    }
+}
+
+/**
+ * updateProofreadingRequestStatusAction:
+ * Updates the administrative status of a proofreading request in Firestore.
+ */
+export async function updateProofreadingRequestStatusAction(requestId: string, newStatus: 'pending' | 'contacted' | 'completed' | 'rejected') {
+    try {
+        const { adminFirestore } = await import('@/firebase/server-init');
+        await adminFirestore.collection('proofreadingRequests').doc(requestId).update({
+            status: newStatus
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update status:", error);
+        return { success: false };
     }
 }
 
