@@ -110,7 +110,10 @@ export default function NativeLawViewer() {
     const { user, userProfile } = useApp();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const lawId = params.lawId as string;
+    
+    // Robust lawId extraction (handles both [lawId] and potential [id] variations)
+    const lawIdFromParams = params?.lawId || params?.id;
+    const lawId = lawIdFromParams as string;
     const initialPara = searchParams.get('para');
 
     const [lawData, setLawData] = useState<LawContentType | null>(null);
@@ -275,7 +278,9 @@ export default function NativeLawViewer() {
                     <Scale className="w-10 h-10" />
                 </div>
                 <h3 className="text-xl font-black text-amber-950 serif">Lov ikke fundet</h3>
-                <p className="text-sm text-slate-500">Vi kunne ikke finde den ønskede lov i arkivet.</p>
+                <p className="text-sm text-slate-500">
+                    Vi kunne ikke finde loven med ID: <code className="bg-slate-100 px-1 rounded">{lawId || 'mangler'}</code>
+                </p>
                 <Button onClick={() => router.push('/lov-portal')} className="mt-4">Gå tilbage</Button>
             </div>
         );
