@@ -135,42 +135,21 @@ export default function NativeLawViewer() {
             if (!lawId || !firestore) return;
             setLoading(true);
             try {
-                // 1. Fetch metadata from 'laws' collection - Try client-side first
-                const lawRef = doc(firestore, 'laws', lawId.trim());
-                let lawSnap = await getDoc(lawRef);
-                let lawMeta: LawConfig | null = null;
-                
-                if (lawSnap.exists()) {
-                    lawMeta = { id: lawSnap.id, ...lawSnap.data() } as LawConfig;
-                } else {
-                    // FALLBACK 1: Try searching the collection locally
-                    const q = query(collection(firestore, 'laws'));
-                    const snap = await getDocs(q);
-                    const found = snap.docs.find(d => d.id === lawId.trim());
-                    if (found) {
-                        lawMeta = { id: found.id, ...found.data() } as LawConfig;
-                    }
-                }
-
-                // FALLBACK 2: If client-side still fails, we'll try to let the server-action find it
-                // We'll pass the documentId as the lawId and hope the server-side logic can resolve it
-                // using its internal admin-sdk access.
-
-                // 2. Fetch full content using the server action
+                // We call the server action immediately with the ID.
+                // The server is now equipped to resolve the missing metadata itself.
                 const result = await getLawContentAction({
-                    documentId: lawId.trim(), // We use the ID directly here
-                    name: 'Henter...', // Fallback name
+                    documentId: lawId.trim(),
+                    name: 'Henter...', 
                     abbreviation: 'LOV'
                 });
 
                 if (result.success && result.data) {
                     setLawData(result.data);
-                } else if (!lawMeta) {
-                    // If even the server-action couldn't find it and we have no meta
-                    console.error("Law not found even with server fallback");
+                } else {
+                    console.error("Server-side fetch failed for ID:", lawId);
                 }
             } catch (err) {
-                console.error("Error fetching law:", err);
+                console.error("Fatal error fetching law:", err);
             } finally {
                 setLoading(false);
             }
