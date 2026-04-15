@@ -54,46 +54,52 @@ const navigationGroups = [
     title: 'Operations',
     items: [
       { id: 'overview', href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-      { id: 'realtime', href: '/admin/realtime', label: 'Live Platform Puls', icon: Activity },
       { id: 'users', href: '/admin/users', label: 'Brugerstyring', icon: Users },
+      { id: 'realtime', href: '/admin/realtime', label: 'Live Platform Puls', icon: Activity },
       { id: 'finans', href: '/admin/finans', label: 'Økonomi & MMR', icon: TrendingUp },
-      { id: 'stats', href: '/admin/stats', label: 'Bruger-Analyse & Retention', icon: BarChart },
+      { id: 'stats', href: '/admin/stats', label: 'Bruger-Analyse', icon: BarChart },
       { id: 'costs', href: '/admin/costs', label: 'AI Omkostninger', icon: CreditCard },
     ]
   },
   {
-    title: 'Vækst & Marked',
+    title: 'Marketing & Leads',
     items: [
+        { id: 'korrektur', href: '/admin/korrektur', label: 'Korrektur-styring', icon: FileSearch },
         { id: 'markedsplads', href: '/admin/markedsplads', label: 'Markedsplads', icon: HandHelping },
         { id: 'marketing', href: '/admin/marketing', label: 'Koder & Tilbud', icon: Sparkles },
+        { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
         { id: 'emails', href: '/admin/emails', label: 'E-mail Blasts', icon: Mail },
         { id: 'inbox', href: '/admin/inbox', label: 'Indbakke (Simply)', icon: Inbox },
-        { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
         { id: 'seo', href: '/admin/seo', label: 'SEO & Meta-Data', icon: Globe },
     ]
   },
   {
-    title: 'Intelligence',
+    title: 'Indhold & Intelligence',
     items: [
+        { id: 'content', href: '/admin/content', label: 'Platform Indhold', icon: BookOpen },
+        { id: 'begreber', href: '/admin/begreber', label: 'Faglige Begreber', icon: Lightbulb },
         { id: 'education', href: '/admin/education', label: 'Uddannelsesdata', icon: GraduationCap },
-        { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: BookOpen },
+        { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: Layers },
         { id: 'dokument-analysator', href: '/admin/dokument-analysator', label: 'PDF Dokument Analysator', icon: FileSearch },
-        { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
-        { id: 'support', href: '/admin/support', label: 'Support & Tickets', icon: ShieldAlert },
-        { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
-        { id: 'second-opinion-decisions', href: '/admin/second-opinions/decisions', label: 'S.O. Afgørelser', icon: Gavel },
-        { id: 'gamification', href: '/admin/gamification', label: 'Challenges & Ritualer', icon: Trophy },
-        { id: 'medbestemmelse', href: '/admin/medbestemmelse', label: 'Medbestemmelse', icon: Lightbulb },
     ]
   },
   {
-    title: 'System & Indhold',
+    title: 'Brugeroplevelse',
     items: [
-        { id: 'content', href: '/admin/content', label: 'Platform Indhold', icon: BookOpen },
         { id: 'notifications', href: '/admin/notifications', label: 'Push Beskeder', icon: Bell },
+        { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
+        { id: 'support', href: '/admin/support', label: 'Support & Tickets', icon: ShieldAlert },
+        { id: 'gamification', href: '/admin/gamification', label: 'Challenges & Ritualer', icon: Trophy },
+        { id: 'medbestemmelse', href: '/admin/medbestemmelse', label: 'Medbestemmelse', icon: Sparkles },
+        { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
+    ]
+  },
+  {
+    title: 'Sikkerhed & System',
+    items: [
         { id: 'audit-logs', href: '/admin/audit-logs', label: 'Audit Logs', icon: HistoryIcon },
         { id: 'system', href: '/admin/system', label: 'System Puls', icon: Database },
-        { id: 'security', href: '/admin/system/security', label: 'Sikkerhed & Deling', icon: ShieldAlert },
+        { id: 'security', href: '/admin/system/security', label: 'Sikkerhed & Deling', icon: Shield },
         { id: 'compliance', href: '/admin/system/compliance', label: 'Juridisk & GDPR', icon: Gavel },
     ]
   }
