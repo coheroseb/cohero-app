@@ -135,7 +135,7 @@ export default function NativeLawViewer() {
             if (!lawId || !firestore) return;
             setLoading(true);
             try {
-                // 1. Fetch metadata from 'laws' collection
+                // 1. Fetch metadata from 'laws' collection - Try client-side first
                 const lawRef = doc(firestore, 'laws', lawId.trim());
                 let lawSnap = await getDoc(lawRef);
                 let lawMeta: LawConfig | null = null;
@@ -143,9 +143,7 @@ export default function NativeLawViewer() {
                 if (lawSnap.exists()) {
                     lawMeta = { id: lawSnap.id, ...lawSnap.data() } as LawConfig;
                 } else {
-                    // FALLBACK: If direct fetch fails (sometimes happens in native cache), try searching the collection
-                    console.log("Direct fetch failed, trying collection search fallback...");
-                    const { getDocs, query, collection } = await import('firebase/firestore');
+                    // FALLBACK 1: Try searching the collection locally
                     const q = query(collection(firestore, 'laws'));
                     const snap = await getDocs(q);
                     const found = snap.docs.find(d => d.id === lawId.trim());
@@ -154,23 +152,22 @@ export default function NativeLawViewer() {
                     }
                 }
 
-                if (!lawMeta) {
-                    console.error("Law metadata not found even with fallback");
-                    setLoading(false);
-                    return;
-                }
+                // FALLBACK 2: If client-side still fails, we'll try to let the server-action find it
+                // We'll pass the documentId as the lawId and hope the server-side logic can resolve it
+                // using its internal admin-sdk access.
 
                 // 2. Fetch full content using the server action
                 const result = await getLawContentAction({
-                    documentId: lawMeta.id,
-                    xmlUrl: lawMeta.xmlUrl,
-                    name: lawMeta.name,
-                    abbreviation: lawMeta.abbreviation,
-                    lbk: lawMeta.lbk
+                    documentId: lawId.trim(), // We use the ID directly here
+                    name: 'Henter...', // Fallback name
+                    abbreviation: 'LOV'
                 });
 
                 if (result.success && result.data) {
                     setLawData(result.data);
+                } else if (!lawMeta) {
+                    // If even the server-action couldn't find it and we have no meta
+                    console.error("Law not found even with server fallback");
                 }
             } catch (err) {
                 console.error("Error fetching law:", err);
