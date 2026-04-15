@@ -634,7 +634,27 @@ export async function generateWelcomeEmailAction(input: { userName: string, user
 }
 
 export async function extractLawInfoAction(input: any) { return callFirebaseFlow('extractLawInfoFromUrlFlow', input); }
-export async function getLawContentAction(input: any) { return callFirebaseFlow('getLawContentFlow', input); }
+export async function getLawContentAction(input: any) { 
+    // If we're missing the xmlUrl, we attempt to fetch it from Firestore first
+    if (!input.xmlUrl && input.documentId) {
+        try {
+            const doc = await adminFirestore.collection('laws').doc(input.documentId).get();
+            if (doc.exists) {
+                const data = doc.data();
+                input.xmlUrl = data?.xmlUrl;
+                input.name = input.name === 'Henter...' ? data?.name : input.name;
+                input.abbreviation = input.abbreviation === 'LOV' ? data?.abbreviation : input.abbreviation;
+                input.lbk = data?.lbk;
+            }
+        } catch (e) {
+            console.error("Failed to resolve law metadata on server:", e);
+        }
+    }
+    
+    // If we still don't have a URL, the flow will naturally fail with a Zod error,
+    // but at least we tried our best to resolve it.
+    return callFirebaseFlow('getLawContentFlow', input); 
+}
 
 export async function explainLawParagraphAction(input: { lawId: string, lovTitel: string, paragrafNummer: string, paragrafTekst: string }): Promise<Types.ExplainLawParagraphOutput> {
     const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: input.lawId, name: input.lovTitel });
