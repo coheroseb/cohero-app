@@ -135,17 +135,30 @@ export default function NativeLawViewer() {
             if (!lawId || !firestore) return;
             setLoading(true);
             try {
-                // 1. Fetch metadata from 'laws' collection first
-                const lawRef = doc(firestore, 'laws', lawId);
-                const lawSnap = await getDoc(lawRef);
+                // 1. Fetch metadata from 'laws' collection
+                const lawRef = doc(firestore, 'laws', lawId.trim());
+                let lawSnap = await getDoc(lawRef);
+                let lawMeta: LawConfig | null = null;
                 
-                if (!lawSnap.exists()) {
-                    console.error("Law metadata not found in Firestore");
+                if (lawSnap.exists()) {
+                    lawMeta = { id: lawSnap.id, ...lawSnap.data() } as LawConfig;
+                } else {
+                    // FALLBACK: If direct fetch fails (sometimes happens in native cache), try searching the collection
+                    console.log("Direct fetch failed, trying collection search fallback...");
+                    const { getDocs, query, collection } = await import('firebase/firestore');
+                    const q = query(collection(firestore, 'laws'));
+                    const snap = await getDocs(q);
+                    const found = snap.docs.find(d => d.id === lawId.trim());
+                    if (found) {
+                        lawMeta = { id: found.id, ...found.data() } as LawConfig;
+                    }
+                }
+
+                if (!lawMeta) {
+                    console.error("Law metadata not found even with fallback");
                     setLoading(false);
                     return;
                 }
-
-                const lawMeta = { id: lawSnap.id, ...lawSnap.data() } as LawConfig;
 
                 // 2. Fetch full content using the server action
                 const result = await getLawContentAction({
