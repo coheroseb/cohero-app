@@ -677,22 +677,42 @@ export async function analyzeParagraphAction(input: { lovTitel: string, paragraf
                 fetch(`https://www.retsinformation.dk/api/document/documentLinks/6/${input.uniqueDocumentId}`).then(r => r.ok ? r.json() : [])
             ]);
 
-            const guidelines = (guidelinesRes || []).filter((g: any) => g.shortName?.startsWith('VEJ'));
-            // All decisions from the link are relevant
-            const decisions = (decisionsRes || []).filter((d: any) => !d.isHistoryFlag && !d.isHistorical);
+            const guidelines = (guidelinesRes || []).filter((g: any) => g.shortName?.startsWith('VEJ')).slice(0, 2);
+            const decisions = (decisionsRes || []).filter((d: any) => !d.isHistoryFlag && !d.isHistorical).slice(0, 2);
 
-            const urls = [...guidelines, ...decisions].map((item: any) => {
+            const linkItems = [...guidelines, ...decisions];
+            
+            // INNOVATION: Fetch and parse the actual XML content of these related documents
+            const contextData = await Promise.all(linkItems.map(async (item: any) => {
                 const path = item.eliPath || item.href || '';
                 if (!path) return null;
-                const base = path.startsWith('http') ? path : `https://www.retsinformation.dk${path}`;
-                return `${base}/xml`;
-            }).filter(Boolean);
+                const xmlUrl = path.startsWith('http') ? (path.endsWith('/xml') ? path : `${path}/xml`) : `https://www.retsinformation.dk${path}/xml`;
+                
+                try {
+                    const res = await fetch(xmlUrl);
+                    if (!res.ok) return null;
+                    const xmlText = await res.text();
+                    
+                    // Use our library parser to get clean text
+                    const { parseRetsinformationXml, extractText } = await import('@/lib/law-engine/xml-parser');
+                    const parsed = parseRetsinformationXml(xmlText, item.shortName || item.title);
+                    
+                    // Summarize the most relevant part (e.g. the first few chapters or anything related to the specific paragraph)
+                    const fullCleanText = parsed.kapitler.map(c => `${c.nummer} ${c.titel}\n${c.paragraffer.map(p => p.tekst).join('\n')}`).join('\n\n');
+                    
+                    return `--- KILDE: ${item.shortName || item.title} ---\n${fullCleanText.substring(0, 3000)}... [Forkortet for viden-densitet]`;
+                } catch (e) {
+                    return null;
+                }
+            }));
 
-            if (urls.length > 0) {
-                urlContext = "AUTORITATIV URL KONTEKST (GEMINI: Hent og inddrag disse XML-kilder i din målgruppevurdering for at sikre praksis-validitet):\n" + urls.join('\n');
+            const validContexts = contextData.filter(Boolean);
+
+            if (validContexts.length > 0) {
+                urlContext = "AUTORITATIV PRAKSIS-KONTEKST (Inddrag disse specifikke vejledninger og afgørelser i din vurdering):\n\n" + validContexts.join('\n\n');
             }
         } catch (e) {
-            console.error("Failed to fetch related context links:", e);
+            console.error("Failed to fetch deep context links:", e);
         }
     }
 
@@ -3394,5 +3414,70 @@ export async function analyzeAdminDocumentAction(input: any) { return callFireba
 
 export async function chatWithGuidelineContentAction(input: Types.GuidelineChatInput): Promise<Types.GuidelineChatOutput> {
     return callFirebaseFlow('chatWithGuidelineContentFlow', input);
+}
+
+/**
+ * sendProofreadingQuoteRequestAction:
+ * Sends an email to seb@cohero.dk via Resend when a user requests a proofreading quote.
+ */
+export async function sendProofreadingQuoteRequestAction(input: { 
+    name: string, 
+    email: string, 
+    charCount: number, 
+    estimatedPrice: number, 
+    deadline: string,
+    message?: string 
+}) {
+    const { isResendConfigured, resend } = await import('@/lib/resend');
+    
+    if (!isResendConfigured) {
+        console.error("Resend is not configured.");
+        return { success: false, message: "Email-serveren er ikke klar. Kontakt os direkte på kontakt@cohero.dk" };
+    }
+
+    try {
+        const { name, email, charCount, estimatedPrice, deadline, message } = input;
+        
+        await resend.emails.send({
+            from: 'Cohéro Korrektur <info@platform.cohero.dk>',
+            to: 'seb@cohero.dk',
+            reply_to: email,
+            subject: `Korrektur-forespørgsel: ${name} (${charCount.toLocaleString()} tegn)`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h1 style="color: #451a03; font-size: 24px; font-weight: 800; margin-bottom: 24px;">Ny Tilbudsanmodning</h1>
+                    <div style="background-color: #fffbeb; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <p><strong>Kunde:</strong> ${name}</p>
+                        <p><strong>Email:</strong> ${email}</p>
+                        <p><strong>Antal tegn:</strong> ${charCount.toLocaleString()}</p>
+                        <p><strong>Anslået pris:</strong> ${estimatedPrice} kr.</p>
+                        <p><strong>Ønsket deadline:</strong> ${deadline}</p>
+                    </div>
+                    <p><strong>Besked:</strong></p>
+                    <p style="background-color: #f8fafc; padding: 15px; border-radius: 8px; font-style: italic;">${message || "Ingen besked."}</p>
+                </div>
+            `,
+        });
+
+        // Confirmation to user
+        await resend.emails.send({
+            from: 'Cohéro <info@platform.cohero.dk>',
+            to: email,
+            subject: 'Vi har modtaget din forespørgsel om korrektur',
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h1 style="color: #451a03; font-size: 24px; font-weight: 800; margin-bottom: 24px;">Tak for din forespørgsel!</h1>
+                    <p>Vi har modtaget din anmodning om korrekturlæsning på <strong>${charCount.toLocaleString()} tegn</strong> med ønsket deadline d. <strong>${deadline}</strong>.</p>
+                    <p>Vi kigger på den nu og vender tilbage med en tidsplan hurtigst muligt.</p>
+                    <p>Med venlig hilsen,<br/>Team Cohéro</p>
+                </div>
+            `,
+        });
+
+        return { success: true, message: "Din forespørgsel er sendt! Vi vender tilbage hurtigst muligt." };
+    } catch (error: any) {
+        console.error("Failed to send quote request email:", error);
+        return { success: false, message: "Der skete en fejl. Prøv venligst igen senere." };
+    }
 }
 

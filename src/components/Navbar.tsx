@@ -322,6 +322,7 @@ const Navbar: React.FC<NavbarProps> = ({
         title: "Hovedmenu",
         items: [
           { title: "Hjem", path: "/portal", icon: <Home className="w-5 h-5" /> },
+          { title: "Korrektur", path: "/korrektur", icon: <Sparkles className="w-5 h-5" /> },
           { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
@@ -410,6 +411,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 ))}
 
                 <NavDropdown title="Mere" icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}>
+                   <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
                    <NavDropdownLink href="/videnskabsteori" icon={<Scale className="w-4 h-4 text-indigo-500" />}>Videnskabsteori</NavDropdownLink>
@@ -428,6 +430,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 <Link href="/hvorfor" className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Hvorfor Cohéro?</Link>
                 
                 <NavDropdown title="Udforsk" icon={<Wand2 className="w-4 h-4 text-amber-500" />}>
+                   <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
                    <NavDropdownLink href="https://ask.cohero.dk" icon={<HandHelping className="w-4 h-4 text-rose-500" />}>Spørg en studerende</NavDropdownLink>
                    <NavDropdownLink href="/om-second-opinion" icon={<Scale className="w-4 h-4 text-emerald-500" />}>Få en Second Opinion</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Giv praktik stjerner</NavDropdownLink>
