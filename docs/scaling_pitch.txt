@@ -1,0 +1,28 @@
+COHÉRO SKALERINGS PITCH: FRA STUDIEASSISTENT TIL MULTIKOMMUNAL INFRASTRUKTUR
+
+1. PROBLEMSTILLINGEN (THE GAP)
+Akademisk og juridisk sagsbehandling er præget af enorme datamængder og komplekse regelsæt. I dag bruger både studerende og kommunale sagsbehandlere op mod 60% af deres tid på informationssøgning og manuel validering frem for kerneopgaven.
+
+2. LØSNINGEN (PLATFORMEN)
+Cohéro er en AI-drevet infrastruktur, der brobygger mellem officielle datakilder (Love, ICD-11, studieordninger) og den praktiske udførelse. Vores platform fungerer som en "specialiseret kollega", der ikke bare genererer tekst, men validerer den mod gældende lovgivning.
+
+3. SKALERINGSPOTENTIALE (HVORFOR NU?)
+A. Modulær AI-arkitektur: 
+Vi har bygget en central AI-kerne (Genkit), der gør det muligt at udrulle nye vertikaler (f.eks. Lovportalen, Videnskabsteori-analysator, Sags-simulator) på uger i stedet for måneder.
+
+B. Fra Uddannelse til Profession: 
+Platformen skalerer horisontalt. Den samme motor, der hjælper den studerende med at forstå socialret, kan bruges af kommunen til at kvalitetssikre afgørelser. Vi har allerede infrastrukturen til at håndtere både uddannelsesdata og reelle sagsforløb.
+
+C. Lav Marginalomkostning:
+Vores AI-flows er optimerede til at køre med minimal menneskelig involvering. Hver ny bruger eller kommune kræver næsten nul ekstra onboard-tid, da systemet er bygget til selvbetjening og automatisk validering.
+
+4. TRACTION OG VALIDERING
+- Integrerede Law Portals med real-time paragraf-validering.
+- Præcisionstracking af AI-omkostninger pr. flow (Financial Dashboard klar til skalering).
+- En arkitektur der understøtter både mobil (Capacitor) og web, hvilket gør os uafhængige af slutbrugerens enhed.
+
+5. VISIONEN
+Vi skalerer ikke bare en app – vi skalerer professionel kompetence. Ved at automatisere sagsbehandlingens "hard skills" (lov-opslag og metode), frigør vi tid til de "soft skills" (det menneskelige møde), som AI aldrig kan erstatte.
+
+KONTAKT: Sebastian Viste
+PLATFORM: Cohéro (Version 4)

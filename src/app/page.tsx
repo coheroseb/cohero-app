@@ -105,12 +105,9 @@ export default function LandingPage() {
        effectiveTheme === 'halloween' ? 'bg-orange-50/20' :
        'bg-[#FDFBF7]'
     }`}>
-      <div className="pt-20 sm:pt-24 lg:pt-28">
-         <ReviewMarquee />
-      </div>
       
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[100dvh] flex flex-col justify-center pb-16 px-5 sm:px-8 overflow-hidden">
+      <section className="relative min-h-[100dvh] flex flex-col pt-32 sm:pt-40 lg:pt-48 pb-16 px-5 sm:px-8 overflow-hidden">
         {/* Dynamic Mobile-First Background */}
         <div className={`absolute inset-0 bg-gradient-to-b -z-20 ${
             effectiveTheme === 'christmas' ? 'from-rose-100/30 via-rose-50/20 to-rose-100/30' :
@@ -135,74 +132,40 @@ export default function LandingPage() {
                 className="space-y-5 sm:space-y-8 flex flex-col items-center lg:items-start w-full"
               >
                 {/* Mobile top badge */}
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-amber-50 border border-amber-200/50 rounded-full shadow-sm mb-2">
-                   <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-500/20" />
-                   <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-900">Din professionelle rygdækning</span>
-                </div>
 
                 <motion.h1 
                   animate={{ 
-                    y: [0, -8, 0],
+                    y: [0, -4, 0],
                   }}
                   transition={{ 
-                    duration: 6, 
+                    duration: 5, 
                     repeat: Infinity, 
                     ease: "easeInOut" 
                   }}
-                  className="text-[40px] leading-[1.05] sm:text-6xl md:text-7xl xl:text-[88px] font-extrabold text-slate-900 tracking-[-0.04em] w-full max-w-[20ch] lg:max-w-none"
+                  className="text-[44px] leading-[0.95] sm:text-7xl md:text-8xl xl:text-[110px] font-[900] text-slate-900 tracking-[-0.06em] w-full max-w-[15ch] lg:max-w-none text-balance"
                 >
-                  Gør din faglighed <br className="hidden sm:block" />
-                  <span className="relative inline-block mt-2 md:mt-4 px-2 sm:px-4 shrink-0 overflow-hidden py-2">
+                  Fremtidens <br className="hidden sm:block" />
+                  <span className="relative inline-block mt-1 md:mt-2 px-1">
                     <motion.span 
                       animate={{ 
-                        color: ["#d97706", "#b45309", "#d97706"],
+                        color: ["#1e293b", "#d97706", "#1e293b"],
                       }}
                       transition={{ 
-                        duration: 4, 
+                        duration: 8, 
                         repeat: Infinity, 
-                        ease: "easeInOut" 
+                        ease: "linear" 
                       }}
-                      className="relative z-10"
+                      className="relative z-10 italic font-serif"
                     >
-                      helt skudsikker.
+                      velfærd
                     </motion.span>
-                    
-                    {/* Continuous Underline Pulse */}
-                    <motion.svg 
-                      animate={{ 
-                        opacity: [0.8, 1, 0.8],
-                        scaleX: [1, 1.02, 1]
-                      }}
-                      transition={{ 
-                        duration: 3, 
-                        repeat: Infinity, 
-                        ease: "easeInOut" 
-                      }}
-                      className="absolute -bottom-1 sm:-bottom-3 left-0 w-full h-3 sm:h-5 text-amber-300/60 -z-10" 
-                      viewBox="0 0 100 10" 
-                      preserveAspectRatio="none"
-                    >
-                        <path d="M0 5 Q 25 0, 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
-                    </motion.svg>
-                    
-                    {/* Shimmer Effect */}
-                    <motion.div 
-                      animate={{ 
-                        x: ['-100%', '200%'] 
-                      }}
-                      transition={{ 
-                        duration: 3, 
-                        repeat: Infinity, 
-                        repeatDelay: 2,
-                        ease: "easeInOut" 
-                      }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] z-20 pointer-events-none"
-                    />
                   </span>
+                  <br />
+                  skabes her.
                 </motion.h1>
                 
                 <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
-                  Aldrig mere usikker på paragraffer, teorier eller din karakter. Med professionsorienteret rygdækning får du tryghed i din faglighed — fra første semester til din færdige uddannelse.
+                  Den eneste platform skabt specifikt til socialrådgiverstuderende. Vi kombinerer avanceret AI med realtids-opdateret dansk lovgivning, så du kan mestre alt fra paragraffer til videnskabsteori med fuld professionel rygdækning.
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -222,7 +185,6 @@ export default function LandingPage() {
                           Kom i gang gratis
                           <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1.5 transition-transform" />
                       </span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                   </button>
                   
 
@@ -234,36 +196,214 @@ export default function LandingPage() {
                        Hent App
                    </button>
               </div>
-
-              <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 mt-4 opacity-90">
-                  <div className="flex flex-col items-center sm:items-start gap-1">
-                      <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[13px] sm:text-sm bg-emerald-50 px-3 py-1 rounded-full">
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>7 dages gratis prøveperiode</span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider text-center sm:text-left mx-1">Ingen binding • Opret på 30 sek.</p>
-                  </div>
-              </div>
             </motion.div>
           </div>
 
-          {/* Hero Illustration Container - Animated and Dynamic */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="w-full lg:w-5/12 relative z-10 mt-6 lg:mt-0 px-4 sm:px-0 flex items-center justify-center min-h-[450px] lg:min-h-[600px]"
+            style={{ 
+              perspective: "1200px",
+              rotateX: 2,
+              rotateY: -5
+            }}
+            initial={{ opacity: 0, x: 50, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full lg:w-1/2 relative z-10 mt-12 lg:mt-0 flex items-center justify-center h-[500px] sm:h-[650px]"
           >
-            <div className="w-full h-full relative group">
-               <HeroIllustration />
-               
-               {/* Founder Reference (Optional, but kept as a subtle trust element or removed if preferred) */}
-               <div className="absolute -bottom-8 right-0 text-[10px] font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity whitespace-nowrap">
-                 <Users className="w-3 h-3" /> Udviklet til fremtidens velfærd
-               </div>
+            {/* Immersive Floating Interface Mockup */}
+            <div className="relative w-full h-full max-w-2xl transform-gpu">
+                {/* Main Dashboard Preview Card */}
+                <motion.div 
+                  animate={{ y: [0, -15, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute inset-0 bg-white rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-20"
+                >
+                   <div className="h-14 bg-slate-50 border-b border-slate-100 flex items-center px-8 justify-between">
+                      <div className="flex gap-2">
+                        <div className="w-3 h-3 rounded-full bg-slate-200"></div>
+                        <div className="w-3 h-3 rounded-full bg-slate-200"></div>
+                        <div className="w-3 h-3 rounded-full bg-slate-200"></div>
+                      </div>
+                      <div className="h-6 w-32 bg-slate-200/50 rounded-full animate-pulse"></div>
+                   </div>
+                   <div className="p-8 space-y-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-100 animate-pulse"></div>
+                        <div className="space-y-2">
+                          <div className="w-40 h-4 bg-slate-100 rounded"></div>
+                          <div className="w-24 h-3 bg-slate-50 rounded"></div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="h-32 rounded-3xl bg-slate-50 border border-slate-100/50 p-4 space-y-3">
+                           <div className="w-full h-2 bg-slate-200 rounded"></div>
+                           <div className="w-2/3 h-2 bg-slate-100 rounded"></div>
+                           <div className="w-1/2 h-2 bg-slate-100 rounded"></div>
+                        </div>
+                        <div className="h-32 rounded-3xl bg-amber-50/30 border border-amber-100/30 p-4 space-y-3">
+                           <div className="w-full h-2 bg-amber-200/40 rounded"></div>
+                           <div className="w-2/3 h-2 bg-amber-100/40 rounded"></div>
+                        </div>
+                      </div>
+                      <div className="h-1 bg-slate-50 w-full mb-2"></div>
+                      <div className="space-y-3 pt-2">
+                        {[1,2,3].map(i => (
+                          <div key={i} className="flex gap-4 items-center">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50"></div>
+                            <div className="flex-1 h-2 bg-slate-50 rounded"></div>
+                          </div>
+                        ))}
+                      </div>
+                   </div>
+                </motion.div>
+
+                {/* Floating "Context Card" - Interactive Element 1 */}
+                <motion.div 
+                  animate={{ y: [0, 20, 0], x: [0, -10, 0], rotate: [-2, 2, -2] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                  className="absolute -top-12 -left-12 w-64 p-6 bg-slate-900 text-white rounded-[2rem] shadow-2xl z-30 hidden sm:block border border-white/10 backdrop-blur-xl"
+                >
+                   <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center">
+                        <Scale className="w-5 h-5 font-bold" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black uppercase text-amber-400 tracking-widest">Lovportalen</div>
+                        <div className="text-sm font-bold">Punkt 7.2 Analyseret</div>
+                      </div>
+                   </div>
+                   <p className="text-[11px] text-slate-400 leading-relaxed italic">"Retssikkerheden for den enkelte borger vægtes tungt jf. Servicelovens §82..."</p>
+                </motion.div>
+
+                {/* Floating "AI Intelligence" - Interactive Element 2 */}
+                <motion.div 
+                  animate={{ y: [0, -25, 0], x: [0, 15, 0] }}
+                  transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  className="absolute -bottom-10 -right-8 w-72 p-6 bg-white rounded-[2.5rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] z-40 hidden sm:block border border-slate-100"
+                >
+                   <div className="flex flex-col gap-4">
+                      <div className="flex -space-x-3">
+                         {[1,2,3,4].map(i => <div key={i} className={`w-8 h-8 rounded-full border-2 border-white bg-slate-${i*100+100}`}></div>)}
+                         <div className="w-8 h-8 rounded-full border-2 border-white bg-amber-400 flex items-center justify-center text-[10px] font-black">+42</div>
+                      </div>
+                      <div className="h-0.5 w-full bg-slate-50"></div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fagfælle vurderet</span>
+                        <div className="flex gap-1">
+                          {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
+                        </div>
+                      </div>
+                   </div>
+                </motion.div>
+
+                {/* Decorative Blobs */}
+                <div className="absolute -top-20 -right-20 w-80 h-80 bg-amber-200/20 rounded-full blur-[100px] -z-10 animate-pulse"></div>
+                <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-indigo-200/20 rounded-full blur-[120px] -z-10"></div>
             </div>
           </motion.div>
+        </div>
+      </section>
 
+      {/* 2. TRUST RIBBON (Immediate Credibility) */}
+      <section className="py-8 sm:py-16 bg-white border-y border-slate-100 overflow-hidden relative">
+        <div className="absolute inset-y-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-white to-transparent z-10"></div>
+        <div className="absolute inset-y-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-white to-transparent z-10"></div>
+        <div className="max-w-7xl mx-auto flex flex-col items-center">
+           <Reveal>
+             <p className="text-[10px] items-center text-center font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400 mb-6 sm:mb-8 px-4">Styrker dannelsen på tværs af professionshøjskoler</p>
+           </Reveal>
+           <div className="w-full overflow-x-auto no-scrollbar px-4 sm:px-6">
+             <div className="flex items-center justify-start sm:justify-center gap-8 sm:gap-16 min-w-max pb-2 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">VIA UC</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">KP</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">UCL</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">Absalon</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">AAU</span>
+             </div>
+           </div>
+        </div>
+      </section>
+
+      {/* 2.5 REVIEWS MARQUEE (Social Proof) */}
+      <div className="py-12 bg-[#FDFBF7]">
+         <ReviewMarquee />
+      </div>
+
+       {/* 1.2 DIFFERENTIATION SECTION (Innovative 'Bento-Neo' Layout) */}
+      <section className="py-32 bg-[#FDFBF7] px-5 sm:px-8 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-end justify-between gap-12 mb-20">
+             <Reveal className="max-w-2xl">
+               <h2 className="text-5xl sm:text-7xl font-[900] text-slate-900 tracking-[-0.05em] leading-[0.9] mb-8">
+                 Designet til <br />
+                 <span className="text-amber-500 italic font-serif">eliten</span> af fremtidens <br />
+                 socialrådgivere.
+               </h2>
+             </Reveal>
+             <Reveal delay={0.2} className="max-w-sm pb-2">
+                <p className="text-lg text-slate-500 font-medium leading-relaxed border-l-2 border-amber-200 pl-6">
+                  Vi bygger ikke bare software. Vi bygger den kognitive arkitektur, der gør dig i stand til at navigere i velfærdssystemets kompleksitet.
+                </p>
+             </Reveal>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-6 auto-rows-[280px] sm:auto-rows-[340px]">
+            {/* Bento Card 1: Power Feature */}
+            <Reveal className="md:col-span-4 lg:col-span-7 row-span-2">
+              <div className="group h-full bg-white border border-slate-100 rounded-[3rem] p-10 sm:p-16 flex flex-col justify-between relative overflow-hidden shadow-sm sm:hover:shadow-2xl transition-all duration-700">
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-slate-50/50 to-transparent -z-10 group-hover:scale-110 transition-transform duration-1000"></div>
+                <div className="relative z-10 space-y-8">
+                  <div className="w-16 h-16 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center rotate-[-8deg] group-hover:rotate-0 transition-transform duration-500 shadow-xl shadow-slate-900/20">
+                    <Scale className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-none italic">Socialretlig <br/>præcision.</h3>
+                    <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-sm">
+                      Med 50.000+ siders lovgivning integreret i hvert eneste svar, er Cohero dit anker i de sværeste faglige beslutninger.
+                    </p>
+                  </div>
+                </div>
+                <div className="relative z-10 pt-10">
+                   <div className="inline-flex items-center gap-2 text-slate-900 font-black uppercase text-xs tracking-widest border-b-2 border-slate-900 pb-1 group-hover:gap-4 transition-all">
+                      Se Lovportalen <ArrowRight className="w-4 h-4" />
+                   </div>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Bento Card 2: Aesthetic Proof */}
+            <Reveal delay={0.1} className="md:col-span-4 lg:col-span-5 row-span-1">
+               <div className="h-full bg-amber-400 rounded-[3rem] p-10 flex flex-col justify-center items-center text-center group cursor-pointer overflow-hidden relative">
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute -top-10 -right-10 w-40 h-40 border-[20px] border-white/10 rounded-full"
+                  />
+                  <h3 className="text-3xl font-black text-amber-950 tracking-tight italic z-10">Fra teori til handling.</h3>
+                  <div className="mt-6 w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform z-10">
+                    <Star className="w-6 h-6 text-white fill-white" />
+                  </div>
+               </div>
+            </Reveal>
+
+            {/* Bento Card 3: Deep Tech */}
+            <Reveal delay={0.2} className="md:col-span-2 lg:col-span-5 row-span-1">
+               <div className="h-full bg-slate-900 text-white rounded-[3rem] p-10 flex flex-col justify-between group overflow-hidden relative border border-slate-800">
+                  <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-amber-500/10 to-transparent -z-10"></div>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold italic">Indbygget rygdækning.</h3>
+                    <p className="text-sm text-slate-400 font-medium">Vi overvåger Folketinget, så du ikke behøver det.</p>
+                  </div>
+                  <div className="flex -space-x-3 pt-6">
+                    {[1,2,3,4,5].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-700 animate-pulse"></div>)}
+                  </div>
+               </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
@@ -318,225 +458,20 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* 2. TRUST RIBBON (Mobile Scroller) */}
-      <section className="py-8 sm:py-16 bg-white border-y border-slate-100 overflow-hidden relative">
-        <div className="absolute inset-y-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-white to-transparent z-10"></div>
-        <div className="absolute inset-y-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-white to-transparent z-10"></div>
-        <div className="max-w-7xl mx-auto flex flex-col items-center">
-           <Reveal>
-             <p className="text-[10px] items-center text-center font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400 mb-6 sm:mb-8 px-4">Styrker dannelsen på tværs af professionshøjskoler</p>
-           </Reveal>
-           <div className="w-full overflow-x-auto no-scrollbar px-4 sm:px-6">
-             <div className="flex items-center justify-start sm:justify-center gap-8 sm:gap-16 min-w-max pb-2 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">VIA UC</span>
-                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">KP</span>
-                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">UCL</span>
-                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">Absalon</span>
-                <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">AAU</span>
-             </div>
-           </div>
-        </div>
-      </section>
 
 
-      {/* 3. CITIZEN ASSISTANCE SECTION (New Marketplace Promo) */}
-      <section className="py-24 sm:py-40 bg-zinc-950 relative overflow-hidden px-5 sm:px-8">
-        {/* Abstract Background Decor */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
-            <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-rose-500 rounded-full blur-[150px]"></div>
-            <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-500 rounded-full blur-[150px]"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-            
-            {/* Illustration Side */}
-            <div className="w-full lg:w-1/2 order-2 lg:order-1">
-                <Reveal className="relative flex items-center justify-center">
-                    <div className="relative w-full aspect-square max-w-md">
-                        {/* Center Shield */}
-                        <motion.div 
-                            animate={{ 
-                                scale: [1, 1.05, 1],
-                                rotate: [0, 2, 0, -2, 0]
-                            }}
-                            transition={{ 
-                                duration: 8, 
-                                repeat: Infinity, 
-                                ease: "easeInOut" 
-                            }}
-                            className="absolute inset-0 m-auto w-40 h-40 sm:w-56 sm:h-56 bg-gradient-to-br from-rose-500 to-rose-600 rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(244,63,94,0.5)] flex items-center justify-center border-4 border-white/20 z-20"
-                        >
-                            <ShieldCheck className="w-20 h-20 sm:w-28 sm:h-28 text-white" />
-                        </motion.div>
-
-                        {/* Orbiting Elements */}
-                        {[
-                            { icon: Heart, delay: 0, color: 'bg-amber-400', label: 'Omsorg' },
-                            { icon: Scale, delay: 2, color: 'bg-indigo-400', label: 'Retssikkerhed' },
-                            { icon: Users, delay: 4, color: 'bg-emerald-400', label: 'Bisidder' },
-                            { icon: GraduationCap, delay: 6, color: 'bg-blue-400', label: 'Ekspertise' },
-                        ].map((item, i) => (
-                            <motion.div
-                                key={i}
-                                animate={{
-                                    rotate: 360
-                                }}
-                                transition={{
-                                    duration: 15,
-                                    repeat: Infinity,
-                                    ease: "linear",
-                                    delay: -item.delay
-                                }}
-                                className="absolute inset-0 m-auto w-full h-full pointer-events-none"
-                            >
-                                <motion.div 
-                                    animate={{ rotate: -360 }}
-                                    transition={{ duration: 15, repeat: Infinity, ease: "linear", delay: -item.delay }}
-                                    className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 ${item.color} rounded-[1.5rem] shadow-2xl flex flex-col items-center justify-center gap-1 border-2 border-white/30 backdrop-blur-md pointer-events-auto`}
-                                >
-                                    <item.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                                    <span className="text-[8px] sm:text-[9px] font-black uppercase text-white/80 tracking-tighter">{item.label}</span>
-                                </motion.div>
-                            </motion.div>
-                        ))}
-
-                        {/* Connection Lines Decor */}
-                        <div className="absolute inset-0 border-2 border-white/5 rounded-full scale-110 opacity-30"></div>
-                        <div className="absolute inset-0 border-2 border-white/5 rounded-full scale-75 opacity-30"></div>
-                    </div>
-                </Reveal>
-            </div>
-
-            {/* Text Side */}
-            <div className="w-full lg:w-1/2 order-1 lg:order-2 space-y-8 text-center lg:text-left">
-                <div className="space-y-4">
-                    <Reveal>
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400/10 border border-amber-400/20 rounded-full mb-4">
-                            <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                            </span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-100/80">For borgere og forældre</span>
-                        </div>
-                    </Reveal>
-                    <Reveal delay={0.1}>
-                        <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-[1.05] tracking-tight">
-                            Har du brug for <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-400 italic">faglig hjælp?</span>
-                        </h2>
-                        <p className="text-xl text-amber-100/60 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 mt-6">
-                            Står du overfor en svær sag, har brug for en bisidder til et møde eller hjælp til en ansøgning? Vores studerende hjælper dig sikkert gennem systemet.
-                        </p>
-                    </Reveal>
-                </div>
-
-                <Reveal delay={0.2}>
-                    <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
-                        <Link 
-                            href="https://ask.cohero.dk" 
-                            className="group relative px-10 py-6 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 transition-all w-full sm:w-auto overflow-hidden active:scale-95"
-                        >
-                            <span className="relative z-10 flex items-center justify-center gap-3">
-                                Start anmodning
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
-                            </span>
-                        </Link>
-                        <div className="flex items-center gap-4 py-2">
-                            <div className="flex -space-x-3">
-                                {[1,2,3].map(i => (
-                                    <div key={i} className="w-10 h-10 rounded-full border-2 border-zinc-950 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-300">
-                                        {['H','L','M'][i-1]}
-                                    </div>
-                                ))}
-                            </div>
-                            <p className="text-[10px] whitespace-nowrap font-bold text-amber-100/40 uppercase tracking-widest">Hjælp fra hele landet</p>
-                        </div>
-                    </div>
-                </Reveal>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* 3.5 SECOND OPINION PROMO */}
-      <section className="py-24 sm:py-32 bg-[#FDFBF7] relative overflow-hidden px-5 sm:px-8 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-          <div className="w-full lg:w-1/2 space-y-8 text-center lg:text-left">
-            <Reveal>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200/50 rounded-full mb-4">
-                 <Scale className="w-3.5 h-3.5 text-amber-500" />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-900">Nyt: Second Opinion</span>
-              </div>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] leading-tight text-balance">
-                Fik du en lavere<br className="hidden sm:block" /> karakter end fortjent?
-              </h2>
-              <p className="text-xl text-slate-500 font-medium leading-relaxed mt-6">
-                Få en lynhurtig, automatiseret vurdering af din eksamensopgave. Censorer laver fejl, og vi giver dig magten tilbage med en objektiv faglig analyse — før du klager.
-              </p>
-            </Reveal>
-            <Reveal delay={0.2}>
-              <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
-                 <Link href="/om-second-opinion" className="group relative px-10 py-6 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all w-full sm:w-auto overflow-hidden">
-                    <span className="relative z-10 flex items-center justify-center gap-3">Test din opgave <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" /></span>
-                 </Link>
-                 <div className="flex items-center gap-2 text-amber-600 font-bold uppercase text-[11px] tracking-wider lg:pt-2">
-                    <ShieldCheck className="w-5 h-5" /> 100% anonymt
-                 </div>
-              </div>
-            </Reveal>
-          </div>
-          <div className="w-full lg:w-1/2">
-             <Reveal delay={0.3} className="relative">
-                 <div className="absolute inset-0 bg-gradient-to-tr from-rose-200/40 to-amber-200/40 blur-3xl rounded-full" />
-                 <div className="relative bg-white border border-slate-100 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl">
-                    <div className="flex gap-4 items-center mb-8 border-b border-slate-50 pb-6">
-                        <div className="w-12 h-12 bg-rose-500 text-white rounded-xl flex items-center justify-center shadow-lg"><FileText className="w-6 h-6" /></div>
-                        <div>
-                            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Analyse fuldført</div>
-                            <div className="text-xl font-bold text-slate-900">Misforhold fundet i karakter</div>
-                        </div>
-                    </div>
-                    <div className="space-y-4 text-left">
-                       <div className="flex gap-4 bg-rose-50/50 p-4 rounded-2xl border border-rose-100/50">
-                          <Zap className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                          <div>
-                              <div className="font-bold text-slate-900">Mangelfuld bedømmelse</div>
-                              <div className="text-[13px] text-slate-500 mt-1">Indikationer på dybdegående refleksion over teori, som ikke blev belønnet.</div>
-                          </div>
-                       </div>
-                       <div className="flex gap-4 bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                          <div>
-                              <div className="font-bold text-slate-900">Læringsmål opfyldt</div>
-                              <div className="text-[13px] text-slate-500 mt-1">Opgaven demonstrerer stærk forståelse for pensums hovedområder.</div>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-             </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. CORE FEATURES (Mobile-First Card Layout) */}
+      {/* 3. CORE FEATURES (Product Showcase) */}
       <section id="vaerktojer" className="py-20 sm:py-32 bg-[#FDFBF7] px-5 sm:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="max-w-3xl mb-12 sm:mb-20 text-center lg:text-left mx-auto lg:mx-0">
+          <div className="max-w-4xl mb-16 sm:mb-28 text-center lg:text-left mx-auto lg:mx-0">
             <Reveal>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-[-0.03em] mb-4 sm:mb-6 leading-tight">
-                Værktøjer der sikrer <br/> 
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400 italic">din faglige præcision.</span>
+              <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100/50 border border-amber-200/50 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 mb-6 font-sans">Arsenalet</span>
+              <h2 className="text-5xl sm:text-7xl lg:text-8xl font-[900] text-slate-900 tracking-[-0.05em] mb-6 sm:mb-8 leading-[0.9] text-balance">
+                Værktøjer til din <br/> 
+                <span className="italic font-serif text-amber-500">faglige præcision.</span>
               </h2>
-              <p className="text-[17px] sm:text-xl text-slate-500 leading-relaxed font-medium">
-                Du køber ikke bare adgang til værktøjer. Du køber visheden om, at det du skriver, er fagligt korrekt og metodisk stærkt.
+              <p className="text-lg sm:text-2xl text-slate-500 leading-relaxed font-medium max-w-2xl">
+                Vi har kondenseret årsværk af socialfaglig viden ind i lynhurtige værktøjer, der fjerner usikkerheden fra dit arbejde.
               </p>
             </Reveal>
           </div>
@@ -608,22 +543,31 @@ export default function LandingPage() {
 
              {/* Feature 4: Seminar-Arkitekten Visualization */}
              <Reveal delay={0.1} className="lg:col-span-12">
-               <div className="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] shadow-xl relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-transparent pointer-events-none"></div>
-                  <div className="relative z-10">
-                    <div className="max-w-2xl mb-8 sm:mb-12">
-                      <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-purple-300 uppercase tracking-widest bg-purple-500/10 px-3 py-1.5 rounded-full border border-purple-400/30 mb-4">
-                        <Sparkles className="w-3.5 h-3.5" /> Visualisering
+               <div className="h-full bg-slate-900 border border-slate-800 p-8 sm:p-16 lg:p-24 rounded-[4rem] shadow-2xl relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.08)_0%,transparent_70%)] pointer-events-none"></div>
+                  <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
+                    <div className="flex-1 space-y-8">
+                      <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-amber-400 uppercase tracking-widest bg-amber-400/10 px-4 py-2 rounded-full border border-amber-400/20">
+                        <Sparkles className="w-3.5 h-3.5" /> Eksklusivt Værktøj
                       </div>
-                      <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-none mb-3 sm:mb-4">Seminar-Arkitekten</h3>
-                      <p className="text-slate-300 text-[16px] sm:text-lg leading-relaxed font-medium">Opbyg intelligente seminarserier med struktureret feedback, faglige kilder og praksisnære vejledninger.</p>
+                      <h3 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-[1] italic">Seminar-Arkitekten</h3>
+                      <p className="text-slate-400 text-lg sm:text-xl leading-relaxed font-medium max-w-xl">
+                        Design komplekse faglige forløb med automatiseret feedback og direkte pensum-integration. Et uundværligt værktøj til den ambitiøse studerende.
+                      </p>
+                      <div className="flex items-center gap-6 pt-4">
+                        <button onClick={onStart} className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs tracking-[0.15em] hover:scale-105 transition-all active:scale-95 shadow-xl shadow-white/5">Prøv nu</button>
+                        <div className="flex items-center gap-2 text-amber-400 font-bold uppercase text-[11px] tracking-wider cursor-pointer group-hover:translate-x-2 transition-transform">
+                          Se demo <ArrowRight className="w-4 h-4" />
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-purple-300 font-bold uppercase text-[13px] tracking-wider sm:group-hover:translate-x-2 transition-transform">
-                      Udforsk værktøjet <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <div className="w-full lg:w-1/2 relative">
+                        {/* More Abstract/Innovative Visualization Wrapper */}
+                        <div className="absolute -inset-10 bg-amber-500/10 blur-[80px] rounded-full animate-pulse"></div>
+                        <div className="relative p-2 bg-white/5 rounded-[3rem] border border-white/10 backdrop-blur-md">
+                           <SeminarArchitectVisualization />
+                        </div>
                     </div>
-                  </div>
-                  <div className="mt-12 sm:mt-16 -mx-8 sm:-mx-12 lg:-mx-16 px-8 sm:px-12 lg:px-16 py-8 sm:py-12 bg-gradient-to-t from-black/40 to-transparent">
-                    <SeminarArchitectVisualization />
                   </div>
                </div>
              </Reveal>
@@ -631,8 +575,112 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 3.5 SECOND OPINION DEEP DIVE (Innovative Visual Stack) */}
+      <section className="py-32 sm:py-48 bg-white relative overflow-hidden px-5 sm:px-8">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-amber-50/50 -skew-x-12 -z-10"></div>
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 lg:gap-32">
+          <div className="w-full lg:w-5/12 space-y-10 text-center lg:text-left">
+            <Reveal>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full mb-4">
+                 <Scale className="w-3.5 h-3.5 text-amber-400" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Nyt: Second Opinion</span>
+              </div>
+              <h2 className="text-5xl sm:text-7xl font-[900] text-slate-900 tracking-[-0.05em] leading-[0.95] text-balance">
+                Fik du ikke <br />
+                <span className="italic font-serif text-amber-500">karakteren</span> <br />
+                du fortjente?
+              </h2>
+              <p className="text-xl text-slate-500 font-medium leading-relaxed mt-8">
+                Vi har udviklet en algoritme, der dekonstruerer bedømmelseskriterier og matcher dem mod din besvarelse. Få et objektivt grundlag for din klage — på under 60 sekunder.
+              </p>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+                 <button onClick={onStart} className="group relative px-10 py-6 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all w-full sm:w-auto overflow-hidden">
+                    <span className="relative z-10 flex items-center justify-center gap-3">Analyseér din opgave <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" /></span>
+                 </button>
+                 <div className="flex items-center gap-3 py-2 px-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Juridisk Privatliv</span>
+                 </div>
+              </div>
+            </Reveal>
+          </div>
+          
+          <div className="w-full lg:w-7/12 relative">
+             <Reveal delay={0.3} className="relative">
+                 {/* Spatial Stack Animation */}
+                 <div className="relative min-h-[500px] flex items-center justify-center">
+                    {/* Background Layer (Blur) */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-400/20 rounded-full blur-[120px] -z-10 animate-pulse"></div>
+                    
+                    {/* Layered Analysis Cards */}
+                    <motion.div 
+                        initial={{ rotate: -5, x: -20, y: 20 }}
+                        whileInView={{ rotate: -8, x: -40, y: 40 }}
+                        className="absolute w-full max-w-sm bg-white border border-slate-100 rounded-[3rem] p-10 shadow-xl opacity-40 grayscale"
+                    >
+                         <div className="h-4 w-1/2 bg-slate-100 rounded mb-4"></div>
+                         <div className="space-y-2">
+                             <div className="h-2 w-full bg-slate-50 rounded"></div>
+                             <div className="h-2 w-full bg-slate-50 rounded"></div>
+                         </div>
+                    </motion.div>
 
-      {/* 4.5 TIKTOK FEED SECTION */}
+                    <motion.div 
+                        initial={{ scale: 1, zIndex: 20 }}
+                        whileHover={{ scale: 1.02 }}
+                        className="relative w-full max-w-md bg-white border border-slate-100 rounded-[3rem] p-8 sm:p-12 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] z-20"
+                    >
+                        <div className="flex justify-between items-start mb-10">
+                           <div className="w-16 h-16 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg"><FileText className="w-8 h-8" /></div>
+                           <div className="px-4 py-2 bg-rose-50 rounded-full text-rose-600 text-[10px] font-black uppercase tracking-widest border border-rose-100">Kritisk afvigelse</div>
+                        </div>
+                        
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400">
+                                    <span>Teoretisk dybde</span>
+                                    <span className="text-slate-900">85%</span>
+                                </div>
+                                <div className="h-3 bg-slate-50 rounded-full overflow-hidden">
+                                    <motion.div 
+                                      initial={{ width: 0 }}
+                                      whileInView={{ width: '85%' }}
+                                      transition={{ duration: 1.5, ease: "easeOut" }}
+                                      className="h-full bg-amber-400"
+                                    ></motion.div>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400">
+                                    <span>Metodisk stringens</span>
+                                    <span className="text-slate-900">92%</span>
+                                </div>
+                                <div className="h-3 bg-slate-50 rounded-full overflow-hidden">
+                                    <motion.div 
+                                      initial={{ width: 0 }}
+                                      whileInView={{ width: '92%' }}
+                                      transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
+                                      className="h-full bg-slate-900"
+                                    ></motion.div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-12 pt-8 border-t border-slate-50">
+                           <p className="text-sm text-slate-500 leading-relaxed font-medium italic">
+                             "Analysen påviser at opgaven opfylder læringsmål for videnskabsteori på et væsentligt højere niveau end den tildelte karakter reflekterer."
+                           </p>
+                        </div>
+                    </motion.div>
+                 </div>
+             </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. TIKTOK FEED SECTION */}
       <section className="py-24 sm:py-40 bg-[#FDFBF7] relative overflow-hidden px-5 sm:px-8 border-t border-slate-100/50">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(251,191,36,0.08)_0%,transparent_100%)] pointer-events-none" />
         <div className="max-w-7xl mx-auto">
@@ -690,132 +738,219 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 5. PRICING SECTION */}
-      <section id="priser" className="py-20 sm:py-32 bg-[#FDFBF7] px-5 sm:px-8 border-t border-slate-100">
+      {/* 5. CITIZEN ASSISTANCE SECTION (Innovative Layered Layout) */}
+      <section className="py-32 sm:py-48 bg-zinc-950 relative overflow-hidden px-5 sm:px-8 border-t border-white/5">
+        <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none">
+            <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-rose-900/40 rounded-full blur-[180px]"></div>
+            <div className="absolute bottom-[-10%] right-[-5%] w-[700px] h-[700px] bg-amber-900/30 rounded-full blur-[180px]"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-24">
+            <div className="w-full lg:w-1/2 order-2 lg:order-1">
+                <Reveal className="relative flex items-center justify-center">
+                    <div className="relative w-full aspect-square max-w-lg">
+                        <motion.div 
+                            animate={{ 
+                                scale: [1, 1.02, 1],
+                                rotate: [0, 1, 0, -1, 0]
+                            }}
+                            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute inset-0 m-auto w-48 h-48 sm:w-72 sm:h-72 bg-gradient-to-br from-rose-500 to-rose-700 rounded-[4rem] shadow-[0_0_100px_rgba(244,63,94,0.3)] flex items-center justify-center border-4 border-white/10 z-20"
+                        >
+                            <ShieldCheck className="w-24 h-24 sm:w-32 sm:h-32 text-white" />
+                        </motion.div>
+                        
+                        {/* More Organic Orbiting Elements */}
+                        {[
+                            { icon: Heart, delay: 0, color: 'bg-white/5', label: 'Omsorg' },
+                            { icon: Scale, delay: 3.75, color: 'bg-white/5', label: 'Retssikkerhed' },
+                            { icon: Users, delay: 7.5, color: 'bg-white/5', label: 'Bisidder' },
+                            { icon: GraduationCap, delay: 11.25, color: 'bg-white/5', label: 'Ekspertise' },
+                        ].map((item, i) => (
+                            <motion.div
+                                key={i}
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 25, repeat: Infinity, ease: "linear", delay: -item.delay }}
+                                className="absolute inset-0 m-auto w-full h-full pointer-events-none"
+                            >
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 bg-white/5 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 flex flex-col items-center gap-2 pointer-events-auto shadow-2xl">
+                                    <item.icon className="w-8 h-8 text-white" />
+                                    <span className="text-[10px] font-black uppercase text-white tracking-widest">{item.label}</span>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </Reveal>
+            </div>
+
+            <div className="w-full lg:w-1/2 order-1 lg:order-2 space-y-10 text-center lg:text-left">
+                <Reveal>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-full mb-6">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-400">Socialrådgivning i øjenhøjde</span>
+                    </div>
+                    <h2 className="text-5xl sm:text-7xl font-[900] text-white leading-[0.95] tracking-tight text-balance">
+                      Brug for <br />
+                      <span className="italic font-serif text-rose-500">professionshjelp?</span>
+                    </h2>
+                    <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 mt-8">
+                        Vi forbinder borgere med studerende, der kan assistere med sagsindsigt, bisidderopgaver og juridisk sparring. Det er din genvej til professionel støtte.
+                    </p>
+                </Reveal>
+                <Reveal delay={0.2}>
+                   <Link 
+                        href="https://ask.cohero.dk" 
+                        className="group relative inline-flex px-12 py-6 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl hover:scale-105 transition-all overflow-hidden"
+                    >
+                        <span className="relative z-10 flex items-center justify-center gap-4">
+                            Søg hjælp nu
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                        </span>
+                    </Link>
+                </Reveal>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* 6. PRICING SECTION (Premium Membership Experience) */}
+      <section id="priser" className="py-32 sm:py-56 bg-[#FDFBF7] px-5 sm:px-8 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[600px] bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.05)_0%,transparent_70%)] -z-10"></div>
+        
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12 sm:mb-20 space-y-4 sm:space-y-6">
+          <div className="text-center mb-24 sm:mb-32 space-y-8">
             <Reveal>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-none px-2">
-                Sov trygt med <span className="text-amber-500">Kollega+</span>.
+              <h2 className="text-5xl sm:text-8xl font-[900] text-slate-900 tracking-tight leading-[0.9] text-balance">
+                Vælg din <br />
+                <span className="italic font-serif text-amber-500">rygdækning</span>.
               </h2>
-              <p className="text-[17px] sm:text-xl text-slate-500 font-medium max-w-xl mx-auto px-4">
-                Fuld rygdækning gennem hele semesteret. Start din 7 dages tryghedspakke i dag.
+              <p className="text-xl sm:text-2xl text-slate-500 font-medium max-w-xl mx-auto mt-8">
+                Invester i din fremtidige karriere. <br className="hidden sm:block" /> Start din 7 dages professionelle prøveperiode i dag.
               </p>
             </Reveal>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-8 items-stretch max-w-lg mx-auto lg:max-w-none">
-            {/* Free Plan */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch max-w-lg mx-auto lg:max-w-none">
+            {/* Free Plan - The Standard */}
             <Reveal delay={0} className="w-full">
-              <div className="h-full bg-white border border-slate-200 p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] shadow-sm flex flex-col transition-all active:scale-[0.98] sm:hover:border-slate-300">
-                 <h3 className="text-[22px] sm:text-2xl font-bold text-slate-900 mb-1">Kollega</h3>
-                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mb-6 sm:mb-8">Det fundamentale</p>
-                 <div className="text-4xl sm:text-5xl font-black text-slate-900 mb-8 sm:mb-10 tracking-tight">0 kr. <span className="text-[15px] sm:text-base font-medium text-slate-400 tracking-normal text-balance">/mdr</span></div>
-                 <ul className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 flex-grow">
+              <div className="h-full bg-white/40 backdrop-blur-md border border-slate-200 p-10 sm:p-14 rounded-[3.5rem] flex flex-col transition-all sm:hover:shadow-xl sm:hover:border-slate-300">
+                 <h3 className="text-2xl font-black text-slate-900 mb-2">Kollega</h3>
+                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10">Trial Access</p>
+                 <div className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">0 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/mdr</span></div>
+                 <ul className="space-y-6 mb-16 flex-grow">
                    {[
                      "1 dagligt opslag i Guiden",
                      "1 daglig STAR-analyse",
                      "Begrænset Lovportal",
                      "Låst Journal-træner",
-                     "Låst Case-Analytiker"
                    ].map(item => (
-                     <li key={item} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-600 font-medium leading-tight">
-                       {item.startsWith('Låst') ? (
-                         <Lock className="w-4 h-4 text-slate-300 shrink-0 mt-0.5" />
-                       ) : (
-                         <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                       )}
-                       <span className={item.startsWith('Låst') ? 'text-slate-400' : ''}>{item}</span>
+                     <li key={item} className="flex items-center gap-5 text-[16px] text-slate-600 font-medium">
+                        {item.startsWith('Låst') ? <Lock className="w-4 h-4 text-slate-300" /> : <Check className="w-5 h-5 text-emerald-500" />}
+                        <span className={item.startsWith('Låst') ? 'opacity-40' : ''}>{item}</span>
                      </li>
                    ))}
                  </ul>
-                 <button onClick={onStart} className="w-full py-4 sm:py-5 border-2 border-slate-200 text-slate-700 rounded-[20px] font-bold uppercase text-[13px] tracking-wider sm:hover:bg-slate-50 sm:hover:text-slate-900 transition-all active:scale-[0.98]">Vælg plan</button>
+                 <button onClick={onStart} className="w-full py-6 border-2 border-slate-200 text-slate-900 rounded-[2rem] font-black uppercase text-xs tracking-widest sm:hover:bg-slate-900 sm:hover:text-white transition-all">Start nu</button>
               </div>
             </Reveal>
 
-            {/* Kollega+ (Highlighted) */}
-            <Reveal delay={0.1} className="w-full lg:-mt-4 lg:mb-[-1rem] relative z-10">
-               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-amber-500 text-white px-5 sm:px-6 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-[12px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 z-20 whitespace-nowrap hidden sm:block">
-                    Mest populære
-                </div>
-                
-               <div onClick={onStart} className="h-full bg-slate-900 p-8 sm:p-10 rounded-[32px] sm:rounded-[48px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] flex flex-col text-white cursor-pointer border border-slate-800 relative overflow-hidden active:scale-[0.98] transition-transform">
-                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-amber-500/20 blur-[60px] rounded-full"></div>
-                  
+            {/* Kollega+ (The Flagship) */}
+            <Reveal delay={0.1} className="w-full lg:-mt-8 lg:mb-[-2rem] relative z-10">
+               <div className="h-full bg-slate-900 p-10 sm:p-14 rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col text-white relative overflow-hidden border border-white/10 group">
+                  <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(245,158,11,0.2)_0%,transparent_50%)]"></div>
                   <div className="relative z-10">
-                        <div className="sm:hidden inline-block bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-amber-500/30">
-                            Mest Populære
-                        </div>
-                        <h3 className="text-[22px] sm:text-2xl font-bold mb-1">Kollega+</h3>
-                        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-amber-400 mb-6 sm:mb-8">Til den dedikerede studerende</p>
+                        <div className="inline-block bg-amber-500 text-slate-900 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-10 shadow-xl shadow-amber-500/20">Mest Populære</div>
+                        <h3 className="text-3xl font-black mb-2">Kollega+</h3>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-10">Full Professional Access</p>
                         
-                        <div className="mb-8">
-                            <div className="text-4xl sm:text-5xl font-black tracking-tight leading-none mb-2">89 kr. <span className="text-[15px] sm:text-base font-medium text-slate-400 tracking-normal">/mdr</span></div>
-                            <p className="text-emerald-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">Første 7 dage gratis</p>
+                        <div className="mb-12">
+                            <div className="text-6xl font-black tracking-tighter mb-4">89 kr. <span className="text-base font-medium text-slate-500 tracking-normal">/mdr</span></div>
+                            <p className="text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                                <Zap className="w-4 h-4 fill-current" /> 7 Dages gratis prøve
+                            </p>
                         </div>
                   </div>
 
-                  <ul className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 flex-grow relative z-10">
+                  <ul className="space-y-6 mb-16 flex-grow relative z-10">
                      {[
                        "Ubegrænset Case-Analytiker",
-                       "Ubegrænset Lovportal-adgang",
+                       "Fuld adgang til Lovportalen",
                        "Ubegrænset Journal-træner",
-                       "Ubegrænset STAR-analyse",
-                       "Ubegrænsede opslag i Guiden",
-                       "Personligt arkiv over analyser"
+                       "Personligt Vidensarkiv",
+                       "Prioriteret AI-support"
                      ].map(item => (
-                       <li key={item} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-200 font-medium leading-tight">
-                         <div className="bg-amber-500/20 rounded-full p-0.5 shrink-0 mt-1">
-                             <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
-                         </div>
-                         <span className="leading-snug">{item}</span>
+                       <li key={item} className="flex items-center gap-5 text-[16px] text-white font-medium">
+                          <div className="w-6 h-6 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20">
+                             <Check className="w-4 h-4 text-amber-500" />
+                          </div>
+                          <span>{item}</span>
                        </li>
                      ))}
                   </ul>
-                  <button className="relative z-10 w-full py-4 sm:py-5 bg-white text-slate-900 rounded-[20px] font-black uppercase text-[13px] tracking-wider sm:hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/10">Start gratis prøve</button>
+                  <button onClick={onStart} className="relative z-10 w-full py-7 bg-amber-500 text-slate-900 rounded-[2.5rem] font-black uppercase text-[13px] tracking-[0.2em] shadow-2xl shadow-amber-500/30 sm:hover:scale-105 active:scale-95 transition-all">Tegn medlemskab</button>
                </div>
             </Reveal>
 
-            {/* Semester pakke */}
+            {/* Semester pakke (Value Deck) */}
             <Reveal delay={0.2} className="w-full">
-               <div onClick={onStart} className="h-full bg-white border border-slate-200 p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] shadow-sm flex flex-col transition-all active:scale-[0.98] sm:hover:border-slate-300 cursor-pointer">
-                 <h3 className="text-[22px] sm:text-2xl font-bold text-slate-900 mb-1">Semesteret</h3>
-                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mb-6 sm:mb-8">Bedste værdi</p>
-                 <div className="text-4xl sm:text-5xl font-black text-slate-900 mb-8 sm:mb-10 tracking-tight">329 kr. <span className="text-[15px] sm:text-base font-medium text-slate-400 tracking-normal text-balance">/5 mdr</span></div>
-                 <ul className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 flex-grow">
-                   {[
-                     "Alt fra Kollega+",
-                     "Spar 116 kr. (-25%)",
-                     "Gælder hele semesteret",
-                     "Ekstra case-adgang"
-                   ].map((item, i) => (
-                     <li key={i} className="flex items-start gap-4 text-[15px] sm:text-[16px] text-slate-600 font-medium">
-                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                         <span>{item}</span>
-                      </li>
-                    ))}
-                 </ul>
-                 <button className="w-full py-4 sm:py-5 border-2 border-slate-200 text-slate-700 rounded-[20px] font-bold uppercase text-[13px] tracking-wider sm:hover:bg-slate-50 sm:hover:text-slate-900 transition-all active:scale-[0.98]">Betal én gang</button>
+               <div className="h-full bg-white p-10 sm:p-14 rounded-[3.5rem] border border-slate-200 flex flex-col transition-all sm:hover:shadow-xl group cursor-pointer relative overflow-hidden">
+                 <div className="absolute inset-0 bg-slate-50/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                 <div className="relative z-10">
+                    <h3 className="text-2xl font-black text-slate-900 mb-2">Semesteret</h3>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10">Best Value Bundle</p>
+                    <div className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">329 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/5 mdr</span></div>
+                    <ul className="space-y-6 mb-16 flex-grow">
+                    {[
+                        "Alt fra Kollega+",
+                        "Spar over 25%",
+                        "Adgang hele semestret",
+                        "Eksamens-rygdækning"
+                    ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-5 text-[16px] text-slate-600 font-medium">
+                            <CheckCircle2 className="w-5 h-5 text-indigo-500" />
+                            <span>{item}</span>
+                        </li>
+                        ))}
+                    </ul>
+                    <button onClick={onStart} className="w-full py-6 border-2 border-indigo-100 text-indigo-600 rounded-[2rem] font-black uppercase text-xs tracking-widest sm:hover:bg-indigo-600 sm:hover:text-white transition-all">Vælg semester</button>
+                 </div>
                </div>
             </Reveal>
           </div>
         </div>
       </section>
 
-      {/* 6. FINAL CTA SECTION */}
-      <section className="py-24 sm:py-40 bg-gradient-to-b from-slate-900 to-slate-950 text-center relative overflow-hidden px-5 sm:px-8 mb-0 md:mb-0">
-         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0,transparent_60%)] -z-10"></div>
-         <div className="max-w-3xl mx-auto space-y-8 sm:space-y-12 relative z-10 reveal px-2">
+      {/* 7. FINAL CTA SECTION (Aurora Glow Effect) */}
+      <section className="py-40 sm:py-64 bg-slate-950 text-center relative overflow-hidden">
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15)_0,transparent_60%)] -z-10"></div>
+         <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-indigo-500/10 to-transparent -z-10"></div>
+         
+         {/* Animated Aurora Blobs */}
+         <motion.div 
+            animate={{ 
+                x: [0, 100, 0],
+                y: [0, 50, 0],
+                scale: [1, 1.2, 1]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[150px] -z-10"
+         />
+         
+         <div className="max-w-4xl mx-auto space-y-12 relative z-10 px-6">
             <Reveal>
-              <h2 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-[-0.03em] leading-tight">Din faglige rejse<br className="sm:hidden" /> <span className="text-amber-400">starter nu.</span></h2>
-              <p className="text-slate-400 text-[17px] sm:text-2xl mt-4 sm:mt-6 leading-relaxed font-medium">
-                Bliv sikker i dit faglige virke.
+              <h2 className="text-6xl sm:text-8xl md:text-[120px] font-[900] text-white tracking-[-0.06em] leading-[0.85] text-balance">
+                Klar til at mestre <br />
+                <span className="italic font-serif text-amber-500">velfærden?</span>
+              </h2>
+              <p className="text-slate-400 text-xl sm:text-2xl mt-10 leading-relaxed font-medium max-w-2xl mx-auto">
+                Bliv en del af eliten. Start din rejse mod en mere sikker og professionel hverdag som socialrådgiver.
               </p>
             </Reveal>
             <Reveal delay={0.1}>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-6 sm:pt-8 w-full">
-                 <button onClick={onStart} className="w-full sm:w-auto px-8 sm:px-12 py-5 sm:py-6 bg-white text-slate-900 rounded-[20px] font-black uppercase tracking-widest text-[15px] sm:text-base sm:hover:scale-105 transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] active:scale-[0.98]">Vis mig hvordan</button>
-                 <Link href="/paedagog" className="text-slate-400 font-bold border-b border-slate-600 pb-1 sm:hover:text-white sm:hover:border-white transition-all text-[15px] sm:text-base w-full sm:w-auto py-3 sm:py-0">Går du på pædagoguddannelsen?</Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10">
+                 <button onClick={onStart} className="w-full sm:w-auto px-16 py-7 bg-white text-slate-900 rounded-[2.5rem] font-black uppercase tracking-[0.2em] text-sm sm:hover:scale-110 active:scale-95 transition-all shadow-[0_0_60px_rgba(255,255,255,0.2)]">Opret profil</button>
+                 <Link href="/paedagog" className="text-slate-400 font-bold border-b-2 border-slate-800 pb-1 sm:hover:text-white sm:hover:border-white transition-all text-sm tracking-wide py-4 sm:py-0">Er du pædagogstuderende?</Link>
               </div>
             </Reveal>
          </div>

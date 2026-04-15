@@ -1857,6 +1857,21 @@ export async function fetchSocialMinistryNews(): Promise<any[]> {
         return [];
     }
 }
+export async function fetchFolketingetMetadataAction() {
+    try {
+        const [typerRes, statusserRes] = await Promise.all([
+            fetch('https://oda.ft.dk/api/Sagstype', { headers: { 'Accept': 'application/json' } }).then(r => r.json()),
+            fetch('https://oda.ft.dk/api/Sagsstatus', { headers: { 'Accept': 'application/json' } }).then(r => r.json())
+        ]);
+        return {
+            typer: typerRes.value || [],
+            statusser: statusserRes.value || []
+        };
+    } catch (error) {
+        console.error("Failed to fetch FT metadata:", error);
+        return { typer: [], statusser: [] };
+    }
+}
 
 export async function fetchFolketingetSager(params: { searchTerm?: string, typeId?: number | null, statusId?: number | null, followedIds?: number[] | null, skip?: number, top?: number }): Promise<any[]> {
     const { searchTerm, typeId, statusId, followedIds, skip = 0, top = 10 } = params;
@@ -3356,3 +3371,8 @@ export async function getDiagnoseDetailsAction(input: { id: string }) {
     return await callFirebaseFlow('getDiagnoseDetailsFlow', input);
 }
 export async function analyzeAdminDocumentAction(input: any) { return callFirebaseFlow('analyzeAdminDocumentFlow', input); }
+
+export async function chatWithGuidelineContentAction(input: Types.GuidelineChatInput): Promise<Types.GuidelineChatOutput> {
+    return callFirebaseFlow('chatWithGuidelineContentFlow', input);
+}
+

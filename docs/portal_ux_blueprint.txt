@@ -1,0 +1,61 @@
+# UX Blueprint: Cohéro Knowledge Portal 2026
+
+## 1. Designfilosofi: "Fra Opslagsværk til Samarbejdspartner"
+Målet er at transformere portalen fra en statisk database til en aktiv AI-makker, der ikke bare giver dig lovtekst, men giver dig **forståelse**.
+
+### Kerne-principper:
+- **Trust First**: AI skal altid citere kilder med direkte links til paragraffer. Enhver påstand skal kunne efterprøves med ét klik.
+- **Cognitive Ease**: Den tunge jura skal "oversættes" løbende via progressive disclosure.
+- **Context is King**: Portalen skal vide, om du er i gang med en klientsag, en eksamensopgave eller et lovforslag.
+
+---
+
+## 2. Interface Layout (The "Explorer" View)
+Vi skifter fra traditionelles lister til et **Tre-Panel Layout**, inspireret af værktøjer som *Linear* og *Perplexity*.
+
+### Panel A: Navigation & Command (Venstre - 15%)
+- **Quick Switcher**: Hurtig adgang mellem Lovportalen, Begrebsguiden og Second Opinion.
+- **Historik**: Dine seneste analyser og gemte paragraffer.
+- **Global Search (Cmd + K)**: Universal søgning på tværs af alt indhold.
+
+### Panel B: AI Research & Draft (Midte - 50%)
+- **Interaktiv Søgefelt**: "Hvordan påvirker de nye regler for sagsbehandling min sag om handicapstøtte?"
+- **Streaming Response**: AI'en opbygger svaret i realtid med fodnoter [1, 2, 3] direkte til loven.
+- **Drafting Mode**: Et skrivefelt hvor du kan formulere din tekst, mens AI'en tjekker den for juridiske mangler "on-the-fly".
+
+### Panel C: Source Vault (Højre - 35%)
+- **Active law view**: Når du klikker på en fodnote i midten, åbner den præcise paragraf sig her.
+- **Paragraf-Omsætter**: En toggle-funktion der oversætter "Juridisk Dansk" til "Praksisnært Dansk".
+- **Forarbejder & Vejledninger**: Relaterede dokumenter der støtter op om paragraffen.
+
+---
+
+## 3. High-Value UX Features
+
+### 1. "Paragraf-Validering" (Validation Badges)
+Når AI'en genererer et svar, markeres kilderne med farvekodede badges:
+- **Grøn**: Direkte citat fra gældende lov.
+- **Blå**: Tolkning baseret på vejledninger/praksis.
+- **Gul**: Analyse baseret på akademisk teori (videnskabsteori).
+
+### 2. "The Time-Traveler" (Lov-Historik)
+En slider-funktion i bunden af Lovportalen, der lader brugeren se, hvordan en specifik paragraf så ud for 2 år siden vs. i dag. Kritisk for sagsbehandling af gamle sager.
+
+### 3. "Semantic Drill-down"
+I stedet for at scrolle gennem 200 paragraffer, bruger vi en **Venn-diagram visualisering**, der viser overlap mellem f.eks. Serviceloven og Forvaltningsloven for et specifikt emne.
+
+---
+
+## 4. Estetik: "Industrial Elegance"
+For at adskille os markant fra generelle værktøjer skal designet føles **autoritært men tilgængeligt**.
+- **Base**: `Neutral-50` eller `Slate-950` afhængig af mode.
+- **Accenter**: `Amber-500` for "Value" og `Blue-500` for "Legal Legitimacy".
+- **Glassmorphism**: Brug af `backdrop-blur` på sidebars for at skabe dybde og hierarki.
+- **Micro-interactions**: Bløde transitions mellem lovtekst og AI-forklaring for at reducere kognitiv belastning.
+
+---
+
+## 5. Implementerings- roadmap
+1. **Fase 1**: Opdatering af `/lovportalen` til to-panel view (Søgning + Kilde).
+2. **Fase 2**: Integration af `trackingMiddleware` i alle portalvisninger (så brugeren kan se deres data-validitet).
+3. **Fase 3**: "The Vault" – En samlet forside for alle værktøjer med AI-overblik over brugerens seneste faglige rejse.

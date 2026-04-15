@@ -95,6 +95,7 @@ import { searchDiagnoseFlow } from './flows/search-diagnose-flow';
 import { translateDiagnoseFlow } from './flows/translate-diagnose-flow';
 import { getDiagnoseDetailsFlow } from './flows/get-diagnose-details-flow';
 import { analyzeScientificParadigmFlow } from './flows/analyze-scientific-paradigm-flow';
+import { chatWithGuidelineContent } from './flows/guideline-chat-flow';
 
 
 import { generateSimulationScenarioFlow, runSimulationTurnFlow, generateSimulationReportFlow } from './flows/simulation-flows';
@@ -291,5 +292,7 @@ export const allFlows: Record<string, any> = {
   'translateDiagnoseFlow': translateDiagnoseFlow,
   'getDiagnoseDetailsFlow': getDiagnoseDetailsFlow,
   'analyzeScientificParadigmFlow': analyzeScientificParadigmFlow,
+  'chatWithGuidelineContentFlow': chatWithGuidelineContent,
+  'chatWithGuidelineContent': chatWithGuidelineContent,
 };
 

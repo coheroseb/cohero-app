@@ -1891,3 +1891,34 @@ export const ResearchDiscoveryOutputSchema = z.object({
 export type ResearchDiscoveryInput = z.infer<typeof ResearchDiscoveryInputSchema>;
 export type ResearchDiscoveryData = z.infer<typeof ResearchDiscoveryDataSchema>;
 export type ResearchDiscoveryOutput = z.infer<typeof ResearchDiscoveryOutputSchema>;
+
+// ==========================================
+// GUIDELINE CHAT SCHEMAS
+// ==========================================
+
+export const GuidelineChatInputSchema = z.object({
+  question: z.string().describe("Brugerens spørgsmål til vejledningen eller loven."),
+  lawContext: z.string().optional().describe("Teksten fra den overordnede lov."),
+  guidelineContexts: z.array(z.object({
+    title: z.string(),
+    content: z.string(),
+  })).describe("En liste over vejledninger og deres indhold."),
+  chatHistory: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+  })).optional().describe("Tidligere beskeder i chatten."),
+});
+
+export const GuidelineChatDataSchema = z.object({
+  answer: z.string().describe("AI'ens svar på spørgsmålet. Inkludér præcise henvisninger."),
+  suggestedFollowUpQuestions: z.array(z.string()).optional().describe("2-3 forslag til opfølgende spørgsmål."),
+});
+
+export const GuidelineChatOutputSchema = z.object({
+  data: GuidelineChatDataSchema,
+  usage: UsageSchema,
+});
+
+export type GuidelineChatInput = z.infer<typeof GuidelineChatInputSchema>;
+export type GuidelineChatData = z.infer<typeof GuidelineChatDataSchema>;
+export type GuidelineChatOutput = z.infer<typeof GuidelineChatOutputSchema>;

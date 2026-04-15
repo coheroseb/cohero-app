@@ -98,6 +98,7 @@ import {
     fetchRelatedDecisions,
     fetchOmbudsmandReports,
     generateLawFlowchartAction,
+    chatWithGuidelineContentAction,
 } from '@/app/actions';
 
 import { Button } from '@/components/ui/button';
@@ -654,6 +655,92 @@ function HighlightText({ text, highlight, userHighlights = [], onRemoveHighlight
 
   return <>{result}</>;
 }
+
+const GuidelineChatMessage = ({ msg }: { msg: { role: 'user' | 'assistant', content: string } }) => {
+    const isAssistant = msg.role === 'assistant';
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`flex flex-col ${isAssistant ? 'items-start' : 'items-end'} mb-6`}
+        >
+            <div className={`max-w-[90%] p-5 rounded-3xl text-sm leading-relaxed shadow-sm ${
+                isAssistant ? 'bg-white border border-amber-100 text-amber-950 font-serif' : 'bg-amber-950 text-white font-bold'
+            }`}>
+                <div dangerouslySetInnerHTML={{ __html: msg.content }} />
+            </div>
+        </motion.div>
+    );
+};
+
+const GuidelineChatInterface = ({
+    messages,
+    input,
+    setInput,
+    onSubmit,
+    isLoading,
+    currentDocTitle
+}: {
+    messages: { role: 'user' | 'assistant', content: string }[];
+    input: string;
+    setInput: (s: string) => void;
+    onSubmit: (e: React.FormEvent) => void;
+    isLoading: boolean;
+    currentDocTitle: string;
+}) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }, [messages]);
+
+    return (
+        <div className="flex flex-col h-[70vh] max-h-[1000px] bg-amber-50/30 rounded-[3rem] border border-amber-100 overflow-hidden shadow-inner">
+            <div className="p-6 border-b border-amber-100 flex items-center justify-between bg-white/40">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-amber-950 text-amber-400 rounded-2xl flex items-center justify-center shadow-lg"><BrainCircuit className="w-5 h-5" /></div>
+                    <div>
+                        <h4 className="text-[11px] font-black uppercase tracking-widest text-amber-950">Vejlednings-Assistent</h4>
+                        <p className="text-[9px] text-slate-400 font-bold italic truncate max-w-[150px]">{currentDocTitle}</p>
+                    </div>
+                </div>
+            </div>
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 scroll-smooth custom-scrollbar">
+                {messages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 px-6 opacity-30">
+                        <Sparkles className="w-12 h-12 text-amber-950" />
+                        <p className="text-xs font-bold serif italic text-amber-950 leading-relaxed">Spørg mig om noget i denne vejledning eller hvordan den relaterer sig til loven.</p>
+                    </div>
+                ) : (
+                    messages.map((m, i) => <GuidelineChatMessage key={i} msg={m} />)
+                )}
+                {isLoading && (
+                    <div className="flex items-start gap-4 mb-6">
+                        <div className="w-10 h-10 bg-white border border-amber-100 rounded-2xl flex items-center justify-center animate-pulse"><Loader2 className="w-4 h-4 animate-spin text-amber-300" /></div>
+                        <div className="bg-white/80 p-4 rounded-2xl border border-amber-50 h-12 w-32 animate-pulse"></div>
+                    </div>
+                )}
+            </div>
+            <div className="p-6 bg-white/60 border-t border-amber-100">
+                <form onSubmit={onSubmit} className="relative group">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Skriv dit spørgsmål..."
+                        className="w-full pl-6 pr-14 py-5 bg-white border-2 border-amber-100 rounded-2xl text-xs font-bold focus:ring-8 focus:ring-amber-950/5 focus:border-amber-950 transition-all shadow-xl placeholder:text-slate-300 placeholder:italic"
+                    />
+                    <button
+                        type="submit"
+                        disabled={!input.trim() || isLoading}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg disabled:opacity-50"
+                    >
+                        <ArrowRight className="w-4 h-4" />
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
 
 const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats, searchQuery }: { law: LawConfig, isLocked: boolean, router: any, idx: number, trainingStats: any, searchQuery: string }) => {
     const [metadata, setMetadata] = useState<LawContentType | null>(null);
@@ -1224,6 +1311,12 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   const [globalParaNum, setGlobalParaNum] = useState<string | null>(null);
   const [globalParaResults, setGlobalParaResults] = useState<any[]>([]);
   const [isGlobalParaLoading, setIsGlobalParaLoading] = useState(false);
+
+  // Guideline Chat States
+  const [guidelineChatMessages, setGuidelineChatMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
+  const [guidelineChatInput, setGuidelineChatInput] = useState('');
+  const [isGuidelineChatLoading, setIsGuidelineChatLoading] = useState(false);
+  const [isGuidelinesExpanded, setIsGuidelinesExpanded] = useState(false);
   
   const mainScrollRef = useRef<HTMLElement>(null);
   const activeLawId = useMemo(() => params?.lawId as string || searchParams?.get('lawId'), [params, searchParams]);
@@ -1744,6 +1837,12 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
     }
   };
 
+  const isGuideline = useMemo(() => {
+    if (!activeReferenceId) return false;
+    const title = searchParams?.get('title') || '';
+    return title.toLowerCase().includes('vejledning') || activeReferenceId.toLowerCase().includes('vejledning');
+  }, [activeReferenceId, searchParams]);
+
   const handleGenerateFlowchart = async (para: any, lawData: LawContentType, paraKey: string) => {
     if (!isPremium) {
         toast({
@@ -1763,13 +1862,53 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
             paragrafTekst: para.tekst || '', 
             fuldLovtekst: lawData.rawText || ''
         });
-        setParaFlowcharts(prev => ({ ...prev, [paraKey]: response.data }));
         setActiveFlowchart(response.data);
     } catch (error) {
         console.error("Failed to generate flowchart:", error);
         toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke generere flowchart." });
     } finally {
         setIsGeneratingFlowchart(prev => ({ ...prev, [paraKey]: false }));
+    }
+  };
+
+  const handleGuidelineChatSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const text = guidelineChatInput;
+    if (!text.trim() || isGuidelineChatLoading) return;
+
+    const userMsg = { role: 'user' as const, content: text };
+    setGuidelineChatMessages(prev => [...prev, userMsg]);
+    setGuidelineChatInput('');
+    setIsGuidelineChatLoading(true);
+
+    try {
+        const guidelineContexts: { title: string; content: string }[] = [];
+        if (currentDocData) {
+            const currentContent = currentDocData.kapitler.map(k => `### ${k.titel}\n${k.paragraffer.map(p => p.tekst).join('\n')}`).join('\n\n');
+            guidelineContexts.push({ title: currentDocData.titel, content: currentContent });
+        }
+
+        let lawContext = '';
+        if (activeLawId && docsData[activeLawId]) {
+            const law = docsData[activeLawId];
+            lawContext = law.kapitler.map(k => `### ${k.titel}\n${k.paragraffer.map(p => `§ ${p.nummer}: ${p.tekst}`).join('\n')}`).join('\n\n');
+        }
+
+        const result = await chatWithGuidelineContentAction({
+            question: text,
+            lawContext,
+            guidelineContexts,
+            chatHistory: guidelineChatMessages
+        });
+
+        if (result?.data) {
+            setGuidelineChatMessages(prev => [...prev, { role: 'assistant', content: result.data.answer }]);
+        }
+    } catch (err) {
+        console.error('Guideline Chat Error:', err);
+        setGuidelineChatMessages(prev => [...prev, { role: 'assistant', content: 'Beklager, der skete en fejl i chatten. Prøv venligst igen senere.' }]);
+    } finally {
+        setIsGuidelineChatLoading(false);
     }
   };
 

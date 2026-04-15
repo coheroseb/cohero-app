@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageSquare, User, Zap, Heart, Shield, ArrowRight, RefreshCw, 
   ChevronLeft, AlertCircle, CheckCircle2, Star, TrendingUp, Brain,
-  Sparkles, Send, Loader2, Info, Activity, Target, Lightbulb
+  Sparkles, Send, Loader2, Info, Activity, Target, Lightbulb, Construction
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -181,6 +181,19 @@ export default function SimulatorPage() {
              )}
           </div>
         </header>
+
+        {/* Under Development Banner */}
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 rounded-[28px] px-8 py-6 flex items-center gap-5 shadow-sm">
+            <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20 shrink-0">
+              <Construction className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-[15px] font-black text-amber-900 tracking-tight">Funktionen er under udvikling</h3>
+              <p className="text-[13px] text-amber-700/80 font-medium mt-0.5">Simulatoren er på vej — vi arbejder på at gøre den klar til dig. Hold øje med opdateringer!</p>
+            </div>
+          </div>
+        </div>
 
         <div className="flex-1 overflow-hidden relative">
           <AnimatePresence mode="wait">
