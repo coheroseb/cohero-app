@@ -17,11 +17,15 @@ const NativeLawViewer = dynamic(
 );
 
 export default function LawViewPage() {
-    const [isNative, setIsNative] = React.useState(false);
+    const [isNative, setIsNative] = React.useState<boolean | null>(null);
 
     React.useEffect(() => {
         setIsNative(Capacitor.isNativePlatform());
     }, []);
+
+    if (isNative === null) {
+        return <AuthLoadingScreen />;
+    }
 
     if (isNative) {
         return <NativeLawViewer />;
