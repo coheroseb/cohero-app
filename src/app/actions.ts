@@ -3608,11 +3608,34 @@ export async function getUserPublicProfileAction(uid: string) {
             createdAt: act.createdAt.toISOString()
         }));
         
+        // Also fetch quiz results (law training progression)
+        const quizSnap = await adminFirestore.collection('users').doc(uid).collection('quizResults').get();
+        
+        let quizResults = quizSnap.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                lawTitle: data.lawTitle || 'Ukendt Lov',
+                topic: data.topic || '',
+                score: data.score || 0,
+                totalQuestions: data.totalQuestions || 5,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date(0))
+            };
+        });
+
+        // Sort descending by date
+        quizResults.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const topQuizzes = quizResults.slice(0, 10).map(q => ({
+            ...q,
+            createdAt: q.createdAt.toISOString()
+        }));
+        
         return { 
             success: true, 
             data: {
                 profile: publicProfile,
-                activities: topActivities
+                activities: topActivities,
+                quizResults: topQuizzes
             }
         };
     } catch (error: any) {
