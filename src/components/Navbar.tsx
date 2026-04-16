@@ -39,6 +39,7 @@ import {
   ArrowRight,
   HandHelping,
   Star,
+  ShoppingBag,
   User as UserIcon
 } from 'lucide-react';
 
@@ -418,6 +419,7 @@ const Navbar: React.FC<NavbarProps> = ({
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
                    <NavDropdownLink href="/videnskabsteori" icon={<Scale className="w-4 h-4 text-indigo-500" />}>Videnskabsteori</NavDropdownLink>
+                  <NavDropdownLink href="/shop" icon={<ShoppingBag className="w-4 h-4 text-rose-500" />}>Cohéro Shop</NavDropdownLink>
                    {userProfile?.role === 'admin' && (
                      <NavDropdownLink href="/admin" icon={<Shield className="w-4 h-4 text-rose-500" />}>Admin Panel</NavDropdownLink>
                    )}
@@ -621,6 +623,11 @@ const Navbar: React.FC<NavbarProps> = ({
                     <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>
                         <Link href="/medbestemmelse" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-slate-50 border border-slate-100 rounded-[24px] text-[18px] font-extrabold text-slate-600 shadow-sm active:scale-[0.98] transition-all">
                             Vær med til at forme Cohéro <Lightbulb className="w-5 h-5 text-amber-500" />
+                        </Link>
+                    </motion.li>
+                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 }}>
+                        <Link href="/shop" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
+                            Cohéro Shop <ShoppingBag className="w-5 h-5 text-rose-400" />
                         </Link>
                     </motion.li>
                   </ul>
