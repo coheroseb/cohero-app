@@ -68,7 +68,9 @@ import {
   Snowflake,
   Egg,
   Ghost,
-  Gift
+  Gift,
+  Share2,
+  Linkedin
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { Capacitor } from '@capacitor/core';
@@ -883,6 +885,11 @@ const PortalPageContent: React.FC = () => {
                 <div className="flex items-center gap-2 px-4 py-2 bg-white text-rose-600 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border border-rose-100 shadow-sm">
                    <Flame className="w-3.5 h-3.5 fill-current" /> {userProfile?.dailyChallengeStreak || 0} Dages dannelse
                 </div>
+                {user && (
+                    <Link href={`/u/${user.uid}`} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
+                       <Share2 className="w-3.5 h-3.5" /> Del LinkedIn Profil
+                    </Link>
+                )}
               </div>
               <h1 className="text-[38px] sm:text-6xl md:text-7xl font-extrabold text-slate-950 tracking-[-0.03em] leading-[0.95]">
                 {getTimeOfDayGreeting()}, <br className="sm:hidden" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">{user?.displayName?.split(' ')[0]}</span>
@@ -1360,6 +1367,23 @@ const PortalPageContent: React.FC = () => {
                </div>
             </section>
           )}
+
+          {/* Public Profile / LinkedIn Card */}
+          <section className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 sm:p-10 rounded-[32px] sm:rounded-[48px] text-white shadow-2xl relative overflow-hidden group border border-white/10">
+               <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-[60px] group-hover:scale-125 transition-transform duration-700"></div>
+               <div className="relative z-10 flex flex-col gap-6">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center shadow-lg border border-white/20 group-hover:rotate-12 transition-transform">
+                      <Linkedin className="w-8 h-8 fill-current" />
+                  </div>
+                  <div className="space-y-3">
+                      <h3 className="text-[22px] font-extrabold text-white leading-tight">Del din faglige profil</h3>
+                      <p className="text-[14px] text-indigo-100 font-medium leading-relaxed">Vis dine færdigheder, din streak og dit digitale certifikat på LinkedIn.</p>
+                  </div>
+                  <Link href={`/u/${user?.uid}`} className="w-full h-14 bg-white text-indigo-600 rounded-[20px] font-black uppercase tracking-widest text-[12px] flex items-center justify-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all shadow-xl">
+                      Se din offentlige profil <ChevronRight className="w-4 h-4" />
+                  </Link>
+               </div>
+          </section>
 
           {/* Recent Case Analyses */}
           <section className="bg-white p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden group">

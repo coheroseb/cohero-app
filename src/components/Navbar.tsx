@@ -38,7 +38,8 @@ import {
   ChevronRight,
   ArrowRight,
   HandHelping,
-  Star
+  Star,
+  User as UserIcon
 } from 'lucide-react';
 
 import { User } from 'firebase/auth';
@@ -322,6 +323,7 @@ const Navbar: React.FC<NavbarProps> = ({
         title: "Hovedmenu",
         items: [
           { title: "Hjem", path: "/portal", icon: <Home className="w-5 h-5" /> },
+          { title: "Offentlig Profil", path: `/u/${user?.uid}`, icon: <UserIcon className="w-5 h-5" /> },
           { title: "Korrektur", path: "/korrektur", icon: <Sparkles className="w-5 h-5" /> },
           { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
@@ -411,6 +413,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 ))}
 
                 <NavDropdown title="Mere" icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}>
+                   <NavDropdownLink href={`/u/${user?.uid}`} icon={<UserIcon className="w-4 h-4 text-indigo-500" />}>Offentlig Profil</NavDropdownLink>
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>

@@ -3516,4 +3516,108 @@ export async function updateProofreadingRequestStatusAction(requestId: string, n
         return { success: false };
     }
 }
+/**
+ * getUserPublicProfileAction:
+ * Fetches public-safe profile information for a user by their UID.
+ * Used for public shareable profile pages.
+ */
+export async function getUserPublicProfileAction(uid: string) {
+    console.log('[getUserPublicProfileAction] Fetching public profile for UID:', uid);
+    if (!uid) {
+        console.error('[getUserPublicProfileAction] Error: Missing UID');
+        return { success: false, message: 'UID er påkrævet.' };
+    }
+    
+    try {
+        const { adminFirestore } = await import('@/firebase/server-init');
+        
+        let userDoc = await adminFirestore.collection('users').doc(uid).get();
+        
+        // Fallback: If not found by document ID (UID), try searching by the 'username' field
+        if (!userDoc.exists) {
+            console.log(`[getUserPublicProfileAction] No doc with ID ${uid}, trying username query...`);
+            const usernameQuery = await adminFirestore.collection('users')
+                .where('username', '==', uid)
+                .limit(1)
+                .get();
+            
+            if (!usernameQuery.empty) {
+                userDoc = usernameQuery.docs[0];
+                console.log(`[getUserPublicProfileAction] Found user by username: ${uid}`);
+            }
+        }
+        
+        console.log(`[getUserPublicProfileAction] Result for ${uid} - Exists: ${userDoc.exists}`);
+        
+        if (!userDoc.exists) {
+            console.warn(`[getUserPublicProfileAction] User not found by ID or username: ${uid}`);
+            
+            // Extreme debug: what IDs ARE in the users collection?
+            const sampleSnap = await adminFirestore.collection('users').limit(3).get();
+            if (sampleSnap.empty) {
+                console.error('[getUserPublicProfileAction] The "users" collection is EMPTY in Firestore.');
+            } else {
+                console.log('[getUserPublicProfileAction] Sample UIDs in collection:', sampleSnap.docs.map(d => d.id));
+            }
+            
+            return { success: false, message: 'Bruger kunne ikke findes.' };
+        }
+        
+        const data = userDoc.data();
+        console.log('[getUserPublicProfileAction] Successfully found user:', data?.username || data?.displayName);
+        if (!data) return { success: false, message: 'Ingen data fundet.' };
+        
+        // Sanitize: Only return public fields
+        const publicProfile = {
+            uid: uid,
+            username: data.username || data.displayName || 'Cohéro Bruger',
+            profession: data.profession || 'Socialrådgiver',
+            institution: data.institution || '',
+            semester: data.semester || '',
+            isQualified: data.isQualified || false,
+            membership: data.membership || 'Kollega',
+            dailyChallengeStreak: data.dailyChallengeStreak || 0,
+            highestStreak: data.highestStreak || 0,
+            cohéroPoints: data.cohéroPoints || 0,
+            mementoLevels: data.mementoLevels || { theorist: 0, paragraph: 0, method: 0 },
+            badges: data.badges || [],
+            profilePicture: data.profilePicture || '',
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : null,
+        };
+        
+        // Also fetch recent activity (publicly sharable ones)
+        // Note: We fetch without orderBy to avoid composite index requirements, 
+        // and sort in-memory for the small result set.
+        const activitySnap = await adminFirestore.collection('userActivities')
+            .where('userId', '==', uid)
+            .get();
+            
+        let activities = activitySnap.docs.map(doc => {
+            const act = doc.data();
+            return {
+                id: doc.id,
+                actionText: act.actionText,
+                createdAt: act.createdAt?.toDate ? act.createdAt.toDate() : (act.createdAt ? new Date(act.createdAt) : new Date(0))
+            };
+        });
+
+        // Sort descending and take top 5
+        activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const topActivities = activities.slice(0, 5).map(act => ({
+            ...act,
+            createdAt: act.createdAt.toISOString()
+        }));
+        
+        return { 
+            success: true, 
+            data: {
+                profile: publicProfile,
+                activities: topActivities
+            }
+        };
+    } catch (error: any) {
+        console.error('Error fetching public profile:', error);
+        return { success: false, message: 'Der skete en fejl under hentning af profilen.' };
+    }
+}
 

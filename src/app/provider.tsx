@@ -305,6 +305,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const isLovPortal = useMemo(() => pathname?.startsWith('/lov-portal') && !pathname?.includes('/lov-stien'), [pathname]);
   const isMitSemester = useMemo(() => pathname?.startsWith('/mit-semester'), [pathname]);
   const isAdminPage = useMemo(() => pathname?.startsWith('/admin'), [pathname]);
+  const isPublicProfile = useMemo(() => pathname?.startsWith('/u/'), [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -761,7 +762,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 .border-amber-200, .border-amber-100 { border-color: #a78bfa !important; }
             ` : ''}
         ` }} />
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isNavbarHidden && showBannerOverlays && (
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isPublicProfile && !isNavbarHidden && showBannerOverlays && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
             <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} topOffset={totalBannerOffset} />

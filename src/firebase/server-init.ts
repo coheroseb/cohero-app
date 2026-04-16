@@ -7,10 +7,8 @@ import * as admin from 'firebase-admin';
  */
 function getAdminApp() {
   const serviceAccountVar = process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_SERVICE_ACCOUNT;
-  const appName = 'cohero';
   
-  const existingApp = admin.apps.find(a => a?.name === appName);
-  if (existingApp) return existingApp;
+  if (admin.apps.length > 0) return admin.apps[0]!;
 
   try {
     if (serviceAccountVar) {
@@ -29,15 +27,15 @@ function getAdminApp() {
           process.env.GCLOUD_PROJECT = serviceAccount.project_id;
       }
 
+      console.log("[Firebase Admin] Initializing with service account for project:", serviceAccount.project_id);
       return admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         projectId: serviceAccount.project_id,
         storageBucket: "studio-7870211338-fe921.firebasestorage.app"
-      }, appName);
+      });
 
     } else {
       console.warn("[Firebase Admin] service account JSON is missing. Trying default app with project id fallback.");
-      if (admin.apps.length > 0) return admin.apps[0]!;
       return admin.initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'studio-7870211338-fe921' });
     }
   } catch (error: any) {
