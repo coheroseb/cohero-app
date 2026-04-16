@@ -31,19 +31,22 @@ const TeamSection = () => {
             name: "Sebastian Viste Hansen",
             role: "Socialrådgiver & medstifter",
             bio: "Erfaring fra børne- og ungeområdet. Brænder for at styrke den faglige selvtillid hos studerende.",
-            image: "/team/seb.png"
+            image: "/team/seb.png",
+            status: "active"
         },
         {
             name: "Nanna Hougaard Ungermand",
-            role: "Socialrådgiver & medstifter",
-            bio: "Erfaring fra borgerrådgivningen. Fokuserer på retssikkerhed og den gode, etiske praksis.",
-            image: "/team/nan.png"
+            role: "Medstifter",
+            bio: "Nanna har været en central del af Cohéros start. Hun er ikke længere en aktiv del af teamet, da hun har solgt sin andel for at søge nye eventyr.",
+            image: "/team/nan.png",
+            status: "former"
         },
         {
             name: "Julie Lee Hansen",
             role: "Uddannelseskonsulent & medstifter",
             bio: "Uddannelsesvidenskabelig baggrund. Sikrer, at alt vores indhold er pædagogisk funderet og læringsoptimeret.",
-            image: "/team/jul.png"
+            image: "/team/jul.png",
+            status: "active"
         }
     ];
 
@@ -53,23 +56,30 @@ const TeamSection = () => {
                 <motion.div 
                     key={idx}
                     variants={itemVariants}
-                    className="bg-white p-8 rounded-[2.5rem] border border-amber-100/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group relative overflow-hidden"
+                    className={`bg-white p-8 rounded-[2.5rem] border ${member.status === 'former' ? 'border-slate-100 opacity-80' : 'border-amber-100/60 shadow-sm'} hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group relative overflow-hidden`}
                 >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full blur-3xl -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                    {member.status === 'active' && (
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full blur-3xl -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                    )}
                     
                     <div className="relative z-10 text-center">
                         <div className="relative w-32 h-32 mx-auto mb-6">
-                            <div className="absolute inset-0 bg-amber-100 rounded-full animate-pulse group-hover:scale-105 transition-transform duration-500 opacity-20"></div>
+                            <div className={`absolute inset-0 ${member.status === 'former' ? 'bg-slate-100' : 'bg-amber-100'} rounded-full animate-pulse group-hover:scale-105 transition-transform duration-500 opacity-20`}></div>
                             <Image 
                                 src={member.image} 
                                 alt={member.name} 
                                 fill
-                                className="rounded-full object-cover border-4 border-white shadow-md relative z-10" 
+                                className={`rounded-full object-cover border-4 border-white shadow-md relative z-10 ${member.status === 'former' ? 'grayscale opacity-60' : ''}`} 
                             />
+                            {member.status === 'former' && (
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20 bg-slate-900 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full border-2 border-white shadow-lg whitespace-nowrap">
+                                    Tidl. Medstifter
+                                </div>
+                            )}
                         </div>
-                        <h4 className="font-bold text-xl text-amber-950 serif group-hover:text-indigo-900 transition-colors">{member.name}</h4>
-                        <p className="text-sm text-indigo-600 font-black uppercase tracking-widest mt-1 mb-4">{member.role}</p>
-                        <p className="text-sm text-slate-500 leading-relaxed italic">{member.bio}</p>
+                        <h4 className={`font-bold text-xl serif transition-colors ${member.status === 'former' ? 'text-slate-400' : 'text-amber-950 group-hover:text-indigo-900'}`}>{member.name}</h4>
+                        <p className={`text-sm font-black uppercase tracking-widest mt-1 mb-4 ${member.status === 'former' ? 'text-slate-300' : 'text-indigo-600'}`}>{member.role}</p>
+                        <p className={`text-sm leading-relaxed italic ${member.status === 'former' ? 'text-slate-300' : 'text-slate-500'}`}>{member.bio}</p>
                     </div>
                 </motion.div>
             ))}
