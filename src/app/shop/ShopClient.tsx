@@ -122,8 +122,8 @@ export default function ShopClient() {
                 transition={{ delay: 0.1 }}
                 className="text-5xl md:text-7xl font-black text-slate-950 serif-premium leading-[1.1] max-w-4xl mx-auto"
             >
-                Gør din studietid <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-amber-500 italic">lidt mere stilfuld</span>
+                Vores merchandise er <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-amber-500 italic">lige på trapperne</span>
             </motion.h1>
             <motion.p 
                 initial={{ opacity: 0, y: 20 }}
@@ -131,8 +131,8 @@ export default function ShopClient() {
                 transition={{ delay: 0.2 }}
                 className="text-lg text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed"
             >
-                Vi har skabt en eksklusiv kollektion af kvalitetsprodukter til fremtidens fagpersoner. 
-                Hvert stykke er designet med kærlighed til faget og studielivet.
+                Vi lægger sidste hånd på vores eksklusive kollektion. Glæd dig til premium kvalitet, 
+                der hylder dit fag og din studietid. Shoppen åbner meget snart!
             </motion.p>
         </section>
 
@@ -192,10 +192,10 @@ export default function ShopClient() {
 
                         <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-slate-950/20 to-transparent flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                              <Button 
-                                onClick={() => addToCart(product)}
-                                className="w-full bg-white text-slate-900 hover:bg-slate-50 rounded-2xl h-14 font-black uppercase tracking-widest text-xs shadow-2xl"
+                                disabled
+                                className="w-full bg-white/90 backdrop-blur-md text-slate-400 font-black uppercase tracking-widest text-xs h-14 rounded-2xl cursor-not-allowed"
                              >
-                                Læg i kurv
+                                Kommer snart
                              </Button>
                         </div>
                     </div>
