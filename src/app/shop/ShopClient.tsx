@@ -207,18 +207,8 @@ export default function ShopClient() {
                     <div className="space-y-4">
                         <h2 className="text-4xl md:text-5xl font-black serif leading-tight">Glæd dig til lanceringen</h2>
                         <p className="text-slate-400 font-medium italic">
-                            Vi arbejder på højtryk for at gøre shoppen klar. Tilmeld dig vores nyhedsbrev for at få besked i sekundet vi åbner!
+                            Vi arbejder på højtryk for at gøre shoppen klar. Vi glæder os til at byde dig velkommen i vores nye univers!
                         </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <input 
-                            type="email" 
-                            placeholder="Din e-mail adresse" 
-                            className="flex-1 h-14 bg-white/10 border border-white/20 rounded-2xl px-6 font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all text-white"
-                        />
-                        <Button className="h-14 px-8 bg-rose-600 hover:bg-rose-700 rounded-2xl font-black uppercase tracking-widest text-[10px]">
-                            Giv lyd
-                        </Button>
                     </div>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Lanceres forår 2026</p>
                 </motion.div>
@@ -238,23 +228,13 @@ export default function ShopClient() {
                     <span className="text-[10px] font-black uppercase text-slate-300 tracking-[0.3em]">Officiel Partner</span>
                 </div>
             </div>
-            <div className="bg-slate-900 p-10 rounded-[3rem] text-white space-y-8 relative overflow-hidden">
+            <div className="bg-slate-900 p-10 rounded-[3rem] text-white space-y-8 relative overflow-hidden flex flex-col justify-center">
                 <div className="absolute top-0 right-0 p-10 opacity-10">
                     <ShoppingBag className="w-40 h-40" />
                 </div>
-                <div className="relative z-10 space-y-6">
-                    <h3 className="text-2xl font-black serif">Få 10% rabat i dag</h3>
-                    <p className="text-slate-400 font-medium">Tilmeld dig vores nyhedsbrev og få en velkomstrabat på din første ordre.</p>
-                    <div className="flex gap-2">
-                        <input 
-                            type="email" 
-                            placeholder="Din e-mail adresse" 
-                            className="flex-1 h-14 bg-white/10 border border-white/20 rounded-2xl px-6 font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all"
-                        />
-                        <Button className="h-14 px-8 bg-rose-600 hover:bg-rose-700 rounded-2xl font-black uppercase tracking-widest text-[10px]">
-                            Tilmeld
-                        </Button>
-                    </div>
+                <div className="relative z-10 space-y-4">
+                    <h3 className="text-2xl font-black serif">En del af Cohéro-oplevelsen</h3>
+                    <p className="text-slate-400 font-medium italic">Vores merchandise er skabt til at bringe fællesskabet og den faglige stolthed helt hjem i stuen.</p>
                 </div>
             </div>
         </section>
