@@ -156,61 +156,73 @@ export default function ShopClient() {
         </section>
 
         {/* Product Grid */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {PRODUCTS.map((product, i) => (
-                <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
-                    className="group"
-                >
-                    <div className="relative aspect-[4/5] bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-rose-500/10 group-hover:-translate-y-2">
-                        {/* Image */}
-                        <img 
-                            src={product.image} 
-                            alt={product.name}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
-                        
-                        {/* Overlays */}
-                        <div className="absolute top-6 left-6 flex flex-col gap-2">
-                            <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-900 border border-slate-100 shadow-sm">
-                                {product.category}
-                            </span>
-                            {product.tag && (
-                                <span className="px-3 py-1 bg-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-rose-600/20">
-                                    {product.tag}
+        <section className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {PRODUCTS.map((product, i) => (
+                    <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1 }}
+                        className="group"
+                    >
+                        <div className="relative aspect-[4/5] bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm transition-all duration-500">
+                            {/* Image */}
+                            <img 
+                                src={product.image} 
+                                alt={product.name}
+                                className="w-full h-full object-cover transition-transform duration-700"
+                            />
+                            
+                            {/* Overlays */}
+                            <div className="absolute top-6 left-6 flex flex-col gap-2">
+                                <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-900 border border-slate-100 shadow-sm">
+                                    {product.category}
                                 </span>
-                            )}
+                            </div>
                         </div>
 
-                        <button className="absolute top-6 right-6 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors shadow-sm">
-                            <Heart className="w-5 h-5" />
-                        </button>
-
-                        <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-slate-950/20 to-transparent flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                             <Button 
-                                disabled
-                                className="w-full bg-white/90 backdrop-blur-md text-slate-400 font-black uppercase tracking-widest text-xs h-14 rounded-2xl cursor-not-allowed"
-                             >
-                                Kommer snart
-                             </Button>
+                        <div className="mt-6 px-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-slate-900">{product.name}</h3>
+                                <p className="text-xl font-black text-rose-600">{product.price} kr.</p>
+                            </div>
                         </div>
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* Coming Soon Overlay */}
+            <div className="absolute inset-x-[-24px] inset-y-[-40px] z-[50] flex items-center justify-center p-6">
+                <div className="absolute inset-0 bg-white/40 backdrop-blur-md rounded-[3rem]" />
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative z-10 bg-slate-950 text-white p-12 md:p-16 rounded-[3rem] text-center space-y-8 shadow-2xl max-w-xl mx-auto"
+                >
+                    <div className="w-20 h-20 bg-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-2xl shadow-rose-600/20 rotate-3">
+                        <ShoppingBag className="w-10 h-10" />
                     </div>
-
-                    <div className="mt-6 px-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-bold text-slate-900">{product.name}</h3>
-                            <p className="text-xl font-black text-rose-600">{product.price} kr.</p>
-                        </div>
-                        <p className="text-sm text-slate-500 font-medium line-clamp-2 leading-relaxed">
-                            {product.description}
+                    <div className="space-y-4">
+                        <h2 className="text-4xl md:text-5xl font-black serif leading-tight">Glæd dig til lanceringen</h2>
+                        <p className="text-slate-400 font-medium italic">
+                            Vi arbejder på højtryk for at gøre shoppen klar. Tilmeld dig vores nyhedsbrev for at få besked i sekundet vi åbner!
                         </p>
                     </div>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <input 
+                            type="email" 
+                            placeholder="Din e-mail adresse" 
+                            className="flex-1 h-14 bg-white/10 border border-white/20 rounded-2xl px-6 font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all text-white"
+                        />
+                        <Button className="h-14 px-8 bg-rose-600 hover:bg-rose-700 rounded-2xl font-black uppercase tracking-widest text-[10px]">
+                            Giv lyd
+                        </Button>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Lanceres forår 2026</p>
                 </motion.div>
-            ))}
+            </div>
         </section>
 
         {/* Footer Info */}
