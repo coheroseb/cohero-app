@@ -23,9 +23,14 @@ import {
   Lock,
   ArrowUpAZ,
   BrainCircuit,
-  MessageSquare
+  MessageSquare,
+  HelpCircle,
+  ListChecks,
+  Activity,
+  Printer
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
+import { lawDefinitions } from '@/lib/law-definitions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { analyzeCasePdfAction, unifiedChatAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
@@ -210,6 +215,10 @@ const CaseAnalyserPage: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [rawText, setRawText] = useState<string | null>(null);
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+  const [draftVurdering, setDraftVurdering] = useState<string | null>(null);
+  const [isGeneratingGaps, setIsGeneratingGaps] = useState(false);
+  const [laws, setLaws] = useState<LawConfig[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -218,8 +227,19 @@ const CaseAnalyserPage: React.FC = () => {
       router.replace('/');
     } else if (user && firestore) {
       fetchHistory();
+      fetchLaws();
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, firestore]);
+
+  const fetchLaws = async () => {
+    if (!firestore) return;
+    try {
+      const q = query(collection(firestore, 'laws'));
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LawConfig[];
+      setLaws(data);
+    } catch (e) { console.error('Error fetching laws:', e); }
+  };
 
   const fetchHistory = async () => {
     if (!user || !firestore) return;
@@ -247,6 +267,7 @@ const CaseAnalyserPage: React.FC = () => {
     setFile({ name: item.fileName } as File);
     setChatHistory(item.chatHistory || []);
     setRawText(item.rawText || null);
+    setDraftVurdering(item.analysis?.socialfagligVurdering || null);
   };
 
   const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
@@ -313,14 +334,45 @@ const CaseAnalyserPage: React.FC = () => {
 
       // 3. Call AI action
       const response = await analyzeCasePdfAction({ caseText: text });
-      setAnalysis(response.data);
+      let finalAnalysis = response.data;
+
+      // Check if we need to supplement with videnshuller/opfølgning
+      if (!finalAnalysis.videnshuller || !finalAnalysis.opfølgning) {
+          try {
+              const gapPrompt = `Her er en socialfaglig case-analyse: ${JSON.stringify(finalAnalysis)}
+              Baseret på sagen, identificér:
+              1. Videnshuller (hvad mangler vi for at træffe en afgørelse?)
+              2. Opfølgning (hvad er de næste skridt?)
+              
+              Svar KUN med en JSON-struktur: { "videnshuller": ["...", "..."], "opfølgning": ["...", "..."] }`;
+              
+              const res = await unifiedChatAction({
+                  message: gapPrompt,
+                  chatHistory: [],
+                  persona: 'case',
+                  context: { currentModule: 'CaseAnalyser', currentPath: 'Generering af videnshuller' }
+              });
+              
+              if (res?.data?.answer) {
+                  try {
+                      const jsonStr = res.data.answer.replace(/```json|```/g, '').trim();
+                      const gaps = JSON.parse(jsonStr);
+                      finalAnalysis = { ...finalAnalysis, ...gaps };
+                  } catch (e) { console.error("Could not parse gaps JSON", e); }
+              }
+          } catch (gapErr) {
+              console.error("Error generating gaps surplus:", gapErr);
+          }
+      }
+
+      setAnalysis(finalAnalysis);
       setUploadProgress(100);
 
       // 4. Save to history
       const docRef = await addDoc(collection(firestore, 'users', user.uid, 'caseAnalyses'), {
         fileName: pdfFile.name,
         pdfUrl: url,
-        analysis: response.data,
+        analysis: finalAnalysis,
         rawText: text,
         chatHistory: [],
         createdAt: serverTimestamp(),
@@ -336,6 +388,71 @@ const CaseAnalyserPage: React.FC = () => {
       setUploadProgress(0);
       fetchHistory();
     }
+  };
+
+  const handleGenerateDraft = async () => {
+    if (!rawText || !user || !firestore || !openCaseId || !analysis) return;
+    setIsGeneratingDraft(true);
+    try {
+        const prompt = `Som en erfaren socialrådgiver, skal du skrive en struktureret 'socialfaglig vurdering' af denne sag.
+        Brug følgende overskrifter i dit svar:
+        1. **Problemformulering** (Hvad er kernen?)
+        2. **Analytiske pointer** (Hvorfor er det et problem?)
+        3. **Faglig vurdering & handlemuligheder** (Hvad skal der gøres?)
+        
+        Svaret skal være formelt, sagligt og fyldestgørende.
+        Her er sagen: ${rawText}`;
+
+        const resp = await unifiedChatAction({
+            message: prompt,
+            chatHistory: [],
+            persona: 'case',
+            context: { currentModule: 'CaseAnalyser', currentPath: 'Generering af socialfaglig vurdering' }
+        });
+
+        if (resp?.data) {
+            const draft = resp.data.answer;
+            setDraftVurdering(draft);
+            
+            // Save to firestore
+            const ref = doc(firestore, 'users', user.uid, 'caseAnalyses', openCaseId);
+            await updateDoc(ref, { 
+                "analysis.socialfagligVurdering": draft 
+            });
+            toast({ title: "Kladde genereret!", description: "Din socialfaglige vurdering er klar." });
+        }
+    } catch (err) {
+        console.error(err);
+        toast({ variant: 'destructive', title: "Kunne ikke generere kladde" });
+    } finally {
+        setIsGeneratingDraft(false);
+    }
+  };
+
+  const getLawIdFromName = (name: string) => {
+    const normalized = name.toLowerCase().trim();
+    
+    // Map of common abbreviations
+    const abbrevMap: Record<string, string> = {
+        'bl': 'barnets lov',
+        'sel': 'social service',
+        'fvl': 'forvaltningsloven',
+        'sul': 'sundhedsloven',
+        'las': 'aktiv socialpolitik',
+        'lab': 'aktiv beskæftigelsesindsats',
+        'ofl': 'offentlighedsloven',
+        'fal': 'forældreansvarsloven',
+        'ffl': 'folkeskoleloven'
+    };
+
+    const targetTerm = abbrevMap[normalized] || normalized;
+
+    const found = laws.find(d => 
+        d.name.toLowerCase().includes(targetTerm) || 
+        d.id.toLowerCase() === normalized ||
+        d.abbreviation?.toLowerCase() === normalized
+    );
+    return found?.id || null;
   };
 
   const isFreeTier = useMemo(() => 
@@ -390,10 +507,14 @@ const CaseAnalyserPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 selection:bg-amber-100 overflow-hidden h-screen text-inter">
-      
-      {/* SIDEBAR - ANALYSIS RESULTS */}
-      <aside className="w-full lg:w-[400px] bg-white border-r border-amber-100 flex flex-col z-30 shadow-sm overflow-y-auto custom-scrollbar shrink-0">
+    <div className="min-h-screen bg-[#FDFCF8] text-slate-900 selection:bg-amber-100 text-inter">
+      {/* 
+          WRAPPER FOR THE INTERACTIVE UI 
+          We hide this entirely during printing to avoid overlaps
+      */}
+      <div className="flex flex-col lg:flex-row h-screen overflow-hidden print:hidden">
+        {/* SIDEBAR - ANALYSIS RESULTS */}
+        <aside className="w-full lg:w-[400px] bg-white border-r border-amber-100 flex flex-col z-30 shadow-sm overflow-y-auto custom-scrollbar shrink-0">
         <div className="p-6 flex items-center gap-4 border-b border-amber-50 bg-[#FDFCF8]/50 sticky top-0 z-10 backdrop-blur-md">
             <button onClick={() => router.back()} className="p-2 hover:bg-amber-50 rounded-lg transition-colors">
                 <ArrowLeft className="w-5 h-5 text-amber-900" />
@@ -569,18 +690,141 @@ const CaseAnalyserPage: React.FC = () => {
                            <Scale className="w-3.5 h-3.5" /> Juridisk Fundament
                         </h3>
                         <div className="space-y-3">
-                            {analysis.relevanteParagraffer.map((p, i) => (
-                                <div key={i} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-3 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
-                                        <Scale className="w-12 h-12" />
+                            {analysis.relevanteParagraffer.map((p, i) => {
+                                const lawId = getLawIdFromName(p.lov);
+                                // Strip anything in parentheses and add a period at the end
+                                let cleanPara = p.paragraf.split('(')[0].trim();
+                                if (!cleanPara.endsWith('.')) cleanPara += '.';
+                                const rawPara = cleanPara.includes('§') ? cleanPara : `§ ${cleanPara}`;
+                                const paragraphParam = encodeURIComponent(rawPara);
+                                
+                                return (
+                                    <div key={i} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-3 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                                            <Scale className="w-12 h-12" />
+                                        </div>
+                                        <div className="relative z-10">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <button 
+                                                    onClick={() => lawId && router.push(`/lov-portal/view/${lawId}?para=${paragraphParam}`)}
+                                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all
+                                                        ${lawId 
+                                                            ? 'bg-amber-950 text-white hover:bg-black active:scale-95' 
+                                                            : 'bg-slate-200 text-slate-500 cursor-default'}`}
+                                                >
+                                                    {p.lov} {p.paragraf}
+                                                    {lawId && <ChevronRight className="w-3 h-3" />}
+                                                </button>
+                                                {lawId && (
+                                                    <span className="text-[8px] font-black uppercase text-amber-900/40">Vis i Lov-portal</span>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 leading-relaxed">{p.relevans}</p>
+                                        </div>
                                     </div>
-                                    <div className="relative z-10">
-                                        <p className="text-xs font-black text-slate-900 mb-1">{p.lov} {p.paragraf}</p>
-                                        <p className="text-[11px] text-slate-500 leading-relaxed">{p.relevans}</p>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
+                    </section>
+                    
+                    {/* Videnshuller & Opfølgning - NEW */}
+                    {(analysis.videnshuller?.length || analysis.opfølgning?.length) ? (
+                        <section className="space-y-6">
+                            {analysis.videnshuller && analysis.videnshuller.length > 0 && (
+                                <div className="p-6 bg-rose-50/50 border border-rose-100 rounded-[2rem] relative overflow-hidden">
+                                     <div className="absolute top-0 right-0 p-6 opacity-[0.05]">
+                                        <HelpCircle className="w-16 h-16" />
+                                    </div>
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-4 flex items-center gap-2">
+                                        <HelpCircle className="w-3.5 h-3.5" /> Videnshuller & Mangler
+                                    </h3>
+                                    <ul className="space-y-2">
+                                        {analysis.videnshuller.map((gap, i) => (
+                                            <li key={i} className="flex gap-3 text-xs text-slate-700 leading-relaxed group">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-rose-300 mt-1.5 shrink-0 group-hover:scale-125 transition-transform" />
+                                                {gap}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {analysis.opfølgning && analysis.opfølgning.length > 0 && (
+                                <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-[2rem] relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-6 opacity-[0.05]">
+                                        <ListChecks className="w-16 h-16" />
+                                    </div>
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 flex items-center gap-2">
+                                        <ListChecks className="w-3.5 h-3.5" /> Næste Skridt & Opfølgning
+                                    </h3>
+                                    <ul className="space-y-3">
+                                        {analysis.opfølgning.map((step, i) => (
+                                            <li key={i} className="flex gap-3 text-xs text-slate-700 leading-relaxed p-3 bg-white/50 border border-emerald-50 rounded-xl group hover:border-emerald-200 transition-all">
+                                                <div className="w-5 h-5 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0">
+                                                    {i + 1}
+                                                </div>
+                                                {step}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </section>
+                    ) : null}
+
+                    {/* Socialfaglig Vurdering - OPTIMIZATION #1 */}
+                    <section className="space-y-4">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 flex items-center gap-2">
+                           <FileText className="w-3.5 h-3.5" /> Socialfaglig Vurdering
+                        </h3>
+                        
+                        {!draftVurdering ? (
+                            <button 
+                                onClick={handleGenerateDraft}
+                                disabled={isGeneratingDraft}
+                                className="w-full p-6 bg-amber-50 border border-amber-200 border-dashed rounded-[2rem] hover:bg-amber-100/50 transition-all flex flex-col items-center justify-center gap-3 group"
+                            >
+                                <div className={`w-12 h-12 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-amber-500 shadow-sm ${isGeneratingDraft ? 'animate-spin' : 'group-hover:scale-110 transition-transform'}`}>
+                                    {isGeneratingDraft ? <Loader2 className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs font-bold text-amber-950">Generér vurderings-kladde</p>
+                                    <p className="text-[9px] text-slate-400 font-medium italic">Få AI til at skrive det første udkast</p>
+                                </div>
+                            </button>
+                        ) : (
+                            <div className="p-6 bg-[#FDFCF8] border border-amber-100 rounded-[2.5rem] relative overflow-hidden group shadow-sm">
+                                <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                    <button 
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(draftVurdering);
+                                            toast({ title: "Kopieret!", description: "Kladden er kopieret til udklipsholderen." });
+                                        }}
+                                        className="p-2 bg-white border border-amber-100 rounded-xl hover:bg-amber-50 transition-all shadow-sm"
+                                        title="Kopier tekst"
+                                    >
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                    </button>
+                                    <button 
+                                        onClick={() => handleGenerateDraft()}
+                                        className="p-2 bg-white border border-amber-100 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
+                                        title="Genskab"
+                                    >
+                                        <History className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                                <div className="prose prose-sm prose-amber max-w-none">
+                                    <div 
+                                        className="text-[13px] text-slate-700 leading-relaxed font-serif whitespace-pre-wrap"
+                                        dangerouslySetInnerHTML={{ __html: draftVurdering }}
+                                    />
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-amber-50 flex items-center justify-between">
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-amber-900/40">AI-genereret Arbejdsdokument</span>
+                                    <Sparkles className="w-3 h-3 text-amber-200" />
+                                </div>
+                            </div>
+                        )}
                     </section>
 
                     {/* Tidslinje */}
@@ -612,6 +856,14 @@ const CaseAnalyserPage: React.FC = () => {
                 </Button>
 
                 <Button 
+                    onClick={() => window.print()}
+                    variant="outline"
+                    className="w-full h-14 border-amber-200 text-amber-900 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-50 transition-all text-[11px]"
+                >
+                    <Printer className="w-4 h-4 mr-2" /> Eksporter Rapport
+                </Button>
+
+                <Button 
                     variant="ghost" 
                     onClick={() => { setFile(null); setAnalysis(null); setPdfUrl(null); setOpenCaseId(null); setChatHistory([]); setRawText(null); }} 
                     className="w-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl h-12"
@@ -621,7 +873,7 @@ const CaseAnalyserPage: React.FC = () => {
             </div>
         )}
       </aside>
-
+      
       {/* MAIN AREA - PDF VIEWER OR UPLOAD */}
       <main className="flex-1 flex flex-col bg-slate-900/5 items-center justify-center p-8 relative">
         <AnimatePresence mode="wait">
@@ -756,12 +1008,144 @@ const CaseAnalyserPage: React.FC = () => {
                         try {
                             const ref = doc(firestore, 'users', user.uid, 'caseAnalyses', openCaseId);
                             await updateDoc(ref, { chatHistory: msgs });
+                            setChatHistory(msgs);
                         } catch (e) { console.error('Error saving chat:', e); }
                     }}
                 />
             )}
         </AnimatePresence>
       </main>
+      </div>
+
+      {/* 
+          PRINTABLE REPORT COMPONENT 
+          This is hidden on screen and only appears when the user prints the page.
+          We use simple, clean styles optimized for paper.
+      */}
+      <div className="hidden print:block bg-white text-slate-950 p-0 m-0 w-full">
+          <style dangerouslySetInnerHTML={{ __html: `
+            @page { margin: 2cm; size: auto; }
+            @media print {
+              body { background: white !important; margin: 0; padding: 0; }
+              .page-break { page-break-before: always; }
+              .avoid-break { page-break-inside: avoid; }
+            }
+          `}} />
+          
+          {analysis && (
+              <div className="max-w-[210mm] mx-auto space-y-10 py-10">
+                  {/* Header */}
+                  <div className="flex justify-between items-end border-b-4 border-slate-900 pb-6 mb-10">
+                      <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-2">Socialfaglig Case-Analyse</p>
+                          <h1 className="text-4xl font-black serif leading-tight">{file?.name || 'Analyse-rapport'}</h1>
+                          <p className="text-xs font-semibold text-slate-500 mt-2 uppercase tracking-widest">Genereret: {new Date().toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                      </div>
+                      <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Fortroligt Dokument</p>
+                          <p className="text-[9px] text-slate-400 font-medium">Cohéro AI Assistant</p>
+                      </div>
+                  </div>
+
+                  {/* Summary */}
+                  <section className="avoid-break space-y-3">
+                      <h2 className="text-lg font-black uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-4">1. Resumé af sagen</h2>
+                      <p className="text-[13px] leading-relaxed text-slate-800">{analysis.sammenfatning}</p>
+                  </section>
+
+                  {/* Persons */}
+                  <section className="avoid-break space-y-4">
+                      <h2 className="text-lg font-black uppercase tracking-widest border-b border-slate-200 pb-2 mb-4">2. Persongalleri</h2>
+                      <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                          {analysis.personer.map((p, i) => (
+                              <div key={i} className="text-sm border-l-2 border-slate-100 pl-4 py-1">
+                                  <p className="font-bold text-slate-900">{p.navn} <span className="text-slate-400 font-medium ml-1">({p.rolle})</span></p>
+                                  <p className="text-slate-600 italic text-[12px] leading-snug mt-1">{p.beskrivelse}</p>
+                              </div>
+                          ))}
+                      </div>
+                  </section>
+
+                  {/* Key Points */}
+                  <section className="avoid-break space-y-4">
+                      <h2 className="text-lg font-black uppercase tracking-widest border-b border-slate-200 pb-2">3. Socialfaglige Nøglepunkter</h2>
+                      <div className="flex flex-wrap gap-2 pt-2">
+                          {analysis.socialeProblemer.map((p, i) => (
+                              <span key={i} className="text-[11px] font-bold uppercase tracking-wider text-slate-900 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded">
+                                  {p}
+                              </span>
+                          ))}
+                      </div>
+                  </section>
+
+                  {/* Timeline */}
+                  <section className="avoid-break space-y-4 pt-4">
+                      <h2 className="text-lg font-black uppercase tracking-widest border-b border-slate-200 pb-2">4. Hændelsesforløb</h2>
+                      <table className="w-full text-[13px] border-collapse">
+                          <tbody>
+                              {analysis.tidslinje.map((t, i) => (
+                                  <tr key={i} className="border-b border-slate-100">
+                                      <td className="py-3 pr-6 font-bold text-slate-900 whitespace-nowrap align-top w-28 uppercase text-[10px] tracking-widest">{t.dato}</td>
+                                      <td className="py-3 text-slate-700 leading-relaxed font-medium">{t.hændelse}</td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
+                  </section>
+
+                  {/* Gaps & Follow-up */}
+                  <div className="grid grid-cols-2 gap-12 pt-4">
+                      <section className="avoid-break space-y-4">
+                          <h2 className="text-lg font-black uppercase tracking-widest border-b border-slate-200 pb-2">5. Videnshuller</h2>
+                          <ul className="space-y-3 list-disc pl-5 text-[12px] text-slate-700 font-medium">
+                                {analysis.videnshuller?.map((gap, i) => (
+                                    <li key={i}>{gap}</li>
+                                )) || <li>Ingen specifikke huller identificeret.</li>}
+                          </ul>
+                      </section>
+                      <section className="avoid-break space-y-4">
+                          <h2 className="text-lg font-black uppercase tracking-widest border-b border-slate-200 pb-2">6. Næste Skridt</h2>
+                          <ul className="space-y-3 list-disc pl-5 text-[12px] text-slate-700 font-medium">
+                                {analysis.opfølgning?.map((step, i) => (
+                                    <li key={i}>{step}</li>
+                                )) || <li>Ingen opfølgningspunkter angivet.</li>}
+                          </ul>
+                      </section>
+                  </div>
+
+                  {/* Legal Basis */}
+                  <section className="page-break-before space-y-8 pt-6">
+                      <h2 className="text-lg font-black uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-6">7. Juridisk Fundament</h2>
+                      <div className="grid gap-6">
+                          {analysis.relevanteParagraffer.map((p, i) => (
+                              <div key={i} className="avoid-break p-6 bg-slate-50 border border-slate-100 rounded-xl relative">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-2 h-2 bg-slate-900 rounded-full" />
+                                    <p className="font-black text-slate-950 uppercase tracking-[0.2em] text-[12px]">§ {p.lov} {p.paragraf}</p>
+                                  </div>
+                                  <p className="text-[13px] text-slate-600 leading-relaxed font-medium italic border-l-2 border-slate-200 pl-4 ml-1">"{p.relevans}"</p>
+                              </div>
+                          ))}
+                      </div>
+                  </section>
+
+                  {/* Social Work Assessment */}
+                  {analysis.socialfagligVurdering && (
+                      <section className="page-break-before avoid-break space-y-8 pt-6">
+                          <h2 className="text-lg font-black uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-6">8. Socialfaglig Vurdering</h2>
+                          <div className="text-[14px] leading-loose font-serif whitespace-pre-wrap text-slate-800 p-10 bg-slate-50 rounded-2xl border border-dotted border-slate-300 shadow-inner">
+                             {analysis.socialfagligVurdering}
+                          </div>
+                      </section>
+                  )}
+
+                  {/* Footer */}
+                  <div className="pt-20 border-t border-slate-100 text-[10px] text-center text-slate-400 font-bold uppercase tracking-[0.6em]">
+                      Slut på rapport • Genereret via cohéro.dk
+                  </div>
+              </div>
+          )}
+      </div>
     </div>
   );
 };

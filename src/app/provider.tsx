@@ -478,19 +478,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         // 1. Streak check
         const lastStreakUpdate = userProfile.lastDailyChallengeDate?.toDate 
             ? userProfile.lastDailyChallengeDate.toDate() 
-            : (userProfile.lastDailyChallengeDate ? new Date(userProfile.lastDailyChallengeDate) : null);
+            : (userProfile.lastDailyChallengeDate?.seconds 
+                ? new Date(userProfile.lastDailyChallengeDate.seconds * 1000)
+                : (userProfile.lastDailyChallengeDate ? new Date(userProfile.lastDailyChallengeDate) : null));
         
         if (lastStreakUpdate) {
             lastStreakUpdate.setHours(0, 0, 0, 0);
         }
 
-        if (!lastStreakUpdate || lastStreakUpdate.getTime() !== today.getTime()) {
+        if (!lastStreakUpdate || (lastStreakUpdate.getTime() < today.getTime())) {
             const yesterday = new Date(today);
             yesterday.setDate(today.getDate() - 1);
+            yesterday.setHours(0,0,0,0);
 
             let newStreak = 1;
-            if (lastStreakUpdate && lastStreakUpdate.getTime() === yesterday.getTime()) {
+            const isYesterday = lastStreakUpdate && lastStreakUpdate.getTime() === yesterday.getTime();
+            
+            if (isYesterday) {
                 newStreak = (userProfile.dailyChallengeStreak || 0) + 1;
+            } else if (lastStreakUpdate && lastStreakUpdate.getTime() === today.getTime()) {
+                // Safeguard: already updated today
+                return;
             }
 
             const currentHighest = userProfile.highestStreak || 0;
@@ -526,7 +534,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    // Add listener for focus to handle midnight roll-over
+    const handleFocus = () => runMaintenance();
+    window.addEventListener('focus', handleFocus);
+
     runMaintenance();
+
+    return () => {
+        window.removeEventListener('focus', handleFocus);
+    };
   }, [user, userProfile, firestore]);
 
 
@@ -787,7 +803,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/simulator') && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/simulator') && !pathname?.includes('/klaus-viste') && <Footer />}
 
 
         
