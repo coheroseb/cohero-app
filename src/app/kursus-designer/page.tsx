@@ -188,6 +188,31 @@ export default function CourseDesignerPage() {
     );
   }, [laws, searchQuery]);
 
+  const groupedSeminars = useMemo(() => {
+    const groups: Record<string, SavedSeminar[]> = {};
+    seminars.forEach(s => {
+        const cat = s.category || 'Andet Materiale';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(s);
+    });
+    return groups;
+  }, [seminars]);
+
+  const handleSelectCategory = (category: string) => {
+    const catSeminars = groupedSeminars[category] || [];
+    setSelectedSeminarIds(prev => {
+        const next = new Set(prev);
+        const allInCatSelected = catSeminars.every(s => next.has(s.id));
+        
+        if (allInCatSelected) {
+            catSeminars.forEach(s => next.delete(s.id));
+        } else {
+            catSeminars.forEach(s => next.add(s.id));
+        }
+        return next;
+    });
+  };
+
   const handleToggleLaw = (id: string) => {
     setSelectedLawIds(prev => {
       const next = new Set(prev);
@@ -396,36 +421,51 @@ export default function CourseDesignerPage() {
                     )}
                   </>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {seminars.length === 0 ? (
-                      <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border border-slate-100">
+                  <div className="space-y-12">
+                    {Object.keys(groupedSeminars).length === 0 ? (
+                      <div className="py-20 text-center bg-white rounded-[3rem] border border-slate-100">
                         <Presentation className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                         <p className="text-slate-400 font-bold">Du har ingen gemte seminarer endnu.</p>
                       </div>
                     ) : (
-                      seminars.map(sem => (
-                        <button 
-                          key={sem.id}
-                          onClick={() => handleToggleSeminar(sem.id)}
-                          className={`p-6 rounded-3xl text-left border-2 transition-all flex items-center justify-between group ${
-                            selectedSeminarIds.has(sem.id) 
-                              ? 'border-amber-950 bg-amber-950 text-white shadow-xl' 
-                              : 'border-white bg-white text-slate-600 hover:border-amber-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedSeminarIds.has(sem.id) ? 'bg-white/10' : 'bg-amber-50 text-amber-600'}`}>
-                              <Presentation className="w-5 h-5" />
+                      Object.entries(groupedSeminars).map(([category, catSeminars]) => (
+                        <div key={category} className="space-y-4">
+                            <div className="flex items-center justify-between px-4">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40">Kategori: {category}</h3>
+                                <button 
+                                    onClick={() => handleSelectCategory(category)}
+                                    className="text-[9px] font-black uppercase tracking-widest text-amber-600 hover:text-amber-800 transition-colors"
+                                >
+                                    {catSeminars.every(s => selectedSeminarIds.has(s.id)) ? 'Fravælg alle' : 'Vælg alle i kategori'}
+                                </button>
                             </div>
-                            <div>
-                              <h4 className="font-bold leading-tight line-clamp-1">{sem.overallTitle}</h4>
-                              <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${selectedSeminarIds.has(sem.id) ? 'text-amber-400' : 'text-slate-400'}`}>
-                                {sem.slides.length} Slides
-                              </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {catSeminars.map(sem => (
+                                    <button 
+                                    key={sem.id}
+                                    onClick={() => handleToggleSeminar(sem.id)}
+                                    className={`p-6 rounded-3xl text-left border-2 transition-all flex items-center justify-between group ${
+                                        selectedSeminarIds.has(sem.id) 
+                                        ? 'border-amber-950 bg-amber-950 text-white shadow-xl' 
+                                        : 'border-white bg-white text-slate-600 hover:border-amber-100'
+                                    }`}
+                                    >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedSeminarIds.has(sem.id) ? 'bg-white/10' : 'bg-amber-50 text-amber-600'}`}>
+                                        <Presentation className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                        <h4 className="font-bold leading-tight line-clamp-1">{sem.overallTitle}</h4>
+                                        <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${selectedSeminarIds.has(sem.id) ? 'text-amber-400' : 'text-slate-400'}`}>
+                                            {sem.slides.length} Slides
+                                        </p>
+                                        </div>
+                                    </div>
+                                    {selectedSeminarIds.has(sem.id) && <CheckCircle className="w-5 h-5 text-amber-400" />}
+                                    </button>
+                                ))}
                             </div>
-                          </div>
-                          {selectedSeminarIds.has(sem.id) && <CheckCircle className="w-5 h-5 text-amber-400" />}
-                        </button>
+                        </div>
                       ))
                     )}
                   </div>
