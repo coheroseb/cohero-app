@@ -129,6 +129,18 @@ export default function CoursePlayerPage() {
         } else if (activeStep === 'reflection' && interactive?.caseChallenge) {
             nextStep = 'challenge';
         } else {
+            // MARK CURRENT LESSON AS COMPLETED
+            const lessonKey = `${activeModule}-${activeLesson}`;
+            const newCompleted = Array.from(new Set([...(course?.completedLessons || []), lessonKey]));
+            
+            if (firestore && id && user) {
+                updateDoc(doc(firestore, 'users', user.uid, 'courseDesigns', id as string), {
+                    completedLessons: newCompleted
+                }).then(() => {
+                    setCourse(prev => prev ? { ...prev, completedLessons: newCompleted } : null);
+                });
+            }
+
             // Move to next lesson/module
             if (activeLesson < (currentModule?.lessons.length || 0) - 1) {
                 nextL = activeLesson + 1;
@@ -358,8 +370,9 @@ export default function CoursePlayerPage() {
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-900/40 px-4">Modul {mIdx +1}: {module.title}</h4>
                             <div className="space-y-2">
                                 {module.lessons.map((lesson, lIdx) => {
+                                    const lessonKey = `${mIdx}-${lIdx}`;
                                     const isCurrent = activeModule === mIdx && activeLesson === lIdx;
-                                    const isPast = mIdx < activeModule || (mIdx === activeModule && lIdx < activeLesson);
+                                    const isPast = course?.completedLessons?.includes(lessonKey);
                                     
                                     return (
                                         <button 
