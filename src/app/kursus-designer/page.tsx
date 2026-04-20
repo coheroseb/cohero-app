@@ -22,7 +22,9 @@ import {
   Search,
   BookMarked,
   Clock,
-  Target
+  Target,
+  Brain,
+  ArrowRight
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { generateCourseAction } from '@/app/actions';
