@@ -529,8 +529,15 @@ export default function CoursePlayerPage() {
                                 <h1 className="text-4xl md:text-5xl font-black text-amber-950 serif tracking-tight">{currentLesson?.title}</h1>
                             </div>
 
-                            <div className="prose prose-amber max-w-none">
-                                <p className="text-xl leading-relaxed text-slate-700 font-medium whitespace-pre-wrap">{currentLesson?.contentSummary}</p>
+                            <div className="prose prose-amber max-w-none space-y-16">
+                                <p className="text-xl leading-relaxed text-slate-700 font-medium whitespace-pre-wrap italic opacity-80 border-l-4 border-amber-200 pl-6">{currentLesson?.contentSummary}</p>
+                                
+                                {currentLesson?.sections?.map((section, sIdx) => (
+                                    <div key={sIdx} className="space-y-6 pt-10 border-t border-amber-50/50 first:border-0 first:pt-0">
+                                        <h3 className="text-3xl font-black text-amber-950 serif tracking-tight">{section.title}</h3>
+                                        <p className="text-lg leading-relaxed text-slate-600 whitespace-pre-wrap font-medium">{section.content}</p>
+                                    </div>
+                                ))}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-12 border-t border-amber-50">

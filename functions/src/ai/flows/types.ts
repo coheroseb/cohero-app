@@ -1979,6 +1979,10 @@ export const CourseLessonSchema = z.object({
     paragraf: z.string().describe('Paragrafhenvisning, fx "§ 42"'),
     why: z.string().describe('Hvorfor er denne juridisk relevant for lektionen?'),
   })).describe('Relevante juridiske koblinger'),
+  sections: z.array(z.object({
+    title: z.string().describe('Overskrift for underemnet'),
+    content: z.string().describe('Det detaljerede faglige indhold for dette underemne'),
+  })).optional().describe('Lektionens indhold opdelt i underemner'),
   suggestedReading: z.array(z.object({
     title: z.string().describe('Titel på bogen eller artiklen'),
     pageRef: z.string().describe('Hvor i bogen skal de læse? (fx "Side 42-50")'),

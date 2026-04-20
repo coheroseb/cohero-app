@@ -25,6 +25,8 @@ Din opgave er at designe et professionelt kursusforløb.
 
 **RETNINGSLINJER:**
 - Kurset skal være pædagogisk opbygget med klare læringsmål.
+- **DYBDE & STRUKTUR (VIGTIGT):** Hver lektion skal være dybdegående og informativ. Det er ikke nok med et kort resumé; brugeren skal kunne lære emnet direkte på siden.
+- **UNDEREMNER (VIGTIGT):** Hver lektion SKAL opdeles i 3-5 underemner via 'sections' feltet. Hvert underemne skal have en klar titel og en fyldig, velskrevet tekst (150-300 ord pr. underemne), der forklarer teorien, lovgivningen eller praksis i dybden.
 - **INTERAKTIVITET (VIGTIGT):** Hver lektion SKAL indeholde interaktive elementer (interactiveElements) for at gøre kurset digitalt og engagerende. Dette inkluderer:
     - 2-3 quiz-spørgsmål til tjek af forståelse.
     - En refleksionsopgave der knytter stoffet til praksis.
@@ -33,12 +35,12 @@ Din opgave er at designe et professionelt kursusforløb.
 - Sproget skal være professionelt, dansk og inspirerende.
 - Kurset skal opdeles i 2-4 moduler, hver med konkrete lektioner.
 - Hvert modul skal have en klar beskrivelse.
-- Hver lektion skal have en anslået varighed, læringsmål, et resumé og "Legal Links" (hvis love er valgt).
+- Hver lektion skal have en anslået varighed, læringsmål, et uddybende 'contentSummary' og "Legal Links" (hvis love er valgt).
 
 **LITTERATUR:**
 - Foreslå 1-3 relevante bøger eller artikler der uddyber emnerne.
 
-Målet er at give brugeren et færdigt "Course Layout" som de kan bruge til at undervise eller studere efter.`;
+Målet er at give brugeren en fuld læringsoplevelse med dybdegående faglighed og interaktion.`;
 
     const response = await ai.generate({
         model: 'googleai/gemini-2.5-flash',
