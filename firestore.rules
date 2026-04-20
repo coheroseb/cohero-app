@@ -212,6 +212,7 @@ service cloud.firestore {
         allow write: if isOwner(userId); 
       }
       match /semesterPlans/{planId} { allow read, write: if isOwner(userId); }
+      match /courseDesigns/{courseId} { allow read, write: if isOwner(userId); }
       match /studySchedules/{scheduleId} { allow read, write: if isOwner(userId); }
       match /journalScenarios/{scenarioId} { allow read, write: if isOwner(userId); }
       match /practiceGuides/{guideId} { allow read, write: if isOwner(userId); }
