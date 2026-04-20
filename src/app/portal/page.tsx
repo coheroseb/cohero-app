@@ -1072,10 +1072,10 @@ const PortalPageContent: React.FC = () => {
 
             <div className="flex items-center justify-center gap-3 sm:gap-5 p-4 sm:p-6 bg-slate-50/50 backdrop-blur-md rounded-[40px] border border-slate-100 shadow-inner shrink-0">
                 <Button asChild variant="outline" className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden">
-                    <Link href="/memento">
+                    <Link href="/mine-kurser">
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                        <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-500 shrink-0 group-hover:scale-110 transition-transform relative z-10"/>
-                        <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Memento</span>
+                        <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-500 shrink-0 group-hover:scale-110 transition-transform relative z-10"/>
+                        <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Kurser</span>
                     </Link>
                 </Button>
                 <Button asChild variant="outline" className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden">
