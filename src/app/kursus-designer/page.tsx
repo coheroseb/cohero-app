@@ -24,7 +24,8 @@ import {
   Clock,
   Target,
   Brain,
-  ArrowRight
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { generateCourseAction } from '@/app/actions';
