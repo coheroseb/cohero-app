@@ -843,6 +843,11 @@ export const ExplanationSchema = z.object({
     relevance: z.string(),
     url: z.string().optional(),
   }).optional(),
+  disambiguation: z.array(z.object({
+    title: z.string(),
+    description: z.string(),
+    query: z.string()
+  })).optional().describe('Different facets/options for broad queries.')
 });
 
 export const ExplainConceptInputSchema = z.object({

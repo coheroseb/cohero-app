@@ -153,9 +153,11 @@ function ConceptExplainerPageContent() {
   const handleExplain = useCallback(async (term: string) => {
     if (!term || !user || !userProfile || !firestore) return;
 
-    // REDIRECT: If searching for a paragraph or specific law, go to Lov-Portalen instead
-    const isLegalSearch = /§|SEL|BL|RSL| Barnets Lov|Serviceloven|Forvaltningslov|Retssikkerhedslov|lov/i.test(term);
-    if (isLegalSearch && term.length > 2) {
+    // REDIRECT: If searching for a paragraph or specific law (short query), go to Lov-Portalen
+    const wordCount = term.trim().split(/\s+/).length;
+    const isLegalSearch = /§|SEL|BL|RSL|Barnets Lov|Serviceloven|Forvaltningslov|Retssikkerhedslov/i.test(term);
+    
+    if (isLegalSearch && wordCount <= 4) {
         router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
         return;
     }
@@ -458,7 +460,7 @@ function ConceptExplainerPageContent() {
                                 <div className="absolute -inset-1 bg-gradient-to-r from-amber-400/20 to-amber-950/20 rounded-[3rem] blur opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
                                 <input 
                                     type="text" 
-                                    placeholder={explanation ? "Nyt opslag..." : "Indtast et begreb eller en paragraf..."}
+                                    placeholder={explanation ? "Spørg om noget nyt..." : "Søg på et begreb, et tema eller stille et spørgsmål..."}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className={`w-full pl-10 pr-40 bg-white border-2 border-amber-100 rounded-[3rem] font-bold text-amber-950 focus:border-amber-950 focus:ring-4 focus:ring-amber-950/5 transition-all outline-none shadow-xl ${explanation ? 'py-5 text-lg' : 'py-8 text-xl'}`}
@@ -469,7 +471,7 @@ function ConceptExplainerPageContent() {
                                     className={`absolute right-2 top-1/2 -translate-y-1/2 bg-amber-950 text-amber-400 rounded-[2.5rem] font-black uppercase text-[10px] tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 ${explanation ? 'h-12 px-6' : 'h-16 px-8'}`}
                                 >
                                     {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                                    {explanation ? 'Søg' : 'Slå op'}
+                                    {explanation ? 'Spørg' : 'Analysér'}
                                 </button>
                             </form>
 
@@ -590,6 +592,35 @@ function ConceptExplainerPageContent() {
               ) : explanation ? (
                   <motion.div key="result" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-12">
                       
+                      {/* DISAMBIGUATION / ANGLES */}
+                      {explanation.disambiguation && explanation.disambiguation.length > 0 && (
+                          <motion.div 
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="w-full bg-amber-50/50 p-8 rounded-[3rem] border border-amber-100/50"
+                          >
+                              <div className="flex items-center gap-3 mb-6">
+                                  <div className="w-8 h-8 rounded-lg bg-amber-950 text-amber-400 flex items-center justify-center shadow-lg"><Sparkles className="w-4 h-4" /></div>
+                                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-950/40">Vælg din vinkel (Relaterede temaer)</h3>
+                              </div>
+                              <div className="flex flex-wrap gap-4">
+                                  {explanation.disambiguation.map((angle, idx) => (
+                                      <button
+                                          key={idx}
+                                          onClick={() => handleExplain(angle.query)}
+                                          className="flex-1 min-w-[300px] text-left p-6 bg-white border border-amber-100 rounded-3xl hover:border-amber-950 hover:shadow-xl transition-all group"
+                                      >
+                                          <h4 className="font-bold text-amber-950 group-hover:text-amber-600 transition-colors">{angle.title}</h4>
+                                          <p className="text-xs text-slate-500 mt-2 line-clamp-2">{angle.description}</p>
+                                          <div className="flex items-center gap-2 mt-4 text-[10px] font-black uppercase tracking-widest text-amber-950/20 group-hover:text-amber-950 transition-colors">
+                                              Analysér denne vinkel <ChevronRight className="w-3 h-3" />
+                                          </div>
+                                      </button>
+                                  ))}
+                              </div>
+                          </motion.div>
+                      )}
+
                       {/* TAB NAVIGATION */}
                       <div className="flex items-center justify-center p-2 bg-white/50 backdrop-blur-xl border border-amber-100/50 rounded-[2.5rem] max-w-2xl mx-auto sticky top-24 z-40 shadow-xl shadow-amber-950/5">
                           {[

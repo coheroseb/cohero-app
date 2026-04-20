@@ -32,10 +32,10 @@ export async function explainConcept(input: ExplainConceptInput): Promise<Explai
 }
 
 const PromptInputSchema = z.object({
-  concept: z.string().describe('The social work concept to be explained.'),
-  profession: z.string().optional().describe('The profession of the user (e.g., Socialrådgiver, Pædagog).'),
-  books: z.array(BookSchemaForPrompt).optional().describe('A list of available textbooks with their metadata (TOC, index).'),
-  lawContext: z.string().optional().describe('Deep legal context including guidelines for accurate paragraph explanation.'),
+  concept: z.string().describe('The concept, question, or topic to be explained/answered.'),
+  profession: z.string().optional().describe('The profession of the user.'),
+  books: z.array(BookSchemaForPrompt).optional().describe('Relevant curriculum books for context.'),
+  lawContext: z.string().optional().describe('Deep legal context from the Law Portal.'),
 });
 
 
@@ -43,12 +43,11 @@ const prompt = ai.definePrompt({
   name: 'explainConceptPrompt',
   input: { schema: PromptInputSchema },
   output: { schema: ExplanationSchema },
-  prompt: `The studerende wants to understand the concept: "{{{concept}}}"
+  prompt: `The studerende has the following query/topic: "{{{concept}}}"
+
 {{#if profession}}
 The user's profession is: "{{{profession}}}". 
-You MUST tailor the explanation, practical examples (case), and relevance to reflect the specific practice, terminology, and challenges of a {{{profession}}}. 
-For a "Pædagog", focus on the pedagogical environment (institutions, developmental work, relational coordination in a pedagogical context). 
-For a "Socialrådgiver", focus on agency work, legal framework, and systemic case management.
+Tailor the response to reflect the specific practice and challenges of a {{{profession}}}.
 {{/if}}
 
 {{#if lawContext}}
@@ -56,44 +55,38 @@ For a "Socialrådgiver", focus on agency work, legal framework, and systemic cas
 ---
 {{{lawContext}}}
 ---
-**IMPORTANT:** The above content contains authoritative texts from the Law Portal. You MUST use this as your PRIMARY and ONLY source for legal facts, paragraph numbers, and specific legal criteria. 
-
-**CRITICAL RULE - NO HALLUCINATIONS:** If you cannot find a specific paragraph number (e.g., "§ 13") in the provided context for a rule, do NOT guess. You must only state the laws and rules you can find documented above. If you are unsure about a specific paragraph number based *only* on the text above, state that the concept is grounded in the law but that the specific paragraph number is not provided in your current context.
+**IMPORTANT:** Use this as your ONLY source for legal facts. No guessing.
 {{/if}}
 
 {{#if books}}
-Here is a list of available curriculum books. You MUST use this list as the primary source for literature recommendations.
+**LITERATURE CONTEXT (TEORETISK GRUNDLAG):**
 ---
-AVAILABLE BOOKS:
 {{#each books}}
 - Title: {{{this.title}}}, Author: {{{this.author}}}, Content Info: {{{this.RAG}}}
 {{/each}}
 ---
 {{/if}}
 
-Your response must be a JSON object with the following keys, all in Danish. Use simple HTML tags like <h2>, <h3>, <ul>, <li>, and <strong> to structure the content for better readability.
+Your task is to provide a comprehensive, pedagogical response. If the query is a full sentence or a multi-part topic (e.g., "individualisering som samfundsdynamik"), you must synthesize an answer that covers all facets.
 
-1.  **definition**: Provide a thorough and pedagogical definition of the concept, suitable for a studerende. Break it down into its core components. The explanation should be detailed enough for a studerende to get a solid grasp of the concept. Use subheadings (e.g., <h3>) to structure the explanation.
-2.  **etymology**: Forklar kort begrebets oprindelse og historiske kontekst. Hvorfor hedder det, som det gør? (f.eks. for "skøn" eller "selvbestemmelse").
-3.  **relevance**: Explain why this concept is important and relevant for a social worker's daily practice. Structure this with bullet points (<ul> and <li>).
-4.  **practicalExample**: Give a concrete, practice-oriented case example. Structure it with a brief **Situation**, a snippet of **Dialog/Observation**, and an **Analyse** that explains how the concept is applied.
-5.  **legalAnchor**: Hvor finder vi dette begreb i lovgivningen? Du SKAL bruge Lovportalens samling (ovenfor) til at finde den korrekte juridiske kilde. Angiv specifikke love eller paragraffer (f.eks. Barnets Lov, Serviceloven, Retssikkerhedsloven), hvor begrebet er centralt.
-6.  **criticalReflection**: Tilføj en kritisk akademisk refleksion. Hvad er de etiske dilemmaer eller begrænsninger ved dette begreb i socialt arbejde?
-7.  **suggestedLiterature**: Recommend 1-3 of the most relevant books.
-    - **CRITICAL RULE 1: HIGH RELEVANCE.** Only recommend a book if its content is *highly* relevant to the concept "{{{concept}}}".
-    - **CRITICAL RULE 2: USE PROVIDED SOURCES ONLY.** Your recommendations MUST come exclusively from the list of 'AVAILABLE BOOKS' provided.
-8.  **relevantTheorists**: Identify key theorists related to '{{{concept}}}' based on the books provided.
-9.  **relatedConcepts**: En liste over 3-4 relaterede begreber, som den studerende også bør kende til.
-10. **socraticQuestion**: Stil ét udfordrende, sokratisk spørgsmål til den studerende, der får dem til at reflektere over begrebet i deres fremtidige praksis.
-11. **isModel**: Identificer om der er tale om en specifik teoretisk model eller framework (f.eks. SMART, Gensvarsmodellen, SWOT, Maslows behovspyramide). Sæt denne til true, hvis begrebet har en fast struktur, der kan visualiseres.
-12. **conceptModel**: Create a structured graph model of the concept. ONLY generate this if **isModel** is true.
-    - **nodes**: Identify the 5-7 most critical "building blocks". Keep labels very short (max 2-3 words). Use Sentence Case.
-    - **edges**: Define how these blocks connect. Use clear, short labels (e.g., "påvirker", "fører til", "kræver").
-    - Layout the nodes in a logical conceptual flow (e.g. Initiator -> Action -> Result).
-    - Make the model descriptive and pedagogical, ensuring it works as a clear mental map without visual clutter.
-13. **legalContext**: Hvis konceptet er en lovparagraf (f.eks. "§ 42"), eller hvis du har fundet direkte relevant lovtekst i 'LEGAL CONTEXT' ovenfor, SKAL du indsætte den ordrette lovtekst her. Brug UDELUKKENDE teksten fra Lovportalens samling.
+Your response must be a JSON object with the following keys, all in Danish.
 
-Always use the term "borger" instead of "klient" in your explanations and examples.
+1.  **definition**: Provide a thorough definition or exploration of the primary theme. If the query is a question, answer it pedogogically here. Break it down into core components using subheadings (e.g., <h3>).
+2.  **etymology**: Begrebets eller fænomenets oprindelse og historiske kontekst.
+3.  **relevance**: Why is this theme/question important for a social worker? Use <ul> and <li>.
+4.  **practicalExample**: A concrete case example. Structure with **Situation**, **Dialog**, and **Analyse**.
+5.  **legalAnchor**: Hvor finder vi hjemmel eller juridisk relevans i Lovportalens samling (ovenfor)?
+6.  **criticalReflection**: En kritisk akademisk refleksion over temaet/spørgsmålet (f.eks. etiske dilemmaer).
+7.  **suggestedLiterature**: Recommend 1-3 relevant books ONLY from the provided list.
+8.  **relevantTheorists**: Key theorists related to this topic based on the books.
+9.  **relatedConcepts**: 3-4 relaterede begreber eller temaer.
+10. **socraticQuestion**: Stil ét udfordrende, sokratisk spørgsmål til refleksion.
+11. **isModel**: True if the topic can be visualized as a model/framework.
+12. **conceptModel**: A structured graph model if isModel is true.
+13. **legalContext**: Indsæt ordret lovtekst fra Lovportalens samling (ovenfor) hvis relevant.
+14. **disambiguation**: If the query is broad or could be explored from different angles (e.g. "individualisering" could be sociological, legal, or practice-oriented), provide 3-4 specific "angles" here. Each angle must have a **title**, a brief **description** of that angle, and a refined **query** for that specific angle. If the query is already specific, leave this empty.
+
+Always use "borger" instead of "klient".
 `,
   config: {
     safetySettings: [
@@ -103,7 +96,7 @@ Always use the term "borger" instead of "klient" in your explanations and exampl
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
     ],
   },
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-2.0-flash',
 });
 
 const explainConceptFlow = ai.defineFlow(
@@ -113,17 +106,33 @@ const explainConceptFlow = ai.defineFlow(
     outputSchema: ExplainConceptOutputSchema,
   },
   async (input) => {
-    const booksForPrompt = await getCachedBooks();
+    // 1. Fetch all books
+    const allBooks = await getCachedBooks();
+    
+    // 2. Filter books by relevance to the query (simple keyword check for efficiency)
+    const keywords = input.concept.toLowerCase().split(/\s+/);
+    const relevantBooks = allBooks.filter(book => {
+        const bookText = `${book.title} ${book.author} ${book.RAG}`.toLowerCase();
+        return keywords.some(kw => kw.length > 3 && bookText.includes(kw));
+    }).slice(0, 8); // Top 8 relative books to keep context clean
+    
+    // Fallback: If no matches, send top 3 general books
+    const booksForPrompt = relevantBooks.length > 0 ? relevantBooks : allBooks.slice(0, 3);
     
     let lawContext = input.lawContext || '';
     
-    // Automatically fetch law context for all concepts to ensure academic and legal depth
+    // 3. Fetch law context
     if (!lawContext) {
-      console.log(`[EXPLAIN-CONCEPT] Fetching legal/academic context for: "${input.concept}"...`);
+      console.log(`[EXPLAIN-CONCEPT] Fetching context for semantic query: "${input.concept}"...`);
       lawContext = await getRelevantLawContext(input.concept);
     }
 
-    const { output, usage } = await prompt({ concept: input.concept, profession: input.profession, books: booksForPrompt, lawContext });
+    const { output, usage } = await prompt({ 
+        concept: input.concept, 
+        profession: input.profession, 
+        books: booksForPrompt, 
+        lawContext 
+    });
     
     return {
       data: output!,
