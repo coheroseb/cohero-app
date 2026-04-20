@@ -840,14 +840,14 @@ export default function LandingPage() {
                  <div className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">0 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/mdr</span></div>
                  <ul className="space-y-6 mb-16 flex-grow">
                    {[
-                     "1 dagligt opslag i Guiden",
-                     "1 daglig STAR-analyse",
-                     "Begrænset Lovportal",
-                     "Låst Journal-træner",
+                     "1 dagligt opslag i Begrebsguiden",
+                     "1 AI Case-analyse pr. døgn",
+                     "Udvalgte paragraffer i Lovportalen",
+                     "Se dine personlige fremskridt",
                    ].map(item => (
                      <li key={item} className="flex items-center gap-5 text-[16px] text-slate-600 font-medium">
-                        {item.startsWith('Låst') ? <Lock className="w-4 h-4 text-slate-300" /> : <Check className="w-5 h-5 text-emerald-500" />}
-                        <span className={item.startsWith('Låst') ? 'opacity-40' : ''}>{item}</span>
+                        <Check className="w-5 h-5 text-emerald-500" />
+                        <span>{item}</span>
                      </li>
                    ))}
                  </ul>
@@ -875,11 +875,11 @@ export default function LandingPage() {
 
                   <ul className="space-y-6 mb-16 flex-grow relative z-10">
                      {[
-                       "Ubegrænset Case-Analytiker",
-                       "Fuld adgang til Lovportalen",
-                       "Ubegrænset Journal-træner",
-                       "Personligt Vidensarkiv",
-                       "Prioriteret AI-support"
+                       "Ubegrænset AI Case-Analytiker",
+                       "Alle love med AI-forklaring",
+                       "Journal-træning med feedback",
+                       "Design egne kurser & pensum",
+                       "Gem vigtige kilder & arkiv"
                      ].map(item => (
                        <li key={item} className="flex items-center gap-5 text-[16px] text-white font-medium">
                           <div className="w-6 h-6 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20">
@@ -903,10 +903,10 @@ export default function LandingPage() {
                     <div className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">329 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/5 mdr</span></div>
                     <ul className="space-y-6 mb-16 flex-grow">
                     {[
-                        "Alt fra Kollega+",
-                        "Spar over 25%",
-                        "Adgang hele semestret",
-                        "Eksamens-rygdækning"
+                        "Alt fra Kollega+ inkluderet",
+                        "Spar 115 kr. vs. månedlig betaling",
+                        "Adgang fastlåst i 5 måneder",
+                        "2nd Opinion & Eksamenshjælp"
                     ].map((item, i) => (
                         <li key={i} className="flex items-center gap-5 text-[16px] text-slate-600 font-medium">
                             <CheckCircle2 className="w-5 h-5 text-indigo-500" />
