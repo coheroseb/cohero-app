@@ -18,9 +18,9 @@ import {
     RotateCcw,
     Sparkles,
     Loader2,
-    Lock,
     Search,
-    BookMarked
+    BookMarked,
+    X
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
@@ -50,6 +50,39 @@ export default function CoursePlayerPage() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<any>(null);
     const [showOverview, setShowOverview] = useState(false);
+    const [showStats, setShowStats] = useState(false);
+
+    const performanceData = useMemo(() => {
+        if (!course) return [];
+        return course.modules.map((mod, mIdx) => {
+            const lessons = mod.lessons;
+            let totalQuestions = 0;
+            let correctAnswers = 0;
+            let reflectionsCount = 0;
+
+            lessons.forEach((less, lIdx) => {
+                const quiz = less.interactiveElements?.quiz || [];
+                totalQuestions += quiz.length;
+                quiz.forEach((q, qIdx) => {
+                    const key = `${mIdx}-${lIdx}-${qIdx}`;
+                    if (quizAnswers[key] === q.correctOptionIndex) correctAnswers++;
+                });
+                if (reflections[`${mIdx}-${lIdx}`]?.trim().length > 10) reflectionsCount++;
+            });
+
+            const quizScore = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 100;
+            const engagementScore = (reflectionsCount / lessons.length) * 100;
+            const overallScore = (quizScore * 0.7) + (engagementScore * 0.3);
+
+            return {
+                topic: mod.title,
+                score: Math.round(overallScore),
+                quizScore: Math.round(quizScore),
+                engagementScore: Math.round(engagementScore),
+                status: overallScore > 80 ? 'Stærk forståelse' : overallScore > 50 ? 'God vej' : 'Brug mere tid'
+            };
+        });
+    }, [course, quizAnswers, reflections]);
 
     // Fetch Course
     useEffect(() => {
@@ -319,6 +352,13 @@ export default function CoursePlayerPage() {
                                 className="h-10 rounded-xl border-amber-100 text-amber-950 font-bold bg-white shadow-sm"
                             >
                                 <Layout className="w-4 h-4 mr-2" /> Oversigt
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setShowStats(true)}
+                                className="h-10 rounded-xl border-amber-100 text-amber-950 font-bold bg-white shadow-sm"
+                            >
+                                <TrendingUp className="w-4 h-4 mr-2" /> Statistik
                             </Button>
                             <div className="text-right hidden lg:block">
                                 <p className="text-xs font-black text-amber-950">LEKTION {activeLesson + 1} AF {currentModule?.lessons.length}</p>
@@ -691,7 +731,118 @@ export default function CoursePlayerPage() {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </main>
+
+            {/* STATISTICS MODAL */}
+            <AnimatePresence>
+                {showStats && (
+                <>
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        onClick={() => setShowStats(false)}
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[1200]" 
+                    />
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="fixed inset-4 md:inset-20 bg-[#FDFCF8] z-[1201] rounded-[4rem] shadow-2xl flex flex-col overflow-hidden border border-amber-100"
+                    >
+                        <div className="p-10 md:p-16 border-b border-amber-50 flex items-center justify-between bg-white relative">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-amber-950 to-emerald-500" />
+                            <div className="space-y-2">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-900 rounded-full text-[9px] font-black uppercase tracking-widest">
+                                    <TrendingUp className="w-3 h-3" /> Din Lærings-indsigt
+                                </div>
+                                <h3 className="text-4xl font-black text-amber-950 serif">Faglig Statistik</h3>
+                                <p className="text-slate-400 text-sm font-medium">Her er dit overblik på tværs af alle emner i {course?.courseTitle}</p>
+                            </div>
+                            <button onClick={() => setShowStats(false)} className="p-4 bg-amber-50 rounded-3xl text-amber-950 hover:bg-amber-100 transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-10 md:p-16">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                                <div className="bg-white p-8 rounded-[3rem] border border-amber-100 shadow-sm text-center space-y-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gennemsnitlig Score</p>
+                                    <p className="text-5xl font-black text-amber-950 serif">{Math.round(performanceData.reduce((acc, d) => acc + d.score, 0) / performanceData.length || 0)}%</p>
+                                </div>
+                                <div className="bg-emerald-50 p-8 rounded-[3rem] border border-emerald-100 text-center space-y-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Stærke Emner</p>
+                                    <p className="text-5xl font-black text-emerald-900 serif">{performanceData.filter(d => d.score > 80).length}</p>
+                                </div>
+                                <div className="bg-rose-50 p-8 rounded-[3rem] border border-rose-100 text-center space-y-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-rose-600">Fokus-områder</p>
+                                    <p className="text-5xl font-black text-rose-900 serif">{performanceData.filter(d => d.score < 50).length}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-12">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-amber-900/40">Performance pr. Emne</h4>
+                                <div className="grid grid-cols-1 gap-6">
+                                    {performanceData.map((data, i) => (
+                                        <div key={i} className="bg-white p-10 rounded-[3rem] border border-amber-100 shadow-sm flex flex-col md:flex-row md:items-center gap-10">
+                                            <div className="flex-1 space-y-2">
+                                                <div className="flex items-center gap-3">
+                                                    <h5 className="text-xl font-bold text-amber-950 leading-tight">{data.topic}</h5>
+                                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                                        data.score > 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 
+                                                        data.score > 50 ? 'bg-amber-50 text-amber-700 border border-amber-100' : 
+                                                        'bg-rose-50 text-rose-700 border border-rose-100'
+                                                    }`}>
+                                                        {data.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-400 font-medium italic">Baseret på {course?.modules[i].lessons.length} lektioners quizzer og refleksioner</p>
+                                            </div>
+
+                                            <div className="w-full md:w-96 space-y-4">
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-[10px] font-black uppercase text-slate-400">
+                                                        <span>Forståelse</span>
+                                                        <span>{data.score}%</span>
+                                                    </div>
+                                                    <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                                                        <motion.div 
+                                                            initial={{ width: 0 }} animate={{ width: `${data.score}%` }} 
+                                                            className={`h-full rounded-full ${
+                                                                data.score > 80 ? 'bg-emerald-500' : 
+                                                                data.score > 50 ? 'bg-amber-500' : 
+                                                                'bg-rose-500'
+                                                            }`} 
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-4">
+                                                    <div className="flex-1 flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Quiz: {data.quizScore}%</span>
+                                                    </div>
+                                                    <div className="flex-1 flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Engagement: {data.engagementScore}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="mt-20 p-12 bg-amber-950 rounded-[4rem] text-white space-y-6">
+                                <div className="flex items-center gap-3 text-amber-400">
+                                    <Sparkles className="w-6 h-6" />
+                                    <h4 className="text-xs font-black uppercase tracking-widest">Arkitektens Råd</h4>
+                                </div>
+                                <p className="text-2xl font-medium serif italic">
+                                    {performanceData.filter(d => d.score < 50).length > 0 
+                                      ? `Du klarer dig generelt flot, men du bør kigge nærmere på "${performanceData.find(d => d.score < 50)?.topic}". Brug lidt mere tid på refleksionerne her for at styrke din forståelse.`
+                                      : "Din forståelse på tværs af alle emner er imponerende! Du er klar til at gå i dybden med case-opgaverne nu."}
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
