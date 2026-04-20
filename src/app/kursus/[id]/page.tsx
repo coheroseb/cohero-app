@@ -140,16 +140,6 @@ export default function CoursePlayerPage() {
                 handleAnalyzeResults();
                 return;
             }
-        }
-    const handleJumpToLesson = (mIdx: number, lIdx: number) => {
-        setActiveModule(mIdx);
-        setActiveLesson(lIdx);
-        setActiveStep('content');
-        setShowOverview(false);
-        updateProgress(mIdx, lIdx, 'content');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
         setActiveModule(nextM);
         setActiveLesson(nextL);
         setActiveStep(nextStep as any);
@@ -157,6 +147,15 @@ export default function CoursePlayerPage() {
         if (nextStep === 'content') {
              // Reset step-specific local scroll or other if needed
         }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleJumpToLesson = (mIdx: number, lIdx: number) => {
+        setActiveModule(mIdx);
+        setActiveLesson(lIdx);
+        setActiveStep('content');
+        setShowOverview(false);
+        updateProgress(mIdx, lIdx, 'content');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
