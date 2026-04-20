@@ -843,6 +843,7 @@ export default function CoursePlayerPage() {
                 </>
                 )}
             </AnimatePresence>
-        </div>
+        </main>
+    </div>
     );
 }
