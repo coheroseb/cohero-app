@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   BookOpen, 
@@ -15,7 +15,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -30,9 +30,10 @@ export default function MineKurserPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const coursesQuery = user && firestore 
-    ? query(collection(firestore, 'users', user.uid, 'courseDesigns'), orderBy('createdAt', 'desc'))
-    : null;
+  const coursesQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, 'users', user.uid, 'courseDesigns'), orderBy('createdAt', 'desc'));
+  }, [user?.uid, firestore]);
 
   const { data: courses, isLoading } = useCollection<any>(coursesQuery);
 
