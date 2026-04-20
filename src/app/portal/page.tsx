@@ -878,6 +878,7 @@ const PortalPageContent: React.FC = () => {
                     { title: "Eksamens-Arkitekten", desc: "Design din opgavestruktur", icon: Layout, path: "/exam-architect", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "AI-Draft", limit: limits.architect, limitText: 'denne md.' },
                     { title: "Mundtlig Eksamenstræner", desc: "Gennemgang af dit oplæg", icon: Mic, path: "/mundtlig-eksamenstraener", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Træning", limit: limits.oralExam, limitText: 'i dag' },
                     { title: "Seminar-Arkitekten", desc: "Fra slides til videnskort", icon: FileSearch, path: "/seminar-architect", color: "text-violet-600 bg-violet-50 border-violet-100", badge: "Transform" },
+                    { title: "Kursus-Arkitekten", desc: "Design forløb af slides & jura", icon: GraduationCap, path: "/kursus-designer", color: "text-amber-900 bg-amber-50 border-amber-100", badge: "Design" },
                     { title: "Kilde-Generator", desc: "Perfekte kildehenvisninger", icon: Quote, path: "/kilde-generator", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Ref" },
                     { title: "Pensum", desc: "Oversigt over din litteratur", icon: BookMarked, path: "/pensum", color: "text-slate-600 bg-slate-50 border-slate-100", badge: "Bøger" },
                     { title: "Quiz-Creator", desc: "Test din viden med AI-quiz", icon: Play, path: "/quiz-creator", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Test" },

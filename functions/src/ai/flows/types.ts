@@ -1965,3 +1965,55 @@ export const UnifiedChatOutputSchema = z.object({
 export type UnifiedChatInput = z.infer<typeof UnifiedChatInputSchema>;
 export type UnifiedChatData = z.infer<typeof UnifiedChatDataSchema>;
 export type UnifiedChatOutput = z.infer<typeof UnifiedChatOutputSchema>;
+
+// ==========================================
+// COURSE DESIGNER SCHEMAS
+// ==========================================
+
+export const CourseLessonSchema = z.object({
+  title: z.string().describe('Titel på lektionen/modulet'),
+  durationMinutes: z.number().describe('Anslået varighed i minutter'),
+  learningObjectives: z.array(z.string()).describe('Konkrete læringsmål for denne lektion'),
+  contentSummary: z.string().describe('Kort resumé af det faglige indhold'),
+  legalLinks: z.array(z.object({
+    paragraf: z.string().describe('Paragrafhenvisning, fx "§ 42"'),
+    why: z.string().describe('Hvorfor er denne juridisk relevant for lektionen?'),
+  })).describe('Relevante juridiske koblinger'),
+});
+
+export const CourseModuleSchema = z.object({
+  title: z.string().describe('Titel på kursets overordnede modul'),
+  description: z.string().describe('Beskrivelse af modulets fokus'),
+  lessons: z.array(CourseLessonSchema).describe('En række lektioner i modulet'),
+});
+
+export const CourseDesignSchema = z.object({
+  courseTitle: z.string().describe('Kursets overordnede titel'),
+  targetAudience: z.string().describe('Målguppen (fx studerende eller fagprofessionelle)'),
+  overallLearningOutcomes: z.array(z.string()).describe('Overordnede læringsmål for hele kurset'),
+  modules: z.array(CourseModuleSchema).describe('Kursets moduler'),
+  suggestedReading: z.array(z.object({
+    title: z.string().describe('Titel eller forfatter/bog'),
+    relevance: z.string().describe('Hvorfor er dette relevant læsning?'),
+  })).describe('Anbefalet litteratur baseret på slides/love'),
+});
+
+export const GenerateCourseInputSchema = z.object({
+  slideText: z.string().describe('Teksten udtrukket fra slides'),
+  selectedLaws: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    abbreviation: z.string(),
+  })).describe('De love brugeren har valgt som fundament'),
+  semester: z.string().optional(),
+  profession: z.string().optional(),
+});
+
+export const GenerateCourseOutputSchema = z.object({
+  data: CourseDesignSchema,
+  usage: UsageSchema,
+});
+
+export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
+export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
+export type CourseDesign = z.infer<typeof CourseDesignSchema>;

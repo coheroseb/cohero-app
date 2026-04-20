@@ -92,7 +92,7 @@ export async function getRelevantLawContext(topicOrQuery: string): Promise<strin
     // 2. AI DISAMBIGUATION (Primary method for semantic relevance)
     try {
         const detectionResponse = await ai.generate({
-            model: 'googleai/gemini-2.0-flash',
+            model: 'googleai/gemini-2.5-flash',
             system: "Du er en dansk juridisk bibliotekar. Din opgave er at vurdere om et begreb har en direkte juridisk forankring i de tilgængelige love. Identificer de 1-2 mest centrale love for begrebet. Svar kun med en komma-separeret liste af ID'er eller 'none' hvis begrebet er rent teoretisk/psykologisk uden direkte lovhjemmel.",
             prompt: `Find relevante love for begrebet: "${topicOrQuery}"
             

@@ -3644,3 +3644,7 @@ export async function getUserPublicProfileAction(uid: string) {
     }
 }
 
+
+export async function generateCourseAction(input: Types.GenerateCourseInput): Promise<Types.GenerateCourseOutput> {
+    return callFirebaseFlow('generateCourseFlow', input);
+}

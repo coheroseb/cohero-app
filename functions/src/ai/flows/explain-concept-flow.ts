@@ -96,7 +96,7 @@ Always use "borger" instead of "klient".
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
     ],
   },
-  model: 'googleai/gemini-2.0-flash',
+  model: 'googleai/gemini-2.5-flash',
 });
 
 const explainConceptFlow = ai.defineFlow(
