@@ -1607,6 +1607,11 @@ export const CaseAnalysisSchema = z.object({
   })).describe('Liste over personer nævnt i casen, deres roller og en kort beskrivelse.'),
   lokationer: z.array(z.string()).describe('Vigtige lokationer eller steder nævnt i casen.'),
   socialeProblemer: z.array(z.string()).describe('Sociale problemer eller udfordringer identificeret i casen (f.eks. misbrug, hjemløshed, omsorgssvigt).'),
+  diagnoser: z.array(z.object({
+    navn: z.string(),
+    beskrivelse: z.string()
+  })).optional().describe('Eventuelle kliniske diagnoser nævnt i casen.'),
+  socialfagligVurdering: z.string().optional().describe('En kladde til en socialfaglig vurdering baseret på casen.'),
   tidslinje: z.array(z.object({
     dato: z.string(),
     hændelse: z.string()
@@ -1617,6 +1622,8 @@ export const CaseAnalysisSchema = z.object({
     relevans: z.string()
   })).describe('Forslag til relevante lovparagraffer og deres betydning for casen.'),
   sammenfatning: z.string().describe('En kort faglig opsummering af casen.'),
+  videnshuller: z.array(z.string()).optional().describe('Informationer der mangler i casen for at kunne træffe en afgørelse.'),
+  opfølgning: z.array(z.string()).optional().describe('Anbefalede næste skridt eller opfølgende spørgsmål til borgeren/samarbejdspartnere.'),
   redFlags: z.array(z.object({
     type: z.string().describe('Typen af advarsel, f.eks. "Sagsbehandlingsfejl", "Sundhedsrisiko", "Vold" eller "Andet".'),
     description: z.string().describe('En kort beskrivelse af hvorfor dette er en "rød lampe".'),

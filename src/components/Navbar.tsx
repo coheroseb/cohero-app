@@ -457,9 +457,13 @@ const Navbar: React.FC<NavbarProps> = ({
               <div className="flex items-center gap-3">
                 {/* Upgrade CTA for free users */}
                 {(userProfile?.membership === 'Kollega' || !userProfile?.membership) && (
-                  <Link href="/upgrade" className="hidden lg:flex items-center gap-2 px-4 py-2 bg-amber-500 text-amber-950 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10 active:scale-95 whitespace-nowrap">
-                    <Star className="w-3.5 h-3.5 fill-current" />
-                    Opgrader
+                  <Link 
+                    href="/upgrade" 
+                    className="hidden lg:flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 bg-[length:200%_auto] animate-shimmer text-amber-950 font-black uppercase text-[10px] tracking-widest rounded-xl hover:scale-105 transition-all shadow-lg shadow-amber-500/20 active:scale-95 whitespace-nowrap border border-white/20 group relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Star className="w-4 h-4 fill-amber-950 animate-pulse" />
+                    <span>Opgrader til Kollega+</span>
                   </Link>
                 )}
                 <NotificationBell />

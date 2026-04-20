@@ -35,7 +35,7 @@ import {
   Area,
   ReferenceDot
 } from 'recharts';
-import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction, getSystemLogsAction, getLiveMarketAnalysisAction, getLatestMarketAnalysisAction } from '@/app/actions';
+import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction, syncAllSubscriptionsAction, getSystemLogsAction } from '@/app/actions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 // --- Improved Components ---
@@ -96,8 +96,6 @@ export default function AdminFinansPage() {
     const [growthRate, setGrowthRate] = useState(15); 
     const [syncLogs, setSyncLogs] = useState<any[]>([]);
     const [isLogsLoading, setIsLogsLoading] = useState(false);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [liveAnalysis, setLiveAnalysis] = useState<any>(null);
     const [platformAssetValue, setPlatformAssetValue] = useState(5000000); 
 
     const platformFeatures = [
@@ -123,18 +121,12 @@ export default function AdminFinansPage() {
         async function fetchData() {
             setLoading(true);
             try {
-                const [mRes, hRes, aRes] = await Promise.all([
+                const [mRes, hRes] = await Promise.all([
                     getStripeDashboardMetricsAction(),
-                    getStripeHistoricalRevenueAction(),
-                    getLatestMarketAnalysisAction()
+                    getStripeHistoricalRevenueAction()
                 ]);
                 if (mRes.success) setMetrics(mRes);
                 if (hRes.success && hRes.data) setHistory(hRes.data);
-                if (aRes.success && aRes.data) {
-                    setLiveAnalysis(aRes.data);
-                    if (aRes.data.estimatedAssetValue) setPlatformAssetValue(aRes.data.estimatedAssetValue);
-                    if (aRes.data.inputUsed?.strategicScores) setStratScores(aRes.data.inputUsed.strategicScores);
-                }
             } catch (err) { console.error(err); } finally { setLoading(false); }
         }
         async function fetchLogs() {
@@ -206,20 +198,6 @@ export default function AdminFinansPage() {
         } finally { setIsSyncing(false); }
     };
 
-    const handleLiveAnalysis = async () => {
-        setIsAnalyzing(true); setLiveAnalysis(null);
-        try {
-            const res = await getLiveMarketAnalysisAction({
-                features: platformFeatures.map(f => f.name),
-                currentArr: metrics?.arr || 0,
-                strategicScores: stratScores
-            });
-            if (res) {
-                setLiveAnalysis(res);
-                if (res.estimatedAssetValue) setPlatformAssetValue(res.estimatedAssetValue);
-            }
-        } catch (err) { console.error(err); } finally { setIsAnalyzing(false); }
-    };
 
     if (isUserLoading || !userProfile || userProfile.role !== 'admin') return <AuthLoadingScreen />;
 
@@ -250,11 +228,8 @@ export default function AdminFinansPage() {
                                     <ShieldCheck className="w-3 h-3" /> Enterprise Valuation
                                 </p>
                                 <p className="text-4xl font-black text-white serif tracking-tighter">
-                                    {metrics ? `${Math.round(metrics.arr * (liveAnalysis?.marketMultiplier || 8) + platformAssetValue).toLocaleString('da-DK')} DKK` : '---'}
-                                </p>
-                            </div>
                             <div className="flex items-center gap-2">
-                                <span className="px-2 py-0.5 bg-white/10 rounded-full text-[8px] font-black text-white/40 uppercase tracking-tighter">Multiplier: {liveAnalysis?.marketMultiplier || 8}x ARR</span>
+                                <span className="px-2 py-0.5 bg-white/10 rounded-full text-[8px] font-black text-white/40 uppercase tracking-tighter">Multiplier: 8x ARR</span>
                                 <span className="px-2 py-0.5 bg-white/10 rounded-full text-[8px] font-black text-white/40 uppercase tracking-tighter">Asset: {Math.round(platformAssetValue / 1000000 * 10) / 10}M DKK</span>
                             </div>
                         </div>
@@ -266,14 +241,6 @@ export default function AdminFinansPage() {
                                     {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
                                 </div>
                                 <span className="text-[11px] font-black uppercase text-slate-900">Sync Betalinger</span>
-                            </div>
-                        </button>
-                        <button onClick={handleLiveAnalysis} disabled={isAnalyzing} className="p-6 bg-indigo-600 text-white rounded-[2rem] shadow-2xl shadow-indigo-600/30 hover:bg-indigo-700 transition-all flex items-center justify-between group active:scale-95 disabled:opacity-50">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-all">
-                                    {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <BrainCircuit className="w-5 h-5" />}
-                                </div>
-                                <span className="text-[11px] font-black uppercase tracking-widest">AI Markedsanalyse</span>
                             </div>
                         </button>
                     </div>
@@ -402,118 +369,6 @@ export default function AdminFinansPage() {
                 </div>
             </div>
 
-            <AnimatePresence>
-                {(isAnalyzing || liveAnalysis) && (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full">
-                        <section className="bg-slate-950 p-12 rounded-[5rem] border border-indigo-500/30 shadow-3xl shadow-indigo-500/10 relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none"><Rocket className="w-64 h-64 text-indigo-400 rotate-12" /></div>
-                             <div className="flex flex-col md:flex-row items-center gap-8 mb-16 relative z-10">
-                                <div className="p-6 bg-indigo-600 rounded-[2.5rem] shadow-2xl animate-pulse"><BrainCircuit className="w-10 h-10 text-white" /></div>
-                                <div className="text-center md:text-left">
-                                    <h3 className="text-4xl font-black text-white serif tracking-tight">AI Intelligence Console</h3>
-                                    <p className="text-indigo-400 text-xs font-black uppercase tracking-[0.4em] mt-2 italic flex items-center gap-2">
-                                        Analyse Færdig — Strategisk Opsamling 
-                                        {liveAnalysis?.savedAt && (
-                                            <span className="text-[10px] text-white/20 normal-case tracking-normal ml-4 font-medium">
-                                                (Analyse fra: {new Date(liveAnalysis.savedAt).toLocaleString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })})
-                                            </span>
-                                        )}
-                                    </p>
-                                </div>
-                             </div>
-
-                             {isAnalyzing ? (
-                                <div className="py-24 flex flex-col items-center gap-8">
-                                    <div className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                                    <p className="text-indigo-300 text-xs font-black uppercase tracking-[0.3em] animate-pulse">Scanner globale SaaS multiplikatorer & 2026 trends...</p>
-                                </div>
-                             ) : (
-                                <div className="space-y-16 animate-ink relative z-10">
-                                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
-                                        {/* 1. SUMMARY (OPSUMMERING) */}
-                                        <div className="xl:col-span-2 space-y-8">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-black text-white">01</div>
-                                                <h4 className="text-xl font-black text-white serif italic uppercase tracking-widest">Strategisk Opsummering</h4>
-                                            </div>
-                                            <div className="p-10 bg-white/5 rounded-[3rem] border border-white/5 backdrop-blur-2xl">
-                                                <div className="text-indigo-100/90 leading-loose italic whitespace-pre-wrap font-medium prose prose-invert prose-sm max-w-none">
-                                                    {liveAnalysis.report}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* 2. CALCULATIONS (MELLEMREGNINGER) */}
-                                        <div className="space-y-8">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-[10px] font-black text-white">02</div>
-                                                <h4 className="text-xl font-black text-white serif italic uppercase tracking-widest">Mellemregninger</h4>
-                                            </div>
-                                            <div className="p-10 bg-indigo-600 rounded-[3rem] shadow-2xl space-y-8 border border-white/10 relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-all duration-1000"><DollarSign className="w-24 h-24 text-white" /></div>
-                                                
-                                                <div className="space-y-6 relative z-10">
-                                                    <div className="flex justify-between items-start pb-4 border-b border-white/10">
-                                                        <div>
-                                                            <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Indtjeningsværdi</p>
-                                                            <p className="text-xs text-white/60 font-medium">{Math.round(metrics?.arr || 0).toLocaleString('da-DK')} ARR x {liveAnalysis.marketMultiplier}x</p>
-                                                        </div>
-                                                        <p className="text-lg font-black text-white">{Math.round((metrics?.arr || 0) * liveAnalysis.marketMultiplier).toLocaleString('da-DK')} DKK</p>
-                                                    </div>
-
-                                                    <div className="flex justify-between items-start pb-4 border-b border-white/10">
-                                                        <div>
-                                                            <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Platform Assets</p>
-                                                            <p className="text-xs text-white/60 font-medium">Replacement Cost (AI Est.)</p>
-                                                        </div>
-                                                        <p className="text-lg font-black text-white">{Math.round(platformAssetValue).toLocaleString('da-DK')} DKK</p>
-                                                    </div>
-
-                                                    <div className="pt-4 flex justify-between items-end">
-                                                        <div>
-                                                            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">Total Valuation</p>
-                                                            <p className="text-[9px] text-white/40 font-black italic uppercase">Beregnet Enterprise Værdi</p>
-                                                        </div>
-                                                        <p className="text-3xl font-black text-white serif tracking-tighter">
-                                                            {Math.round((metrics?.arr || 0) * (liveAnalysis.marketMultiplier) + platformAssetValue).toLocaleString('da-DK')} DKK
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 space-y-4">
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Beslutningsgrundlag</p>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-3 bg-white/5 rounded-xl text-indigo-400"><Target className="w-5 h-5" /></div>
-                                                    <p className="text-[10px] text-white/60 leading-relaxed italic">Vurderingen vægter teknologi-moat (Score: {stratScores.technology}/5) over ren omsætning.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 3. BENCHMARKS */}
-                                    <div className="space-y-8">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-[10px] font-black text-white">03</div>
-                                            <h4 className="text-xl font-black text-white serif italic uppercase tracking-widest">Konkurrent Benchmarks</h4>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                            {liveAnalysis.competitorBenchmarks?.map((b: any, i: number) => (
-                                                <div key={i} className="p-10 bg-white/5 rounded-[3rem] border border-white/5 hover:border-indigo-500/50 transition-all hover:bg-white/10 group/c backdrop-blur-sm">
-                                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4">{b.name}</p>
-                                                    <p className="text-2xl font-black text-white serif mb-3">{b.estimatedValue}</p>
-                                                    <div className="h-1px w-12 bg-white/10 mb-4 group-hover/c:w-full transition-all duration-500" />
-                                                    <p className="text-[11px] text-white/40 italic font-medium leading-relaxed group-hover/c:text-white/60">{b.featureOverlap}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                             )}
-                        </section>
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             <section className="space-y-10 pt-10 border-t border-slate-50">
                 <div className="flex items-center px-4 gap-5">

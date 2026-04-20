@@ -31,6 +31,8 @@ export async function generateAdminInsights(stats: any) {
       - Potentielt MRR tab: ${stats.totalRiskMRR} kr.
       - Facebook Konverteringer: ${stats.fbConversions}
       - TikTok Konverteringer: ${stats.tiktokConversions}
+      - Flest oprettelser ugedag: ${stats.peakDay}
+      - Flest oprettelser tidspunkt: ${stats.peakHour}
 
       Struktur:
       1. Overskrift: En motiverende eller advarende status (f.eks. "Stærk vækst, men fokus på fastholdelse påkrævet").

@@ -70,7 +70,9 @@ import {
   Ghost,
   Gift,
   Share2,
-  Linkedin
+  Linkedin,
+  Rocket,
+  Crown
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { Capacitor } from '@capacitor/core';
@@ -269,6 +271,67 @@ const SemesterFocusView = ({ institution, semester, profession, studyStarted }: 
                     </div>
                 </div>
             </div>
+        </motion.div>
+    );
+};
+
+const UpgradeIncentiveBanner = () => {
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600 p-[2px] rounded-[48px] shadow-2xl relative overflow-hidden group cursor-pointer active:scale-[0.99] transition-all duration-500"
+        >
+            <Link href="/upgrade" className="block p-8 sm:p-12 bg-slate-950 rounded-[46px] relative overflow-hidden">
+                {/* Background effects */}
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-white/20 transition-all duration-700" />
+                <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] bg-amber-500/10 rounded-full blur-[60px] pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
+                
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+                    <div className="flex-1 text-center md:text-left">
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-white/10 rounded-full text-amber-400 text-[10px] font-black uppercase tracking-[0.3em] mb-8 border border-white/5 backdrop-blur-md">
+                            <Rocket className="w-4 h-4 fill-amber-400" /> Ej din uddannelse med Kollega+
+                        </div>
+                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.05] mb-8 tracking-tight">
+                            Bliv <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 serif italic font-serif">Kollega+</span> <br className="hidden lg:block" /> og lås op for alt.
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-5 text-left max-w-2xl">
+                            {[
+                                { text: "Ubegrænset AI-sparring", icon: Zap },
+                                { text: "Eksamens-Arkitekten Pro", icon: Layout },
+                                { text: "Personligt Viden-Arkiv", icon: Layers },
+                                { text: "Prioriteret 1:1 Support", icon: HandHelping }
+                            ].map((benefit, i) => (
+                                <div key={i} className="flex items-center gap-3.5 group/item">
+                                    <div className="w-6 h-6 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover/item:bg-amber-500 group-hover/item:border-amber-400 transition-all duration-300">
+                                        <benefit.icon className="w-3 h-3 text-amber-400 group-hover/item:text-amber-950 transition-colors" />
+                                    </div>
+                                    <span className="text-[15px] text-slate-300 font-bold group-hover/item:text-white transition-colors">{benefit.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div className="shrink-0 flex flex-col items-center gap-6 w-full md:w-auto">
+                        <div className="relative group/badge">
+                            <div className="absolute inset-0 bg-amber-500 blur-[40px] opacity-20 group-hover/badge:opacity-40 transition-opacity" />
+                            <div className="w-32 h-32 bg-white rounded-[40px] flex items-center justify-center shadow-2xl relative z-10 group-hover/badge:scale-110 group-hover/badge:rotate-6 transition-transform duration-700">
+                                <Star className="w-16 h-16 text-amber-500 fill-current animate-pulse" />
+                            </div>
+                            <div className="absolute -top-3 -right-3 w-12 h-12 bg-rose-500 text-white rounded-full flex items-center justify-center font-black text-[10px] uppercase tracking-tighter border-4 border-slate-950 z-20 shadow-xl rotate-12">
+                                -20%
+                            </div>
+                        </div>
+                        <div className="space-y-4 w-full">
+                            <div className="px-10 py-5 bg-amber-500 text-amber-950 font-black uppercase tracking-[0.2em] text-[13px] rounded-[24px] hover:bg-amber-400 transition-all shadow-[0_15px_40px_-5px_rgba(245,158,11,0.3)] w-full text-center hover:scale-[1.03] active:scale-[0.97]">
+                                Start din opgradering
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] text-center">Gratis prøveperiode i 7 dage</p>
+                        </div>
+                    </div>
+                </div>
+            </Link>
         </motion.div>
     );
 };
@@ -1144,6 +1207,11 @@ const PortalPageContent: React.FC = () => {
         {/* LEFT COLUMN: THE WORKSPACE */}
         <div className="lg:col-span-8 space-y-16">
           
+          {/* Prominent Upgrade Banner for free users */}
+          {(userProfile?.membership === 'Kollega' || !userProfile?.membership) && (
+              <UpgradeIncentiveBanner />
+          )}
+
           {/* Automatic Semester Insight - Identifying based on uploaded Curriculums */}
           {!userProfile?.isQualified && (
             <div className="space-y-12">
@@ -1283,26 +1351,35 @@ const PortalPageContent: React.FC = () => {
                     </div>
 
                     {item.limit && item.limit.used >= item.limit.total && (
-                        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[6px] flex items-center justify-center p-6 z-20 group-hover:bg-slate-950/50 transition-all duration-700">
+                        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[12px] flex items-center justify-center p-6 z-20 group-hover:bg-slate-950/70 transition-all duration-700">
                             <motion.div 
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="bg-slate-900 p-8 rounded-[40px] shadow-2xl flex flex-col items-center text-center gap-5 max-w-[260px] border border-white/10 relative overflow-hidden"
+                                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                className="bg-slate-900/40 backdrop-blur-3xl p-8 rounded-[48px] shadow-2xl flex flex-col items-center text-center gap-6 max-w-[280px] border border-white/10 relative overflow-hidden group/limit"
                             >
-                                {/* Decorative amber glow effect */}
-                                <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl" />
+                                <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
                                 
-                                <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20 relative z-10 animate-bounce transition-all duration-[3000ms]">
-                                  <Star className="w-7 h-7 fill-current" />
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-amber-500 blur-2xl opacity-20 group-hover/limit:opacity-40 transition-opacity" />
+                                    <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 rounded-[24px] flex items-center justify-center shadow-2xl relative z-10 group-hover/limit:scale-110 group-hover/limit:rotate-12 transition-transform duration-500">
+                                      <Crown className="w-8 h-8 fill-current" />
+                                    </div>
                                 </div>
+
                                 <div className="space-y-2 relative z-10">
-                                  <p className="text-[18px] font-black text-white leading-none tracking-tight">Limit nået</p>
-                                  <p className="text-[12px] font-medium text-slate-400 leading-relaxed px-2">Lås op for ubegrænset brug af <span className="text-white font-bold">{item.title}</span> og meget mere.</p>
+                                    <h5 className="text-[22px] font-black text-white leading-none tracking-tight">Kollega+ Fordel</h5>
+                                    <p className="text-[13px] font-medium text-slate-400 leading-relaxed px-2">
+                                        Du har nået grænsen for i dag. <br />
+                                        <span className="text-amber-400">Lås op for ubegrænset brug</span> og ej din uddannelse med Kollega+.
+                                    </p>
                                 </div>
-                                <div className="mt-2 w-full py-4 bg-white text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-100 transition-all shadow-xl shadow-white/5 active:scale-95 relative z-10">
-                                  Lås op nu
+
+                                <div className="w-full space-y-3 relative z-10">
+                                    <div className="w-full py-4 bg-white text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-amber-400 hover:text-amber-950 transition-all shadow-xl shadow-white/5 active:scale-95">
+                                        Opgradér nu
+                                    </div>
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-300 transition-colors cursor-pointer">Læs mere om fordele</p>
                                 </div>
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-amber-500/50 transition-colors">Opgradér til Kollega+</p>
                             </motion.div>
                         </div>
                     )}
@@ -1351,21 +1428,38 @@ const PortalPageContent: React.FC = () => {
           
           {/* Upgrade Incentive Card for free users */}
           {(userProfile?.membership === 'Kollega' || !userProfile?.membership) && (
-            <section className="bg-slate-900 p-8 sm:p-10 rounded-[32px] sm:rounded-[48px] text-white shadow-2xl relative overflow-hidden group">
-               <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-400/20 rounded-full blur-[60px] group-hover:scale-125 transition-transform duration-700"></div>
-               <div className="relative z-10 flex flex-col gap-6">
-                  <div className="w-16 h-16 bg-amber-400 text-amber-950 rounded-2xl flex items-center justify-center shadow-[0_0_30px_-5px_rgba(251,191,36,0.5)] group-hover:rotate-6 transition-transform">
-                      <Zap className="w-8 h-8 fill-current" />
-                  </div>
-                  <div className="space-y-3">
-                      <h3 className="text-[22px] font-extrabold text-white leading-tight">Gå efter toppen med Kollega+</h3>
-                      <p className="text-[14px] text-slate-300 font-medium">Lås op for ubegrænset brug, personligt arkiv og prioriteret support.</p>
-                  </div>
-                  <Link href="/upgrade" className="w-full h-14 bg-white text-slate-900 rounded-[20px] font-black uppercase tracking-widest text-[12px] flex items-center justify-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all shadow-xl">
-                      Prøv gratis i 7 dage <ArrowRight className="w-4 h-4" />
-                  </Link>
-               </div>
-            </section>
+            <Link href="/upgrade" className="block outline-none">
+              <section className="bg-slate-950 p-8 sm:p-10 rounded-[48px] text-white shadow-2xl relative overflow-hidden group border border-white/5 active:scale-[0.98] transition-all duration-500">
+                 {/* Premium Background Effects */}
+                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-400/20 rounded-full blur-[80px] group-hover:bg-amber-400/30 transition-all duration-700"></div>
+                 <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-rose-500/10 rounded-full blur-[60px]"></div>
+                 
+                 <div className="relative z-10 flex flex-col gap-8">
+                    <div className="flex items-center justify-between">
+                      <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 text-amber-950 rounded-3xl flex items-center justify-center shadow-[0_10px_30px_-5px_rgba(245,158,11,0.5)] group-hover:rotate-12 group-hover:scale-110 transition-all duration-500">
+                          <Zap className="w-8 h-8 fill-current" />
+                      </div>
+                      <div className="px-4 py-1.5 bg-white/5 rounded-full border border-white/10 text-[9px] font-black uppercase tracking-widest text-amber-400">
+                         Mest Populær
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h3 className="text-3xl font-black text-white leading-[1.1] tracking-tight">Gå efter toppen med <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Kollega+</span></h3>
+                        <p className="text-sm text-slate-400 font-medium leading-relaxed">
+                          Få ubegrænset brug af alle AI-værktøjer, dit eget personlige viden-arkiv og meget mere.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="w-full h-14 bg-white text-slate-950 rounded-[20px] font-black uppercase tracking-widest text-[12px] flex items-center justify-center gap-2.5 hover:bg-amber-400 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.97]">
+                          Prøv gratis i 7 dage <ArrowRight className="w-4 h-4" />
+                      </div>
+                      <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em] text-center">Bliv klar til eksamen med ro i maven</p>
+                    </div>
+                 </div>
+              </section>
+            </Link>
           )}
 
           {/* Public Profile / LinkedIn Card */}

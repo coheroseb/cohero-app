@@ -7,11 +7,10 @@ import { Palette, Sparkles, Heart, ShoppingBag, ArrowLeft, Instagram, Wand2 } fr
 import Link from 'next/link';
 import Image from 'next/image';
 
-const ARTWORK = [
-  { id: 1, src: '/artist/klaus-viste/art1.jpg', title: 'Vibrante Strømninger', desc: 'Akryl på lærred', color: 'from-blue-500 to-pink-500' },
-  { id: 2, src: '/artist/klaus-viste/art2.jpg', title: 'Struktureret Kaos', desc: 'Mixed media', color: 'from-purple-500 to-rose-500' },
-  { id: 3, src: '/artist/klaus-viste/art3.jpg', title: 'Nattens Blomstring', desc: 'Olie på plade', color: 'from-emerald-500 to-blue-500' },
-  { id: 4, src: '/artist/klaus-viste/art4.jpg', title: 'Gallu Badada', desc: 'Signatur værk', color: 'from-rose-500 to-amber-500' },
+const COLLECTION = [
+  { id: 1, src: '/artist/klaus-viste/tote.png', title: 'Premium Mulepose', desc: 'Kraftig canvas med Badada-print', color: 'from-pink-500 to-rose-500' },
+  { id: 2, src: '/artist/klaus-viste/bottle.png', title: 'Signature Drikkedunk', desc: 'Mat sort med silhuet-detaljer', color: 'from-blue-500 to-indigo-500' },
+  { id: 3, src: '/artist/klaus-viste/hoodie.png', title: 'Street-wear Hoodie', desc: 'Over-sized med stort rygprint', color: 'from-purple-500 to-rose-500' },
 ];
 
 export default function KlausVistePage() {
@@ -38,7 +37,7 @@ export default function KlausVistePage() {
         />
       </motion.div>
 
-      {/* Vibrant Ambient Glows - Inspired by ARTWORK[1] */}
+      {/* Vibrant Ambient Glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[20%] left-[-10%] w-[60%] h-[60%] bg-pink-600/20 rounded-full blur-[160px] animate-pulse" />
         <div className="absolute bottom-[10%] right-[-10%] w-[60%] h-[60%] bg-blue-600/20 rounded-full blur-[160px] animate-pulse" style={{ animationDelay: '3s' }} />
@@ -59,7 +58,7 @@ export default function KlausVistePage() {
          </div>
       </nav>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-20 pb-40">
         
         {/* Artistic Hero Section */}
         <section className="min-h-[80vh] flex flex-col justify-center items-center text-center space-y-12 mb-40">
@@ -77,7 +76,6 @@ export default function KlausVistePage() {
                         className="object-cover grayscale contrast-125 hover:scale-110 transition-transform duration-700"
                     />
                 </div>
-                {/* Hand-drawn style badge */}
                 <div className="absolute -bottom-4 -right-4 bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest px-6 py-3 rounded-full shadow-2xl rotate-12 border-2 border-black">
                     Badada Forever
                 </div>
@@ -90,8 +88,8 @@ export default function KlausVistePage() {
                     transition={{ delay: 0.2 }}
                     className="text-7xl md:text-9xl font-black serif-premium leading-[0.85] tracking-tighter"
                 >
-                    DET <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-purple-600 italic">USYNLIGE</span> <br /> 
-                    MANIFEST
+                    MELLEM <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-purple-600 italic text-[0.8em]">KUNST</span> <br /> 
+                    OG FAGLIGHED
                 </motion.h1>
                 <motion.p 
                     initial={{ opacity: 0 }}
@@ -99,44 +97,40 @@ export default function KlausVistePage() {
                     transition={{ delay: 0.4 }}
                     className="text-xl md:text-2xl text-white/60 font-medium italic serif max-w-2xl mx-auto leading-relaxed"
                 >
-                    "Mine værker er en dialog mellem det rå kaos og den fine orden. Et ekko af den verden vi føler, men ikke altid kan sætte ord på."
+                    Vi forvandler de usynlige manifestationer til fysiske objekter. <br />
+                    Her er et indblik i vores kommende eksklusive samarbejde.
                 </motion.p>
             </div>
-
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="flex items-center gap-10"
-            >
-                <div className="h-px w-20 bg-white/20" />
-                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-rose-500">Klaus Viste</span>
-                <div className="h-px w-20 bg-white/20" />
-            </motion.div>
         </section>
 
-        {/* Immersive Gallery */}
-        <section className="space-y-32 mb-60">
-            {ARTWORK.map((art, i) => (
-                <div key={art.id} className={`flex flex-col ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-20`}>
+        {/* Immersive Product Showcase */}
+        <section className="space-y-40">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
+                <div className="space-y-4">
+                    <h2 className="text-4xl md:text-6xl font-black serif">Socialrådgiver Kollektionen</h2>
+                    <p className="text-slate-500 font-medium max-w-lg">Vores fælles vision materialiseret i premium kvalitet. Et sneak peek på de første designs.</p>
+                </div>
+                <div className="h-px bg-white/10 flex-1 hidden md:block mb-6 mx-12" />
+            </div>
+
+            {COLLECTION.map((item, i) => (
+                <div key={item.id} className={`flex flex-col ${i % 2 === 1 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-20`}>
                     <motion.div 
-                        initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
+                        initial={{ opacity: 0, x: i % 2 === 1 ? -50 : 50 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         className="flex-1 w-full"
                     >
-                        <div className="relative aspect-[4/3] md:aspect-video rounded-[3rem] overflow-hidden group">
-                            {/* Colorful Glow behind each image */}
-                            <div className={`absolute inset-[-40px] bg-gradient-to-br ${art.color} opacity-0 group-hover:opacity-30 blur-3xl transition-opacity duration-700`} />
+                        <div className="relative aspect-square md:aspect-video rounded-[3rem] overflow-hidden group">
+                            <div className={`absolute inset-[-40px] bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-30 blur-3xl transition-opacity duration-700`} />
                             
-                            <div className="relative h-full w-full rounded-[3rem] overflow-hidden border border-white/10">
+                            <div className="relative h-full w-full rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
                                 <Image 
-                                    src={art.src} 
-                                    alt={art.title} 
+                                    src={item.src} 
+                                    alt={item.title} 
                                     fill 
                                     className="object-cover transition-transform duration-1000 group-hover:scale-105"
                                 />
-                                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-700" />
                             </div>
                         </div>
                     </motion.div>
@@ -148,14 +142,14 @@ export default function KlausVistePage() {
                         className="flex-1 space-y-6 lg:px-12"
                     >
                         <div className="flex items-center gap-4">
-                            <span className="text-4xl font-black text-white/10 serif font-mono">0{i + 1}</span>
-                            <div className={`h-px flex-1 bg-gradient-to-r ${art.color} opacity-40`} />
+                            <span className="text-4xl font-black text-white/10 serif font-mono">EST. 2026</span>
+                            <div className={`h-px flex-1 bg-gradient-to-r ${item.color} opacity-40`} />
                         </div>
-                        <h2 className="text-4xl md:text-6xl font-black serif tracking-tight">{art.title}</h2>
-                        <p className="text-lg text-white/50 font-medium leading-relaxed italic">{art.desc}</p>
-                        <button className="flex items-center gap-2 group text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">
-                            Læs Manifestet <Wand2 className="w-3 h-3 group-hover:rotate-12 transition-transform" />
-                        </button>
+                        <h2 className="text-4xl md:text-6xl font-black serif tracking-tight">{item.title}</h2>
+                        <p className="text-lg text-white/50 font-medium leading-relaxed italic">{item.desc}</p>
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-rose-500">
+                             <Sparkles className="w-4 h-4" /> Limited Edition / Forår 2026
+                        </div>
                     </motion.div>
                 </div>
             ))}
@@ -204,30 +198,6 @@ export default function KlausVistePage() {
                     </div>
                 </div>
              </div>
-        </section>
-
-        {/* Final Outro */}
-        <section className="text-center space-y-20 py-20 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-600/20 rounded-full blur-[100px] pointer-events-none" />
-            
-            <motion.div 
-                whileInView={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border border-white/10 opacity-40 grayscale"
-            >
-                <Image src="/artist/klaus-viste/portrait.jpg" alt="Portrait" fill className="object-cover" />
-            </motion.div>
-
-            <div className="space-y-6 relative z-10">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.8em] text-white/30">Badada Lifestyle</h3>
-                <div className="flex items-center justify-center gap-12">
-                   <Instagram className="w-6 h-6 text-white/20 hover:text-white transition-colors cursor-pointer" />
-                   <div className="w-12 h-px bg-white/10" />
-                   <Sparkles className="w-6 h-6 text-white/20 hover:text-white transition-colors cursor-pointer" />
-                </div>
-            </div>
-            
-            <p className="text-[9px] font-black uppercase tracking-widest text-white/10">© 2026 Cohéro x Klaus Viste — All Rights Reserved</p>
         </section>
 
       </main>

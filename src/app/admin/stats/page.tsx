@@ -39,7 +39,7 @@ import {
   Newspaper,
   Search
 } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
 import { generateAdminInsights, generateTikTokScripts, generateBlogPost } from './actions';
 import { useState } from 'react';
 
@@ -232,7 +232,20 @@ export default function StatsPage() {
           totalFbClicks: referralStats?.totalFbClicks || 0,
           totalTikTokClicks: referralStats?.totalTikTokClicks || 0,
           riskUsers,
-          totalRiskMRR
+          totalRiskMRR,
+          registrationDaysData: [
+            { name: 'Man', count: allUsers.filter(u => { const d = u.createdAt?.toDate?.() || new Date(u.createdAt); return d.getDay() === 1; }).length },
+            { name: 'Tir', count: allUsers.filter(u => { const d = u.createdAt?.toDate?.() || new Date(u.createdAt); return d.getDay() === 2; }).length },
+            { name: 'Ons', count: allUsers.filter(u => { const d = u.createdAt?.toDate?.() || new Date(u.createdAt); return d.getDay() === 3; }).length },
+            { name: 'Tor', count: allUsers.filter(u => { const d = u.createdAt?.toDate?.() || new Date(u.createdAt); return d.getDay() === 4; }).length },
+            { name: 'Fre', count: allUsers.filter(u => { const d = u.createdAt?.toDate?.() || new Date(u.createdAt); return d.getDay() === 5; }).length },
+            { name: 'Lør', count: allUsers.filter(u => { const d = u.createdAt?.toDate?.() || new Date(u.createdAt); return d.getDay() === 6; }).length },
+            { name: 'Søn', count: allUsers.filter(u => { const d = u.createdAt?.toDate?.() || new Date(u.createdAt); return d.getDay() === 0; }).length },
+          ],
+          registrationHoursData: Array.from({ length: 24 }, (_, i) => ({
+            hour: `${i}:00`,
+            count: allUsers.filter(u => { const d = u.createdAt?.toDate?.() || new Date(u.createdAt); return d.getHours() === i; }).length
+          }))
       };
     }, [users, referralStats, aiUsage]);
 
@@ -383,6 +396,112 @@ export default function StatsPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Registration Patterns Section */}
+            <section className="space-y-8">
+                <div className="flex flex-col md:flex-row items-start md:items-end justify-between px-2 gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 text-amber-500 mb-2">
+                             <div className="p-2 rounded-lg bg-amber-50">
+                                <CalendarDays className="w-5 h-5" />
+                             </div>
+                             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Oprettelses-Mønstre</span>
+                        </div>
+                        <h2 className="text-3xl font-black text-slate-900 serif">Hvornår opretter de sig?</h2>
+                        <p className="text-slate-500 font-medium text-sm">Fordeling af oprettelser på ugedage og tidspunkter på døgnet.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    {/* Weekly Distribution */}
+                    <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-500">
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-8 px-2">Fordeling på Ugedage</h3>
+                        <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats.registrationDaysData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis 
+                                        dataKey="name" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
+                                        dy={10}
+                                    />
+                                    <YAxis hide />
+                                    <Tooltip 
+                                        cursor={{fill: '#f8fafc'}}
+                                        content={({ active, payload }: any) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="bg-slate-900 px-4 py-2 rounded-xl shadow-2xl border border-slate-800">
+                                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">{payload[0].payload.name}</p>
+                                                        <p className="text-lg font-black text-white serif">{payload[0].value} oprettelser</p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
+                                    />
+                                    <Bar dataKey="count" radius={[10, 10, 10, 10]} barSize={40}>
+                                        {stats.registrationDaysData.map((entry: any, index: number) => (
+                                            <Cell 
+                                                key={`cell-${index}`} 
+                                                fill={entry.count === Math.max(...stats.registrationDaysData.map((d: any) => d.count)) ? '#6366f1' : '#f1f5f9'} 
+                                                className="transition-all duration-500 hover:opacity-80"
+                                            />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Hourly Distribution */}
+                    <div className="bg-white rounded-[3rem] border border-slate-100 p-10 shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-500">
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-8 px-2">Fordeling på Tidspunkter</h3>
+                        <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats.registrationHoursData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis 
+                                        dataKey="hour" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fill: '#94a3b8', fontSize: 8, fontWeight: 700}}
+                                        dy={10}
+                                        interval={2}
+                                    />
+                                    <YAxis hide />
+                                    <Tooltip 
+                                        cursor={{fill: '#f8fafc'}}
+                                        content={({ active, payload }: any) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="bg-slate-900 px-4 py-2 rounded-xl shadow-2xl border border-slate-800">
+                                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Kl. {payload[0].payload.hour}</p>
+                                                        <p className="text-lg font-black text-white serif">{payload[0].value} oprettelser</p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
+                                    />
+                                    <Bar dataKey="count" radius={[4, 4, 4, 4]} barSize={12}>
+                                        {stats.registrationHoursData.map((entry: any, index: number) => (
+                                            <Cell 
+                                                key={`cell-${index}`} 
+                                                fill={entry.count === Math.max(...stats.registrationHoursData.map((d: any) => d.count)) ? '#f59e0b' : '#f1f5f9'} 
+                                                className="transition-all duration-500 hover:opacity-80"
+                                            />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section className="space-y-8">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
@@ -405,9 +524,14 @@ export default function StatsPage() {
                             <button 
                                 onClick={async () => {
                                     setIsGenerating(true);
+                                    const peakDay = stats.registrationDaysData.reduce((prev: any, current: any) => (prev.count > current.count) ? prev : current).name;
+                                    const peakHour = stats.registrationHoursData.reduce((prev: any, current: any) => (prev.count > current.count) ? prev : current).hour;
+                                    
                                     const insight = await generateAdminInsights({
                                         ...stats,
-                                        riskUsersCount: stats.riskUsers.length
+                                        riskUsersCount: stats.riskUsers.length,
+                                        peakDay,
+                                        peakHour
                                     });
                                     setAiInsight(insight);
                                     setIsGenerating(false);

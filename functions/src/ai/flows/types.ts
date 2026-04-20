@@ -1922,3 +1922,41 @@ export const GuidelineChatOutputSchema = z.object({
 export type GuidelineChatInput = z.infer<typeof GuidelineChatInputSchema>;
 export type GuidelineChatData = z.infer<typeof GuidelineChatDataSchema>;
 export type GuidelineChatOutput = z.infer<typeof GuidelineChatOutputSchema>;
+
+
+// ==========================================
+// UNIFIED CHAT SCHEMAS (Central Kollega Chat)
+// ==========================================
+export const UnifiedChatInputSchema = z.object({
+  message: z.string(),
+  chatHistory: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'system']),
+    content: z.string()
+  })).optional(),
+  persona: z.enum(['kollega', 'legal', 'case', 'social_work']).optional(),
+  context: z.object({
+    currentPath: z.string().optional(),
+    currentModule: z.string().optional(),
+    relevantDocumentIds: z.array(z.string()).optional()
+  }).optional(),
+});
+
+export const UnifiedChatDataSchema = z.object({
+  answer: z.string(),
+  suggestedFollowUpQuestions: z.array(z.string()).optional(),
+  referencedMetadata: z.array(z.object({
+      id: z.string(),
+      title: z.string(),
+      type: z.string(),
+      link: z.string().optional()
+  })).optional(),
+});
+
+export const UnifiedChatOutputSchema = z.object({
+  data: UnifiedChatDataSchema,
+  usage: UsageSchema,
+});
+
+export type UnifiedChatInput = z.infer<typeof UnifiedChatInputSchema>;
+export type UnifiedChatData = z.infer<typeof UnifiedChatDataSchema>;
+export type UnifiedChatOutput = z.infer<typeof UnifiedChatOutputSchema>;
