@@ -157,14 +157,15 @@ export default function CoursePlayerPage() {
         let nextL = activeLesson;
         let nextStep = activeStep;
 
-        if (activeStep === 'intro') {
-            nextStep = 'content';
-        } else if (activeStep === 'content' && interactive?.quiz?.length) {
-            nextStep = 'quiz';
-        } else if (activeStep === 'quiz' && interactive?.reflectionQuestion) {
-            nextStep = 'reflection';
-        } else if (activeStep === 'reflection' && interactive?.caseChallenge) {
-            nextStep = 'challenge';
+        const currentSteps: string[] = ['intro', 'content'];
+        if (interactive?.quiz?.length) currentSteps.push('quiz');
+        if (interactive?.reflectionQuestion) currentSteps.push('reflection');
+        if (interactive?.caseChallenge) currentSteps.push('challenge');
+
+        const currentIdx = currentSteps.indexOf(activeStep);
+
+        if (currentIdx < currentSteps.length - 1) {
+            nextStep = currentSteps[currentIdx + 1] as any;
         } else {
             // MARK CURRENT LESSON AS COMPLETED
             const lessonKey = `${activeModule}-${activeLesson}`;
@@ -179,7 +180,7 @@ export default function CoursePlayerPage() {
             }
 
             // Move to next lesson/module
-            if (activeLesson < (currentModule?.lessons.length || 0) - 1) {
+            if (activeLesson < (course?.modules[activeModule].lessons.length || 0) - 1) {
                 nextL = activeLesson + 1;
                 nextStep = 'intro';
             } else if (activeModule < (course?.modules.length || 0) - 1) {
@@ -192,12 +193,49 @@ export default function CoursePlayerPage() {
                 return;
             }
         }
+        
         setActiveModule(nextM);
         setActiveLesson(nextL);
         setActiveStep(nextStep as any);
         updateProgress(nextM, nextL, nextStep);
-        if (nextStep === 'content') {
-             // Reset step-specific local scroll or other if needed
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePrev = () => {
+        const currentSteps: string[] = ['intro', 'content'];
+        if (interactive?.quiz?.length) currentSteps.push('quiz');
+        if (interactive?.reflectionQuestion) currentSteps.push('reflection');
+        if (interactive?.caseChallenge) currentSteps.push('challenge');
+
+        const currentIdx = currentSteps.indexOf(activeStep);
+
+        if (currentIdx > 0) {
+            setActiveStep(currentSteps[currentIdx - 1] as any);
+            updateProgress(activeModule, activeLesson, currentSteps[currentIdx - 1]);
+        } else {
+            // Go to previous lesson
+            let prevM = activeModule;
+            let prevL = activeLesson;
+            
+            if (activeLesson > 0) {
+                prevL = activeLesson - 1;
+            } else if (activeModule > 0) {
+                prevM = activeModule - 1;
+                prevL = course!.modules[prevM].lessons.length - 1;
+            } else {
+                return; // Start of course
+            }
+
+            const prevLesson = course!.modules[prevM].lessons[prevL];
+            const prevSteps: string[] = ['intro', 'content'];
+            if (prevLesson.interactiveElements?.quiz?.length) prevSteps.push('quiz');
+            if (prevLesson.interactiveElements?.reflectionQuestion) prevSteps.push('reflection');
+            if (prevLesson.interactiveElements?.caseChallenge) prevSteps.push('challenge');
+
+            setActiveModule(prevM);
+            setActiveLesson(prevL);
+            setActiveStep(prevSteps[prevSteps.length - 1] as any);
+            updateProgress(prevM, prevL, prevSteps[prevSteps.length - 1]);
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -520,9 +558,19 @@ export default function CoursePlayerPage() {
                         </div>
                     </div>
 
-                    <Button onClick={handleNext} className="w-full h-20 rounded-[2.5rem] bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-lg">
-                        Start Lektionen <ArrowRight className="w-6 h-6 ml-3" />
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <Button 
+                            variant="outline"
+                            onClick={handlePrev}
+                            disabled={activeModule === 0 && activeLesson === 0}
+                            className="w-full h-20 rounded-[2.5rem] border-amber-200 text-amber-950 font-black uppercase tracking-widest hover:bg-amber-50 transition-all text-lg"
+                        >
+                            <ChevronLeft className="w-6 h-6 mr-3" /> Forrige
+                        </Button>
+                        <Button onClick={handleNext} className="w-full h-20 rounded-[2.5rem] bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-lg">
+                            Start Lektionen <ArrowRight className="w-6 h-6 ml-3" />
+                        </Button>
+                    </div>
                 </div>
             </motion.div>
           )}
@@ -599,9 +647,18 @@ export default function CoursePlayerPage() {
                                 )}
                             </div>
 
-                            <Button onClick={handleNext} className="w-full h-16 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest mt-12 shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">
-                                Start Interaktiv Øvelse <ChevronRight className="w-5 h-5 ml-2" />
-                            </Button>
+                            <div className="flex flex-col sm:flex-row gap-4 mt-12">
+                                <Button 
+                                    variant="outline"
+                                    onClick={handlePrev}
+                                    className="w-full h-16 rounded-2xl border-amber-200 text-amber-950 font-black uppercase tracking-widest hover:bg-amber-50 transition-all"
+                                >
+                                    <ChevronLeft className="w-5 h-5 mr-2" /> Forrige
+                                </Button>
+                                <Button onClick={handleNext} className="w-full h-16 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">
+                                    Start Interaktiv Øvelse <ChevronRight className="w-5 h-5 ml-2" />
+                                </Button>
+                            </div>
                         </motion.div>
                     )}
 
@@ -659,13 +716,22 @@ export default function CoursePlayerPage() {
                                 })}
                             </div>
 
-                            <Button
-                                disabled={interactive.quiz.some((_, i) => quizAnswers[`${activeModule}-${activeLesson}-${i}`] === undefined)}
-                                onClick={handleNext}
-                                className="w-full h-16 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl transition-all disabled:opacity-50"
-                            >
-                                Videre til refleksion <ChevronRight className="w-5 h-5 ml-2" />
-                            </Button>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <Button 
+                                    variant="outline"
+                                    onClick={handlePrev}
+                                    className="w-full h-16 rounded-2xl border-amber-200 text-amber-950 font-black uppercase tracking-widest hover:bg-amber-50 transition-all"
+                                >
+                                    <ChevronLeft className="w-5 h-5 mr-2" /> Forrige
+                                </Button>
+                                <Button
+                                    disabled={interactive.quiz.some((_, i) => quizAnswers[`${activeModule}-${activeLesson}-${i}`] === undefined)}
+                                    onClick={handleNext}
+                                    className="w-full h-16 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl transition-all disabled:opacity-50"
+                                >
+                                    Videre til refleksion <ChevronRight className="w-5 h-5 ml-2" />
+                                </Button>
+                            </div>
                         </motion.div>
                     )}
 
@@ -694,13 +760,22 @@ export default function CoursePlayerPage() {
                                 />
                             </div>
 
-                            <Button
-                                disabled={!reflections[`${activeModule}-${activeLesson}`]?.trim()}
-                                onClick={handleNext}
-                                className="w-full h-16 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl transition-all disabled:opacity-50"
-                            >
-                                Videre til udfordringen <ChevronRight className="w-5 h-5 ml-2" />
-                            </Button>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <Button 
+                                    variant="outline"
+                                    onClick={handlePrev}
+                                    className="w-full h-16 rounded-2xl border-amber-200 text-amber-950 font-black uppercase tracking-widest hover:bg-amber-50 transition-all"
+                                >
+                                    <ChevronLeft className="w-5 h-5 mr-2" /> Forrige
+                                </Button>
+                                <Button
+                                    disabled={!reflections[`${activeModule}-${activeLesson}`]?.trim()}
+                                    onClick={handleNext}
+                                    className="w-full h-16 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl transition-all disabled:opacity-50"
+                                >
+                                    Videre til udfordringen <ChevronRight className="w-5 h-5 ml-2" />
+                                </Button>
+                            </div>
                         </motion.div>
                     )}
 
@@ -750,15 +825,24 @@ export default function CoursePlayerPage() {
                                 </div>
                             </div>
 
-                            <Button
-                                disabled={!caseAnswers[`${activeModule}-${activeLesson}`]?.trim()}
-                                onClick={handleNext}
-                                className="w-full h-20 rounded-[2.5rem] bg-emerald-600 text-white font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-                            >
-                                {activeLesson < (currentModule?.lessons.length || 0) - 1 || activeModule < (course?.modules.length || 0) - 1
-                                    ? "Næste Lektion"
-                                    : "Gennemfør Kursus & Se Analyse"} <ArrowRight className="w-6 h-6 ml-3" />
-                            </Button>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <Button 
+                                    variant="outline"
+                                    onClick={handlePrev}
+                                    className="w-full h-20 rounded-[2.5rem] border-amber-200 text-amber-950 font-black uppercase tracking-widest hover:bg-amber-50 transition-all text-lg"
+                                >
+                                    <ChevronLeft className="w-6 h-6 mr-3" /> Forrige
+                                </Button>
+                                <Button
+                                    disabled={!caseAnswers[`${activeModule}-${activeLesson}`]?.trim()}
+                                    onClick={handleNext}
+                                    className="w-full h-20 rounded-[2.5rem] bg-emerald-600 text-white font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                    {activeLesson < (course?.modules[activeModule]?.lessons.length || 0) - 1 || activeModule < (course?.modules.length || 0) - 1
+                                        ? "Næste Lektion"
+                                        : "Gennemfør Kursus & Se Analyse"} <ArrowRight className="w-6 h-6 ml-3" />
+                                </Button>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
