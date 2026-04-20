@@ -19,7 +19,8 @@ import {
   Sparkles,
   Loader2,
   Lock,
-  Search
+  Search,
+  BookMarked
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
