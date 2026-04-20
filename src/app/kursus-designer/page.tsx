@@ -119,6 +119,15 @@ export default function CourseDesignerPage() {
   const [courseDesign, setCourseDesign] = useState<CourseDesign | null>(null);
   const [courseId, setCourseId] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [loadingStage, setLoadingStage] = useState(0);
+
+  const loadingStages = [
+    { label: "Analyserer materiale", icon: Search },
+    { label: "Udvælger juridiske ankre", icon: Scale },
+    { label: "Designer pædagogisk struktur", icon: Layout },
+    { label: "Konstruerer interaktive quizzer", icon: Brain },
+    { label: "Færdiggør dit arkitekt-design", icon: Sparkles }
+  ];
 
   const [sourceType, setSourceType] = useState<'upload' | 'library'>('upload');
   const [seminars, setSeminars] = useState<SavedSeminar[]>([]);
@@ -215,6 +224,7 @@ export default function CourseDesignerPage() {
     try {
       // 1. Extract Slide Text
       setGenerationProgress(20);
+      setLoadingStage(0);
       let combinedText = "";
       
       // From Files
@@ -237,6 +247,7 @@ export default function CourseDesignerPage() {
 
       // 2. Prepare Laws
       setGenerationProgress(40);
+      setLoadingStage(1);
       const selectedLawData = laws
         .filter(l => selectedLawIds.has(l.id))
         .map(l => ({ id: l.id, name: l.name, abbreviation: l.abbreviation }));
@@ -252,6 +263,7 @@ export default function CourseDesignerPage() {
 
       // 3. Call AI
       setGenerationProgress(60);
+      setLoadingStage(2);
       const response = await generateCourseAction({
         slideText: combinedText,
         selectedLaws: selectedLawData,
@@ -260,6 +272,7 @@ export default function CourseDesignerPage() {
       });
 
       setGenerationProgress(90);
+      setLoadingStage(4);
       setCourseDesign(response.data);
       
       // Save to Firestore
@@ -274,7 +287,7 @@ export default function CourseDesignerPage() {
       }
 
       setGenerationProgress(100);
-      setStep(3);
+      setTimeout(() => setStep(3), 500);
     } catch (err: any) {
       console.error(err);
       toast({ variant: 'destructive', title: "Fejl", description: err.message || "Kunne ikke generere kursus." });
@@ -423,6 +436,67 @@ export default function CourseDesignerPage() {
                 </Button>
               </div>
             </motion.div>
+          )}
+
+          {isGenerating && (
+             <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               exit={{ opacity: 0 }}
+               className="fixed inset-0 z-[100] bg-[#FDFCF8]/95 backdrop-blur-xl flex items-center justify-center p-8"
+             >
+                <div className="max-w-xl w-full space-y-12">
+                   <div className="relative h-2 w-full bg-amber-100 rounded-full overflow-hidden shadow-inner">
+                      <motion.div 
+                        initial={{ width: 0 }} 
+                        animate={{ width: `${generationProgress}%` }}
+                        className="absolute h-full bg-amber-950 rounded-full shadow-[0_0_20px_rgba(69,39,16,0.3)]" 
+                      />
+                   </div>
+
+                   <div className="flex flex-col items-center gap-8">
+                       <div className="relative">
+                          <AnimatePresence mode="wait">
+                             <motion.div 
+                                key={loadingStage}
+                                initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                exit={{ opacity: 0, scale: 1.2, rotate: 10 }}
+                                className="w-32 h-32 bg-amber-950 rounded-[2.5rem] flex items-center justify-center text-amber-400 shadow-2xl"
+                             >
+                                {React.createElement(loadingStages[loadingStage].icon, { className: 'w-12 h-12' })}
+                             </motion.div>
+                          </AnimatePresence>
+                          <div className="absolute -inset-4 border-2 border-dashed border-amber-950/10 rounded-[3rem] animate-[spin_20s_linear_infinite]" />
+                       </div>
+
+                       <div className="text-center space-y-4">
+                          <h3 className="text-3xl font-black text-amber-950 serif tracking-tight italic">Arkitekten tegner...</h3>
+                          <div className="space-y-2">
+                             {loadingStages.map((s, i) => (
+                                <motion.div 
+                                  key={i} 
+                                  animate={{ 
+                                    opacity: i === loadingStage ? 1 : 0.2,
+                                    scale: i === loadingStage ? 1.05 : 0.95
+                                  }}
+                                  className="flex items-center justify-center gap-3"
+                                >
+                                   <div className={`w-1.5 h-1.5 rounded-full ${i <= loadingStage ? 'bg-amber-600' : 'bg-slate-300'}`} />
+                                   <span className={`text-[11px] font-black uppercase tracking-[0.2em] ${i === loadingStage ? 'text-amber-950' : 'text-slate-400'}`}>
+                                      {s.label}
+                                   </span>
+                                </motion.div>
+                             ))}
+                          </div>
+                       </div>
+                   </div>
+
+                   <div className="bg-white/50 p-6 rounded-3xl border border-amber-100 text-center">
+                       <p className="text-[10px] font-medium text-slate-400 italic">"Gode ting tager tid. Vi murer de juridiske sten sammen med din faglighed..."</p>
+                   </div>
+                </div>
+             </motion.div>
           )}
 
           {step === 2 && (
