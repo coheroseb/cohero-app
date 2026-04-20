@@ -1979,6 +1979,20 @@ export const CourseLessonSchema = z.object({
     paragraf: z.string().describe('Paragrafhenvisning, fx "§ 42"'),
     why: z.string().describe('Hvorfor er denne juridisk relevant for lektionen?'),
   })).describe('Relevante juridiske koblinger'),
+  interactiveElements: z.object({
+    quiz: z.array(z.object({
+        question: z.string().describe('Spørgsmål til quiz'),
+        options: z.array(z.string()).describe('Svarmuligheder'),
+        correctOptionIndex: z.number().describe('Index på det rigtige svar'),
+        explanation: z.string().describe('Forklaring af svaret'),
+    })).optional().describe('Små quiz-spørgsmål til at tjekke forståelse'),
+    reflectionQuestion: z.string().optional().describe('Et spørgsmål til personlig refleksion'),
+    caseChallenge: z.object({
+        scenario: z.string().describe('Et lille virkelighedsnært scenarie'),
+        task: z.string().describe('Hvad skal brugeren gøre/overveje i casen?'),
+        hint: z.string().optional().describe('Et lille vink til at hjælpe brugeren på vej'),
+    }).optional().describe('En lille case-baseret udfordring'),
+  }).optional().describe('Interaktive elementer til at gøre kurset digitalt og engagerende'),
 });
 
 export const CourseModuleSchema = z.object({

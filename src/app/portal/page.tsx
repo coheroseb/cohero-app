@@ -1408,6 +1408,7 @@ const PortalPageContent: React.FC = () => {
                     { title: "Seminarer", desc: "Bibliotek", icon: Presentation, path: "/mine-seminarer", color: "text-emerald-600 bg-emerald-50" },
                     { title: "Begreber", desc: "Videns-arkiv", icon: Brain, path: "/mine-gemte-begreber", color: "text-amber-900 bg-amber-50 border-amber-100" },
                     { title: "Artikler", desc: "Indsigter", icon: Bookmark, path: "/mine-gemte-artikler", color: "text-rose-600 bg-rose-50" },
+                    { title: "Kurser", desc: "Digital læring", icon: BookOpen, path: "/mine-kurser", color: "text-amber-600 bg-amber-50" },
                     { title: "Paragraffer", desc: "Jura-opslag", icon: Scale, path: "/mine-gemte-paragraffer", color: "text-sky-600 bg-sky-50" },
                     { title: "Kalender", desc: "Overblik", icon: CalendarDays, path: "/mine-semesterplaner", color: "text-violet-600 bg-violet-50" }
                   ].map((item, i) => (

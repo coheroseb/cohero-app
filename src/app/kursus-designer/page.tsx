@@ -117,6 +117,7 @@ export default function CourseDesignerPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [courseDesign, setCourseDesign] = useState<CourseDesign | null>(null);
+  const [courseId, setCourseId] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
 
   const [sourceType, setSourceType] = useState<'upload' | 'library'>('upload');
@@ -251,12 +252,13 @@ export default function CourseDesignerPage() {
       
       // Save to Firestore
       if (user && firestore) {
-        await addDoc(collection(firestore, 'users', user.uid, 'courseDesigns'), {
+        const docRef = await addDoc(collection(firestore, 'users', user.uid, 'courseDesigns'), {
           ...response.data,
           createdAt: serverTimestamp(),
           sourceFiles: files.map(f => f.name),
           sourceSeminars: Array.from(selectedSeminarIds)
         });
+        setCourseId(docRef.id);
       }
 
       setGenerationProgress(100);
@@ -624,7 +626,13 @@ export default function CourseDesignerPage() {
                                   </div>
                               </div>
 
-                              <Button className="w-full h-14 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-xl">
+                              <Button 
+                                onClick={() => router.push(`/kursus/${courseId}`)}
+                                className="w-full h-14 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+                              >
+                                  Start digitalt kursus <Sparkles className="w-4 h-4 ml-2" />
+                              </Button>
+                              <Button variant="outline" className="w-full h-14 rounded-2xl border-amber-100 text-amber-950 font-bold">
                                   Eksporter Kursusplan
                               </Button>
                           </div>

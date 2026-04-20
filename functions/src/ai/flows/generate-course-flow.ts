@@ -25,6 +25,10 @@ Din opgave er at designe et professionelt kursusforløb.
 
 **RETNINGSLINJER:**
 - Kurset skal være pædagogisk opbygget med klare læringsmål.
+- **INTERAKTIVITET (VIGTIGT):** Hver lektion SKAL indeholde interaktive elementer (`interactiveElements`) for at gøre kurset digitalt og engagerende. Dette inkluderer:
+    - 2-3 quiz-spørgsmål til tjek af forståelse.
+    - En refleksionsopgave der knytter stoffet til praksis.
+    - En case-challenge hvor brugeren skal anvende de juridiske og faglige pointer.
 - Sproget skal være professionelt, dansk og inspirerende.
 - Kurset skal opdeles i 2-4 moduler, hver med konkrete lektioner.
 - Hvert modul skal have en klar beskrivelse.
