@@ -140,6 +140,7 @@ export default function CoursePlayerPage() {
                 handleAnalyzeResults();
                 return;
             }
+        }
         setActiveModule(nextM);
         setActiveLesson(nextL);
         setActiveStep(nextStep as any);
