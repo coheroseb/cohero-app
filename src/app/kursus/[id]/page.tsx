@@ -33,7 +33,7 @@ import type { CourseDesign } from '@/ai/flows/types';
 
 export default function CoursePlayerPage() {
     const { id } = useParams();
-    const { user } = useApp();
+    const { user, isNativeApp } = useApp() || {};
     const firestore = useFirestore();
     const { toast } = useToast();
     const router = useRouter();
@@ -384,45 +384,60 @@ export default function CoursePlayerPage() {
     return (
         <div className="min-h-screen bg-[#FDFCF8] text-slate-900 pb-40">
             {/* HEADER / PROGRESS */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-amber-50 sticky top-0 z-[1000] px-8 py-6">
-                <div className="max-w-4xl mx-auto space-y-6">
+            <header className={`${isNativeApp ? 'pt-[env(safe-area-inset-top)] border-b-0' : 'pt-6 border-b'} bg-white/80 backdrop-blur-md border-amber-50 sticky top-0 z-[1000] px-4 sm:px-8 pb-4`}>
+                <div className="max-w-4xl mx-auto space-y-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
                             <button onClick={() => router.back()} className="p-2 hover:bg-amber-50 rounded-xl transition-colors">
                                 <ChevronLeft className="w-6 h-6 text-amber-950" />
                             </button>
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Digitalt Kursus</p>
-                                <h2 className="text-xl font-bold text-amber-950 truncate max-w-[200px] md:max-w-[300px]">{course?.courseTitle}</h2>
+                            <div className={isNativeApp ? 'max-w-[150px]' : ''}>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-amber-600">Kursus</p>
+                                <h2 className="text-base md:text-xl font-bold text-amber-950 truncate">{course?.courseTitle}</h2>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <Button 
-                                variant="outline" 
-                                onClick={() => setShowOverview(true)}
-                                className="h-10 rounded-xl border-amber-100 text-amber-950 font-bold bg-white shadow-sm"
-                            >
-                                <Layout className="w-4 h-4 mr-2" /> Oversigt
-                            </Button>
-                            <Button 
-                                variant="outline" 
-                                onClick={() => setShowStats(true)}
-                                className="h-10 rounded-xl border-amber-100 text-amber-950 font-bold bg-white shadow-sm"
-                            >
-                                <TrendingUp className="w-4 h-4 mr-2" /> Statistik
-                            </Button>
-                            <div className="text-right hidden lg:block">
-                                <p className="text-xs font-black text-amber-950">LEKTION {activeLesson + 1} AF {currentModule?.lessons.length}</p>
-                                <p className="text-[10px] text-slate-400 font-bold line-clamp-1 max-w-[150px]">{currentModule?.title}</p>
-                            </div>
+                        <div className="flex items-center gap-2">
+                            {isNativeApp ? (
+                                <div className="flex gap-1">
+                                    <button 
+                                        onClick={() => setShowOverview(true)}
+                                        className="p-2 bg-amber-50 rounded-xl text-amber-950 shadow-sm active:scale-95 transition-all"
+                                    >
+                                        <Layout className="w-5 h-5" />
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowStats(true)}
+                                        className="p-2 bg-amber-50 rounded-xl text-amber-950 shadow-sm active:scale-95 transition-all"
+                                    >
+                                        <TrendingUp className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => setShowOverview(true)}
+                                        className="h-10 rounded-xl border-amber-100 text-amber-950 font-bold bg-white shadow-sm"
+                                    >
+                                        <Layout className="w-4 h-4 mr-2" /> Oversigt
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => setShowStats(true)}
+                                        className="h-10 rounded-xl border-amber-100 text-amber-950 font-bold bg-white shadow-sm"
+                                    >
+                                        <TrendingUp className="w-4 h-4 mr-2" /> Statistik
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-[10px] font-black uppercase text-amber-950/40 px-1">
-                            <span>Din fremgang</span>
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between text-[9px] font-black uppercase text-amber-950/40 px-1">
+                            <span>Fremgang</span>
                             <span>{Math.round(progress)}%</span>
                         </div>
-                        <Progress value={progress} className="h-2 bg-amber-50" />
+                        <Progress value={progress} className="h-1.5 bg-amber-50" />
                     </div>
                 </div>
             </header>
@@ -443,9 +458,9 @@ export default function CoursePlayerPage() {
                     animate={{ x: 0 }} 
                     exit={{ x: '100%' }}
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                    className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-[#FDFCF8] z-[1101] shadow-2xl flex flex-col"
+                    className={`fixed right-0 ${isNativeApp ? 'inset-0' : 'top-0 bottom-0 max-w-sm'} w-full bg-[#FDFCF8] z-[1101] shadow-2xl flex flex-col`}
                     >
-                    <div className="p-8 border-b border-amber-50 flex items-center justify-between bg-white">
+                    <div className={`${isNativeApp ? 'pt-[env(safe-area-inset-top)] pb-4' : 'p-8'} border-b border-amber-50 flex items-center justify-between bg-white px-6`}>
                         <div>
                             <h3 className="text-xl font-black text-amber-950 serif">Kursus Oversigt</h3>
                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mt-1">{totalLessons} lektioner i alt</p>
@@ -508,7 +523,7 @@ export default function CoursePlayerPage() {
                 )}
             </AnimatePresence>
 
-            <main className="max-w-3xl mx-auto px-6 py-12">
+            <main className={`max-w-3xl mx-auto ${isNativeApp ? 'px-4' : 'px-6'} py-8 md:py-12`}>
         <AnimatePresence mode="wait">
           {activeStep === 'intro' && (
             <motion.div 
@@ -516,9 +531,9 @@ export default function CoursePlayerPage() {
                initial={{ opacity: 0, scale: 0.95 }}
                animate={{ opacity: 1, scale: 1 }}
                exit={{ opacity: 0, scale: 1.05 }}
-               className="space-y-12"
+               className="space-y-8"
             >
-                <div className="bg-white p-12 md:p-20 rounded-[4rem] border border-amber-100 shadow-2xl space-y-12 relative overflow-hidden">
+                <div className={`bg-white ${isNativeApp ? 'p-8 rounded-[2.5rem]' : 'p-12 md:p-20 rounded-[4rem]'} border border-amber-100 shadow-xl space-y-8 relative overflow-hidden`}>
                     <div className="absolute top-0 right-0 w-96 h-96 bg-amber-50 rounded-full -mr-48 -mt-48 blur-3xl opacity-50" />
                     
                     <div className="space-y-8 relative">
@@ -558,17 +573,20 @@ export default function CoursePlayerPage() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3">
                         <Button 
                             variant="outline"
                             onClick={handlePrev}
                             disabled={activeModule === 0 && activeLesson === 0}
-                            className="w-full h-20 rounded-[2.5rem] border-amber-200 text-amber-950 font-black uppercase tracking-widest hover:bg-amber-50 transition-all text-lg"
+                            className={`w-full ${isNativeApp ? 'h-14 rounded-2xl' : 'h-20 rounded-[2.5rem]'} border-amber-200 text-amber-950 font-black uppercase tracking-widest hover:bg-amber-50 transition-all text-sm md:text-lg`}
                         >
-                            <ChevronLeft className="w-6 h-6 mr-3" /> Forrige
+                            <ChevronLeft className="w-5 h-5 mr-2" /> Forrige
                         </Button>
-                        <Button onClick={handleNext} className="w-full h-20 rounded-[2.5rem] bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-lg">
-                            Start Lektionen <ArrowRight className="w-6 h-6 ml-3" />
+                        <Button 
+                            onClick={handleNext} 
+                            className={`w-full ${isNativeApp ? 'h-14 rounded-2xl' : 'h-20 rounded-[2.5rem]'} bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-sm md:text-lg`}
+                        >
+                            Start Lektion <ArrowRight className="w-5 h-5 ml-2" />
                         </Button>
                     </div>
                 </div>
@@ -858,9 +876,9 @@ export default function CoursePlayerPage() {
                     />
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="fixed inset-4 md:inset-20 bg-[#FDFCF8] z-[1201] rounded-[4rem] shadow-2xl flex flex-col overflow-hidden border border-amber-100"
+                        className={`fixed ${isNativeApp ? 'inset-0' : 'inset-4 md:inset-20'} bg-[#FDFCF8] z-[1201] ${isNativeApp ? '' : 'rounded-[4rem]'} shadow-2xl flex flex-col overflow-hidden border border-amber-100`}
                     >
-                        <div className="p-10 md:p-16 border-b border-amber-50 flex items-center justify-between bg-white relative">
+                        <div className={`${isNativeApp ? 'pt-[env(safe-area-inset-top)] pb-6' : 'p-10 md:p-16'} border-b border-amber-50 flex items-center justify-between bg-white px-8 relative`}>
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-amber-950 to-emerald-500" />
                             <div className="space-y-2">
                                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-900 rounded-full text-[9px] font-black uppercase tracking-widest">
@@ -958,7 +976,10 @@ export default function CoursePlayerPage() {
                 </>
                 )}
             </AnimatePresence>
-        </main>
-    </div>
-    );
+
+        {/* NATIVE SAFE AREA SPACER */}
+        {isNativeApp && <div className="h-[env(safe-area-inset-bottom)]" />}
+    </main>
+</div>
+);
 }
