@@ -49,6 +49,7 @@ export default function CoursePlayerPage() {
     const [isCompleted, setIsCompleted] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<any>(null);
+    const [showOverview, setShowOverview] = useState(false);
 
     // Fetch Course
     useEffect(() => {
@@ -140,6 +141,14 @@ export default function CoursePlayerPage() {
                 return;
             }
         }
+    const handleJumpToLesson = (mIdx: number, lIdx: number) => {
+        setActiveModule(mIdx);
+        setActiveLesson(lIdx);
+        setActiveStep('content');
+        setShowOverview(false);
+        updateProgress(mIdx, lIdx, 'content');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
         setActiveModule(nextM);
         setActiveLesson(nextL);
@@ -286,12 +295,21 @@ export default function CoursePlayerPage() {
                             </button>
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Digitalt Kursus</p>
-                                <h2 className="text-xl font-bold text-amber-950 truncate max-w-[300px]">{course?.courseTitle}</h2>
+                                <h2 className="text-xl font-bold text-amber-950 truncate max-w-[200px] md:max-w-[300px]">{course?.courseTitle}</h2>
                             </div>
                         </div>
-                        <div className="text-right hidden md:block">
-                            <p className="text-xs font-black text-amber-950">LEKTION {activeLesson + 1} AF {currentModule?.lessons.length}</p>
-                            <p className="text-[10px] text-slate-400 font-bold">{currentModule?.title}</p>
+                        <div className="flex items-center gap-4">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setShowOverview(true)}
+                                className="h-10 rounded-xl border-amber-100 text-amber-950 font-bold bg-white shadow-sm"
+                            >
+                                <Layout className="w-4 h-4 mr-2" /> Oversigt
+                            </Button>
+                            <div className="text-right hidden lg:block">
+                                <p className="text-xs font-black text-amber-950">LEKTION {activeLesson + 1} AF {currentModule?.lessons.length}</p>
+                                <p className="text-[10px] text-slate-400 font-bold line-clamp-1 max-w-[150px]">{currentModule?.title}</p>
+                            </div>
                         </div>
                     </div>
                     <div className="space-y-2">
@@ -303,6 +321,86 @@ export default function CoursePlayerPage() {
                     </div>
                 </div>
             </header>
+
+            {/* OVERVIEW SIDEBAR */}
+            <AnimatePresence>
+                {showOverview && (
+                <>
+                    <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowOverview(false)}
+                    className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[100]" 
+                    />
+                    <motion.div 
+                    initial={{ x: '100%' }} 
+                    animate={{ x: 0 }} 
+                    exit={{ x: '100%' }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-[#FDFCF8] z-[101] shadow-2xl flex flex-col"
+                    >
+                    <div className="p-8 border-b border-amber-50 flex items-center justify-between bg-white">
+                        <div>
+                            <h3 className="text-xl font-black text-amber-950 serif">Kursus Oversigt</h3>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mt-1">{totalLessons} lektioner i alt</p>
+                        </div>
+                        <button onClick={() => setShowOverview(false)} className="p-3 bg-amber-50 rounded-2xl text-amber-950">
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                        {course?.modules.map((module, mIdx) => (
+                            <div key={mIdx} className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-900/40 px-4">Modul {mIdx +1}: {module.title}</h4>
+                            <div className="space-y-2">
+                                {module.lessons.map((lesson, lIdx) => {
+                                    const isCurrent = activeModule === mIdx && activeLesson === lIdx;
+                                    const isPast = mIdx < activeModule || (mIdx === activeModule && lIdx < activeLesson);
+                                    
+                                    return (
+                                        <button 
+                                        key={lIdx}
+                                        onClick={() => handleJumpToLesson(mIdx, lIdx)}
+                                        className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all text-left ${
+                                            isCurrent ? 'bg-amber-950 text-white shadow-lg translate-x-2' : 'bg-white border border-amber-50 text-slate-600 hover:border-amber-200'
+                                        }`}
+                                        >
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                                            isCurrent ? 'bg-white/20' : isPast ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                        }`}>
+                                            {isPast ? <CheckCircle className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-bold leading-tight">{lesson.title}</p>
+                                            <p className={`text-[10px] ${isCurrent ? 'text-amber-400' : 'text-slate-400'}`}>{lesson.durationMinutes} minutter</p>
+                                        </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {isCompleted && (
+                        <div className="p-8 bg-emerald-50 border-t border-emerald-100">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
+                                <Award className="w-5 h-5" />
+                                </div>
+                                <div>
+                                <p className="text-sm font-bold text-emerald-900">Kursus Gennemført</p>
+                                <p className="text-xs text-emerald-600">Se din analyse i slutningen</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    </motion.div>
+                </>
+                )}
+            </AnimatePresence>
 
             <main className="max-w-3xl mx-auto px-6 py-12">
                 <AnimatePresence mode="wait">
