@@ -754,26 +754,46 @@ export default function CourseDesignerPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                 {userCourses.slice(0, 3).map((course) => (
-                    <div 
-                      key={course.id}
-                      onClick={() => router.push(`/kursus/${course.id}`)}
-                      className="group bg-white p-8 rounded-[2.5rem] border border-amber-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer"
-                    >
-                       <div className="flex items-center justify-between mb-6">
-                            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
-                                <BookOpen className="w-6 h-6" />
-                            </div>
-                            <span className="text-[9px] font-black uppercase text-slate-300 tracking-widest">
-                                {course.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
-                            </span>
-                       </div>
-                       <h4 className="text-lg font-black text-amber-950 serif leading-tight line-clamp-2 mb-4">{course.courseTitle}</h4>
-                       <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-amber-600 group-hover:gap-6 transition-all">
-                          Fortsæt kursus <ArrowRight className="w-3.5 h-3.5" />
-                       </div>
-                    </div>
-                 ))}
+                 {userCourses.slice(0, 3).map((course) => {
+                    const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+                    const completedCount = course.completedLessons?.length || 0;
+                    const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+                    return (
+                        <div 
+                        key={course.id}
+                        onClick={() => router.push(`/kursus/${course.id}`)}
+                        className="group bg-white p-8 rounded-[2.5rem] border border-amber-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col h-full"
+                        >
+                        <div className="flex items-center justify-between mb-6">
+                                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                                    <BookOpen className="w-6 h-6" />
+                                </div>
+                                <span className="text-[9px] font-black uppercase text-slate-300 tracking-widest">
+                                    {course.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
+                                </span>
+                        </div>
+                        <h4 className="text-lg font-black text-amber-950 serif leading-tight line-clamp-2 mb-6 flex-grow">{course.courseTitle}</h4>
+                        
+                        <div className="space-y-4 mb-6">
+                           <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                               <span>Fremgang</span>
+                               <span>{progress}%</span>
+                           </div>
+                           <div className="h-2 bg-amber-50 rounded-full overflow-hidden">
+                               <div 
+                                 className="h-full bg-amber-600 rounded-full transition-all duration-1000" 
+                                 style={{ width: `${progress}%` }} 
+                               />
+                           </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-amber-600 group-hover:gap-6 transition-all">
+                            {progress === 100 ? "Gennemfør igen" : "Fortsæt kursus"} <ArrowRight className="w-3.5 h-3.5" />
+                        </div>
+                        </div>
+                    );
+                 })}
               </div>
            </motion.div>
         )}
