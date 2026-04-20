@@ -28,7 +28,7 @@ Din opgave er at designe et professionelt kursusforløb.
 - **DYBDE & STRUKTUR (VIGTIGT):** Hver lektion skal være dybdegående og informativ. Det er ikke nok med et kort resumé; brugeren skal kunne lære emnet direkte på siden.
 - **UNDEREMNER (VIGTIGT):** Hver lektion SKAL opdeles i 3-5 underemner via 'sections' feltet. Hvert underemne skal have en klar titel og en fyldig, velskrevet tekst (150-300 ord pr. underemne), der forklarer teorien, lovgivningen eller praksis i dybden.
 - **INTERAKTIVITET (VIGTIGT):** Hver lektion SKAL indeholde interaktive elementer (interactiveElements) for at gøre kurset digitalt og engagerende. Dette inkluderer:
-    - 2-3 quiz-spørgsmål til tjek af forståelse.
+- **QUIZ (VIGTIGT):** Lav 2-3 quiz-spørgsmål pr. lektion, der tester brugerens dybe forståelse. Svarmulighederne SKAL være meget tæt beslægtet og nuancerede, så det er svært at bruge udelukkelsesmetoden. Undgå indlysende forkerte svar; distraktorerne skal repræsentere realistiske misforståelser eller tæt-beslægtede juridiske begreber, der kræver præcision at skelne imellem.
     - En refleksionsopgave der knytter stoffet til praksis.
     - En case-challenge hvor brugeren skal anvende de juridiske og faglige pointer.
 - **LÆSEANBEFALINGER (VIGTIGT):** For hver lektion skal du foreslå 1-2 specifikke steder i relevant litteratur (suggestedReading), hvor brugeren kan dykke dybere. Angiv gerne specifikke sider hvis det er muligt ud fra din viden om de store socialfaglige bøger.
