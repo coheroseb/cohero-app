@@ -228,6 +228,9 @@ export default function AdminFinansPage() {
                                     <ShieldCheck className="w-3 h-3" /> Enterprise Valuation
                                 </p>
                                 <p className="text-4xl font-black text-white serif tracking-tighter">
+                                    {metrics ? `${Math.round(metrics.arr * 8 + platformAssetValue).toLocaleString('da-DK')} DKK` : '---'}
+                                </p>
+                            </div>
                             <div className="flex items-center gap-2">
                                 <span className="px-2 py-0.5 bg-white/10 rounded-full text-[8px] font-black text-white/40 uppercase tracking-tighter">Multiplier: 8x ARR</span>
                                 <span className="px-2 py-0.5 bg-white/10 rounded-full text-[8px] font-black text-white/40 uppercase tracking-tighter">Asset: {Math.round(platformAssetValue / 1000000 * 10) / 10}M DKK</span>
