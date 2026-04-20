@@ -42,7 +42,7 @@ export default function CoursePlayerPage() {
     const [loading, setLoading] = useState(true);
     const [activeModule, setActiveModule] = useState(0);
     const [activeLesson, setActiveLesson] = useState(0);
-    const [activeStep, setActiveStep] = useState<'content' | 'quiz' | 'reflection' | 'challenge'>('content');
+    const [activeStep, setActiveStep] = useState<'intro' | 'content' | 'quiz' | 'reflection' | 'challenge'>('intro');
 
     const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({}); // key: "mod-less-q", value: selectedIndex
     const [reflections, setReflections] = useState<Record<string, string>>({}); // key: "mod-less", value: reflection text
@@ -120,7 +120,9 @@ export default function CoursePlayerPage() {
         let nextL = activeLesson;
         let nextStep = activeStep;
 
-        if (activeStep === 'content' && interactive?.quiz?.length) {
+        if (activeStep === 'intro') {
+            nextStep = 'content';
+        } else if (activeStep === 'content' && interactive?.quiz?.length) {
             nextStep = 'quiz';
         } else if (activeStep === 'quiz' && interactive?.reflectionQuestion) {
             nextStep = 'reflection';
@@ -130,11 +132,11 @@ export default function CoursePlayerPage() {
             // Move to next lesson/module
             if (activeLesson < (currentModule?.lessons.length || 0) - 1) {
                 nextL = activeLesson + 1;
-                nextStep = 'content';
+                nextStep = 'intro';
             } else if (activeModule < (course?.modules.length || 0) - 1) {
                 nextM = activeModule + 1;
                 nextL = 0;
-                nextStep = 'content';
+                nextStep = 'intro';
             } else {
                 setIsCompleted(true);
                 handleAnalyzeResults();
@@ -154,9 +156,9 @@ export default function CoursePlayerPage() {
     const handleJumpToLesson = (mIdx: number, lIdx: number) => {
         setActiveModule(mIdx);
         setActiveLesson(lIdx);
-        setActiveStep('content');
+        setActiveStep('intro');
         setShowOverview(false);
-        updateProgress(mIdx, lIdx, 'content');
+        updateProgress(mIdx, lIdx, 'intro');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -403,8 +405,63 @@ export default function CoursePlayerPage() {
             </AnimatePresence>
 
             <main className="max-w-3xl mx-auto px-6 py-12">
-                <AnimatePresence mode="wait">
-                    {activeStep === 'content' && (
+        <AnimatePresence mode="wait">
+          {activeStep === 'intro' && (
+            <motion.div 
+               key="intro"
+               initial={{ opacity: 0, scale: 0.95 }}
+               animate={{ opacity: 1, scale: 1 }}
+               exit={{ opacity: 0, scale: 1.05 }}
+               className="space-y-12"
+            >
+                <div className="bg-white p-12 md:p-20 rounded-[4rem] border border-amber-100 shadow-2xl space-y-12 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-amber-50 rounded-full -mr-48 -mt-48 blur-3xl opacity-50" />
+                    
+                    <div className="space-y-8 relative">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-900 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100">
+                          <Sparkles className="w-3.5 h-3.5" /> Introduktion til Lektionen
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <p className="text-amber-600 font-black uppercase tracking-widest text-xs">Modul {activeModule + 1} • Lektion {activeLesson + 1}</p>
+                            <h1 className="text-4xl md:text-6xl font-black text-amber-950 serif tracking-tight leading-[1.1]">{currentLesson?.title}</h1>
+                        </div>
+
+                        <p className="text-xl text-slate-600 font-medium italic border-l-4 border-amber-200 pl-6 py-2">
+                            "{currentLesson?.contentSummary.split('.')[0]}..."
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+                        <div className="space-y-6">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-amber-900/40">Hvad skal vi gennemgå?</h3>
+                            <div className="space-y-4">
+                                <p className="text-sm text-slate-500 leading-relaxed">{currentLesson?.contentSummary}</p>
+                            </div>
+                        </div>
+                        <div className="space-y-6">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-amber-900/40">Dine Læringsmål</h3>
+                            <ul className="space-y-4">
+                                {currentLesson?.learningObjectives.map((obj, i) => (
+                                    <li key={i} className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mt-0.5 shrink-0">
+                                            <CheckCircle className="w-3.5 h-3.5" />
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-700 leading-snug">{obj}</p>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <Button onClick={handleNext} className="w-full h-20 rounded-[2.5rem] bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-lg">
+                        Start Lektionen <ArrowRight className="w-6 h-6 ml-3" />
+                    </Button>
+                </div>
+            </motion.div>
+          )}
+
+          {activeStep === 'content' && (
                         <motion.div
                             key="content"
                             initial={{ opacity: 0, y: 20 }}
