@@ -280,6 +280,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin } = useUser();
   const [userProfile, setUserProfile] = useState<UserProfile | null | undefined>(undefined);
+  const [isProfileInitialized, setIsProfileInitialized] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [hasPlayedDailyChallenge, setHasPlayedDailyChallenge] = useState(false);
   const [cookieConsent, setCookieConsent] = useState<'granted' | 'denied' | 'pending'>('pending');
@@ -346,12 +347,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isUserLoading) {
       setUserProfile(undefined);
+      setIsProfileInitialized(false);
       return;
     }
+
     if (!user || !firestore) {
       setUserProfile(null);
+      setIsProfileInitialized(true); // "Initialized" as null/not logged in
       return;
     }
+
+    setIsProfileInitialized(false); // Reset when user actually changes to fetch new one
 
     const userRef = doc(firestore, 'users', user.uid);
     const unsubscribe = onSnapshot(userRef, (docSnap) => {
@@ -360,9 +366,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUserProfile(null);
       }
+      setIsProfileInitialized(true);
     }, (error) => {
       console.error('Error listening to user profile:', error);
       setUserProfile(null);
+      setIsProfileInitialized(true);
     });
 
     return () => unsubscribe();
@@ -579,14 +587,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [user, isUserLoading, userProfile, pathname, router, isStandaloneGroups, isNativeApp]);
 
   const showOnboardingModal = useMemo(() => {
-    if (isUserLoading || userProfile === undefined || !user || isStandaloneGroups || pathname === '/') {
+    if (!isProfileInitialized || isUserLoading || userProfile === undefined || !user || isStandaloneGroups || pathname === '/') {
         return false;
     }
     return userProfile === null || (!userProfile.isQualified && (!userProfile.institution || !userProfile.semester || !userProfile.studyStarted));
-  }, [isUserLoading, userProfile, user, isStandaloneGroups, pathname]);
+  }, [isProfileInitialized, isUserLoading, userProfile, user, isStandaloneGroups, pathname]);
 
   const showTermsModal = useMemo(() => {
-    if (isUserLoading || userProfile === undefined || !user || !latestTermsVersion || isStandaloneGroups || pathname === '/' || isAdminPage) {
+    if (!isProfileInitialized || isUserLoading || userProfile === undefined || !user || !latestTermsVersion || isStandaloneGroups || pathname === '/' || isAdminPage) {
         return false;
     }
     // If onboarding is being shown, hide terms modal to avoid overlap
@@ -595,16 +603,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     // Check if user has accepted the latest version
     const acceptedVersion = userProfile?.acceptedTermsVersion;
     return acceptedVersion !== latestTermsVersion;
-  }, [isUserLoading, userProfile, user, latestTermsVersion, isStandaloneGroups, pathname, showOnboardingModal, isAdminPage]);
+  }, [isProfileInitialized, isUserLoading, userProfile, user, latestTermsVersion, isStandaloneGroups, pathname, showOnboardingModal, isAdminPage]);
 
   const showFeatureIntroRedirect = useMemo(() => {
-    if (isUserLoading || userProfile === undefined || !user || isStandaloneGroups || pathname === '/' || pathname?.startsWith('/velkommen')) {
+    if (!isProfileInitialized || isUserLoading || userProfile === undefined || !user || isStandaloneGroups || pathname === '/' || pathname?.startsWith('/velkommen')) {
         return false;
     }
     // Only redirect if onboarding is complete but intro hasn't been seen
     const onboardingComplete = userProfile && (userProfile.isQualified || (userProfile.institution && userProfile.semester && userProfile.studyStarted));
     return onboardingComplete && !userProfile.hasSeenFeatureIntro && !showOnboardingModal;
-  }, [isUserLoading, userProfile, user, isStandaloneGroups, pathname, showOnboardingModal]);
+  }, [isProfileInitialized, isUserLoading, userProfile, user, isStandaloneGroups, pathname, showOnboardingModal]);
 
   useEffect(() => {
     if (showFeatureIntroRedirect) {

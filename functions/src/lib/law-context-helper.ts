@@ -72,12 +72,8 @@ export async function getRelevantLawContext(topicOrQuery: string): Promise<strin
     console.log(`[LAW-CONTEXT] Question: "${topicOrQuery}"`);
     const lowerQuery = topicOrQuery.toLowerCase();
     
-    // QUICK EXIT: If it's a theoretical model without legal indicators, skip deep law search
-    const hasLegalIndicators = /§|lov|pgr|stk|kap|retssikkerhed|servicelov|barnets lov/i.test(lowerQuery);
-    if (!hasLegalIndicators && lowerQuery.length > 3) {
-        console.log(`[LAW-CONTEXT] No legal indicators found. Skipping deep law search.`);
-        return '';
-    }
+    // We remove the quick exit to allow the AI to determine if a concept has legal relevance, 
+    // even if it doesn't contain explicit keywords like "§" or "lov".
 
     const snapshot = await adminFirestore.collection('laws').get();
     const allLaws = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
@@ -88,44 +84,63 @@ export async function getRelevantLawContext(topicOrQuery: string): Promise<strin
 
     // 1. FAST MATCH: Priority abbreviations (e.g., "SEL", "BL", "RSL")
     allLaws.forEach(l => {
-        if (l.abbreviation && lowerQuery.includes(l.abbreviation.toLowerCase())) {
+        if (l.abbreviation && (lowerQuery === l.abbreviation.toLowerCase() || lowerQuery.startsWith(l.abbreviation.toLowerCase() + ' '))) {
             detectedIds.push(l.id);
         }
     });
 
-    // 2. AI DISAMBIGUATION (Only if no fast match or query is complex)
-    if (detectedIds.length === 0) {
-        try {
-            const detectionResponse = await ai.generate({
-                model: 'googleai/gemini-2.5-flash',
-                system: "Du er en dansk juridisk bibliotekar. Identificer de 1-2 mest relevante love for spørgsmålet. Svar kun med en komma-separeret liste af ID'er eller 'none'.",
-                prompt: `Find relevante love for: "${topicOrQuery}"
-                
-                Tilgængelige love:
-                ${allLaws.map(l => `- ID: ${l.id}, Navn: ${l.name} (${l.abbreviation})`).join('\n')}
-                
-                Svar KUN med ID'erne.`
-            });
+    // 2. AI DISAMBIGUATION (Primary method for semantic relevance)
+    try {
+        const detectionResponse = await ai.generate({
+            model: 'googleai/gemini-2.0-flash',
+            system: "Du er en dansk juridisk bibliotekar. Din opgave er at vurdere om et begreb har en direkte juridisk forankring i de tilgængelige love. Identificer de 1-2 mest centrale love for begrebet. Svar kun med en komma-separeret liste af ID'er eller 'none' hvis begrebet er rent teoretisk/psykologisk uden direkte lovhjemmel.",
+            prompt: `Find relevante love for begrebet: "${topicOrQuery}"
+            
+            LOV-SAMLING (Lovportalen):
+            ${allLaws.map(l => `- ID: ${l.id}, Navn: ${l.name} (${l.abbreviation})`).join('\n')}
+            
+            Svar KUN med ID'erne eller 'none'.`
+        });
 
-            const rawIds = detectionResponse.text;
-            if (rawIds && rawIds.toLowerCase() !== 'none') {
-                rawIds.split(',').map(id => id.trim()).forEach(p => {
-                    const found = allLaws.find(l => l.id.toLowerCase() === p.toLowerCase());
-                    if (found && !detectedIds.includes(found.id)) detectedIds.push(found.id);
-                });
-            }
-        } catch (error) {
-            console.error('[LAW-CONTEXT] AI detection error:', error);
+        const rawIds = detectionResponse.text;
+        if (rawIds && rawIds.toLowerCase() !== 'none') {
+            rawIds.split(',').map(id => id.trim()).forEach(p => {
+                const found = allLaws.find(l => l.id.toLowerCase() === p.toLowerCase() || (l.abbreviation && l.abbreviation.toLowerCase() === p.toLowerCase()));
+                if (found && !detectedIds.includes(found.id)) detectedIds.push(found.id);
+            });
         }
+    } catch (error) {
+        console.error('[LAW-CONTEXT] AI detection error:', error);
     }
 
     // Filter and fetch context
     let legalContext = '';
-    const targetLaws = allLaws.filter(l => detectedIds.includes(l.id)).slice(0, 2);
+    
+    // NUDGE: If the term is about note-taking/journals, and we don't have Offentlighedsloven, try to find it
+    if (lowerQuery.includes('notat') || lowerQuery.includes('journal')) {
+        const offFound = allLaws.find(l => l.name?.toLowerCase().includes('offentlighed') || l.abbreviation === 'OFL');
+        if (offFound && !detectedIds.includes(offFound.id)) {
+            detectedIds.push(offFound.id);
+        }
+    }
+
+    const targetLaws = allLaws.filter(l => detectedIds.includes(l.id)).slice(0, 3);
 
     if (targetLaws.length > 0) {
-        const contexts = await Promise.all(targetLaws.map(l => getSpecificLawAndGuidelinesContext(l)));
-        legalContext = contexts.filter(Boolean).join('\n\n---\n\n');
+        const contexts = await Promise.all(targetLaws.map(async (l) => {
+            const fullLawContext = await getSpecificLawAndGuidelinesContext(l);
+            
+            // KEYWORD SEARCH: Force the AI to see the most relevant paragraphs first
+            // We split by paragraph marker or double newline
+            const paragraphs = fullLawContext.split(/\n\n|(?=§\s?\d+)/);
+            const matches = paragraphs.filter(p => p.toLowerCase().includes(lowerQuery));
+            
+            if (matches.length > 0) {
+                return `--- DIREKTE MATCH I ${l.name} FOR "${topicOrQuery}" ---\n${matches.join('\n\n')}\n\n${fullLawContext}`;
+            }
+            return fullLawContext;
+        }));
+        legalContext = contexts.filter(Boolean).sort((a, b) => b.includes('DIREKTE MATCH') ? 1 : -1).join('\n\n---\n\n');
     }
     
     const ethicsContent = await getEthicsContext()

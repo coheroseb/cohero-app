@@ -52,10 +52,13 @@ For a "Socialrådgiver", focus on agency work, legal framework, and systemic cas
 {{/if}}
 
 {{#if lawContext}}
-**LEGAL CONTEXT (Use this for accurate paragraph explanations):**
+**LEGAL CONTEXT (LOVPORTALENS SAMLING):**
 ---
 {{{lawContext}}}
 ---
+**IMPORTANT:** The above content contains authoritative texts from the Law Portal. You MUST use this as your PRIMARY and ONLY source for legal facts, paragraph numbers, and specific legal criteria. 
+
+**CRITICAL RULE - NO HALLUCINATIONS:** If you cannot find a specific paragraph number (e.g., "§ 13") in the provided context for a rule, do NOT guess. You must only state the laws and rules you can find documented above. If you are unsure about a specific paragraph number based *only* on the text above, state that the concept is grounded in the law but that the specific paragraph number is not provided in your current context.
 {{/if}}
 
 {{#if books}}
@@ -74,7 +77,7 @@ Your response must be a JSON object with the following keys, all in Danish. Use 
 2.  **etymology**: Forklar kort begrebets oprindelse og historiske kontekst. Hvorfor hedder det, som det gør? (f.eks. for "skøn" eller "selvbestemmelse").
 3.  **relevance**: Explain why this concept is important and relevant for a social worker's daily practice. Structure this with bullet points (<ul> and <li>).
 4.  **practicalExample**: Give a concrete, practice-oriented case example. Structure it with a brief **Situation**, a snippet of **Dialog/Observation**, and an **Analyse** that explains how the concept is applied.
-5.  **legalAnchor**: Hvor finder vi dette begreb i lovgivningen? Angiv specifikke love eller paragraffer (f.eks. Barnets Lov, Serviceloven, Retssikkerhedsloven), hvor begrebet er centralt.
+5.  **legalAnchor**: Hvor finder vi dette begreb i lovgivningen? Du SKAL bruge Lovportalens samling (ovenfor) til at finde den korrekte juridiske kilde. Angiv specifikke love eller paragraffer (f.eks. Barnets Lov, Serviceloven, Retssikkerhedsloven), hvor begrebet er centralt.
 6.  **criticalReflection**: Tilføj en kritisk akademisk refleksion. Hvad er de etiske dilemmaer eller begrænsninger ved dette begreb i socialt arbejde?
 7.  **suggestedLiterature**: Recommend 1-3 of the most relevant books.
     - **CRITICAL RULE 1: HIGH RELEVANCE.** Only recommend a book if its content is *highly* relevant to the concept "{{{concept}}}".
@@ -88,7 +91,7 @@ Your response must be a JSON object with the following keys, all in Danish. Use 
     - **edges**: Define how these blocks connect. Use clear, short labels (e.g., "påvirker", "fører til", "kræver").
     - Layout the nodes in a logical conceptual flow (e.g. Initiator -> Action -> Result).
     - Make the model descriptive and pedagogical, ensuring it works as a clear mental map without visual clutter.
-13. **legalContext**: If the concept is a law paragraph (e.g., "§ 42"), or if you have found highly relevant legal text in the 'LEGAL CONTEXT' above, you MUST populate this field with verbatim law text.
+13. **legalContext**: Hvis konceptet er en lovparagraf (f.eks. "§ 42"), eller hvis du har fundet direkte relevant lovtekst i 'LEGAL CONTEXT' ovenfor, SKAL du indsætte den ordrette lovtekst her. Brug UDELUKKENDE teksten fra Lovportalens samling.
 
 Always use the term "borger" instead of "klient" in your explanations and examples.
 `,
