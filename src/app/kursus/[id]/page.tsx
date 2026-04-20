@@ -286,7 +286,7 @@ export default function CoursePlayerPage() {
     return (
         <div className="min-h-screen bg-[#FDFCF8] text-slate-900 pb-40">
             {/* HEADER / PROGRESS */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-amber-50 sticky top-0 z-50 px-8 py-6">
+            <header className="bg-white/80 backdrop-blur-md border-b border-amber-50 sticky top-0 z-[1000] px-8 py-6">
                 <div className="max-w-4xl mx-auto space-y-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -331,14 +331,14 @@ export default function CoursePlayerPage() {
                     animate={{ opacity: 1 }} 
                     exit={{ opacity: 0 }}
                     onClick={() => setShowOverview(false)}
-                    className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[100]" 
+                    className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[1100]" 
                     />
                     <motion.div 
                     initial={{ x: '100%' }} 
                     animate={{ x: 0 }} 
                     exit={{ x: '100%' }}
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                    className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-[#FDFCF8] z-[101] shadow-2xl flex flex-col"
+                    className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-[#FDFCF8] z-[1101] shadow-2xl flex flex-col"
                     >
                     <div className="p-8 border-b border-amber-50 flex items-center justify-between bg-white">
                         <div>
