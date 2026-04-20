@@ -860,7 +860,8 @@ export default function LandingPage() {
                <div className="h-full bg-slate-900 p-10 sm:p-14 rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col text-white relative overflow-hidden border border-white/10 group">
                   <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(245,158,11,0.2)_0%,transparent_50%)]"></div>
                   <div className="relative z-10">
-                        <div className="inline-block bg-amber-500 text-slate-900 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-10 shadow-xl shadow-amber-500/20">Mest Populære</div>
+                        <div className="inline-block bg-amber-500 text-slate-900 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 shadow-xl shadow-amber-500/20">Mest Populære</div>
+                        <p className="text-[11px] font-medium text-amber-200/60 mb-10 italic">Et Kollega+ medlemskab er en personlig investering i din faglighed</p>
                         <h3 className="text-3xl font-black mb-2">Kollega+</h3>
                         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-10">Full Professional Access</p>
                         
