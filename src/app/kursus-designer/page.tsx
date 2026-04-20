@@ -125,6 +125,8 @@ export default function CourseDesignerPage() {
   const [selectedSeminarIds, setSelectedSeminarIds] = useState<Set<string>>(new Set());
   const [savedParagraphs, setSavedParagraphs] = useState<SavedParagraph[]>([]);
   const [selectedParagraphIds, setSelectedParagraphIds] = useState<Set<string>>(new Set());
+  const [userCourses, setUserCourses] = useState<any[]>([]);
+  const recentSectionRef = useRef<HTMLDivElement>(null);
 
   // Fetch Laws
   useEffect(() => {
@@ -152,6 +154,16 @@ export default function CourseDesignerPage() {
     const q = query(collection(firestore, 'users', user.uid, 'savedParagraphs'), orderBy('savedAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snap) => {
       setSavedParagraphs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedParagraph)));
+    });
+    return () => unsubscribe();
+  }, [firestore, user]);
+
+  // Fetch User Courses
+  useEffect(() => {
+    if (!firestore || !user) return;
+    const q = query(collection(firestore, 'users', user.uid, 'courseDesigns'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      setUserCourses(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
     return () => unsubscribe();
   }, [firestore, user]);
@@ -289,8 +301,12 @@ export default function CourseDesignerPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-            <Button variant="outline" className="rounded-xl border-amber-200 text-amber-900">
-                <History className="w-4 h-4 mr-2" /> My Designs
+            <Button 
+                variant="outline" 
+                className="rounded-xl border-amber-200 text-amber-900"
+                onClick={() => recentSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            >
+                <History className="w-4 h-4 mr-2" /> Mine Designs
             </Button>
         </div>
       </header>
@@ -642,6 +658,48 @@ export default function CourseDesignerPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {step !== 3 && userCourses.length > 0 && (
+           <motion.div 
+             initial={{ opacity: 0 }} 
+             animate={{ opacity: 1 }} 
+             ref={recentSectionRef}
+             className="mt-32 pt-20 border-t border-amber-100"
+           >
+              <div className="flex items-center justify-between mb-10">
+                 <div>
+                    <h3 className="text-3xl font-black text-amber-950 serif tracking-tight">Mine gemte kurser</h3>
+                    <p className="text-slate-400 text-sm font-medium mt-1">Dine seneste arkitekt-tegninger</p>
+                 </div>
+                 <Button variant="ghost" onClick={() => router.push('/mine-kurser')} className="text-amber-600 font-black uppercase tracking-widest text-[10px] hover:bg-amber-50">
+                    Se alle kurser <ChevronRight className="w-4 h-4 ml-2" />
+                 </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                 {userCourses.slice(0, 3).map((course) => (
+                    <div 
+                      key={course.id}
+                      onClick={() => router.push(`/kursus/${course.id}`)}
+                      className="group bg-white p-8 rounded-[2.5rem] border border-amber-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer"
+                    >
+                       <div className="flex items-center justify-between mb-6">
+                            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                                <BookOpen className="w-6 h-6" />
+                            </div>
+                            <span className="text-[9px] font-black uppercase text-slate-300 tracking-widest">
+                                {course.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
+                            </span>
+                       </div>
+                       <h4 className="text-lg font-black text-amber-950 serif leading-tight line-clamp-2 mb-4">{course.courseTitle}</h4>
+                       <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-amber-600 group-hover:gap-6 transition-all">
+                          Fortsæt kursus <ArrowRight className="w-3.5 h-3.5" />
+                       </div>
+                    </div>
+                 ))}
+              </div>
+           </motion.div>
+        )}
       </main>
     </div>
   );
