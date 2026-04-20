@@ -29,7 +29,7 @@ Din opgave er at designe et professionelt kursusforløb.
     - 2-3 quiz-spørgsmål til tjek af forståelse.
     - En refleksionsopgave der knytter stoffet til praksis.
     - En case-challenge hvor brugeren skal anvende de juridiske og faglige pointer.
-- **LÆSEANBEFALINGER (VIGTIGT):** For hver lektion skal du foreslå 1-2 specifikke steder i relevant litteratur (`suggestedReading`), hvor brugeren kan dykke dybere. Angiv gerne specifikke sider hvis det er muligt ud fra din viden om de store socialfaglige bøger.
+- **LÆSEANBEFALINGER (VIGTIGT):** For hver lektion skal du foreslå 1-2 specifikke steder i relevant litteratur (suggestedReading), hvor brugeren kan dykke dybere. Angiv gerne specifikke sider hvis det er muligt ud fra din viden om de store socialfaglige bøger.
 - Sproget skal være professionelt, dansk og inspirerende.
 - Kurset skal opdeles i 2-4 moduler, hver med konkrete lektioner.
 - Hvert modul skal have en klar beskrivelse.
