@@ -46,6 +46,7 @@ export default function CoursePlayerPage() {
 
     const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({}); // key: "mod-less-q", value: selectedIndex
     const [reflections, setReflections] = useState<Record<string, string>>({}); // key: "mod-less", value: reflection text
+    const [caseAnswers, setCaseAnswers] = useState<Record<string, string>>({}); // key: "mod-less", value: user response
     const [isCompleted, setIsCompleted] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<any>(null);
@@ -68,21 +69,22 @@ export default function CoursePlayerPage() {
                     if (quizAnswers[key] === q.correctOptionIndex) correctAnswers++;
                 });
                 if (reflections[`${mIdx}-${lIdx}`]?.trim().length > 10) reflectionsCount++;
+                if (caseAnswers[`${mIdx}-${lIdx}`]?.trim().length > 20) reflectionsCount++; // Cases count double for engagement
             });
 
             const quizScore = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 100;
-            const engagementScore = (reflectionsCount / lessons.length) * 100;
-            const overallScore = (quizScore * 0.7) + (engagementScore * 0.3);
+            const engagementScore = (reflectionsCount / (lessons.length * 2)) * 100;
+            const overallScore = (quizScore * 0.6) + (engagementScore * 0.4);
 
             return {
                 topic: mod.title,
-                score: Math.round(overallScore),
+                score: Math.min(100, Math.round(overallScore)),
                 quizScore: Math.round(quizScore),
-                engagementScore: Math.round(engagementScore),
+                engagementScore: Math.min(100, Math.round(engagementScore)),
                 status: overallScore > 80 ? 'Stærk forståelse' : overallScore > 50 ? 'God vej' : 'Brug mere tid'
             };
         });
-    }, [course, quizAnswers, reflections]);
+    }, [course, quizAnswers, reflections, caseAnswers]);
 
     // Fetch Course
     useEffect(() => {
@@ -98,6 +100,8 @@ export default function CoursePlayerPage() {
                     if (data.currentLessonIndex !== undefined) setActiveLesson(data.currentLessonIndex);
                     if (data.activeStep !== undefined) setActiveStep(data.activeStep);
                     if (data.quizAnswers) setQuizAnswers(data.quizAnswers);
+                    if (data.reflections) setReflections(data.reflections);
+                    if (data.caseAnswers) setCaseAnswers(data.caseAnswers);
                     if (data.reflections) setReflections(data.reflections);
                     if (data.isCompleted) setIsCompleted(data.isCompleted);
                     if (data.analysisResult) setAnalysisResult(data.analysisResult);
@@ -222,6 +226,15 @@ export default function CoursePlayerPage() {
         if (!firestore || !id || !user) return;
         await updateDoc(doc(firestore, 'users', user.uid, 'courseDesigns', id as string), {
             reflections: newReflections
+        });
+    };
+
+    const handleSaveCaseAnswer = async (key: string, text: string) => {
+        const newCaseAnswers = { ...caseAnswers, [key]: text };
+        setCaseAnswers(newCaseAnswers);
+        if (!firestore || !id || !user) return;
+        await updateDoc(doc(firestore, 'users', user.uid, 'courseDesigns', id as string), {
+            caseAnswers: newCaseAnswers
         });
     };
 
@@ -725,11 +738,22 @@ export default function CoursePlayerPage() {
                                         <p className="text-sm font-medium text-slate-600 italic">Hint: {interactive.caseChallenge.hint}</p>
                                     </div>
                                 )}
+
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-amber-900/40">Din løsning / overvejelse</h3>
+                                    <textarea
+                                        className="w-full h-80 p-8 bg-white border-2 border-amber-100 focus:border-amber-950/20 rounded-[3rem] outline-none transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-inner"
+                                        placeholder="Beskriv hvordan du vil løse denne case... (Dette er påkrævet for at gennemføre)"
+                                        value={caseAnswers[`${activeModule}-${activeLesson}`] || ''}
+                                        onChange={(e) => handleSaveCaseAnswer(`${activeModule}-${activeLesson}`, e.target.value)}
+                                    />
+                                </div>
                             </div>
 
                             <Button
+                                disabled={!caseAnswers[`${activeModule}-${activeLesson}`]?.trim()}
                                 onClick={handleNext}
-                                className="w-full h-20 rounded-[2.5rem] bg-emerald-600 text-white font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all"
+                                className="w-full h-20 rounded-[2.5rem] bg-emerald-600 text-white font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {activeLesson < (currentModule?.lessons.length || 0) - 1 || activeModule < (course?.modules.length || 0) - 1
                                     ? "Næste Lektion"
