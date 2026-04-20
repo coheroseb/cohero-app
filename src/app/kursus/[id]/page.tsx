@@ -290,6 +290,25 @@ export default function CoursePlayerPage() {
                             ))}
                         </div>
                     </div>
+
+                    {currentLesson?.suggestedReading && currentLesson.suggestedReading.length > 0 && (
+                        <div className="md:col-span-2 bg-amber-50/50 p-8 rounded-[3rem] border border-amber-100/50 space-y-6">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-amber-600 flex items-center gap-2">
+                                <BookMarked className="w-3.5 h-3.5" /> Anbefalet læsning for denne lektion
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {currentLesson.suggestedReading.map((read, i) => (
+                                    <div key={i} className="bg-white p-6 rounded-2xl border border-amber-100 shadow-sm space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <p className="font-bold text-amber-950 text-sm">{read.title}</p>
+                                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-md text-[9px] font-black uppercase tracking-widest">{read.pageRef}</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 italic leading-snug">{read.relevance}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <Button onClick={handleNext} className="w-full h-16 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest mt-12 shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">
