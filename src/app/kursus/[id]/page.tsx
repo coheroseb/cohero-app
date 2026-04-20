@@ -62,6 +62,10 @@ export default function CoursePlayerPage() {
                     if (data.currentModuleIndex !== undefined) setActiveModule(data.currentModuleIndex);
                     if (data.currentLessonIndex !== undefined) setActiveLesson(data.currentLessonIndex);
                     if (data.activeStep !== undefined) setActiveStep(data.activeStep);
+                    if (data.quizAnswers) setQuizAnswers(data.quizAnswers);
+                    if (data.reflections) setReflections(data.reflections);
+                    if (data.isCompleted) setIsCompleted(data.isCompleted);
+                    if (data.analysisResult) setAnalysisResult(data.analysisResult);
                 } else {
                     toast({ variant: 'destructive', title: "Fejl", description: "Kurset blev ikke fundet." });
                     router.push('/portal');
@@ -140,15 +144,34 @@ export default function CoursePlayerPage() {
         setActiveLesson(nextL);
         setActiveStep(nextStep as any);
         updateProgress(nextM, nextL, nextStep);
+        if (nextStep === 'content') {
+             // Reset step-specific local scroll or other if needed
+        }
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleSaveQuiz = async (key: string, oIdx: number) => {
+        const newAnswers = { ...quizAnswers, [key]: oIdx };
+        setQuizAnswers(newAnswers);
+        if (!firestore || !id || !user) return;
+        await updateDoc(doc(firestore, 'users', user.uid, 'courseDesigns', id as string), {
+            quizAnswers: newAnswers
+        });
+    };
+
+    const handleSaveReflection = async (key: string, text: string) => {
+        const newReflections = { ...reflections, [key]: text };
+        setReflections(newReflections);
+        if (!firestore || !id || !user) return;
+        await updateDoc(doc(firestore, 'users', user.uid, 'courseDesigns', id as string), {
+            reflections: newReflections
+        });
     };
 
     const handleAnalyzeResults = async () => {
         setIsAnalyzing(true);
-        // In a real app, I'd call an AI flow here. 
-        // For this demo, let's simulate a deep analysis of "Strengths and Weaknesses"
-        setTimeout(() => {
-            setAnalysisResult({
+        setTimeout(async () => {
+            const result = {
                 strengths: [
                     "Stærk forståelse for de juridiske rammer i serviceloven",
                     "Gode refleksioner omkring borger-inddragelse",
@@ -159,8 +182,16 @@ export default function CoursePlayerPage() {
                     "Kan med fordel øvekoblingen mellem teori og konkret praksis mere"
                 ],
                 recommendation: "Du klarer dig generelt rigtig flot! Fokusér dit næste studiepas på de formelle sagsbehandlingsregler."
-            });
+            };
+            setAnalysisResult(result);
             setIsAnalyzing(false);
+            
+            if (firestore && id && user) {
+                await updateDoc(doc(firestore, 'users', user.uid, 'courseDesigns', id as string), {
+                    isCompleted: true,
+                    analysisResult: result
+                });
+            }
         }, 3000);
     };
 
@@ -371,7 +402,7 @@ export default function CoursePlayerPage() {
                                                 {q.options.map((opt, oIdx) => (
                                                     <button
                                                         key={oIdx}
-                                                        onClick={() => setQuizAnswers(prev => ({ ...prev, [key]: oIdx }))}
+                                                        onClick={() => handleSaveQuiz(key, oIdx)}
                                                         className={`p-6 rounded-2xl text-left border-2 transition-all flex items-center justify-between group ${selected === oIdx
                                                                 ? (oIdx === q.correctOptionIndex ? 'border-emerald-500 bg-emerald-50 text-emerald-950' : 'border-rose-500 bg-rose-50 text-rose-950')
                                                                 : 'border-slate-100 bg-white hover:border-amber-200'
@@ -430,7 +461,7 @@ export default function CoursePlayerPage() {
                                     className="w-full h-64 p-8 bg-amber-50/30 border-2 border-transparent focus:border-amber-950/20 rounded-3xl outline-none transition-all font-medium text-slate-700 placeholder:text-slate-300"
                                     placeholder="Skriv dine tanker her... (Dine ord tæller med i slut-analysen)"
                                     value={reflections[`${activeModule}-${activeLesson}`] || ''}
-                                    onChange={(e) => setReflections(prev => ({ ...prev, [`${activeModule}-${activeLesson}`]: e.target.value }))}
+                                    onChange={(e) => handleSaveReflection(`${activeModule}-${activeLesson}`, e.target.value)}
                                 />
                             </div>
 
