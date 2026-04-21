@@ -8,18 +8,21 @@ import {
   User, 
   Brain, 
   Heart, 
-  Send, 
+  Mic, 
+  MicOff,
   ArrowLeft, 
   Sparkles, 
   History,
   ShieldAlert,
   Loader2,
   ChevronRight,
-  Info
+  Info,
+  Volume2,
+  VolumeX,
+  RefreshCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { citizenSimulationAction } from '@/app/actions';
 import { useApp } from '@/app/provider';
 import Link from 'next/link';
 
@@ -75,10 +78,16 @@ export default function CitizenSimulatorPage() {
   const [selectedPersona, setSelectedPersona] = useState<any>(null);
   const [isSimulationActive, setIsSimulationActive] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentEmotionalState, setCurrentEmotionalState] = useState('');
   const [internalMonologue, setInternalMonologue] = useState('');
+  
+  // Voice States
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  
+  const recognitionRef = useRef<any>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,21 +96,95 @@ export default function CitizenSimulatorPage() {
     }
   }, [chatHistory]);
 
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.lang = 'da-DK';
+        recognitionRef.current.interimResults = false;
+
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          handleSendMessage(transcript);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          setIsListening(false);
+          if (event.error !== 'no-speech') {
+            toast({ title: "Mikrofon fejl", description: "Vi kunne ikke høre dig. Tjek dine indstillinger.", variant: "destructive" });
+          }
+        };
+      }
+    }
+    return () => {
+      if (recognitionRef.current) recognitionRef.current.abort();
+    };
+  }, []);
+
   const startSimulation = (persona: any) => {
     setSelectedPersona(persona);
     setIsSimulationActive(true);
     setCurrentEmotionalState(persona.emotionalState);
+    const initialGreeting = `Goddag. Jeg er ${persona.name}. Hvad vil du tale om i dag?`;
     setChatHistory([
-      { role: 'model', content: `Goddag. Jeg er ${persona.name}. Hvad vil du tale om i dag?` }
+      { role: 'model', content: initialGreeting }
     ]);
+    speak(initialGreeting);
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || isLoading) return;
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
+      setIsListening(true);
+      recognitionRef.current?.start();
+    }
+  };
 
-    const userMsg = message.trim();
-    setMessage('');
+  const speak = (text: string) => {
+    if (isMuted || typeof window === 'undefined') return;
+    
+    // Cancel any current speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'da-DK';
+    
+    // Choose a suitable voice (try to find a Danish one)
+    const voices = window.speechSynthesis.getVoices();
+    const danishVoice = voices.find(v => v.lang === 'da-DK');
+    if (danishVoice) utterance.voice = danishVoice;
+
+    // Adjust pitch/rate based on persona age/background if needed
+    if (selectedPersona?.age > 60) {
+        utterance.rate = 0.85;
+        utterance.pitch = 0.9;
+    } else if (selectedPersona?.age < 25) {
+        utterance.rate = 1.05;
+        utterance.pitch = 1.1;
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleSendMessage = async (userMsg: string) => {
+    if (!userMsg.trim() || isLoading) return;
+
     setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
     setIsLoading(true);
 
@@ -131,7 +214,6 @@ export default function CitizenSimulatorPage() {
       const decoder = new TextDecoder();
       let accumulatedText = "";
       
-      // Initialize the model response in history
       setChatHistory(prev => [...prev, { role: 'model', content: "" }]);
 
       if (reader) {
@@ -142,14 +224,12 @@ export default function CitizenSimulatorPage() {
           const chunk = decoder.decode(value);
           accumulatedText += chunk;
 
-          // Parse metadata if present
           const emotionMatch = accumulatedText.match(/\[EMOTION:\s*(.*?)\]/i);
           const thoughtsMatch = accumulatedText.match(/\[THOUGHTS:\s*(.*?)\]/i);
           
           if (emotionMatch) setCurrentEmotionalState(emotionMatch[1].trim());
           if (thoughtsMatch) setInternalMonologue(thoughtsMatch[1].trim());
 
-          // Extract content after the separator '---'
           const parts = accumulatedText.split('---');
           if (parts.length > 1) {
             const actualContent = parts.slice(1).join('---').trim();
@@ -159,6 +239,12 @@ export default function CitizenSimulatorPage() {
               return newHistory;
             });
           }
+        }
+        
+        // After full response is collected, speak it
+        const finalParts = accumulatedText.split('---');
+        if (finalParts.length > 1) {
+            speak(finalParts[1].trim());
         }
       }
     } catch (error) {
@@ -175,8 +261,7 @@ export default function CitizenSimulatorPage() {
 
   if (!isSimulationActive) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] text-slate-900 selection:bg-rose-100 selection:text-rose-900 pb-20">
-        {/* Navigation */}
+      <div className="min-h-screen bg-[#FAFAF9] text-slate-900 selection:bg-rose-100 selection:text-rose-900 pb-20 font-sans">
         <nav className="p-6 flex items-center justify-between max-w-7xl mx-auto">
           <Link href="/portal" className="p-3 hover:bg-slate-100 rounded-2xl transition-colors">
             <ArrowLeft className="w-6 h-6" />
@@ -187,7 +272,7 @@ export default function CitizenSimulatorPage() {
             </div>
             <span className="font-black tracking-tighter text-xl">Borger<span className="text-rose-600">Simulatoren</span></span>
           </div>
-          <div className="w-12 h-12" /> {/* Spacer */}
+          <div className="w-12 h-12" />
         </nav>
 
         <main className="max-w-4xl mx-auto px-6 mt-12">
@@ -197,13 +282,13 @@ export default function CitizenSimulatorPage() {
               animate={{ scale: 1, opacity: 1 }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-100"
             >
-              <Sparkles className="w-4 h-4" /> AI-drevet træning
+              <Volume2 className="w-4 h-4" /> Tale-baseret træning
             </motion.div>
             <h1 className="text-5xl md:text-6xl font-black serif tracking-tight leading-tight">
-              Træn dine <span className="italic text-rose-600">samtaleteknikker</span> i et trygt rum.
+              Hold en <span className="italic text-rose-600">rigtig samtale</span> med AI'en
             </h1>
             <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto">
-              Vælg en borgerprofil og start en realistisk samtale. AI'en reagerer på din facon, din empati og din faglige tilgang.
+              Simulatoren bruger din stemme til at skabe en naturlig dialog. Træn din samtaleteknik, empati og faglighed direkte gennem tale.
             </p>
           </div>
 
@@ -224,28 +309,11 @@ export default function CitizenSimulatorPage() {
                   {persona.description}
                 </p>
                 <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Start simulation</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Start samtale</span>
                   <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-rose-600 transition-colors" />
                 </div>
               </motion.div>
             ))}
-          </div>
-
-          <div className="mt-20 p-10 bg-slate-900 rounded-[50px] text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-10 opacity-10">
-               <Brain className="w-40 h-40 rotate-12" />
-            </div>
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
-              <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center backdrop-blur-xl shrink-0">
-                <ShieldAlert className="w-10 h-10 text-rose-400" />
-              </div>
-              <div>
-                <h4 className="text-2xl font-black mb-2">Hvorfor træne med en simulator?</h4>
-                <p className="text-slate-400 font-medium max-w-xl">
-                  Som socialrådgiver møder du borgere i krise, vrede eller modløshed. Simulatoren lader dig teste forskellige tilgange uden konsekvenser, så du står stærkere i virkeligheden.
-                </p>
-              </div>
-            </div>
           </div>
         </main>
       </div>
@@ -253,16 +321,16 @@ export default function CitizenSimulatorPage() {
   }
 
   return (
-    <div className="h-screen bg-white flex flex-col md:flex-row overflow-hidden">
-      {/* Simulation Sidebar - Stats & Internal Monologue */}
-      <aside className="w-full md:w-80 lg:w-96 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0 overflow-y-auto">
+    <div className="h-screen bg-white flex flex-col md:flex-row overflow-hidden font-sans">
+      {/* Simulation Sidebar - Reflection & Status */}
+      <aside className="w-full md:w-80 lg:w-96 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0 overflow-y-auto z-20">
         <div className="p-8 border-b border-slate-200">
            <Button 
             variant="ghost" 
             className="mb-8 -ml-3 text-slate-500 hover:text-slate-950 hover:bg-white"
             onClick={() => setIsSimulationActive(false)}
            >
-             <ArrowLeft className="w-4 h-4 mr-2" /> Afslut simulation
+             <ArrowLeft className="w-4 h-4 mr-2" /> Afslut samtale
            </Button>
 
            <div className="flex items-center gap-4 mb-6">
@@ -320,109 +388,168 @@ export default function CitizenSimulatorPage() {
 
            <section>
               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                <Info className="w-4 h-4 text-slate-500" /> Baggrund & Kontekst
+                <Info className="w-4 h-4 text-slate-500" /> Samtalehistorik (Tekst)
               </h3>
-              <div className="space-y-4">
-                 <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                    {selectedPersona.background}
-                 </p>
-                 <div className="p-4 bg-slate-100 rounded-2xl">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Persona Træk</p>
-                    <div className="flex flex-wrap gap-2">
-                       {selectedPersona.personalityTraits.map((trait: string, idx: number) => (
-                         <span key={idx} className="px-2 py-0.5 bg-white rounded-md text-[9px] font-bold text-slate-600 border border-slate-200">{trait}</span>
-                       ))}
+              <div className="max-h-60 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+                {chatHistory.map((chat, i) => (
+                    <div key={i} className={`p-3 rounded-xl text-[11px] font-medium leading-normal ${chat.role === 'user' ? 'bg-slate-200 text-slate-700 ml-4' : 'bg-white border border-slate-100 text-slate-600 mr-4'}`}>
+                        <span className="font-black uppercase tracking-tighter mr-1">{chat.role === 'user' ? 'Dig' : selectedPersona.name}:</span>
+                        {chat.content}
                     </div>
-                 </div>
+                ))}
               </div>
            </section>
         </div>
       </aside>
 
-      {/* Chat Area */}
-      <main className="flex-1 flex flex-col bg-white relative">
-        {/* Chat Header */}
-        <header className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-white/80 backdrop-blur-xl z-10">
-           <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Live Simulation i gang</span>
-           </div>
-           <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
-              <History className="w-4 h-4 text-slate-400" />
-              <span className="text-[11px] font-bold text-slate-600">{chatHistory.length} runder</span>
-           </div>
-        </header>
-
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8 pb-32">
-          {chatHistory.map((chat, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-[80%] flex gap-4 ${chat.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center text-lg ${
-                  chat.role === 'user' ? 'bg-slate-900 text-white' : `${selectedPersona.color} text-white`
-                }`}>
-                  {chat.role === 'user' ? <User className="w-5 h-5" /> : selectedPersona.icon}
-                </div>
-                <div className={`p-6 rounded-[32px] font-medium leading-relaxed ${
-                  chat.role === 'user' 
-                  ? 'bg-rose-600 text-white rounded-tr-none shadow-xl shadow-rose-900/10' 
-                  : 'bg-slate-100 text-slate-900 rounded-tl-none'
-                }`}>
-                  {chat.content}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-          {isLoading && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-start gap-4"
-            >
-               <div className={`w-10 h-10 ${selectedPersona.color} rounded-xl flex items-center justify-center text-lg`}>
-                {selectedPersona.icon}
-              </div>
-               <div className="bg-slate-100 p-6 rounded-3xl rounded-tl-none">
-                  <div className="flex gap-1">
-                    <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
-                    <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
-                    <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
-                  </div>
-               </div>
-            </motion.div>
-          )}
-          <div ref={chatEndRef} />
+      {/* Voice Interaction Area */}
+      <main className="flex-1 flex flex-col items-center justify-center bg-white relative p-10">
+        
+        {/* Floating Controls */}
+        <div className="absolute top-8 right-8 flex items-center gap-4">
+             <Button 
+                variant="outline" 
+                size="icon" 
+                className="w-12 h-12 rounded-2xl border-slate-200"
+                onClick={() => setIsMuted(!isMuted)}
+             >
+                {isMuted ? <VolumeX className="w-5 h-5 text-slate-400" /> : <Volume2 className="w-5 h-5 text-slate-600" />}
+             </Button>
+             <Button 
+                variant="outline" 
+                size="icon" 
+                className="w-12 h-12 rounded-2xl border-slate-200"
+                onClick={() => {
+                    setChatHistory([{ role: 'model', content: `Okay, lad os prøve igen. Jeg er ${selectedPersona.name}.` }]);
+                    speak(`Okay, lad os prøve igen. Jeg er ${selectedPersona.name}.`);
+                }}
+             >
+                <RefreshCcw className="w-5 h-5 text-slate-600" />
+             </Button>
         </div>
 
-        {/* Message Input */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-white via-white to-transparent pointer-events-none">
-           <form 
-            onSubmit={handleSendMessage}
-            className="max-w-4xl mx-auto flex gap-4 pointer-events-auto"
-           >
-              <input 
-                type="text" 
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder={`Svar ${selectedPersona.name} her...`}
-                className="flex-1 bg-white border border-slate-200 px-8 py-5 rounded-[28px] shadow-2xl focus:ring-4 focus:ring-rose-500/5 outline-none transition-all font-medium placeholder:text-slate-400 border-b-4 border-b-slate-100"
-                disabled={isLoading}
-              />
-              <Button 
-                type="submit" 
-                disabled={isLoading || !message.trim()}
-                className="w-16 h-16 rounded-[28px] bg-rose-600 hover:bg-rose-500 text-white shadow-xl shadow-rose-900/20 active:scale-95 transition-all"
-              >
-                {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
-              </Button>
-           </form>
+        {/* Central Avatar Visualizer */}
+        <div className="relative flex flex-col items-center gap-12 max-w-xl w-full text-center">
+            
+            <div className="relative">
+                {/* Wave Visualizations */}
+                <AnimatePresence>
+                    {(isSpeaking || isListening) && (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="absolute inset-0 -m-8"
+                        >
+                            {[1, 2, 3].map((i) => (
+                                <motion.div
+                                    key={i}
+                                    animate={{ 
+                                        scale: [1, 1.5, 1],
+                                        opacity: [0.3, 0, 0.3],
+                                        rotate: [0, 90, 180]
+                                    }}
+                                    transition={{ 
+                                        duration: 3, 
+                                        repeat: Infinity, 
+                                        delay: i * 0.4,
+                                        ease: "easeInOut"
+                                    }}
+                                    className={`absolute inset-0 rounded-[60px] border-2 ${isSpeaking ? 'border-rose-400/30' : 'border-indigo-400/30'}`}
+                                />
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <motion.div 
+                    animate={isSpeaking ? { y: [0, -10, 0] } : {}}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className={`w-40 h-40 ${selectedPersona.color} rounded-[60px] flex items-center justify-center text-7xl shadow-2xl relative z-10`}
+                >
+                    {selectedPersona.icon}
+                </motion.div>
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="text-3xl font-black serif">
+                    {isSpeaking ? `${selectedPersona.name} taler...` : isListening ? "Lytter til dig..." : `Tal med ${selectedPersona.name}`}
+                </h3>
+                <p className="text-slate-400 font-medium text-lg leading-relaxed px-10">
+                    {chatHistory[chatHistory.length - 1]?.role === 'model' && !isSpeaking
+                      ? "Det er din tur til at svare."
+                      : chatHistory[chatHistory.length - 1]?.content}
+                </p>
+            </div>
+
+            {/* Interaction Button */}
+            <div className="mt-8 flex flex-col items-center gap-6">
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={toggleListening}
+                    disabled={isLoading || isSpeaking}
+                    className={`w-28 h-28 rounded-full flex items-center justify-center shadow-2xl transition-all ${
+                        isListening 
+                        ? 'bg-rose-500 shadow-rose-500/40 text-white' 
+                        : 'bg-slate-900 shadow-slate-900/20 text-white hover:bg-slate-800 disabled:opacity-20'
+                    }`}
+                >
+                    {isListening ? (
+                        <div className="relative">
+                            <MicOff className="w-10 h-10" />
+                            <motion.div 
+                                animate={{ scale: [1, 2], opacity: [1, 0] }}
+                                transition={{ repeat: Infinity, duration: 1 }}
+                                className="absolute inset-0 bg-white rounded-full -z-10"
+                            />
+                        </div>
+                    ) : isLoading ? (
+                        <Loader2 className="w-10 h-10 animate-spin" />
+                    ) : (
+                        <Mic className="w-10 h-10" />
+                    )}
+                </motion.button>
+                <div className="flex flex-col items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+                        {isListening ? "Tryk for at sende" : "Tryk på mikrofonen for at tale"}
+                    </span>
+                    <div className="flex gap-1.5">
+                        <kbd className="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-500 border border-slate-200">Mellemrum</kbd>
+                        <span className="text-[10px] font-bold text-slate-300 italic">virker også</span>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        {/* Footer info */}
+        <div className="absolute bottom-10 left-0 right-0 flex justify-center">
+             <div className="flex items-center gap-6 opacity-30 grayscale saturate-0 hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Powered by</span>
+                <img src="/google-ai.png" className="h-4" alt="Google AI" />
+                <div className="w-[1px] h-4 bg-slate-200" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">STT & TTS Engine</span>
+             </div>
+        </div>
+
       </main>
+      
+      {/* Spacebar Listener */}
+      <KeyPressListener onSpace={toggleListening} disabled={isLoading || isSpeaking} />
     </div>
   );
+}
+
+function KeyPressListener({ onSpace, disabled }: { onSpace: () => void, disabled: boolean }) {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.code === 'Space' && !disabled) {
+                e.preventDefault();
+                onSpace();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onSpace, disabled]);
+    return null;
 }
