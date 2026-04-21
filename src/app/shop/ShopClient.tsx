@@ -24,35 +24,7 @@ import { collection, query, orderBy, addDoc, serverTimestamp, where, onSnapshot,
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
-const FALLBACK_PRODUCTS = [
-  {
-    id: 'cup-01',
-    name: 'Cohéro Kaffekop',
-    description: 'Den essentielle følgesvend til de lange studieaftener. Mat hvid keramik med minimalistisk logo.',
-    price: 149,
-    image: '/shop/cup.png',
-    category: 'Lifestyle',
-    tag: 'Bestseller'
-  },
-  {
-    id: 'hoodie-01',
-    name: 'Cohéro Premium Hoodie',
-    description: 'Ultra-blød bomuld i kraftig kvalitet. Diskret broderet logo på brystet.',
-    price: 499,
-    image: '/shop/hoodie.png',
-    category: 'Beklædning',
-    tag: 'Limited'
-  },
-  {
-    id: 'tote-01',
-    name: 'Cohéro Mulepose',
-    description: 'Bæredygtig canvas i høj kvalitet. Perfekt til dine studiebøger og computer.',
-    price: 129,
-    image: '/shop/tote.png',
-    category: 'Accessories',
-    tag: 'Eco-friendly'
-  }
-];
+const FALLBACK_PRODUCTS: any[] = [];
 
 export default function ShopClient() {
   const { user, userProfile } = useApp();
@@ -81,8 +53,7 @@ export default function ShopClient() {
   const { data: firestoreProducts, isLoading } = useCollection<any>(productsQuery);
 
   const products = useMemo(() => {
-    if (!firestoreProducts || firestoreProducts.length === 0) return FALLBACK_PRODUCTS;
-    return firestoreProducts;
+    return firestoreProducts || [];
   }, [firestoreProducts]);
 
   const addToCart = (product: any) => {

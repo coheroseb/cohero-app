@@ -45,6 +45,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
+import { uploadProductImageAction } from './actions';
 
 type Tab = 'products' | 'orders';
 
@@ -101,6 +102,32 @@ const AdminShopPage = () => {
     image: '',
     isActive: true
   });
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUri = event.target?.result as string;
+      try {
+        const res = await uploadProductImageAction(dataUri, file.name);
+        if (res.success && res.imageUrl) {
+          setFormData(prev => ({ ...prev, image: res.imageUrl! }));
+          toast({ title: "Billede uploadet" });
+        } else {
+          toast({ title: "Fejl ved upload", description: res.error, variant: "destructive" });
+        }
+      } catch (err) {
+        toast({ title: "Kunne ikke uploade", variant: "destructive" });
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -434,14 +461,32 @@ const AdminShopPage = () => {
                 </div>
 
                 <div className="space-y-4">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Billed-URL</label>
-                   <input 
-                      type="text" 
-                      placeholder="F.eks. /shop/cup.png eller ekstern URL" 
-                      className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:bg-white outline-none"
-                      value={formData.image}
-                      onChange={(e) => setFormData({...formData, image: e.target.value})}
-                   />
+                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Produktbillede</label>
+                   <div className="flex gap-6">
+                      <div className="flex-1">
+                        <input 
+                            type="text" 
+                            placeholder="URL eller upload..." 
+                            className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:bg-white outline-none mb-2"
+                            value={formData.image}
+                            onChange={(e) => setFormData({...formData, image: e.target.value})}
+                        />
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest px-1">Tip: Du kan også uploade direkte ved siden af</p>
+                      </div>
+                      <div className="relative">
+                         <input 
+                           type="file" 
+                           className="absolute inset-0 opacity-0 cursor-pointer" 
+                           onChange={handleFileChange}
+                           disabled={isUploading}
+                           accept="image/*"
+                         />
+                         <div className={`h-[60px] px-8 rounded-2xl border-2 border-dashed flex items-center justify-center gap-3 transition-all ${isUploading ? 'bg-slate-50 border-slate-200' : 'bg-white border-indigo-100 text-indigo-600 hover:bg-indigo-50'}`}>
+                            {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Eye className="w-5 h-5" />}
+                            <span className="text-[10px] font-black uppercase tracking-widest">{isUploading ? 'Uploader...' : 'Upload fil'}</span>
+                         </div>
+                      </div>
+                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6 items-end">
