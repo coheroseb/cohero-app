@@ -311,10 +311,18 @@ export default function ShopClient() {
         {cart.length > 0 && (
           <motion.button
             initial={{ scale: 0, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
+            animate={{ 
+                scale: 1, 
+                opacity: 1, 
+                y: 0,
+                boxShadow: ["0 20px 50px rgba(0,0,0,0.3)", "0 20px 60px rgba(225,29,72,0.2)", "0 20px 50px rgba(0,0,0,0.3)"]
+            }}
+            transition={{
+                animate: { duration: 2, repeat: Infinity }
+            }}
             exit={{ scale: 0, opacity: 0, y: 20 }}
             onClick={() => setIsCartOpen(true)}
-            className="fixed bottom-10 right-10 z-[150] h-20 px-8 bg-slate-950 text-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-4 group active:scale-95 transition-transform"
+            className="fixed bottom-10 right-10 z-[150] h-20 px-8 bg-slate-950 text-white rounded-[2.5rem] flex items-center gap-4 group active:scale-95 transition-all duration-500 border border-slate-800"
           >
             <div className="relative">
                 <ShoppingBag className="w-8 h-8 text-rose-400 group-hover:scale-110 transition-transform" />
