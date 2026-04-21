@@ -1,7 +1,7 @@
 
 import { adminFirestore } from '@/firebase/server-init';
 
-export async function generateOpenAITTS(text: string): Promise<string> {
+export async function generateOpenAITTS(text: string, voice: string = "shimmer"): Promise<string> {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
         throw new Error("OPENAI_API_KEY mangler.");
@@ -16,8 +16,8 @@ export async function generateOpenAITTS(text: string): Promise<string> {
         body: JSON.stringify({
             model: "tts-1",
             input: text,
-            voice: "shimmer", 
-            speed: 1.1,
+            voice: voice, // Support dynamic voice
+            speed: 1.0,
         }),
     });
 

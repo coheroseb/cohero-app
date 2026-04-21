@@ -198,21 +198,61 @@ export default function CitizenSimulatorPage() {
     }
   };
 
-  const speak = (text: string) => {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const speak = async (text: string) => {
     if (isMuted || typeof window === 'undefined') return;
     
-    // Cancel any current speech
+    // Stop any current audio
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+    }
     window.speechSynthesis.cancel();
 
+    // Mapping of personas to professional AI voices (OpenAI)
+    const voiceMap: Record<string, string> = {
+        'Lene': 'shimmer', // Older, clear female
+        'Morten': 'onyx',   // Young male
+        'Søren': 'alloy'    // Balanced male
+    };
+    const voice = selectedPersona ? (voiceMap[selectedPersona.name] || 'alloy') : 'alloy';
+
+    try {
+        const response = await fetch('/api/simulator/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, voice })
+        });
+        
+        if (!response.ok) throw new Error("TTS API Error");
+        
+        const { audioDataUri } = await response.json();
+        const audio = new Audio(audioDataUri);
+        audioRef.current = audio;
+        
+        setIsSpeaking(true);
+        audio.onended = () => {
+            setIsSpeaking(false);
+            audioRef.current = null;
+        };
+
+        audio.onerror = () => {
+             console.error("Audio playback error, falling back");
+             fallbackSpeak(text);
+        };
+        
+        await audio.play();
+    } catch (err) {
+        console.warn("Falling back to browser TTS:", err);
+        fallbackSpeak(text);
+    }
+  };
+
+  const fallbackSpeak = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'da-DK';
     
-    // Choose a suitable voice (try to find a Danish one)
-    const voices = window.speechSynthesis.getVoices();
-    const danishVoice = voices.find(v => v.lang === 'da-DK');
-    if (danishVoice) utterance.voice = danishVoice;
-
-    // Adjust pitch/rate based on persona age/background if needed
     if (selectedPersona?.age > 60) {
         utterance.rate = 0.85;
         utterance.pitch = 0.9;
@@ -223,7 +263,6 @@ export default function CitizenSimulatorPage() {
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
-    
     window.speechSynthesis.speak(utterance);
   };
 
