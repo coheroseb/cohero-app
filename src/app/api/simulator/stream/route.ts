@@ -2,19 +2,22 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest } from "next/server";
 
-export const runtime = 'edge';
+// Remove edge runtime to ensure environment variables are correctly loaded and for better debugging
+// export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
     const { message, chatHistory, citizenPersona, scenarioContext } = await req.json();
 
-    if (!process.env.GEMINI_API_KEY) {
-        return new Response("Missing GEMINI_API_KEY", { status: 500 });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("SIMULATOR ERROR: GEMINI_API_KEY is not defined in environment variables");
+      return new Response(JSON.stringify({ error: "API Key missing" }), { status: 500 });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const genAI = new GoogleGenerativeAI(apiKey);
     
-    // We use gemini-1.5-flash but ensure we have more robust error handling
+    // We use gemini-1.5-flash which is widely available and fast
     const model = genAI.getGenerativeModel({ 
         model: "gemini-1.5-flash", 
         generationConfig: {
@@ -34,7 +37,7 @@ REGEL: Du skal REAGERE som borgeren. Brug et naturligt sprog.
 **DIT HUMØR:** ${citizenPersona.emotionalState}
 
 **INSTRUKSER:**
-Du SKAL starte dit svar med præcis dette metadata format (vigtigt):
+Du SKAL starte dit svar med præcis dette metadata format:
 [EMOTION: <ét ord>]
 [THOUGHTS: <dine korte indre tanker>]
 ---
@@ -49,6 +52,7 @@ ${chatHistory.map((h: any) => `${h.role === 'user' ? 'Sagsbehandler' : 'Borger'}
 ${message}
 `;
 
+    // Initialize the stream
     const result = await model.generateContentStream(prompt);
 
     const stream = new ReadableStream({
@@ -62,14 +66,14 @@ ${message}
                 }
             }
         } catch (e) {
-            console.error("Stream generation error:", e);
+            console.error("STREAM ERROR:", e);
+            controller.enqueue(encoder.encode("\n[ERROR: Stream interrupted]"));
         } finally {
             controller.close();
         }
       },
     });
 
-    // Use text/plain for maximum compatibility with proxy/buffering
     return new Response(stream, {
         headers: {
             'Content-Type': 'text/plain; charset=utf-8',
@@ -77,8 +81,14 @@ ${message}
             'X-Content-Type-Options': 'nosniff',
         },
     });
-  } catch (error) {
-    console.error("Simulator API Error:", error);
-    return new Response(JSON.stringify({ error: "Fail" }), { status: 500 });
+  } catch (error: any) {
+    console.error("SIMULATOR API CRASH:", error);
+    return new Response(JSON.stringify({ 
+        error: "Internal Server Error", 
+        details: error?.message || "Unknown error" 
+    }), { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
