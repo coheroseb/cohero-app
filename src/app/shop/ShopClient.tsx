@@ -40,6 +40,7 @@ export default function ShopClient() {
   const [shopSettings, setShopSettings] = useState({ isOpen: true });
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [guestEmail, setGuestEmail] = useState('');
 
   // Handle URL status
   useEffect(() => {
@@ -107,18 +108,26 @@ export default function ShopClient() {
         toast({ title: "Shoppen er lukket", description: "Du kan ikke gennemføre dit køb lige nu.", variant: "destructive" });
         return;
     }
-    if (!firestore || !user) {
-        toast({ title: "Log venligst ind", description: "Du skal være logget ind for at gennemføre dit køb." });
+    if (!firestore) return;
+
+    if (!user && !guestEmail) {
+        toast({ title: "Log ind eller indtast email", description: "Vi skal bruge din email for at sende ordren." });
         openAuthPage('signin');
         return;
     }
     
+    // Simple email validation for guests
+    if (!user && guestEmail && !guestEmail.includes('@')) {
+        toast({ title: "Ugyldig email", description: "Indtast venligst en gyldig email-adresse.", variant: "destructive" });
+        return;
+    }
+
     setIsCheckingOut(true);
     try {
         const res = await createShopCheckoutSessionAction(
             cart.map(item => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })),
-            user.uid,
-            user.email || ''
+            user?.uid || null,
+            user?.email || guestEmail
         );
 
         if (res.success && res.url) {
@@ -404,12 +413,24 @@ export default function ShopClient() {
                 </div>
 
                 <div className="p-8 bg-slate-50/50 border-t border-slate-100 space-y-6">
+                    {!user && (
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 italic">Fortsæt som gæst</label>
+                            <input 
+                                type="email" 
+                                placeholder="Indtast din email..."
+                                className="w-full px-8 py-5 bg-white border border-slate-100 rounded-2xl font-bold text-slate-900 focus:bg-white focus:border-rose-200 outline-none shadow-inner transition-all placeholder:text-slate-300"
+                                value={guestEmail}
+                                onChange={(e) => setGuestEmail(e.target.value)}
+                            />
+                        </div>
+                    )}
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-slate-500">Subtotal</span>
                         <span className="text-xl font-black text-slate-950">{total} kr.</span>
                     </div>
                     <Button 
-                        disabled={cart.length === 0 || isCheckingOut}
+                        disabled={cart.length === 0 || isCheckingOut || (!user && !guestEmail)}
                         onClick={handleCheckout}
                         className="w-full h-16 bg-slate-950 hover:bg-black text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-slate-950/20 active:scale-95 disabled:opacity-50"
                     >

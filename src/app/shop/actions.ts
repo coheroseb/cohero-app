@@ -4,16 +4,19 @@
 import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { adminFirestore, admin } from '@/firebase/server-init';
 
-export async function createShopCheckoutSessionAction(items: any[], userId: string, userEmail: string) {
+export async function createShopCheckoutSessionAction(items: any[], userId: string | null, userEmail: string) {
     if (!isStripeConfigured) {
         return { success: false, error: "Stripe er ikke konfigureret på serveren." };
     }
 
+    const finalUserId = userId || `guest_${Date.now()}`;
+
     try {
         // 1. Create a pending order in Firestore first to get an ID
         const orderRef = await adminFirestore.collection('shop_orders').add({
-            userId,
+            userId: finalUserId,
             userEmail,
+            isGuest: !userId,
             items,
             total: items.reduce((acc, item) => acc + (item.price * item.quantity), 0),
             status: 'pending',
