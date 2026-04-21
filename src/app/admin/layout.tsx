@@ -39,7 +39,8 @@ import {
     Trophy,
     Gavel,
     Globe,
-    Lightbulb
+    Lightbulb,
+    ShoppingBag
 } from 'lucide-react';
 
 import { useApp } from '@/app/provider';
@@ -70,6 +71,7 @@ const navigationGroups = [
         { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
         { id: 'emails', href: '/admin/emails', label: 'E-mail Blasts', icon: Mail },
         { id: 'inbox', href: '/admin/inbox', label: 'Indbakke (Simply)', icon: Inbox },
+        { id: 'admin-shop', href: '/admin/shop', label: 'Shop-styring', icon: ShoppingBag },
         { id: 'seo', href: '/admin/seo', label: 'SEO & Meta-Data', icon: Globe },
     ]
   },

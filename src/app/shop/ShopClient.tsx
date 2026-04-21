@@ -19,8 +19,12 @@ import {
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { useApp } from '@/app/provider';
+import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
-const PRODUCTS = [
+const FALLBACK_PRODUCTS = [
   {
     id: 'cup-01',
     name: 'Cohéro Kaffekop',
@@ -51,10 +55,25 @@ const PRODUCTS = [
 ];
 
 export default function ShopClient() {
+  const { user, userProfile } = useApp();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'shop_products'), where('isActive', '==', true), orderBy('createdAt', 'desc'));
+  }, [firestore]);
+
+  const { data: firestoreProducts, isLoading } = useCollection<any>(productsQuery);
+
+  const products = useMemo(() => {
+    if (!firestoreProducts || firestoreProducts.length === 0) return FALLBACK_PRODUCTS;
+    return firestoreProducts;
+  }, [firestoreProducts]);
 
   const addToCart = (product: any) => {
     setCart(prev => {
@@ -75,6 +94,37 @@ export default function ShopClient() {
   };
 
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+  const handleCheckout = async () => {
+    if (!firestore || !user) {
+        toast({ title: "Log venligst ind", description: "Du skal være logget ind for at handle." });
+        return;
+    }
+    
+    setIsCheckingOut(true);
+    try {
+        await addDoc(collection(firestore, 'shop_orders'), {
+            userId: user.uid,
+            userEmail: user.email,
+            userName: userProfile?.displayName || user.displayName || 'Studerende',
+            items: cart.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity })),
+            total,
+            status: 'pending',
+            paymentStatus: 'unpaid',
+            createdAt: serverTimestamp()
+        });
+        setCart([]);
+        setIsCartOpen(false);
+        toast({ 
+            title: "Ordre modtaget", 
+            description: "Tak for dit køb! Vi behandler din bestilling hurtigst muligt.",
+        });
+    } catch (error) {
+        toast({ title: "Fejl", description: "Der skete en fejl under checkout.", variant: "destructive" });
+    } finally {
+        setIsCheckingOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FDFCF8] text-slate-900 selection:bg-rose-100 selection:text-rose-900">
@@ -157,8 +207,8 @@ export default function ShopClient() {
 
         {/* Product Grid */}
         <section className="relative">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {PRODUCTS.map((product, i) => (
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 ${isLoading ? 'opacity-50' : 'opacity-100'} transition-opacity`}>
+                {products.map((product, i) => (
                     <motion.div
                         key={product.id}
                         initial={{ opacity: 0, y: 30 }}
@@ -178,8 +228,18 @@ export default function ShopClient() {
                             {/* Overlays */}
                             <div className="absolute top-6 left-6 flex flex-col gap-2">
                                 <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-900 border border-slate-100 shadow-sm">
-                                    {product.category}
+                                    {product.tag || product.category}
                                 </span>
+                            </div>
+
+                            {/* Hover Actions */}
+                            <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                                <button 
+                                    onClick={() => addToCart(product)}
+                                    className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all shadow-2xl active:scale-95"
+                                >
+                                    Læg i kurv
+                                </button>
                             </div>
                         </div>
 
@@ -194,25 +254,27 @@ export default function ShopClient() {
             </div>
 
             {/* Coming Soon Overlay */}
-            <div className="absolute inset-x-[-24px] inset-y-[-40px] z-[50] flex items-center justify-center p-6">
-                <div className="absolute inset-0 bg-white/40 backdrop-blur-md rounded-[3rem]" />
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="relative z-10 bg-slate-950 text-white p-12 md:p-16 rounded-[3rem] text-center space-y-8 shadow-2xl max-w-xl mx-auto"
-                >
-                    <div className="w-20 h-20 bg-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-2xl shadow-rose-600/20 rotate-3">
-                        <ShoppingBag className="w-10 h-10" />
-                    </div>
-                    <div className="space-y-4">
-                        <h2 className="text-4xl md:text-5xl font-black serif leading-tight">Glæd dig til lanceringen</h2>
-                        <p className="text-slate-400 font-medium italic">
-                            Vi arbejder på højtryk for at gøre shoppen klar. Vi glæder os til at byde dig velkommen i vores nye univers!
-                        </p>
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Lanceres forår 2026</p>
-                </motion.div>
-            </div>
+            {(products.length === 0 && !isLoading) && (
+                <div className="absolute inset-x-[-24px] inset-y-[-40px] z-[50] flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-white/40 backdrop-blur-md rounded-[3rem]" />
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="relative z-10 bg-slate-950 text-white p-12 md:p-16 rounded-[3rem] text-center space-y-8 shadow-2xl max-w-xl mx-auto"
+                    >
+                        <div className="w-20 h-20 bg-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-2xl shadow-rose-600/20 rotate-3">
+                            <ShoppingBag className="w-10 h-10" />
+                        </div>
+                        <div className="space-y-4">
+                            <h2 className="text-4xl md:text-5xl font-black serif leading-tight">Glæd dig til lanceringen</h2>
+                            <p className="text-slate-400 font-medium italic">
+                                Vi arbejder på højtryk for at gøre shoppen klar. Vi glæder os til at byde dig velkommen i vores nye univers!
+                            </p>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Lanceres forår 2026</p>
+                    </motion.div>
+                </div>
+            )}
         </section>
 
         {/* Footer Info */}
@@ -305,10 +367,11 @@ export default function ShopClient() {
                         <span className="text-xl font-black text-slate-950">{total} kr.</span>
                     </div>
                     <Button 
-                        disabled={cart.length === 0}
+                        disabled={cart.length === 0 || isCheckingOut}
+                        onClick={handleCheckout}
                         className="w-full h-16 bg-slate-950 hover:bg-black text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-slate-950/20 active:scale-95 disabled:opacity-50"
                     >
-                        Gå til kassen
+                        {isCheckingOut ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Gå til kassen'}
                     </Button>
                     <p className="text-[10px] text-center text-slate-400 font-medium">Sikker betaling med Stripe & MobilePay</p>
                 </div>
