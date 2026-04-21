@@ -47,7 +47,7 @@ export default function ShopClient() {
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'shop_products'), where('isActive', '==', true), orderBy('createdAt', 'desc'));
+    return query(collection(firestore, 'shop_products'), where('isActive', '==', true));
   }, [firestore]);
 
   const { data: firestoreProducts, isLoading } = useCollection<any>(productsQuery);
@@ -240,6 +240,17 @@ export default function ShopClient() {
                         </div>
                     </motion.div>
                 ))}
+                {(products.length === 0 && !isLoading) && (
+                    <div className="col-span-full py-40 flex flex-col items-center justify-center text-center gap-6 animate-in fade-in duration-1000">
+                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-200">
+                            <ShoppingBag className="w-10 h-10" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-2xl font-bold text-slate-900 serif">Ingen produkter endnu</h3>
+                            <p className="text-slate-500 font-medium italic">Vi er ved at fylde hylderne op. Kig forbi igen snart!</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
         </section>
