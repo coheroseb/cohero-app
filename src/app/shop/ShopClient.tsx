@@ -69,7 +69,7 @@ export default function ShopClient() {
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'shop_products'), where('isActive', '==', true));
+    return query(collection(firestore, 'shop_products'));
   }, [firestore]);
 
   const { data: firestoreProducts, isLoading } = useCollection<any>(productsQuery);
