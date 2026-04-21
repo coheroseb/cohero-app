@@ -145,6 +145,8 @@ export default function ShopClient() {
     } finally {
         setIsCheckingOut(false);
     }
+  };
+
   return (
     <div className="min-h-screen bg-[#FAFAF9] text-slate-900 selection:bg-rose-100 selection:text-rose-900">
       
