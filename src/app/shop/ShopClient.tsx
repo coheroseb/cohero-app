@@ -30,7 +30,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 const FALLBACK_PRODUCTS: any[] = [];
 
 export default function ShopClient() {
-  const { user, userProfile } = useApp();
+  const { user, userProfile, openAuthPage } = useApp();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -108,7 +108,8 @@ export default function ShopClient() {
         return;
     }
     if (!firestore || !user) {
-        toast({ title: "Log venligst ind", description: "Du skal være logget ind for at handle." });
+        toast({ title: "Log venligst ind", description: "Du skal være logget ind for at gennemføre dit køb." });
+        openAuthPage('signin');
         return;
     }
     
