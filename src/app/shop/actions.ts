@@ -61,12 +61,29 @@ export async function createShopCheckoutSessionAction(items: any[], userId: stri
     }
 }
 
+function sanitizeData(data: any): any {
+    if (!data || typeof data !== 'object') return data;
+    
+    // Handle Firestore Timestamp
+    if (typeof data.toDate === 'function') {
+        return data.toDate().toISOString();
+    }
+    
+    if (Array.isArray(data)) return data.map(sanitizeData);
+    
+    const sanitized: any = {};
+    for (const key in data) {
+        sanitized[key] = sanitizeData(data[key]);
+    }
+    return sanitized;
+}
+
 export async function getShopProductsAction() {
     try {
         const snapshot = await adminFirestore.collection('shop_products').get();
         const products = snapshot.docs.map(doc => ({
             id: doc.id,
-            ...doc.data()
+            ...sanitizeData(doc.data())
         }));
         return { success: true, products };
     } catch (error: any) {
