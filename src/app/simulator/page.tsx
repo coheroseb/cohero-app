@@ -106,30 +106,66 @@ export default function CitizenSimulatorPage() {
     setIsLoading(true);
 
     try {
-      const res = await citizenSimulationAction({
-        message: userMsg,
-        chatHistory: chatHistory,
-        citizenPersona: {
-          name: selectedPersona.name,
-          age: selectedPersona.age,
-          background: selectedPersona.background,
-          currentSituation: selectedPersona.currentSituation,
-          emotionalState: currentEmotionalState,
-          personalityTraits: selectedPersona.personalityTraits,
-          secretInfo: selectedPersona.secretInfo
-        },
-        scenarioContext: selectedPersona.currentSituation
+      const response = await fetch('/api/simulator/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          chatHistory: chatHistory,
+          citizenPersona: {
+            name: selectedPersona.name,
+            age: selectedPersona.age,
+            background: selectedPersona.background,
+            currentSituation: selectedPersona.currentSituation,
+            emotionalState: currentEmotionalState,
+            personalityTraits: selectedPersona.personalityTraits,
+            secretInfo: selectedPersona.secretInfo
+          },
+          scenarioContext: selectedPersona.currentSituation
+        })
       });
 
-      if (res && res.data) {
-        setChatHistory(prev => [...prev, { role: 'model', content: res.data.response }]);
-        setCurrentEmotionalState(res.data.currentEmotionalState);
-        setInternalMonologue(res.data.internalMonologue);
+      if (!response.ok) throw new Error('Streaming failed');
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = "";
+      
+      // Initialize the model response in history
+      setChatHistory(prev => [...prev, { role: 'model', content: "" }]);
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          accumulatedText += chunk;
+
+          // Parse metadata if present
+          const emotionMatch = accumulatedText.match(/\[EMOTION:\s*(.*?)\]/i);
+          const thoughtsMatch = accumulatedText.match(/\[THOUGHTS:\s*(.*?)\]/i);
+          
+          if (emotionMatch) setCurrentEmotionalState(emotionMatch[1].trim());
+          if (thoughtsMatch) setInternalMonologue(thoughtsMatch[1].trim());
+
+          // Extract content after the separator '---'
+          const parts = accumulatedText.split('---');
+          if (parts.length > 1) {
+            const actualContent = parts.slice(1).join('---').trim();
+            setChatHistory(prev => {
+              const newHistory = [...prev];
+              newHistory[newHistory.length - 1].content = actualContent;
+              return newHistory;
+            });
+          }
+        }
       }
     } catch (error) {
+      console.error('Simulation error:', error);
       toast({
-        title: 'Fejl',
-        description: 'Kunne ikke få svar fra borgeren. Prøv igen.',
+        title: 'Forbindelsesfejl',
+        description: 'Kunne ikke oprette realtids-forbindelse til borgeren.',
         variant: 'destructive'
       });
     } finally {
