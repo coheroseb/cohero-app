@@ -189,12 +189,12 @@ export default function CitizenSimulatorPage() {
     }
     window.speechSynthesis.cancel();
 
-    // Mapping of personas to professional AI voices (OpenAI)
+    // Mapping of personas to professional ElevenLabs Voice IDs (Danish)
     const voiceMap: Record<string, string> = {
-        'Karen': 'nova',    // Direct female
-        'Lene': 'shimmer',  // Older, clear female
-        'Morten': 'onyx',   // Young male
-        'Søren': 'alloy'    // Balanced male
+        'Karen': 'EXAVITQu4vr4xnSDxMaL', // Bella (Danish)
+        'Lene': 'Lcf7uHj9MSqu71uDZDWn',   // Alice (Mature)
+        'Morten': 'pNInz6obpgDQGcFmaJgB', // Adam (Male)
+        'Søren': 'pNInz6obpgDQGcFmaJgB'   // Adam (Male)
     };
     const voice = selectedPersona ? (voiceMap[selectedPersona.name] || 'alloy') : 'alloy';
 

@@ -1,13 +1,13 @@
 
-export async function generateElevenLabsTTS(text: string): Promise<string> {
+export async function generateElevenLabsTTS(text: string, customVoiceId?: string): Promise<string> {
     const apiKey = process.env.ELEVEN_LABS_API_KEY;
     if (!apiKey) {
         console.warn("ELEVEN_LABS_API_KEY mangler. Springer over high-quality TTS.");
         throw new Error("ELEVEN_LABS_API_KEY missing.");
     }
 
-    // Use the specific high-quality voice requested by the user: V34B5u5UbLdNJVEkcgXp
-    const voiceId = process.env.ELEVEN_LABS_VOICE_ID || "V34B5u5UbLdNJVEkcgXp"; 
+    // Default to a solid Danish voice if none provided
+    const voiceId = customVoiceId || process.env.ELEVEN_LABS_VOICE_ID || "V34B5u5UbLdNJVEkcgXp"; 
 
     console.log(`ElevenLabs: Genererer tale for tekst (${text.length} tegn)...`);
 
