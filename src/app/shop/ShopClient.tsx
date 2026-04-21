@@ -100,6 +100,7 @@ export default function ShopClient() {
   };
 
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const handleCheckout = async () => {
     if (!shopSettings.isOpen) {
@@ -147,14 +148,23 @@ export default function ShopClient() {
           <div className="flex items-center gap-6">
             <button 
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-2.5 hover:bg-slate-100 rounded-2xl transition-all active:scale-95"
+                className={`relative flex items-center gap-3 px-6 py-3 rounded-2xl transition-all active:scale-95 shadow-sm border ${cart.length > 0 ? 'bg-slate-950 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-100 hover:bg-slate-50'}`}
             >
-              <ShoppingBag className="w-5 h-5 text-slate-600" />
-              {cart.length > 0 && (
-                <span className="absolute top-1 right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-[#FDFCF8]">
-                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
-                </span>
-              )}
+              <div className="relative">
+                <ShoppingBag className={`w-5 h-5 ${cart.length > 0 ? 'text-rose-400' : 'text-slate-400'}`} />
+                {cart.length > 0 && (
+                  <motion.span 
+                    key={totalItems}
+                    initial={{ scale: 1.5 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-600 text-white text-[8px] font-black rounded-full flex items-center justify-center"
+                  >
+                      {totalItems}
+                  </motion.span>
+                )}
+              </div>
+              <span className="hidden md:inline text-xs font-black uppercase tracking-widest px-1">Se kurv</span>
+              {cart.length > 0 && <span className="text-xs font-black ml-1 text-rose-100">{total} kr.</span>}
             </button>
           </div>
         </div>
@@ -295,6 +305,35 @@ export default function ShopClient() {
             </div>
         </section>
       </main>
+
+      {/* Floating Cart Button */}
+      <AnimatePresence>
+        {cart.length > 0 && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0, opacity: 0, y: 20 }}
+            onClick={() => setIsCartOpen(true)}
+            className="fixed bottom-10 right-10 z-[150] h-20 px-8 bg-slate-950 text-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-4 group active:scale-95 transition-transform"
+          >
+            <div className="relative">
+                <ShoppingBag className="w-8 h-8 text-rose-400 group-hover:scale-110 transition-transform" />
+                <motion.div 
+                    key={totalItems}
+                    initial={{ scale: 1.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute -top-3 -right-3 w-8 h-8 bg-rose-600 rounded-full flex items-center justify-center text-xs font-black border-4 border-slate-950 shadow-lg"
+                >
+                    {totalItems}
+                </motion.div>
+            </div>
+            <div className="flex flex-col items-start pr-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">Gå til betaling</span>
+                <span className="text-xl font-black serif leading-none">{total} kr.</span>
+            </div>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Cart Drawer */}
       <AnimatePresence>
