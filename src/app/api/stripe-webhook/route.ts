@@ -46,6 +46,12 @@ export async function POST(req: NextRequest) {
              await orderRef.update({
                 paymentStatus: 'paid',
                 stripeSessionId: session.id,
+                shippingDetails: session.shipping_details || null,
+                customerDetails: {
+                    name: session.customer_details?.name || null,
+                    email: session.customer_details?.email || null,
+                    phone: session.customer_details?.phone || null,
+                },
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
              });
              break;

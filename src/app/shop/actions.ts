@@ -44,6 +44,12 @@ export async function createShopCheckoutSessionAction(items: any[], userId: stri
             payment_method_types: ['card'],
             line_items,
             mode: 'payment',
+            shipping_address_collection: {
+                allowed_countries: ['DK'],
+            },
+            phone_number_collection: {
+                enabled: true,
+            },
             success_url: `${baseUrl}/shop?status=success&session_id={CHECKOUT_SESSION_ID}&order_id=${orderRef.id}`,
             cancel_url: `${baseUrl}/shop?status=cancelled&order_id=${orderRef.id}`,
             customer_email: userEmail,
