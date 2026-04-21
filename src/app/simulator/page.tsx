@@ -97,6 +97,26 @@ export default function CitizenSimulatorPage() {
   }, [chatHistory]);
 
   const [interimTranscript, setInterimTranscript] = useState('');
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-send logic when silence is detected
+  useEffect(() => {
+    if (interimTranscript && isListening) {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      
+      silenceTimerRef.current = setTimeout(() => {
+        if (interimTranscript.trim()) {
+          handleSendMessage(interimTranscript);
+          setInterimTranscript('');
+          recognitionRef.current?.stop();
+        }
+      }, 1500); // 1.5 seconds of silence
+    }
+
+    return () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+  }, [interimTranscript, isListening]);
 
   // Initialize Speech Recognition
   useEffect(() => {
