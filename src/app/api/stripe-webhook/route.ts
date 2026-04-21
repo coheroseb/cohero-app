@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe, getMembershipFromPriceId } from '@/lib/stripe';
-import { initializeServerFirebase } from '@/firebase/server-init';
+import { initializeServerFirebase, admin } from '@/firebase/server-init';
 
 const relevantEvents = new Set([
   'checkout.session.completed',
@@ -38,7 +38,20 @@ export async function POST(req: NextRequest) {
       switch (event.type) {
         case 'checkout.session.completed': {
           const session = event.data.object as Stripe.Checkout.Session;
-          const userId = session.client_reference_id;
+          
+          // Handle Shop One-time Payment
+          if (session.mode === 'payment' && session.metadata?.type === 'shop_purchase' && session.metadata?.orderId) {
+             const orderId = session.metadata.orderId;
+             const orderRef = firestore.collection('shop_orders').doc(orderId);
+             await orderRef.update({
+                paymentStatus: 'paid',
+                stripeSessionId: session.id,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+             });
+             break;
+          }
+
+          const userId = session.client_reference_id || session.metadata?.userId;
           
           if (session.mode === 'subscription' && session.subscription && userId) {
             const subscription = await stripe.subscriptions.retrieve(session.subscription as string);

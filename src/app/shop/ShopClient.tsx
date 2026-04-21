@@ -24,6 +24,8 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, where, onSnapshot, doc } from 'firebase/firestore';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
+import { createShopCheckoutSessionAction } from './actions';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const FALLBACK_PRODUCTS: any[] = [];
 
@@ -36,6 +38,24 @@ export default function ShopClient() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [shopSettings, setShopSettings] = useState({ isOpen: true });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Handle URL status
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const orderId = searchParams.get('order_id');
+    
+    if (status === 'success') {
+        setCart([]); // Clear cart on success
+        toast({ title: "Betaling gennemført!", description: `Din ordre #${orderId?.slice(-6)} er modtaget.`, variant: "default" });
+        // Clean URL
+        router.replace('/shop');
+    } else if (status === 'cancelled') {
+        toast({ title: "Betaling afbrudt", description: "Vi har gemt din kurv, hvis du skifter mening.", variant: "destructive" });
+        router.replace('/shop');
+    }
+  }, [searchParams, router]);
 
   // Load Shop settings
   React.useEffect(() => {
@@ -93,24 +113,19 @@ export default function ShopClient() {
     
     setIsCheckingOut(true);
     try {
-        await addDoc(collection(firestore, 'shop_orders'), {
-            userId: user.uid,
-            userEmail: user.email,
-            userName: userProfile?.displayName || user.displayName || 'Studerende',
-            items: cart.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity })),
-            total,
-            status: 'pending',
-            paymentStatus: 'unpaid',
-            createdAt: serverTimestamp()
-        });
-        setCart([]);
-        setIsCartOpen(false);
-        toast({ 
-            title: "Ordre modtaget", 
-            description: "Tak for dit køb! Vi behandler din bestilling hurtigst muligt.",
-        });
+        const res = await createShopCheckoutSessionAction(
+            cart.map(item => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })),
+            user.uid,
+            user.email || ''
+        );
+
+        if (res.success && res.url) {
+            window.location.href = res.url; // Redirect to Stripe
+        } else {
+            toast({ title: "Fejl ved oprettelse af betaling", description: res.error, variant: "destructive" });
+        }
     } catch (error) {
-        toast({ title: "Fejl", description: "Der skete en fejl under checkout.", variant: "destructive" });
+        toast({ title: "Systemfejl", description: "Der skete en uventet fejl. Prøv igen senere.", variant: "destructive" });
     } finally {
         setIsCheckingOut(false);
     }
