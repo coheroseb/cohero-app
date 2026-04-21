@@ -202,8 +202,8 @@ export default function ShopClient() {
                 transition={{ delay: 0.1 }}
                 className="text-5xl md:text-7xl font-black text-slate-950 serif-premium leading-[1.1] max-w-4xl mx-auto"
             >
-                Vores merchandise er <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-amber-500 italic">lige på trapperne</span>
+                Alt hvad du skal bruge til <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-amber-500 italic">din studietid</span>
             </motion.h1>
             <motion.p 
                 initial={{ opacity: 0, y: 20 }}
@@ -211,8 +211,8 @@ export default function ShopClient() {
                 transition={{ delay: 0.2 }}
                 className="text-lg text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed"
             >
-                Vi lægger sidste hånd på vores eksklusive kollektion. Glæd dig til premium kvalitet, 
-                der hylder dit fag og din studietid. Shoppen åbner meget snart!
+                Gør din dagligdag på studiet mere stilfuld med officielt Cohéro merchandise. 
+                Nøje udvalgt kvalitet, der forener faglig stolthed med moderne design.
             </motion.p>
         </section>
 
