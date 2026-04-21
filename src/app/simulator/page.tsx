@@ -183,7 +183,7 @@ export default function CitizenSimulatorPage() {
   };
 
   const handleSendMessage = async (userMsg: string) => {
-    if (!userMsg.trim() || isLoading) return;
+    if (!userMsg.trim() || isLoading || !selectedPersona) return;
 
     setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
     setIsLoading(true);
@@ -526,7 +526,7 @@ export default function CitizenSimulatorPage() {
         <div className="absolute bottom-10 left-0 right-0 flex justify-center">
              <div className="flex items-center gap-6 opacity-30 grayscale saturate-0 hover:opacity-100 hover:grayscale-0 transition-all duration-500">
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Powered by</span>
-                <img src="/google-ai.png" className="h-4" alt="Google AI" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500">Google Gemini AI</span>
                 <div className="w-[1px] h-4 bg-slate-200" />
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">STT & TTS Engine</span>
              </div>
