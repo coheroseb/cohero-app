@@ -232,7 +232,7 @@ export default function CitizenSimulatorPage() {
       const decoder = new TextDecoder();
       let accumulatedText = "";
       
-      setChatHistory(prev => [...prev, { role: 'model', content: "" }]);
+      setChatHistory(prev => [...prev, { role: 'model', content: "Borgeren tænker..." }]);
 
       if (reader) {
         while (true) {
@@ -256,13 +256,35 @@ export default function CitizenSimulatorPage() {
               newHistory[newHistory.length - 1].content = actualContent;
               return newHistory;
             });
+          } else {
+            // Show something while waiting for the separator, or if it never comes
+            if (accumulatedText.length > 0 && !accumulatedText.startsWith('[')) {
+                setChatHistory(prev => {
+                  const newHistory = [...prev];
+                  newHistory[newHistory.length - 1].content = accumulatedText;
+                  return newHistory;
+                });
+            }
           }
         }
         
-        // After full response is collected, speak it
+        // Final check: if no separator was found, show the full text minus tags
         const finalParts = accumulatedText.split('---');
+        let textToSpeak = "";
         if (finalParts.length > 1) {
-            speak(finalParts[1].trim());
+            textToSpeak = finalParts.slice(1).join('---').trim();
+        } else {
+            // Remove tags manually if separator is missing
+            textToSpeak = accumulatedText.replace(/\[.*?\]/g, '').trim();
+        }
+
+        if (textToSpeak) {
+            setChatHistory(prev => {
+                const newHistory = [...prev];
+                newHistory[newHistory.length - 1].content = textToSpeak;
+                return newHistory;
+            });
+            speak(textToSpeak);
         }
       }
     } catch (error) {

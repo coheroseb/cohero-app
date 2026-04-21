@@ -13,9 +13,10 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // Use gemini-1.5-flash for maximum speed and stability in streaming
+    
+    // We use gemini-1.5-flash but ensure we have more robust error handling
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
+        model: "gemini-1.5-flash", 
         generationConfig: {
             temperature: 0.9,
             topP: 0.95,
@@ -26,35 +27,25 @@ export async function POST(req: NextRequest) {
 
     const prompt = `
 Du er en AI, der simulerer en borger i en samtale med en socialrådgiver (brugeren).
-Din opgave er at reagere naturtro, følelsesladet og autentisk baseret på din persona.
+REGEL: Du skal REAGERE som borgeren. Brug et naturligt sprog.
 
-**DIN PERSONA:**
-- Navn: ${citizenPersona.name}
-- Alder: ${citizenPersona.age}
-- Baggrund: ${citizenPersona.background}
-- Nuværende situation: ${citizenPersona.currentSituation}
-- Udgangspunkt for følelsesmæssig tilstand: ${citizenPersona.emotionalState}
-- Personlighedstræk: ${citizenPersona.personalityTraits.join(', ')}
-${citizenPersona.secretInfo ? `- HEMMELIGHED (Hold dette skjult indtil det føles naturligt): ${citizenPersona.secretInfo}` : ''}
+**DIN PERSONA:** ${citizenPersona.name}, ${citizenPersona.age} år. ${citizenPersona.background}
+**SITUATION:** ${citizenPersona.currentSituation}
+**DIT HUMØR:** ${citizenPersona.emotionalState}
 
-**SAMTALEKONTEKST:**
-${scenarioContext}
+**INSTRUKSER:**
+Du SKAL starte dit svar med præcis dette metadata format (vigtigt):
+[EMOTION: <ét ord>]
+[THOUGHTS: <dine korte indre tanker>]
+---
+<Din tale direkte til sagsbehandleren her>
 
-**DINE INSTRUKSER:**
-1. REAGER som borgeren. Brug et sprog, der passer til din alder og baggrund. Lad være med at tale som en AI.
-2. FØLELSER: Din tilstand skal ændre sig baseret på sagsbehandlerens (brugerens) tilgang.
-3. FORMAT: Du SKAL starte dit svar med metadata i præcis dette format:
-   [EMOTION: <ét ord>]
-   [THOUGHTS: <dine korte indre tanker om sagsbehandleren>]
-   ---
-   <Din tale direkte til sagsbehandleren her>
-
-Svaret SKAL være på dansk.
+Svaret skal være på dansk.
 
 **SAMTALEHISTORIK:**
 ${chatHistory.map((h: any) => `${h.role === 'user' ? 'Sagsbehandler' : 'Borger'}: ${h.content}`).join('\n')}
 
-**BRUGERENS (SAGSBEHANDLERENS) BESKED:**
+**NY BESKED FRA SAGSBEHANDLER:**
 ${message}
 `;
 
@@ -62,28 +53,32 @@ ${message}
 
     const stream = new ReadableStream({
       async start(controller) {
+        const encoder = new TextEncoder();
         try {
             for await (const chunk of result.stream) {
                 const text = chunk.text();
-                controller.enqueue(new TextEncoder().encode(text));
+                if (text) {
+                    controller.enqueue(encoder.encode(text));
+                }
             }
         } catch (e) {
-            console.error("Stream error:", e);
+            console.error("Stream generation error:", e);
         } finally {
             controller.close();
         }
       },
     });
 
+    // Use text/plain for maximum compatibility with proxy/buffering
     return new Response(stream, {
         headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Cache-Control': 'no-cache, no-transform',
+            'X-Content-Type-Options': 'nosniff',
         },
     });
   } catch (error) {
-    console.error("Simulator Stream Error:", error);
-    return new Response(JSON.stringify({ error: "Failed to generate stream" }), { status: 500 });
+    console.error("Simulator API Error:", error);
+    return new Response(JSON.stringify({ error: "Fail" }), { status: 500 });
   }
 }
