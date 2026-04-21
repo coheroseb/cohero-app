@@ -193,8 +193,8 @@ export default function CitizenSimulatorPage() {
     const voiceMap: Record<string, string> = {
         'Karen': 'EXAVITQu4vr4xnSDxMaL', // Bella (Danish)
         'Lene': 'Lcf7uHj9MSqu71uDZDWn',   // Alice (Mature)
-        'Morten': 'pNInz6obpgDQGcFmaJgB', // Adam (Male)
-        'Søren': 'pNInz6obpgDQGcFmaJgB'   // Adam (Male)
+        'Morten': 'ZjUnNBDnhXraav7Ba13L', // User provided young man voice
+        'Søren': 'ZjUnNBDnhXraav7Ba13L'   // Using same for Søren
     };
     const voice = selectedPersona ? (voiceMap[selectedPersona.name] || 'alloy') : 'alloy';
 
