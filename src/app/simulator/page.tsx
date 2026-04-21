@@ -116,29 +116,16 @@ export default function CitizenSimulatorPage() {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false; // Stop after first sentence
+        recognitionRef.current.continuous = true; // Stay alive even when user is silent
         recognitionRef.current.lang = 'da-DK';
         recognitionRef.current.interimResults = true; // Show text as we speak
 
         recognitionRef.current.onresult = (event: any) => {
-          let finalTranscript = '';
-          let interim = '';
-
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-              finalTranscript += event.results[i][0].transcript;
-            } else {
-              interim += event.results[i][0].transcript;
-            }
+          let currentTranscript = '';
+          for (let i = 0; i < event.results.length; ++i) {
+            currentTranscript += event.results[i][0].transcript;
           }
-
-          if (interim) setInterimTranscript(interim);
-          
-          if (finalTranscript) {
-            setInterimTranscript('');
-            handleSendMessage(finalTranscript);
-            recognitionRef.current?.stop();
-          }
+          setInterimTranscript(currentTranscript);
         };
 
         recognitionRef.current.onend = () => {
