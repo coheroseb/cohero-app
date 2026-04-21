@@ -2,24 +2,21 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest } from "next/server";
 
-// Remove edge runtime to ensure environment variables are correctly loaded and for better debugging
-// export const runtime = 'edge';
-
 export async function POST(req: NextRequest) {
   try {
     const { message, chatHistory, citizenPersona, scenarioContext } = await req.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error("SIMULATOR ERROR: GEMINI_API_KEY is not defined in environment variables");
+      console.error("SIMULATOR ERROR: GEMINI_API_KEY is not defined");
       return new Response(JSON.stringify({ error: "API Key missing" }), { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // We use gemini-1.5-flash which is widely available and fast
+    // Using gemini-2.5-flash which is the current stable flash model in this environment (April 2026)
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash", 
+        model: "gemini-2.5-flash", 
         generationConfig: {
             temperature: 0.9,
             topP: 0.95,
@@ -52,7 +49,6 @@ ${chatHistory.map((h: any) => `${h.role === 'user' ? 'Sagsbehandler' : 'Borger'}
 ${message}
 `;
 
-    // Initialize the stream
     const result = await model.generateContentStream(prompt);
 
     const stream = new ReadableStream({
@@ -67,7 +63,6 @@ ${message}
             }
         } catch (e) {
             console.error("STREAM ERROR:", e);
-            controller.enqueue(encoder.encode("\n[ERROR: Stream interrupted]"));
         } finally {
             controller.close();
         }
@@ -87,8 +82,7 @@ ${message}
         error: "Internal Server Error", 
         details: error?.message || "Unknown error" 
     }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        status: 500
     });
   }
 }
