@@ -16,6 +16,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ audioDataUri });
   } catch (error: any) {
     console.error("TTS API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: "TTS Error", 
+      details: error.message 
+    }, { status: 500 });
   }
 }

@@ -212,7 +212,8 @@ export default function CitizenSimulatorPage() {
 
     // Mapping of personas to professional AI voices (OpenAI)
     const voiceMap: Record<string, string> = {
-        'Lene': 'shimmer', // Older, clear female
+        'Karen': 'nova',    // Direct female
+        'Lene': 'shimmer',  // Older, clear female
         'Morten': 'onyx',   // Young male
         'Søren': 'alloy'    // Balanced male
     };
@@ -225,7 +226,10 @@ export default function CitizenSimulatorPage() {
             body: JSON.stringify({ text, voice })
         });
         
-        if (!response.ok) throw new Error("TTS API Error");
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.details || "TTS API Error");
+        }
         
         const { audioDataUri } = await response.json();
         const audio = new Audio(audioDataUri);
@@ -243,8 +247,18 @@ export default function CitizenSimulatorPage() {
         };
         
         await audio.play();
-    } catch (err) {
+    } catch (err: any) {
         console.warn("Falling back to browser TTS:", err);
+        
+        // Inform user about quota issue if relevant
+        if (err.message?.includes('insufficient_quota')) {
+            toast({
+                title: "Premium AI Stemme deaktiveret",
+                description: "Din OpenAI konto er løbet tør for credits. Bruger standard browser stemme.",
+                variant: "destructive"
+            });
+        }
+        
         fallbackSpeak(text);
     }
   };

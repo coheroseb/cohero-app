@@ -24,7 +24,7 @@ export async function generateOpenAITTS(text: string, voice: string = "shimmer")
     if (!response.ok) {
         const err = await response.text();
         console.error("OpenAI TTS Error:", err);
-        throw new Error("Fejl ved generering af tale.");
+        throw new Error(`OpenAI API fejl: ${err}`);
     }
 
     const buffer = await response.arrayBuffer();
