@@ -97,26 +97,18 @@ export default function CitizenSimulatorPage() {
   }, [chatHistory]);
 
   const [interimTranscript, setInterimTranscript] = useState('');
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Auto-send logic when silence is detected
+  // Spacebar listener for manual stop/send
   useEffect(() => {
-    if (interimTranscript && isListening) {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      
-      silenceTimerRef.current = setTimeout(() => {
-        if (interimTranscript.trim()) {
-          handleSendMessage(interimTranscript);
-          setInterimTranscript('');
-          recognitionRef.current?.stop();
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.code === 'Space' && !isLoading && isSimulationActive) {
+            e.preventDefault();
+            toggleListening();
         }
-      }, 1500); // 1.5 seconds of silence
-    }
-
-    return () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     };
-  }, [interimTranscript, isListening]);
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isListening, isLoading, isSimulationActive, interimTranscript]);
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -302,12 +294,6 @@ export default function CitizenSimulatorPage() {
 
   const handleSendMessage = async (userMsg: string) => {
     if (!userMsg.trim() || isLoading || !selectedPersona) return;
-
-    // Clear any pending silence timer to avoid double sending
-    if (silenceTimerRef.current) {
-        clearTimeout(silenceTimerRef.current);
-        silenceTimerRef.current = null;
-    }
 
     const newUserMsg = { role: 'user', content: userMsg };
     const updatedHistory = [...chatHistory, newUserMsg];
