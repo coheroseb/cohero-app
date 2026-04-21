@@ -267,12 +267,32 @@ export default function CitizenSimulatorPage() {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'da-DK';
     
-    if (selectedPersona?.age > 60) {
-        utterance.rate = 0.85;
-        utterance.pitch = 0.9;
-    } else if (selectedPersona?.age < 25) {
-        utterance.rate = 1.05;
-        utterance.pitch = 1.1;
+    // Find best Danish voice in the browser
+    const voices = window.speechSynthesis.getVoices();
+    const danishVoices = voices.filter(v => v.lang.startsWith('da'));
+    
+    // Attempt gender matching for fallback if possible
+    let selectedVoice = danishVoices[0];
+    if (selectedPersona?.name === 'Morten' || selectedPersona?.name === 'Søren') {
+        // Try to find a male-sounding Danish voice
+        selectedVoice = danishVoices.find(v => v.name.toLowerCase().includes('magnus') || v.name.toLowerCase().includes('rasmus')) || danishVoices[0];
+    } else {
+        // Try to find a female-sounding Danish voice
+        selectedVoice = danishVoices.find(v => v.name.toLowerCase().includes('sara') || v.name.toLowerCase().includes('ida')) || danishVoices[0];
+    }
+
+    if (selectedVoice) utterance.voice = selectedVoice;
+
+    // fine-tune pitch and rate for age/gender
+    if (selectedPersona?.name === 'Lene') {
+        utterance.rate = 0.85; // Older, slightly slower
+        utterance.pitch = 0.95;
+    } else if (selectedPersona?.name === 'Morten') {
+        utterance.rate = 1.05; // Younger, faster
+        utterance.pitch = 1.1; 
+    } else if (selectedPersona?.name === 'Karen') {
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
     }
 
     utterance.onstart = () => setIsSpeaking(true);
@@ -283,8 +303,18 @@ export default function CitizenSimulatorPage() {
   const handleSendMessage = async (userMsg: string) => {
     if (!userMsg.trim() || isLoading || !selectedPersona) return;
 
-    setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
+    // Clear any pending silence timer to avoid double sending
+    if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+    }
+
+    const newUserMsg = { role: 'user', content: userMsg };
+    const updatedHistory = [...chatHistory, newUserMsg];
+    
+    setChatHistory(updatedHistory);
     setIsLoading(true);
+    setInterimTranscript('');
 
     try {
       const response = await fetch('/api/simulator/stream', {
@@ -292,7 +322,7 @@ export default function CitizenSimulatorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
-          chatHistory: chatHistory,
+          chatHistory: updatedHistory, // Use up-to-date history
           citizenPersona: {
             name: selectedPersona.name,
             age: selectedPersona.age,
