@@ -96,23 +96,41 @@ export default function CitizenSimulatorPage() {
     }
   }, [chatHistory]);
 
+  const [interimTranscript, setInterimTranscript] = useState('');
+
   // Initialize Speech Recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
+        recognitionRef.current.continuous = false; // Stop after first sentence
         recognitionRef.current.lang = 'da-DK';
-        recognitionRef.current.interimResults = false;
+        recognitionRef.current.interimResults = true; // Show text as we speak
 
         recognitionRef.current.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          handleSendMessage(transcript);
+          let finalTranscript = '';
+          let interim = '';
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interim += event.results[i][0].transcript;
+            }
+          }
+
+          if (interim) setInterimTranscript(interim);
+          
+          if (finalTranscript) {
+            setInterimTranscript('');
+            handleSendMessage(finalTranscript);
+          }
         };
 
         recognitionRef.current.onend = () => {
           setIsListening(false);
+          // Don't auto-clear interim here to avoid flickers, handleSendMessage clears it
         };
 
         recognitionRef.current.onerror = (event: any) => {
@@ -476,9 +494,12 @@ export default function CitizenSimulatorPage() {
                     {isSpeaking ? `${selectedPersona.name} taler...` : isListening ? "Lytter til dig..." : `Tal med ${selectedPersona.name}`}
                 </h3>
                 <p className="text-slate-400 font-medium text-lg leading-relaxed px-10">
-                    {chatHistory[chatHistory.length - 1]?.role === 'model' && !isSpeaking
-                      ? "Det er din tur til at svare."
-                      : chatHistory[chatHistory.length - 1]?.content}
+                    {interimTranscript 
+                      ? <span className="text-indigo-600 italic">"{interimTranscript}..."</span>
+                      : (chatHistory[chatHistory.length - 1]?.role === 'model' && !isSpeaking
+                        ? "Det er din tur til at svare."
+                        : chatHistory[chatHistory.length - 1]?.content)
+                    }
                 </p>
             </div>
 
