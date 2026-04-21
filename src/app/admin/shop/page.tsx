@@ -16,7 +16,8 @@ import {
   updateDoc,
   deleteDoc,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  onSnapshot
 } from 'firebase/firestore';
 import { 
   ShoppingBag, 
@@ -38,7 +39,8 @@ import {
   List,
   Eye,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Power
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -53,6 +55,26 @@ const AdminShopPage = () => {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [shopSettings, setShopSettings] = useState({ isOpen: true });
+
+  // Load Shop settings
+  React.useEffect(() => {
+    if (!firestore) return;
+    const unsub = onSnapshot(doc(firestore, 'settings', 'shop'), (snap) => {
+        if (snap.exists()) setShopSettings(snap.data() as any);
+    });
+    return () => unsub();
+  }, [firestore]);
+
+  const toggleShopOpen = async () => {
+    if (!firestore) return;
+    try {
+        await setDoc(doc(firestore, 'settings', 'shop'), { isOpen: !shopSettings.isOpen }, { merge: true });
+        toast({ title: `Shoppen er nu ${!shopSettings.isOpen ? 'åben' : 'lukket'}` });
+    } catch (err) {
+        toast({ title: "Fejl ved opdatering af shop-status", variant: "destructive" });
+    }
+  };
 
   // Queries
   const productsQuery = useMemoFirebase(() => {
@@ -140,7 +162,17 @@ const AdminShopPage = () => {
              <ShoppingBag className="w-3.5 h-3.5" /> Commerce Engine
           </div>
           <h1 className="text-4xl font-black text-slate-900 serif tracking-tight">Shop Administration</h1>
-          <p className="text-slate-500 font-medium mt-1">Styr produkter, lagerbeholdning og ordreflow.</p>
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-slate-500 font-medium">Styr produkter, lagerbeholdning og ordreflow.</p>
+            <div className="w-1 h-1 rounded-full bg-slate-300" />
+            <button 
+                onClick={toggleShopOpen}
+                className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${shopSettings.isOpen ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}
+            >
+                <Power className="w-3 h-3" />
+                Status: {shopSettings.isOpen ? 'Åben' : 'Lukket'}
+            </button>
+          </div>
         </div>
         <div className="flex bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
           <button 

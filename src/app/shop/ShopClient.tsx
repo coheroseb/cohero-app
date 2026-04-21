@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, serverTimestamp, where, onSnapshot, doc } from 'firebase/firestore';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
@@ -62,6 +62,16 @@ export default function ShopClient() {
   const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [shopSettings, setShopSettings] = useState({ isOpen: true });
+
+  // Load Shop settings
+  React.useEffect(() => {
+    if (!firestore) return;
+    const unsub = onSnapshot(doc(firestore, 'settings', 'shop'), (snap) => {
+        if (snap.exists()) setShopSettings(snap.data() as any);
+    });
+    return () => unsub();
+  }, [firestore]);
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -76,6 +86,10 @@ export default function ShopClient() {
   }, [firestoreProducts]);
 
   const addToCart = (product: any) => {
+    if (!shopSettings.isOpen) {
+        toast({ title: "Shoppen er lukket", description: "Vi tager ikke imod nye ordrer lige nu.", variant: "destructive" });
+        return;
+    }
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -96,6 +110,10 @@ export default function ShopClient() {
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   const handleCheckout = async () => {
+    if (!shopSettings.isOpen) {
+        toast({ title: "Shoppen er lukket", description: "Du kan ikke gennemføre dit køb lige nu.", variant: "destructive" });
+        return;
+    }
     if (!firestore || !user) {
         toast({ title: "Log venligst ind", description: "Du skal være logget ind for at handle." });
         return;
@@ -253,8 +271,8 @@ export default function ShopClient() {
                 ))}
             </div>
 
-            {/* Coming Soon Overlay */}
-            {(products.length === 0 && !isLoading) && (
+            {/* Coming Soon / Closed Overlay */}
+            {((products.length === 0 && !isLoading) || !shopSettings.isOpen) && (
                 <div className="absolute inset-x-[-24px] inset-y-[-40px] z-[50] flex items-center justify-center p-6">
                     <div className="absolute inset-0 bg-white/40 backdrop-blur-md rounded-[3rem]" />
                     <motion.div 
@@ -262,16 +280,22 @@ export default function ShopClient() {
                         animate={{ opacity: 1, scale: 1 }}
                         className="relative z-10 bg-slate-950 text-white p-12 md:p-16 rounded-[3rem] text-center space-y-8 shadow-2xl max-w-xl mx-auto"
                     >
-                        <div className="w-20 h-20 bg-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-2xl shadow-rose-600/20 rotate-3">
+                        <div className={`w-20 h-20 bg-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-2xl shadow-rose-600/20 rotate-3`}>
                             <ShoppingBag className="w-10 h-10" />
                         </div>
                         <div className="space-y-4">
-                            <h2 className="text-4xl md:text-5xl font-black serif leading-tight">Glæd dig til lanceringen</h2>
+                            <h2 className="text-4xl md:text-5xl font-black serif leading-tight">
+                                {shopSettings.isOpen ? 'Glæd dig til lanceringen' : 'Shoppen er midlertidigt lukket'}
+                            </h2>
                             <p className="text-slate-400 font-medium italic">
-                                Vi arbejder på højtryk for at gøre shoppen klar. Vi glæder os til at byde dig velkommen i vores nye univers!
+                                {shopSettings.isOpen 
+                                    ? 'Vi arbejder på højtryk for at gøre shoppen klar. Vi glæder os til at byde dig velkommen i vores nye univers!'
+                                    : 'Vi er ved at opdatere vores sortiment eller foretage vedligeholdelse. Vi er snart tilbage!'}
                             </p>
                         </div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Lanceres forår 2026</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">
+                            {shopSettings.isOpen ? 'Lanceres forår 2026' : 'Vi åbner snart igen'}
+                        </p>
                     </motion.div>
                 </div>
             )}
