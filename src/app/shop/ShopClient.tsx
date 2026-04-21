@@ -24,7 +24,7 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, where, onSnapshot, doc } from 'firebase/firestore';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { createShopCheckoutSessionAction } from './actions';
+import { createShopCheckoutSessionAction, getShopProductsAction } from './actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 const FALLBACK_PRODUCTS: any[] = [];
@@ -67,16 +67,21 @@ export default function ShopClient() {
     return () => unsub();
   }, [firestore]);
 
-  const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'shop_products'));
-  }, [firestore]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: firestoreProducts, isLoading } = useCollection<any>(productsQuery);
-
-  const products = useMemo(() => {
-    return firestoreProducts || [];
-  }, [firestoreProducts]);
+  // Load Products
+  useEffect(() => {
+    const loadProducts = async () => {
+        setIsLoading(true);
+        const res = await getShopProductsAction();
+        if (res.success && res.products) {
+            setProducts(res.products);
+        }
+        setIsLoading(false);
+    };
+    loadProducts();
+  }, []);
 
   const addToCart = (product: any) => {
     if (!shopSettings.isOpen) {

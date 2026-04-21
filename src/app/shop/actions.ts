@@ -60,3 +60,17 @@ export async function createShopCheckoutSessionAction(items: any[], userId: stri
         return { success: false, error: error.message };
     }
 }
+
+export async function getShopProductsAction() {
+    try {
+        const snapshot = await adminFirestore.collection('shop_products').get();
+        const products = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        return { success: true, products };
+    } catch (error: any) {
+        console.error("Error fetching shop products:", error);
+        return { success: false, error: error.message };
+    }
+}
