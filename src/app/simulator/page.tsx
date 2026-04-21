@@ -125,12 +125,13 @@ export default function CitizenSimulatorPage() {
           if (finalTranscript) {
             setInterimTranscript('');
             handleSendMessage(finalTranscript);
+            recognitionRef.current?.stop();
           }
         };
 
         recognitionRef.current.onend = () => {
           setIsListening(false);
-          // Don't auto-clear interim here to avoid flickers, handleSendMessage clears it
+          setInterimTranscript(''); 
         };
 
         recognitionRef.current.onerror = (event: any) => {
@@ -161,11 +162,17 @@ export default function CitizenSimulatorPage() {
   const toggleListening = () => {
     if (isListening) {
       recognitionRef.current?.stop();
+      // Manual trigger: if user clicks stop, send what we have
+      if (interimTranscript) {
+        handleSendMessage(interimTranscript);
+        setInterimTranscript('');
+      }
     } else {
       if (isSpeaking) {
         window.speechSynthesis.cancel();
         setIsSpeaking(false);
       }
+      setInterimTranscript('');
       setIsListening(true);
       recognitionRef.current?.start();
     }
