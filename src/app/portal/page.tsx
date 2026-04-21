@@ -849,6 +849,7 @@ const PortalPageContent: React.FC = () => {
                 subtitle: "Værktøjer til din daglige myndighedsudøvelse",
                 icon: <Gavel className="w-6 h-6 text-slate-700" />,
                 items: [
+                    { title: "Borger-Simulator", desc: "Træn samtaler med AI-borgere", icon: MessageSquare, path: "/simulator", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "TRÆNING" },
                     { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
                     { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse", limit: limits.caseAnalyser },
                     { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },

@@ -98,6 +98,7 @@ import { analyzeScientificParadigmFlow } from './flows/analyze-scientific-paradi
 import { chatWithGuidelineContent } from './flows/guideline-chat-flow';
 import { unifiedChatFlow } from './flows/unified-chat-flow';
 import { generateCourse } from './flows/generate-course-flow';
+import { citizenSimulationFlow } from './flows/citizen-simulation-flow';
 
 
 import { generateSimulationScenarioFlow, runSimulationTurnFlow, generateSimulationReportFlow } from './flows/simulation-flows';
@@ -298,7 +299,7 @@ export const allFlows: Record<string, any> = {
   'chatWithGuidelineContent': chatWithGuidelineContent,
   'unifiedChatFlow': unifiedChatFlow,
   'unifiedChat': unifiedChatFlow,
-  'generateCourseFlow': generateCourse,
-  'generateCourse': generateCourse,
+  'citizenSimulationFlow': citizenSimulationFlow,
+  'citizenSimulation': citizenSimulationFlow,
 };
 

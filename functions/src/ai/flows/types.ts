@@ -2040,3 +2040,40 @@ export const GenerateCourseOutputSchema = z.object({
 export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
 export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
 export type CourseDesign = z.infer<typeof CourseDesignSchema>;
+// ==========================================
+// CITIZEN SIMULATION SCHEMAS
+// ==========================================
+
+export const CitizenPersonaSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+  background: z.string(),
+  currentSituation: z.string(),
+  emotionalState: z.string().describe('F.eks. "Frustreret", "Hjælpeløs", "Vred" eller "Genert"'),
+  personalityTraits: z.array(z.string()),
+  secretInfo: z.string().optional().describe('Information som borgeren ikke fortæller med det samme'),
+});
+
+export const CitizenSimulationInputSchema = z.object({
+  message: z.string(),
+  chatHistory: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'model']),
+    content: z.string(),
+  })),
+  citizenPersona: CitizenPersonaSchema,
+  scenarioContext: z.string().describe('Beskrivelse af rammen for samtalen, f.eks. "Opfølgningssamtale på jobcentret"'),
+});
+
+export const CitizenSimulationOutputSchema = z.object({
+  data: z.object({
+    response: z.string(),
+    currentEmotionalState: z.string(),
+    internalMonologue: z.string().describe('Borgerens egne tanker - her reflekterer han over brugerens teknik'),
+  }),
+  usage: UsageSchema,
+});
+
+export type CitizenPersona = z.infer<typeof CitizenPersonaSchema>;
+export type CitizenSimulationInput = z.infer<typeof CitizenSimulationInputSchema>;
+export type CitizenSimulationOutput = z.infer<typeof CitizenSimulationOutputSchema>;
+

@@ -3648,3 +3648,8 @@ export async function getUserPublicProfileAction(uid: string) {
 export async function generateCourseAction(input: Types.GenerateCourseInput): Promise<Types.GenerateCourseOutput> {
     return callFirebaseFlow('generateCourseFlow', input);
 }
+
+
+export async function citizenSimulationAction(input: Types.CitizenSimulationInput): Promise<Types.CitizenSimulationOutput> {
+    return callFirebaseFlow('citizenSimulationFlow', input);
+}
