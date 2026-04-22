@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { ai } from '../genkit';
 import {
   UnifiedChatInputSchema,
@@ -13,46 +12,6 @@ export const personaPrompts = {
   social_work: `Du er en ekspert i socialfaglige teorier, metoder og etik. Du hjælper med at koble teori på praksis og reflektere over professionens værdier. Du kender pensummet på socialrådgiveruddannelsen indgående.`
 };
 
-const chatPrompt = ai.definePrompt({
-  name: 'unifiedChatPrompt',
-  input: { schema: UnifiedChatInputSchema.extend({ personaDescription: z.string(), contextInfo: z.string() }) },
-  output: { schema: UnifiedChatDataSchema },
-  prompt: `
-{{personaDescription}}
-
-**Kontekst:**
-{{{contextInfo}}}
-
-**Chat Historik:**
-{{#each chatHistory}}
-- {{role}}: {{content}}
-{{/each}}
-
-**Brugerens besked:**
-{{message}}
-
-**Din opgave:**
-Besvar brugerens besked på en måde, der passer til din persona. 
-Hvis du er i 'legal' persona, skal du prioritere lovhenvisninger. 
-Hvis du er i 'case' persona, skal du fokusere på den konkrete situation.
-
-Returner dit svar i et JSON-objekt med:
-1. 'answer': Selve dit svar (brug Markdown til formatering).
-2. 'suggestedFollowUpQuestions': 2-3 relevante opfølgningsspørgsmål, som brugeren kan stille.
-3. 'referencedMetadata': (Valgfrit) En liste over love eller dokumenter, du refererer til.
-
-4. **VIGTIGT:** Du må IKKE bruge din generelle viden om jura til at rådgive. ALT jura skal være baseret på den leverede kontekst fra Lovportalen. Hvis du mangler specifik lovhjemmel i konteksten, skal du sige det direkte fremfor at gætte.
-    
-Svaret SKAL være på dansk.`,
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
-    ],
-  },
-});
 
 export const unifiedChatFlow = ai.defineFlow(
   {
@@ -73,11 +32,36 @@ export const unifiedChatFlow = ai.defineFlow(
       if (input.context.lawContext) contextInfo += `\n### COHERO LOVSAMLING (LOVPORTAL-KONTEKST):\n${input.context.lawContext}\n`;
     }
 
-    const { output, usage } = await chatPrompt({
-      ...input,
-      personaDescription,
-      contextInfo,
-      chatHistory: input.chatHistory || []
+    const { output, usage } = await ai.generate({
+      prompt: `
+${personaDescription}
+
+**Kontekst:**
+{{{contextInfo}}}
+
+**Chat Historik:**
+${(input.chatHistory && input.chatHistory.length > 0)
+  ? input.chatHistory.map(h => `- ${h.role}: ${h.content}`).join('\n')
+  : 'Ingen tidligere historik.'}
+
+**Brugerens besked:**
+${input.message}
+
+**Din opgave:**
+Besvar brugerens besked på en måde, der passer til din persona. 
+Hvis du er i 'legal' persona, skal du prioritere lovhenvisninger. 
+Hvis du er i 'case' persona, skal du fokusere på den konkrete situation.
+
+Returner dit svar i et JSON-objekt med:
+1. 'answer': Selve dit svar (brug Markdown til formatering).
+2. 'suggestedFollowUpQuestions': 2-3 relevante opfølgningsspørgsmål, som brugeren kan stille.
+3. 'referencedMetadata': (Valgfrit) En liste over love eller dokumenter, du refererer til.
+
+4. **VIGTIGT:** Du må IKKE bruge din generelle viden om jura til at rådgive. ALT jura skal være baseret på den leverede kontekst fra Lovportalen. Hvis du mangler specifik lovhjemmel i konteksten, skal du sige det direkte fremfor at gætte.
+    
+Svaret SKAL være på dansk.`,
+      output: { schema: UnifiedChatDataSchema },
+      config: { temperature: 0.7 }
     });
 
     return {
