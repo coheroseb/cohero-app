@@ -10,13 +10,14 @@ import {
     Zap,
     Scale,
     Library,
-    Gavel
+    Gavel,
+    GraduationCap
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface MobileBottomNavProps {
-    viewMode: 'laws' | 'decisions' | 'saved' | 'training' | 'reforms';
-    onTabChange: (mode: 'laws' | 'decisions' | 'saved' | 'training' | 'reforms') => void;
+    viewMode: 'laws' | 'decisions' | 'saved' | 'training' | 'reforms' | 'courses';
+    onTabChange: (mode: 'laws' | 'decisions' | 'saved' | 'training' | 'reforms' | 'courses') => void;
     onSearchToggle?: () => void;
     activeLawId?: string | null;
     activeReferenceId?: string | null;
@@ -33,6 +34,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
     const tabs = [
         { id: 'laws', label: 'Lovportal', icon: Library },
+        { id: 'courses', label: 'Kurser', icon: GraduationCap },
         { id: 'reforms', label: 'Reformer', icon: Gavel },
         { id: 'saved', label: 'Gemte', icon: Bookmark },
     ] as const;

@@ -70,11 +70,8 @@ export async function getSpecificLawAndGuidelinesContext(data: { id: string, nam
 
 export async function getRelevantLawContext(topicOrQuery: string): Promise<string> {
     console.log(`[LAW-CONTEXT] Question: "${topicOrQuery}"`);
-    const lowerQuery = topicOrQuery.toLowerCase();
+    const lowerQuery = topicOrQuery.toLowerCase().trim();
     
-    // We remove the quick exit to allow the AI to determine if a concept has legal relevance, 
-    // even if it doesn't contain explicit keywords like "§" or "lov".
-
     const snapshot = await adminFirestore.collection('laws').get();
     const allLaws = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
     
@@ -82,24 +79,50 @@ export async function getRelevantLawContext(topicOrQuery: string): Promise<strin
 
     let detectedIds: string[] = [];
 
-    // 1. FAST MATCH: Priority abbreviations (e.g., "SEL", "BL", "RSL")
+    // 1. Keyword Extraction (for better matching)
+    // Filter out common Danish stop words and short words
+    const stopWords = ['når', 'en', 'et', 'den', 'det', 'de', 'der', 'om', 'på', 'i', 'til', 'fra', 'ved', 'og', 'eller', 'skal', 'kan', 'er', 'var', 'bliver', 'med', 'hvis', 'efter', 'hvilke', 'hvem', 'hvor', 'hvorfor', 'hvordan', 'mikkel', 'dreng', 'pige', 'barn', 'dreng', 'mistrivsel', 'kommune', 'modtager', 'underretning'];
+    const keywords = lowerQuery
+        .split(/[ \.\?\!,;]+/)
+        .filter(w => w.length > 3 && !stopWords.includes(w));
+
+    // 2. FAST MATCH: Priority abbreviations and exact name matches
     allLaws.forEach(l => {
-        if (l.abbreviation && (lowerQuery === l.abbreviation.toLowerCase() || lowerQuery.startsWith(l.abbreviation.toLowerCase() + ' '))) {
+        const nameLower = l.name?.toLowerCase() || '';
+        const abbrLower = l.abbreviation?.toLowerCase() || '';
+        
+        if (abbrLower && (lowerQuery.includes(abbrLower))) {
+            detectedIds.push(l.id);
+        }
+        
+        // Also match if law name is mentioned
+        if (nameLower && lowerQuery.includes(nameLower)) {
             detectedIds.push(l.id);
         }
     });
 
-    // 2. AI DISAMBIGUATION (Primary method for semantic relevance)
+    // 3. CORE LAWS INJECTION: If the query is a situation/case context, we almost always want these
+    const coreLawKeywords = ['kommune', 'underretning', 'mistrivsel', 'barn', 'familie', 'støtte', 'hjælp', 'afgørelse', 'forvaltning', 'sagsbehandler'];
+    if (coreLawKeywords.some(kw => lowerQuery.includes(kw))) {
+        // IDs for Serviceloven, Barnets Lov, Forvaltningsloven, Retssikkerhedsloven
+        const coreIds = ['barnetslov', 'barnets-lov', 'serviceloven', 'forvaltningsloven', 'retssikkerhedsloven'];
+        coreIds.forEach(cid => {
+            const found = allLaws.find(l => l.id.toLowerCase() === cid || (l.abbreviation && l.abbreviation.toLowerCase() === cid));
+            if (found && !detectedIds.includes(found.id)) detectedIds.push(found.id);
+        });
+    }
+
+    // 4. AI DISAMBIGUATION (Broader selection)
     try {
         const detectionResponse = await ai.generate({
             model: 'googleai/gemini-2.5-flash',
-            system: "Du er en dansk juridisk bibliotekar. Din opgave er at vurdere om et begreb har en direkte juridisk forankring i de tilgængelige love. Identificer de 1-2 mest centrale love for begrebet. Svar kun med en komma-separeret liste af ID'er eller 'none' hvis begrebet er rent teoretisk/psykologisk uden direkte lovhjemmel.",
-            prompt: `Find relevante love for begrebet: "${topicOrQuery}"
+            system: "Du er en dansk juridisk bibliotekar. Din opgave er at identificere ALL relevante love for en given problemstilling eller et spørgsmål. Identificer op til 5-6 mest relevante love. Svar kun med en komma-separeret liste af ID'er.",
+            prompt: `Find relevante love for dette spørgsmål/begreb: "${topicOrQuery}"
             
             LOV-SAMLING (Lovportalen):
             ${allLaws.map(l => `- ID: ${l.id}, Navn: ${l.name} (${l.abbreviation})`).join('\n')}
             
-            Svar KUN med ID'erne eller 'none'.`
+            Svar KUN med ID'erne (f.eks. barnetslov, forvaltningsloven) eller 'none' hvis intet er relevant.`
         });
 
         const rawIds = detectionResponse.text;
@@ -113,10 +136,10 @@ export async function getRelevantLawContext(topicOrQuery: string): Promise<strin
         console.error('[LAW-CONTEXT] AI detection error:', error);
     }
 
-    // Filter and fetch context
+    // 5. Build Context
     let legalContext = '';
     
-    // NUDGE: If the term is about note-taking/journals, and we don't have Offentlighedsloven, try to find it
+    // Safety check for note-taking/journals
     if (lowerQuery.includes('notat') || lowerQuery.includes('journal')) {
         const offFound = allLaws.find(l => l.name?.toLowerCase().includes('offentlighed') || l.abbreviation === 'OFL');
         if (offFound && !detectedIds.includes(offFound.id)) {
@@ -124,23 +147,35 @@ export async function getRelevantLawContext(topicOrQuery: string): Promise<strin
         }
     }
 
-    const targetLaws = allLaws.filter(l => detectedIds.includes(l.id)).slice(0, 3);
+    // Use a larger slice if searching "all laws"
+    const targetLaws = allLaws.filter(l => detectedIds.includes(l.id)).slice(0, 6);
 
     if (targetLaws.length > 0) {
         const contexts = await Promise.all(targetLaws.map(async (l) => {
             const fullLawContext = await getSpecificLawAndGuidelinesContext(l);
             
             // KEYWORD SEARCH: Force the AI to see the most relevant paragraphs first
-            // We split by paragraph marker or double newline
             const paragraphs = fullLawContext.split(/\n\n|(?=§\s?\d+)/);
-            const matches = paragraphs.filter(p => p.toLowerCase().includes(lowerQuery));
+            
+            // Filter paragraphs that contain ANY of our extracted keywords
+            const matches = paragraphs.filter(p => {
+                const pLower = p.toLowerCase();
+                return keywords.length > 0 ? keywords.some(kw => pLower.includes(kw)) : pLower.includes(lowerQuery);
+            });
             
             if (matches.length > 0) {
-                return `--- DIREKTE MATCH I ${l.name} FOR "${topicOrQuery}" ---\n${matches.join('\n\n')}\n\n${fullLawContext}`;
+                // Prioritize matches at the top but keep the full context below for nuances
+                return `--- RELEVANTE UDDRAG FRA ${l.name} ---\n${matches.slice(0, 10).join('\n\n')}\n\n${fullLawContext}`;
             }
             return fullLawContext;
         }));
-        legalContext = contexts.filter(Boolean).sort((a, b) => b.includes('DIREKTE MATCH') ? 1 : -1).join('\n\n---\n\n');
+        legalContext = contexts.filter(Boolean).sort((a, b) => b.includes('RELEVANTE UDDRAG') ? 1 : -1).join('\n\n---\n\n');
+    }
+    
+    // If we still found NOTHING, let's at least include summaries of all laws
+    if (!legalContext) {
+        legalContext = "OVERORDNET LOV-OVERSIGT (Da der ikke blev fundet direkte match på din søgning):\n" + 
+            allLaws.map(l => `- ${l.name} (${l.abbreviation}): ${l.description || 'Juridisk regelsæt i lovportalen.'}`).join('\n');
     }
     
     const ethicsContent = await getEthicsContext()

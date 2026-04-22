@@ -2030,6 +2030,10 @@ export const GenerateCourseInputSchema = z.object({
   })).describe('De love brugeren har valgt som fundament'),
   semester: z.string().optional(),
   profession: z.string().optional(),
+  media: z.array(z.object({
+    data: z.string(),
+    mimeType: z.string(),
+  })).optional().describe('Filer (PDF/Billeder) til OCR-analyse'),
 });
 
 export const GenerateCourseOutputSchema = z.object({
@@ -2077,3 +2081,31 @@ export type CitizenPersona = z.infer<typeof CitizenPersonaSchema>;
 export type CitizenSimulationInput = z.infer<typeof CitizenSimulationInputSchema>;
 export type CitizenSimulationOutput = z.infer<typeof CitizenSimulationOutputSchema>;
 
+
+// ==========================================
+// COURSE LEARNING OBJECTIVES
+// ==========================================
+
+export const GenerateLearningObjectivesInputSchema = z.object({
+  courseTitle: z.string(),
+  courseDescription: z.string(),
+  lessons: z.array(z.object({
+    title: z.string(),
+    type: z.string(),
+    content: z.string().optional(),
+    summary: z.string().optional()
+  })),
+});
+
+export const GenerateLearningObjectivesDataSchema = z.object({
+  objectives: z.array(z.string()).describe("En liste over 4-6 konkrete læringsmål for kurset baseret på lektionerne."),
+});
+
+export const GenerateLearningObjectivesOutputSchema = z.object({
+  data: GenerateLearningObjectivesDataSchema,
+  usage: UsageSchema,
+});
+
+export type GenerateLearningObjectivesInput = z.infer<typeof GenerateLearningObjectivesInputSchema>;
+export type GenerateLearningObjectivesData = z.infer<typeof GenerateLearningObjectivesDataSchema>;
+export type GenerateLearningObjectivesOutput = z.infer<typeof GenerateLearningObjectivesOutputSchema>;

@@ -153,6 +153,17 @@ function ConceptExplainerPageContent() {
   const handleExplain = useCallback(async (term: string) => {
     if (!term || !user || !userProfile || !firestore) return;
 
+    // Detect if it's a question
+    const questionWords = ['hvad', 'hvordan', 'hvilke', 'hvilken', 'hvem', 'hvor', 'hvorfor', 'er', 'kan', 'skal', 'bør', 'må'];
+    const isQuestion = term.endsWith('?') || 
+                      questionWords.some(word => term.toLowerCase().startsWith(word + ' ')) ||
+                      term.split(' ').length > 6;
+
+    if (isQuestion) {
+        router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+        return;
+    }
+
     // REDIRECT: If searching for a paragraph or specific law (short query), go to Lov-Portalen
     const wordCount = term.trim().split(/\s+/).length;
     const isLegalSearch = /§|SEL|BL|RSL|Barnets Lov|Serviceloven|Forvaltningslov|Retssikkerhedslov/i.test(term);

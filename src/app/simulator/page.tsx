@@ -197,6 +197,7 @@ export default function CitizenSimulatorPage() {
         'Søren': 'ZjUnNBDnhXraav7Ba13L'   // Using same for Søren
     };
     const voice = selectedPersona ? (voiceMap[selectedPersona.name] || 'alloy') : 'alloy';
+    console.log(`DEBUG: Sending TTS request for ${selectedPersona?.name} using voiceId ${voice}`);
 
     try {
         const response = await fetch('/api/simulator/tts', {

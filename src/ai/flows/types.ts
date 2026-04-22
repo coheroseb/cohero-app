@@ -1579,7 +1579,8 @@ export const UnifiedChatInputSchema = z.object({
   context: z.object({
     currentPath: z.string().optional(),
     currentModule: z.string().optional(),
-    relevantDocumentIds: z.array(z.string()).optional()
+    relevantDocumentIds: z.array(z.string()).optional(),
+    lawContext: z.string().optional()
   }).optional(),
 });
 
@@ -1882,4 +1883,175 @@ export const GuidelineChatOutputSchema = z.object({
 export type GuidelineChatInput = z.infer<typeof GuidelineChatInputSchema>;
 export type GuidelineChatData = z.infer<typeof GuidelineChatDataSchema>;
 export type GuidelineChatOutput = z.infer<typeof GuidelineChatOutputSchema>;
+
+// ==========================================
+// COURSE & ACADEMY SCHEMAS
+// ==========================================
+export const LessonSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  type: z.enum(['standard', 'quiz', 'reading']).default('standard'),
+  content: z.string().optional(),
+  videoUrl: z.string().optional(),
+  duration: z.string().optional(),
+  questions: z.array(z.object({
+    id: z.string(),
+    question: z.string(),
+    options: z.array(z.string()),
+    correctAnswer: z.number(),
+    explanation: z.string().optional(),
+  })).optional(),
+});
+
+export const CourseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  level: z.enum(['Begynder', 'Mellemniveau', 'Avanceret']),
+  imageUrl: z.string(),
+  duration: z.string(),
+  status: z.enum(['draft', 'published', 'coming-soon']),
+  isPremium: z.boolean().default(false),
+  learningObjectives: z.array(z.string()).optional(),
+  lessons: z.array(LessonSchema),
+  createdAt: z.any().optional(),
+  updatedAt: z.any().optional(),
+});
+
+export type Lesson = z.infer<typeof LessonSchema>;
+export type Course = z.infer<typeof CourseSchema>;
+
+
+// ==========================================
+// COURSE DESIGN SCHEMAS
+// ==========================================
+
+export const CourseDesignSchema = z.object({
+  courseTitle: z.string(),
+  overallLearningOutcomes: z.array(z.string()),
+  modules: z.array(z.object({
+    title: z.string(),
+    description: z.string(),
+    lessons: z.array(z.object({
+      title: z.string(),
+      duration: z.string(),
+      contentSummary: z.string(),
+      sections: z.array(z.object({
+        title: z.string(),
+        content: z.string()
+      })).optional(),
+      interactiveElements: z.object({
+        quiz: z.array(z.object({
+          question: z.string(),
+          options: z.array(z.string()),
+          correctOptionIndex: z.number(),
+          explanation: z.string()
+        })).optional(),
+        reflection: z.string().optional(),
+        caseChallenge: z.string().optional()
+      }).optional(),
+      suggestedReading: z.array(z.object({
+        source: z.string(),
+        pages: z.string(),
+        relevance: z.string()
+      })).optional()
+    }))
+  })),
+  suggestedLiterature: z.array(z.object({
+    title: z.string(),
+    author: z.string(),
+    relevance: z.string()
+  })).optional()
+});
+
+export const GenerateCourseInputSchema = z.object({
+  slideText: z.string().describe('Teksten udtrukket fra slides'),
+  selectedLaws: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    abbreviation: z.string(),
+  })).describe('De love brugeren har valgt som fundament'),
+  semester: z.string().optional(),
+  profession: z.string().optional(),
+  media: z.array(z.object({
+    data: z.string(),
+    mimeType: z.string(),
+  })).optional().describe('Filer (PDF/Billeder) til OCR-analyse'),
+});
+
+export const GenerateCourseOutputSchema = z.object({
+  data: CourseDesignSchema,
+  usage: UsageSchema,
+});
+
+export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
+export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
+export type CourseDesign = z.infer<typeof CourseDesignSchema>;
+
+
+// ==========================================
+// CITIZEN SIMULATION SCHEMAS
+// ==========================================
+
+export const CitizenPersonaSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+  background: z.string(),
+  currentSituation: z.string(),
+  emotionalState: z.string().describe('F.eks. "Frustreret", "Hjælpeløs", "Vred" eller "Genert"'),
+  personalityTraits: z.array(z.string()),
+  secretInfo: z.string().optional().describe('Information som borgeren ikke fortæller med det samme'),
+});
+
+export const CitizenSimulationInputSchema = z.object({
+  message: z.string(),
+  chatHistory: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'model']),
+    content: z.string(),
+  })),
+  citizenPersona: CitizenPersonaSchema,
+  scenarioContext: z.string().describe('Beskrivelse af rammen for samtalen, f.eks. "Opfølgningssamtale på jobcentret"'),
+});
+
+export const CitizenSimulationOutputSchema = z.object({
+  data: z.object({
+    response: z.string(),
+    currentEmotionalState: z.string(),
+    internalMonologue: z.string().describe('Borgerens egne tanker - her reflekterer han over brugerens teknik'),
+  }),
+  usage: UsageSchema,
+});
+
+export type CitizenPersona = z.infer<typeof CitizenPersonaSchema>;
+export type CitizenSimulationInput = z.infer<typeof CitizenSimulationInputSchema>;
+export type CitizenSimulationOutput = z.infer<typeof CitizenSimulationOutputSchema>;
+
+
+// ==========================================
+// COURSE LEARNING OBJECTIVES
+// ==========================================
+
+export const GenerateLearningObjectivesInputSchema = z.object({
+  courseTitle: z.string(),
+  courseDescription: z.string(),
+  lessons: z.array(z.object({
+    title: z.string(),
+    type: z.string(),
+    content: z.string().optional(),
+    summary: z.string().optional()
+  })),
+});
+
+export const GenerateLearningObjectivesDataSchema = z.object({
+  objectives: z.array(z.string()).describe("En liste over 4-6 konkrete læringsmål for kurset baseret på lektionerne."),
+});
+
+export const GenerateLearningObjectivesOutputSchema = z.object({
+  data: GenerateLearningObjectivesDataSchema,
+  usage: UsageSchema,
+});
+
+export type GenerateLearningObjectivesInput = z.infer<typeof GenerateLearningObjectivesInputSchema>;
+export type GenerateLearningObjectivesData = z.infer<typeof GenerateLearningObjectivesDataSchema>;
+export type GenerateLearningObjectivesOutput = z.infer<typeof GenerateLearningObjectivesOutputSchema>;
 

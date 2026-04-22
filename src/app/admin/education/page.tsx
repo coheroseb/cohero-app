@@ -164,6 +164,9 @@ export default function EducationStatsPage() {
                    <p className="text-slate-500 font-medium">Deep-dive i platformens akademiske fundment og dimittend-forecasts.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <Link href="/admin/education/kurser" className="flex items-center gap-2 px-6 py-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all group shadow-sm shadow-indigo-600/5">
+                        Administrér Kurser <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                     <Link href="/admin/education/studieordninger" className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all group">
                         Administrér Studieordninger <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </Link>

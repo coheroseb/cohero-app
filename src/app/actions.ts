@@ -917,18 +917,36 @@ export async function unifiedChatAction(input: Types.UnifiedChatInput): Promise<
  * identifyReformAction
  * Step 1: Identifies the documents for a reform.
  */
-export async function identifyReformAction(query: string): Promise<Types.IdentifyReformOutput> {
+export async function identifyReformAction(input: string | { query: string }): Promise<Types.IdentifyReformOutput> {
+    const query = typeof input === 'string' ? input : input.query;
     return callFirebaseFlow('identifyReformFlow', { query });
 }
 
 /**
- * generateReformAnalysisAction
+ * generateParagraphDiffAction / generateReformAnalysisAction
  * Step 2: Generates the detailed diff between a bill and a law.
  * Includes caching in Firestore.
  */
-export async function generateReformAnalysisAction(bill: Types.ReformCandidate, law: Types.ReformCandidate, query: string): Promise<Types.GenerateParagraphDiffOutput> {
-    // Normalizing query for cache key
-    const cacheKey = `analysis_${query.toLowerCase().trim().replace(/[^a-z0-9]/g, '_')}`;
+export async function generateParagraphDiffAction(billOrParams: Types.ReformCandidate | { targetLawTitle: string; newBillXmlUrl: string; oldLawXmlUrl: string }, law?: Types.ReformCandidate, query?: string): Promise<Types.GenerateParagraphDiffOutput> {
+    // Check if called with discrete params (lov-portal usage) or objects (VidenChat usage / Legacy)
+    let targetLawTitle: string;
+    let oldLawXmlUrl: string;
+    let newBillXmlUrl: string;
+    let cacheKey: string | null = null;
+
+    if ('targetLawTitle' in billOrParams) {
+        targetLawTitle = billOrParams.targetLawTitle;
+        oldLawXmlUrl = billOrParams.oldLawXmlUrl;
+        newBillXmlUrl = billOrParams.newBillXmlUrl;
+        cacheKey = `diff_${targetLawTitle.toLowerCase().trim().replace(/[^a-z0-9]/g, '_')}_${newBillXmlUrl.split('/').pop()}`;
+    } else if (law && query) {
+        targetLawTitle = law.title;
+        oldLawXmlUrl = law.xmlUrl;
+        newBillXmlUrl = billOrParams.xmlUrl;
+        cacheKey = `analysis_${query.toLowerCase().trim().replace(/[^a-z0-9]/g, '_')}`;
+    } else {
+        throw new Error("Invalid arguments to generateParagraphDiffAction");
+    }
     
     // Check cache
     const { adminFirestore } = await import('@/firebase/server-init');
@@ -939,9 +957,9 @@ export async function generateReformAnalysisAction(bill: Types.ReformCandidate, 
     }
 
     const result = await callFirebaseFlow('generateParagraphDiffFlow', {
-        targetLawTitle: law.title,
-        oldLawXmlUrl: law.xmlUrl,
-        newBillXmlUrl: bill.xmlUrl,
+        targetLawTitle,
+        oldLawXmlUrl,
+        newBillXmlUrl,
     });
 
     // Save to cache
@@ -952,6 +970,9 @@ export async function generateReformAnalysisAction(bill: Types.ReformCandidate, 
 
     return result;
 }
+
+// Keep legacy name for internal compatibility if needed
+export const generateReformAnalysisAction = generateParagraphDiffAction;
 
 export async function generateRawCaseSourcesAction(input: { topic: string, profession?: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
@@ -984,7 +1005,6 @@ export async function generateReportQuestionsAction(input: any) { return callFir
 export async function generateModuleExamPrepAction(input: Types.ModuleExamPrepInput): Promise<Types.ModuleExamPrepOutput> {
     return callFirebaseFlow('generateModuleExamPrepFlow', input);
 }
-
 export async function analyzeStarDataAction(input: Types.AnalyzeStarDataInput): Promise<Types.AnalyzeStarDataOutput> {
     return callFirebaseFlow('analyzeStarDataFlow', input);
 }
@@ -994,6 +1014,7 @@ export async function analyzeLegalDecisionAction(input: any) { return callFireba
 export async function semanticLawSearchAction(query: string, lawId?: string, documentData?: any): Promise<any> {
     try {
         let context = '';
+        const lowerQuery = query.toLowerCase().trim();
         console.log(`[SemanticSearch] starting search for query: "${query}", lawId: ${lawId}`);
 
         if (lawId && lawId !== 'reference') {
@@ -1004,29 +1025,76 @@ export async function semanticLawSearchAction(query: string, lawId?: string, doc
                     console.log(`[SemanticSearch] law doc exists, calling getSpecificLawContextFlow`);
                     const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { id: lawId, ...snapshot.data() } as any);
                     context = fetchRes.data;
-                } else {
-                    console.warn(`[SemanticSearch] law doc ${lawId} NOT found in firestore`);
                 }
-            } catch (firestoreErr: any) {
-                console.error("[SemanticSearch] Firestore scoped lookup failed, falling back to global:", firestoreErr.message);
-                // We proceed to fallback below
+            } catch (error) {
+                console.error("[SemanticSearch] Local law fetch failed:", error);
             }
         } else if (lawId === 'reference' && documentData) {
             context = `[REFERENCE-DOKUMENT: ${documentData.titel}]\n${documentData.rawText}\n\n`;
         }
 
+        // IMPROVED CONTEXT FINDING (Local Logic)
         if (!context) {
-            console.log(`[SemanticSearch] falling back to global search`);
+            console.log(`[SemanticSearch] building local context for global search`);
             try {
-                const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: query });
-                context = fetchRes.data;
-            } catch (flowErr: any) {
-                console.error("[SemanticSearch] Global context fetch failed:", flowErr.message);
-                return { data: null, error: true, message: "Kunne ikke hente juridisk kontekst for din søgning." };
+                const snapshot = await adminFirestore.collection('laws').get();
+                const allLaws = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+                
+                let detectedIds: string[] = [];
+
+                // 1. Keyword Extraction (Filter stop words)
+                const stopWords = ['når', 'en', 'et', 'den', 'det', 'de', 'der', 'om', 'på', 'i', 'til', 'fra', 'ved', 'og', 'eller', 'skal', 'kan', 'er', 'var', 'bliver', 'med', 'hvis', 'efter', 'hvilke', 'hvem', 'hvor', 'hvorfor', 'hvordan'];
+                const queryKeywords = lowerQuery.split(/[ \.\?\!,;]+/).filter(w => w.length > 3 && !stopWords.includes(w));
+
+                // 2. SEARCH ALL LAWS FOR MATCHES
+                const coreLawKeywords = ['kommune', 'underretning', 'mistrivsel', 'barn', 'familie', 'støtte', 'hjælp', 'afgørelse', 'forvaltning', 'sagsbehandler', 'socialforvaltning'];
+                const isCaseScenario = coreLawKeywords.some(kw => lowerQuery.includes(kw));
+
+                allLaws.forEach(l => {
+                    const nameLower = (l.name || '').toLowerCase();
+                    const abbrLower = (l.abbreviation || '').toLowerCase();
+                    
+                    // Match by abbreviations found in query
+                    if (abbrLower && lowerQuery.includes(abbrLower)) detectedIds.push(l.id);
+                    
+                    // Match by keywords from query found in law name
+                    if (queryKeywords.some(kw => nameLower.includes(kw))) detectedIds.push(l.id);
+                });
+
+                if (isCaseScenario) {
+                    // Identify core laws by name if they weren't found by keywords
+                    const caseTargets = ['barnets lov', 'servicelov', 'forvaltningslov', 'retssikkerhed'];
+                    allLaws.forEach(l => {
+                        const nameLower = (l.name || '').toLowerCase();
+                        if (caseTargets.some(t => nameLower.includes(t)) && !detectedIds.includes(l.id)) {
+                            detectedIds.push(l.id);
+                        }
+                    });
+                }
+
+                // Limit context fetching to avoid token limits
+                const targetLaws = allLaws.filter(l => detectedIds.includes(l.id)).slice(0, 5);
+                
+                if (targetLaws.length > 0) {
+                    console.log(`[SemanticSearch] fetching context for: ${targetLaws.map(l => l.abbreviation || l.id).join(', ')}`);
+                    const contexts = await Promise.all(targetLaws.map(async (l) => {
+                        const fetchRes = await callFirebaseFlow('getSpecificLawContextFlow', { ...l });
+                        return fetchRes?.data || '';
+                    }));
+                    context = contexts.filter(Boolean).join('\n\n---\n\n');
+                }
+
+                // If still no context, call the legacy flow as absolute fallback
+                if (!context) {
+                    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: query });
+                    context = fetchRes.data;
+                }
+            } catch (err) {
+                console.error("[SemanticSearch] Local context logic failed:", err);
             }
         }
         
-        console.log(`[SemanticSearch] calling semanticLawSearchFlow`);
+        console.log(`[SemanticSearch] calling semanticLawSearchFlow with context length: ${context?.length || 0}`);
         const result = await callFirebaseFlow('semanticLawSearchFlow', { 
             query, 
             legalContext: context || '' 
@@ -1034,16 +1102,28 @@ export async function semanticLawSearchAction(query: string, lawId?: string, doc
         return result;
     } catch (error: any) {
         console.error("CRITICAL ERROR in semanticLawSearchAction:", error.message);
-        try {
-            const logMsg = `[${new Date().toISOString()}] Semantic Search Error: ${error.message}\nStack: ${error.stack}\n`;
-            require('fs').appendFileSync(path.join(process.cwd(), 'server-errors.log'), logMsg);
-        } catch(e) {}
-        
-        return { 
-            data: null, 
-            error: true, 
-            message: error.message || 'Der opstod en fejl under søgningen. Prøv igen senere.' 
-        };
+        return { data: null, error: true, message: "Der skete en teknisk fejl under AI-søgningen." };
+    }
+}
+
+export async function chatWithKnowledgeAction(input: { question: string, chatHistory: any[] }) {
+    try {
+        // Use the centralized law context helper via a flow
+        const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.question });
+        const lawContext = fetchRes?.data || '';
+
+        return callFirebaseFlow('unifiedChatFlow', { 
+            message: input.question,
+            chatHistory: input.chatHistory,
+            persona: 'legal',
+            context: {
+                relevantDocumentIds: [],
+                lawContext: lawContext
+            }
+        });
+    } catch (e: any) {
+        console.error("Knowledge Chat failed:", e);
+        return { data: { answer: "Der opstod en fejl i chat-forbindelsen. Prøv venligst igen." }, error: true };
     }
 }
 
@@ -3652,4 +3732,8 @@ export async function generateCourseAction(input: Types.GenerateCourseInput): Pr
 
 export async function citizenSimulationAction(input: Types.CitizenSimulationInput): Promise<Types.CitizenSimulationOutput> {
     return callFirebaseFlow('citizenSimulationFlow', input);
+}
+
+export async function generateLearningObjectivesAction(input: Types.GenerateLearningObjectivesInput): Promise<Types.GenerateLearningObjectivesOutput> {
+    return callFirebaseFlow('generateLearningObjectivesFlow', input);
 }

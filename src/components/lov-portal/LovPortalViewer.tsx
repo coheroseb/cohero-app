@@ -65,30 +65,35 @@ import {
   Menu,
   ChevronUp,
   BrainCircuit,
-  Pencil,
-  Tag
+  Tag,
+  ArrowLeft,
+  CheckCircle,
+  Circle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Course, Lesson } from '@/ai/flows/types';
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { 
   collection, 
   query, 
-  orderBy, 
-  doc, 
-  deleteDoc, 
-  updateDoc, 
-  getDoc, 
-  onSnapshot, 
-  DocumentData, 
-  addDoc, 
-  serverTimestamp, 
-  setDoc, 
-  increment, 
   where, 
+  orderBy, 
+  getDocs, 
+  onSnapshot,
+  doc, 
+  setDoc, 
+  addDoc,
+  updateDoc, 
+  deleteDoc, 
+  writeBatch,
+  serverTimestamp, 
+  arrayUnion, 
+  arrayRemove, 
   limit,
-  writeBatch
+  getDoc
 } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { useDebounce } from 'use-debounce';
 import { 
     getLawContentAction, 
@@ -99,6 +104,8 @@ import {
     fetchOmbudsmandReports,
     generateLawFlowchartAction,
     chatWithGuidelineContentAction,
+    semanticLawSearchAction,
+    chatWithKnowledgeAction,
 } from '@/app/actions';
 
 import { Button } from '@/components/ui/button';
@@ -856,6 +863,223 @@ const LawOverviewCard = ({ law, isLocked, router, idx, trainingStats, searchQuer
 
 // --- REFORM ORACLE COMPONENTS ---
 
+const QuizModule = ({ 
+    questions, 
+    onComplete,
+    previousAnswers,
+    completeLabel = "Fortsæt"
+}: { 
+    questions: any[], 
+    onComplete: (answers: Record<string, number>) => void,
+    previousAnswers?: Record<string, number>,
+    completeLabel?: string
+}) => {
+    const [answers, setAnswers] = useState<Record<string, number>>(previousAnswers || {});
+    const [showResults, setShowResults] = useState(!!previousAnswers);
+
+    const score = questions.reduce((acc, q) => acc + (answers[q.id] === q.correctAnswer ? 1 : 0), 0);
+
+    return (
+        <div className="space-y-8 animate-ink">
+            {questions.map((q, idx) => (
+                <div key={q.id} className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm space-y-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-900 flex items-center justify-center font-black text-xs">{idx + 1}</div>
+                        <h4 className="text-xl font-bold text-amber-950 serif-premium">{q.question}</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {q.options.map((opt: string, optIdx: number) => {
+                            const isSelected = answers[q.id] === optIdx;
+                            const isCorrect = optIdx === q.correctAnswer;
+                            const showCorrect = showResults && isCorrect;
+                            const showWrong = showResults && isSelected && !isCorrect;
+
+                            return (
+                                <button
+                                    key={optIdx}
+                                    disabled={showResults}
+                                    onClick={() => setAnswers({ ...answers, [q.id]: optIdx })}
+                                    className={`p-5 rounded-2xl border text-left transition-all flex items-center gap-4 ${
+                                        showCorrect ? 'bg-emerald-50 border-emerald-500 text-emerald-950' :
+                                        showWrong ? 'bg-rose-50 border-rose-500 text-rose-950' :
+                                        isSelected ? 'bg-amber-950 border-amber-950 text-white shadow-xl' :
+                                        'bg-slate-50 border-transparent hover:border-amber-200 text-slate-600'
+                                    }`}
+                                >
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-white' : 'border-slate-200'}`}>
+                                        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white animate-in zoom-in" />}
+                                    </div>
+                                    <span className="text-sm font-bold">{opt}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
+
+            {!showResults ? (
+                <div className="flex justify-center pt-8">
+                    <Button 
+                        disabled={Object.keys(answers).length < questions.length}
+                        onClick={() => setShowResults(true)}
+                        className="rounded-2xl h-16 px-16 bg-amber-950 text-amber-400 font-bold uppercase tracking-widest shadow-2xl shadow-amber-950/20"
+                    >
+                        Tjek dine svar
+                    </Button>
+                </div>
+            ) : (
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="p-12 bg-amber-950 rounded-[4rem] text-white text-center space-y-6">
+                    <Trophy className="w-16 h-16 text-amber-400 mx-auto" />
+                    <div>
+                        <h3 className="text-3xl font-bold serif-premium">Resultat: {score} af {questions.length} rigtige</h3>
+                        <p className="text-amber-100/60 mt-2">
+                            {previousAnswers ? "Her er resultatet fra dit tidligere forsøg." : "Godt gået! Du er nu klar til at gå videre."}
+                        </p>
+                    </div>
+                    <div className="flex justify-center gap-4">
+                        {previousAnswers && (
+                            <Button 
+                                variant="outline"
+                                onClick={() => { setAnswers({}); setShowResults(false); }} 
+                                className="bg-transparent border-amber-400/30 text-amber-400 rounded-2xl h-14 px-8 font-black uppercase"
+                            >
+                                Prøv igen
+                            </Button>
+                        )}
+                        <Button 
+                            onClick={() => onComplete(answers)} 
+                            className="bg-amber-400 text-amber-950 rounded-2xl h-14 px-12 font-black uppercase"
+                        >
+                            {completeLabel}
+                        </Button>
+                    </div>
+                </motion.div>
+            )}
+        </div>
+    );
+};
+
+const CoursesView = ({ 
+    courses, 
+    onSelectCourse, 
+    isLoading,
+    allProgress = {},
+    isPremium = false
+}: { 
+    courses: Course[], 
+    onSelectCourse: (c: Course) => void,
+    isLoading: boolean,
+    allProgress?: Record<string, any>,
+    isPremium?: boolean
+}) => {
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h2 className="text-4xl font-bold text-amber-950 serif-premium tracking-tight">Akademiet</h2>
+                    <p className="text-slate-500 mt-2 font-medium italic">Online kurser i socialret, sagsbehandling og teori.</p>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100/30 shadow-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Live Undervisning
+                </div>
+            </div>
+
+            {isLoading ? (
+                <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-amber-200" /></div>
+            ) : courses.length === 0 ? (
+                <div className="py-20 text-center bg-white rounded-[3rem] border border-amber-100 border-dashed">
+                    <p className="text-slate-400 font-medium italic">Ingen kurser tilgængelige lige nu. Vi arbejder på højtryk!</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {courses.map((course, idx) => {
+                        const progress = allProgress[course.id] || {};
+                        const completedCount = (progress.completedLessons || []).length;
+                        const totalLessons = course.lessons?.length || 1;
+                        const percent = Math.round((completedCount / totalLessons) * 100);
+
+                        return (
+                            <div 
+                                key={course.id} 
+                                onClick={() => course.status === 'published' && onSelectCourse(course)}
+                                className={`group bg-white rounded-[3rem] border border-amber-100/50 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col h-full cursor-pointer ${course.status === 'coming-soon' ? 'opacity-60 grayscale' : 'hover:opacity-100'}`}
+                            >
+                                <div className="h-48 overflow-hidden relative">
+                                    <img src={course.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={course.title} />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-amber-950/40 to-transparent"></div>
+                                    <div className="absolute top-6 right-6">
+                                        {progress.isCompleted ? (
+                                            <div className="bg-emerald-500 text-white p-2 rounded-full shadow-lg animate-in zoom-in spin-in-12 duration-500">
+                                                <Trophy className="w-4 h-4" />
+                                            </div>
+                                        ) : percent > 0 && (
+                                            <div className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[9px] font-black uppercase text-amber-950 border border-amber-100">{percent}% færdig</div>
+                                        )}
+                                    </div>
+                                    <div className="absolute bottom-6 left-6 flex flex-wrap gap-2">
+                                        {course.isPremium && (
+                                            <span className="px-2 py-0.5 bg-amber-950 text-amber-400 rounded-lg text-[8px] font-black uppercase tracking-widest border border-amber-400/30 flex items-center gap-1.5 shadow-lg">
+                                                <Sparkles className="w-2.5 h-2.5" /> Kollega+
+                                            </span>
+                                        )}
+                                        <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[9px] font-black uppercase text-white border border-white/20">{course.level}</span>
+                                        {course.status === 'coming-soon' && (
+                                            <span className="px-3 py-1 bg-amber-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">Kommer snart</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="p-8 flex-1 flex flex-col">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <h3 className="text-xl font-bold text-amber-950 serif-premium group-hover:text-amber-600 transition-colors">{course.title}</h3>
+                                        {!isPremium && course.isPremium && <Lock className="w-4 h-4 text-slate-300 group-hover:text-amber-600 transition-colors" />}
+                                    </div>
+                                    <p className="text-sm text-slate-500 leading-relaxed font-medium line-clamp-2 mb-6">{course.description}</p>
+                                    
+                                    {course.learningObjectives && course.learningObjectives.length > 0 && (
+                                        <div className="mb-8 space-y-2">
+                                            {course.learningObjectives.slice(0, 3).map((obj, i) => (
+                                                <div key={i} className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
+                                                    <div className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                                                    <span className="line-clamp-1">{obj}</span>
+                                                </div>
+                                            ))}
+                                            {course.learningObjectives.length > 3 && (
+                                                <p className="text-[10px] text-slate-400 font-bold ml-3 italic">+ mere læringsværdi...</p>
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    <div className="mt-auto pt-6 border-t border-amber-50 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-slate-400"><Clock className="w-3.5 h-3.5" /> {course.duration}</div>
+                                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-slate-400"><List className="w-3.5 h-3.5" /> {course.lessons?.length || 0} lektioner</div>
+                                        </div>
+                                        <button className="p-3 bg-amber-50 text-amber-950 rounded-xl group-hover:bg-amber-950 group-hover:text-amber-400 transition-all shadow-inner"><ArrowRight className="w-5 h-5" /></button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            <div className="p-12 bg-amber-950 rounded-[4rem] text-white relative overflow-hidden group">
+                <Sparkles className="absolute top-0 right-0 w-64 h-64 text-white/5 -translate-y-12 translate-x-12 rotate-12" />
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+                    <div className="space-y-6 max-w-xl text-center md:text-left">
+                        <h3 className="text-3xl font-bold serif-premium leading-tight">Bliv certificeret i Cohero Akademi</h3>
+                        <p className="text-amber-50/70 font-medium italic">Vi arbejder på at skabe de bedste online kurser specifikt til socialrådgivere og pædagoger. Tilmeld dig ventelisten for at få besked når vi lancerer.</p>
+                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                            <Input placeholder="Din e-mail adresse" className="h-14 rounded-2xl bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:ring-amber-400 focus:border-amber-400" />
+                            <Button className="h-14 rounded-2xl px-8 bg-amber-400 text-amber-950 font-black uppercase tracking-widest shadow-xl shadow-amber-400/20 hover:scale-[1.02] transition-transform shrink-0">Tilmeld venteliste</Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 const ReformOracleView = ({ 
     query, 
     setQuery, 
@@ -1234,7 +1458,7 @@ const DecisionTreeFlow = ({ situation, onCancel }: { situation: any, onCancel: (
 
 // --- MAIN PAGE COMPONENT ---
 
-export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' | 'decisions' | 'saved' | 'training' | 'reforms' }) {
+export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' | 'decisions' | 'saved' | 'training' | 'reforms' | 'courses' }) {
   const { user, userProfile, refetchUserProfile, isUserLoading } = useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1247,7 +1471,29 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   const [lawsLoading, setLawsLoading] = useState(true);
   const [docsData, setDocsData] = useState<Record<string, LawContentType>>({});
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
-  const [viewMode, setViewMode] = useState<'laws' | 'decisions' | 'saved' | 'training' | 'reforms'>(initialViewMode || 'laws');
+  const [viewMode, setViewMode] = useState<'laws' | 'decisions' | 'saved' | 'training' | 'reforms' | 'courses'>(initialViewMode || 'laws');
+  const [activeCourse, setActiveCourse] = useState<Course | null>(null);
+  const [activeLessonIdx, setActiveLessonIdx] = useState(0);
+
+  const coursesQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'courses') : null), [firestore]);
+  const { data: rawCourses, isLoading: isCoursesLoading } = useCollection<Course>(coursesQuery);
+  const courses = useMemo(() => {
+    return (rawCourses || [])
+        .filter(c => ['published', 'coming-soon'].includes(c.status))
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+  }, [rawCourses]);
+
+  const uid = getAuth().currentUser?.uid;
+  const progressPath = uid ? `users/${uid}/courseProgress` : null;
+  const progressQuery = useMemoFirebase(() => (firestore && progressPath ? collection(firestore, progressPath) : null), [firestore, progressPath]);
+  const { data: rawProgress } = useCollection<any>(progressQuery);
+  const allProgress = useMemo(() => {
+    const map: Record<string, any> = {};
+    (rawProgress || []).forEach(p => { map[p.id] = p; });
+    return map;
+  }, [rawProgress]);
+
+  const activeProgress = activeCourse ? allProgress[activeCourse.id] : null;
   const [isContextSidebarOpen, setIsContextSidebarOpen] = useState(true);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -1312,11 +1558,20 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
   const [globalParaResults, setGlobalParaResults] = useState<any[]>([]);
   const [isGlobalParaLoading, setIsGlobalParaLoading] = useState(false);
 
+  // Semantic Law Search States
+  const [semanticResults, setSemanticResults] = useState<{ summary: string, relevantLaws: any[] } | null>(null);
+  const [isSemanticLoading, setIsSemanticLoading] = useState(false);
+
   // Guideline Chat States
   const [guidelineChatMessages, setGuidelineChatMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
   const [guidelineChatInput, setGuidelineChatInput] = useState('');
   const [isGuidelineChatLoading, setIsGuidelineChatLoading] = useState(false);
   const [isGuidelinesExpanded, setIsGuidelinesExpanded] = useState(false);
+  
+  // Portal Assistant States (Cross-law Search)
+  const [portalChatMessages, setPortalChatMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
+  const [portalChatInput, setPortalChatInput] = useState('');
+  const [isPortalChatLoading, setIsPortalChatLoading] = useState(false);
   
   const mainScrollRef = useRef<HTMLElement>(null);
   const activeLawId = useMemo(() => params?.lawId as string || searchParams?.get('lawId'), [params, searchParams]);
@@ -1591,6 +1846,40 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
       
       fetchGlobalParas();
   }, [globalParaNum, lawsConfigs, activeLawId, activeReferenceId, viewMode]);
+
+  // Fetch Semantic Law Search Results
+  useEffect(() => {
+    if (!debouncedSearchQuery || globalParaNum || activeLawId || activeReferenceId || viewMode !== 'laws') {
+      setSemanticResults(null);
+      return;
+    }
+
+    const q = debouncedSearchQuery.trim();
+    if (q.length < 15) {
+      setSemanticResults(null);
+      return;
+    }
+
+    const fetchSemanticSearch = async () => {
+      setIsSemanticLoading(true);
+      try {
+        const res = await semanticLawSearchAction(q);
+        if (res?.data) {
+          setSemanticResults(res.data);
+          setPortalChatMessages([
+            { role: 'user', content: q },
+            { role: 'assistant', content: res.data.summary }
+          ]);
+        }
+      } catch (e) {
+        console.error("Semantic search failed:", e);
+      } finally {
+        setIsSemanticLoading(false);
+      }
+    };
+
+    fetchSemanticSearch();
+  }, [debouncedSearchQuery, globalParaNum, activeLawId, activeReferenceId, viewMode]);
 
   // Load Main Configuration
   useEffect(() => {
@@ -1909,6 +2198,33 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
         setGuidelineChatMessages(prev => [...prev, { role: 'assistant', content: 'Beklager, der skete en fejl i chatten. Prøv venligst igen senere.' }]);
     } finally {
         setIsGuidelineChatLoading(false);
+    }
+  };
+
+  const handlePortalChatSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const text = portalChatInput;
+    if (!text.trim() || isPortalChatLoading) return;
+
+    const userMsg = { role: 'user' as const, content: text };
+    setPortalChatMessages(prev => [...prev, userMsg]);
+    setPortalChatInput('');
+    setIsPortalChatLoading(true);
+
+    try {
+        const result = await chatWithKnowledgeAction({
+            question: text,
+            history: portalChatMessages
+        });
+
+        if (result?.data) {
+            setPortalChatMessages(prev => [...prev, { role: 'assistant', content: result.data.answer }]);
+        }
+    } catch (err) {
+        console.error('Portal Chat Error:', err);
+        setPortalChatMessages(prev => [...prev, { role: 'assistant', content: 'Beklager, der skete en fejl. Prøv venligst igen senere.' }]);
+    } finally {
+        setIsPortalChatLoading(false);
     }
   };
 
@@ -2274,6 +2590,13 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
                 <TrendingUp className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'training' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Min Træning
             </button>
             <button 
+                onClick={() => { setViewMode('courses'); router.push('/lov-portal/kurser'); }} 
+                className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'courses' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
+            >
+                <GraduationCap className={`w-5 h-5 shrink-0 transition-transform ${viewMode === 'courses' ? 'scale-110' : 'group-hover/nav:scale-110'}`} /> Kurser
+            </button>
+
+            <button 
                 onClick={() => { setViewMode('reforms'); router.push('/lov-portal/reformer'); }} 
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-black uppercase tracking-[0.1em] transition-all group/nav ${viewMode === 'reforms' ? 'bg-amber-950 text-white shadow-2xl shadow-amber-900/40 translate-x-1' : 'text-slate-400 hover:bg-amber-50 hover:text-amber-950 hover:translate-x-1'}`}
             >
@@ -2387,6 +2710,165 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
             <AnimatePresence mode="wait">
                 {lawsLoading || isLoadingDoc ? (
                     <motion.div key="loading-main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-96 flex flex-col items-center justify-center space-y-6"><Loader2 className="w-10 h-10 animate-spin text-amber-200" /><p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Indlæser indhold</p></motion.div>
+                ) : viewMode === 'courses' ? (
+                    activeCourse ? (() => {
+                        const lessons = activeCourse.lessons || [];
+                        const lesson = lessons[activeLessonIdx];
+                        const progress = activeProgress || {};
+                        const completedLessons = progress.completedLessons || [];
+                        const isLessonCompleted = completedLessons.includes(lesson?.id);
+
+                        const saveProgress = async (lessonId: string, answers?: any) => {
+                            if (!uid || !activeCourse) return;
+                            const ref = doc(firestore!, progressPath!, activeCourse.id);
+                            
+                            const newCompleted = Array.from(new Set([...completedLessons, lessonId]));
+                            const isAllDone = newCompleted.length === lessons.length;
+
+                            await setDoc(ref, {
+                                completedLessons: newCompleted,
+                                isCompleted: isAllDone,
+                                lastLessonIdx: activeLessonIdx,
+                                quizAnswers: {
+                                    ...(progress.quizAnswers || {}),
+                                    ...(answers ? { [lessonId]: answers } : {})
+                                },
+                                updatedAt: serverTimestamp(),
+                                courseTitle: activeCourse.title
+                            }, { merge: true });
+                        };
+
+                        return (
+                            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12">
+                                <header className="flex items-center gap-6 border-b border-amber-100 pb-8">
+                                    <button onClick={() => setActiveCourse(null)} className="p-3 bg-white border border-amber-100 rounded-2xl text-slate-400 hover:text-amber-950 transition-all">
+                                        <ArrowLeft className="w-5 h-5" />
+                                    </button>
+                                    <div className="flex-1">
+                                        <h2 className="text-3xl font-bold text-amber-950 serif-premium tracking-tight">{activeCourse.title}</h2>
+                                        <div className="flex items-center gap-4 mt-1">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600">Lektion {activeLessonIdx + 1} af {lessons.length}</p>
+                                            <div className="h-1.5 flex-1 max-w-[200px] bg-amber-50 rounded-full overflow-hidden">
+                                                <div className="h-full bg-amber-500 transition-all" style={{ width: `${Math.round((completedLessons.length / lessons.length) * 100)}%` }} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </header>
+
+                                <div className="grid lg:grid-cols-12 gap-12">
+                                    <div className="lg:col-span-8 space-y-10">
+                                        {lesson?.type === 'quiz' ? (
+                                            <QuizModule 
+                                                questions={lesson.questions || []} 
+                                                previousAnswers={progress.quizAnswers?.[lesson.id]}
+                                                completeLabel={activeLessonIdx < lessons.length - 1 ? "Næste Lektion" : "Gennemfør Kursus"}
+                                                onComplete={async (finalAnswers) => {
+                                                    await saveProgress(lesson.id, finalAnswers);
+                                                    if (activeLessonIdx < lessons.length - 1) {
+                                                        setActiveLessonIdx(prev => prev + 1);
+                                                    } else {
+                                                        setActiveCourse(null);
+                                                        toast({ title: "Tillykke!", description: "Du har gennemført kurset." });
+                                                    }
+                                                }}
+                                            />
+                                        ) : (
+                                            <>
+                                                {lesson?.type === 'standard' && lesson?.videoUrl && (
+                                                    <div className="aspect-video bg-black rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white">
+                                                        <iframe 
+                                                            src={lesson.videoUrl?.includes('vimeo') ? lesson.videoUrl : `https://www.youtube.com/embed/${lesson.videoUrl?.split('v=')[1]}`} 
+                                                            className="w-full h-full"
+                                                            allowFullScreen
+                                                        />
+                                                    </div>
+                                                )}
+                                                <section className={`bg-white rounded-[4rem] border border-amber-100 shadow-sm space-y-8 ${lesson?.type === 'reading' ? 'p-16 max-w-4xl mx-auto' : 'p-12'}`}>
+                                                    <h3 className={`font-bold text-amber-950 serif-premium ${lesson?.type === 'reading' ? 'text-5xl leading-tight' : 'text-3xl'}`}>
+                                                        {lesson?.title}
+                                                    </h3>
+                                                    <div 
+                                                        className={`prose prose-amber prose-xl max-w-none text-slate-700 leading-relaxed font-medium serif ${lesson?.type === 'reading' ? 'text-2xl opacity-90' : ''}`}
+                                                        dangerouslySetInnerHTML={{ __html: lesson?.content || '' }} 
+                                                    />
+                                                </section>
+                                                
+                                                <div className="flex items-center justify-between pt-8">
+                                                    <Button 
+                                                        disabled={activeLessonIdx === 0}
+                                                        onClick={() => setActiveLessonIdx(prev => prev - 1)}
+                                                        variant="outline" 
+                                                        className="rounded-2xl h-14 px-8 border-amber-200"
+                                                    >
+                                                        <ChevronLeft className="w-5 h-5 mr-2" /> Forrige
+                                                    </Button>
+                                                    <Button 
+                                                        onClick={async () => {
+                                                            await saveProgress(lesson.id);
+                                                            if (activeLessonIdx < lessons.length - 1) {
+                                                                setActiveLessonIdx(prev => prev + 1);
+                                                            } else {
+                                                                setActiveCourse(null);
+                                                                toast({ title: "Tillykke!", description: "Du har gennemført kurset." });
+                                                            }
+                                                        }}
+                                                        className="rounded-2xl h-14 px-12 bg-amber-950 text-amber-400 font-bold"
+                                                    >
+                                                        {activeLessonIdx === lessons.length - 1 ? 'Gennemfør Kursus' : 'Markér som læst & Næste'} <ChevronRight className="w-5 h-5 ml-2" />
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="lg:col-span-4 space-y-8">
+                                        <section className="bg-white/50 backdrop-blur-xl p-8 rounded-[3rem] border border-amber-100 sticky top-24">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 px-2">Kursusindhold</h4>
+                                            <div className="space-y-2">
+                                                {lessons.map((l, idx) => {
+                                                    const isCompleted = completedLessons.includes(l.id);
+                                                    return (
+                                                        <button 
+                                                            key={l.id}
+                                                            onClick={() => setActiveLessonIdx(idx)}
+                                                            className={`w-full text-left p-4 rounded-2xl transition-all flex items-center gap-4 ${activeLessonIdx === idx ? 'bg-amber-950 text-white shadow-xl' : 'hover:bg-white hover:text-amber-950'}`}
+                                                        >
+                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold ${activeLessonIdx === idx ? 'bg-white/20' : isCompleted ? 'bg-emerald-500 text-white' : 'bg-amber-50 text-amber-900'}`}>
+                                                                {isCompleted ? <CheckCircle className="w-4 h-4" /> : idx + 1}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-xs font-bold truncate leading-none">{l.title}</p>
+                                                                <p className={`text-[9px] mt-1 uppercase font-black tracking-widest ${activeLessonIdx === idx ? 'text-amber-400' : 'text-slate-400'}`}>{l.duration || '15 min'}</p>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </section>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })() : (
+                        <CoursesView 
+                            courses={courses || []} 
+                            onSelectCourse={(c) => { 
+                                if (c.isPremium && !isPremium) {
+                                    toast({
+                                        title: "Kollega+ Eksklusivt",
+                                        description: "Dette kursus kræver et Kollega+ medlemskab. Opgrader for at få adgang!",
+                                        variant: "destructive"
+                                    });
+                                    return;
+                                }
+                                setActiveCourse(c); 
+                                setActiveLessonIdx(0); 
+                            }}
+                            isLoading={isCoursesLoading}
+                            allProgress={allProgress}
+                            isPremium={isPremium}
+                        />
+                    )
                 ) : viewMode === 'reforms' ? (
                     <ReformOracleView 
                         query={reformQuery}
@@ -3038,11 +3520,66 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
                                         </div>
                                     ) : !isGlobalParaLoading && (
                                         <div className="py-12 text-center bg-white rounded-[3rem] border border-dashed border-orange-100">
-                                            <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">Ingen direkte match fundet på § {globalParaNum} i de primære love.</p>
+                                            <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">Ingen resultater fundet i de udvalgte love.</p>
                                         </div>
+                                    )}
+
+                                    {semanticResults && (
+                                        <section className="space-y-12 animate-ink">
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-5 h-5 bg-amber-400 rounded-full shadow-lg shadow-amber-400/20 animate-pulse"></div>
+                                                <h3 className="text-[13px] font-black uppercase tracking-[0.4em] text-amber-950/60 whitespace-nowrap">Portal-Assistent</h3>
+                                                <div className="h-px w-full bg-gradient-to-r from-amber-100 to-transparent" />
+                                            </div>
+                                            
+                                            <div className="bg-white rounded-[3.5rem] border border-amber-100 shadow-2xl relative overflow-hidden">
+                                                <GuidelineChatInterface 
+                                                    messages={portalChatMessages}
+                                                    input={portalChatInput}
+                                                    setInput={setPortalChatInput}
+                                                    onSubmit={handlePortalChatSubmit}
+                                                    isLoading={isPortalChatLoading}
+                                                    currentDocTitle="Portal-viden (tværgående søgning)"
+                                                />
+                                            </div>
+                                            
+                                            {/* Related laws info below the chat */}
+                                            <div className="grid md:grid-cols-2 gap-6 opacity-60 hover:opacity-100 transition-opacity">
+                                                {semanticResults.relevantLaws.map((law, idx) => (
+                                                    <div key={idx} className="bg-white/40 p-4 rounded-3xl border border-amber-100/30 space-y-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <h4 className="text-[10px] font-black text-amber-950 uppercase tracking-widest">{law.title}</h4>
+                                                            <div className="px-1.5 py-0.5 bg-amber-950 text-amber-400 text-[6px] font-black rounded-md">DETEKTERET</div>
+                                                        </div>
+                                                        <p className="text-[9px] text-slate-500 italic leading-snug">{law.relevance}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </section>
                                     )}
                                 </section>
                             )}
+
+                            {isSemanticLoading && !semanticResults && (
+                                <section className="space-y-12 animate-ink">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-5 h-5 bg-amber-400 rounded-full shadow-lg shadow-amber-400/20 animate-pulse"></div>
+                                        <h3 className="text-[13px] font-black uppercase tracking-[0.4em] text-amber-950/60 whitespace-nowrap">AI-Søgning kører...</h3>
+                                        <div className="h-px w-full bg-gradient-to-r from-amber-100 to-transparent" />
+                                    </div>
+                                    <div className="flex flex-col items-center justify-center py-20 gap-6 bg-amber-50/20 rounded-[3rem] border border-dashed border-amber-100">
+                                        <div className="relative">
+                                            <div className="absolute inset-0 bg-amber-400/20 blur-3xl animate-pulse rounded-full"></div>
+                                            <Loader2 className="w-12 h-12 animate-spin text-amber-950 relative z-10" />
+                                        </div>
+                                        <div className="text-center space-y-2">
+                                            <p className="text-xs font-black uppercase tracking-widest text-amber-950/60">Analyserer din situation og relevante lovgivninger</p>
+                                            <p className="text-[10px] font-bold text-slate-400 italic">Dette kan tage et øjeblik for at sikre juridisk præcision...</p>
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
+
 
                             <div className="space-y-24">
                                 {Object.entries(groupedLaws).map(([category, laws], groupIdx) => (

@@ -16,18 +16,20 @@ export async function POST(req: NextRequest) {
     let audioDataUri;
 
     try {
-        // Try ElevenLabs first
-        audioDataUri = await generateElevenLabsTTS(text, voice);
+        const finalVoice = voice && voice !== 'alloy' ? voice : "pNInz6obpgDQGcFmaJgB"; // Use Adam as default if invalid
+        console.log(`TTS REQUEST: Voice=${finalVoice}, Provider=ElevenLabs`);
+        
+        audioDataUri = await generateElevenLabsTTS(text, finalVoice);
     } catch (e: any) {
-        console.warn("ElevenLabs failed, falling back to OpenAI:", e.message);
-        try {
-            audioDataUri = await generateOpenAITTS(text, "shimmer");
-        } catch (e2: any) {
-            throw new Error("All cloud TTS providers failed");
-        }
+        console.error("CRITICAL ELEVENLABS FAILURE:", e.message);
+        return NextResponse.json({ 
+            error: "ElevenLabs failed", 
+            details: e.message,
+            attemptedVoice: voice
+        }, { status: 500 });
     }
 
-    return NextResponse.json({ audioDataUri });
+    return NextResponse.json({ audioDataUri, provider: 'elevenlabs' });
   } catch (error: any) {
     console.error("TTS API Error:", error);
     return NextResponse.json({ 

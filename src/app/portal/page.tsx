@@ -765,6 +765,25 @@ const PortalPageContent: React.FC = () => {
         const term = overrideTerm || searchQuery.trim();
         if (!term) return;
 
+        // Detect if it's a question
+        const questionWords = ['hvad', 'hvordan', 'hvilke', 'hvilken', 'hvem', 'hvor', 'hvorfor', 'er', 'kan', 'skal', 'bør', 'må'];
+        const isQuestion = term.endsWith('?') || 
+                          questionWords.some(word => term.toLowerCase().startsWith(word + ' ')) ||
+                          term.split(' ').length > 6;
+
+        if (isQuestion) {
+            if (user && firestore) {
+                addDoc(collection(firestore, 'userActivities'), {
+                    userId: user.uid,
+                    userName: userProfile?.username || user.displayName || 'Anonym bruger',
+                    actionText: `startede en sparring om: "${term}".`,
+                    createdAt: serverTimestamp(),
+                }).catch(err => console.error("Failed to record activity:", err));
+            }
+            router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+            return;
+        }
+
         const isLaw = term.includes('§') || 
                       /(\d+)/.test(term) || 
                       term.toLowerCase().includes('lov') || 
@@ -862,6 +881,7 @@ const PortalPageContent: React.FC = () => {
                 subtitle: "Dyk ned i jura, forskning og data",
                 icon: <Scale className="w-6 h-6 text-rose-500" />,
                 items: [
+
                     { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
                     { title: "VIVE Indsigt", desc: "Dansk velfærdsforskning", icon: Building, path: "/vive-indsigt", color: "text-cyan-600 bg-cyan-50 border-cyan-100", badge: "Forskning" },
                     { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
