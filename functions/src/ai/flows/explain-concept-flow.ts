@@ -202,18 +202,26 @@ const explainConceptFlow = ai.defineFlow(
       }
     }
 
-    const { output, usage } = await prompt({ 
+    const { stream } = await prompt.stream({ 
         concept: input.concept, 
         profession: input.profession, 
         books: booksForPrompt, 
         lawContext 
     });
+
+    for await (const chunk of stream) {
+      if (chunk.output) {
+        sendChunk(chunk.output);
+      }
+    }
+
+    const finalRes = await stream.response();
     
     return {
-      data: output!,
+      data: finalRes.output!,
       usage: {
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
+        inputTokens: finalRes.usage.inputTokens,
+        outputTokens: finalRes.usage.outputTokens,
       },
     };
   }

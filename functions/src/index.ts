@@ -124,14 +124,41 @@ export const runAiFlow = onRequest({
         return;
      }
 
+     const isStreaming = req.body.stream === true;
+
+     if (isStreaming) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        
+        try {
+          const { stream } = await allFlows[flowName].stream(data);
+          for await (const chunk of stream) {
+            res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+          }
+          const finalResult = await stream.response();
+          res.write(`data: ${JSON.stringify({ done: true, result: finalResult })}\n\n`);
+          res.end();
+          
+          // Log usage after stream ends
+          if (finalResult && finalResult.usage) {
+             const { inputTokens = 0, outputTokens = 0 } = finalResult.usage;
+             logAiUsage(flowName, { inputTokens, outputTokens }).catch(() => {});
+          }
+        } catch (streamError: any) {
+          console.error(`Stream error in ${flowName}:`, streamError);
+          res.write(`data: ${JSON.stringify({ error: streamError.message })}\n\n`);
+          res.end();
+        }
+        return;
+     }
+
      const result = await allFlows[flowName](data);
 
      // Log token usage to Firestore for AI Finans dashboard
-     // This is the central point all client-triggered flows pass through.
      if (result && result.usage) {
         const { inputTokens = 0, outputTokens = 0 } = result.usage;
         if (inputTokens > 0 || outputTokens > 0) {
-           // Fire-and-forget so we don't delay the response
            logAiUsage(flowName, { inputTokens, outputTokens })
              .catch(err => console.error("Failed to log AI usage:", err));
         }
@@ -140,7 +167,9 @@ export const runAiFlow = onRequest({
      res.status(200).json(result);
   } catch (error: any) {
      console.error(`Error in flow ${flowName}:`, error);
-     res.status(500).json({ error: error.message });
+     if (!res.headersSent) {
+       res.status(500).json({ error: error.message });
+     }
   }
 });
 

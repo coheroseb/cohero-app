@@ -73,7 +73,15 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
 
         {/* Definition */}
         <div className="px-7 py-7">
-          <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed font-medium serif" dangerouslySetInnerHTML={{ __html: ex.definition }} />
+          {ex.definition ? (
+            <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed font-medium serif" dangerouslySetInnerHTML={{ __html: ex.definition }} />
+          ) : (
+            <div className="space-y-3 animate-pulse">
+              <div className="h-4 bg-amber-100 rounded-full w-3/4" />
+              <div className="h-4 bg-amber-100 rounded-full w-full" />
+              <div className="h-4 bg-amber-100 rounded-full w-5/6" />
+            </div>
+          )}
         </div>
 
         {/* Disambiguation angles */}
@@ -325,23 +333,71 @@ function ConceptChatContent() {
           } else if (snap2.exists()) {
             explanation = snap2.data().explanation;
           } else {
-            const res = await explainConceptAction({ concept: term, profession: userProfile.profession || 'Socialrådgiver' });
-            explanation = res.data;
-            const saveData = { conceptName: term, explanation, profession: userProfile.profession, createdAt: serverTimestamp() };
-            const batch = writeBatch(firestore);
-            batch.set(docRef, saveData);
-            if (!snap2.exists()) batch.set(genRef, { ...saveData, profession: 'Generel' });
-            await batch.commit();
+            // ── Streaming fetch ──
+            const aiMsgId = (Date.now() + 1).toString();
+            const initialAiMsg: ChatMsg = { id: aiMsgId, role: 'concept', explanation: {} as any, conceptName: term };
+            setMessages(prev => [...prev, initialAiMsg]);
+            
+            const url = 'https://runaiflow-7pguetq4hq-uc.a.run.app/runAiFlow';
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ flowName: 'explainConceptFlow', data: { concept: term, profession: userProfile.profession || 'Socialrådgiver', stream: true }, stream: true }),
+            });
+
+            if (!response.body) throw new Error('No response body');
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let finalExplanation: Explanation | null = null;
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              
+              const lines = buffer.split('\n\n');
+              buffer = lines.pop() || '';
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const chunk = JSON.parse(line.substring(6));
+                    if (chunk.done) {
+                      finalExplanation = chunk.result.data;
+                    } else if (chunk.output) {
+                      setLoading(false); // Hide thinking dots once we have data
+                      setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, explanation: chunk.output } : m));
+                      if (chunk.output.definition) setCurrentDefinition(chunk.output.definition);
+                    }
+                  } catch (e) {
+                    console.warn('Failed to parse stream chunk', e);
+                  }
+                }
+              }
+            }
+
+            explanation = finalExplanation;
+            if (explanation) {
+              const docRef = doc(firestore, 'conceptExplanations-v2', `${normalised}--${profKey}`);
+              const genRef = doc(firestore, 'conceptExplanations-v2', normalised);
+              const snap2 = await getDoc(genRef);
+              const saveData = { conceptName: term, explanation, profession: userProfile.profession, createdAt: serverTimestamp() };
+              const batch = writeBatch(firestore);
+              batch.set(docRef, saveData);
+              if (!snap2.exists()) batch.set(genRef, { ...saveData, profession: 'Generel' });
+              await batch.commit();
+            }
           }
 
-          sessionStorage.setItem(cacheKey, JSON.stringify(explanation));
+          if (explanation) {
+            sessionStorage.setItem(cacheKey, JSON.stringify(explanation));
+            setCurrentConceptName(term);
+            setCurrentDefinition(explanation.definition || '');
+            // Final update to ensure everything is synced
+            setMessages(prev => prev.map(m => m.role === 'concept' && m.conceptName === term ? { ...m, explanation: explanation! } : m));
+          }
         }
-
-        setCurrentConceptName(term);
-        setCurrentDefinition(explanation?.definition || '');
-
-        const aiMsg: ChatMsg = { id: (Date.now() + 1).toString(), role: 'concept', explanation: explanation!, conceptName: term };
-        setMessages(prev => [...prev, aiMsg]);
 
         // Track usage
         const batch = writeBatch(firestore);
@@ -359,16 +415,53 @@ function ConceptChatContent() {
         await refetchUserProfile();
 
       } else {
-        // ── Follow-up: conversational ──
-        const res = await conceptFollowUpAction({
-          message: term,
-          conceptName: currentConceptName,
-          conceptDefinition: currentDefinition,
-          chatHistory: buildHistory(),
-          profession: userProfile.profession,
+        // ── Follow-up: conversational streaming ──
+        const aiMsgId = (Date.now() + 1).toString();
+        const initialAiMsg: ChatMsg = { id: aiMsgId, role: 'followup', text: '' };
+        setMessages(prev => [...prev, initialAiMsg]);
+
+        const url = 'https://runaiflow-7pguetq4hq-uc.a.run.app/runAiFlow';
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            flowName: 'unifiedChatFlow', 
+            data: { 
+              message: term,
+              chatHistory: buildHistory(),
+              persona: 'academic',
+              context: {
+                relevantDocumentIds: [],
+                lawContext: `AKTUEL FAGLIG KONTEKST:\nBegreb: ${currentConceptName}\nDefinition (uddrag): ${currentDefinition.replace(/<[^>]*>/g, '').substring(0, 1500)}`,
+              },
+            }, 
+            stream: true 
+          }),
         });
-        const aiMsg: ChatMsg = { id: (Date.now() + 1).toString(), role: 'followup', text: res.data.answer };
-        setMessages(prev => [...prev, aiMsg]);
+
+        if (!response.body) throw new Error('No response body');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const chunk = JSON.parse(line.substring(6));
+                if (chunk.output && chunk.output.answer) {
+                  setLoading(false);
+                  setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, text: chunk.output.answer } : m));
+                }
+              } catch (e) {}
+            }
+          }
+        }
       }
     } catch (err) {
       toast({ variant: 'destructive', title: 'Fejl', description: 'Noget gik galt. Prøv igen.' });

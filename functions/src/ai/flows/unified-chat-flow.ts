@@ -32,12 +32,12 @@ export const unifiedChatFlow = ai.defineFlow(
       if (input.context.lawContext) contextInfo += `\n### COHERO LOVSAMLING (LOVPORTAL-KONTEKST):\n${input.context.lawContext}\n`;
     }
 
-    const { output, usage } = await ai.generate({
+    const { stream } = await ai.generateStream({
       prompt: `
 ${personaDescription}
 
 **Kontekst:**
-{{{contextInfo}}}
+${contextInfo}
 
 **Chat Historik:**
 ${(input.chatHistory && input.chatHistory.length > 0)
@@ -64,11 +64,19 @@ Svaret SKAL være på dansk.`,
       config: { temperature: 0.7 }
     });
 
+    for await (const chunk of stream) {
+      if (chunk.output) {
+        sendChunk(chunk.output);
+      }
+    }
+
+    const finalRes = await stream.response();
+
     return {
-      data: output!,
+      data: finalRes.output!,
       usage: {
-        inputTokens: usage.inputTokens || 0,
-        outputTokens: usage.outputTokens || 0,
+        inputTokens: finalRes.usage.inputTokens || 0,
+        outputTokens: finalRes.usage.outputTokens || 0,
       },
     };
   }
