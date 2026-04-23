@@ -1,1031 +1,500 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback, Suspense, useRef } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import React, { useState, useCallback, useRef, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Search, 
-  ArrowLeft, 
-  Book, 
-  ChevronRight, 
-  X, 
-  BookOpen, 
-  Sparkles, 
-  Loader2, 
-  ChevronDown, 
-  Wand2, 
-  Lock, 
-  ArrowUpRight, 
-  Building, 
-  Brain, 
-  BrainCircuit, 
-  Quote, 
-  Check, 
-  Copy, 
-  Info,
-  Target,
-  Zap,
-  TrendingUp,
-  History,
-  Layout,
-  Library,
-  BookMarked,
-  Clock,
-  PanelRight,
-  Maximize,
-  Minimize,
-  Scale as ScaleIcon,
-  MessageSquare,
-  Share2,
-  Bookmark,
-  GraduationCap,
-  Play,
-  Gavel
-} from 'lucide-react';
-
-import { useApp } from '@/app/provider';
-import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, setDoc, writeBatch, increment, collection, serverTimestamp, query, orderBy, limit, DocumentData } from 'firebase/firestore';
-import ConceptVideoPlayer from '@/components/ConceptVideoPlayer';
-import { 
-  explainConceptAction, 
-  explainConceptWithAnalogyAction, 
-  fetchVivePublicationsAction,
-  generateConceptVideoScriptAction 
-} from '@/app/actions';
-import type { Explanation, VivePublication, ConceptVideoScript } from '@/ai/flows/types';
-import { Button } from '@/components/ui/button';
-import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Brain, BrainCircuit, Sparkles, Loader2, Send, Plus, Scale, Target, Zap, BookOpen, Quote, ChevronDown, ChevronUp, Lock, Check, History, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ConceptModelMap from '@/components/concept/ConceptModelMap';
+import { useApp } from '@/app/provider';
+import { useFirestore } from '@/firebase';
+import { doc, getDoc, setDoc, writeBatch, increment, collection, serverTimestamp } from 'firebase/firestore';
+import { explainConceptAction, conceptFollowUpAction } from '@/app/actions';
+import type { Explanation } from '@/ai/flows/types';
+import { useToast } from '@/hooks/use-toast';
 
-// --- STYLED COMPONENTS ---
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const FeatureChip = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
-    <button 
-        onClick={onClick}
-        className="px-6 py-4 bg-white border border-amber-100 rounded-3xl flex items-center gap-4 hover:border-amber-950 hover:shadow-xl transition-all group shrink-0"
-    >
-        <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-950 group-hover:scale-110 transition-transform">
-            {icon}
+type MsgRole = 'user' | 'concept' | 'followup';
+
+interface ChatMsg {
+  id: string;
+  role: MsgRole;
+  text?: string;          // user / followup
+  explanation?: Explanation; // concept
+  conceptName?: string;
+}
+
+const stripHtml = (s: string) => s?.replace(/<[^>]*>/g, '') ?? '';
+
+// ─── Expand section ───────────────────────────────────────────────────────────
+
+function Section({ title, icon, children, open: defaultOpen = false }: {
+  title: string; icon: React.ReactNode; children: React.ReactNode; open?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-t border-amber-50">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-7 py-4 hover:bg-amber-50/40 transition-colors">
+        <span className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-amber-950/40">{icon}{title}</span>
+        {open ? <ChevronUp className="w-3.5 h-3.5 text-amber-200" /> : <ChevronDown className="w-3.5 h-3.5 text-amber-200" />}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <div className="px-7 pb-6">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Concept card (rich first-response) ──────────────────────────────────────
+
+function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: string) => void }) {
+  const { explanation: ex, conceptName } = msg;
+  if (!ex) return null;
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400"><BrainCircuit className="w-3.5 h-3.5" /></div>
+        <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/30">Guiden</span>
+      </div>
+      <div className="bg-white border border-amber-100 rounded-[2rem] overflow-hidden shadow-lg shadow-amber-950/5">
+        {/* Header */}
+        <div className="px-7 py-5 bg-amber-950 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-950 to-amber-900" />
+          <div className="relative z-10">
+            <p className="text-[8px] font-black uppercase tracking-widest text-amber-400/60 mb-1">Faglig analyse</p>
+            <h3 className="text-xl font-black text-white serif">{conceptName}</h3>
+            {ex.etymology && <p className="text-amber-200/50 text-[10px] italic mt-1 line-clamp-1">{stripHtml(ex.etymology).substring(0, 100)}…</p>}
+          </div>
         </div>
-        <span className="text-sm font-bold text-slate-600 group-hover:text-amber-950 transition-colors uppercase tracking-widest text-[10px]">{label}</span>
-    </button>
-);
 
-const ContentSection = ({ title, icon, children, delay = 0 }: { title: string, icon: React.ReactNode, children: React.ReactNode, delay?: number }) => (
-    <motion.section 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay }}
-        className="space-y-6"
-    >
-        <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-700 shadow-inner">
-                {icon}
+        {/* Definition */}
+        <div className="px-7 py-7">
+          <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed font-medium serif" dangerouslySetInnerHTML={{ __html: ex.definition }} />
+        </div>
+
+        {/* Disambiguation angles */}
+        {ex.disambiguation && ex.disambiguation.length > 0 && (
+          <div className="px-7 pb-5">
+            <p className="text-[9px] font-black uppercase tracking-widest text-amber-950/30 mb-2">Vælg en vinkel</p>
+            <div className="flex flex-wrap gap-2">
+              {ex.disambiguation.map((a, i) => (
+                <button key={i} onClick={() => onAngleClick(a.query)}
+                  className="px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-bold text-amber-950 hover:bg-amber-100 transition-colors">
+                  {a.title} →
+                </button>
+              ))}
             </div>
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-950/40">{title}</h3>
+          </div>
+        )}
+
+        {ex.relevance && (
+          <Section title="Faglig relevans" icon={<Target className="w-3 h-3" />}>
+            <div className="prose prose-sm prose-slate max-w-none text-slate-600" dangerouslySetInnerHTML={{ __html: ex.relevance }} />
+          </Section>
+        )}
+
+        {ex.practicalExample && (
+          <Section title="Case eksempel" icon={<Zap className="w-3 h-3" />}>
+            <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 italic leading-relaxed" dangerouslySetInnerHTML={{ __html: ex.practicalExample }} />
+          </Section>
+        )}
+
+        {(ex.legalAnchor || ex.legalContext) && (
+          <Section title="Juridisk forankring" icon={<Scale className="w-3 h-3" />}>
+            {ex.legalContext && (
+              <div className="bg-amber-950 text-amber-100 rounded-2xl p-4 text-xs font-mono mb-3">
+                <span className="text-amber-400 font-bold">{ex.legalContext.lawTitle} {ex.legalContext.paragraphNumber}</span>
+                <p className="mt-2 text-amber-200/70 italic">{ex.legalContext.exactText}</p>
+              </div>
+            )}
+            {ex.legalAnchor && <p className="text-xs text-slate-600">{ex.legalAnchor}</p>}
+          </Section>
+        )}
+
+        {ex.criticalReflection && (
+          <Section title="Kritisk refleksion" icon={<BrainCircuit className="w-3 h-3" />}>
+            <div className="prose prose-sm text-slate-600 italic" dangerouslySetInnerHTML={{ __html: ex.criticalReflection }} />
+          </Section>
+        )}
+
+        {/* Tags row */}
+        {ex.relatedConcepts && ex.relatedConcepts.length > 0 && (
+          <div className="px-7 py-4 border-t border-amber-50 flex flex-wrap gap-1.5">
+            {ex.relatedConcepts.map((c, i) => (
+              <button key={i} onClick={() => onAngleClick(c)}
+                className="px-3 py-1 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-bold text-amber-800 hover:bg-amber-100 transition-colors">
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Literature */}
+        {ex.suggestedLiterature && ex.suggestedLiterature.length > 0 && (
+          <div className="px-7 py-5 border-t border-amber-50">
+            <p className="text-[9px] font-black uppercase tracking-widest text-amber-950/30 mb-3">Anbefalet litteratur</p>
+            <div className="space-y-2">
+              {ex.suggestedLiterature.map((b, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                  <BookOpen className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <div><p className="text-[11px] font-bold text-amber-950">{b.title}</p><p className="text-[10px] text-amber-700">{b.author}</p></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Socratic question */}
+        {ex.socraticQuestion && (
+          <div className="px-7 py-5 border-t border-amber-50 bg-amber-50/30 flex items-start gap-3">
+            <Quote className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+            <p className="text-sm italic text-amber-950/60 font-medium serif">"{ex.socraticQuestion}"</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Follow-up AI message ─────────────────────────────────────────────────────
+
+function FollowUpMsg({ msg }: { msg: ChatMsg }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400"><BrainCircuit className="w-3.5 h-3.5" /></div>
+        <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/30">Guiden</span>
+      </div>
+      <div className="bg-white border border-amber-100 rounded-[2rem] px-7 py-6 shadow-sm">
+        <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.text || '' }} />
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── User bubble ──────────────────────────────────────────────────────────────
+
+function UserBubble({ msg }: { msg: ChatMsg }) {
+  return (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-end">
+      <div className="max-w-lg bg-amber-950 text-white rounded-[2rem] rounded-tr-lg px-6 py-4 shadow-lg">
+        <p className="text-sm font-semibold leading-relaxed">{msg.text}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Thinking dots ────────────────────────────────────────────────────────────
+
+function Thinking() {
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400"><BrainCircuit className="w-3.5 h-3.5" /></div>
+        <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/30">Guiden</span>
+      </div>
+      <div className="bg-white border border-amber-100 rounded-[2rem] px-7 py-5 shadow-sm flex items-center gap-3">
+        {[0, 1, 2].map(i => (
+          <motion.div key={i} className="w-2 h-2 bg-amber-300 rounded-full"
+            animate={{ y: [0, -8, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />
+        ))}
+        <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/25 ml-2">Analyserer…</span>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+
+const SUGGESTIONS = ['Magtanvendelse', 'Mentalisering', 'Retssikkerhed', 'Systemisk Teori', 'Moralsk stress', 'Barnets perspektiv'];
+
+function EmptyState({ onPick }: { onPick: (s: string) => void }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center h-full text-center px-6 pb-20 gap-10">
+      <div>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-900 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-100 mb-6">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Din faglige makker
         </div>
-        <div className="bg-white p-8 md:p-12 rounded-[3.5rem] border border-amber-100 shadow-sm hover:shadow-xl transition-shadow">
-            {children}
-        </div>
-    </motion.section>
-);
+        <h2 className="text-5xl md:text-7xl font-black text-amber-950 serif tracking-tighter">Hvad vil du lære <span className="text-amber-400 italic">nu?</span></h2>
+        <p className="text-slate-500 font-medium italic mt-4 max-w-md mx-auto">Søg et begreb, stil et spørgsmål eller beskriv en situation. Guiden besvarer alt.</p>
+      </div>
+      <div className="flex flex-wrap justify-center gap-3">
+        {SUGGESTIONS.map(s => (
+          <button key={s} onClick={() => onPick(s)}
+            className="px-5 py-3 bg-white border border-amber-100 rounded-2xl text-xs font-bold text-amber-950 hover:border-amber-950 hover:shadow-lg transition-all">
+            {s}
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
 
-// --- MAIN COMPONENT ---
+// ─── Main page ────────────────────────────────────────────────────────────────
 
-import { Capacitor } from '@capacitor/core';
-import NativeConceptExplainer from '@/components/native/NativeConceptExplainer';
-
-function ConceptExplainerPageContent() {
+function ConceptChatContent() {
   const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
-  
-  
   const firestore = useFirestore();
-  const { toast = (p: any) => console.log(p) } = useToast();
+  const { toast } = useToast();
   const searchParams = useSearchParams();
-  const router = useRouter();
 
-  // Core State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [explanation, setExplanation] = useState<Explanation | null>(null);
-  const [analogy, setAnalogy] = useState<string | null>(null);
-  const [viveArticles, setViveArticles] = useState<VivePublication[]>([]);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
   const [limitError, setLimitError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'explanation' | 'relevance' | 'case' | 'sources'>('explanation');
-  const [isGettingAnalogy, setIsGettingAnalogy] = useState(false);
-  const [searchProgress, setSearchProgress] = useState<{ step: number; label: string }>({ step: 0, label: '' });
-  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
-  const [videoScript, setVideoScript] = useState<ConceptVideoScript | null>(null);
-  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
-  const [hasCachedVideo, setHasCachedVideo] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  if (Capacitor.isNativePlatform()) {
-    return (
-      <NativeConceptExplainer 
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        handleExplain={(term) => handleExplain(term)}
-        isLoading={isLoading}
-        explanation={explanation}
-        isSaved={isSaved}
-        handleToggleSave={() => handleToggleSave()}
-        limitError={limitError}
-        searchProgress={searchProgress}
-      />
-    );
-  }
-  const [showModelModal, setShowModelModal] = useState(false);
-
-  const resultsRef = useRef<HTMLElement>(null);
-
-  const isKollegaPlus = (userProfile?.role === 'admin') || (userProfile?.membership && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership));
-
-
-
-  // UI Helpers
+  const [currentConceptName, setCurrentConceptName] = useState('');
+  const [currentDefinition, setCurrentDefinition] = useState('');
   const [showHistory, setShowHistory] = useState(false);
 
-  const handleExplain = useCallback(async (term: string) => {
-    if (!term || !user || !userProfile || !firestore) return;
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const urlProcessed = useRef(false);
 
-    // All queries — questions, concepts, legal searches — are handled directly in Guiden
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
-    setSearchQuery(term);
-    setIsLoading(true);
-    setExplanation(null);
-    setAnalogy(null);
-    setViveArticles([]);
-    setLimitError(null);
-    setSearchProgress({ step: 1, label: 'Analyserer begrebets kerne...' });
+  const hasConcept = messages.some(m => m.role === 'concept');
 
-    // Scroll to results area automatically
-    setTimeout(() => {
-        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+  // Build chat history for follow-up
+  const buildHistory = useCallback(() =>
+    messages
+      .filter(m => m.role !== 'concept')
+      .map(m => ({
+        role: m.role === 'user' ? 'user' as const : 'assistant' as const,
+        content: m.text || '',
+      })),
+    [messages]
+  );
 
-    let progressInterval: NodeJS.Timeout | undefined;
-    // Progress simulation
-    progressInterval = setInterval(() => {
-        setSearchProgress(prev => {
-            if (prev.step === 1) return { step: 2, label: 'Indhenter relevant teori og litteratur...' };
-            if (prev.step === 2) return { step: 3, label: 'Forbinder til socialfaglig praksis...' };
-            if (prev.step === 3) return { step: 4, label: 'Syntetiserer pædagogisk forklaring...' };
-            return prev;
-        });
-    }, 1500);
-
-    // Limit Check
-    const currentTier = userProfile?.membership || 'Kollega';
-    const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
-    const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : { concepts: 1 };
-    const conceptsLimit = tierLimits.concepts === -1 ? Infinity : (tierLimits.concepts ?? 1);
-
+  const checkLimit = useCallback(() => {
+    if (!userProfile || !usageLimits) return true;
+    const tier = ['Kollega', 'Group Pro'].includes(userProfile.membership || '') ? 'Kollega' : 'Kollega+';
+    const lim = usageLimits[tier]?.concepts === -1 ? Infinity : (usageLimits[tier]?.concepts ?? 1);
     const today = new Date().toDateString();
-    const lastUsage = userProfile.lastConceptExplainerUsage?.toDate().toDateString();
-    const count = lastUsage === today ? userProfile.dailyConceptExplainerCount || 0 : 0;
-
-    if (count >= conceptsLimit) {
-        setLimitError(`Dine opslag for i dag er brugt. Som Kollega-medlem har du ${conceptsLimit} dagligt opslag. Opgrader til Kollega+ for fri adgang.`);
-        setIsLoading(false);
-        return;
+    const last = userProfile.lastConceptExplainerUsage?.toDate().toDateString();
+    const count = last === today ? userProfile.dailyConceptExplainerCount || 0 : 0;
+    if (count >= lim) {
+      setLimitError(`Dine opslag for i dag er brugt (${lim} stk.). Opgrader til Kollega+ for fri adgang.`);
+      return false;
     }
+    return true;
+  }, [userProfile, usageLimits]);
+
+  const sendMessage = useCallback(async (term: string) => {
+    if (!term.trim() || !user || !userProfile || !firestore) return;
+    setInput('');
+    setLimitError(null);
+    if (!checkLimit()) return;
+
+    const userMsg: ChatMsg = { id: Date.now().toString(), role: 'user', text: term };
+    setMessages(prev => [...prev, userMsg]);
+    setLoading(true);
 
     try {
-        // Fetch VIVE research parallel
-        fetchVivePublicationsAction({ searchTerm: term, limit: 3 }).then(res => setViveArticles(res.publications));
+      if (!hasConcept) {
+        // ── First message: full concept explanation ──
+        const normalised = term.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
+        const profKey = (userProfile.profession || 'socialrådgiver').toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
+        const cacheKey = `cohero-explainer-${normalised}-${profKey}`;
 
-        const userProfession = userProfile?.profession || 'Socialrådgiver';
-        const normalizedTerm = term.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
-        const professionKey = userProfession.toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
-        
-        // 0. QUICK CHECK: Local cache for immediate response
-        const sessionCacheKey = `cohero-explainer-${normalizedTerm}-${professionKey}`;
-        const cached = sessionStorage.getItem(sessionCacheKey);
+        let explanation: Explanation | null = null;
+
+        const cached = sessionStorage.getItem(cacheKey);
         if (cached) {
-            setSearchProgress({ step: 3, label: 'Indlæser lynhurtigt fra cache...' });
-            const data = JSON.parse(cached);
-            setExplanation(data);
-            setIsLoading(false);
-            setSearchProgress({ step: 0, label: '' });
-            return;
-        }
-
-        const docRef = doc(firestore, 'conceptExplanations-v2', `${normalizedTerm}--${professionKey}`);
-        const genericDocRef = doc(firestore, 'conceptExplanations-v2', normalizedTerm);
-        
-        setSearchProgress({ step: 1, label: 'Søger i Cohero Vidensbase...' });
-        
-        // Try profession-specific first, then generic fallback
-        const snaps = await Promise.all([getDoc(docRef), getDoc(genericDocRef)]);
-        const professionSnap = snaps[0];
-        const genericSnap = snaps[1];
-
-        let finalExplanation: Explanation;
-        if (professionSnap.exists()) {
-            setSearchProgress({ step: 2, label: 'Henter skræddersyet forklaring...' });
-            finalExplanation = professionSnap.data().explanation;
-        } else if (genericSnap.exists()) {
-            setSearchProgress({ step: 2, label: 'Henter global forklaring...' });
-            finalExplanation = genericSnap.data().explanation;
+          explanation = JSON.parse(cached);
         } else {
-            setSearchProgress({ step: 2, label: 'Aktiverer AI Deep Scan...' });
-            const res = await explainConceptAction({ concept: term, profession: userProfession });
-            finalExplanation = res.data;
-            
-            setSearchProgress({ step: 3, label: 'Deler viden med netværket...' });
-            
-            const saveData = { 
-                conceptName: term, 
-                explanation: res.data, 
-                profession: userProfession,
-                createdAt: serverTimestamp() 
-            };
+          const docRef = doc(firestore, 'conceptExplanations-v2', `${normalised}--${profKey}`);
+          const genRef = doc(firestore, 'conceptExplanations-v2', normalised);
+          const [snap1, snap2] = await Promise.all([getDoc(docRef), getDoc(genRef)]);
 
-            // Save both specific and as a seed for generic search
+          if (snap1.exists()) {
+            explanation = snap1.data().explanation;
+          } else if (snap2.exists()) {
+            explanation = snap2.data().explanation;
+          } else {
+            const res = await explainConceptAction({ concept: term, profession: userProfile.profession || 'Socialrådgiver' });
+            explanation = res.data;
+            const saveData = { conceptName: term, explanation, profession: userProfile.profession, createdAt: serverTimestamp() };
             const batch = writeBatch(firestore);
             batch.set(docRef, saveData);
-            if (!genericSnap.exists()) {
-                batch.set(genericDocRef, { ...saveData, profession: 'Generel' });
-            }
+            if (!snap2.exists()) batch.set(genRef, { ...saveData, profession: 'Generel' });
             await batch.commit();
-        }
-        
-        // Save to session cache
-        sessionStorage.setItem(sessionCacheKey, JSON.stringify(finalExplanation));
-        
-        setSearchProgress({ step: 4, label: 'Færdiggør visuel præsentation...' });
-        setExplanation(finalExplanation);
-        
-        // Update User Activity
-        const batch = writeBatch(firestore);
-        const recent = [term, ...(userProfile.recentConcepts || [])].filter((t, i, self) => self.indexOf(t) === i).slice(0, 10);
-        
-        const activitiesCol = collection(firestore, 'userActivities');
-        batch.set(doc(activitiesCol), {
-            userId: user.uid,
-            userName: userProfile?.username || user.displayName || 'Anonym bruger',
-            actionText: `slog begrebet "${term}" op.`,
-            createdAt: serverTimestamp(),
-        });
+          }
 
+          sessionStorage.setItem(cacheKey, JSON.stringify(explanation));
+        }
+
+        setCurrentConceptName(term);
+        setCurrentDefinition(explanation?.definition || '');
+
+        const aiMsg: ChatMsg = { id: (Date.now() + 1).toString(), role: 'concept', explanation: explanation!, conceptName: term };
+        setMessages(prev => [...prev, aiMsg]);
+
+        // Track usage
+        const batch = writeBatch(firestore);
+        const recent = [term, ...(userProfile.recentConcepts || [])].filter((t, i, s) => s.indexOf(t) === i).slice(0, 10);
+        batch.set(doc(collection(firestore, 'userActivities')), {
+          userId: user.uid, userName: userProfile.username || user.displayName || 'Anonym',
+          actionText: `slog begrebet "${term}" op.`, createdAt: serverTimestamp(),
+        });
         batch.update(doc(firestore, 'users', user.uid), {
-            lastConceptExplainerUsage: serverTimestamp(),
-            dailyConceptExplainerCount: increment(1),
-            recentConcepts: recent
+          lastConceptExplainerUsage: serverTimestamp(),
+          dailyConceptExplainerCount: increment(1),
+          recentConcepts: recent,
         });
         await batch.commit();
         await refetchUserProfile();
 
+      } else {
+        // ── Follow-up: conversational ──
+        const res = await conceptFollowUpAction({
+          message: term,
+          conceptName: currentConceptName,
+          conceptDefinition: currentDefinition,
+          chatHistory: buildHistory(),
+          profession: userProfile.profession,
+        });
+        const aiMsg: ChatMsg = { id: (Date.now() + 1).toString(), role: 'followup', text: res.data.answer };
+        setMessages(prev => [...prev, aiMsg]);
+      }
     } catch (err) {
-        toast({ variant: 'destructive', title: "Fejl", description: "Der opstod en fejl. Prøv igen senere." });
+      toast({ variant: 'destructive', title: 'Fejl', description: 'Noget gik galt. Prøv igen.' });
     } finally {
-        setIsLoading(false);
-        setSearchProgress({ step: 0, label: '' });
-        if (progressInterval) clearInterval(progressInterval);
+      setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [user, firestore, userProfile, refetchUserProfile, toast, router, usageLimits]);
+  }, [user, userProfile, firestore, hasConcept, currentConceptName, currentDefinition, buildHistory, checkLimit, refetchUserProfile, toast]);
 
-  const handleGetAnalogy = useCallback(async () => {
-    if (!explanation || isGettingAnalogy || !user) return;
-    setIsGettingAnalogy(true);
-    try {
-        const res = await explainConceptWithAnalogyAction({ conceptName: searchQuery, definition: explanation.definition });
-        setAnalogy(res.data.analogy);
-    } catch (err) {
-        toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke hente analogi." });
-    } finally {
-        setIsGettingAnalogy(false);
-    }
-  }, [explanation, searchQuery, user, isGettingAnalogy, toast]);
+  const startNew = useCallback(() => {
+    setMessages([]);
+    setCurrentConceptName('');
+    setCurrentDefinition('');
+    setLimitError(null);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
 
-  const handleGenerateVideo = useCallback(async () => {
-    if (!explanation || isGeneratingVideo || !user) return;
-    setIsGeneratingVideo(true);
-    try {
-        const res = await generateConceptVideoScriptAction({ concept: searchQuery, explanation });
-        setVideoScript(res.data);
-        setShowVideoPlayer(true);
-    } catch (err) {
-        toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke danne videoforklaring." });
-    } finally {
-        setIsGeneratingVideo(false);
-    }
-  }, [explanation, searchQuery, user, isGeneratingVideo, toast]);
-
-
-  const hasUrlTermProcessed = useRef(false);
-  // Initial term from URL
+  // Handle URL ?term=
   useEffect(() => {
-    if (hasUrlTermProcessed.current) return;
+    if (urlProcessed.current) return;
     const term = searchParams?.get('term');
-    if (term) {
-      const decoded = decodeURIComponent(term);
-      handleExplain(decoded);
-      hasUrlTermProcessed.current = true;
-    }
-  }, [searchParams, handleExplain]);
-
-  // Check for cached video when explanation changes
-  useEffect(() => {
-    if (explanation && searchQuery && firestore) {
-        const normalizedTerm = searchQuery.toLowerCase().trim().replace(/\s+/g, '-');
-        const docRef = doc(firestore, 'conceptVideos', normalizedTerm);
-        getDoc(docRef).then(snap => {
-            setHasCachedVideo(snap.exists());
-            if (snap.exists()) {
-                setVideoScript(snap.data() as ConceptVideoScript);
-            }
-        }).catch(err => {
-            console.error('[ConceptExplainer] Error fetching cached video:', err);
-        });
-    }
-  }, [explanation, searchQuery, firestore]);
-
-  // Check if saved
-  useEffect(() => {
-    if (explanation && user && firestore && searchQuery) {
-        const normalizedTerm = searchQuery.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
-        const savedRef = doc(firestore, 'users', user.uid, 'savedConcepts', normalizedTerm);
-        getDoc(savedRef).then(snap => setIsSaved(snap.exists()))
-        .catch(err => {
-            console.error('[ConceptExplainer] Error checking saved status:', err);
-        });
-    }
-  }, [explanation, user, firestore, searchQuery]);
-
-  const handleToggleSave = useCallback(async () => {
-    if (!explanation || !user || !firestore || isSaving) return;
-    setIsSaving(true);
-    const normalizedTerm = searchQuery.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
-    const savedRef = doc(firestore, 'users', user.uid, 'savedConcepts', normalizedTerm);
-
-    try {
-        if (isSaved) {
-            const batch = writeBatch(firestore);
-            batch.delete(savedRef);
-            await batch.commit();
-            setIsSaved(false);
-            toast({ title: "Fjernet", description: `"${searchQuery}" er fjernet fra dine gemte begreber.` });
-        } else {
-            const batch = writeBatch(firestore);
-            batch.set(savedRef, {
-                conceptName: searchQuery,
-                explanation,
-                savedAt: serverTimestamp()
-            });
-            await batch.commit();
-            setIsSaved(true);
-            toast({ title: "Gemt", description: `"${searchQuery}" er gemt i dit bibliotek.` });
-        }
-    } catch (err) {
-        toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke gemme begrebet." });
-    } finally {
-        setIsSaving(false);
-    }
-  }, [explanation, user, firestore, isSaving, isSaved, searchQuery, toast]);
+    if (term) { urlProcessed.current = true; sendMessage(decodeURIComponent(term)); }
+  }, [searchParams, sendMessage]);
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8] selection:bg-amber-100 flex flex-col items-center">
-      
-      {/* HEADER / NAVIGATION */}
-      <header className="w-full h-20 bg-white/80 backdrop-blur-md border-b border-amber-50 px-8 flex items-center justify-between sticky top-0 z-50">
-          <div className="flex items-center gap-6">
-              <Link href="/portal" className="p-3 bg-amber-50 text-amber-900 rounded-2xl hover:bg-amber-100 transition-all border border-amber-100">
-                  <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-lg"><Wand2 className="w-5 h-5" /></div>
-                  <h1 className="text-xl font-bold text-amber-950 serif tracking-tight hidden sm:block">Guiden</h1>
-              </div>
-          </div>
+    <div className="flex flex-col h-screen bg-[#FDFCF8] overflow-hidden">
 
-          <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setShowHistory(!showHistory)}
-                className={`p-3 rounded-2xl transition-all border ${showHistory ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}
-              >
-                  <History className="w-5 h-5" />
-              </button>
-              <Link href="/upgrade" className="hidden sm:block">
-                  <Button variant="outline" className="rounded-xl border-amber-200 text-amber-900">Opgrader</Button>
-              </Link>
+      {/* ── Header ─────────────────────────────────────── */}
+      <header className="shrink-0 h-16 bg-white/80 backdrop-blur-md border-b border-amber-50 flex items-center justify-between px-6 z-50">
+        <div className="flex items-center gap-4">
+          <Link href="/portal" className="p-2.5 bg-amber-50 text-amber-900 rounded-xl hover:bg-amber-100 transition-all border border-amber-100">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-md">
+              <Brain className="w-4 h-4" />
+            </div>
+            <div>
+              <h1 className="text-sm font-black text-amber-950 leading-none">Guiden</h1>
+              {currentConceptName && <p className="text-[9px] text-amber-600 font-bold uppercase tracking-widest mt-0.5 truncate max-w-[180px]">{currentConceptName}</p>}
+            </div>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {hasConcept && (
+            <button onClick={startNew}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-950 hover:bg-amber-100 transition-all">
+              <Plus className="w-3.5 h-3.5" /> Nyt begreb
+            </button>
+          )}
+          <button onClick={() => setShowHistory(!showHistory)}
+            className={`p-2.5 rounded-xl border transition-all ${showHistory ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}>
+            <History className="w-4 h-4" />
+          </button>
+          <Link href="/upgrade" className="hidden sm:flex items-center gap-2 px-4 py-2 bg-amber-950 text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-900 transition-all">
+            Opgrader
+          </Link>
+        </div>
       </header>
 
-      {/* SEARCH AREA (TRANSFORMS BASED ON STATE) */}
-      <div className={`w-full max-w-[1600px] px-6 sm:px-12 transition-all duration-700 ease-in-out ${explanation ? 'pt-12 pb-12' : 'pt-[20vh] pb-24'}`}>
-          <div className={`space-y-12 ${explanation ? 'text-left' : 'text-center'}`}>
-              {!explanation && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-900 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-amber-100 mx-auto">
-                          <Sparkles className="w-4 h-4 text-amber-500" /> Din personlige faglige makker
-                      </div>
-                      <h2 className="text-5xl md:text-8xl font-black text-amber-950 serif tracking-tighter">Hvad vil du lære <span className="text-amber-400 italic">nu</span>?</h2>
-                      <p className="text-lg text-slate-500 font-medium italic max-w-lg mx-auto leading-relaxed">Vores AI transformerer komplekse teorier til klar, socialfaglig indsigt på sekunder.</p>
-                  </motion.div>
-              )}
+      {/* ── Messages area ──────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+          {messages.length === 0 && !loading && (
+            <EmptyState onPick={sendMessage} />
+          )}
 
-                <div className={`flex flex-col gap-6 ${explanation ? 'md:flex-row md:items-center' : 'items-center'}`}>
-                {explanation && (
-                    <div className="flex-1 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-950 border border-amber-100 shadow-sm"><BrainCircuit className="w-5 h-5" /></div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/40">Faglig Analyse</span>
-                        </div>
-                        <h2 className="text-4xl md:text-6xl font-black text-amber-950 serif tracking-tighter leading-none">{searchQuery}</h2>
-                    </div>
-                )}
-                
-                    {/* SEARCH FORM & VIDEO ACTION WRAPPER */}
-                    <div className={`flex flex-col gap-4 w-full ${explanation ? 'max-w-4xl md:ml-auto' : 'mx-auto'}`}>
-                        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full">
-                            
-                            {/* SEARCH BAR */}
-                            <form 
-                                onSubmit={(e) => { e.preventDefault(); handleExplain(searchQuery); }}
-                                className={`relative group flex-1 z-10`}
-                            >
-                                <div className="absolute -inset-1 bg-gradient-to-r from-amber-400/20 to-amber-950/20 rounded-[3rem] blur opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
-                                <input 
-                                    type="text" 
-                                    placeholder={explanation ? "Spørg om noget nyt..." : "Søg på et begreb, et tema eller stille et spørgsmål..."}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className={`w-full pl-10 pr-40 bg-white border-2 border-amber-100 rounded-[3rem] font-bold text-amber-950 focus:border-amber-950 focus:ring-4 focus:ring-amber-950/5 transition-all outline-none shadow-xl ${explanation ? 'py-5 text-lg' : 'py-8 text-xl'}`}
-                                />
-                                <button 
-                                    type="submit"
-                                    disabled={isLoading || !searchQuery.trim()}
-                                    className={`absolute right-2 top-1/2 -translate-y-1/2 bg-amber-950 text-amber-400 rounded-[2.5rem] font-black uppercase text-[10px] tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 ${explanation ? 'h-12 px-6' : 'h-16 px-8'}`}
-                                >
-                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                                    {explanation ? 'Spørg' : 'Analysér'}
-                                </button>
-                            </form>
+          {messages.map(msg => (
+            <div key={msg.id}>
+              {msg.role === 'user' && <UserBubble msg={msg} />}
+              {msg.role === 'concept' && <ConceptCard msg={msg} onAngleClick={sendMessage} />}
+              {msg.role === 'followup' && <FollowUpMsg msg={msg} />}
+            </div>
+          ))}
 
-                            {/* VIDEO CALL TO ACTION (INLINE) - SET TO UNDER DEVELOPMENT */}
-                            {explanation && (
-                                <motion.div 
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="shrink-0"
-                                >
-                                    <button 
-                                        disabled={true}
-                                        className="flex items-center gap-4 px-8 py-5 rounded-[3rem] border-2 bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed transition-all shadow-sm opacity-80"
-                                    >
-                                        <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-100 text-slate-400">
-                                            <Clock className="w-4 h-4" />
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="text-[11px] font-black uppercase tracking-widest leading-none">Video under udvikling</p>
-                                            <p className="text-[8px] opacity-60 font-black uppercase tracking-[0.2em] mt-1 whitespace-nowrap">Kommer snart ✨</p>
-                                        </div>
-                                    </button>
-                                </motion.div>
-                            )}
-                        </div>
-                    </div>
+          {loading && <Thinking />}
 
-              </div>
+          {limitError && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="max-w-lg mx-auto bg-amber-50 border-2 border-dashed border-amber-200 rounded-3xl p-8 text-center space-y-4">
+              <Lock className="w-8 h-8 text-amber-400 mx-auto" />
+              <p className="text-sm font-medium text-slate-600">{limitError}</p>
+              <Link href="/upgrade" className="inline-block px-6 py-3 bg-amber-950 text-amber-400 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-amber-900 transition-all">
+                Lås op
+              </Link>
+            </motion.div>
+          )}
 
-
-              {!explanation && !isLoading && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="flex flex-wrap items-center justify-center gap-4">
-                      <FeatureChip icon={<ScaleIcon className="w-5 h-5"/>} label="Retssikkerhed" onClick={() => handleExplain('Retssikkerhed')} />
-                      <FeatureChip icon={<Brain className="w-5 h-5"/>} label="Mentalisering" onClick={() => handleExplain('Mentalisering')} />
-                      <FeatureChip icon={<Target className="w-5 h-5"/>} label="Systemisk Teori" onClick={() => handleExplain('Systemisk Teori')} />
-                  </motion.div>
-              )}
-          </div>
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      {/* CONTENT AREA */}
-      <main ref={resultsRef} className="w-full max-w-[1600px] px-6 sm:px-12 pb-40">
-          <AnimatePresence mode="wait">
-              {isLoading ? (
-                  <motion.div 
-                    key="loading"
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
-                    exit={{ opacity: 0 }}
-                    className="py-12 flex flex-col items-center gap-12 max-w-lg mx-auto"
-                  >
-                      <div className="relative group">
-                          <div className="absolute -inset-8 bg-amber-400/20 rounded-full blur-3xl animate-pulse group-hover:bg-amber-400/30 transition-all"></div>
-                          <div className="relative w-32 h-32 flex items-center justify-center">
-                              <motion.div 
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                                  className="absolute inset-0 border-4 border-dashed border-amber-950/10 rounded-full"
-                              />
-                              <motion.div 
-                                  animate={{ rotate: -360 }}
-                                  transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                                  className="absolute inset-4 border-2 border-dashed border-amber-400/20 rounded-full"
-                              />
-                              <div className="w-20 h-20 bg-white rounded-[2.5rem] shadow-2xl flex items-center justify-center relative z-10 border border-amber-50">
-                                  <Brain className="w-10 h-10 text-amber-950" />
-                              </div>
-                          </div>
-                      </div>
-
-                      <div className="space-y-8 w-full">
-                          <div className="space-y-2 text-center">
-                              <h3 className="text-3xl font-bold text-amber-950 serif">Guiden analyserer...</h3>
-                              <p className="text-slate-500 font-medium italic">Vi bygger en pædagogisk bro mellem begreb og virkelighed.</p>
-                          </div>
-
-                          <div className="space-y-4">
-                              {[
-                                  { step: 1, label: 'Analyserer begrebets kerne' },
-                                  { step: 2, label: 'Indhenter teori og litteratur' },
-                                  { step: 3, label: 'Forbinder til praksis' },
-                                  { step: 4, label: 'Syntetiserer forklaring' }
-                              ].map((s) => (
-                                  <div key={s.step} className={`flex items-center gap-4 transition-all duration-500 ${searchProgress.step >= s.step ? 'opacity-100 translate-x-0' : 'opacity-20 -translate-y-2'}`}>
-                                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-bold ${searchProgress.step > s.step ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : searchProgress.step === s.step ? 'bg-amber-950 text-amber-400 animate-pulse shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
-                                          {searchProgress.step > s.step ? <Check className="w-4 h-4" /> : s.step}
-                                      </div>
-                                      <span className={`text-xs font-black uppercase tracking-widest ${searchProgress.step === s.step ? 'text-amber-950' : 'text-slate-400'}`}>{s.label}</span>
-                                  </div>
-                              ))}
-                          </div>
-
-                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                              <motion.div 
-                                  className="h-full bg-amber-950"
-                                  initial={{ width: "0%" }}
-                                  animate={{ width: `${(searchProgress.step / 4) * 100}%` }}
-                                />
-                          </div>
-                      </div>
-                  </motion.div>
-              ) : limitError ? (
-                  <motion.div 
-                    key="limit"
-                    initial={{ opacity: 0, scale: 0.9 }} 
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-amber-50 p-12 rounded-[4rem] text-center space-y-8 border-2 border-dashed border-amber-200"
-                  >
-                      <Lock className="w-12 h-12 text-amber-400 mx-auto" />
-                      <div className="space-y-2">
-                        <h3 className="text-3xl font-bold text-amber-950 serif underline decoration-amber-400 underline-offset-8">Dagens grænse nået</h3>
-                        <p className="text-slate-500 font-medium">{limitError}</p>
-                      </div>
-                      <Link href="/upgrade">
-                        <Button size="lg" className="rounded-2xl h-14 px-12 bg-amber-950 text-amber-400 shadow-xl hover:shadow-amber-950/20">Lås helt op her</Button>
-                      </Link>
-                  </motion.div>
-              ) : explanation ? (
-                  <motion.div key="result" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-12">
-                      
-                      {/* DISAMBIGUATION / ANGLES */}
-                      {explanation.disambiguation && explanation.disambiguation.length > 0 && (
-                          <motion.div 
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="w-full bg-amber-50/50 p-8 rounded-[3rem] border border-amber-100/50"
-                          >
-                              <div className="flex items-center gap-3 mb-6">
-                                  <div className="w-8 h-8 rounded-lg bg-amber-950 text-amber-400 flex items-center justify-center shadow-lg"><Sparkles className="w-4 h-4" /></div>
-                                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-950/40">Vælg din vinkel (Relaterede temaer)</h3>
-                              </div>
-                              <div className="flex flex-wrap gap-4">
-                                  {explanation.disambiguation.map((angle, idx) => (
-                                      <button
-                                          key={idx}
-                                          onClick={() => handleExplain(angle.query)}
-                                          className="flex-1 min-w-[300px] text-left p-6 bg-white border border-amber-100 rounded-3xl hover:border-amber-950 hover:shadow-xl transition-all group"
-                                      >
-                                          <h4 className="font-bold text-amber-950 group-hover:text-amber-600 transition-colors">{angle.title}</h4>
-                                          <p className="text-xs text-slate-500 mt-2 line-clamp-2">{angle.description}</p>
-                                          <div className="flex items-center gap-2 mt-4 text-[10px] font-black uppercase tracking-widest text-amber-950/20 group-hover:text-amber-950 transition-colors">
-                                              Analysér denne vinkel <ChevronRight className="w-3 h-3" />
-                                          </div>
-                                      </button>
-                                  ))}
-                              </div>
-                          </motion.div>
-                      )}
-
-                      {/* TAB NAVIGATION */}
-                      <div className="flex items-center justify-center p-2 bg-white/50 backdrop-blur-xl border border-amber-100/50 rounded-[2.5rem] max-w-2xl mx-auto sticky top-24 z-40 shadow-xl shadow-amber-950/5">
-                          {[
-                              { id: 'explanation', label: 'Overblik', icon: Brain },
-                              { id: 'relevance', label: 'Praksis', icon: Target },
-                              { id: 'case', label: 'Jura', icon: ScaleIcon },
-                              { id: 'sources', label: 'Vidensbank', icon: Library },
-                          ].map((tab) => (
-                              <button
-                                  key={tab.id}
-                                  onClick={() => setActiveTab(tab.id as any)}
-                                  className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all ${
-                                      activeTab === tab.id 
-                                          ? 'bg-amber-950 text-amber-400 shadow-lg scale-[1.02]' 
-                                          : 'text-slate-400 hover:text-amber-950 hover:bg-amber-50'
-                                  }`}
-                              >
-                                  <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'animate-pulse' : ''}`} />
-                                  <span className="hidden sm:block">{tab.label}</span>
-                              </button>
-                          ))}
-                      </div>
-
-                      <AnimatePresence mode="wait">
-                          <motion.div
-                              key={activeTab}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="w-full"
-                          >
-                            {activeTab === 'explanation' && (
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                                    {/* PRIMARY DEFINITION */}
-                                    <div className="lg:col-span-12 xl:col-span-7">
-                                        <section className="bg-white p-10 md:p-16 rounded-[4rem] border border-amber-100 shadow-sm relative overflow-hidden group min-h-[400px]">
-                                            <div className="absolute top-0 right-0 p-12 w-64 h-64 bg-amber-50 rounded-full translate-x-1/2 -translate-y-1/2 transition-transform group-hover:scale-110" />
-                                            <div className="relative z-10 space-y-10">
-                                                <div className="flex items-center gap-3 border-b border-amber-50 pb-8">
-                                                    <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-950 border border-amber-100">
-                                                        <Info className="w-5 h-5" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-amber-950/40 leading-none">
-                                                            {userProfile?.profession === 'Pædagog' ? 'Pædagogisk Definition' : 'Socialfaglig Definition'}
-                                                        </h3>
-                                                        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-2 last:mb-0">Essensen af {searchQuery}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="prose prose-amber prose-xl max-w-none text-slate-700 leading-relaxed font-medium selection:bg-amber-100 serif" dangerouslySetInnerHTML={{ __html: explanation.definition }} />
-                                            </div>
-                                        </section>
-                                    </div>
-
-                                    {/* SIDEBAR: ETYMOLOGY & ANALOGY */}
-                                    <div className="lg:col-span-12 xl:col-span-5 space-y-8">
-                                        {explanation.etymology && (
-                                            <section className="bg-amber-50/30 p-10 rounded-[3rem] border border-amber-100 shadow-sm">
-                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-950/40 mb-6 flex items-center gap-2">
-                                                    <History className="w-3.5 h-3.5" /> Oprindelse & Kontext
-                                                </h4>
-                                                <div className="text-sm text-slate-600 italic leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: explanation.etymology }} />
-                                            </section>
-                                        )}
-
-                                        {!analogy && !isGettingAnalogy ? (
-                                            <button 
-                                                onClick={handleGetAnalogy}
-                                                className="w-full p-10 bg-white border-2 border-dashed border-amber-200 rounded-[3rem] flex items-center gap-6 text-amber-950 font-bold hover:bg-amber-50 hover:border-amber-950/20 transition-all group"
-                                            >
-                                                <div className="w-14 h-14 bg-amber-950 rounded-2xl flex items-center justify-center text-amber-400 group-hover:rotate-12 transition-transform shadow-lg shadow-amber-950/20">
-                                                    <MessageSquare className="w-6 h-6" />
-                                                </div>
-                                                <div className="text-left">
-                                                    <p className="text-lg serif italic">Stadig svært at forstå?</p>
-                                                    <p className="text-[10px] uppercase tracking-widest text-amber-600 font-black mt-1">Få en pædagogisk analogi</p>
-                                                </div>
-                                            </button>
-                                        ) : isGettingAnalogy ? (
-                                            <div className="w-full p-12 bg-amber-50 rounded-[3rem] flex flex-col items-center justify-center gap-4 border border-amber-100 animate-pulse">
-                                                <Loader2 className="w-8 h-8 text-amber-950 animate-spin" />
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-950/40">Syntetiserer analogi...</p>
-                                            </div>
-                                        ) : analogy && (
-                                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-amber-950 p-12 rounded-[3.5rem] text-white space-y-8 shadow-2xl relative overflow-hidden group">
-                                                <Quote className="absolute top-0 right-0 w-40 h-40 text-white/5 -translate-y-6 translate-x-6 group-hover:rotate-12 transition-transform" />
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-amber-400 flex items-center justify-center text-amber-950"><Quote className="w-4 h-4 fill-current" /></div>
-                                                    <h4 className="text-xs font-black uppercase tracking-widest text-amber-400">Hverdags-analogi</h4>
-                                                </div>
-                                                <div className="prose prose-invert prose-lg text-amber-50/90 italic leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: analogy }} />
-                                            </motion.div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'relevance' && (
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                                    {/* CORE RELEVANCE */}
-                                    <div className="lg:col-span-12 xl:col-span-8">
-                                        <section className="bg-white p-12 md:p-20 rounded-[4rem] border border-amber-100 shadow-sm relative overflow-hidden h-full">
-                                            <div className="flex items-center gap-4 mb-12">
-                                                <div className="w-12 h-12 rounded-2xl bg-amber-950 text-amber-400 flex items-center justify-center shadow-xl shadow-amber-950/20">
-                                                    <Target className="w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-2xl font-black text-amber-950 serif tracking-tight">
-                                                        {userProfile?.profession === 'Pædagog' ? 'Pædagogisk Praksis' : 'Socialfaglig Praksis'}
-                                                    </h3>
-                                                    <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-1">Hvordan begrebet anvendes i virkeligheden</p>
-                                                </div>
-                                            </div>
-                                            <div className="prose prose-amber prose-lg max-w-none text-slate-700 font-medium leading-[2] mb-16" dangerouslySetInnerHTML={{ __html: explanation.relevance }} />
-                                            
-                                            {explanation.practicalExample && (
-                                                <div className="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 relative group transition-all hover:bg-white hover:shadow-xl">
-                                                    <div className="flex items-center gap-3 mb-6">
-                                                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-slate-400 shadow-sm transition-all group-hover:text-amber-950"><Zap className="w-4 h-4" /></div>
-                                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Case Eksempel</h4>
-                                                    </div>
-                                                    <div className="prose prose-slate prose-lg text-slate-600 italic font-serif leading-relaxed" dangerouslySetInnerHTML={{ __html: explanation.practicalExample }} />
-                                                </div>
-                                            )}
-                                        </section>
-                                    </div>
-
-                                    {/* REFLECTION & CHALLENGE */}
-                                    <div className="lg:col-span-12 xl:col-span-4 space-y-8">
-                                        {explanation.criticalReflection && (
-                                            <section className="bg-amber-950 p-12 rounded-[3.5rem] text-white shadow-xl relative overflow-hidden group">
-                                                <Brain className="absolute top-0 right-0 w-32 h-32 text-white/5 -translate-y-4 translate-x-4 transition-transform group-hover:scale-110" />
-                                                <div className="flex items-center gap-3 mb-8">
-                                                    <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-amber-400 backdrop-blur-md">
-                                                        <BrainCircuit className="w-5 h-5" />
-                                                    </div>
-                                                    <h4 className="text-xs font-black uppercase tracking-widest text-amber-400">Kritisk Refleksion</h4>
-                                                </div>
-                                                <div className="text-amber-50/80 font-medium italic leading-relaxed text-sm" dangerouslySetInnerHTML={{ __html: explanation.criticalReflection }} />
-                                            </section>
-                                        )}
-
-                                        {explanation.socraticQuestion && (
-                                            <section className="p-12 bg-white border-2 border-amber-950 rounded-[3.5rem] shadow-2xl relative group">
-                                                <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-950 text-amber-400 rounded-2xl flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform">
-                                                    <Sparkles className="w-6 h-6" />
-                                                </div>
-                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-950/40 mb-6 mt-4">Udfordring til din faglighed</h4>
-                                                <p className="text-xl serif italic text-amber-950 leading-relaxed" dangerouslySetInnerHTML={{ __html: `"${explanation.socraticQuestion}"` }} />
-                                            </section>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'case' && (
-                                <div className="max-w-6xl mx-auto space-y-12">
-                                    {explanation.legalContext ? (
-                                        <section className="bg-amber-950 p-12 md:p-20 rounded-[5rem] text-white shadow-2xl relative overflow-hidden group">
-                                            <ScaleIcon className="absolute top-0 right-0 w-[500px] h-[500px] text-white/5 -translate-y-20 translate-x-20 group-hover:scale-105 transition-transform duration-1000" />
-                                            <div className="relative z-10 space-y-12">
-                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-white/10 pb-12">
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="w-16 h-16 rounded-[2rem] bg-amber-400 text-amber-950 flex items-center justify-center shadow-2xl shadow-amber-400/20">
-                                                            <ScaleIcon className="w-8 h-8" />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-3xl font-black serif tracking-tight">Juridisk Grundlag</h3>
-                                                            <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mt-2">{explanation.legalContext.lawTitle}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/10 backdrop-blur-xl">
-                                                        <span className="text-xs font-black uppercase tracking-widest text-white/40">Paragraf</span>
-                                                        <span className="text-4xl font-black serif italic text-amber-100">{explanation.legalContext.paragraphNumber}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid lg:grid-cols-2 gap-12">
-                                                    <div className="space-y-8">
-                                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-400">Lovens ordlyd</h4>
-                                                        <div 
-                                                            className="p-10 bg-white/5 border border-white/10 rounded-[4rem] text-lg text-amber-50/90 leading-relaxed font-serif italic backdrop-blur-md"
-                                                            dangerouslySetInnerHTML={{ __html: `"${explanation.legalContext.exactText}"` }}
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-8">
-                                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-400">Juridisk Relevans</h4>
-                                                        <div className="text-xl text-white/80 font-medium leading-relaxed tracking-tight" dangerouslySetInnerHTML={{ __html: explanation.legalContext.relevance }} />
-                                                        
-                                                        {explanation.legalAnchor && (
-                                                            <div className="p-8 bg-amber-400 text-amber-950 rounded-[3rem] shadow-xl flex items-center gap-6">
-                                                                <div className="w-12 h-12 bg-amber-950 text-amber-400 rounded-2xl flex items-center justify-center shrink-0">
-                                                                    <Gavel className="w-6 h-6" />
-                                                                </div>
-                                                                <div>
-                                                                    <h5 className="text-[9px] font-black uppercase tracking-widest opacity-60">Juridisk Forankring</h5>
-                                                                    <div className="text-lg font-black leading-tight" dangerouslySetInnerHTML={{ __html: explanation.legalAnchor }} />
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </section>
-                                    ) : (
-                                        <div className="p-20 bg-white border border-dashed border-amber-200 rounded-[5rem] text-center space-y-6">
-                                            <ScaleIcon className="w-16 h-16 text-amber-100 mx-auto" />
-                                            <h3 className="text-2xl font-black text-amber-950 serif">Ingen direkte juridisk kobling</h3>
-                                            <p className="text-slate-500 max-w-sm mx-auto font-medium">Dette begreb er primært teoretisk/metodisk og har ikke en direkte tilknytning til en specifik lovparagraf.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {activeTab === 'sources' && (
-                                <div className="space-y-12">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                        {/* LITERATURE */}
-                                        <section className="space-y-8 bg-white p-12 rounded-[4rem] border border-amber-50 shadow-sm">
-                                            <div className="flex items-center gap-4 border-b border-amber-50 pb-8">
-                                                <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
-                                                    <Book className="w-6 h-6" />
-                                                </div>
-                                                <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">Relevant Pensum</h4>
-                                            </div>
-                                            <div className="space-y-6">
-                                                {explanation.suggestedLiterature?.map((lit, i) => (
-                                                    <div key={i} className="group cursor-default">
-                                                        <h5 className="text-lg font-bold text-amber-950 serif group-hover:text-amber-600 transition-colors">{lit.title}</h5>
-                                                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-1">af {lit.author}</p>
-                                                        <div className="text-xs text-slate-500 italic mt-4 leading-relaxed p-4 bg-slate-50 rounded-2xl border border-slate-100" dangerouslySetInnerHTML={{ __html: `"${lit.relevance}"` }} />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </section>
-
-                                        {/* THEORISTS */}
-                                        <section className="space-y-8 bg-white p-12 rounded-[4rem] border border-amber-50 shadow-sm">
-                                            <div className="flex items-center gap-4 border-b border-amber-50 pb-8">
-                                                <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center shadow-inner">
-                                                    <GraduationCap className="w-6 h-6" />
-                                                </div>
-                                                <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">Centrale Teoretikere</h4>
-                                            </div>
-                                            <div className="space-y-8">
-                                                {explanation.relevantTheorists?.map((theorist, i) => (
-                                                    <div key={i} className="space-y-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <h5 className="text-lg font-bold text-amber-950 serif">{theorist.name}</h5>
-                                                            <span className="text-[9px] font-black bg-purple-100 text-purple-600 px-2 py-1 rounded-lg uppercase tracking-widest">{theorist.era}</span>
-                                                        </div>
-                                                        <div className="text-sm text-slate-600 font-medium leading-relaxed font-serif bg-purple-50/30 p-6 rounded-3xl border border-purple-100/30" dangerouslySetInnerHTML={{ __html: theorist.contribution }} />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </section>
-
-                                        {/* RESEARCH & EXTRAS */}
-                                        <div className="space-y-8">
-                                            {viveArticles.length > 0 && (
-                                                <section className="space-y-8 bg-cyan-950 p-12 rounded-[4rem] text-white shadow-xl relative overflow-hidden group">
-                                                    <Building className="absolute top-0 right-0 w-32 h-32 text-white/5 -translate-y-4 translate-x-4 group-hover:scale-110 transition-transform" />
-                                                    <div className="flex items-center gap-4 border-b border-white/10 pb-8">
-                                                        <div className="w-12 h-12 bg-cyan-400 text-cyan-950 rounded-2xl flex items-center justify-center shadow-xl shadow-cyan-400/20">
-                                                            <Building className="w-6 h-6" />
-                                                        </div>
-                                                        <h4 className="text-xs font-black uppercase tracking-widest text-cyan-400">VIVE Forskning</h4>
-                                                    </div>
-                                                    <div className="grid gap-4">
-                                                        {viveArticles.map(art => (
-                                                            <a key={art.id} href={art.url} target="_blank" className="p-6 bg-white/5 border border-white/10 rounded-[2.5rem] hover:bg-white hover:text-cyan-950 transition-all flex items-center justify-between group/link">
-                                                                <h6 className="text-[11px] font-bold line-clamp-2 leading-snug flex-1">{art.title}</h6>
-                                                                <ArrowUpRight className="w-4 h-4 text-cyan-400 opacity-40 group-hover/link:opacity-100 transition-all ml-4" />
-                                                            </a>
-                                                        ))}
-                                                    </div>
-                                                </section>
-                                            )}
-
-                                            {/* RELATED CONCEPTS */}
-                                            {explanation.relatedConcepts && (
-                                                <section className="bg-white p-12 rounded-[4rem] border border-amber-50 shadow-sm">
-                                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8 border-b border-amber-50 pb-4">Fortsæt din udforskning</h4>
-                                                    <div className="flex flex-wrap gap-3">
-                                                        {explanation.relatedConcepts.map((concept, i) => (
-                                                            <button 
-                                                                key={i} 
-                                                                onClick={() => handleExplain(concept)}
-                                                                className="px-5 py-3 bg-amber-50 text-amber-950 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-950 hover:text-white transition-all border border-amber-100/50"
-                                                            >
-                                                                {concept}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </section>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                          </motion.div>
-                      </AnimatePresence>
-
-                      {/* PERSISTENT ACTION BAR - FLOATING AT BOTTOM */}
-                      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/90 backdrop-blur-2xl px-8 py-5 rounded-[3rem] border border-amber-100 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.1)] z-50">
-                          <button onClick={() => window.print()} className="flex items-center gap-3 px-6 py-3 bg-slate-900 text-white rounded-[2rem] text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-slate-900/20">
-                              <Share2 className="w-4 h-4" />
-                              <span className="hidden sm:block">Print Notat</span>
-                          </button>
-                          <div className="w-[1px] h-6 bg-slate-200" />
-                          <button 
-                            onClick={handleToggleSave}
-                            disabled={isSaving}
-                            className={`p-3 rounded-full transition-all active:scale-90 ${isSaved ? 'bg-amber-950 text-amber-400' : 'bg-amber-50 text-amber-900 hover:bg-amber-100'}`}
-                          >
-                              {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />}
-                          </button>
-                          <button 
-                            onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                            className="p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-slate-100 transition-all active:scale-90"
-                          >
-                              <ArrowUpRight className="w-5 h-5 -rotate-45" />
-                          </button>
-                      </div>
-
-                  </motion.div>
-              ) : null}
-          </AnimatePresence>
-      </main>
-
-      {/* HISTORY OVERLAY */}
-      <AnimatePresence>
-          {showHistory && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-amber-950/20 backdrop-blur-sm"
-              >
-                  <div className="w-full max-w-xl bg-white rounded-[4rem] shadow-2xl border border-amber-50 overflow-hidden flex flex-col max-h-[80vh]">
-                      <div className="p-10 border-b border-slate-50 flex items-center justify-between">
-                          <h3 className="text-2xl font-bold text-amber-950 serif">Dine seneste opslag</h3>
-                          <button onClick={() => setShowHistory(false)} className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-amber-950 transition-colors"><X className="w-6 h-6"/></button>
-                      </div>
-                      <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
-                          {userProfile?.recentConcepts?.map((c: string) => (
-                              <button 
-                                key={c} 
-                                onClick={() => { handleExplain(c); setShowHistory(false); }}
-                                className="w-full p-6 text-left hover:bg-amber-50 rounded-[2rem] transition-all flex items-center justify-between group"
-                              >
-                                  <div className="flex items-center gap-6">
-                                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:text-amber-700 shadow-sm transition-all"><BookMarked className="w-5 h-5"/></div>
-                                      <span className="text-lg font-bold text-slate-600 group-hover:text-amber-950 transition-colors">{c}</span>
-                                  </div>
-                                  <ChevronRight className="w-6 h-6 text-slate-200 group-hover:text-amber-400 transition-all opacity-0 group-hover:opacity-100 translate-x-[-10px] group-hover:translate-x-0"/>
-                              </button>
-                          ))}
-                          {(!userProfile?.recentConcepts || userProfile.recentConcepts.length === 0) && (
-                              <div className="py-20 text-center space-y-4">
-                                  <Clock className="w-12 h-12 text-slate-100 mx-auto" />
-                                  <p className="text-slate-400 font-medium italic">Du har ikke foretaget nogen søgninger endnu.</p>
-                              </div>
-                          )}
-                      </div>
-                  </div>
-              </motion.div>
+      {/* ── Input bar ──────────────────────────────────── */}
+      <div className="shrink-0 border-t border-amber-50 bg-white/90 backdrop-blur-xl px-4 py-4">
+        <form
+          onSubmit={e => { e.preventDefault(); sendMessage(input); }}
+          className="max-w-3xl mx-auto flex items-center gap-3"
+        >
+          {hasConcept && (
+            <div className="hidden sm:flex shrink-0 items-center gap-1.5 px-3 py-2 bg-amber-50 border border-amber-100 rounded-2xl">
+              <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-amber-800 max-w-[100px] truncate">{currentConceptName}</span>
+            </div>
           )}
-      </AnimatePresence>
-
-      {/* VIDEO PLAYER OVERLAY */}
-      <AnimatePresence>
-          {showVideoPlayer && videoScript && (
-              <ConceptVideoPlayer 
-                script={videoScript} 
-                onClose={() => setShowVideoPlayer(false)} 
-              />
-          )}
-      </AnimatePresence>
-
-      {/* CONCEPT MODEL MODAL - TEMPORARILY DISABLED BY REQUEST */}
-      {/* 
-      <AnimatePresence>
-          {showModelModal && explanation?.conceptModel && (
-              ... (modal code) ...
-          )}
-      </AnimatePresence>
-      */}
-
+          <div className="relative flex-1">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder={hasConcept ? `Spørg mere om ${currentConceptName}…` : 'Søg et begreb, stil et spørgsmål…'}
+              className="w-full pl-5 pr-14 py-4 bg-white border-2 border-amber-100 rounded-2xl text-sm font-medium text-amber-950 focus:border-amber-950 focus:ring-4 focus:ring-amber-950/5 outline-none transition-all placeholder:text-slate-300"
+              disabled={loading}
+            />
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg disabled:opacity-40"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </button>
+          </div>
+        </form>
+        <p className="text-center text-[9px] text-slate-300 font-medium mt-2">Guiden husker samtalen – spørg løs om begrebet</p>
+      </div>
     </div>
-
   );
 }
 
 export default function ConceptExplainerPage() {
-    const { user, isUserLoading, userProfile } = useApp();
-    const router = useRouter();
-    const pathname = usePathname();
-
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.replace(`/?callbackUrl=${encodeURIComponent(pathname || '/')}`);
-        }
-    }, [user, isUserLoading, router, pathname]);
-
-    if (isUserLoading || !user || !userProfile) {
-        return <AuthLoadingScreen />;
-    }
-
-    return (
-      <Suspense fallback={<AuthLoadingScreen />}>
-        <ConceptExplainerPageContent />
-      </Suspense>
-    );
+  return (
+    <Suspense>
+      <ConceptChatContent />
+    </Suspense>
+  );
 }

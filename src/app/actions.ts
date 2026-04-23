@@ -763,11 +763,47 @@ export async function getConsensusAnalysisAction(input: any) { return callFireba
 export async function getSocraticReflectionAction(input: Types.SocraticInput) { return callFirebaseFlow('getSocraticReflectionFlow', input); }
 
 export async function explainConceptAction(input: { concept: string, profession?: string }): Promise<Types.ExplainConceptOutput> {
-    // Concept explainer now focuses only on non-legal social work concepts.
     return callFirebaseFlow('explainConceptFlow', { ...input });
 }
 
+export async function conceptFollowUpAction(input: {
+    message: string;
+    conceptName: string;
+    conceptDefinition: string;
+    chatHistory: { role: 'user' | 'assistant'; content: string }[];
+    profession?: string;
+}): Promise<{ data: { answer: string } }> {
+    let lawContext = '';
+    try {
+        const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: `${input.message} ${input.conceptName}` });
+        lawContext = fetchRes?.data || '';
+    } catch (e) {
+        console.error('[conceptFollowUp] Law context fetch failed:', e);
+    }
+
+    const conceptContext = `AKTUEL FAGLIG KONTEKST:\nBegreb: ${input.conceptName}\nDefinition (uddrag): ${input.conceptDefinition.replace(/<[^>]*>/g, '').substring(0, 1500)}`;
+
+    try {
+        const result = await callFirebaseFlow('unifiedChatFlow', {
+            message: input.message,
+            chatHistory: input.chatHistory,
+            persona: 'academic',
+            context: {
+                relevantDocumentIds: [],
+                lawContext: [conceptContext, lawContext].filter(Boolean).join('\n\n---\n\n'),
+            },
+        });
+        // Normalise output shape
+        const answer = result?.data?.answer || result?.answer || 'Jeg kunne ikke besvare spørgsmålet. Prøv igen.';
+        return { data: { answer } };
+    } catch (e: any) {
+        console.error('[conceptFollowUp] Flow failed:', e);
+        return { data: { answer: 'Der opstod en fejl. Prøv igen.' } };
+    }
+}
+
 export async function explainConceptWithAnalogyAction(input: any) { return callFirebaseFlow('explainConceptWithAnalogyFlow', input); }
+
 export async function getCaseConsequenceAction(input: any) { return callFirebaseFlow('getCaseConsequenceFlow', input); }
 
 export async function generateQuizAction(input: { topic: string, numQuestions: number, difficulty?: 'easy' | 'medium' | 'hard', lawId?: string, contextText?: string, profession?: string }): Promise<Types.QuizGeneratorOutput> {
