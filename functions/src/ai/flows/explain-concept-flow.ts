@@ -93,7 +93,10 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
    - <strong>Faglig refleksion</strong>: Kobl til teori, lovgivning og etiske overvejelser.
    Skriv som en mini-case med fuld HTML-formatering.
 
-5. **legalAnchor**: Præcis juridisk forankring. Angiv lovens fulde navn + konkrete paragrafnumre fra lovkonteksten ovenfor. Skriv "Ingen direkte juridisk hjemmel" hvis ikke relevant. Aldrig "Ikke oplyst."
+5. **legalAnchor**: Præcis juridisk forankring. Angiv lovens fulde navn + konkrete paragrafnumre fra lovkonteksten ovenfor. 
+   - **VIGTIGT:** Udfyld KUN hvis emnet har en DIREKTE juridisk forankring (f.eks. en konkret paragraf i serviceloven). 
+   - Hvis emnet er rent teoretisk, sociologisk eller pædagogisk uden direkte lovhjemmel, skal dette felt være TOMT. 
+   - Du må ALDRIG "opfinde" en juridisk forankring eller bruge generelle paragraffer der ikke passer præcist.
 
 6. **criticalReflection**: En akademisk og kritisk refleksion. Adressér: 
    - Etiske dilemmaer eller magtforhold
@@ -144,7 +147,7 @@ const explainConceptFlow = ai.defineFlow(
     inputSchema: z.object({ concept: z.string(), profession: z.string().optional(), lawContext: z.string().optional() }),
     outputSchema: ExplainConceptOutputSchema,
   },
-  async (input) => {
+  async (input, { sendChunk }) => {
     // 1. Fetch all books
     const allBooks = await getCachedBooks();
     
@@ -202,20 +205,20 @@ const explainConceptFlow = ai.defineFlow(
       }
     }
 
-    const { stream } = await prompt.stream({ 
+    const streamRes = await prompt.stream({ 
         concept: input.concept, 
         profession: input.profession, 
         books: booksForPrompt, 
         lawContext 
     });
 
-    for await (const chunk of stream) {
+    for await (const chunk of streamRes.stream) {
       if (chunk.output) {
         sendChunk(chunk.output);
       }
     }
 
-    const finalRes = await stream.response();
+    const finalRes = await streamRes.response;
     
     return {
       data: finalRes.output!,

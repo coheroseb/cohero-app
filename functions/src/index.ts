@@ -132,11 +132,11 @@ export const runAiFlow = onRequest({
         res.setHeader('Connection', 'keep-alive');
         
         try {
-          const { stream } = await allFlows[flowName].stream(data);
-          for await (const chunk of stream) {
+          const streamRes = await allFlows[flowName].stream(data);
+          for await (const chunk of streamRes.stream) {
             res.write(`data: ${JSON.stringify(chunk)}\n\n`);
           }
-          const finalResult = await stream.response();
+          const finalResult = await streamRes.response;
           res.write(`data: ${JSON.stringify({ done: true, result: finalResult })}\n\n`);
           res.end();
           

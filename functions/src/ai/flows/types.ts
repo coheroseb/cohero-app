@@ -1938,7 +1938,7 @@ export const UnifiedChatInputSchema = z.object({
     role: z.enum(['user', 'assistant', 'system']),
     content: z.string()
   })).optional(),
-  persona: z.enum(['kollega', 'legal', 'case', 'social_work']).optional(),
+  persona: z.string().optional(),
   context: z.object({
     currentPath: z.string().optional(),
     currentModule: z.string().optional(),

@@ -9,7 +9,8 @@ export const personaPrompts = {
   kollega: `Du er en hjælpsom og motiverende studie-kollega for socialrådgiverstuderende. Du forklarer ting i et letforståeligt sprog, som om vi sad over en kop kaffe. Du hjælper med at strukturere tanker, forstå pensum og give praktiske råd til studiet.`,
   legal: `Du er en ekspert i dansk socialret og forvaltningsret. Din opgave er at give præcise, juridisk funderede svar. Du må KUN henvise til love og paragraffer, der findes i den medsendte kontekst (Lovsamlingen fra Cohero). Du må IKKE bruge generel viden om andre love. Du SKAL altid henvise til præcis lovhjemmel (paragraffer) og give en konkret faglig begrundelse baseret på Lovsamlingen.`,
   case: `Du er en erfaren sagsbehandler og case-analytiker. Du hjælper med at identificere de vigtigste faglige pointer i en case. Du må KUN henvise til love fra Cohero's Lovportal (BL, SEL, FVL, RSL) som grundlag for din analyse. Dine svar skal være yderst konkrete, altid indeholde lovhjemmel ved forslag til indsatser, og give en klar faglig begrundelse for dine valg.`,
-  social_work: `Du er en ekspert i socialfaglige teorier, metoder og etik. Du hjælper med at koble teori på praksis og reflektere over professionens værdier. Du kender pensummet på socialrådgiveruddannelsen indgående.`
+  social_work: `Du er en ekspert i socialfaglige teorier, metoder og etik. Du hjælper med at koble teori på praksis og reflektere over professionens værdier. Du kender pensummet på socialrådgiveruddannelsen indgående.`,
+  academic: `Du er en akademisk vejleder for socialrådgiverstuderende. Du hjælper med at uddybe komplekse begreber, koble dem til videnskabsteori og pensum, og forberede den studerende til eksamen. Du svarer præcist, fagligt og med et højt abstraktionsniveau, men stadig pædagogisk.`
 };
 
 
@@ -19,7 +20,7 @@ export const unifiedChatFlow = ai.defineFlow(
     inputSchema: UnifiedChatInputSchema,
     outputSchema: UnifiedChatOutputSchema,
   },
-  async (input) => {
+  async (input, { sendChunk }) => {
     const persona = input.persona || 'kollega';
     // @ts-ignore
     const personaDescription = personaPrompts[persona] || personaPrompts.kollega;
@@ -32,7 +33,11 @@ export const unifiedChatFlow = ai.defineFlow(
       if (input.context.lawContext) contextInfo += `\n### COHERO LOVSAMLING (LOVPORTAL-KONTEKST):\n${input.context.lawContext}\n`;
     }
 
-    const { stream } = await ai.generateStream({
+    const chatPrompt = ai.definePrompt({
+      name: 'unifiedChatPrompt',
+      input: { schema: UnifiedChatInputSchema },
+      output: { schema: UnifiedChatDataSchema },
+      model: 'googleai/gemini-2.5-flash',
       prompt: `
 ${personaDescription}
 
@@ -45,32 +50,35 @@ ${(input.chatHistory && input.chatHistory.length > 0)
   : 'Ingen tidligere historik.'}
 
 **Brugerens besked:**
-${input.message}
+{{message}}
 
 **Din opgave:**
 Besvar brugerens besked på en måde, der passer til din persona. 
 Hvis du er i 'legal' persona, skal du prioritere lovhenvisninger. 
 Hvis du er i 'case' persona, skal du fokusere på den konkrete situation.
 
-Returner dit svar i et JSON-objekt med:
-1. 'answer': Selve dit svar (brug Markdown til formatering).
-2. 'suggestedFollowUpQuestions': 2-3 relevante opfølgningsspørgsmål, som brugeren kan stille.
-3. 'referencedMetadata': (Valgfrit) En liste over love eller dokumenter, du refererer til.
+Returner dit svar i et JSON-objekt med feltet 'answer'. 
+Brug Markdown til at skabe en flot struktur:
+- Brug overskrifter (##, ###) til at dele svaret op.
+- Brug punktopstillinger til lister.
+- Brug **fed skrift** til vigtige pointer.
+- Brug > til citater eller lovhenvisninger.
 
-4. **VIGTIGT:** Du må IKKE bruge din generelle viden om jura til at rådgive. ALT jura skal være baseret på den leverede kontekst fra Lovportalen. Hvis du mangler specifik lovhjemmel i konteksten, skal du sige det direkte fremfor at gætte.
+**VIGTIGT:** Du må IKKE bruge din generelle viden om jura til at rådgive. ALT jura skal være baseret på den leverede kontekst fra Lovportalen. Hvis du mangler specifik lovhjemmel i konteksten, skal du sige det direkte fremfor at gætte.
     
 Svaret SKAL være på dansk.`,
-      output: { schema: UnifiedChatDataSchema },
-      config: { temperature: 0.7 }
+      config: { temperature: 0.1 }
     });
 
-    for await (const chunk of stream) {
+    const streamRes = await chatPrompt.stream(input);
+
+    for await (const chunk of streamRes.stream) {
       if (chunk.output) {
         sendChunk(chunk.output);
       }
     }
 
-    const finalRes = await stream.response();
+    const finalRes = await streamRes.response;
 
     return {
       data: finalRes.output!,

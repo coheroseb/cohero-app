@@ -43,6 +43,7 @@
     "jspdf": "^4.2.1",
     "lucide-react": "^0.577.0",
     "mailparser": "^3.9.6",
+    "marked": "^18.0.2",
     "next": "14.2.35",
     "nodemailer": "^8.0.4",
     "openai": "^6.33.0",
