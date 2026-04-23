@@ -153,25 +153,7 @@ function ConceptExplainerPageContent() {
   const handleExplain = useCallback(async (term: string) => {
     if (!term || !user || !userProfile || !firestore) return;
 
-    // Detect if it's a question
-    const questionWords = ['hvad', 'hvordan', 'hvilke', 'hvilken', 'hvem', 'hvor', 'hvorfor', 'er', 'kan', 'skal', 'bør', 'må'];
-    const isQuestion = term.endsWith('?') || 
-                      questionWords.some(word => term.toLowerCase().startsWith(word + ' ')) ||
-                      term.split(' ').length > 6;
-
-    if (isQuestion) {
-        router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
-        return;
-    }
-
-    // REDIRECT: If searching for a paragraph or specific law (short query), go to Lov-Portalen
-    const wordCount = term.trim().split(/\s+/).length;
-    const isLegalSearch = /§|SEL|BL|RSL|Barnets Lov|Serviceloven|Forvaltningslov|Retssikkerhedslov/i.test(term);
-    
-    if (isLegalSearch && wordCount <= 4) {
-        router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
-        return;
-    }
+    // All queries — questions, concepts, legal searches — are handled directly in Guiden
 
     setSearchQuery(term);
     setIsLoading(true);
@@ -413,7 +395,7 @@ function ConceptExplainerPageContent() {
       {/* HEADER / NAVIGATION */}
       <header className="w-full h-20 bg-white/80 backdrop-blur-md border-b border-amber-50 px-8 flex items-center justify-between sticky top-0 z-50">
           <div className="flex items-center gap-6">
-              <Link href="/lov-portal" className="p-3 bg-amber-50 text-amber-900 rounded-2xl hover:bg-amber-100 transition-all border border-amber-100">
+              <Link href="/portal" className="p-3 bg-amber-50 text-amber-900 rounded-2xl hover:bg-amber-100 transition-all border border-amber-100">
                   <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="flex items-center gap-3">
