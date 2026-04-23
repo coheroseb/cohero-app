@@ -234,13 +234,20 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
-
 function ConceptChatContent() {
   const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
   const firestore = useFirestore();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+
+  // Hook to lock body scroll
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
@@ -387,10 +394,10 @@ function ConceptChatContent() {
   }, [searchParams, sendMessage]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#FDFCF8] overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-[#FDFCF8] z-[100]">
 
       {/* ── Header ─────────────────────────────────────── */}
-      <header className="shrink-0 h-16 bg-white/80 backdrop-blur-md border-b border-amber-50 flex items-center justify-between px-6 z-50">
+      <header className="shrink-0 h-16 bg-white/95 backdrop-blur-md border-b border-amber-50 flex items-center justify-between px-6 z-50">
         <div className="flex items-center gap-4">
           <Link href="/portal" className="p-2.5 bg-amber-50 text-amber-900 rounded-xl hover:bg-amber-100 transition-all border border-amber-100">
             <ArrowLeft className="w-4 h-4" />
@@ -424,7 +431,7 @@ function ConceptChatContent() {
       </header>
 
       {/* ── Messages area ──────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
           {messages.length === 0 && !loading && (
             <EmptyState onPick={sendMessage} />
@@ -456,7 +463,7 @@ function ConceptChatContent() {
       </div>
 
       {/* ── Input bar ──────────────────────────────────── */}
-      <div className="shrink-0 border-t border-amber-50 bg-white/90 backdrop-blur-xl px-4 py-4">
+      <div className="shrink-0 border-t border-amber-50 bg-white/95 backdrop-blur-xl px-4 py-4 pb-[env(safe-area-inset-bottom,16px)]">
         <form
           onSubmit={e => { e.preventDefault(); sendMessage(input); }}
           className="max-w-3xl mx-auto flex items-center gap-3"
