@@ -1,9 +1,8 @@
 // @ts-nocheck
 
-
 /**
- * @fileOverview An AI flow to explain social work concepts.
- * - explainConcept - Generates a studerende-oriented explanation of a concept.
+ * @fileOverview An AI flow to explain social work concepts and answer questions.
+ * - explainConcept - Generates a comprehensive, studerende-oriented explanation or answer.
  */
 
 import { ai } from '@/ai/genkit';
@@ -43,50 +42,90 @@ const prompt = ai.definePrompt({
   name: 'explainConceptPrompt',
   input: { schema: PromptInputSchema },
   output: { schema: ExplanationSchema },
-  prompt: `The studerende has the following query/topic: "{{{concept}}}"
+  prompt: `Du er en ekspert i dansk socialfaglig praksis med dybdegående viden om socialt arbejde, pædagogik, jura og akademisk teori. Du skal besvare følgende spørgsmål/emne fra en studerende:
+
+**SPØRGSMÅL/EMNE:** "{{{concept}}}"
 
 {{#if profession}}
-The user's profession is: "{{{profession}}}". 
-Tailor the response to reflect the specific practice and challenges of a {{{profession}}}.
+Brugeren arbejder som/studerer til: **{{{profession}}}**. 
+Tilpas hele dit svar til denne professions konkrete udfordringer, fagsprog og praksis.
 {{/if}}
 
 {{#if lawContext}}
-**LEGAL CONTEXT (LOVPORTALENS SAMLING):**
+**JURIDISK KONTEKST (Fra Lovportalen):**
 ---
 {{{lawContext}}}
 ---
-**IMPORTANT:** Use this as your ONLY source for legal facts. No guessing.
+**VIGTIGT:** Brug KUN dette som kilde til juridiske fakta. Citér paragrafnumre præcist. Gæt ikke på jura.
 {{/if}}
 
 {{#if books}}
-**LITERATURE CONTEXT (TEORETISK GRUNDLAG):**
+**PENSUMLITTERATUR (Brug som teoretisk fundament):**
 ---
 {{#each books}}
-- Title: {{{this.title}}}, Author: {{{this.author}}}, Content Info: {{{this.RAG}}}
+- **{{{this.title}}}** af {{{this.author}}}{{#if this.year}} ({{{this.year}}}){{/if}}: {{{this.RAG}}}
 {{/each}}
 ---
 {{/if}}
 
-Your task is to provide a comprehensive, pedagogical response. If the query is a full sentence or a multi-part topic (e.g., "individualisering som samfundsdynamik"), you must synthesize an answer that covers all facets.
+---
 
-Your response must be a JSON object with the following keys, all in Danish.
+**DIN OPGAVE:**
 
-1.  **definition**: Provide a thorough definition or exploration of the primary theme. If the query is a question, answer it pedogogically here. Break it down into core components using subheadings (e.g., <h3>).
-2.  **etymology**: Begrebets eller fænomenets oprindelse og historiske kontekst.
-3.  **relevance**: Why is this theme/question important for a social worker? Use <ul> and <li>.
-4.  **practicalExample**: A concrete case example. Structure with **Situation**, **Dialog**, and **Analyse**.
-5.  **legalAnchor**: Hvor finder vi hjemmel eller juridisk relevans i Lovportalens samling (ovenfor)?
-6.  **criticalReflection**: En kritisk akademisk refleksion over temaet/spørgsmålet (f.eks. etiske dilemmaer).
-7.  **suggestedLiterature**: Recommend 1-3 relevant books ONLY from the provided list.
-8.  **relevantTheorists**: Key theorists related to this topic based on the books.
-9.  **relatedConcepts**: 3-4 relaterede begreber eller temaer.
-10. **socraticQuestion**: Stil ét udfordrende, sokratisk spørgsmål til refleksion.
-11. **isModel**: True if the topic can be visualized as a model/framework.
-12. **conceptModel**: A structured graph model if isModel is true.
-13. **legalContext**: Indsæt ordret lovtekst fra Lovportalens samling (ovenfor) hvis relevant.
-14. **disambiguation**: If the query is broad or could be explored from different angles (e.g. "individualisering" could be sociological, legal, or practice-oriented), provide 3-4 specific "angles" here. Each angle must have a **title**, a brief **description** of that angle, and a refined **query** for that specific angle. If the query is already specific, leave this empty.
+Uanset om input er et enkelt begreb, et sammensat emne (f.eks. "individualisering som samfundsdynamik") eller et direkte spørgsmål (f.eks. "hvad er forskellen på servicelov og barnets lov?"), skal du give et grundigt, pædagogisk og fagligt stærkt svar.
 
-Always use "borger" instead of "klient".
+Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med HØJ FAGLIG KVALITET:
+
+1. **definition**: 
+   - Hvis det er et *begreb*: Giv en dybtgående og nuanceret definition med underoverskrifter (<h3>) for centrale dimensioner.
+   - Hvis det er et *spørgsmål*: BESVAR spørgsmålet direkte og udtømmende. Brug <h3> til at strukturere delsvaret. Vær konkret og handlingsorienteret.
+   - Hvis det er et *sammensat emne*: Syntetisér alle facetter i en sammenhængende forklaring.
+   - Minimum 4-6 afsnit. Brug <p>, <h3>, <ul>, <li>, <strong>, <em> til strukturering.
+   - Inkludér altid: kernedefinition, centrale komponenter, nuancer og eventuelle kontroverser.
+
+2. **etymology**: Begrebets eller fænomenets oprindelse og historiske kontekst (inkl. årstal og nøglebegivenheder). Skriv i fulde sætninger.
+
+3. **relevance**: Hvorfor er dette emne/spørgsmål AFGØRENDE for en socialfaglig professionel? Brug <ul> og <li> med konkrete punkter. Minimum 4 punkter.
+
+4. **practicalExample**: ET konkret praksiseksempel fra dansk socialfaglig kontekst. Strukturér med:
+   - <strong>Situation</strong>: Beskriv casen (borger, kontekst, problemstilling)
+   - <strong>Faglig handling</strong>: Hvad gør den professionelle og HVORFOR? 
+   - <strong>Faglig refleksion</strong>: Kobl til teori, lovgivning og etiske overvejelser.
+   Skriv som en mini-case med fuld HTML-formatering.
+
+5. **legalAnchor**: Præcis juridisk forankring. Angiv lovens fulde navn + konkrete paragrafnumre fra lovkonteksten ovenfor. Skriv "Ingen direkte juridisk hjemmel" hvis ikke relevant. Aldrig "Ikke oplyst."
+
+6. **criticalReflection**: En akademisk og kritisk refleksion. Adressér: 
+   - Etiske dilemmaer eller magtforhold
+   - Kritik af begrebet/tilgangen fra forskning eller praksis
+   - Hvad mangler der – hvad kan metoden/tilgangen IKKE? 
+   Skriv mindst 3 afsnit med HTML-formatering.
+
+7. **suggestedLiterature**: 1-3 bøger KUN fra den vedlagte pensumliste, der bedst belyser emnet. Angiv specifikt hvilke kapitler/sider der er mest relevante baseret på RAG-information.
+
+8. **relevantTheorists**: 2-4 centrale teoretikere. For HVER: navn, tidsperiode, specifikt bidrag til dette emne, og reference til pensumliste hvis muligt.
+
+9. **relatedConcepts**: 4-5 relaterede begreber eller emner som studerende bør kende til i sammenhæng.
+
+10. **socraticQuestion**: ÉT skarpt refleksionsskabende spørgsmål som en eksaminator ville stille. Gør det udfordrende og specifikt – ikke generisk.
+
+11. **isModel**: True KUN hvis emnet er en konkret model/ramme der kan visualiseres (f.eks. Maslows behovspyramide, LØFT-modellen, ART, Brofenbrenner).
+
+12. **conceptModel**: KUN udfyld hvis isModel er true. Lav en komplet graph med nodes og edges der visualiserer modellen.
+
+13. **legalContext**: KUN udfyld med ORDRET lovtekst fra konteksten ovenfor. Angiv lov, paragraf, og den nøjagtige tekst. Udelad hvis ikke relevant.
+
+14. **disambiguation**: Udfyld KUN hvis forespørgslen er bred og kan belyses fra flere faglige vinkler (f.eks. sociologisk, juridisk, etisk, praksisrettet). Giv 3-4 vinkler med titel, beskrivelse og raffineret søgeforespørgsel. Lad dette være TOMT hvis spørgsmålet allerede er specifikt.
+
+---
+
+**KVALITETSKRAV:**
+- Svar altid fyldestgørende – studerende bruger dette til eksamensforberedelse og praksis
+- Brug ALTID "borger" (aldrig "klient")
+- Undgå generiske svar – vær specifik, faglig og præcis
+- Hvis spørgsmålet er tvetydigt, vælg den mest sandsynlige socialfaglige fortolkning og besvar den
+- Citér teorier med forfatter og årstal når muligt, f.eks. (Jensen, 2019)
+- Definition-feltet er det vigtigste – investér mest kvalitet her
 `,
   config: {
     safetySettings: [
@@ -96,7 +135,7 @@ Always use "borger" instead of "klient".
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
     ],
   },
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-2.5-pro',
 });
 
 const explainConceptFlow = ai.defineFlow(
@@ -109,22 +148,58 @@ const explainConceptFlow = ai.defineFlow(
     // 1. Fetch all books
     const allBooks = await getCachedBooks();
     
-    // 2. Filter books by relevance to the query (simple keyword check for efficiency)
-    const keywords = input.concept.toLowerCase().split(/\s+/);
-    const relevantBooks = allBooks.filter(book => {
-        const bookText = `${book.title} ${book.author} ${book.RAG}`.toLowerCase();
-        return keywords.some(kw => kw.length > 3 && bookText.includes(kw));
-    }).slice(0, 8); // Top 8 relative books to keep context clean
+    // 2. Smarter book filtering: expand keywords with Danish morphology approximation
+    const rawKeywords = input.concept.toLowerCase().split(/[\s,;.?!]+/).filter(w => w.length > 2);
     
-    // Fallback: If no matches, send top 3 general books
-    const booksForPrompt = relevantBooks.length > 0 ? relevantBooks : allBooks.slice(0, 3);
+    // Generate keyword variants to handle Danish word forms
+    const expandedKeywords = new Set<string>(rawKeywords);
+    rawKeywords.forEach(kw => {
+      // Remove common suffixes to get root form
+      if (kw.endsWith('ing')) expandedKeywords.add(kw.slice(0, -3));
+      if (kw.endsWith('else')) expandedKeywords.add(kw.slice(0, -4));
+      if (kw.endsWith('ninger')) expandedKeywords.add(kw.slice(0, -6));
+      if (kw.endsWith('elser')) expandedKeywords.add(kw.slice(0, -5));
+      if (kw.endsWith('erne')) expandedKeywords.add(kw.slice(0, -4));
+      if (kw.endsWith('ene')) expandedKeywords.add(kw.slice(0, -3));
+      if (kw.endsWith('er')) expandedKeywords.add(kw.slice(0, -2));
+      if (kw.endsWith('lig')) expandedKeywords.add(kw.slice(0, -3));
+      if (kw.endsWith('hed')) expandedKeywords.add(kw.slice(0, -3));
+      if (kw.endsWith('igt')) expandedKeywords.add(kw.slice(0, -3));
+      // Truncated root forms for compound word matching
+      if (kw.length > 6) {
+        expandedKeywords.add(kw.substring(0, kw.length - 1));
+        expandedKeywords.add(kw.substring(0, kw.length - 2));
+      }
+    });
+
+    const keywordArray = Array.from(expandedKeywords).filter(kw => kw.length > 2);
+
+    // Score each book by number of keyword matches
+    const scoredBooks = allBooks
+      .map(book => {
+        const bookText = `${book.title} ${book.author} ${book.RAG || ''}`.toLowerCase();
+        const score = keywordArray.filter(kw => bookText.includes(kw)).length;
+        return { book, score };
+      })
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10) // Top 10 most relevant books
+      .map(({ book }) => book);
+    
+    // Fallback: If no matches, send top 5 general books
+    const booksForPrompt = scoredBooks.length > 0 ? scoredBooks : allBooks.slice(0, 5);
     
     let lawContext = input.lawContext || '';
     
-    // 3. Fetch law context
+    // 3. Fetch law context if not provided
     if (!lawContext) {
-      console.log(`[EXPLAIN-CONCEPT] Fetching context for semantic query: "${input.concept}"...`);
-      lawContext = await getRelevantLawContext(input.concept);
+      console.log(`[EXPLAIN-CONCEPT] Fetching law context for: "${input.concept}"...`);
+      try {
+        lawContext = await getRelevantLawContext(input.concept);
+      } catch (e) {
+        console.error('[EXPLAIN-CONCEPT] Law context fetch failed:', e);
+        lawContext = '';
+      }
     }
 
     const { output, usage } = await prompt({ 
