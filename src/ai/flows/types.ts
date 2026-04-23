@@ -1907,7 +1907,7 @@ export const CourseSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
-  level: z.enum(['Begynder', 'Mellemniveau', 'Avanceret']),
+  level: z.enum(['Socialrådgiver-niveau', 'Jurist-niveau', 'Avanceret']),
   imageUrl: z.string(),
   duration: z.string(),
   status: z.enum(['draft', 'published', 'coming-soon']),

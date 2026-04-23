@@ -68,7 +68,8 @@ import {
   Tag,
   ArrowLeft,
   CheckCircle,
-  Circle
+  Circle,
+  Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Course, Lesson } from '@/ai/flows/types';
@@ -972,6 +973,13 @@ const CoursesView = ({
     allProgress?: Record<string, any>,
     isPremium?: boolean
 }) => {
+    const [levelFilter, setLevelFilter] = useState<'Alle' | 'Socialrådgiver-niveau' | 'Jurist-niveau' | 'Avanceret'>('Alle');
+
+    const filteredCourses = useMemo(() => {
+        if (levelFilter === 'Alle') return courses;
+        return courses.filter(c => c.level === levelFilter);
+    }, [courses, levelFilter]);
+
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -979,20 +987,38 @@ const CoursesView = ({
                     <h2 className="text-4xl font-bold text-amber-950 serif-premium tracking-tight">Akademiet</h2>
                     <p className="text-slate-500 mt-2 font-medium italic">Online kurser i socialret, sagsbehandling og teori.</p>
                 </div>
-                <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100/30 shadow-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Live Undervisning
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100/30 shadow-sm mr-4">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Live Undervisning
+                    </div>
                 </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+                {['Alle', 'Socialrådgiver-niveau', 'Jurist-niveau', 'Avanceret'].map((level) => (
+                    <button
+                        key={level}
+                        onClick={() => setLevelFilter(level as any)}
+                        className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 border ${
+                            levelFilter === level 
+                                ? 'bg-amber-950 text-amber-400 border-amber-950 shadow-xl shadow-amber-900/20' 
+                                : 'bg-white text-slate-400 border-slate-100 hover:border-amber-200 hover:text-amber-950'
+                        }`}
+                    >
+                        {level}
+                    </button>
+                ))}
             </div>
 
             {isLoading ? (
                 <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-amber-200" /></div>
-            ) : courses.length === 0 ? (
+            ) : filteredCourses.length === 0 ? (
                 <div className="py-20 text-center bg-white rounded-[3rem] border border-amber-100 border-dashed">
-                    <p className="text-slate-400 font-medium italic">Ingen kurser tilgængelige lige nu. Vi arbejder på højtryk!</p>
+                    <p className="text-slate-400 font-medium italic">Ingen kurser fundet for dette niveau.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {courses.map((course, idx) => {
+                    {filteredCourses.map((course, idx) => {
                         const progress = allProgress[course.id] || {};
                         const completedCount = (progress.completedLessons || []).length;
                         const totalLessons = course.lessons?.length || 1;

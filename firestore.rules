@@ -162,6 +162,12 @@ service cloud.firestore {
     match /reforms/{reformId} { allow read: if isSignedIn(); }
     match /teamMembers/{memberId} { allow read: if true; }
     match /highlightedSager/{sagId} { allow read: if isSignedIn(); }
+    
+    match /courses/{courseId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
     match /pageViews/{viewId} { allow create: if true; }
     match /systemErrors/{errorId} {
       allow create: if true;
@@ -225,6 +231,7 @@ service cloud.firestore {
       match /viveAnalyses/{analysisId} { allow read, write: if isOwner(userId); }
       match /caseAnalyses/{analysisId} { allow read, write: if isOwner(userId); }
       match /savedConcepts/{conceptId} { allow read, write: if isOwner(userId); }
+      match /courseProgress/{courseId} { allow read, write: if isOwner(userId); }
       match /conversations/{conversationId} { 
         allow read, write: if isOwner(userId); 
         match /messages/{messageId} { allow read, write: if isOwner(userId); }

@@ -64,7 +64,7 @@ interface Course {
     id: string;
     title: string;
     description: string;
-    level: 'Begynder' | 'Mellemniveau' | 'Avanceret';
+    level: 'Socialrådgiver-niveau' | 'Jurist-niveau' | 'Avanceret';
     imageUrl: string;
     duration: string;
     status: 'draft' | 'published' | 'coming-soon';
@@ -98,7 +98,7 @@ export default function CoursesAdminPage() {
             id: '',
             title: '',
             description: '',
-            level: 'Begynder',
+            level: 'Socialrådgiver-niveau',
             imageUrl: '',
             duration: '',
             status: 'draft',
@@ -263,7 +263,7 @@ export default function CoursesAdminPage() {
                     id: '',
                     title: design.courseTitle,
                     description: design.overallLearningOutcomes.join('. '),
-                    level: 'Begynder',
+                    level: 'Socialrådgiver-niveau',
                     imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2670&auto=format&fit=crop',
                     duration: '2 timer',
                     status: 'draft',
@@ -357,9 +357,9 @@ export default function CoursesAdminPage() {
                                             onChange={(e) => setSelectedCourse({ ...selectedCourse, level: e.target.value as any })}
                                             className="w-full h-14 px-4 rounded-2xl border border-slate-100 font-bold text-sm bg-white outline-none focus:ring-4 focus:ring-indigo-600/5 transition-all"
                                         >
-                                            <option value="Begynder">Begynder</option>
-                                            <option value="Mellemniveau">Mellemniveau</option>
-                                            <option value="Avanceret">Avanceret</option>
+                                            <option value="Socialrådgiver-niveau">Socialrådgiver-niveau</option>
+                                            <option value="Jurist-niveau">Jurist-niveau</option>
+                                            <option value="Avanceret">Avanceret (Ekspert)</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
