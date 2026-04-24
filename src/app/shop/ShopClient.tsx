@@ -88,6 +88,11 @@ export default function ShopClient() {
         toast({ title: "Shoppen er lukket", description: "Vi tager ikke imod nye ordrer lige nu.", variant: "destructive" });
         return;
     }
+    const isOutOfStock = product.stock !== undefined && product.stock <= 0;
+    if (isOutOfStock) {
+        toast({ title: "Varen er udsolgt", description: "Beklager, denne vare er desværre ikke på lager.", variant: "destructive" });
+        return;
+    }
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -254,52 +259,68 @@ export default function ShopClient() {
                         transition={{ delay: i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                         className="group relative"
                     >
-                        {/* More premium card */}
-                        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-100 transition-all duration-700 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] hover:border-slate-200">
-                            {/* Image Container */}
-                            <div className="relative aspect-[4/5] overflow-hidden">
-                                <motion.img 
-                                    whileHover={{ scale: 1.05 }}
-                                    transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                                    src={product.image} 
-                                    alt={product.name}
-                                    className="w-full h-full object-cover"
-                                />
-                                
-                                {/* Status Tags */}
-                                {product.tag && (
-                                    <div className="absolute top-6 left-6 flex flex-col gap-2">
-                                        <span className="px-4 py-2 bg-white/90 backdrop-blur-xl rounded-2xl text-[10px] font-bold uppercase tracking-widest text-slate-900 shadow-sm border border-white/50">
-                                            {product.tag}
-                                        </span>
+                        {(() => {
+                            const isOutOfStock = product.stock !== undefined && product.stock <= 0;
+                            return (
+                                <>
+                                    {/* More premium card */}
+                                    <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-100 transition-all duration-700 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] hover:border-slate-200">
+                                        {/* Image Container */}
+                                        <div className="relative aspect-[4/5] overflow-hidden">
+                                            {isOutOfStock && (
+                                                <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+                                                    <div className="px-6 py-3 bg-slate-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl">
+                                                        Udsolgt
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <motion.img 
+                                                whileHover={!isOutOfStock ? { scale: 1.05 } : {}}
+                                                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                                                src={product.image} 
+                                                alt={product.name}
+                                                className={`w-full h-full object-cover ${isOutOfStock ? 'grayscale opacity-50' : ''}`}
+                                            />
+                                            
+                                            {/* Status Tags */}
+                                            {product.tag && (
+                                                <div className="absolute top-6 left-6 flex flex-col gap-2">
+                                                    <span className="px-4 py-2 bg-white/90 backdrop-blur-xl rounded-2xl text-[10px] font-bold uppercase tracking-widest text-slate-900 shadow-sm border border-white/50">
+                                                        {product.tag}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Cart Shortcut Overlay */}
+                                            {!isOutOfStock && (
+                                                <div className="absolute inset-x-0 bottom-0 p-6 opacity-0 group-hover:opacity-100 translate-y-10 group-hover:translate-y-0 transition-all duration-500 bg-gradient-to-t from-black/20 to-transparent">
+                                                    <button 
+                                                        onClick={() => addToCart(product)}
+                                                        className="w-full bg-slate-950 text-white h-14 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl active:scale-95 transition-transform"
+                                                    >
+                                                        Læg i kurv
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                )}
 
-                                {/* Cart Shortcut Overlay */}
-                                <div className="absolute inset-x-0 bottom-0 p-6 opacity-0 group-hover:opacity-100 translate-y-10 group-hover:translate-y-0 transition-all duration-500 bg-gradient-to-t from-black/20 to-transparent">
-                                    <button 
-                                        onClick={() => addToCart(product)}
-                                        className="w-full bg-slate-950 text-white h-14 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl active:scale-95 transition-transform"
-                                    >
-                                        Læg i kurv
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Product Details (Separate from card for cleaner look) */}
-                        <div className="mt-8 px-2 space-y-3">
-                            <div className="flex items-start justify-between">
-                                <div className="space-y-1">
-                                    <h3 className="text-2xl font-bold text-slate-950 tracking-tight">{product.name}</h3>
-                                    <p className="text-xs font-bold text-slate-400 h-4 uppercase tracking-widest">{product.category || 'Gear'}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-2xl font-black text-slate-950 tabular-nums">{product.price} kr.</p>
-                                    <p className="text-[10px] font-bold text-slate-400 italic">Inkl. moms</p>
-                                </div>
-                            </div>
-                        </div>
+                                    {/* Product Details (Separate from card for cleaner look) */}
+                                    <div className="mt-8 px-2 space-y-3">
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1">
+                                                <h3 className={`text-2xl font-bold tracking-tight ${isOutOfStock ? 'text-slate-400' : 'text-slate-950'}`}>{product.name}</h3>
+                                                <p className="text-xs font-bold text-slate-400 h-4 uppercase tracking-widest">{product.category || 'Gear'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className={`text-2xl font-black tabular-nums ${isOutOfStock ? 'text-slate-400' : 'text-slate-950'}`}>{product.price} kr.</p>
+                                                <p className="text-[10px] font-bold text-slate-400 italic">Inkl. moms</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </motion.div>
                 )) : !isLoading && (
                     <div className="col-span-full py-40 flex flex-col items-center justify-center text-center gap-6">

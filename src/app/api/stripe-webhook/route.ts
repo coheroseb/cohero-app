@@ -43,6 +43,27 @@ export async function POST(req: NextRequest) {
           if (session.mode === 'payment' && session.metadata?.type === 'shop_purchase' && session.metadata?.orderId) {
              const orderId = session.metadata.orderId;
              const orderRef = firestore.collection('shop_orders').doc(orderId);
+             
+             // 1. Get the order data to know which items were bought
+             const orderSnap = await orderRef.get();
+             if (orderSnap.exists()) {
+                const orderData = orderSnap.data();
+                const items = orderData?.items || [];
+                
+                // 2. Update stock for each item in shop_products
+                const batch = firestore.batch();
+                for (const item of items) {
+                    if (item.id) {
+                        const productRef = firestore.collection('shop_products').doc(item.id);
+                        batch.update(productRef, {
+                            stock: admin.firestore.FieldValue.increment(-item.quantity)
+                        });
+                    }
+                }
+                await batch.commit();
+                console.log(`[StripeWebhook] Updated stock for order ${orderId}`);
+             }
+
              await orderRef.update({
                 paymentStatus: 'paid',
                 stripeSessionId: session.id,
