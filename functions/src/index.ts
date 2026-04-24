@@ -199,3 +199,6 @@ export { onAssistanceRequestUpdate, onAssistanceRequestCreate };
 import { onUserUpdateScanStudentCard, onUserDeleteCleanUp } from "./users";
 export { onUserUpdateScanStudentCard, onUserDeleteCleanUp };
 
+import { onShopOrderUpdate } from "./shop";
+export { onShopOrderUpdate };
+

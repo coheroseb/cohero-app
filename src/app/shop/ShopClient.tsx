@@ -267,11 +267,13 @@ export default function ShopClient() {
                                 />
                                 
                                 {/* Status Tags */}
-                                <div className="absolute top-6 left-6 flex flex-col gap-2">
-                                    <span className="px-4 py-2 bg-white/90 backdrop-blur-xl rounded-2xl text-[10px] font-bold uppercase tracking-widest text-slate-900 shadow-sm border border-white/50">
-                                        {product.tag || 'Standard Edition'}
-                                    </span>
-                                </div>
+                                {product.tag && (
+                                    <div className="absolute top-6 left-6 flex flex-col gap-2">
+                                        <span className="px-4 py-2 bg-white/90 backdrop-blur-xl rounded-2xl text-[10px] font-bold uppercase tracking-widest text-slate-900 shadow-sm border border-white/50">
+                                            {product.tag}
+                                        </span>
+                                    </div>
+                                )}
 
                                 {/* Cart Shortcut Overlay */}
                                 <div className="absolute inset-x-0 bottom-0 p-6 opacity-0 group-hover:opacity-100 translate-y-10 group-hover:translate-y-0 transition-all duration-500 bg-gradient-to-t from-black/20 to-transparent">
