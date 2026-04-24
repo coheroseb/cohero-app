@@ -3,6 +3,7 @@
 
 import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { adminFirestore, admin } from '@/firebase/server-init';
+import { headers } from 'next/headers';
 
 export async function createShopCheckoutSessionAction(items: any[], userId: string | null, userEmail: string) {
     if (!isStripeConfigured) {
@@ -38,7 +39,9 @@ export async function createShopCheckoutSessionAction(items: any[], userId: stri
         }));
 
         // 3. Create Stripe Session
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const host = headers().get('host');
+        const protocol = host?.includes('localhost') ? 'http' : 'https';
+        const baseUrl = `${protocol}://${host}`;
         
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
