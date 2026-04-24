@@ -252,8 +252,6 @@ const Navbar: React.FC<NavbarProps> = ({
                   { label: "Akademiet", href: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5"/>, color: "bg-purple-100 text-purple-700" },
                   { label: "Slides", href: "/mine-seminarer", icon: <Presentation className="w-5 h-5"/>, color: "bg-emerald-100 text-emerald-700" },
                   { label: "Jura", href: "/lov-portal", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" },
-                  { label: "Shop", href: "/shop", icon: <ShoppingBag className="w-5 h-5"/>, color: "bg-rose-100 text-rose-700" },
-                  
                   { label: "Semester", href: "/mit-semester", icon: <CalendarDays className="w-5 h-5"/>, color: "bg-indigo-100 text-indigo-700" }
                 ].map((item) => (
                   <Link key={item.label} href={item.href} className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
@@ -265,6 +263,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 ))}
 
                 <NavDropdown title="Mere" icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}>
+                   <NavDropdownLink href="/shop" icon={<ShoppingBag className="w-4 h-4 text-rose-500" />}>Shop</NavDropdownLink>
                    <NavDropdownLink href={`/u/${user?.uid}`} icon={<UserIcon className="w-4 h-4 text-indigo-500" />}>Offentlig Profil</NavDropdownLink>
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
