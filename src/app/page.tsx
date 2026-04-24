@@ -791,7 +791,7 @@ export default function LandingPage() {
                     </div>
                     <h2 className="text-5xl sm:text-7xl font-[900] text-white leading-[0.95] tracking-tight text-balance">
                       Brug for <br />
-                      <span className="italic font-serif text-rose-500">professionshjelp?</span>
+                      <span className="italic font-serif text-rose-500">professionshjælp?</span>
                     </h2>
                     <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 mt-8">
                         Vi forbinder borgere med studerende, der kan assistere med sagsindsigt, bisidderopgaver og juridisk sparring. Det er din genvej til professionel støtte.
