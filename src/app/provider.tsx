@@ -307,6 +307,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const isMitSemester = useMemo(() => pathname?.startsWith('/mit-semester'), [pathname]);
   const isAdminPage = useMemo(() => pathname?.startsWith('/admin'), [pathname]);
   const isPublicProfile = useMemo(() => pathname?.startsWith('/u/'), [pathname]);
+  const isJourney = useMemo(() => pathname === '/journey', [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -786,15 +787,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 .border-amber-200, .border-amber-100 { border-color: #a78bfa !important; }
             ` : ''}
         ` }} />
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isPublicProfile && !isNavbarHidden && showBannerOverlays && (
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isPublicProfile && !isNavbarHidden && !isJourney && showBannerOverlays && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
             <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} topOffset={totalBannerOffset} />
           </>
         )}
         <main 
-          className={`relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${((isLovPortal || isMitSemester || pathname?.includes('/simulator')) && !isNativeApp) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
-          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' ? `calc(${totalBannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (totalBannerOffset > 0 && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${totalBannerOffset}px` : undefined) }}
+          className={`relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage || isJourney) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${((isLovPortal || isMitSemester || pathname?.includes('/simulator')) && !isNativeApp) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
+          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' && !isJourney ? `calc(${totalBannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (totalBannerOffset > 0 && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${totalBannerOffset}px` : undefined) }}
         >
             {/* Soft top gradient to blend with navbar when scrolling */}
             {!isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && (
@@ -811,7 +812,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/simulator') && !pathname?.includes('/klaus-viste') && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/simulator') && !pathname?.includes('/klaus-viste') && !isJourney && <Footer />}
 
 
         
