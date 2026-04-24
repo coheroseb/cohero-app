@@ -101,6 +101,18 @@ export default function ShopClient() {
     });
   };
 
+  const updateQuantity = (id: string, delta: number) => {
+    setCart(prev => {
+      return prev.map(item => {
+        if (item.id === id) {
+          const newQty = item.quantity + delta;
+          return { ...item, quantity: newQty };
+        }
+        return item;
+      }).filter(item => item.quantity > 0);
+    });
+  };
+
   const removeFromCart = (id: string) => {
     setCart(prev => prev.filter(item => item.id !== id));
   };
@@ -305,7 +317,7 @@ export default function ShopClient() {
         <section className="mt-60 grid md:grid-cols-3 gap-16">
              {[
                 { title: 'Materialer', icon: <Star />, desc: 'Vi benytter udelukkende premium bomuld og genanvendelige materialer i vores produktion.' },
-                { title: 'Logistik', icon: <Truck />, desc: 'Hurtig og CO2-kompenseret forsendelse til hele Danmark via vores pakke-partnere.' },
+                { title: 'Logistik', icon: <Truck />, desc: 'Altid gratis og CO2-kompenseret forsendelse til hele Danmark via vores pakke-partnere.' },
                 { title: 'Support', icon: <ShieldCheck />, desc: 'Vi sidder klar til at hjælpe dig med spørgsmål om størrelser, kvalitet eller levering.' }
              ].map((f, i) => (
                 <div key={i} className="space-y-6 flex flex-col items-center text-center px-4">
@@ -422,9 +434,13 @@ export default function ShopClient() {
                                         
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                                                <button onClick={() => {/* Decrement would go here */}} className="text-slate-400 hover:text-slate-950 transition-colors"><Minus className="w-3 h-3" /></button>
+                                                <button onClick={() => updateQuantity(item.id, -1)} className="text-slate-400 hover:text-slate-950 transition-colors">
+                                                    <Minus className="w-3 h-3" />
+                                                </button>
                                                 <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
-                                                <button onClick={() => addToCart(item)} className="text-slate-400 hover:text-slate-950 transition-colors"><Plus className="w-3 h-3" /></button>
+                                                <button onClick={() => updateQuantity(item.id, 1)} className="text-slate-400 hover:text-slate-950 transition-colors">
+                                                    <Plus className="w-3 h-3" />
+                                                </button>
                                             </div>
                                             <p className="text-xl font-black text-slate-950">{item.price * item.quantity} kr.</p>
                                         </div>
@@ -464,7 +480,7 @@ export default function ShopClient() {
                         </div>
                         <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-widest px-2 border-t border-slate-900 pt-4">
                             <span>Forsendelse</span>
-                            <span className="text-emerald-400">Gratis over 499 kr.</span>
+                            <span className="text-emerald-400">Altid gratis</span>
                         </div>
                         <div className="h-[1px] bg-slate-900 w-full" />
                         <div className="flex items-center justify-between px-2">

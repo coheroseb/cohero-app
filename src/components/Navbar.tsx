@@ -330,6 +330,7 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Kursus Arkitekt", path: "/kursus-designer", icon: <Wand2 className="w-5 h-5" /> },
           { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
+          { title: "Shop", path: "/shop", icon: <ShoppingBag className="w-5 h-5" /> },
           
           { title: "Form fremtiden", path: "/medbestemmelse", icon: <Lightbulb className="w-5 h-5" /> },
         ]
@@ -404,6 +405,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   { label: "Kursus", href: "/kursus-designer", icon: <Wand2 className="w-5 h-5"/>, color: "bg-purple-100 text-purple-700" },
                   { label: "Slides", href: "/mine-seminarer", icon: <Presentation className="w-5 h-5"/>, color: "bg-emerald-100 text-emerald-700" },
                   { label: "Jura", href: "/lov-portal", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" },
+                  { label: "Shop", href: "/shop", icon: <ShoppingBag className="w-5 h-5"/>, color: "bg-rose-100 text-rose-700" },
                   
                   { label: "Semester", href: "/mit-semester", icon: <CalendarDays className="w-5 h-5"/>, color: "bg-indigo-100 text-indigo-700" }
                 ].map((item) => (
@@ -421,9 +423,6 @@ const Navbar: React.FC<NavbarProps> = ({
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
                    <NavDropdownLink href="/videnskabsteori" icon={<Scale className="w-4 h-4 text-indigo-500" />}>Videnskabsteori</NavDropdownLink>
-                  <NavDropdownLink href="/shop" icon={<ShoppingBag className="w-4 h-4 text-rose-500" />}>
-                    Cohéro Shop <span className="ml-2 px-1.5 py-0.5 bg-rose-100 text-rose-600 text-[8px] rounded-full">PÅ VEJ</span>
-                  </NavDropdownLink>
                    {userProfile?.role === 'admin' && (
                      <NavDropdownLink href="/admin" icon={<Shield className="w-4 h-4 text-rose-500" />}>Admin Panel</NavDropdownLink>
                    )}
@@ -437,6 +436,10 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center space-x-2"
               >
                 <Link href="/hvorfor" className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Hvorfor Cohéro?</Link>
+                <Link href="/shop" className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all flex items-center gap-2`}>
+                  <ShoppingBag className="w-4 h-4 text-rose-500" />
+                  Shop
+                </Link>
                 
                 <NavDropdown title="Udforsk" icon={<Wand2 className="w-4 h-4 text-amber-500" />}>
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
@@ -633,9 +636,9 @@ const Navbar: React.FC<NavbarProps> = ({
                             Vær med til at forme Cohéro <Lightbulb className="w-5 h-5 text-amber-500" />
                         </Link>
                     </motion.li>
-                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 }}>
+                      <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 }}>
                         <Link href="/shop" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
-                            <span className="flex items-center gap-3">Cohéro Shop <span className="px-2 py-0.5 bg-rose-200 text-rose-700 text-[10px] rounded-full">PÅ VEJ</span></span>
+                            <span className="flex items-center gap-3">Cohéro Shop</span>
                             <ShoppingBag className="w-5 h-5 text-rose-400" />
                         </Link>
                     </motion.li>
