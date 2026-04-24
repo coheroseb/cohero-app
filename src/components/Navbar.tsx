@@ -175,7 +175,7 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Korrektur", path: "/korrektur", icon: <Sparkles className="w-5 h-5" /> },
           { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
-          { title: "Kursus Arkitekt", path: "/kursus-designer", icon: <Wand2 className="w-5 h-5" /> },
+          { title: "Akademiet", path: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5" /> },
           { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
           { title: "Shop", path: "/shop", icon: <ShoppingBag className="w-5 h-5" /> },
           { title: "Vores Rejse", path: "/journey", icon: <Rocket className="w-5 h-5 text-rose-500" /> },
@@ -249,7 +249,7 @@ const Navbar: React.FC<NavbarProps> = ({
               >
                 {[
                   { label: "Hjem", href: "/portal", icon: <Home className="w-5 h-5"/>, color: "bg-amber-100 text-amber-700" },
-                  { label: "Kursus", href: "/kursus-designer", icon: <Wand2 className="w-5 h-5"/>, color: "bg-purple-100 text-purple-700" },
+                  { label: "Akademiet", href: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5"/>, color: "bg-purple-100 text-purple-700" },
                   { label: "Slides", href: "/mine-seminarer", icon: <Presentation className="w-5 h-5"/>, color: "bg-emerald-100 text-emerald-700" },
                   { label: "Jura", href: "/lov-portal", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" },
                   { label: "Shop", href: "/shop", icon: <ShoppingBag className="w-5 h-5"/>, color: "bg-rose-100 text-rose-700" },
