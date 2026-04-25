@@ -30,6 +30,8 @@ export async function explainConcept(input: ExplainConceptInput): Promise<Explai
   return explainConceptFlow(input);
 }
 
+export { explainConceptFlow };
+
 const PromptInputSchema = z.object({
   concept: z.string().describe('The concept, question, or topic to be explained/answered.'),
   profession: z.string().optional().describe('The profession of the user.'),
