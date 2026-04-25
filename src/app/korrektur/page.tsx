@@ -32,7 +32,7 @@ export default function KorrekturPage() {
     setHasMounted(true);
   }, []);
 
-  const PRICE_PER_PAGE = 35;
+  const PRICE_PER_PAGE = 25;
   const CHARS_PER_PAGE = 2400;
 
   const pageCount = useMemo(() => Math.ceil(charCount / CHARS_PER_PAGE), [charCount]);
@@ -161,7 +161,7 @@ export default function KorrekturPage() {
                     </div>
                     <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
                       <p className="text-[10px] font-black uppercase text-amber-700 mb-1">Pris pr. side</p>
-                      <p className="text-2xl font-black text-amber-900">35 kr.</p>
+                      <p className="text-2xl font-black text-amber-900">25 kr.</p>
                     </div>
                   </div>
                 </div>
@@ -480,7 +480,7 @@ export default function KorrekturPage() {
 
       {/* Footer / Copyright */}
       <footer className="px-6 py-12 text-center text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
-        © {new Date().getFullYear()} Cohéro I/S • Pris: 35 kr. pr. 2.400 tegn
+        © {new Date().getFullYear()} Cohéro I/S • Pris: 25 kr. pr. 2.400 tegn
       </footer>
     </div>
   );
