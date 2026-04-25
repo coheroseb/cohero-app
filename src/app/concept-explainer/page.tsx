@@ -442,12 +442,16 @@ function ConceptChatContent() {
               ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + flowPath)
               : (prodBaseUrl + flowPath);
 
-            console.log(`[ConceptExplainer] Fetching from ${url}...`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+
             const response = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ flowName: 'explainConceptFlow', data: { concept: term, profession: userProfile.profession || 'Socialrådgiver', stream: true }, stream: true }),
+              signal: controller.signal,
             });
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
               const errText = await response.text();
@@ -551,7 +555,9 @@ function ConceptChatContent() {
         const history = buildHistory();
         const safeDef = (currentDefinition || messages.find(m => m.role === 'concept')?.explanation?.definition || '').replace(/<[^>]*>/g, '');
         
-        console.log(`[ConceptExplainer] Fetching followup from ${url}...`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -568,7 +574,9 @@ function ConceptChatContent() {
             }, 
             stream: true 
           }),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           const errText = await response.text();
@@ -621,8 +629,14 @@ function ConceptChatContent() {
           }
         }
       }
-    } catch (err) {
-      toast({ variant: 'destructive', title: 'Fejl', description: 'Noget gik galt. Prøv igen.' });
+    } catch (err: any) {
+      console.error('[ConceptExplainer] Error:', err);
+      const isTimeout = err.name === 'AbortError';
+      toast({ 
+        variant: 'destructive', 
+        title: isTimeout ? 'Forbindelse afbrudt' : 'Fejl', 
+        description: isTimeout ? 'Svaret tog for lang tid. Prøv venligst igen.' : 'Noget gik galt. Prøv igen.' 
+      });
     } finally {
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -675,7 +689,7 @@ function ConceptChatContent() {
             className={`p-2.5 rounded-xl border transition-all ${showHistory ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}>
             <History className="w-4 h-4" />
           </button>
-          <Link href="/upgrade" className="hidden sm:flex items-center gap-2 px-4 py-2 bg-amber-950 text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-900 transition-all">
+          <Link href="/upgrade" prefetch={false} className="hidden sm:flex items-center gap-2 px-4 py-2 bg-amber-950 text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-900 transition-all">
             Opgrader
           </Link>
         </div>

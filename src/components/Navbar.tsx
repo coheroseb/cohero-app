@@ -108,6 +108,7 @@ const NavDropdownLink: React.FC<{
       <Link
         href={href}
         onClick={onClick}
+        prefetch={false}
         className="flex items-center gap-3 p-3 rounded-xl text-sm font-semibold text-slate-600 lg:hover:bg-slate-50 lg:hover:text-slate-900 transition-colors active:scale-[0.98]"
       >
         <div className="w-8 h-8 flex items-center justify-center bg-slate-50 border border-slate-100 rounded-lg text-slate-500">
@@ -282,8 +283,8 @@ const Navbar: React.FC<NavbarProps> = ({
                 transition={{ delay: 0.1 }}
                 className="flex items-center space-x-2"
               >
-                <Link href="/hvorfor" className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Hvorfor Cohéro?</Link>
-                <Link href="/shop" className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all flex items-center gap-2`}>
+                <Link href="/hvorfor" prefetch={false} className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Hvorfor Cohéro?</Link>
+                <Link href="/shop" prefetch={false} className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all flex items-center gap-2`}>
                   <ShoppingBag className="w-4 h-4 text-rose-500" />
                   Shop
                 </Link>
@@ -428,6 +429,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                 <Link 
                                   href={item.path} 
                                   onClick={() => setIsMobileMenuOpen(false)}
+                                  prefetch={false}
                                   className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-[20px] active:scale-[0.98] active:bg-slate-50 transition-all shadow-sm"
                                 >
                                   <div className="flex items-center gap-4">

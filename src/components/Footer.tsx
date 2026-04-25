@@ -77,6 +77,7 @@ const Footer: React.FC = () => {
                   <li key={link.name}>
                     <Link 
                       href={link.href} 
+                      prefetch={false}
                       className={`text-sm flex items-center gap-2 group transition-colors ${link.highlight ? 'text-amber-600 font-bold' : 'text-slate-500 hover:text-amber-950'}`}
                     >
                       {link.name}
@@ -99,6 +100,7 @@ const Footer: React.FC = () => {
                   <li key={link.name}>
                     <Link 
                       href={link.href} 
+                      prefetch={false}
                       className="text-sm text-slate-500 hover:text-amber-950 flex items-center gap-2 group transition-colors"
                     >
                       {link.name}
