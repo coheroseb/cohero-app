@@ -22,7 +22,7 @@ import { draftEmail } from './flows/draft-email-flow';
 import { chatWithEvidenceContent } from './flows/evidence-chat-flow';
 import { generateExamBlueprint } from './flows/exam-architect-flow';
 import { explainConceptWithAnalogy } from './flows/explain-concept-analogy-flow';
-import { explainConcept, explainConceptFlow } from './flows/explain-concept-flow';
+import { explainConceptFlow } from './flows/explain-concept-flow';
 import { explainFolketingetSag } from './flows/explain-ft-case-flow';
 import { explainLawParagraph } from './flows/explain-law-paragraph-flow';
 import { explainTechniqueWithAnalogy } from './flows/explain-technique-analogy-flow';
