@@ -290,7 +290,7 @@ export default function KorrekturPage() {
               <h3 className="text-2xl font-black text-slate-900 serif mb-2">Sebastian Hansen</h3>
               <p className="text-amber-700 text-xs font-black uppercase tracking-widest mb-4">Uddannet Socialrådgiver</p>
               <p className="text-slate-500 font-medium leading-relaxed">
-                Kandidatstuderende i Arbejdsliv ved Roskilde Universitet.
+                Uddannet socialrådgiver fra sommeren 2025. Sebastian læser til dagligt på Roskilde Universitet og har topkarakterer fra sin uddannelse, herunder et 12-tal i sit bachelorprojekt.
               </p>
             </motion.div>
 
