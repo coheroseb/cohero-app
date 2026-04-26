@@ -14,7 +14,7 @@ export const translateDiagnoseFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-2.5-flash',
       prompt: `Du er en professionel oversætter specialiseret i medicinsk og socialfaglig terminologi.
       Oversæt nedenstående tekst fra engelsk til flydende, fagligt korrekt dansk.
       

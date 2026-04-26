@@ -131,7 +131,7 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
     ],
   },
-  model: 'googleai/gemini-1.5-flash',
+  model: 'googleai/gemini-2.5-flash',
 });
 
 export const explainConceptFlow = ai.defineFlow(

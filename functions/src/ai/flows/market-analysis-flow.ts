@@ -54,7 +54,7 @@ export const marketAnalysisFlow = ai.defineFlow(
       4. Skriv en rapport i Markdown (dansk).
       
       VIGTIGT: Returner KUN JSON-objektet i overensstemmelse med schemaet. Ingen forklarende tekst før eller efter JSON.`,
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-2.5-flash',
       output: {
         schema: MarketAnalysisOutputSchema,
       }

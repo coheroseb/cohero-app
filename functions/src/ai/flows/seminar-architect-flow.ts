@@ -69,7 +69,7 @@ async function analyzeBatch(
     const count = slides.length;
 
     const response = await ai.generate({
-        model: 'googleai/gemini-1.5-flash',
+        model: 'googleai/gemini-2.5-flash',
         system: buildSystem(count),
         prompt: `Analyser nu disse ${count} slides systematisk og returnér præcis ${count} elementer i 'slides' arrayet.
 
@@ -120,7 +120,7 @@ export async function seminarArchitect(input: SeminarArchitectInput): Promise<Se
         console.log(`[SEMINAR-ARCHITECT] Single-pass mode (${slideCount} slides)`);
         
         const response = await ai.generate({
-            model: 'googleai/gemini-1.5-flash',
+            model: 'googleai/gemini-2.5-flash',
             system: buildSystem(slideCount),
             prompt: `Analyser nu ALLE ${slideCount} slides og returnér PRÆCIS ${slideCount} elementer i 'slides' arrayet.
 

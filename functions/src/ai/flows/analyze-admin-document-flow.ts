@@ -24,7 +24,7 @@ export const analyzeAdminDocumentFlow = ai.defineFlow(
     }
 
     const { output, usage } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-2.5-flash',
       prompt: [
         mediaObj,
         {

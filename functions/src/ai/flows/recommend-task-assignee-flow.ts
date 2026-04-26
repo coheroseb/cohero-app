@@ -7,7 +7,7 @@ import { RecommendTaskAssigneeInputSchema, RecommendTaskAssigneeOutputSchema } f
 
 export async function recommendTaskAssignee(input: z.infer<typeof RecommendTaskAssigneeInputSchema>) {
   const { output } = await ai.generate({
-    model: 'googleai/gemini-1.5-flash',
+    model: 'googleai/gemini-2.5-flash',
     output: { schema: RecommendTaskAssigneeOutputSchema },
     system: `Du er en intelligent assistent til studiegrupper. Din opgave er at anbefale hvem en ny opgave skal tildeles til, baseret på opgavens indhold, gruppemedlemmernes nuværende arbejdsbyrde og deres tilgængelighed. Svar på dansk.
 

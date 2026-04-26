@@ -14,7 +14,7 @@ export const analyzeLegalDecisionPdfFlow = ai.defineFlow(
   },
   async (input) => {
     const { output, usage } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-2.5-flash',
       prompt: [
         { media: { url: `data:application/pdf;base64,${input.pdfBase64}`, contentType: 'application/pdf' } },
         {
