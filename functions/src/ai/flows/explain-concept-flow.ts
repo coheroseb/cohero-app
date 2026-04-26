@@ -12,11 +12,9 @@ import {
     ExplainConceptOutputSchema, 
     type ExplainConceptInput,
     type ExplainConceptOutput,
-    UsageSchema,
 } from './types';
 import { getCachedBooks } from './book-cache';
 import { getRelevantLawContext } from '../../lib/law-context-helper';
-
 
 const BookSchemaForPrompt = z.object({
   title: z.string(),
@@ -25,20 +23,12 @@ const BookSchemaForPrompt = z.object({
   RAG: z.string().optional().describe('Relevant content excerpts, keywords, and topics from the book for retrieval-augmented generation.'),
 });
 
-
-export async function explainConcept(input: ExplainConceptInput): Promise<ExplainConceptOutput> {
-  return explainConceptFlow(input);
-}
-
-export { explainConceptFlow };
-
 const PromptInputSchema = z.object({
   concept: z.string().describe('The concept, question, or topic to be explained/answered.'),
   profession: z.string().optional().describe('The profession of the user.'),
   books: z.array(BookSchemaForPrompt).optional().describe('Relevant curriculum books for context.'),
   lawContext: z.string().optional().describe('Deep legal context from the Law Portal.'),
 });
-
 
 const prompt = ai.definePrompt({
   name: 'explainConceptPrompt',
@@ -116,7 +106,7 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
 
 11. **isModel**: True KUN hvis emnet er en konkret model/ramme der kan visualiseres (f.eks. Maslows behovspyramide, LØFT-modellen, ART, Brofenbrenner).
 
-12. **conceptModel**: KUN udfyld hvis isModel er true. Lav en komplet graph med nodes og edges der visualiserer modellen.
+12. **conceptModel**: KUN udfyld hvis isModel is true. Lav en komplet graph med nodes og edges der visualiserer modellen.
 
 13. **legalContext**: KUN udfyld med ORDRET lovtekst fra konteksten ovenfor. Angiv lov, paragraf, og den nøjagtige tekst. Udelad hvis ikke relevant.
 
@@ -131,6 +121,7 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
 - Hvis spørgsmålet er tvetydigt, vælg den mest sandsynlige socialfaglige fortolkning og besvar den
 - Citér teorier med forfatter og årstal når muligt, f.eks. (Jensen, 2019)
 - Definition-feltet er det vigtigste – investér mest kvalitet her
+- **VIGTIGT:** Brug ALTID dobbelte linjeskift (\\n\\n) før overskrifter (###) og mellem afsnit, så markdown formateringen virker korrekt.
 `,
   config: {
     safetySettings: [
@@ -140,39 +131,40 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
     ],
   },
-  model: 'googleai/gemini-2.5-pro',
+  model: 'googleai/gemini-1.5-flash',
 });
 
-const explainConceptFlow = ai.defineFlow(
+export const explainConceptFlow = ai.defineFlow(
   {
     name: 'explainConceptFlow',
-    inputSchema: z.object({ concept: z.string(), profession: z.string().optional(), lawContext: z.string().optional() }),
+    inputSchema: z.object({ 
+        concept: z.string(), 
+        profession: z.string().optional(), 
+        lawContext: z.string().optional() 
+    }),
     outputSchema: ExplainConceptOutputSchema,
   },
   async (input, { sendChunk }) => {
+    console.log(`[EXPLAIN-CONCEPT-FLOW] Starting for: "${input.concept}"...`);
+
     // 1. Fetch all books
     const allBooks = await getCachedBooks();
     
-    // 2. Smarter book filtering: expand keywords with Danish morphology approximation
+    // 2. Smarter book filtering
     const rawKeywords = input.concept.toLowerCase().split(/[\s,;.?!]+/).filter(w => w.length > 2);
     
     // Generate keyword variants to handle Danish word forms
     const expandedKeywords = new Set<string>(rawKeywords);
     rawKeywords.forEach(kw => {
-      // Remove common suffixes to get root form
+      // Common suffixes
       if (kw.endsWith('ing')) expandedKeywords.add(kw.slice(0, -3));
       if (kw.endsWith('else')) expandedKeywords.add(kw.slice(0, -4));
-      if (kw.endsWith('ninger')) expandedKeywords.add(kw.slice(0, -6));
-      if (kw.endsWith('elser')) expandedKeywords.add(kw.slice(0, -5));
       if (kw.endsWith('erne')) expandedKeywords.add(kw.slice(0, -4));
       if (kw.endsWith('ene')) expandedKeywords.add(kw.slice(0, -3));
       if (kw.endsWith('er')) expandedKeywords.add(kw.slice(0, -2));
-      if (kw.endsWith('lig')) expandedKeywords.add(kw.slice(0, -3));
-      if (kw.endsWith('hed')) expandedKeywords.add(kw.slice(0, -3));
-      if (kw.endsWith('igt')) expandedKeywords.add(kw.slice(0, -3));
+      
       // Truncated root forms for compound word matching
       if (kw.length > 6) {
-        expandedKeywords.add(kw.substring(0, kw.length - 1));
         expandedKeywords.add(kw.substring(0, kw.length - 2));
       }
     });
@@ -183,30 +175,37 @@ const explainConceptFlow = ai.defineFlow(
     const scoredBooks = allBooks
       .map(book => {
         const bookText = `${book.title} ${book.author} ${book.RAG || ''}`.toLowerCase();
-        const score = keywordArray.filter(kw => bookText.includes(kw)).length;
+        let score = 0;
+        keywordArray.forEach(kw => {
+            if (bookText.includes(kw)) score += 1;
+        });
+        // Boost books that have exact word matches in title
+        rawKeywords.forEach(kw => {
+            if (book.title.toLowerCase().includes(kw)) score += 2;
+        });
         return { book, score };
       })
       .filter(({ score }) => score > 0)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 10) // Top 10 most relevant books
-      .map(({ book }) => book);
+      .slice(0, 8); // Top 8 most relevant books
     
-    // Fallback: If no matches, send top 5 general books
-    const booksForPrompt = scoredBooks.length > 0 ? scoredBooks : allBooks.slice(0, 5);
+    // Fallback: If no matches, send top 4 general books
+    const booksForPrompt = scoredBooks.length > 0 ? scoredBooks.map(s => s.book) : allBooks.slice(0, 4);
     
     let lawContext = input.lawContext || '';
     
     // 3. Fetch law context if not provided
     if (!lawContext) {
-      console.log(`[EXPLAIN-CONCEPT] Fetching law context for: "${input.concept}"...`);
+      console.log(`[EXPLAIN-CONCEPT-FLOW] Fetching law context for: "${input.concept}"...`);
       try {
         lawContext = await getRelevantLawContext(input.concept);
       } catch (e) {
-        console.error('[EXPLAIN-CONCEPT] Law context fetch failed:', e);
-        lawContext = '';
+        console.error('[EXPLAIN-CONCEPT-FLOW] Law context fetch failed:', e);
+        lawContext = 'Kunne ikke hente juridisk kontekst automatisk.';
       }
     }
 
+    // 4. Stream response
     const streamRes = await prompt.stream({ 
         concept: input.concept, 
         profession: input.profession, 
@@ -216,6 +215,7 @@ const explainConceptFlow = ai.defineFlow(
 
     for await (const chunk of streamRes.stream) {
       if (chunk.output) {
+        // Genkit's prompt.stream output is the accumulated object
         sendChunk(chunk.output);
       }
     }
@@ -231,3 +231,7 @@ const explainConceptFlow = ai.defineFlow(
     };
   }
 );
+
+export async function explainConcept(input: ExplainConceptInput): Promise<ExplainConceptOutput> {
+  return explainConceptFlow(input);
+}

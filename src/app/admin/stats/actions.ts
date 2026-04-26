@@ -10,10 +10,8 @@ export async function generateAdminInsights(stats: any) {
       throw new Error('Missing GEMINI_API_KEY');
     }
 
-    // Attempt to use gemini-2.5-flash as requested, though it might be a future version.
-    // We'll use gemini-1.5-flash or gemini-2.0-flash if needed as fallbacks in real scenarios,
-    // but here we follow user instruction strictly.
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
+    // Use gemini-1.5-flash which is the current stable flash model.
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
     const prompt = `
       Du er en erfaren forretningsanalytiker for platformen Cohéro (en platform for socialrådgiverstuderende).
@@ -58,7 +56,7 @@ export async function generateTikTokScripts(topic: string = "", goal: string = "
     }
 
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         generationConfig: {
             responseMimeType: "application/json",
         }
@@ -99,7 +97,7 @@ export async function generateBlogPost(topic: string = "", keywords: string = ""
     }
 
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         generationConfig: {
             responseMimeType: "application/json",
         }

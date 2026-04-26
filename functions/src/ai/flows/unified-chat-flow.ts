@@ -37,7 +37,7 @@ export const unifiedChatFlow = ai.defineFlow(
       name: 'unifiedChatPrompt',
       input: { schema: UnifiedChatInputSchema },
       output: { schema: UnifiedChatDataSchema },
-      model: 'googleai/gemini-2.5-flash',
+      model: 'googleai/gemini-1.5-flash',
       prompt: `
 ${personaDescription}
 
@@ -64,6 +64,8 @@ Brug Markdown til at skabe en flot struktur:
 - Brug **fed skrift** til vigtige pointer.
 - Brug > til citater eller lovhenvisninger.
 
+**VIGTIGT:** Du skal ALTID bruge dobbelte linjeskift (\n\n) før overskrifter og mellem afsnit. Uden dobbelte linjeskift virker formateringen ikke.
+    
 **VIGTIGT:** Du må IKKE bruge din generelle viden om jura til at rådgive. ALT jura skal være baseret på den leverede kontekst fra Lovportalen. Hvis du mangler specifik lovhjemmel i konteksten, skal du sige det direkte fremfor at gætte.
     
 Svaret SKAL være på dansk.`,

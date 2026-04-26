@@ -8,10 +8,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc, writeBatch, increment, collection, serverTimestamp } from 'firebase/firestore';
-import { explainConceptAction, conceptFollowUpAction } from '@/app/actions';
 import type { Explanation } from '@/ai/flows/types';
 import { useToast } from '@/hooks/use-toast';
 import { marked } from 'marked';
+
+// Configure marked
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,7 +26,7 @@ interface ChatMsg {
   id: string;
   role: MsgRole;
   text?: string;          // user / followup
-  explanation?: Explanation; // concept
+  explanation?: Partial<Explanation>; // concept
   conceptName?: string;
 }
 
@@ -55,8 +60,9 @@ function Section({ title, icon, children, open: defaultOpen = false }: {
 function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: string) => void }) {
   const { explanation: ex, conceptName } = msg;
   if (!ex) return null;
+
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-7 h-7 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400"><BrainCircuit className="w-3.5 h-3.5" /></div>
         <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/30">Guiden</span>
@@ -75,7 +81,8 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
         {/* Definition */}
         <div className="px-7 py-7">
           {ex.definition ? (
-            <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed font-medium serif" dangerouslySetInnerHTML={{ __html: ex.definition }} />
+            <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed font-medium serif" 
+                 dangerouslySetInnerHTML={{ __html: marked.parse(ex.definition) as string }} />
           ) : (
             <div className="space-y-3 animate-pulse">
               <div className="h-4 bg-amber-100 rounded-full w-3/4" />
@@ -101,14 +108,16 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
         )}
 
         {ex.relevance && (
-          <Section title="Faglig relevans" icon={<Target className="w-3 h-3" />}>
-            <div className="prose prose-sm prose-slate max-w-none text-slate-600" dangerouslySetInnerHTML={{ __html: ex.relevance }} />
+          <Section title="Faglig relevans" icon={<Target className="w-3 h-3" />} open={true}>
+            <div className="prose prose-sm prose-slate max-w-none text-slate-600" 
+                 dangerouslySetInnerHTML={{ __html: marked.parse(ex.relevance || '') as string }} />
           </Section>
         )}
 
         {ex.practicalExample && (
           <Section title="Case eksempel" icon={<Zap className="w-3 h-3" />}>
-            <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 italic leading-relaxed" dangerouslySetInnerHTML={{ __html: ex.practicalExample }} />
+            <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 italic leading-relaxed" 
+                 dangerouslySetInnerHTML={{ __html: marked.parse(ex.practicalExample || '') as string }} />
           </Section>
         )}
 
@@ -134,7 +143,8 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
 
         {ex.criticalReflection && (
           <Section title="Kritisk refleksion" icon={<BrainCircuit className="w-3 h-3" />}>
-            <div className="prose prose-sm text-slate-600 italic" dangerouslySetInnerHTML={{ __html: ex.criticalReflection }} />
+            <div className="prose prose-sm text-slate-600 italic" 
+                 dangerouslySetInnerHTML={{ __html: marked.parse(ex.criticalReflection || '') as string }} />
           </Section>
         )}
 
@@ -143,7 +153,7 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
           <div className="px-7 py-4 border-t border-amber-50 flex flex-wrap gap-1.5">
             {ex.relatedConcepts.map((c, i) => (
               <button key={i} onClick={() => onAngleClick(c)}
-                className="px-3 py-1 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-bold text-amber-800 hover:bg-amber-100 transition-colors">
+                className="px-3 py-1 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-bold text-amber-800 hover:bg-amber-100 transition-all">
                 {c}
               </button>
             ))}
@@ -183,7 +193,7 @@ function FollowUpMsg({ msg }: { msg: ChatMsg }) {
   const isEmpty = !msg.text || msg.text.trim() === '';
   
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-7 h-7 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400"><BrainCircuit className="w-3.5 h-3.5" /></div>
         <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/30">Guiden</span>
@@ -197,7 +207,7 @@ function FollowUpMsg({ msg }: { msg: ChatMsg }) {
             ))}
           </div>
         ) : (
-          <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed" 
+          <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed space-y-4" 
                dangerouslySetInnerHTML={{ __html: marked.parse(msg.text || '') as string }} />
         )}
       </div>
@@ -209,37 +219,80 @@ function FollowUpMsg({ msg }: { msg: ChatMsg }) {
 
 function UserBubble({ msg }: { msg: ChatMsg }) {
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex justify-end">
-      <div className="max-w-lg bg-amber-950 text-white rounded-[2rem] rounded-tr-lg px-6 py-4 shadow-lg">
+    <div className="flex justify-end w-full">
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-lg bg-amber-950 text-white rounded-[2rem] rounded-tr-lg px-6 py-4 shadow-lg">
         <p className="text-sm font-semibold leading-relaxed">{msg.text}</p>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }
 
 // ─── Thinking dots ────────────────────────────────────────────────────────────
 
 function Thinking() {
+  const [step, setStep] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStep(s => (s + 1) % 5);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const steps = [
+    'Analyserer begrebet...',
+    'Finder faglig kontekst...',
+    'Søger i vidensbasen...',
+    'Slår juridisk forankring op...',
+    'Formulerer forklaring...'
+  ];
+
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400"><BrainCircuit className="w-3.5 h-3.5" /></div>
-        <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/30">Guiden</span>
-      </div>
-      <div className="bg-white border border-amber-100 rounded-[2rem] px-7 py-5 shadow-sm flex items-center gap-3">
-        {[0, 1, 2].map(i => (
-          <motion.div key={i} className="w-2 h-2 bg-amber-300 rounded-full"
-            animate={{ y: [0, -8, 0] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />
-        ))}
-        <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/25 ml-2">Analyserer…</span>
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      className="max-w-2xl w-full py-10"
+    >
+      <div className="flex flex-col items-center gap-6">
+        {/* Animated Icon */}
+        <div className="relative">
+          <div className="w-16 h-16 bg-amber-50 rounded-[2rem] flex items-center justify-center border border-amber-100/50 shadow-sm">
+            <BrainCircuit className="w-8 h-8 text-amber-400" />
+          </div>
+          <motion.div 
+            className="absolute inset-0 bg-amber-200/20 rounded-[2rem]"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+        </div>
+
+        {/* Step Text */}
+        <div className="flex flex-col items-center gap-3">
+          <AnimatePresence mode="wait">
+            <motion.p 
+              key={step}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              className="text-2xl font-black text-amber-950/80 serif italic tracking-tight"
+            >
+              {steps[step]}
+            </motion.p>
+          </AnimatePresence>
+          
+          <div className="flex gap-1">
+            {[0, 1, 2, 3, 4].map(i => (
+              <motion.div 
+                key={i} 
+                className={`h-1 rounded-full transition-all duration-700 ${i === step ? 'w-8 bg-amber-400' : 'w-2 bg-amber-100'}`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </motion.div>
   );
 }
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-
-const SUGGESTIONS = ['Magtanvendelse', 'Mentalisering', 'Retssikkerhed', 'Systemisk Teori', 'Moralsk stress', 'Barnets perspektiv'];
 
 // ─── History sidebar ─────────────────────────────────────────────────────────
 
@@ -306,7 +359,7 @@ function HistorySidebar({
   );
 }
 
-// ─── User bubble ──────────────────────────────────────────────────────────────
+// ─── Empty state ──────────────────────────────────────────────────────────────
 function EmptyState({ onPick }: { onPick: (s: string) => void }) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center h-full text-center px-6 pb-20 gap-10">
@@ -331,6 +384,8 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
     </motion.div>
   );
 }
+
+const SUGGESTIONS = ['Magtanvendelse', 'Mentalisering', 'Retssikkerhed', 'Systemisk Teori', 'Moralsk stress', 'Barnets perspektiv'];
 
 function ConceptChatContent() {
   const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
@@ -397,251 +452,272 @@ function ConceptChatContent() {
     return true;
   }, [userProfile, usageLimits]);
 
+  const trackUsage = useCallback(async (term: string) => {
+    if (!user || !userProfile || !firestore) return;
+    const batch = writeBatch(firestore);
+    const recent = [term, ...(userProfile.recentConcepts || [])].filter((t, i, s) => s.indexOf(t) === i).slice(0, 10);
+    batch.set(doc(collection(firestore, 'userActivities')), {
+      userId: user.uid, userName: userProfile.username || user.displayName || 'Anonym',
+      actionText: `slog begrebet "${term}" op.`, createdAt: serverTimestamp(),
+    });
+    batch.update(doc(firestore, 'users', user.uid), {
+      lastConceptExplainerUsage: serverTimestamp(),
+      dailyConceptExplainerCount: increment(1),
+      recentConcepts: recent,
+    });
+    await batch.commit();
+    await refetchUserProfile();
+  }, [user, userProfile, firestore, refetchUserProfile]);
+
   const sendMessage = useCallback(async (term: string) => {
     if (!term.trim() || !user || !userProfile || !firestore) return;
     setInput('');
     setLimitError(null);
     if (!checkLimit()) return;
 
+    const isInitial = !hasConcept;
+    const aiMsgId = (Date.now() + 1).toString();
     const userMsg: ChatMsg = { id: Date.now().toString(), role: 'user', text: term };
     setMessages(prev => [...prev, userMsg]);
+
+    const normalised = term.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
+    const profKey = (userProfile.profession || 'socialrådgiver').toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
+    const cacheKey = `cohero-explainer-${normalised}-${profKey}`;
+
     setLoading(true);
 
     try {
-      if (!hasConcept) {
-        // ── First message: concept explanation ──
-        setCurrentConceptName(term);
-        let explanation: Explanation | null = null;
-        const aiMsgId = (Date.now() + 1).toString();
-        const initialAiMsg: ChatMsg = { id: aiMsgId, role: 'concept', explanation: {} as any, conceptName: term };
-        setMessages(prev => [...prev, initialAiMsg]);
-        
-        const normalised = term.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
-        const profKey = (userProfile.profession || 'socialrådgiver').toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
-        const cacheKey = `cohero-explainer-${normalised}-${profKey}`;
-        const cached = sessionStorage.getItem(cacheKey);
-
-        if (cached) {
-          explanation = JSON.parse(cached);
-        } else {
-          // Check Firestore first
-          const docRef = doc(firestore, 'conceptExplanations-v2', `${normalised}--${profKey}`);
-          const genRef = doc(firestore, 'conceptExplanations-v2', normalised);
-          const [snap1, snap2] = await Promise.all([getDoc(docRef), getDoc(genRef)]);
-
-          if (snap1.exists()) {
-            explanation = snap1.data().explanation;
-          } else if (snap2.exists()) {
-            explanation = snap2.data().explanation;
-          } else {
-            // ── Streaming fetch ──
-            const flowPath = "/runAiFlow";
-            const prodBaseUrl = "https://runaiflow-7pguetq4hq-uc.a.run.app";
-            
-            const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
-              ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + flowPath)
-              : (prodBaseUrl + flowPath);
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
-
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ flowName: 'explainConceptFlow', data: { concept: term, profession: userProfile.profession || 'Socialrådgiver', stream: true }, stream: true }),
-              signal: controller.signal,
-            });
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-              const errText = await response.text();
-              throw new Error(`Server returned ${response.status}: ${errText}`);
-            }
-
-            if (!response.body) throw new Error('No response body received from server');
-            
-            const isStreaming = response.headers.get('Content-Type')?.includes('text/event-stream');
-            
-            if (!isStreaming) {
-              const res = await response.json();
-              explanation = res.data;
-            } else {
-              const reader = response.body.getReader();
-              const decoder = new TextDecoder();
-              let buffer = '';
-              let finalExplanation: Explanation | null = null;
-
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                
-                const lines = buffer.split('\n\n');
-                buffer = lines.pop() || '';
-                
-                for (const line of lines) {
-                  if (line.startsWith('data: ')) {
-                    try {
-                      const lineData = line.substring(6).trim();
-                      if (!lineData) continue;
-                      const chunk = JSON.parse(lineData);
-                      console.log('[ConceptExplainer] Concept chunk:', chunk);
-                      
-                      if (chunk.done) {
-                        finalExplanation = chunk.result?.data || chunk.result;
-                      } else {
-                        const partialExp = chunk.output || (chunk.definition ? chunk : null);
-                        if (partialExp) {
-                          if (partialExp.definition) {
-                            setLoading(false); 
-                            setCurrentDefinition(partialExp.definition);
-                          }
-                          setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, explanation: partialExp } : m));
-                        }
-                      }
-                    } catch (e) {
-                      console.warn('[ConceptExplainer] Stream parse error:', e);
-                    }
-                  }
-                }
-              }
-              explanation = finalExplanation;
-            }
-
-            if (explanation) {
-              const batch = writeBatch(firestore);
-              batch.set(docRef, { conceptName: term, explanation, profession: userProfile.profession, createdAt: serverTimestamp() });
-              if (!snap2.exists()) batch.set(genRef, { conceptName: term, explanation, profession: 'Generel', createdAt: serverTimestamp() });
-              await batch.commit();
-            }
-          }
-        }
-
-        if (explanation) {
-          sessionStorage.setItem(cacheKey, JSON.stringify(explanation));
-          setCurrentConceptName(term);
-          setCurrentDefinition(explanation.definition || '');
-          setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, explanation: explanation! } : m));
-        }
-
-        // Track usage
-        const batch = writeBatch(firestore);
-        const recent = [term, ...(userProfile.recentConcepts || [])].filter((t, i, s) => s.indexOf(t) === i).slice(0, 10);
-        batch.set(doc(collection(firestore, 'userActivities')), {
-          userId: user.uid, userName: userProfile.username || user.displayName || 'Anonym',
-          actionText: `slog begrebet "${term}" op.`, createdAt: serverTimestamp(),
-        });
-        batch.update(doc(firestore, 'users', user.uid), {
-          lastConceptExplainerUsage: serverTimestamp(),
-          dailyConceptExplainerCount: increment(1),
-          recentConcepts: recent,
-        });
-        await batch.commit();
-        await refetchUserProfile();
-
-      } else {
-        // ── Follow-up: conversational streaming ──
-        const aiMsgId = (Date.now() + 1).toString();
-        const initialAiMsg: ChatMsg = { id: aiMsgId, role: 'followup', text: '' };
-        setMessages(prev => [...prev, initialAiMsg]);
-
         const flowPath = "/runAiFlow";
         const prodBaseUrl = "https://runaiflow-7pguetq4hq-uc.a.run.app";
-        
         const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
-          ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + flowPath)
+          ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + flowPath) 
           : (prodBaseUrl + flowPath);
 
-        const history = buildHistory();
-        const safeDef = (currentDefinition || messages.find(m => m.role === 'concept')?.explanation?.definition || '').replace(/<[^>]*>/g, '');
-        
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 90000);
 
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            flowName: 'unifiedChatFlow', 
-            data: { 
-              message: term,
-              chatHistory: history,
-              persona: 'academic',
-              context: {
-                relevantDocumentIds: [],
-                lawContext: `AKTUEL FAGLIG KONTEKST:\nBegreb: ${currentConceptName}\nDefinition (uddrag): ${safeDef.substring(0, 1500)}`,
-              },
-            }, 
-            stream: true 
-          }),
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(`Server returned ${response.status}: ${errText}`);
-        }
-        
-        const isStreaming = response.headers.get('Content-Type')?.includes('text/event-stream');
-        
-        if (!isStreaming) {
-          const res = await response.json();
-          const answer = res.data?.answer || '';
-          setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, text: answer } : m));
-        } else {
-          const reader = response.body.getReader();
+        // Helper to handle streaming
+        const handleStream = async (
+          reader: ReadableStreamDefaultReader<Uint8Array>, 
+          onChunk: (data: any) => void
+        ) => {
           const decoder = new TextDecoder();
           let buffer = '';
-
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || '';
-            for (const line of lines) {
+            
+            const text = decoder.decode(value, { stream: true });
+            buffer += text;
+            
+            // Split by double newline (standard SSE) or single newline (sometimes used)
+            const parts = buffer.split(/\n\n|\n/);
+            buffer = parts.pop() || '';
+            
+            for (const part of parts) {
+              const line = part.trim();
               if (line.startsWith('data: ')) {
                 try {
                   const lineData = line.substring(6).trim();
                   if (!lineData) continue;
-                  const chunk = JSON.parse(lineData);
-                  console.log('[ConceptExplainer] Followup chunk:', chunk);
                   
-                  if (chunk.done) {
-                    setLoading(false);
-                    const finalAnswer = chunk.result?.data?.answer || chunk.result?.answer || '';
-                    if (finalAnswer) {
-                      setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, text: finalAnswer } : m));
-                    }
-                  } else {
-                    const partialAnswer = chunk.output?.answer || chunk.answer;
-                    if (partialAnswer !== undefined) {
-                      setLoading(false);
-                      setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, text: partialAnswer } : m));
-                    }
+                  const chunk = JSON.parse(lineData);
+                  console.log("[Stream] Raw chunk:", chunk);
+                  
+                  // Genkit sends data in various nested forms:
+                  // 1. { chunk: { ... } } -> streaming partials
+                  // 2. { done: true, result: { data: { ... } } } -> final result
+                  // 3. { message: { ... } } -> sometimes used in different versions
+                  
+                  let data = null;
+                  if (chunk.chunk) data = chunk.chunk;
+                  else if (chunk.done && chunk.result) data = chunk.result.data || chunk.result;
+                  else if (chunk.message) data = chunk.message;
+                  else if (!chunk.index && !chunk.done) data = chunk; // Raw object
+                  
+                  if (data) {
+                    console.log("[Stream] Extracted data:", data);
+                    onChunk(data);
                   }
                 } catch (e) {
-                  console.warn('[ConceptExplainer] Followup stream parse error:', e);
+                  // Partial JSON is common in streaming, but SSE should deliver whole lines
+                  console.warn("[Stream] Parse error for line:", line, e);
                 }
               }
             }
           }
+        };
+
+        if (isInitial) {
+          // Check cache first
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            const explanation = JSON.parse(cached);
+            setMessages(prev => [...prev, { id: aiMsgId, role: 'concept', explanation, conceptName: term }]);
+            setCurrentDefinition(explanation.definition || '');
+            setCurrentConceptName(term);
+            trackUsage(term);
+            setLoading(false);
+            return;
+          }
+
+          // Check DB first
+          const docRef = doc(firestore, 'conceptExplanations-v2', `${normalised}--${profKey}`);
+          const genRef = doc(firestore, 'conceptExplanations-v2', normalised);
+          const [snap1, snap2] = await Promise.all([getDoc(docRef), getDoc(genRef)]);
+
+          if (snap1.exists() || snap2.exists()) {
+            const explanation = snap1.exists() ? snap1.data().explanation : snap2.data().explanation;
+            setMessages(prev => [...prev, { id: aiMsgId, role: 'concept', explanation, conceptName: term }]);
+            setCurrentDefinition(explanation.definition || '');
+            setCurrentConceptName(term);
+            trackUsage(term);
+            setLoading(false);
+            return;
+          }
+
+          // No cache, no DB - start AI generation
+          setMessages(prev => [...prev, { id: aiMsgId, role: 'concept', explanation: {} as any, conceptName: term }]);
+
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              flowName: 'explainConceptFlow', 
+              data: { 
+                concept: term, 
+                profession: userProfile.profession || 'Socialrådgiver'
+              }, 
+              stream: true 
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server returned ${response.status}: ${errText}`);
+          }
+
+          if (!response.body) throw new Error('No response body received from server');
+          
+          await handleStream(response.body.getReader(), (data) => {
+            setMessages(prev => prev.map(m => {
+              if (m.id !== aiMsgId) return m;
+              
+              const currentEx = m.explanation || {};
+              
+              if (typeof data === 'string') {
+                // If it's a raw string, it's a delta, so we APPEND to definition
+                return {
+                  ...m,
+                  explanation: {
+                    ...currentEx,
+                    definition: (currentEx.definition || '') + data
+                  } as Explanation
+                };
+              } else {
+                // If it's an object, it's accumulated, so we OVERWRITE/MERGE
+                return {
+                  ...m,
+                  explanation: {
+                    ...currentEx,
+                    ...data
+                  } as Explanation
+                };
+              }
+            }));
+          });
+
+          // After stream completion, find the final state and save
+          setMessages(currentMessages => {
+             const finalMsg = currentMessages.find(m => m.id === aiMsgId);
+             const explanation = finalMsg?.explanation as Explanation;
+             if (explanation && explanation.definition) {
+                setCurrentDefinition(explanation.definition);
+                setCurrentConceptName(term);
+                // Background save
+                (async () => {
+                  const batch = writeBatch(firestore);
+                  batch.set(docRef, { conceptName: term, explanation, profession: userProfile.profession, createdAt: serverTimestamp() });
+                  if (!snap2.exists()) batch.set(genRef, { conceptName: term, explanation, profession: 'Generel', createdAt: serverTimestamp() });
+                  await batch.commit();
+                  sessionStorage.setItem(cacheKey, JSON.stringify(explanation));
+                })();
+             }
+             return currentMessages;
+          });
+
+          trackUsage(term);
+
+        } else {
+          // Follow-up chat with streaming
+          setMessages(prev => [...prev, { id: aiMsgId, role: 'followup', text: '' }]);
+
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              flowName: 'unifiedChatFlow', 
+              data: {
+                message: term,
+                chatHistory: buildHistory(),
+                persona: 'academic',
+                context: {
+                  relevantDocumentIds: [],
+                  lawContext: `AKTUEL FAGLIG KONTEKST:\nBegreb: ${currentConceptName}\nDefinition: ${stripHtml(currentDefinition).substring(0, 1000)}`,
+                },
+              },
+              stream: true
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server returned ${response.status}: ${errText}`);
+          }
+
+          if (!response.body) throw new Error('No response body received from server');
+
+          await handleStream(response.body.getReader(), (data) => {
+            // Extraction
+            const answer = data.answer || data.text;
+            
+            if (answer) {
+              // Genkit sends accumulated objects, so we OVERWRITE
+              setMessages(prev => prev.map(m => 
+                m.id === aiMsgId ? { ...m, text: answer } : m
+              ));
+            } else if (typeof data === 'string' && data.length > 0) {
+              // If it's a raw string, it might be a delta, so we APPEND
+              setMessages(prev => prev.map(m => 
+                m.id === aiMsgId ? { ...m, text: (m.text || '') + data } : m
+              ));
+            }
+          });
         }
-      }
     } catch (err: any) {
       console.error('[ConceptExplainer] Error:', err);
-      const isTimeout = err.name === 'AbortError';
-      toast({ 
-        variant: 'destructive', 
-        title: isTimeout ? 'Forbindelse afbrudt' : 'Fejl', 
-        description: isTimeout ? 'Svaret tog for lang tid. Prøv venligst igen.' : 'Noget gik galt. Prøv igen.' 
-      });
+      if (err.name !== 'AbortError') {
+        toast({ 
+          variant: 'destructive', 
+          title: 'Fejl', 
+          description: 'Noget gik galt. Prøv igen.' 
+        });
+      } else {
+        toast({ 
+            variant: 'destructive', 
+            title: 'Forbindelse afbrudt', 
+            description: 'Svaret tog for lang tid. Prøv venligst igen.' 
+          });
+      }
     } finally {
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [user, userProfile, firestore, hasConcept, currentConceptName, currentDefinition, buildHistory, checkLimit, refetchUserProfile, toast]);
+  }, [user, userProfile, firestore, hasConcept, currentConceptName, currentDefinition, buildHistory, checkLimit, refetchUserProfile, toast, trackUsage]);
 
   const startNew = useCallback(() => {
     setMessages([]);
@@ -653,10 +729,13 @@ function ConceptChatContent() {
 
   // Handle URL ?term=
   useEffect(() => {
-    if (urlProcessed.current) return;
+    if (urlProcessed.current || !userProfile || !firestore) return;
     const term = searchParams?.get('term');
-    if (term) { urlProcessed.current = true; sendMessage(decodeURIComponent(term)); }
-  }, [searchParams, sendMessage]);
+    if (term) { 
+      urlProcessed.current = true; 
+      sendMessage(decodeURIComponent(term)); 
+    }
+  }, [searchParams, sendMessage, userProfile, firestore]);
 
   return (
     <div className="fixed inset-0 flex flex-col bg-[#FDFCF8] z-[9999]">
@@ -706,7 +785,17 @@ function ConceptChatContent() {
       />
 
       {/* ── Messages area ──────────────────────────────── */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#FDFCF8]">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#FDFCF8] relative">
+        {loading && (
+          <div className="absolute top-0 left-0 right-0 h-1 z-50 overflow-hidden bg-amber-50">
+            <motion.div 
+              initial={{ x: '-100%' }}
+              animate={{ x: '100%' }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+              className="h-full w-1/3 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+            />
+          </div>
+        )}
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-10 flex flex-col items-center">
           <div className="w-full max-w-2xl space-y-8">
           {messages.length === 0 && !loading && (

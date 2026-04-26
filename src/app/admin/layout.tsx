@@ -40,7 +40,8 @@ import {
     Gavel,
     Globe,
     Lightbulb,
-    ShoppingBag
+    ShoppingBag,
+    Presentation as MonitorPlay
 } from 'lucide-react';
 
 import { useApp } from '@/app/provider';
@@ -81,6 +82,7 @@ const navigationGroups = [
         { id: 'content', href: '/admin/content', label: 'Platform Indhold', icon: BookOpen },
         { id: 'begreber', href: '/admin/begreber', label: 'Faglige Begreber', icon: Lightbulb },
         { id: 'education', href: '/admin/education', label: 'Uddannelsesdata', icon: GraduationCap },
+        { id: 'admin-seminarer', href: '/admin/seminarer', label: 'Seminar-arkiv', icon: MonitorPlay },
         { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: Layers },
         { id: 'dokument-analysator', href: '/admin/dokument-analysator', label: 'PDF Dokument Analysator', icon: FileSearch },
     ]

@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Using gemini-2.5-flash which is the current stable flash model in this environment (April 2026)
+    // Using gemini-1.5-flash which is the current stable flash model
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash", 
+        model: "gemini-1.5-flash", 
         generationConfig: {
             temperature: 0.9,
             topP: 0.95,

@@ -68,12 +68,25 @@ export async function getSpecificLawAndGuidelinesContext(data: { id: string, nam
     }
 }
 
+let cachedLaws: any[] | null = null;
+let lastCacheUpdate = 0;
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+
 export async function getRelevantLawContext(topicOrQuery: string): Promise<string> {
     console.log(`[LAW-CONTEXT] Question: "${topicOrQuery}"`);
     const lowerQuery = topicOrQuery.toLowerCase().trim();
     
-    const snapshot = await adminFirestore.collection('laws').get();
-    const allLaws = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+    // 0. Use cached laws if available
+    let allLaws: any[] = [];
+    const now = Date.now();
+    if (cachedLaws && (now - lastCacheUpdate < CACHE_TTL)) {
+        allLaws = cachedLaws;
+    } else {
+        const snapshot = await adminFirestore.collection('laws').get();
+        allLaws = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+        cachedLaws = allLaws;
+        lastCacheUpdate = now;
+    }
     
     if (allLaws.length === 0) return '';
 
@@ -115,7 +128,7 @@ export async function getRelevantLawContext(topicOrQuery: string): Promise<strin
     // 4. AI DISAMBIGUATION (Broader selection)
     try {
         const detectionResponse = await ai.generate({
-            model: 'googleai/gemini-2.5-flash',
+            model: 'googleai/gemini-1.5-flash',
             system: "Du er en dansk juridisk bibliotekar. Din opgave er at identificere ALL relevante love for en given problemstilling eller et spørgsmål. Identificer op til 5-6 mest relevante love. Svar kun med en komma-separeret liste af ID'er.",
             prompt: `Find relevante love for dette spørgsmål/begreb: "${topicOrQuery}"
             

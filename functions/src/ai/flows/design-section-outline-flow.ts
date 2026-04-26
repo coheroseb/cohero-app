@@ -49,7 +49,7 @@ Baseret på afsnittets titel og den tilgængelige empiri, skal du:
 4. Gennemgående brug et motiverende, varmt og akademisk sprog på dansk.`;
 
     const { output } = await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
+        model: 'googleai/gemini-1.5-flash',
         prompt: sysPrompt,
         output: { schema: SectionOutlineOutputSchema },
         config: { temperature: 0.7 }

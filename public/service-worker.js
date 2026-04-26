@@ -80,14 +80,21 @@ self.addEventListener('fetch', event => {
   
   const url = new URL(event.request.url);
   
-  // Skip specific URLs
-  if (url.pathname.includes('_workstation') || url.pathname.includes('forwardAuthCookie') || url.pathname.includes('_next/webpack-hmr')) return;
+  // Skip specific URLs and dynamic requests
+  if (
+    url.pathname.includes('_workstation') || 
+    url.pathname.includes('forwardAuthCookie') || 
+    url.pathname.includes('_next/webpack-hmr') ||
+    url.search.includes('term=') || // Skip concept-explainer and other term-based searches
+    url.pathname.includes('api/')   // Skip API routes
+  ) return;
 
   // Use Network First strategy for HTML/Navigation to ensure we get latest JS/CSS chunk filenames
   if (event.request.mode === 'navigate' || (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'))) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
+          if (!response || response.status !== 200 || response.type !== 'basic') return response;
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
           return response;
@@ -101,7 +108,14 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       if (cachedResponse) return cachedResponse;
-      return fetch(event.request);
+      return fetch(event.request).catch(err => {
+        // Return a failing response instead of letting the promise reject
+        console.warn('[SW] Fetch failed for:', event.request.url);
+        return new Response('Network error occurred', {
+          status: 408,
+          statusText: 'Network error occurred'
+        });
+      });
     })
   );
 });

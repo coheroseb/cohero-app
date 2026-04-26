@@ -26,7 +26,7 @@ Din opgave er at analysere et kursusforløb og uddrage de mest centrale lærings
 Målet er at give brugeren et klart overblik over kursets udbytte.`;
 
     const response = await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
+        model: 'googleai/gemini-1.5-flash',
         system: systemPrompt,
         prompt: `Analyser dette kursus og generér læringsmål:
 
