@@ -89,12 +89,6 @@ export default function MineKurserPage() {
                   className="w-full h-14 pl-12 pr-4 bg-white border border-amber-100 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-amber-50 outline-none transition-all"
                 />
              </div>
-             <Button 
-                onClick={() => router.push('/kursus-designer')}
-                className="h-14 px-8 rounded-2xl bg-amber-950 text-amber-400 font-black uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all shrink-0"
-             >
-                Nyt Kursus
-             </Button>
           </div>
         </div>
       </header>
@@ -114,12 +108,6 @@ export default function MineKurserPage() {
                 <h3 className="text-2xl font-black text-amber-950 serif">Ingen kurser endnu</h3>
                 <p className="text-slate-500 max-w-sm mx-auto">Du har ikke designet nogle kurser endnu. Brug Arkitekten til at bygge dit første digitale forløb.</p>
             </div>
-            <Button 
-              onClick={() => router.push('/kursus-designer')}
-              className="px-10 h-16 rounded-[2rem] bg-amber-950 text-amber-400 font-black uppercase tracking-widest"
-            >
-                Design dit første kursus
-            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">

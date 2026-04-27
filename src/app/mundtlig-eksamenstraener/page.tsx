@@ -65,7 +65,7 @@ interface AnalysisResult {
 
 export default function MundtligEksamenstraenerPage() {
   const { user, userProfile, isUserLoading } = useApp();
-  const isUnderDevelopment = true;
+  const isUnderDevelopment = false;
   const router = useRouter();
   const { toast } = useToast();
 
@@ -334,33 +334,7 @@ export default function MundtligEksamenstraenerPage() {
                 </div>
               </div>
             </motion.div>
-          ) : isOverLimit ? (
-            <motion.div 
-              key="limit-state"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center min-h-[60vh] p-8 sm:p-12 text-center"
-            >
-              <div className="max-w-md w-full bg-white rounded-[36px] border border-slate-100 shadow-2xl shadow-slate-900/5 p-10 sm:p-14 flex flex-col items-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl flex items-center justify-center text-white mb-8 shadow-xl shadow-blue-500/20">
-                  <Mic className="w-10 h-10" />
-                </div>
-                <div className="px-3 py-1 bg-blue-50 border border-blue-100 rounded-full mb-6">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Kollega+ Funktion</span>
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 serif mb-4">Mundtlig Eksamenstræner</h3>
-                <p className="text-slate-500 leading-relaxed mb-10 text-sm">
-                  Få AI-feedback på dit mundtlige oplæg med terminologianalyse, logiske broer, tempovurdering og sokratiske spørgsmål. Eksklusivt for Kollega+ medlemmer.
-                </p>
-                <Link href="/upgrade" className="w-full">
-                  <Button className="w-full h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Opgrader til Kollega+
-                  </Button>
-                </Link>
-                <p className="text-[10px] text-slate-400 mt-4">Du kan også se alle muligheder på vores <Link href="/upgrade" className="underline">opgraderingsside</Link>.</p>
-              </div>
-            </motion.div>
+
           ) : !result && !isAnalyzing ? (
             <motion.div 
               key="input-form"
@@ -721,24 +695,54 @@ export default function MundtligEksamenstraenerPage() {
       </main>
 
       {/* FOOTER NAV (MOBILE) */}
-      <div className="sm:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%]">
-          {!result && !isAnalyzing ? (
-              <Button 
-                onClick={handleStartAnalysis}
-                className="w-full h-16 rounded-[24px] bg-blue-600 text-white font-black uppercase tracking-widest gap-2 shadow-2xl"
+      {/* PREMIUM TEASER OVERLAY FOR FREE TIER */}
+      {isOverLimit && (
+          <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-[2px] flex items-center justify-center p-8">
+              <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-blue-100 p-10 text-center space-y-8 relative overflow-hidden"
               >
-                Analyser Oplæg <Zap className="w-5 h-5 fill-amber-400 text-amber-400" />
-              </Button>
-          ) : result && (
-              <Button 
-                onClick={resetAnalysis}
-                className="w-full h-16 rounded-[24px] bg-slate-900 text-white font-black uppercase tracking-widest gap-2 shadow-2xl"
-              >
-                Ny Træning <RefreshCw className="w-5 h-5" />
-              </Button>
-          )}
-      </div>
+                  <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+                      <Sparkles className="w-32 h-32" />
+                  </div>
+                  
+                  <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-blue-100/50 relative z-10">
+                      <Mic className="w-8 h-8" />
+                  </div>
+                  
+                  <div className="space-y-3 relative z-10">
+                      <h2 className="text-3xl font-black text-slate-900 serif tracking-tight">Kollega+ Eksklusivt</h2>
+                      <p className="text-slate-500 leading-relaxed italic text-sm">
+                          Få AI-feedback på dit mundtlige oplæg med terminologianalyse, logiske broer og sokratiske spørgsmål.
+                      </p>
+                  </div>
 
+                  <div className="space-y-4 text-left relative z-10 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                      {[
+                          "Terminologi & Akademisk niveau",
+                          "Logiske broer & struktur",
+                          "Tempo-tracking (beta)",
+                          "Sokratiske Modspørgsmål"
+                      ].map((feat, i) => (
+                          <div key={i} className="flex items-center gap-3 text-[12px] font-bold text-slate-700">
+                              <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
+                              {feat}
+                          </div>
+                      ))}
+                  </div>
+
+                  <div className="space-y-4 relative z-10">
+                      <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl active:scale-95 text-[12px]">
+                          Opgrader til Kollega+
+                      </Button>
+                      <button onClick={() => router.back()} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
+                          Måske senere
+                      </button>
+                  </div>
+              </motion.div>
+          </div>
+      )}
     </div>
   );
 }

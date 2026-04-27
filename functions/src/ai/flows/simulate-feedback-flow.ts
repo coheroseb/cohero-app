@@ -40,7 +40,12 @@ const SimulateFeedbackOutputSchema = z.object({
 
 const prompt = ai.definePrompt({
     name: 'simulateFeedbackPrompt',
-    input: { schema: SimulateFeedbackInputSchema },
+    input: { 
+        schema: SimulateFeedbackInputSchema.extend({
+            isPedagog: z.boolean().optional(),
+            isSocialworker: z.boolean().optional()
+        }) 
+    },
     output: { schema: SimulateFeedbackOutputSchema },
     prompt: `Du er censor og 'Game Master' for Sags-simulatoren. {{#if profession}}{{profession}}en{{else}}Socialrådgiveren{{/if}} {{{userName}}} har netop afsluttet en simulation, der varede i {{{totalDays}}} dage.
 
@@ -62,8 +67,8 @@ Journal: {{this}}
 
 Din opgave er at evaluere {{{userName}}}. Vær streng og professionel.
 1. Syntetiserede {{{userName}}} informationerne godt i journalerne?
-2. Reagerede de rettidigt på de mest kritiske/etiske dilemmaer (f.eks. {{#if (eq profession "Pædagog")}}magtanvendelse, omsorgssvigt, akutte kriser{{else}}tvang, underretninger{{/if}}) i indbakken? (Tidsstyring og prioritering).
-3. Hvad mangler der {{#if (eq profession "Pædagog")}}pædagogisk eller metodisk{{else}}juridisk eller fagligt{{/if}}? Blev {{#if (eq profession "Pædagog")}}pædagogiske handleplaner eller barnets/borgerens trivsel{{else}}vigtig lovgivning{{/if}} ignoreret?
+2. Reagerede de rettidigt på de mest kritiske/etiske dilemmaer (f.eks. {{#if isPedagog}}magtanvendelse, omsorgssvigt, akutte kriser{{else}}tvang, underretninger{{/if}}) i indbakken? (Tidsstyring og prioritering).
+3. Hvad mangler der {{#if isPedagog}}pædagogisk eller metodisk{{else}}juridisk eller fagligt{{/if}}? Blev {{#if isPedagog}}pædagogiske handleplaner eller barnets/borgerens trivsel{{else}}vigtig lovgivning{{/if}} ignoreret?
 
 Giv konkrete karakterer og specifik formateret feedback direkte stilet til {{{userName}}}.`
 });
@@ -81,7 +86,14 @@ export const simulateFeedbackFlow = ai.defineFlow(
         }),
     },
     async (input) => {
-        const { output, usage } = await prompt(input);
+        const isPedagog = input.profession === 'Pædagog';
+        const isSocialworker = !input.profession || input.profession === 'Socialrådgiver';
+
+        const { output, usage } = await prompt({
+            ...input,
+            isPedagog,
+            isSocialworker
+        });
         return {
             data: output!,
             usage: {

@@ -868,7 +868,6 @@ const PortalPageContent: React.FC = () => {
                 subtitle: "Værktøjer til din daglige myndighedsudøvelse",
                 icon: <Gavel className="w-6 h-6 text-slate-700" />,
                 items: [
-                    { title: "Borger-Simulator", desc: "Træn samtaler med AI-borgere", icon: MessageSquare, path: "/simulator", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "TRÆNING" },
                     { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
                     { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse", limit: limits.caseAnalyser },
                     { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
@@ -898,10 +897,8 @@ const PortalPageContent: React.FC = () => {
                     { title: "Eksamens-Arkitekten", desc: "Design din opgavestruktur", icon: Layout, path: "/exam-architect", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "AI-Draft", limit: limits.architect, limitText: 'denne md.' },
                     { title: "Mundtlig Eksamenstræner", desc: "Gennemgang af dit oplæg", icon: Mic, path: "/mundtlig-eksamenstraener", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Træning", limit: limits.oralExam, limitText: 'i dag' },
                     { title: "Seminar-Arkitekten", desc: "Fra slides til videnskort", icon: FileSearch, path: "/seminar-architect", color: "text-violet-600 bg-violet-50 border-violet-100", badge: "Transform" },
-                    { title: "Kursus-Arkitekten", desc: "Design forløb af slides & jura", icon: GraduationCap, path: "/kursus-designer", color: "text-amber-900 bg-amber-50 border-amber-100", badge: "Design" },
                     { title: "Kilde-Generator", desc: "Perfekte kildehenvisninger", icon: Quote, path: "/kilde-generator", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Ref" },
                     { title: "Pensum", desc: "Oversigt over din litteratur", icon: BookMarked, path: "/pensum", color: "text-slate-600 bg-slate-50 border-slate-100", badge: "Bøger" },
-                    { title: "Quiz-Creator", desc: "Test din viden med AI-quiz", icon: Play, path: "/quiz-creator", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Test" },
                     { title: "Mit Semester", desc: "Dybdegående semesteroverblik", icon: Layers, path: "/mit-semester", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Ny" },
                     { title: "Semester-Planlægger", desc: "Intelligent planlægning", icon: CalendarDays, path: "/semester-planlaegger", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sync" }
                 ]
@@ -911,10 +908,8 @@ const PortalPageContent: React.FC = () => {
                 subtitle: "Forbered dig på arbejdslivet",
                 icon: <Compass className="w-6 h-6 text-amber-500" />,
                 items: [
-                    { title: "Jobopslag", desc: "Se målrettede stillinger fra arbejdsgivere", icon: Briefcase, path: "/jobopslag", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Nyt" },
                     { title: "Institutionssøgning", desc: "Find din næste praktikplads", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
                     { title: "Praktik-Rating", desc: "Se andres erfaringer i praktik", icon: Star, path: "/praktik-rating", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Reviews" },
-                    { title: "Faglige Tendenser", desc: "Hvad rører sig på studiet?", icon: Compass, path: "/tendenser", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Insights" }
                 ]
             }
         ];

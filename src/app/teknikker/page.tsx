@@ -28,7 +28,8 @@ import {
   History,
   Layers,
   ChevronLeft,
-  ArrowUpRight
+  ArrowUpRight,
+  Crown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -162,7 +163,7 @@ const StudyCornerPageContent: React.FC = () => {
     const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || '');
     
     if (technique.isPremium && !isPremiumUser) {
-      router.push('/upgrade');
+      setSelectedTechnique({ ...technique, content: 'PREMIUM_TEASER' });
     } else {
       setHighlightQuote(null);
       setSelectedTechnique(technique);
@@ -477,13 +478,61 @@ const StudyCornerPageContent: React.FC = () => {
                         </button>
                     </div>
 
-                    <div ref={modalContentRef} className="flex-1 overflow-y-auto p-10 md:p-14">
-                        <div className="max-w-2xl mx-auto">
-                            <div 
-                                className="prose prose-amber max-w-none text-slate-700 leading-[1.8] prose-headings:serif prose-headings:text-amber-950" 
-                                dangerouslySetInnerHTML={{ __html: highlightedContent }} 
-                            />
-                        </div>
+                    <div ref={modalContentRef} className="flex-1 overflow-y-auto p-10 md:p-14 relative">
+                        {selectedTechnique.content === 'PREMIUM_TEASER' ? (
+                            <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-[2px] flex items-center justify-center p-8">
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-amber-100 p-10 text-center space-y-8 relative overflow-hidden"
+                                >
+                                    <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+                                        <Sparkles className="w-32 h-32" />
+                                    </div>
+                                    
+                                    <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-amber-100/50 relative z-10">
+                                        <Crown className="w-8 h-8" />
+                                    </div>
+                                    
+                                    <div className="space-y-3 relative z-10">
+                                        <h2 className="text-3xl font-black text-slate-900 serif tracking-tight">Kollega+ Eksklusivt</h2>
+                                        <p className="text-slate-500 leading-relaxed italic text-sm">
+                                            Lås op for avancerede studieteknikker og videnskabeligt baserede læringsmetoder.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4 text-left relative z-10 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                                        {[
+                                            "Avancerede eksamens-strategier",
+                                            "Hukommelsesteknikker (Loci/Mnemo)",
+                                            "Akademisk skrivestil og flow",
+                                            "Tidsstyring for elitesstuderende"
+                                        ].map((feat, i) => (
+                                            <div key={i} className="flex items-center gap-3 text-[12px] font-bold text-slate-700">
+                                                <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
+                                                {feat}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="space-y-4 relative z-10">
+                                        <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-amber-900 transition-all shadow-xl active:scale-95 text-[12px]">
+                                            Opgrader til Kollega+
+                                        </Button>
+                                        <button onClick={closeModal} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
+                                            Måske senere
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        ) : (
+                            <div className="max-w-2xl mx-auto">
+                                <div 
+                                    className="prose prose-amber max-w-none text-slate-700 leading-[1.8] prose-headings:serif prose-headings:text-amber-950" 
+                                    dangerouslySetInnerHTML={{ __html: highlightedContent }} 
+                                />
+                            </div>
+                        )}
                     </div>
                 </motion.div>
             </div>

@@ -35,7 +35,12 @@ const SimulateStartInputSchema = z.object({
 
 const prompt = ai.definePrompt({
     name: 'simulateStartPrompt',
-    input: { schema: SimulateStartInputSchema },
+    input: { 
+        schema: SimulateStartInputSchema.extend({
+            isPedagog: z.boolean().optional(),
+            isSocialworker: z.boolean().optional()
+        }) 
+    },
     output: { schema: SimulateStartOutputSchema },
     prompt: `Du er en avanceret fagsystem-generator, og du er 'Game Master' for Sags-simulatoren. Spilleren (en "{{#if profession}}{{profession}}{{else}}Socialrådgiver{{/if}}") hedder {{{userName}}}. 
 Din opgave er at generere START-TILSTANDEN for simulationen.
@@ -43,7 +48,7 @@ Din opgave er at generere START-TILSTANDEN for simulationen.
 Tema for simulationen: {{{theme}}}
 Relevant jura baggrund (valgfrit): {{{lawContext}}}
 
-Opret præcis 3 unikke og yderst realistiske sager indenfor dansk {{#if (eq profession "Pædagog")}}pædagogisk arbejde (f.eks. døgninstitution, specialområdet eller udsatte børn){{else}}socialrådgivning{{/if}}. Sagerne skal have ET HØJT NIVEAU AF KOMPLEKSITET. Sørg for at integrere svære sværgange (f.eks. {{#if (eq profession "Pædagog")}}magtanvendelser, forældregrupper, pædagogiske handleplaner, tværfagligt samarbejde eller akutte kriser{{else}}tvangsanbringelser vs. forældresamarbejde, stramme lovpligtige frister, psykiatri, ressourcemangel, eller uklare underretninger{{/if}}).
+Opret præcis 3 unikke og yderst realistiske sager indenfor dansk {{#if isPedagog}}pædagogisk arbejde (f.eks. døgninstitution, specialområdet eller udsatte børn){{else}}socialrådgivning{{/if}}. Sagerne skal have ET HØJT NIVEAU AF KOMPLEKSITET. Sørg for at integrere svære sværgange (f.eks. {{#if isPedagog}}magtanvendelser, forældregrupper, pædagogiske handleplaner, tværfagligt samarbejde eller akutte kriser{{else}}tvangsanbringelser vs. forældresamarbejde, stramme lovpligtige frister, psykiatri, ressourcemangel, eller uklare underretninger{{/if}}).
 For disse 3 sager genererer du de indledende indbakke-beskeder (3-5 i alt) for starten på simulationen.
 Den rigtige aktuelle dato lige nu er: {{{currentDateStr}}}. Dater beskedernes felt 'date' realistisk (f.eks. "{{{currentDateStr}}} kl. 08:15" or "I går kl. 14:30").
 Beskederne skal være "rå data" - dvs. e-mails, telefonnotater osv. Nogle afspendere MÅ MEGET GERNE henvende sig direkte til "{{userName}}". Gør dem frustrerede, udokumenterede eller modsigende, ligesom den virkelige verden. Husk at knytte dem til de rigtige case ID'er.`
@@ -62,7 +67,14 @@ export const simulateStartFlow = ai.defineFlow(
         }),
     },
     async (input) => {
-        const { output, usage } = await prompt(input);
+        const isPedagog = input.profession === 'Pædagog';
+        const isSocialworker = !input.profession || input.profession === 'Socialrådgiver';
+
+        const { output, usage } = await prompt({
+            ...input,
+            isPedagog,
+            isSocialworker
+        });
         return {
             data: output!,
             usage: {

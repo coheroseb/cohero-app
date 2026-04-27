@@ -325,6 +325,7 @@ export default function AdminOverviewPage() {
                     {/* Research & Core */}
                     <div className="col-span-1 lg:col-span-1 space-y-4">
                         <NexusCard title="Seminarer" icon={MonitorPlay} color="text-indigo-600" bg="bg-indigo-50" href="/admin/seminarer" desc="Bruger-analyser & Slides" />
+                        <NexusCard title="Case Analyser" icon={Sparkles} color="text-rose-600" bg="bg-rose-50" href="/admin/case-analyser" desc="Bruger-cases & AI-indsigt" />
                         <NexusCard title="Begreber" icon={BrainCircuit} color="text-amber-600" bg="bg-amber-50" href="/admin/begreber" desc="Vidensbase & Modeller" />
                         <NexusCard title="Dokument-Tjek" icon={FileSearch} color="text-indigo-600" bg="bg-indigo-50" href="/admin/dokument-analysator" desc="PDF AI Analyse" />
                         <NexusCard title="Surveys" icon={MessageSquare} color="text-rose-500" bg="bg-rose-50" href="/admin/surveys" desc="NPS, Feedback" />

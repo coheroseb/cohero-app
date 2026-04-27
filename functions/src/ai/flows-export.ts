@@ -41,7 +41,6 @@ import { generateFieldworkAgreement } from './flows/generate-fieldwork-agreement
 import { generateGroupInvitationEmail } from './flows/generate-group-invitation-email-flow';
 import { generateModuleExamPrep } from './flows/generate-module-exam-prep-flow';
 import { generateParagraphDiffFlow } from './flows/generate-paragraph-diff-flow';
-import { generateRawCaseSources } from './flows/generate-raw-case-sources-flow';
 import { generateReportQuestions } from './flows/generate-report-questions-flow';
 import { generateStreakReminderEmail } from './flows/generate-streak-reminder-email-flow';
 import { generateStudySchedule } from './flows/generate-study-schedule-flow';
@@ -51,7 +50,6 @@ import { generateWelcomeEmail } from './flows/generate-welcome-email-flow';
 import { getLawContent } from './flows/get-law-content-flow';
 import { identifyReformFlow } from './flows/identify-reform-flow';
 import { getIntroCaseConsequence } from './flows/intro-case-consequence-flow';
-import { journalSynthesisFeedback } from './flows/journal-synthesis-feedback-flow';
 import { getRelevantLawContextFlow } from './flows/law-context-wrapper-flow';
 import { getLivePortfolioFeedback } from './flows/live-portfolio-feedback-flow';
 import { getMythBusterResponse } from './flows/myth-buster-flow';
@@ -65,7 +63,6 @@ import { generateQuiz } from './flows/quiz-generator-flow';
 import { recommendTaskAssignee } from './flows/recommend-task-assignee-flow';
 import { recommendTechnique } from './flows/recommend-technique-flow';
 import { reviseCase } from './flows/revise-case-flow';
-import { reviseJournalEntry } from './flows/revise-journal-entry-flow';
 import { scanStudentCard } from './flows/scan-student-card-flow';
 import { getSecondOpinion } from './flows/second-opinion-flow';
 import { semanticLawSearch } from './flows/semantic-law-search-flow';
@@ -196,8 +193,6 @@ export const allFlows: Record<string, any> = {
   'generateModuleExamPrep': generateModuleExamPrep,
   'generateParagraphDiffFlowFlow': generateParagraphDiffFlow,
   'generateParagraphDiffFlow': generateParagraphDiffFlow,
-  'generateRawCaseSourcesFlow': generateRawCaseSources,
-  'generateRawCaseSources': generateRawCaseSources,
   'generateReportQuestionsFlow': generateReportQuestions,
   'generateReportQuestions': generateReportQuestions,
   'generateStreakReminderEmailFlow': generateStreakReminderEmail,
@@ -216,8 +211,6 @@ export const allFlows: Record<string, any> = {
   'identifyReformFlow': identifyReformFlow,
   'getIntroCaseConsequenceFlow': getIntroCaseConsequence,
   'getIntroCaseConsequence': getIntroCaseConsequence,
-  'journalSynthesisFeedbackFlow': journalSynthesisFeedback,
-  'journalSynthesisFeedback': journalSynthesisFeedback,
   'getRelevantLawContextFlowFlow': getRelevantLawContextFlow,
   'getRelevantLawContextFlow': getRelevantLawContextFlow,
   'getLivePortfolioFeedbackFlow': getLivePortfolioFeedback,
@@ -244,8 +237,6 @@ export const allFlows: Record<string, any> = {
   'recommendTechnique': recommendTechnique,
   'reviseCaseFlow': reviseCase,
   'reviseCase': reviseCase,
-  'reviseJournalEntryFlow': reviseJournalEntry,
-  'reviseJournalEntry': reviseJournalEntry,
   'scanStudentCardFlow': scanStudentCard,
   'scanStudentCard': scanStudentCard,
   'getSecondOpinionFlow': getSecondOpinion,

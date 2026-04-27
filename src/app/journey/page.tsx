@@ -46,6 +46,15 @@ const SLIDES = [
     background: 'bg-slate-950'
   },
   {
+    id: 'mission-detailed',
+    title: 'Vores Mission',
+    subtitle: 'Gør op med den faglige ensomhed',
+    description: 'Vi bygger den digitale kollega, der sikrer at ingen står alene med ansvaret for andres skæbne. Fra socialrådgivere til alle velfærdsprofessionelle.',
+    icon: <Heart className="w-12 h-12 text-rose-500" />,
+    color: 'from-rose-500 to-indigo-500',
+    background: 'bg-slate-900'
+  },
+  {
     id: 'problem',
     title: 'Professionsreformen',
     subtitle: 'Fra teori til praksisnær læring',
@@ -404,6 +413,63 @@ export default function PresentationModule() {
                     <span>Brug piletasterne for at starte</span>
                     <ChevronRight className="w-4 h-4" />
                  </div>
+              </motion.div>
+            )}
+
+            {slide.id === 'mission-detailed' && (
+              <motion.div 
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                className="pt-12 max-w-4xl mx-auto w-full space-y-8"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <motion.div 
+                     initial={{ opacity: 0, x: -20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     transition={{ delay: 1 }}
+                     className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-2xl text-left space-y-4"
+                   >
+                      <p className="text-xs font-black uppercase tracking-widest text-rose-400">Udfordringen</p>
+                      <h4 className="text-2xl font-black text-white">Praksischoket</h4>
+                      <p className="text-sm text-slate-400 leading-relaxed italic">
+                        "Mange føler sig alene med svære juridiske afgørelser kl. 23:00 søndag aften. Systemet mangler ressourcerne til den nødvendige sparring."
+                      </p>
+                   </motion.div>
+                   <motion.div 
+                     initial={{ opacity: 0, x: 20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     transition={{ delay: 1.2 }}
+                     className="p-8 rounded-[2.5rem] bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-2xl text-left space-y-4"
+                   >
+                      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Ambitionen</p>
+                      <h4 className="text-2xl font-black text-white">Fra 6.500 til 50.000+</h4>
+                      <p className="text-sm text-slate-400 leading-relaxed">
+                        Vi startede hos socialrådgiverne, men vores vision inkluderer pædagoger, sygeplejersker og lærere. Idéen er bygget til at skalere.
+                      </p>
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                         <motion.div 
+                           initial={{ width: '13%' }}
+                           animate={{ width: '100%' }}
+                           transition={{ duration: 3, delay: 2 }}
+                           className="h-full bg-gradient-to-r from-rose-500 to-indigo-500"
+                         />
+                      </div>
+                   </motion.div>
+                </div>
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.4 }}
+                  className="p-10 rounded-[3rem] bg-gradient-to-br from-indigo-600/20 to-rose-600/20 border border-white/10 backdrop-blur-3xl relative overflow-hidden group"
+                >
+                   <Quote className="w-12 h-12 text-white/10 mb-4 mx-auto group-hover:scale-110 transition-transform" />
+                   <p className="text-xl md:text-3xl font-serif italic text-white leading-relaxed text-center">
+                     ”At skabe teknologiske løsninger til velfærdsuddannelserne, der giver de studerende et digitalt rum for træning og faglig fordybelse”
+                   </p>
+                   <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-rose-500/10 blur-[80px] rounded-full" />
+                   <div className="absolute -top-20 -left-20 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full" />
+                </motion.div>
               </motion.div>
             )}
 

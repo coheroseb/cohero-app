@@ -27,7 +27,8 @@ import {
   HelpCircle,
   ListChecks,
   Activity,
-  Printer
+  Printer,
+  Crown
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { lawDefinitions } from '@/lib/law-definitions';
@@ -462,57 +463,62 @@ const CaseAnalyserPage: React.FC = () => {
 
   if (isUserLoading || !user) return <AuthLoadingScreen />;
 
-  if (isFreeTier) {
-      return (
-          <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-8 text-inter">
-              <div className="max-w-md w-full text-center space-y-8">
-                  <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-amber-100/50">
-                      <Lock className="w-8 h-8" />
-                  </div>
-                  <div className="space-y-4">
-                      <h1 className="text-3xl font-black text-amber-950 serif tracking-tight">Kollega+ Eksklusivt</h1>
-                      <p className="text-slate-500 leading-relaxed italic text-sm">
-                        Case-Analytikeren er et avanceret AI-værktøj forbeholdt vores Kollega+ medlemmer. 
-                      </p>
-                  </div>
-                  <div className="bg-white p-8 rounded-[40px] border border-amber-100 shadow-2xl space-y-8 overflow-hidden relative">
-                      <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
-                          <Sparkles className="w-32 h-32" />
-                      </div>
-                      <div className="space-y-4 text-left relative z-10">
-                          {[
-                              "AI-drevet PDF sagsanalyse",
-                              "Automatisk udtræk af paragraffer",
-                              "Hændelsesforløb & tidslinje",
-                              "Persongalleri & rolle-fordeling"
-                          ].map((feat, i) => (
-                              <div key={i} className="flex items-center gap-3 text-[13px] font-bold text-slate-700">
-                                  <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
-                                  {feat}
-                              </div>
-                          ))}
-                      </div>
-                      <div className="space-y-4 relative z-10">
-                        <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 text-[12px]">
-                            Lås op nu
-                        </Button>
-                        <button onClick={() => router.back()} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
-                            Gå tilbage
-                        </button>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      );
-  }
-
   return (
     <div className="min-h-screen bg-[#FDFCF8] text-slate-900 selection:bg-amber-100 text-inter">
       {/* 
           WRAPPER FOR THE INTERACTIVE UI 
           We hide this entirely during printing to avoid overlaps
       */}
-      <div className="flex flex-col lg:flex-row h-screen overflow-hidden print:hidden">
+      <div className="flex flex-col lg:flex-row h-screen overflow-hidden print:hidden relative">
+        
+        {/* PREMIUM TEASER OVERLAY FOR FREE TIER */}
+        {isFreeTier && (
+            <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-[2px] flex items-center justify-center p-8">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-amber-100 p-10 text-center space-y-8 relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+                        <Sparkles className="w-32 h-32" />
+                    </div>
+                    
+                    <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-amber-100/50 relative z-10">
+                        <Crown className="w-8 h-8 fill-current" />
+                    </div>
+                    
+                    <div className="space-y-3 relative z-10">
+                        <h2 className="text-3xl font-black text-amber-950 serif tracking-tight">Kollega+ Eksklusivt</h2>
+                        <p className="text-slate-500 leading-relaxed italic text-sm">
+                            Få AI til at analysere dine sagsakter, identificere paragraffer og tidslinjer automatisk.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 text-left relative z-10 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                        {[
+                            "AI-drevet PDF sagsanalyse",
+                            "Automatisk udtræk af paragraffer",
+                            "Hændelsesforløb & tidslinje",
+                            "Persongalleri & rolle-fordeling"
+                        ].map((feat, i) => (
+                            <div key={i} className="flex items-center gap-3 text-[12px] font-bold text-slate-700">
+                                <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
+                                {feat}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="space-y-4 relative z-10">
+                        <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 text-[12px]">
+                            Opgrader til Kollega+
+                        </Button>
+                        <button onClick={() => router.back()} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
+                            Måske senere
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+        )}
         {/* SIDEBAR - ANALYSIS RESULTS */}
         <aside className="w-full lg:w-[400px] bg-white border-r border-amber-100 flex flex-col z-30 shadow-sm overflow-y-auto custom-scrollbar shrink-0">
         <div className="p-6 flex items-center gap-4 border-b border-amber-50 bg-[#FDFCF8]/50 sticky top-0 z-10 backdrop-blur-md">

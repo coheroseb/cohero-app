@@ -37,8 +37,8 @@ import {
   Layout,
   BookOpen,
   GraduationCap,
-  MessageSquare,
-  Quote
+  Quote,
+  Crown
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
@@ -603,8 +603,55 @@ const SecondOpinionPageContent = () => {
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start"
+                        className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start relative"
                     >
+                        {!isPremiumUser && (
+                            <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-[2px] flex items-center justify-center p-8">
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-rose-100 p-10 text-center space-y-8 relative overflow-hidden"
+                                >
+                                    <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+                                        <Sparkles className="w-32 h-32" />
+                                    </div>
+                                    
+                                    <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-rose-100/50 relative z-10">
+                                        <Scale className="w-8 h-8" />
+                                    </div>
+                                    
+                                    <div className="space-y-3 relative z-10">
+                                        <h2 className="text-3xl font-black text-rose-950 serif tracking-tight">Kollega+ Eksklusivt</h2>
+                                        <p className="text-slate-500 leading-relaxed italic text-sm">
+                                            Få en uvildig AI-audit af din karakter baseret på din studieordnings læringsmål.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4 text-left relative z-10 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                                        {[
+                                            "Karakter-audit mod læringsmål",
+                                            "Juridisk klage-argumentation",
+                                            "Styrke/svaghedsanalyse",
+                                            "Konkret feedback til forbedring"
+                                        ].map((feat, i) => (
+                                            <div key={i} className="flex items-center gap-3 text-[12px] font-bold text-slate-700">
+                                                <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
+                                                {feat}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="space-y-4 relative z-10">
+                                        <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-rose-950 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-rose-900 transition-all shadow-xl active:scale-95 text-[12px]">
+                                            Opgrader til Kollega+
+                                        </Button>
+                                        <button onClick={() => router.back()} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
+                                            Måske senere
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
                         {/* BOTTOM / FULL WIDTH: AI INSIGHTS FROM PREVIOUS DECISIONS */}
 
 

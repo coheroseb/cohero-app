@@ -83,6 +83,7 @@ const navigationGroups = [
         { id: 'begreber', href: '/admin/begreber', label: 'Faglige Begreber', icon: Lightbulb },
         { id: 'education', href: '/admin/education', label: 'Uddannelsesdata', icon: GraduationCap },
         { id: 'admin-seminarer', href: '/admin/seminarer', label: 'Seminar-arkiv', icon: MonitorPlay },
+        { id: 'admin-case-analyser', href: '/admin/case-analyser', label: 'Case Analyser', icon: Sparkles },
         { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: Layers },
         { id: 'dokument-analysator', href: '/admin/dokument-analysator', label: 'PDF Dokument Analysator', icon: FileSearch },
     ]

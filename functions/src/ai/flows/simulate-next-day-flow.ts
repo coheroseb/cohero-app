@@ -36,7 +36,12 @@ const SimulateNextDayOutputSchema = z.object({
 
 const prompt = ai.definePrompt({
     name: 'simulateNextDayPrompt',
-    input: { schema: SimulateNextDayInputSchema },
+    input: { 
+        schema: SimulateNextDayInputSchema.extend({
+            isPedagog: z.boolean().optional(),
+            isSocialworker: z.boolean().optional()
+        }) 
+    },
     output: { schema: SimulateNextDayOutputSchema },
     prompt: `Du er 'Game Master' for Sags-simulatoren. En {{#if profession}}{{profession}}{{else}}socialrådgiver{{/if}} ved navn {{{userName}}} logger ind.
 Der er gået {{{daysPassed}}} dag(e) siden {{{userName}}} sidst var her. I dag er simulationens Dag {{{currentDay}}}, og den Rigtige Dato i dag er: {{{newDateStr}}}.
@@ -58,7 +63,7 @@ Ud fra hvad {{{userName}}} HAR journaliseret, og især hvad der ligger i Indbakk
 
 VIGTIGT: Læs indbakken! Hvis der ligger en e-mail i indbakken, hvor sender er "{{{userName}}}" (brugeren har trykket "besvar"), SKAL DU LADE MODPARTEN REAGERE på dette svar! Hvis brugeren tværtimod ignorerer folks opkald/mails, skal de blive frustrerede.
 
-Udfordr vitterligt {{{userName}}}! Hvis der mangler {{#if (eq profession "Pædagog")}}pædagogiske observationer, handleplaner eller nødvendig omsorg/støtte{{else}}lovpligtige handlinger (f.eks. partshøring ikke nævnt){{/if}} SKAL DER SKE ESKALERING (f.eks. {{#if (eq profession "Pædagog")}}tilsyn ringer, forældre klager, kolleger er bekymrede{{else}}Ankestyrelsen klager, politiet ringer m.v.{{/if}}).
+Udfordr vitterligt {{{userName}}}! Hvis der mangler {{#if isPedagog}}pædagogiske observationer, handleplaner eller nødvendig omsorg/støtte{{else}}lovpligtige handlinger (f.eks. partshøring ikke nævnt){{/if}} SKAL DER SKE ESKALERING (f.eks. {{#if isPedagog}}tilsyn ringer, forældre klager, kolleger er bekymrede{{else}}Ankestyrelsen klager, politiet ringer m.v.{{/if}}).
 Hvis der er gået flere dage ({{{daysPassed}}} > 1), og der ikke er journaliseret handlinger for de forgangne dage, forventes massiv utålmodighed ("Kære {{{userName}}}, jeg har ventet længe på svar!").
 Hændelserne skal inkorporere høj faglig, etisk eller juridisk kompleksitet.
 Dater de nye beskeder troværdigt vha. aktuel dato: "{{{newDateStr}}} kl. XX:XX". Giv dem nye (unikke) ID'er.`
@@ -77,7 +82,14 @@ export const simulateNextDayFlow = ai.defineFlow(
         }),
     },
     async (input) => {
-        const { output, usage } = await prompt(input);
+        const isPedagog = input.profession === 'Pædagog';
+        const isSocialworker = !input.profession || input.profession === 'Socialrådgiver';
+
+        const { output, usage } = await prompt({
+            ...input,
+            isPedagog,
+            isSocialworker
+        });
         return {
             data: output!,
             usage: {

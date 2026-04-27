@@ -26,7 +26,6 @@ const NativeDashboard: React.FC = () => {
     { title: "Begrebsguide", icon: Brain, href: "/concept-explainer", color: "amber", desc: "Slå teoretiske begreber op" },
     { title: "Lovportal", icon: Scale, href: "/lov-portal", color: "indigo", desc: "Find paragraffer & domme" },
     { title: "Arkiv", icon: Bookmark, href: "/mine-gemte-begreber", color: "emerald", desc: "Dine gemte guldkorn" },
-    { title: "Jobopslag", icon: Briefcase, href: "/jobopslag", color: "rose", desc: "Studiejobs & praktik" },
   ];
 
   const Tile = ({ tool }: { tool: any }) => (

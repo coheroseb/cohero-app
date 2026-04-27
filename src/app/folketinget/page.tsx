@@ -30,7 +30,8 @@ import {
   Lock,
   ArrowRight,
   Plus,
-  Building
+  Building,
+  Crown
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -563,7 +564,14 @@ const FolketingetPageContent: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row flex-1 max-w-xl gap-4 items-center w-full">
+                <div className="flex flex-col sm:flex-row flex-1 max-w-xl gap-4 items-center w-full relative">
+                    {!isPremiumUser && (
+                        <div className="absolute inset-0 z-50 bg-white/40 backdrop-blur-[1px] rounded-2xl flex items-center justify-center">
+                            <button onClick={() => router.push('/upgrade')} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2">
+                                <Crown className="w-3 h-3 text-amber-400" /> Lås Søgning Op
+                            </button>
+                        </div>
+                    )}
                     <div className="relative flex-1 w-full group">
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-slate-900 transition-colors" />
                         <input
@@ -572,7 +580,6 @@ const FolketingetPageContent: React.FC = () => {
                             placeholder="Søg i lovforslag, sager og beslutninger..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            disabled={!isPremiumUser}
                         />
                         {!isPremiumUser && (
                             <div className="absolute right-6 top-1/2 -translate-y-1/2">
@@ -783,14 +790,14 @@ const FolketingetPageContent: React.FC = () => {
                                 </div>
                               )}
 
-                              {hasMore && isPremiumUser && (
+                              {hasMore && (
                                 <div className="text-center pt-8">
                                    <button 
-                                      onClick={() => fetchSagerData(true)} 
+                                      onClick={() => isPremiumUser ? fetchSagerData(true) : router.push('/upgrade')} 
                                       disabled={isLoadingMore}
                                       className="px-12 h-16 bg-white border border-slate-200 rounded-2xl text-[14px] font-black uppercase tracking-widest text-slate-900 hover:border-slate-900 hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm"
                                    >
-                                      {isLoadingMore ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Indlæs flere efterretninger'}
+                                      {isLoadingMore ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : isPremiumUser ? 'Indlæs flere efterretninger' : 'Opgrader for at se flere'}
                                    </button>
                                 </div>
                               )}

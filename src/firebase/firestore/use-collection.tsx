@@ -12,8 +12,8 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-/** Utility type to add an 'id' field to a given type T. */
-export type WithId<T> = T & { id: string };
+/** Utility type to add an 'id' and optional '_path' field to a given type T. */
+export type WithId<T> = T & { id: string; _path?: string };
 
 /**
  * Interface for the return value of the useCollection hook.
@@ -77,8 +77,8 @@ export function useCollection<T = any>(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
         const results: ResultItemType[] = [];
-        for (const doc of snapshot.docs) {
-          results.push({ ...(doc.data() as T), id: doc.id });
+        for (const docSnap of snapshot.docs) {
+          results.push({ ...(docSnap.data() as T), id: docSnap.id, _path: docSnap.ref.path });
         }
         setData(results);
         setError(null);

@@ -446,13 +446,7 @@ const CaseTrainerPageContent: React.FC = () => {
                                 {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 text-amber-400" />}
                                 Generér Sagsmappe
                             </button>
-                            {limitError && (
-                                <div className="bg-amber-50 border-2 border-dashed border-amber-200 text-amber-950 p-6 rounded-2xl animate-shake">
-                                    <h3 className="font-bold text-sm mb-1 flex items-center justify-center gap-2"><Lock className="w-4 h-4"/> Grænse nået</h3>
-                                    <p className="text-xs mb-4">{limitError}</p>
-                                    <Link href="/upgrade" className="bg-amber-950 text-white px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest">Opgrader</Link>
-                                </div>
-                            )}
+
                         </div>
                     </motion.div>
                 ) : showDilemma ? (
@@ -669,6 +663,54 @@ const CaseTrainerPageContent: React.FC = () => {
             </AnimatePresence>
         </div>
       </main>
+      {/* PREMIUM TEASER OVERLAY FOR FREE TIER */}
+      {limitError && (
+          <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-[2px] flex items-center justify-center p-8">
+              <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-amber-100 p-10 text-center space-y-8 relative overflow-hidden"
+              >
+                  <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+                      <Sparkles className="w-32 h-32" />
+                  </div>
+                  
+                  <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-amber-100/50 relative z-10">
+                      <BookOpen className="w-8 h-8" />
+                  </div>
+                  
+                  <div className="space-y-3 relative z-10">
+                      <h2 className="text-3xl font-black text-amber-950 serif tracking-tight">Kollega+ Eksklusivt</h2>
+                      <p className="text-slate-500 leading-relaxed italic text-sm">
+                          Træn dit faglige skøn i komplekse sager med realistiske konsekvenser og supervision.
+                      </p>
+                  </div>
+
+                  <div className="space-y-4 text-left relative z-10 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                      {[
+                          "Ubegrænsede træningscases",
+                          "Realistiske konsekvens-loops",
+                          "Faglig supervision fra 3 personaer",
+                          "Gem resultater i dit arkiv"
+                      ].map((feat, i) => (
+                          <div key={i} className="flex items-center gap-3 text-[12px] font-bold text-slate-700">
+                              <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
+                              {feat}
+                          </div>
+                      ))}
+                  </div>
+
+                  <div className="space-y-4 relative z-10">
+                      <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 text-[12px]">
+                          Opgrader til Kollega+
+                      </Button>
+                      <button onClick={() => setLimitError(null)} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
+                          Måske senere
+                      </button>
+                  </div>
+              </motion.div>
+          </div>
+      )}
     </div>
   );
 };

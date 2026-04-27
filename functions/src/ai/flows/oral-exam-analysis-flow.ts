@@ -22,13 +22,19 @@ export async function oralExamAnalysis(input: OralExamAnalysisInput): Promise<Or
 
 const prompt = ai.definePrompt({
   name: 'oralExamAnalysisPrompt',
-  input: { schema: OralExamAnalysisInputSchema },
+  input: { 
+    schema: OralExamAnalysisInputSchema.extend({
+      isPedagog: z.boolean().optional(),
+      isSocialworker: z.boolean().optional()
+    }) 
+  },
   output: { schema: OralExamAnalysisDataSchema },
   prompt: `You are an expert examiner in {{{#if profession}}}{{{profession}}}{{{else}}}social work{{{/if}}} in Denmark. Your task is to provide a "X-ray analysis" of a student's oral exam presentation. The analysis should be structured, pedagogical, and focus on professional development.
 
-{{#if (eq profession "Pædagog")}}
+{{#if isPedagog}}
 VIGTIGT: Din feedback skal tage udgangspunkt i pædagogens faglighed. Fokuser på pædagogiske teorier, relationsarbejde, inklusion og dannelse. Terminology-analysen skal identificere pædagogiske fagtermer.
-{{else}}
+{{/if}}
+{{#if isSocialworker}}
 VIGTIGT: Din feedback skal tage udgangspunkt i socialrådgiverens faglighed. Fokuser på socialfaglig metode, sagsbehandling og juridisk stringens.
 {{/if}}
 
@@ -83,7 +89,14 @@ const oralExamAnalysisFlow = ai.defineFlow(
     outputSchema: OralExamAnalysisOutputSchema,
   },
   async (input) => {
-    const { output, usage } = await prompt(input);
+    const isPedagog = input.profession === 'Pædagog';
+    const isSocialworker = !input.profession || input.profession === 'Socialrådgiver';
+
+    const { output, usage } = await prompt({
+        ...input,
+        isPedagog,
+        isSocialworker
+    });
     return {
       data: output!,
       usage: {

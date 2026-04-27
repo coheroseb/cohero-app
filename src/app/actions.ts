@@ -568,18 +568,6 @@ export async function getSecondOpinionAction(input: {
     return { ...result, fileUrl: assignmentUrl };
 }
 
-export async function journalSynthesisFeedbackAction(input: { topic: string, sources: any[], journalEntry: string, complexityHints?: string, profession?: string }): Promise<any> {
-    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
-    const lawContext = fetchRes?.data || '';
-    return callFirebaseFlow('journalSynthesisFeedbackFlow', { 
-        topic: input.topic,
-        sources: input.sources,
-        journalEntry: input.journalEntry,
-        complexityHints: input.complexityHints || '',
-        lawContext: lawContext,
-        profession: input.profession
-    });
-}
 
 export async function getCaseFeedbackAction(input: { topic: string, scenario: string, initialObservation: string, assessment: string, goals: string, actionPlan: string, profession?: string }): Promise<Types.CaseFeedbackOutput> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
@@ -726,7 +714,6 @@ export async function suggestExamTopicAction(input: Types.SuggestExamTopicInput)
 export async function getIntroCaseConsequenceAction(input: any) { return callFirebaseFlow('getIntroCaseConsequenceFlow', input); }
 export async function getMythBusterResponseAction(input: any) { return callFirebaseFlow('getMythBusterResponseFlow', input); }
 export async function getCareerMatchAction(input: any) { return callFirebaseFlow('getCareerMatchFlow', input); }
-export async function reviseJournalEntryAction(input: any) { return callFirebaseFlow('reviseJournalEntryFlow', input); }
 export async function reviseCaseAction(input: any) { return callFirebaseFlow('reviseCaseFlow', input); }
 export async function researchDiscoveryAction(input: Types.ResearchDiscoveryInput): Promise<Types.ResearchDiscoveryOutput> {
     return callFirebaseFlow('researchDiscoveryFlow', input);
@@ -1010,11 +997,6 @@ export async function generateParagraphDiffAction(billOrParams: Types.ReformCand
 // Keep legacy name for internal compatibility if needed
 export const generateReformAnalysisAction = generateParagraphDiffAction;
 
-export async function generateRawCaseSourcesAction(input: { topic: string, profession?: string }): Promise<any> {
-    const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.topic });
-    const lawContext = fetchRes.data;
-    return callFirebaseFlow('generateRawCaseSourcesFlow', { topic: input.topic, lawContext, profession: input.profession });
-}
 
 export async function simulateStartAction(input: { theme: string, userName: string, currentDateStr: string, profession?: string }): Promise<any> {
     const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: input.theme });

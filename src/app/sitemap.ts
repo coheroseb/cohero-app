@@ -22,7 +22,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/second-opinion',
     '/exam-architect',
     '/etik',
-    '/tendenser',
     '/samarbejde',
     '/lov-portal',
     '/legal-logic-board',

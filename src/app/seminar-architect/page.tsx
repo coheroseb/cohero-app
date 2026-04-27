@@ -24,6 +24,7 @@ import {
   Lock,
   FileUp,
   Trash2,
+  Crown
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -698,35 +699,7 @@ function SeminarArchitectPageContent() {
     return () => clearTimeout(t);
   }, [saveStatus]);
 
-  if (!isPremiumUser && (userProfile?.totalSeminarAnalyses || 0) >= 1 && !analysisResult) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-white rounded-[36px] border border-slate-100 shadow-2xl shadow-slate-900/5 p-10 sm:p-14 flex flex-col items-center text-center"
-        >
-          <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl flex items-center justify-center text-white mb-8 shadow-xl shadow-indigo-500/20">
-            <Presentation className="w-10 h-10" />
-          </div>
-          <div className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full mb-6">
-            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Kollega+ Funktion</span>
-          </div>
-          <h2 className="text-2xl font-black text-slate-900 mb-4">Seminar-Arkitekten</h2>
-          <p className="text-slate-500 text-sm leading-relaxed mb-10">
-            {userProfile?.membership === 'Kollega' 
-              ? 'Det inkluderede seminar i dit Kollega-medlemskab er brugt. Opgrader til Kollega+ for at uploade ubegrænset materiale og få adgang til arkivet.' 
-              : 'Du har brugt din gratis analyse af et seminar. Opgrader til Kollega+ for at uploade dine planer og få ubegrænset adgang til Seminar-Arkitekten.'}
-          </p>
-          <Link href="/upgrade" className="w-full">
-            <Button className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-700 text-white font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-              <Sparkles className="w-4 h-4 mr-2" /> Opgrader til Kollega+
-            </Button>
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -770,7 +743,54 @@ function SeminarArchitectPageContent() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
+      <main className="max-w-7xl mx-auto px-5 sm:px-8 py-10 sm:py-14 relative">
+        {!isPremiumUser && (userProfile?.totalSeminarAnalyses || 0) >= 1 && (
+            <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-[2px] flex items-center justify-center p-8">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-indigo-100 p-10 text-center space-y-8 relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+                        <Sparkles className="w-32 h-32" />
+                    </div>
+                    
+                    <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-indigo-100/50 relative z-10">
+                        <Presentation className="w-8 h-8" />
+                    </div>
+                    
+                    <div className="space-y-3 relative z-10">
+                        <h2 className="text-3xl font-black text-slate-900 serif tracking-tight">Kollega+ Eksklusivt</h2>
+                        <p className="text-slate-500 leading-relaxed italic text-sm">
+                            Få AI til at omdanne dine slides til strukturerede videnskort med begreber, jura og metoder.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 text-left relative z-10 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                        {[
+                            "Ubegrænset behandling af slides",
+                            "Automatisk begrebs-identifikation",
+                            "Juridisk forankring af indhold",
+                            "Fuld adgang til seminar-arkiv"
+                        ].map((feat, i) => (
+                            <div key={i} className="flex items-center gap-3 text-[12px] font-bold text-slate-700">
+                                <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
+                                {feat}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="space-y-4 relative z-10">
+                        <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl active:scale-95 text-[12px]">
+                            Opgrader til Kollega+
+                        </Button>
+                        <button onClick={() => router.back()} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
+                            Måske senere
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+        )}
         <AnimatePresence mode="wait">
           {!analysisResult ? (
             <motion.div
