@@ -321,7 +321,7 @@ const SagItem = ({
 };
 
 const FolketingetPageContent: React.FC = () => {
-  const { user, userProfile } = useApp();
+  const { user, userProfile, usageLimits } = useApp();
   const firestore = useFirestore();
   const { toast } = useToast();
   
@@ -343,7 +343,7 @@ const FolketingetPageContent: React.FC = () => {
   const [generatingAIIds, setGeneratingAIIds] = useState<Set<number>>(new Set());
 
   const isPremiumUser = useMemo(() => {
-    return !!(userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || ''));
+    return !!(userProfile && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership || ''));
   }, [userProfile]);
 
 

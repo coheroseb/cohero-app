@@ -131,7 +131,7 @@ export default function SharedSeminarPage({ params }: { params: { id: string } }
   const isPremium = useMemo(() => {
     if (!userProfile) return false;
     if (userProfile.isQualified) return true;
-    return ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || '');
+    return ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership || '');
   }, [userProfile]);
 
   useEffect(() => {

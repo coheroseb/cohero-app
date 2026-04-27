@@ -346,7 +346,7 @@ export default function StarTableDetailsPage() {
 
     const isPremium = useMemo(() => {
         if (!userProfile) return false;
-        const premiumPlans = ['Kollega+', 'Semesterpakken'];
+        const premiumPlans = ['Kollega+', 'Semesterpakken', 'Institutionspakken'];
         return userProfile.role === 'admin' || (userProfile.membership && premiumPlans.includes(userProfile.membership));
     }, [userProfile]);
 

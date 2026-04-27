@@ -93,7 +93,7 @@ const AdminSystemPage = () => {
         // Use the same robust filter as User Management
         const premiumCount = users.filter((u: any) => {
             const mem = u.membership || '';
-            return mem.includes('+') || mem === 'Semesterpakken' || mem === 'Group Pro';
+            return mem.includes('+') || mem === 'Semesterpakken' || mem === 'Institutionspakken' || mem === 'Group Pro';
         }).length;
         
         // Use Stripe MRR if available (~ in DKK), else estimate from user count

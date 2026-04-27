@@ -160,7 +160,7 @@ const StudyCornerPageContent: React.FC = () => {
   }, [techniques, searchQuery, activeCategory]);
 
   const handleTechniqueClick = (technique: Technique) => {
-    const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || '');
+    const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership || '');
     
     if (technique.isPremium && !isPremiumUser) {
       setSelectedTechnique({ ...technique, content: 'PREMIUM_TEASER' });
@@ -189,7 +189,7 @@ const StudyCornerPageContent: React.FC = () => {
             const recommendedTechnique = techniques.find(t => t.id === topRecommendation.id);
 
             if (recommendedTechnique) {
-                const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || '');
+                const isPremiumUser = userProfile && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership || '');
                 if (recommendedTechnique.isPremium && !isPremiumUser) {
                     router.push('/upgrade');
                     return;

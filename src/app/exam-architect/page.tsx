@@ -63,7 +63,7 @@ const StatCard = ({ icon: Icon, label, value, color }: { icon: any, label: strin
 // Main Component
 // ---------------------------------------------------------------------------
 const ExamArchitectPageContent: React.FC = () => {
-  const { user, userProfile, refetchUserProfile, isUserLoading } = useApp();
+  const { user, userProfile, refetchUserProfile, isUserLoading, usageLimits } = useApp();
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -88,6 +88,22 @@ const ExamArchitectPageContent: React.FC = () => {
     if (userProfile?.role === 'admin') return true;
     return userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership);
   }, [userProfile]);
+
+  const usedToday = useMemo(() => {
+    if (!userProfile) return 0;
+    const lastUsage = userProfile.lastExamArchitectUsage?.toDate();
+    const now = new Date();
+    const isNewDay = !lastUsage || lastUsage.toDateString() !== now.toDateString();
+    return isNewDay ? 0 : (userProfile.dailyExamArchitectCount || 0);
+  }, [userProfile]);
+
+  const totalAllowed = useMemo(() => {
+    if (isPremiumUser) return Infinity;
+    const tier = ['Kollega', 'Group Pro'].includes(userProfile?.membership || '') ? 'Kollega' : 'Kollega+';
+    return usageLimits?.[tier]?.architect ?? 1;
+  }, [isPremiumUser, userProfile, usageLimits]);
+
+  const isOverLimit = !isPremiumUser && usedToday >= totalAllowed;
 
   const seminarsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -155,16 +171,10 @@ const ExamArchitectPageContent: React.FC = () => {
     setLimitError(null);
 
     // Limit check
-    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
-      const lastUsage = userProfile.lastExamArchitectUsage?.toDate();
-      const now = new Date();
-      const isNewMonth = !lastUsage || lastUsage.getMonth() !== now.getMonth() || lastUsage.getFullYear() !== now.getFullYear();
-      const count = isNewMonth ? 0 : (userProfile.monthlyExamArchitectCount || 0);
-      if (count >= 2) {
-        setLimitError('Du har brugt dine 2 månedlige forsøg. Opgrader til Kollega+ for ubegrænset adgang.');
-        setIsGenerating(false);
-        return;
-      }
+    if (isOverLimit) {
+      setLimitError(`Du har brugt din daglige grænse på ${totalAllowed} byggeplan. Opgrader til Kollega+ for ubegrænset adgang.`);
+      setIsGenerating(false);
+      return;
     }
     
     let seminarContext = '';
@@ -186,15 +196,10 @@ const ExamArchitectPageContent: React.FC = () => {
       
       const batch = writeBatch(firestore);
       const userRef = doc(firestore, 'users', user.uid);
-      const userUpdates: {[key: string]: any} = { lastExamArchitectUsage: serverTimestamp() };
-      if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
-        const lastUsage = userProfile.lastExamArchitectUsage?.toDate();
-        if (!lastUsage || lastUsage.getMonth() !== new Date().getMonth() || lastUsage.getFullYear() !== new Date().getFullYear()) {
-          userUpdates.monthlyExamArchitectCount = 1;
-        } else {
-          userUpdates.monthlyExamArchitectCount = increment(1);
-        }
-      }
+      const userUpdates: {[key: string]: any} = { 
+        lastExamArchitectUsage: serverTimestamp(),
+        dailyExamArchitectCount: increment(1)
+      };
       if (response.usage) {
         const totalTokens = response.usage.inputTokens + response.usage.outputTokens;
         const pointsToAdd = Math.round(totalTokens * 0.05);

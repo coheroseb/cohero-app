@@ -298,7 +298,7 @@ const FileInputCard: React.FC<{
 
 const SecondOpinionPageContent = () => {
     const router = useRouter();
-    const { user, userProfile, refetchUserProfile } = useApp();
+    const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -426,7 +426,7 @@ const SecondOpinionPageContent = () => {
 
       const isPremiumUser = useMemo(() => {
         const m = userProfile?.membership;
-        return m && ['Kollega+', 'Semesterpakken'].includes(m);
+        return m && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(m);
     }, [userProfile]);
 
     const handleGetSecondOpinion = async (e?: React.FormEvent) => {
@@ -456,27 +456,14 @@ const SecondOpinionPageContent = () => {
             
             const lastUsage = userData.lastSecondOpinionUsage?.toDate();
             const now = new Date();
-            const isNewMonth = !lastUsage || lastUsage.getMonth() !== now.getMonth() || lastUsage.getFullYear() !== now.getFullYear();
+            const isNewDay = !lastUsage || lastUsage.toDateString() !== now.toDateString();
+            const currentCount = isNewDay ? 0 : (userData.dailySecondOpinionCount || 0);
 
-            let limitVal = 1;
-            switch (userProfile.membership) {
-                case 'Group Pro':
-                case 'Kollega':
-                    limitVal = 100;
-                    break;
-                case 'Kollega+':
-                case 'Institution':
-                    limitVal = 1000;
-                    break;
-                default:
-                    limitVal = 1; 
-            }
-            
-            const currentCount = isNewMonth ? 0 : (userData.monthlySecondOpinionCount || 0);
+            const tier = ['Kollega', 'Group Pro'].includes(userProfile.membership || '') ? 'Kollega' : 'Kollega+';
+            const limitVal = isPremiumUser ? Infinity : (usageLimits?.[tier]?.opinion ?? 0);
 
-            if (currentCount >= limitVal && !['Kollega+', 'Institution'].includes(userProfile.membership || '')) {
-                 const planName = userProfile.membership || 'din plan';
-                 setLimitError(`Månedlig grænse nået for ${planName}.`);
+            if (currentCount >= limitVal && !isPremiumUser) {
+                 setLimitError(`Daglig grænse på ${limitVal} nået. Opgrader for fuld adgang.`);
                  setIsAnalyzing(false);
                  if (progressInterval) clearInterval(progressInterval);
                  return;
@@ -531,8 +518,7 @@ const SecondOpinionPageContent = () => {
             batch.set(doc(firestore, 'users', user.uid, 'secondOpinions', 'latest'), dataToSave);
 
             const userUpdates: any = {};
-            if (isNewMonth) userUpdates.monthlySecondOpinionCount = 1;
-            else userUpdates.monthlySecondOpinionCount = increment(1);
+            userUpdates.dailySecondOpinionCount = increment(1);
             userUpdates.lastSecondOpinionUsage = serverTimestamp();
             userUpdates.cohéroPoints = increment(500);
 

@@ -450,7 +450,7 @@ function SeminarArchitectPageContent() {
   const isInitialMount = useRef(true);
 
   const isPremiumUser = useMemo(() =>
-    !!userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership ?? ''),
+    !!userProfile && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership ?? ''),
     [userProfile]
   );
   
