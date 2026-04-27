@@ -64,7 +64,7 @@ interface AnalysisResult {
 }
 
 export default function MundtligEksamenstraenerPage() {
-  const { user, userProfile, isUserLoading, usageLimits } = useApp();
+  const { user, userProfile, isUserLoading } = useApp();
   const isUnderDevelopment = false;
   const router = useRouter();
   const { toast } = useToast();
@@ -85,7 +85,7 @@ export default function MundtligEksamenstraenerPage() {
 
   const firestore = useFirestore();
 
-  const isPremiumUser = useMemo(() => !!userProfile && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership ?? ''), [userProfile]);
+  const isPremiumUser = useMemo(() => !!userProfile && ['Kollega+', 'Semesterpakken'].includes(userProfile.membership ?? ''), [userProfile]);
 
   const getDailyCount = (lastUsage?: any, dailyCount?: number) => {
     if (!lastUsage) return 0;
@@ -95,9 +95,8 @@ export default function MundtligEksamenstraenerPage() {
   };
 
   const usedToday = userProfile ? getDailyCount(userProfile.lastOralExamUsage, userProfile.dailyOralExamCount) : 0;
-  const tier = ['Kollega', 'Group Pro'].includes(userProfile?.membership || '') ? 'Kollega' : 'Kollega+';
-  const totalAllowed = isPremiumUser ? Infinity : (usageLimits?.[tier]?.oralExam ?? 1);
-  const isOverLimit = !isPremiumUser && usedToday >= totalAllowed;
+  const totalAllowed = isPremiumUser ? Infinity : 0;
+  const isOverLimit = !isPremiumUser;
 
   useEffect(() => {
     if (!isUserLoading && !user) {

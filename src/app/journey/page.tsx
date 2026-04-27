@@ -38,20 +38,20 @@ const SLIDES = [
   },
   {
     id: 'intro',
-    title: '',
+    title: 'Velkommen til Cohéro',
     subtitle: 'Teknologi til træning. Mennesker til mening.',
-    description: 'En rejse fra en vision om at hjælpe den enkelte studerende til at transformere måden vi tænker velfærd på.',
-    icon: null,
+    description: 'Vi bygger bro mellem teori og praksis for at skabe næste generation af velfærdsprofessionelle.',
+    icon: <Sparkles className="w-12 h-12 text-rose-500" />,
     color: 'from-rose-500 to-orange-500',
     background: 'bg-slate-950'
   },
   {
     id: 'mission-detailed',
     title: 'Vores Mission',
-    subtitle: 'Gør op med den faglige ensomhed',
-    description: 'Vi bygger den digitale kollega, der sikrer at ingen står alene med ansvaret for andres skæbne. Fra socialrådgivere til alle velfærdsprofessionelle.',
-    icon: <Heart className="w-12 h-12 text-rose-500" />,
-    color: 'from-rose-500 to-indigo-500',
+    subtitle: 'Rygdækning til velfærdens helte',
+    description: 'Vi udvikler AI-drevne værktøjer og praksisnær træning, der giver studerende og færdiguddannede den nødvendige tyngde til at navigere i komplekse faglige udfordringer.',
+    icon: <Shield className="w-12 h-12 text-indigo-500" />,
+    color: 'from-indigo-500 to-rose-500',
     background: 'bg-slate-900'
   },
   {
@@ -402,17 +402,46 @@ export default function PresentationModule() {
             </motion.p>
 
             {/* Interactive Elements for specific slides */}
-            {currentSlide === 0 && (
+            {slide.id === 'intro' && (
               <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="pt-12"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                className="pt-12 max-w-5xl mx-auto w-full relative"
               >
-                 <div className="flex items-center justify-center gap-4 text-slate-500 text-sm font-bold animate-bounce">
-                    <span>Brug piletasterne for at starte</span>
-                    <ChevronRight className="w-4 h-4" />
-                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   {[
+                     { t: 'Innovation', d: 'Fremtidens løsninger', icon: <Rocket className="w-6 h-6 text-rose-500" /> },
+                     { t: 'Faglighed', d: 'Metodisk tyngde', icon: <Brain className="w-6 h-6 text-orange-500" /> },
+                     { t: 'Fællesskab', d: 'Stærk rygdækning', icon: <Users className="w-6 h-6 text-amber-500" /> }
+                   ].map((item, i) => (
+                     <motion.div 
+                       key={item.t}
+                       initial={{ opacity: 0, scale: 0.9 }}
+                       animate={{ opacity: 1, scale: 1 }}
+                       transition={{ delay: 1 + i * 0.2 }}
+                       className="p-8 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-2xl hover:bg-white/10 transition-all group cursor-default"
+                     >
+                        <div className="mb-4 p-3 inline-block rounded-xl bg-white/5 group-hover:scale-110 transition-transform">
+                          {item.icon}
+                        </div>
+                        <h4 className="text-xl font-black text-white mb-2">{item.t}</h4>
+                        <p className="text-sm text-slate-500 font-medium">{item.d}</p>
+                     </motion.div>
+                   ))}
+                </div>
+                
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.8 }}
+                  className="pt-12"
+                >
+                   <div className="flex items-center justify-center gap-4 text-slate-500 text-sm font-bold animate-bounce">
+                      <span>Brug piletasterne for at starte</span>
+                      <ChevronRight className="w-4 h-4" />
+                   </div>
+                </motion.div>
               </motion.div>
             )}
 
@@ -421,55 +450,174 @@ export default function PresentationModule() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="pt-12 max-w-4xl mx-auto w-full space-y-8"
+                className="pt-12 max-w-5xl mx-auto w-full space-y-12"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <motion.div 
                      initial={{ opacity: 0, x: -20 }}
                      animate={{ opacity: 1, x: 0 }}
                      transition={{ delay: 1 }}
-                     className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-2xl text-left space-y-4"
+                     className="p-10 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-2xl text-left space-y-6 relative overflow-hidden"
                    >
-                      <p className="text-xs font-black uppercase tracking-widest text-rose-400">Udfordringen</p>
-                      <h4 className="text-2xl font-black text-white">Praksischoket</h4>
-                      <p className="text-sm text-slate-400 leading-relaxed italic">
-                        "Mange føler sig alene med svære juridiske afgørelser kl. 23:00 søndag aften. Systemet mangler ressourcerne til den nødvendige sparring."
+                      <div className="absolute top-0 right-0 p-8 opacity-5">
+                        <Shield className="w-32 h-32" />
+                      </div>
+                      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Vores Mission</p>
+                      <h4 className="text-3xl font-black text-white leading-tight">Broen mellem teori og praksis</h4>
+                      <p className="text-base text-slate-400 leading-relaxed">
+                        Vi udvikler AI-drevne værktøjer, praksisnær træning og et stærkt fagligt fællesskab, der giver studerende og færdiguddannede den nødvendige rygdækning til at navigere i komplekse faglige udfordringer.
                       </p>
                    </motion.div>
                    <motion.div 
                      initial={{ opacity: 0, x: 20 }}
                      animate={{ opacity: 1, x: 0 }}
                      transition={{ delay: 1.2 }}
-                     className="p-8 rounded-[2.5rem] bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-2xl text-left space-y-4"
+                     className="p-10 rounded-[3rem] bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-2xl text-left space-y-6 flex flex-col justify-center"
                    >
-                      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Ambitionen</p>
-                      <h4 className="text-2xl font-black text-white">Fra 6.500 til 50.000+</h4>
-                      <p className="text-sm text-slate-400 leading-relaxed">
-                        Vi startede hos socialrådgiverne, men vores vision inkluderer pædagoger, sygeplejersker og lærere. Idéen er bygget til at skalere.
+                      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Fremtidens Velfærd</p>
+                      <p className="text-xl text-indigo-100 font-medium leading-relaxed italic">
+                        "Vi sikrer, at digital dannelse og metodisk tyngde bliver nøglen til et sundt arbejdsliv."
                       </p>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                         <motion.div 
-                           initial={{ width: '13%' }}
-                           animate={{ width: '100%' }}
-                           transition={{ duration: 3, delay: 2 }}
-                           className="h-full bg-gradient-to-r from-rose-500 to-indigo-500"
-                         />
+                      <div className="space-y-4 pt-4">
+                        <div className="flex justify-between text-xs font-black uppercase tracking-widest text-indigo-300/50">
+                          <span>Digital Dannelse</span>
+                          <span>100%</span>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                           <motion.div 
+                             initial={{ width: '0%' }}
+                             animate={{ width: '100%' }}
+                             transition={{ duration: 3, delay: 2 }}
+                             className="h-full bg-gradient-to-r from-indigo-500 to-rose-500"
+                           />
+                        </div>
                       </div>
                    </motion.div>
                 </div>
+
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.4 }}
-                  className="p-10 rounded-[3rem] bg-gradient-to-br from-indigo-600/20 to-rose-600/20 border border-white/10 backdrop-blur-3xl relative overflow-hidden group"
+                  className="p-12 rounded-[3.5rem] bg-gradient-to-br from-indigo-600/20 to-rose-600/20 border border-white/10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl"
                 >
-                   <Quote className="w-12 h-12 text-white/10 mb-4 mx-auto group-hover:scale-110 transition-transform" />
-                   <p className="text-xl md:text-3xl font-serif italic text-white leading-relaxed text-center">
+                   <div className="absolute top-6 left-12">
+                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Vores Vision</p>
+                   </div>
+                   <Quote className="w-16 h-16 text-white/10 mb-6 mx-auto group-hover:scale-110 transition-transform" />
+                   <p className="text-2xl md:text-4xl font-serif italic text-white leading-relaxed text-center max-w-4xl mx-auto">
                      ”At skabe teknologiske løsninger til velfærdsuddannelserne, der giver de studerende et digitalt rum for træning og faglig fordybelse”
                    </p>
-                   <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-rose-500/10 blur-[80px] rounded-full" />
-                   <div className="absolute -top-20 -left-20 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full" />
+                   <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-rose-500/10 blur-[100px] rounded-full" />
+                   <div className="absolute -top-20 -left-20 w-80 h-80 bg-indigo-500/10 blur-[100px] rounded-full" />
                 </motion.div>
+              </motion.div>
+            )}
+
+            {slide.id === 'problem' && (
+              <motion.div 
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                className="pt-12 max-w-5xl mx-auto w-full space-y-12"
+              >
+                <div className="relative h-[500px] rounded-[3.5rem] bg-white/5 border border-white/10 backdrop-blur-3xl overflow-hidden shadow-2xl flex items-center justify-center group">
+                   {/* Background Glows */}
+                   <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-emerald-500/5 opacity-50" />
+                   
+                   {/* Visual Bridge Elements */}
+                   <div className="absolute inset-0 flex items-center justify-between px-20">
+                      {/* Theory Side */}
+                      <motion.div 
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.2 }}
+                        className="w-64 space-y-4 text-center z-20"
+                      >
+                         <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md relative">
+                            <BookSpine isGhost index={0} theme="dark" width="w-10" height="h-24" color="bg-amber-500/20" decoration="bands" />
+                            <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-xs font-bold text-slate-950">!</div>
+                         </div>
+                         <h5 className="text-xl font-black text-amber-500 uppercase tracking-widest">Tung Teori</h5>
+                         <p className="text-xs text-slate-500 font-medium italic">"Mange føler sig alene med det teoretiske ansvar"</p>
+                      </motion.div>
+
+                      {/* Practice Side */}
+                      <motion.div 
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.4 }}
+                        className="w-64 space-y-4 text-center z-20"
+                      >
+                         <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md relative">
+                            <Zap className="w-16 h-16 text-emerald-500/50 mx-auto" />
+                            <motion.div 
+                              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="absolute inset-0 bg-emerald-500/10 blur-xl rounded-full"
+                            />
+                         </div>
+                         <h5 className="text-xl font-black text-emerald-500 uppercase tracking-widest">Praksis</h5>
+                         <p className="text-xs text-slate-500 font-medium italic">"Tryg træning af virkeligheden"</p>
+                      </motion.div>
+                   </div>
+
+                   {/* The Bridge (Connecting Line) */}
+                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <motion.div 
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 1.5, delay: 1.6, ease: "circOut" }}
+                        className="w-1/3 h-[2px] bg-gradient-to-r from-amber-500 via-white to-emerald-500 shadow-[0_0_30px_rgba(255,255,255,0.5)] z-10"
+                      />
+                   </div>
+
+                   {/* Floating "Bridge" Elements (Cohéro Platform) */}
+                   <motion.div 
+                     animate={{ 
+                       y: [0, -20, 0],
+                       rotate: [-2, 2, -2]
+                     }}
+                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                     className="absolute z-30"
+                   >
+                      <div className="p-10 rounded-[2.5rem] bg-white/10 backdrop-blur-3xl border border-white/20 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4">
+                         <div className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-rose-500 to-indigo-600 flex items-center justify-center shadow-2xl">
+                            <Brain className="w-10 h-10 text-white" />
+                         </div>
+                         <div className="text-center">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Cohéro Platform</p>
+                            <h4 className="text-xl font-black text-white">Brobyggeren</h4>
+                         </div>
+                      </div>
+                   </motion.div>
+
+                   {/* Scanner Effect */}
+                   <motion.div 
+                     animate={{ x: ['-100%', '100%'] }}
+                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                     className="absolute top-0 bottom-0 w-32 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none"
+                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   {[
+                     { t: 'Professionsreformen', d: 'Et massivt skifte mod praksisnær læring.', color: 'text-amber-500' },
+                     { t: 'Digital Dannelse', d: 'Nøglen til et sundt og stærkt arbejdsliv.', color: 'text-white' },
+                     { t: 'Trygt Rum', d: 'Træn de svære samtaler før virkeligheden kalder.', color: 'text-emerald-500' }
+                   ].map((item, i) => (
+                     <motion.div 
+                       key={item.t}
+                       initial={{ opacity: 0, y: 20 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       transition={{ delay: 2 + i * 0.2 }}
+                       className="p-8 rounded-[2rem] bg-white/5 border border-white/10 text-left space-y-3"
+                     >
+                        <h5 className={`text-sm font-black uppercase tracking-widest ${item.color}`}>{item.t}</h5>
+                        <p className="text-sm text-slate-400 leading-relaxed font-medium">{item.d}</p>
+                     </motion.div>
+                   ))}
+                </div>
               </motion.div>
             )}
 
@@ -1202,18 +1350,142 @@ export default function PresentationModule() {
               </motion.div>
             )}
 
-            {slide.id === 'outro' && (
+            {slide.id === 'community' && (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="pt-12"
+                className="pt-12 max-w-5xl mx-auto w-full space-y-12"
               >
-                <div className="flex justify-center gap-6">
-                  <Link href="/" className="px-8 py-4 bg-white text-slate-950 rounded-2xl font-black uppercase text-sm tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-white/20">
-                    Udforsk Platformen
-                  </Link>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                   <div className="space-y-8 text-left">
+                      <div className="space-y-4">
+                         <p className="text-xs font-black uppercase tracking-[0.4em] text-emerald-400">Medskabelse</p>
+                         <h4 className="text-4xl md:text-6xl font-black text-white leading-[0.9] tracking-tighter">
+                            Udviklet sammen<br />med jer.
+                         </h4>
+                      </div>
+                      <p className="text-xl text-slate-400 leading-relaxed font-medium">
+                         Vi udvikler og forfiner platformen i tæt samarbejde med både de studerende og uddannelserne. Fordi løsningen findes hverken hos uddannelserne eller hos de studerende alene – den findes et sted på midten.
+                      </p>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                            <Users className="w-6 h-6 text-emerald-500" />
+                            <h5 className="text-white font-bold">Studerende</h5>
+                            <p className="text-xs text-slate-500">Direkte feedback fra hverdagen.</p>
+                         </div>
+                         <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                            <Globe className="w-6 h-6 text-blue-500" />
+                            <h5 className="text-white font-bold">Institutioner</h5>
+                            <p className="text-xs text-slate-500">Akademisk dybde og relevans.</p>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="relative aspect-square">
+                      {/* Interactive Synergy Visual */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                         <motion.div 
+                           animate={{ rotate: 360 }}
+                           transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                           className="w-full h-full border-2 border-dashed border-white/10 rounded-full"
+                         />
+                         
+                         {/* Connecting Points */}
+                         {[0, 120, 240].map(deg => (
+                           <motion.div 
+                             key={deg}
+                             animate={{ 
+                               scale: [1, 1.1, 1],
+                               opacity: [0.5, 1, 0.5]
+                             }}
+                             transition={{ duration: 4, repeat: Infinity, delay: deg/120 }}
+                             className="absolute w-12 h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl"
+                             style={{ 
+                               top: '50%',
+                               left: '50%',
+                               transform: `rotate(${deg}deg) translateX(150px) rotate(-${deg}deg)`
+                             }}
+                           >
+                              <Sparkles className="w-6 h-6 text-emerald-400" />
+                           </motion.div>
+                         ))}
+
+                         {/* Central Core */}
+                         <motion.div 
+                           animate={{ 
+                             scale: [1, 1.05, 1],
+                             boxShadow: [
+                               "0 0 40px rgba(16,185,129,0.2)",
+                               "0 0 80px rgba(16,185,129,0.4)",
+                               "0 0 40px rgba(16,185,129,0.2)"
+                             ]
+                           }}
+                           transition={{ duration: 3, repeat: Infinity }}
+                           className="w-40 h-40 rounded-[2.5rem] bg-gradient-to-br from-emerald-500 to-teal-600 flex flex-col items-center justify-center gap-2 shadow-2xl z-10"
+                         >
+                            <Target className="w-12 h-12 text-white" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white/70">Fælles Mål</span>
+                         </motion.div>
+
+                         {/* Connecting Lines (Simulated with Gradient Overlays) */}
+                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(16,185,129,0.05)_100%)] pointer-events-none" />
+                      </div>
+                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {slide.id === 'outro' && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8, duration: 0.8 }}
+                className="pt-12 max-w-4xl mx-auto w-full text-center space-y-12"
+              >
+                <div className="relative p-20 rounded-[4rem] bg-white/5 border border-white/10 backdrop-blur-3xl overflow-hidden group">
+                   <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-transparent to-indigo-500/10" />
+                   
+                   <motion.div 
+                     animate={{ 
+                       rotate: 360,
+                       scale: [1, 1.2, 1]
+                     }}
+                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                     className="absolute -top-1/2 -right-1/2 w-full h-full bg-rose-500/5 blur-[120px] rounded-full"
+                   />
+
+                   <div className="relative z-10 space-y-8">
+                      <motion.div 
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                        className="inline-block p-6 rounded-[2rem] bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl"
+                      >
+                         <Rocket className="w-12 h-12 text-rose-500" />
+                      </motion.div>
+                      
+                      <div className="space-y-4">
+                         <h4 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
+                            Lad os skabe fremtiden<br />sammen.
+                         </h4>
+                         <p className="text-xl text-slate-400 font-medium max-w-2xl mx-auto">
+                            Vi inviterer dig med til at forme fremtidens velfærd. Lad os gøre en forskel sammen.
+                         </p>
+                      </div>
+
+                      <div className="pt-8">
+                         <Link href="/" className="inline-flex items-center gap-4 px-12 py-6 bg-white text-slate-950 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.3)] group/btn">
+                           Start din rejse nu
+                           <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                         </Link>
+                      </div>
+                   </div>
+                </div>
+                
+                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20">
+                   Cohéro © 2026 • Designet med stolthed
+                </p>
               </motion.div>
             )}
           </motion.div>

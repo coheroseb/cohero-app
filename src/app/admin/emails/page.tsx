@@ -24,7 +24,7 @@ const ReactQuill = dynamic(
 );
 import 'react-quill/dist/quill.snow.css';
 
-type TargetGroup = 'all' | 'Socialrådgiver' | 'Pædagog' | 'Lærer' | 'Sygeplejerske' | 'Andet' | 'premium' | 'Kollega+' | 'Semesterpakken' | 'Institutionspakken' | 'Group Pro' | 'Kollega' | 'specific' | 'institutions';
+type TargetGroup = 'all' | 'Socialrådgiver' | 'Pædagog' | 'Lærer' | 'Sygeplejerske' | 'Andet' | 'premium' | 'Kollega+' | 'Semesterpakken' | 'Group Pro' | 'Kollega' | 'specific' | 'institutions';
 
 interface UserProfile {
   id: string;
@@ -151,11 +151,10 @@ export default function AdminEmailsPage() {
             if (group === 'all') return true;
             
             const m = u.membership?.trim() || '';
-            if (group === 'premium') return ['Kollega+', 'Semesterpakken', 'Institutionspakken', 'Group Pro'].includes(m);
+            if (group === 'premium') return ['Kollega+', 'Semesterpakken', 'Group Pro'].includes(m);
             if (group === 'Kollega') return m === 'Kollega' || m === '';
             if (group === 'Kollega+') return m === 'Kollega+';
             if (group === 'Semesterpakken') return m === 'Semesterpakken';
-            if (group === 'Institutionspakken') return m === 'Institutionspakken';
             if (group === 'Group Pro') return m === 'Group Pro';
             
             return u.profession?.trim() === group;
@@ -181,10 +180,9 @@ export default function AdminEmailsPage() {
                 if (targetGroup === 'all') return true;
                 
                 const m = u.membership?.trim() || '';
-                if (targetGroup === 'premium') return ['Kollega+', 'Semesterpakken', 'Institutionspakken', 'Group Pro'].includes(m);
+                if (targetGroup === 'premium') return ['Kollega+', 'Semesterpakken', 'Group Pro'].includes(m);
                 if (targetGroup === 'Kollega+') return m === 'Kollega+';
                 if (targetGroup === 'Semesterpakken') return m === 'Semesterpakken';
-                if (targetGroup === 'Institutionspakken') return m === 'Institutionspakken';
                 if (targetGroup === 'Group Pro') return m === 'Group Pro';
                 if (targetGroup === 'Kollega') return m === 'Kollega' || m === '';
                 
@@ -316,7 +314,7 @@ export default function AdminEmailsPage() {
                                         </div>
                                         <div className="bg-slate-50/50 p-6 rounded-[2.5rem] border border-slate-100 space-y-6">
                                             <div className="flex flex-wrap gap-2">
-                                                {['all', 'premium', 'Kollega', 'Kollega+', 'Semesterpakken', 'Institutionspakken', 'institutions', 'specific'].map(g => (
+                                                {['all', 'premium', 'Kollega', 'Kollega+', 'Semesterpakken', 'institutions', 'specific'].map(g => (
                                                     <button
                                                         key={g}
                                                         type="button"

@@ -225,7 +225,7 @@ const AdminUsersPage = () => {
 
     const premiumCount = nonAdmins.filter(u => {
         const mem = u.membership || '';
-        return mem.includes('+') || mem === 'Semesterpakken' || mem === 'Institutionspakken' || mem === 'Group Pro';
+        return mem.includes('+') || mem === 'Semesterpakken' || mem === 'Group Pro';
     }).length;
 
     const pushCount = nonAdmins.filter(u => u.fcmTokens && u.fcmTokens.length > 0).length;
@@ -608,8 +608,8 @@ const AdminUsersPage = () => {
                                    </div>
                                )}
                                <span className={`w-fit px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-colors mt-1 ${
-                                    u.membership === 'Kollega+' || u.membership === 'Semesterpakken' || u.membership === 'Institutionspakken' || u.membership === 'Group Pro' ? 'bg-amber-950 text-amber-400 border-amber-900/50' : 
-                                    'bg-slate-50 text-slate-500 border-slate-100'
+                                    u.membership === 'Kollega+' || u.membership === 'Semesterpakken' || u.membership === 'Group Pro' ? 'bg-amber-950 text-amber-400 border-amber-900/50' : 
+                                    u.membership === 'Kollega+' ? 'bg-indigo-900 text-indigo-200 border-indigo-800' : 'bg-slate-50 text-slate-500 border-slate-100'
                                }`}>
                                  {u.membership || 'Kollega (Gratis)'}
                                </span>
@@ -750,7 +750,7 @@ const AdminUsersPage = () => {
                                              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                                                  <div className="flex items-center justify-between">
                                                      <span className="text-xs font-bold text-slate-500">Plan Status</span>
-                                                     {u.membership === 'Kollega+' || u.membership === 'Semesterpakken' || u.membership === 'Institutionspakken' ? (
+                                                     {u.membership === 'Kollega+' || u.membership === 'Semesterpakken' ? (
                                                         <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest rounded-lg border border-emerald-100/50">Active Subscription</span>
                                                      ) : (
                                                         <span className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[8px] font-black uppercase tracking-widest rounded-lg border border-slate-100">Free Tier</span>
@@ -765,7 +765,7 @@ const AdminUsersPage = () => {
                                                             await updateDoc(doc(firestore, 'users', u.id), { 
                                                                 membership: newVal,
                                                                 // If manually setting to premium, also set the boolean if app uses it
-                                                                isPremium: newVal.includes('+') || newVal === 'Semesterpakken' || newVal === 'Institutionspakken'
+                                                                isPremium: newVal.includes('+') || newVal === 'Semesterpakken'
                                                             });
                                                             toast({ title: "Medlemskab opdateret", description: `${u.username} er nu ${newVal}` });
                                                         } catch (err) {
@@ -777,7 +777,6 @@ const AdminUsersPage = () => {
                                                     <option value="Kollega">Kollega (Gratis)</option>
                                                     <option value="Kollega+">Kollega+</option>
                                                     <option value="Semesterpakken">Semesterpakken</option>
-                                                    <option value="Institutionspakken">Institutionspakken</option>
                                                     <option value="Mentor">Mentor</option>
                                                  </select>
                                                  {u.stripeSubscriptionId && (

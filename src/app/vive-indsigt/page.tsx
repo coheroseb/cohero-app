@@ -38,8 +38,7 @@ import {
   Info,
   TrendingUp,
   FileSearch,
-  BookOpen,
-  Crown
+  BookOpen
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useDebounce } from 'use-debounce';
@@ -118,7 +117,7 @@ const ViveIndsigtPageContent: React.FC = () => {
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
-    const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile.membership), [userProfile]);
+    const isPremium = useMemo(() => !!userProfile?.membership && ['Kollega+', 'Semesterpakken', 'Group Pro'].includes(userProfile.membership), [userProfile]);
 
     const savedArticlesQuery = useMemoFirebase(() => (
         user && firestore ? query(collection(firestore, 'users', user.uid, 'savedViveArticles')) : null
@@ -583,28 +582,12 @@ const ViveIndsigtPageContent: React.FC = () => {
                                                 </div>
 
                                                 {!isPremium ? (
-                                                    <div className="relative group/teaser">
-                                                        <div className="absolute inset-0 z-50 bg-white/40 backdrop-blur-[2px] rounded-[2.5rem] flex items-center justify-center p-6 text-center">
-                                                            <div className="space-y-6">
-                                                                <div className="w-16 h-16 bg-cyan-50 text-cyan-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner border border-cyan-100/50">
-                                                                    <Crown className="w-8 h-8" />
-                                                                </div>
-                                                                <div className="space-y-2">
-                                                                    <h5 className="text-[14px] font-black text-slate-900 serif tracking-tight">Kollega+ Eksklusivt</h5>
-                                                                    <p className="text-[11px] text-slate-500 italic">Opgrader for at bruge AI-forskeren.</p>
-                                                                </div>
-                                                                <Button onClick={() => router.push('/upgrade')} className="w-full h-12 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl">
-                                                                    Opgrader nu
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                        <div className="w-full py-16 border-2 border-dashed border-slate-100 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 opacity-50">
-                                                            <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center"><UploadCloud className="w-8 h-8 text-slate-300" /></div>
-                                                            <div className="text-center">
-                                                                <span className="block text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Upload VIVE PDF</span>
-                                                                <span className="text-[10px] text-slate-500">Træk filen herind</span>
-                                                            </div>
-                                                        </div>
+                                                    <div className="p-8 bg-white/5 border border-white/10 rounded-3xl space-y-6">
+                                                        <div className="flex items-center gap-3 text-amber-500 font-black uppercase text-[10px] tracking-widest"><Lock className="w-4 h-4" /> Premium Værktøj</div>
+                                                        <p className="text-xs text-slate-400">Opgrader til Kollega+ for at uploade rapporter og stille AI-spørgsmål.</p>
+                                                        <Button asChild className="w-full bg-cyan-500 hover:bg-white text-slate-950 h-14 rounded-2xl font-bold border-none shadow-xl shadow-cyan-500/20">
+                                                            <Link href="/upgrade">Se medlemskab</Link>
+                                                        </Button>
                                                     </div>
                                                 ) : !uploadedFile ? (
                                                     <label className="block cursor-pointer">

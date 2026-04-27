@@ -803,7 +803,14 @@ const PortalPageContent: React.FC = () => {
             return;
         }
 
-        // Limit check removed - teaser handled on target page
+        if (isConceptLimitReached) {
+            toast({
+                variant: 'destructive',
+                title: 'Dagsgrænse nået',
+                description: 'Som Kollega-medlem har du 1 dagligt opslag i Begrebsguiden. Opgradér til Kollega+ for fri adgang.',
+            });
+            return;
+        }
 
         if (user && firestore) {
             addDoc(collection(firestore, 'userActivities'), {
@@ -921,7 +928,14 @@ const PortalPageContent: React.FC = () => {
                   tag.toLowerCase().includes('bekendtgørelse') ||
                   tag.toLowerCase().includes('vejledning');
 
-    // Limit check removed - teaser handled on target page
+    if (!isLaw && isConceptLimitReached) {
+        toast({
+            variant: 'destructive',
+            title: 'Dagsgrænse nået',
+            description: 'Som Kollega-medlem har du 1 dagligt opslag i Begrebsguiden. Opgradér til Kollega+ for fri adgang.',
+        });
+        return;
+    }
 
     if (isLaw) {
         router.push(`/lov-portal?search=${encodeURIComponent(tag)}`);
@@ -1305,17 +1319,21 @@ const PortalPageContent: React.FC = () => {
                 {category.items.map((item, i) => (
                     <Link
                         key={i}
-                        href={item.path}
+                        href={item.limit && item.limit.used >= item.limit.total ? '/upgrade' : item.path}
                         style={{ 
                             borderColor: 'var(--theme-border, rgba(241, 245, 249, 1))', 
                             backgroundColor: effectiveTheme !== 'default' ? 'var(--theme-accent, rgba(255, 255, 255, 1))' : 'white' 
                         }}
-                        className={`group p-8 rounded-[40px] border outline-none focus-visible:ring-4 focus-visible:ring-slate-900/5 transition-all duration-500 relative overflow-hidden flex flex-col justify-between h-[260px] sm:h-[280px] active:scale-[0.98] lg:hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] lg:hover:border-slate-300 cursor-pointer shadow-sm shadow-slate-200/50 ${
+                        className={`group p-8 rounded-[40px] border outline-none focus-visible:ring-4 focus-visible:ring-slate-900/5 transition-all duration-500 relative overflow-hidden flex flex-col justify-between h-[260px] sm:h-[280px] ${
+                            item.limit && item.limit.used >= item.limit.total 
+                              ? 'opacity-80 border-slate-200 cursor-not-allowed shadow-none' 
+                              : `active:scale-[0.98] lg:hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] lg:hover:border-slate-300 cursor-pointer shadow-sm shadow-slate-200/50 ${
                                   effectiveTheme === 'christmas' ? 'lg:hover:-translate-y-1 lg:hover:shadow-white/20' :
                                   effectiveTheme === 'easter' ? 'lg:hover:-translate-y-4' :
                                   effectiveTheme === 'halloween' ? 'lg:hover:-translate-y-1 lg:hover:shadow-orange-500/20' :
                                   'lg:hover:-translate-y-1'
-                                }`}
+                                }`
+                        }`}
                     >
                         <div className="relative z-10 flex justify-between items-start">
                          <div className={`w-16 h-16 rounded-[22px] border flex items-center justify-center shadow-sm ${item.color} ${item.limit && item.limit.used >= item.limit.total ? 'grayscale opacity-30' : 'group-hover:scale-110 group-hover:rotate-3 transition-all duration-500'}`}>
@@ -1349,10 +1367,36 @@ const PortalPageContent: React.FC = () => {
                     </div>
 
                     {item.limit && item.limit.used >= item.limit.total && (
-                        <div className="absolute top-6 right-6 z-20">
-                            <div className="w-10 h-10 bg-amber-500 text-amber-950 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
-                                <Crown className="w-5 h-5 fill-current" />
-                            </div>
+                        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[12px] flex items-center justify-center p-6 z-20 group-hover:bg-slate-950/70 transition-all duration-700">
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                className="bg-slate-900/40 backdrop-blur-3xl p-8 rounded-[48px] shadow-2xl flex flex-col items-center text-center gap-6 max-w-[280px] border border-white/10 relative overflow-hidden group/limit"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
+                                
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-amber-500 blur-2xl opacity-20 group-hover/limit:opacity-40 transition-opacity" />
+                                    <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 rounded-[24px] flex items-center justify-center shadow-2xl relative z-10 group-hover/limit:scale-110 group-hover/limit:rotate-12 transition-transform duration-500">
+                                      <Crown className="w-8 h-8 fill-current" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 relative z-10">
+                                    <h5 className="text-[22px] font-black text-white leading-none tracking-tight">Kollega+ Fordel</h5>
+                                    <p className="text-[13px] font-medium text-slate-400 leading-relaxed px-2">
+                                        Du har nået grænsen for i dag. <br />
+                                        <span className="text-amber-400">Lås op for ubegrænset brug</span> og ej din uddannelse med Kollega+.
+                                    </p>
+                                </div>
+
+                                <div className="w-full space-y-3 relative z-10">
+                                    <div className="w-full py-4 bg-white text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-amber-400 hover:text-amber-950 transition-all shadow-xl shadow-white/5 active:scale-95">
+                                        Opgradér nu
+                                    </div>
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-300 transition-colors cursor-pointer">Læs mere om fordele</p>
+                                </div>
+                            </motion.div>
                         </div>
                     )}
                   </Link>
