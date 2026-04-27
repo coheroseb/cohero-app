@@ -95,7 +95,7 @@ export default function MundtligEksamenstraenerPage() {
   };
 
   const usedToday = userProfile ? getDailyCount(userProfile.lastOralExamUsage, userProfile.dailyOralExamCount) : 0;
-  const tier = ['Kollega', 'Group Pro'].includes(userProfile.membership || '') ? 'Kollega' : 'Kollega+';
+  const tier = ['Kollega', 'Group Pro'].includes(userProfile?.membership || '') ? 'Kollega' : 'Kollega+';
   const totalAllowed = isPremiumUser ? Infinity : (usageLimits?.[tier]?.oralExam ?? 1);
   const isOverLimit = !isPremiumUser && usedToday >= totalAllowed;
 
