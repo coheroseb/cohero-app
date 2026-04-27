@@ -1383,10 +1383,10 @@ const PortalPageContent: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2 relative z-10">
-                                    <h5 className="text-[22px] font-black text-white leading-none tracking-tight">Kollega+ Fordel</h5>
+                                    <h5 className="text-[22px] font-black text-white leading-none tracking-tight">{item.title}</h5>
                                     <p className="text-[13px] font-medium text-slate-400 leading-relaxed px-2">
-                                        Du har nået grænsen for i dag. <br />
-                                        <span className="text-amber-400">Lås op for ubegrænset brug</span> og ej din uddannelse med Kollega+.
+                                        {item.desc}. <br />
+                                        Som Kollega+ får du <span className="text-amber-400 font-bold">ubegrænset adgang</span> til dette og alle vores andre AI-værktøjer.
                                     </p>
                                 </div>
 
