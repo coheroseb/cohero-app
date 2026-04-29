@@ -24,13 +24,22 @@ import { useApp } from '@/app/provider';
 
 const SLIDES = [
   {
+    id: 'problem',
+    title: 'Udfordringen',
+    subtitle: 'Problemet',
+    description: 'I 2030 kommer vi til at mangle cirka 35.600 velfærdsmedarbejdere – herunder op mod 5.000 socialrådgivere. Vi er her for at sikre, at de ikke bare rekrutteres, men også fastholdes.',
+    icon: null,
+    color: 'from-amber-500 to-yellow-500',
+    background: 'bg-slate-900'
+  },
+  {
     id: 'team',
     title: 'Menneskene Bag',
-    subtitle: 'Julie & Sebastian',
+    subtitle: 'Om Julie og Sebastian',
     description: 'Drevet af en fælles passion for at gøre en forskel. Vi startede Cohéro for at bygge den rygdækning, som velfærdens helte fortjener.',
     icon: null,
     color: 'from-rose-500 to-pink-500',
-    background: 'bg-slate-900',
+    background: 'bg-slate-950',
     team: [
         { name: 'Julie', role: 'Founder & Uddannelses-ekspert', bio: 'Bachelor i uddannelsesvidenskab og læser kandidat i arbejdsliv.' },
         { name: 'Sebastian', role: 'Founder & Socialrådgiver', bio: 'Uddannet socialrådgiver og læser en kandidat i arbejdsliv.' }
@@ -38,35 +47,44 @@ const SLIDES = [
   },
   {
     id: 'intro',
-    title: 'Velkommen til Cohéro',
-    subtitle: 'Teknologi til træning. Mennesker til mening.',
-    description: 'Vi bygger bro mellem teori og praksis for at skabe næste generation af velfærdsprofessionelle.',
+    title: 'Innovation',
+    subtitle: 'Teknologi til træning',
+    description: 'Vi bygger bro mellem teori og praksis for at skabe næste generation af velfærdsprofessionelle med værktøjer, der rent faktisk gør en forskel.',
     icon: <Sparkles className="w-12 h-12 text-rose-500" />,
     color: 'from-rose-500 to-orange-500',
-    background: 'bg-slate-950'
+    background: 'bg-slate-900'
   },
   {
     id: 'mission-detailed',
     title: 'Vores Mission',
-    subtitle: 'Rygdækning til velfærdens helte',
+    subtitle: 'Rygdækning',
     description: 'Vi udvikler AI-drevne værktøjer og praksisnær træning, der giver studerende og færdiguddannede den nødvendige tyngde til at navigere i komplekse faglige udfordringer.',
     icon: <Shield className="w-12 h-12 text-indigo-500" />,
     color: 'from-indigo-500 to-rose-500',
+    background: 'bg-slate-950'
+  },
+  {
+    id: 'tools',
+    title: 'Metodik',
+    subtitle: 'Praksisnær læring',
+    description: 'Vi træner fremtidens socialrådgivere i at skrive præcise, metodiske og juridisk holdbare journaler. Fra usikker kladde til professionelt dokument.',
+    icon: null,
+    color: 'from-emerald-500 to-teal-500',
     background: 'bg-slate-900'
   },
   {
-    id: 'problem',
-    title: 'Professionsreformen',
-    subtitle: 'Fra teori til praksisnær læring',
-    description: 'Den nye reform kræver et massivt skifte mod praksis. Vi bygger broen, der gør det muligt at træne virkelighedens udfordringer i et trygt, digitalt rum.',
+    id: 'community',
+    title: 'Medskabelse',
+    subtitle: 'Løsninger findes på midten mellem den studerende og uddannelsen',
+    description: 'Løsningen findes hverken hos uddannelserne eller hos de studerende alene – den findes et sted på midten, hvor vi sammen bygger broen til praksis.',
     icon: null,
-    color: 'from-amber-500 to-yellow-500',
+    color: 'from-emerald-500 to-teal-500',
     background: 'bg-slate-900'
   },
   {
     id: 'spark',
-    title: 'Faglig Stolthed',
-    subtitle: 'Mere end blot teknologi',
+    title: 'Identitet',
+    subtitle: 'Faglig stolthed',
     description: 'At bære Cohéros logo udstråler en dyb faglig stolthed. Det er et symbol på modet til at innovere, tænke nyt og ambitionen om konstant at forbedre sin profession.',
     icon: null,
     color: 'from-blue-500 to-cyan-500',
@@ -76,52 +94,25 @@ const SLIDES = [
     id: 'analogy',
     title: 'Hvorfor AI-træning?',
     subtitle: 'Simulering redder liv',
-    description: 'Vi forventer at kirurgen har opereret på en dukke, og at soldaten har trænet bykamp i en simulator. Hvorfor skulle vi ikke forvente det samme af dem, der håndterer menneskers liv og kriser?',
+    description: 'Vi forventer at kirurgen har opereret på en dukke, og at soldaten har trænet bykamp i en simulator. Hvorfor skulle vi ikke forvente det samme af dem, der håndterer menneskers liv?',
     icon: null,
     color: 'from-orange-500 to-red-600',
     background: 'bg-slate-900'
   },
   {
-    id: 'tools',
-    title: '',
-    subtitle: 'Journaltræning i verdensklasse',
-    description: 'Vi træner fremtidens socialrådgivere i at skrive præcise, metodiske og juridisk holdbare journaler. Fra usikker kladde til professionelt dokument.',
-    icon: null,
-    color: 'from-emerald-500 to-teal-500',
-    background: 'bg-slate-950'
-  },
-  {
-    id: 'lovportalen',
-    title: '',
-    subtitle: 'Lovgivning gjort levende',
-    description: 'Vi har knækket koden til juraen. Ikke flere tunge støvede bøger – nu er lovgivningen interaktiv, søgbar og altid opdateret.',
-    icon: null,
-    color: 'from-blue-600 to-indigo-600',
-    background: 'bg-slate-950'
-  },
-  {
     id: 'begrebsguiden',
-    title: '',
-    subtitle: 'Fra kompleks teori til klar forståelse',
+    title: 'Teori',
+    subtitle: 'Begrebsguide',
     description: 'Begrebsguiden gør op med frustrationen over svære akademiske termer. Vi oversætter teorien til et sprog, alle kan forstå – uden at miste dybden.',
     icon: null,
     color: 'from-purple-600 to-pink-600',
-    background: 'bg-slate-900'
-  },
-  {
-    id: 'community',
-    title: 'Medskabelse',
-    subtitle: 'Udviklet sammen med jer',
-    description: 'Vi udvikler og forfiner platformen i tæt samarbejde med både de studerende og uddannelserne. Fordi løsningen findes hverken hos uddannelserne eller hos de studerende alene – den findes et sted på midten.',
-    icon: null,
-    color: 'from-emerald-500 to-teal-500',
     background: 'bg-slate-950'
   },
   {
     id: 'outro',
-    title: 'Bliv en del af det',
-    subtitle: 'Rejsen er kun lige begyndt',
-    description: 'Vi inviterer dig med til at forme fremtidens velfærd. Lad os gøre en forskel sammen.',
+    title: 'Fremtiden',
+    subtitle: 'Rejsen er lige begyndt',
+    description: 'Vi inviterer dig med til at forme fremtidens velfærd. Det her er kun det første skridt på en vigtig rejse for professionen.',
     icon: <Rocket className="w-12 h-12 text-rose-500" />,
     color: 'from-rose-500 to-orange-500',
     background: 'bg-slate-950'
@@ -160,7 +151,7 @@ export default function PresentationModule() {
   // Cycle animation scenes for specific slides
   useEffect(() => {
     const slideId = SLIDES[currentSlide].id;
-    const animatedSlides = ['team', 'analogy', 'lovportalen', 'begrebsguiden', 'tools', 'spark', 'outro'];
+    const animatedSlides = ['spark', 'tools', 'begrebsguiden', 'analogy'];
     if (animatedSlides.includes(slideId)) {
       const interval = setInterval(() => {
         setAnimationScene(prev => (prev + 1) % 3);
@@ -211,7 +202,7 @@ export default function PresentationModule() {
       </div>
 
       {/* Main Content */}
-      <div className="relative h-full flex flex-col items-center justify-center px-6">
+      <div className="relative h-full flex flex-col items-center justify-center px-6 pt-24 pb-20 md:pt-40 md:pb-32 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentSlide}
@@ -241,48 +232,55 @@ export default function PresentationModule() {
               opacity: { duration: 0.4 },
               scale: { duration: 0.4 }
             }}
-            className="max-w-4xl w-full text-center space-y-8"
+            className="max-w-7xl w-full"
           >
-            {slide.icon && (
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="inline-block p-6 rounded-[2.5rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl mb-8"
-              >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+              {/* Left Column: Narrative Content */}
+              <div className="text-left space-y-8 md:space-y-12">
+                {slide.icon && (
+                  <motion.div 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="inline-block p-6 rounded-[2.5rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl"
+                  >
                 {slide.icon}
               </motion.div>
             )}
 
-            <div className="space-y-4">
-              {slide.title && (
-                <motion.span 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className={`text-sm font-black uppercase tracking-[0.4em] text-transparent bg-clip-text bg-gradient-to-r ${slide.color}`}
-                >
-                  {slide.title}
-                </motion.span>
-              )}
-              <motion.h2 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9]"
-              >
-                {slide.subtitle}
-              </motion.h2>
-            </div>
+                <div className="space-y-4">
+                  {slide.title && (
+                    <motion.span 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className={`text-sm font-black uppercase tracking-[0.4em] text-transparent bg-clip-text bg-gradient-to-r ${slide.color}`}
+                    >
+                      {slide.title}
+                    </motion.span>
+                  )}
+                  <motion.h2 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9]"
+                  >
+                    {slide.subtitle}
+                  </motion.h2>
+                </div>
 
-            <motion.p 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-xl md:text-2xl text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed"
-            >
-              {slide.description}
-            </motion.p>
+                <motion.p 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-xl md:text-2xl text-slate-400 font-medium leading-relaxed max-w-xl"
+                >
+                  {slide.description}
+                </motion.p>
+              </div>
+
+              {/* Right Column: Interactive Elements & Visuals */}
+              <div className="w-full relative min-h-[500px] flex items-center justify-center">
 
             {/* Interactive Elements for specific slides */}
             {slide.id === 'intro' && (
@@ -290,7 +288,7 @@ export default function PresentationModule() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="pt-12 max-w-5xl mx-auto w-full relative"
+                className="w-full relative"
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                    {[
@@ -333,62 +331,19 @@ export default function PresentationModule() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="pt-12 max-w-5xl mx-auto w-full space-y-12"
+                className="w-full space-y-12"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <motion.div 
-                     initial={{ opacity: 0, x: -20 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     transition={{ delay: 1 }}
-                     className="p-10 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-2xl text-left space-y-6 relative overflow-hidden"
-                   >
-                      <div className="absolute top-0 right-0 p-8 opacity-5">
-                        <Shield className="w-32 h-32" />
-                      </div>
-                      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Vores Mission</p>
-                      <h4 className="text-3xl font-black text-white leading-tight">Broen mellem teori og praksis</h4>
-                      <p className="text-base text-slate-400 leading-relaxed">
-                        Vi udvikler AI-drevne værktøjer, praksisnær træning og et stærkt fagligt fællesskab, der giver studerende og færdiguddannede den nødvendige rygdækning til at navigere i komplekse faglige udfordringer.
-                      </p>
-                   </motion.div>
-                   <motion.div 
-                     initial={{ opacity: 0, x: 20 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     transition={{ delay: 1.2 }}
-                     className="p-10 rounded-[3rem] bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-2xl text-left space-y-6 flex flex-col justify-center"
-                   >
-                      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Fremtidens Velfærd</p>
-                      <p className="text-xl text-indigo-100 font-medium leading-relaxed italic">
-                        "Vi sikrer, at digital dannelse og metodisk tyngde bliver nøglen til et sundt arbejdsliv."
-                      </p>
-                      <div className="space-y-4 pt-4">
-                        <div className="flex justify-between text-xs font-black uppercase tracking-widest text-indigo-300/50">
-                          <span>Digital Dannelse</span>
-                          <span>100%</span>
-                        </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                           <motion.div 
-                             initial={{ width: '0%' }}
-                             animate={{ width: '100%' }}
-                             transition={{ duration: 3, delay: 2 }}
-                             className="h-full bg-gradient-to-r from-indigo-500 to-rose-500"
-                           />
-                        </div>
-                      </div>
-                   </motion.div>
-                </div>
-
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1.4 }}
-                  className="p-12 rounded-[3.5rem] bg-gradient-to-br from-indigo-600/20 to-rose-600/20 border border-white/10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl"
+                  transition={{ delay: 1 }}
+                  className="p-12 md:p-20 rounded-[4rem] bg-gradient-to-br from-indigo-600/20 to-rose-600/20 border border-white/10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl"
                 >
-                   <div className="absolute top-6 left-12">
+                   <div className="absolute top-8 left-12">
                      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Vores Vision</p>
                    </div>
-                   <Quote className="w-16 h-16 text-white/10 mb-6 mx-auto group-hover:scale-110 transition-transform" />
-                   <p className="text-2xl md:text-4xl font-serif italic text-white leading-relaxed text-center max-w-4xl mx-auto">
+                   <Quote className="w-20 h-20 text-white/10 mb-8 mx-auto group-hover:scale-110 transition-transform" />
+                   <p className="text-3xl md:text-5xl font-serif italic text-white leading-relaxed text-center max-w-5xl mx-auto">
                      ”At skabe teknologiske løsninger til velfærdsuddannelserne, der giver de studerende et digitalt rum for træning og faglig fordybelse”
                    </p>
                    <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-rose-500/10 blur-[100px] rounded-full" />
@@ -397,112 +352,119 @@ export default function PresentationModule() {
               </motion.div>
             )}
 
-            {slide.id === 'problem' && (
+             {slide.id === 'problem' && (
               <motion.div 
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="pt-12 max-w-5xl mx-auto w-full space-y-12"
+                className="w-full space-y-6"
               >
-                <div className="relative h-[500px] rounded-[3.5rem] bg-white/5 border border-white/10 backdrop-blur-3xl overflow-hidden shadow-2xl flex items-center justify-center group">
-                   {/* Background Glows */}
-                   <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-emerald-500/5 opacity-50" />
+                <div className="relative h-[650px] rounded-[3rem] bg-slate-900/40 border border-white/10 backdrop-blur-3xl overflow-hidden shadow-2xl p-12 flex flex-col justify-between group">
+                   {/* Background Decorative Elements */}
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 blur-[80px] rounded-full" />
+                   <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/5 blur-[80px] rounded-full" />
                    
-                   {/* Visual Bridge Elements */}
-                   <div className="absolute inset-0 flex items-center justify-between px-20">
-                      {/* Theory Side */}
-                      <motion.div 
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1.2 }}
-                        className="w-64 space-y-4 text-center z-20"
-                      >
-                         <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md relative">
-                            <BookSpine isGhost index={0} theme="dark" width="w-10" height="h-24" color="bg-amber-500/20" decoration="bands" />
-                            <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-xs font-bold text-slate-950">!</div>
+                   {/* Top Section: The Crisis Number */}
+                   <div className="relative z-10 space-y-4">
+                      <div className="flex items-center gap-4">
+                         <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
+                            <Users className="w-6 h-6" />
                          </div>
-                         <h5 className="text-xl font-black text-amber-500 uppercase tracking-widest">Tung Teori</h5>
-                         <p className="text-xs text-slate-500 font-medium italic">"Mange føler sig alene med det teoretiske ansvar"</p>
-                      </motion.div>
+                         <p className="text-xs font-black uppercase tracking-[0.3em] text-rose-500/50">Arbejdskrafts-krise 2030</p>
+                      </div>
+                      
+                      <div className="flex items-baseline gap-4">
+                         <motion.h3 
+                           animate={{ opacity: [0.7, 1, 0.7] }}
+                           transition={{ duration: 3, repeat: Infinity }}
+                           className="text-7xl md:text-8xl font-black text-white tracking-tighter"
+                         >
+                           35.600
+                         </motion.h3>
+                         <p className="text-xl font-bold text-slate-500 leading-tight">færre hænder i<br />velfærden</p>
+                      </div>
+                   </div>
 
-                      {/* Practice Side */}
-                      <motion.div 
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1.4 }}
-                        className="w-64 space-y-4 text-center z-20"
-                      >
-                         <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md relative">
-                            <Zap className="w-16 h-16 text-emerald-500/50 mx-auto" />
+                   {/* Middle Section: The Split / The Tension */}
+                   <div className="relative z-10 grid grid-cols-2 gap-8">
+                      <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 space-y-4 relative overflow-hidden group/item hover:bg-white/10 transition-colors">
+                         <div className="absolute top-0 right-0 p-6 opacity-5 group-hover/item:opacity-10 transition-opacity">
+                            <Zap className="w-20 h-20 text-rose-500" />
+                         </div>
+                         <h4 className="text-xl font-black text-rose-500 uppercase tracking-widest">Burnout</h4>
+                         <p className="text-sm text-slate-400 leading-relaxed font-medium">
+                            Nyuddannede forlader faget efter få år på grund af manglende støtte og urealistiske krav.
+                         </p>
+                         <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                             <motion.div 
-                              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                              className="absolute inset-0 bg-emerald-500/10 blur-xl rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{ width: '85%' }}
+                              transition={{ duration: 2, delay: 1.5 }}
+                              className="h-full bg-rose-500"
                             />
                          </div>
-                         <h5 className="text-xl font-black text-emerald-500 uppercase tracking-widest">Praksis</h5>
-                         <p className="text-xs text-slate-500 font-medium italic">"Tryg træning af virkeligheden"</p>
-                      </motion.div>
-                   </div>
+                         <p className="text-[10px] font-black uppercase text-rose-500/50">Risiko for frafald: Høj</p>
+                      </div>
 
-                   {/* The Bridge (Connecting Line) */}
-                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <motion.div 
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ duration: 1.5, delay: 1.6, ease: "circOut" }}
-                        className="w-1/3 h-[2px] bg-gradient-to-r from-amber-500 via-white to-emerald-500 shadow-[0_0_30px_rgba(255,255,255,0.5)] z-10"
-                      />
-                   </div>
-
-                   {/* Floating "Bridge" Elements (Cohéro Platform) */}
-                   <motion.div 
-                     animate={{ 
-                       y: [0, -20, 0],
-                       rotate: [-2, 2, -2]
-                     }}
-                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                     className="absolute z-30"
-                   >
-                      <div className="p-10 rounded-[2.5rem] bg-white/10 backdrop-blur-3xl border border-white/20 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4">
-                         <div className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-rose-500 to-indigo-600 flex items-center justify-center shadow-2xl">
-                            <Brain className="w-10 h-10 text-white" />
+                      <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 space-y-4 relative overflow-hidden group/item hover:bg-white/10 transition-colors">
+                         <div className="absolute top-0 right-0 p-6 opacity-5 group-hover/item:opacity-10 transition-opacity">
+                            <Shield className="w-20 h-20 text-emerald-500" />
                          </div>
-                         <div className="text-center">
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Cohéro Platform</p>
-                            <h4 className="text-xl font-black text-white">Brobyggeren</h4>
+                         <h4 className="text-xl font-black text-emerald-500 uppercase tracking-widest">Løsningen</h4>
+                         <p className="text-sm text-slate-400 leading-relaxed font-medium">
+                            Cohéro bygger den nødvendige rygdækning gennem praksisnær læring og metodisk tyngde.
+                         </p>
+                         <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: '100%' }}
+                              transition={{ duration: 2, delay: 1.8 }}
+                              className="h-full bg-emerald-500"
+                            />
+                         </div>
+                         <p className="text-[10px] font-black uppercase text-emerald-500/50">Faglig Rygdækning: Sikret</p>
+                      </div>
+                   </div>
+
+                   {/* Bottom Section: The Bridge Footer */}
+                   <div className="relative z-10 flex items-center justify-between pt-8 border-t border-white/5">
+                      <div className="flex gap-12">
+                         <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Kilde</p>
+                            <p className="text-xs font-bold text-white/50">KL & Dansk Socialrådgiverforening</p>
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Status</p>
+                            <p className="text-xs font-bold text-amber-500">Kritisk mangel</p>
                          </div>
                       </div>
-                   </motion.div>
-
-                   {/* Scanner Effect */}
-                   <motion.div 
-                     animate={{ x: ['-100%', '100%'] }}
-                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                     className="absolute top-0 bottom-0 w-32 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none"
-                   />
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                         <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Cohéro Solution Active</span>
+                      </div>
+                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-3 gap-4">
                    {[
-                     { t: 'Professionsreformen', d: 'Et massivt skifte mod praksisnær læring.', color: 'text-amber-500' },
-                     { t: 'Digital Dannelse', d: 'Nøglen til et sundt og stærkt arbejdsliv.', color: 'text-white' },
-                     { t: 'Trygt Rum', d: 'Træn de svære samtaler før virkeligheden kalder.', color: 'text-emerald-500' }
-                   ].map((item, i) => (
-                     <motion.div 
-                       key={item.t}
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       transition={{ delay: 2 + i * 0.2 }}
-                       className="p-8 rounded-[2rem] bg-white/5 border border-white/10 text-left space-y-3"
-                     >
-                        <h5 className={`text-sm font-black uppercase tracking-widest ${item.color}`}>{item.t}</h5>
-                        <p className="text-sm text-slate-400 leading-relaxed font-medium">{item.d}</p>
-                     </motion.div>
+                     { t: '35.600', d: 'Velfærdsmedarbejdere', color: 'text-rose-500' },
+                     { t: '5.000', d: 'Socialrådgivere', color: 'text-amber-500' },
+                     { t: '2030', d: 'Deadline for løsning', color: 'text-white' }
+                   ].map((stat, i) => (
+                      <motion.div 
+                        key={stat.d}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 2 + i * 0.1 }}
+                        className="p-6 rounded-3xl bg-white/5 border border-white/10 text-center space-y-1"
+                      >
+                         <h5 className={`text-2xl font-black ${stat.color}`}>{stat.t}</h5>
+                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{stat.d}</p>
+                      </motion.div>
                    ))}
                 </div>
               </motion.div>
-            )}
+             )}
 
             {slide.id === 'spark' && (
               <motion.div 
@@ -513,7 +475,7 @@ export default function PresentationModule() {
                   y: { delay: 0.8 },
                   rotateY: { duration: 12, repeat: Infinity, ease: "linear" }
                 }}
-                className="pt-12 max-w-4xl mx-auto w-full h-[550px] relative group"
+                className="w-full h-[600px] relative group"
               >
                 <div className="absolute -inset-10 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition-colors duration-1000" />
                 
@@ -631,7 +593,7 @@ export default function PresentationModule() {
                   y: { delay: 0.8 },
                   rotateX: { duration: 10, repeat: Infinity, ease: "linear" }
                 }}
-                className="pt-12 max-w-4xl mx-auto w-full h-[550px] relative group"
+                className="w-full h-[600px] relative group"
               >
                 <div className="absolute -inset-10 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-1000" />
                 
@@ -768,7 +730,7 @@ export default function PresentationModule() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-16 w-full"
+                className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full"
               >
                 {slide.team.map((member: any, i: number) => (
                   <div key={member.name} className="relative group">
@@ -798,7 +760,7 @@ export default function PresentationModule() {
                   y: { delay: 0.8 },
                   rotateY: { duration: 10, repeat: Infinity, ease: "linear" }
                 }}
-                className="pt-12 max-w-4xl mx-auto w-full h-[550px] relative group"
+                className="w-full h-[600px] relative group"
               >
                 <div className="absolute -inset-10 bg-orange-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-orange-500/20 transition-colors duration-1000" />
                 
@@ -904,7 +866,7 @@ export default function PresentationModule() {
                   y: { delay: 0.8 },
                   rotateY: { duration: 10, repeat: Infinity, ease: "linear" }
                 }}
-                className="pt-12 max-w-4xl mx-auto w-full h-[550px] relative group"
+                className="w-full h-[600px] relative group"
               >
                 {/* Decorative Glows */}
                 <div className="absolute -inset-10 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition-colors duration-1000" />
@@ -1089,7 +1051,7 @@ export default function PresentationModule() {
                   y: { delay: 0.8 },
                   rotateY: { duration: 10, repeat: Infinity, ease: "linear" }
                 }}
-                className="pt-12 max-w-4xl mx-auto w-full h-[550px] relative group"
+                className="w-full h-[600px] relative group"
               >
                 {/* Decorative Glows */}
                 <div className="absolute -inset-10 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-purple-500/20 transition-colors duration-1000" />
@@ -1238,7 +1200,7 @@ export default function PresentationModule() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="pt-12 max-w-5xl mx-auto w-full space-y-12"
+                className="w-full space-y-12"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                    <div className="space-y-8 text-left">
@@ -1325,7 +1287,7 @@ export default function PresentationModule() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.8, duration: 0.8 }}
-                className="pt-12 max-w-4xl mx-auto w-full text-center space-y-12"
+                className="w-full text-center space-y-12"
               >
                 <div className="relative p-20 rounded-[4rem] bg-white/5 border border-white/10 backdrop-blur-3xl overflow-hidden group">
                    <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-transparent to-indigo-500/10" />
@@ -1371,7 +1333,9 @@ export default function PresentationModule() {
                 </p>
               </motion.div>
             )}
-          </motion.div>
+                </div>
+              </div>
+            </motion.div>
         </AnimatePresence>
       </div>
 
@@ -1408,7 +1372,7 @@ export default function PresentationModule() {
       </div>
 
       {/* Logo watermark */}
-      <div className="absolute top-16 left-1/2 -translate-x-1/2 opacity-100 flex items-end -space-x-[1px] scale-[0.8] md:scale-[1.5] origin-top transition-all hover:scale-[1.6] cursor-pointer z-[100]">
+      <div className="absolute top-6 md:top-12 left-1/2 -translate-x-1/2 opacity-100 flex items-end -space-x-[1px] scale-[0.6] md:scale-[1.2] lg:scale-[1.5] origin-top transition-all hover:scale-[1.3] md:hover:scale-[1.6] cursor-pointer z-[100]">
         <BookSpine isGhost index={0} theme={effectiveTheme} width="w-4" height="h-10" color="bg-white" decoration="plain" tilt="-rotate-1" />
         <BookSpine isGhost index={1} theme={effectiveTheme} width="w-5" height="h-14" color="bg-white" decoration="bands" />
         <BookSpine isGhost index={2} theme={effectiveTheme} width="w-2.5" height="h-11" color="bg-white" decoration="plain" />
