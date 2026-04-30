@@ -2,365 +2,1229 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  AlertTriangle,
-  Flag,
-  Target,
-  CalendarDays,
+  ChevronRight,
+  ArrowUpRight,
+  Book,
   Search,
   Flame,
   Zap,
+  Lock,
   Star,
+  Users,
+  ShieldCheck,
   FileSearch,
+  CalendarDays,
   Gavel,
+  Bell,
+  CheckCircle2,
+  Clock,
   Sparkles,
   Layout,
+  Target,
   FileText,
+  Compass,
   GraduationCap,
+    MessageSquare,
   Library,
   BookOpen,
   Scale,
+  Plus,
   Loader2,
+  RefreshCw,
+  BookCopy,
   Building,
   TrendingUp,
+  Settings,
   Brain,
-  Quote,
+  Layers,
+  BookMarked,
+  DraftingCompass,
+  Presentation,
+  Wand2,
+  SearchCode,
+  Bookmark,
   ArrowRight,
-  Crown,
-  Clock,
-  Command,
-  ChevronRight,
-  MessageSquare,
+  AlertCircle,
+  AlertTriangle,
+  BarChart3,
+  BookCheck,
   Mic,
-  Upload,
-  CheckCircle2,
-  Briefcase
+  HandHelping,
+  CreditCard,
+  Command,
+  Briefcase,
+  Database,
+  Network,
+  Globe,
+  Play,
+  FolderOpen,
+  ScrollText,
+  Trophy,
+  History as HistoryIcon,
+  Quote,
+  Snowflake,
+  Egg,
+  Ghost,
+  Gift,
+  Share2,
+  Linkedin,
+  Rocket,
+  Crown
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
-import { useToast } from '@/hooks/use-toast';
+import { Capacitor } from '@capacitor/core';
+import NativeDashboard from '@/components/native/NativeDashboard';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { fetchPoliticalNews, fetchSocialMinistryNews, processStudyRegulationAction } from '@/app/actions';
+import { processStripeSession, fetchPoliticalNews, fetchSocialMinistryNews, logUserSessionAction } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, where, doc, updateDoc, deleteField } from 'firebase/firestore';
+import { collection, query, orderBy, limit, DocumentData, Timestamp, doc, updateDoc, serverTimestamp, increment, getDoc, setDoc, where, addDoc } from 'firebase/firestore';
+import { AssistanceRequest } from '@/ai/flows/types';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import SurveyWidget from '@/components/SurveyWidget';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// --- Sub-components for a "Light" feel ---
-
-const ActionCard = ({ title, icon: Icon, description, path, color }: any) => (
-  <motion.div 
-    whileHover={{ y: -8, scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    className="relative group cursor-pointer"
-  >
-    <Link href={path} className="block h-full">
-      <div className="bg-white p-8 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100/50 flex flex-col items-center text-center gap-6 group-hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] group-hover:border-slate-200 transition-all duration-500 h-full">
-        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-2 shadow-sm ${color} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
-          <Icon className="w-10 h-10" />
-        </div>
-        <div className="space-y-2">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tight">{title}</h3>
-          <p className="text-slate-400 font-medium text-sm leading-relaxed px-4">{description}</p>
-        </div>
-        <div className="mt-auto pt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-slate-900 transition-colors">
-          Start nu <ArrowRight className="w-3 h-3" />
-        </div>
-      </div>
-    </Link>
-  </motion.div>
-);
-
-const SmallTool = ({ title, icon: Icon, path }: any) => (
-  <Link href={path} className="group flex items-center gap-4 p-4 bg-white/50 hover:bg-white border border-transparent hover:border-slate-100 rounded-2xl transition-all">
-    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-amber-50 group-hover:scale-110 transition-all">
-      <Icon className="w-5 h-5 text-slate-400 group-hover:text-amber-600" />
-    </div>
-    <span className="font-bold text-slate-600 group-hover:text-slate-950 transition-colors">{title}</span>
-    <ChevronRight className="w-4 h-4 ml-auto text-slate-200 group-hover:text-slate-400 transition-colors" />
-  </Link>
-);
-
-// --- Helpers ---
-function getSemNum(semester: string): number {
-  return parseInt(semester?.match(/\d+/)?.[0] ?? '1');
+// --- Type Definitions ---
+interface NewsItem {
+  title: string;
+  link: string;
+  pubDate: string;
 }
 
-const PortalPageContent: React.FC = () => {
-  const { user, userProfile, isUserLoading, refetchUserProfile } = useApp();
-  const router = useRouter();
-  const { toast } = useToast();
-  const firestore = useFirestore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [news, setNews] = useState<any[]>([]);
-  const [newsLoading, setNewsLoading] = useState(true);
+// --- Sub-components for a cleaner Workspace ---
 
-  // Dashboard Data
-  const [plans, setPlans] = useState<any[]>([]);
-  const [schedules, setSchedules] = useState<any[]>([]);
-  const [isDataLoading, setIsDataLoading] = useState(true);
-  const [isProcessingPdf, setIsProcessingPdf] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+function BriefingReport({ title, icon: Icon, isLoading, news, link, color }: {
+  title: string;
+  icon: React.ElementType;
+  isLoading: boolean;
+  news: NewsItem[];
+  link: string;
+  color: string;
+}) {
+  return (
+    <section className="bg-white/70 backdrop-blur-xl p-8 rounded-[40px] border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.02)] relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:bg-white transition-all duration-500">
+      <div className={`absolute top-0 right-0 p-10 opacity-[0.02] group-hover:opacity-[0.06] group-hover:-translate-y-2 group-hover:translate-x-2 transition-all duration-700`}>
+        <Icon className="w-32 h-32 -rotate-12" />
+      </div>
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-[14px] bg-white shadow-sm border border-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+              <Icon className={`w-5 h-5 ${color}`} />
+            </div>
+            <h3 className="font-black text-slate-950 text-[11px] uppercase tracking-[0.2em]">
+              {title}
+            </h3>
+          </div>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100/30">
+             <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> Live
+          </div>
+        </div>
+        
+        {isLoading ? (
+          <div className="flex flex-col justify-center items-center py-12 gap-3">
+            <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Opdaterer kilder...</span>
+          </div>
+        ) : news.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-[14px] text-slate-400 font-medium italic">Afventer nye efterretninger...</p>
+          </div>
+        ) : (
+          <ul className="space-y-2 flex-grow">
+            {news.slice(0, 3).map((item, index) => (
+              <li key={index} className="group/item">
+                <a href={item.link} target="_blank" rel="noopener noreferrer" className="block p-4 rounded-[24px] hover:bg-slate-50/80 active:scale-[0.98] transition-all -mx-4">
+                  <p className="text-[15px] font-bold text-slate-800 group-hover/item:text-slate-950 leading-snug line-clamp-2 transition-colors">
+                    {item.title}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2.5">
+                     <div className="w-1.5 h-1.5 bg-slate-200 rounded-full group-hover/item:bg-slate-400 transition-colors" />
+                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                       {new Date(item.pubDate).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
+                     </p>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+        
+        <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
+          <a href={link} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-950 flex items-center gap-2 transition-all group-hover:gap-3">
+            Se fuldt arkiv <ArrowUpRight className="w-3.5 h-3.5" />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-  // --- Curriculum / Module Identification ---
-  const curriculumsQuery = useMemoFirebase(() => {
-    if (!firestore || !userProfile?.profession) return null;
-    return query(
-      collection(firestore, 'curriculums'),
-      where('profession', '==', userProfile.profession)
-    );
-  }, [firestore, userProfile?.profession]);
-
-  const { data: curriculumsRaw } = useCollection<any>(curriculumsQuery);
-
-  const curriculum = useMemo(() => {
-    // Priority 1: User's own custom curriculum
-    if (userProfile?.customCurriculum) {
-      return userProfile.customCurriculum;
-    }
-
-    // Priority 2: Global institutional curriculum
-    if (!curriculumsRaw || curriculumsRaw.length === 0) return null;
-
-    const currentSemId = userProfile?.semester;
+const SemesterFocusView = ({ institution, semester, profession, studyStarted }: { institution: string; semester: string; profession: string; studyStarted?: string }) => {
+    const firestore = useFirestore();
+    const curriculumsQuery = useMemoFirebase(() => {
+        if (!firestore || !institution || !profession) return null;
+        return query(
+            collection(firestore, 'curriculums'), 
+            where('institution', '==', institution),
+            where('profession', '==', profession)
+        );
+    }, [firestore, institution, profession]);
     
-    // NEW: If user has a specific module ID, find the curriculum that actually contains this module
-    if (currentSemId && (currentSemId.length > 2 || isNaN(parseInt(currentSemId)))) {
-       const containingCurriculum = curriculumsRaw.find((c: any) => 
-         c.modules?.some((m: any) => String(m.id) === String(currentSemId))
-       );
-       if (containingCurriculum) return containingCurriculum;
-    }
+    const { data: curriculums } = useCollection<any>(curriculumsQuery);
+    
+    const activeModule = useMemo(() => {
+        if (!curriculums || curriculums.length === 0 || !semester || !studyStarted) return null;
+        
+        // Find the curriculum where studyStarted falls within [validFrom, validTo)
+        const curr = curriculums.find((c: any) => {
+            const start = c.validFrom;
+            const end = c.validTo;
+            if (!start) return false;
+            if (studyStarted < start) return false;
+            if (end && studyStarted >= end) return false;
+            return true;
+        });
 
-    const userInst = (userProfile?.institution || '').toLowerCase().trim();
-    const studyStarted = userProfile?.studyStarted;
+        if (!curr) return null;
+        
+        // Extract semester number (e.g. from "4. semester" -> 4)
+        const semNum = semester.match(/\d+/)?.[0];
+        if (!semNum) return null;
 
-    const normalize = (s: string) => {
-      let res = s.toLowerCase()
-        .replace(/professionshøjskolen\s+/gs, '')
-        .replace(/university college\s+/gs, '')
-        .replace(/erhvervsakademi og professionshøjskole\s+/gs, '')
-        .replace(/professionshøjskole\s+/gs, '')
-        .replace(/\bsjælland\b/g, 'absalon')
-        .trim();
-      const mapping: Record<string, string> = {
-        'københavns professionshøjskole': 'kp', 'københavn': 'kp', 'københavns': 'kp',
-        'professionshøjskolen absalon': 'absalon', 'lillebælt': 'ucl',
-        'erhvervsakademi lillebælt': 'ucl', 'ucl erhvervsakademi og professionshøjskole': 'ucl'
-      };
-      let mapped = mapping[res];
-      if (!mapped) {
-        if (res.includes('lillebælt')) mapped = 'ucl';
-        else if (res.includes('københavn')) mapped = 'kp';
-        else if (res.includes('sjælland')) mapped = 'absalon';
-        else if (res.includes('midtjylland')) mapped = 'via';
-        else if (res.includes('nordjylland')) mapped = 'ucn';
-      }
-      return mapped || res;
+        // Find module that matches the semester number
+        return curr.modules.find((m: any) => 
+            m.id.includes(semNum) || 
+            (m.name && m.name.toLowerCase().includes(semNum))
+        );
+    }, [curriculums, semester, studyStarted]);
+
+    if (!activeModule) return null;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/40 backdrop-blur-xl border border-blue-100 rounded-[48px] p-8 sm:p-12 relative overflow-hidden group shadow-[0_8px_40px_rgba(59,130,246,0.03)]"
+        >
+            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+                <GraduationCap className="w-40 h-40 text-blue-600 -rotate-12" />
+            </div>
+            
+            <div className="relative z-10 flex flex-col md:flex-row gap-10 items-start">
+                <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 shrink-0">
+                    <Layers className="w-10 h-10" />
+                </div>
+                <div className="space-y-6 flex-1">
+                    <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                            <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border border-blue-100">
+                                Studieordnings-Indsigt
+                            </span>
+                            <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border border-slate-200">
+                                {institution}
+                            </span>
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-black text-slate-900 serif leading-tight">
+                            Dit fokus på <span className="text-blue-600">{semester}</span>
+                        </h2>
+                        <div className="flex items-center gap-2 mt-2">
+                             <p className="text-slate-500 font-bold text-lg">{activeModule.name}</p>
+                             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[9px] font-black uppercase tracking-widest border border-emerald-100/50">
+                                <CheckCircle2 className="w-3 h-3" /> Tilpasset din årgang
+                             </div>
+                        </div>
+                    </div>
+                    
+                    <div className="grid sm:grid-cols-2 gap-8 pt-4 border-t border-blue-50">
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                <Target className="w-3 h-3 text-blue-500" /> Kerne-læringsmål
+                            </h4>
+                            <div className="space-y-2.5">
+                                {activeModule.learningGoals?.slice(0, 3).map((goal: string, idx: number) => (
+                                    <div key={idx} className="flex gap-3 items-start group/item">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 group-hover/item:scale-150 transition-transform" />
+                                        <p className="text-[13px] font-medium text-slate-600 leading-snug">{goal}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                <Gavel className="w-3 h-3 text-blue-500" /> Eksamen & Metode
+                            </h4>
+                            <p className="text-[13px] font-medium text-slate-600 leading-relaxed bg-blue-50/30 p-4 rounded-2xl border border-blue-100/30 italic">
+                                "{activeModule.examForm || 'Prøveform ikke angivet i systemet endnu.'}"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+const UpgradeIncentiveBanner = () => {
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600 p-[2px] rounded-[48px] shadow-2xl relative overflow-hidden group cursor-pointer active:scale-[0.99] transition-all duration-500"
+        >
+            <Link href="/upgrade" className="block p-8 sm:p-12 bg-slate-950 rounded-[46px] relative overflow-hidden">
+                {/* Background effects */}
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-white/20 transition-all duration-700" />
+                <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] bg-amber-500/10 rounded-full blur-[60px] pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
+                
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+                    <div className="flex-1 text-center md:text-left">
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-white/10 rounded-full text-amber-400 text-[10px] font-black uppercase tracking-[0.3em] mb-8 border border-white/5 backdrop-blur-md">
+                            <Rocket className="w-4 h-4 fill-amber-400" /> Ej din uddannelse med Kollega+
+                        </div>
+                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.05] mb-8 tracking-tight">
+                            Bliv <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 serif italic font-serif">Kollega+</span> <br className="hidden lg:block" /> og lås op for alt.
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-5 text-left max-w-2xl">
+                            {[
+                                { text: "Ubegrænset AI-sparring", icon: Zap },
+                                { text: "Eksamens-Arkitekten Pro", icon: Layout },
+                                { text: "Personligt Viden-Arkiv", icon: Layers },
+                                { text: "Prioriteret 1:1 Support", icon: HandHelping }
+                            ].map((benefit, i) => (
+                                <div key={i} className="flex items-center gap-3.5 group/item">
+                                    <div className="w-6 h-6 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover/item:bg-amber-500 group-hover/item:border-amber-400 transition-all duration-300">
+                                        <benefit.icon className="w-3 h-3 text-amber-400 group-hover/item:text-amber-950 transition-colors" />
+                                    </div>
+                                    <span className="text-[15px] text-slate-300 font-bold group-hover/item:text-white transition-colors">{benefit.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div className="shrink-0 flex flex-col items-center gap-6 w-full md:w-auto">
+                        <div className="relative group/badge">
+                            <div className="absolute inset-0 bg-amber-500 blur-[40px] opacity-20 group-hover/badge:opacity-40 transition-opacity" />
+                            <div className="w-32 h-32 bg-white rounded-[40px] flex items-center justify-center shadow-2xl relative z-10 group-hover/badge:scale-110 group-hover/badge:rotate-6 transition-transform duration-700">
+                                <Star className="w-16 h-16 text-amber-500 fill-current animate-pulse" />
+                            </div>
+                            <div className="absolute -top-3 -right-3 w-12 h-12 bg-rose-500 text-white rounded-full flex items-center justify-center font-black text-[10px] uppercase tracking-tighter border-4 border-slate-950 z-20 shadow-xl rotate-12">
+                                -20%
+                            </div>
+                        </div>
+                        <div className="space-y-4 w-full">
+                            <div className="px-10 py-5 bg-amber-500 text-amber-950 font-black uppercase tracking-[0.2em] text-[13px] rounded-[24px] hover:bg-amber-400 transition-all shadow-[0_15px_40px_-5px_rgba(245,158,11,0.3)] w-full text-center hover:scale-[1.03] active:scale-[0.97]">
+                                Start din opgradering
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] text-center">Gratis prøveperiode i 7 dage</p>
+                        </div>
+                    </div>
+                </div>
+            </Link>
+        </motion.div>
+    );
+};
+
+const CareerTransitionView = ({ semester }: { semester: string }) => {
+    const semNum = parseInt(semester.replace(/\D/g, ''));
+    if (isNaN(semNum) || semNum < 6) return null;
+
+    const isLastSem = semNum >= 7;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-[48px] p-8 sm:p-12 relative overflow-hidden group shadow-2xl border border-white/5"
+        >
+            <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-700">
+                <Briefcase className="w-48 h-48 text-amber-500 -rotate-12" />
+            </div>
+            
+            <div className="relative z-10">
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                    <span className="px-3 py-1 bg-amber-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20">
+                         Karriere-Fokus
+                    </span>
+                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> {isLastSem ? 'Klar til dimission' : 'Forberedelse til job'}
+                    </span>
+                </div>
+
+                <h2 className="text-3xl md:text-4xl font-black text-white serif leading-tight max-w-xl">
+                    Det er snart tid til at bytte <span className="text-amber-500 italic">loven</span> ud med <span className="text-amber-500 italic">jobbet</span>
+                </h2>
+                
+                <p className="text-slate-400 mt-4 font-medium text-lg max-w-2xl leading-relaxed">
+                    Du nærmer dig afslutningen på din uddannelse. Vi har låst op for dine personlige karriere-værktøjer for at hjælpe dig sikkert i mål.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
+                    {[
+                        { title: 'AI-drevet CV Tjek', icon: FileText, desc: 'Optimér dit CV til socialrådgiver-stillinger.' },
+                        { title: 'Jobsimulering', icon: MessageSquare, desc: 'Træn din ansættelsessamtale med AI-sparring.' },
+                        { title: 'LinkedIn-Guide', icon: Compass, desc: 'Gør din profil synlig for kommunale ledere.' }
+                    ].map((tool, i) => (
+                        <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-[32px] hover:bg-white/10 transition-all cursor-pointer group/card active:scale-95">
+                            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform">
+                                <tool.icon className="w-5 h-5 text-amber-500" />
+                            </div>
+                            <h4 className="text-white font-bold mb-1">{tool.title}</h4>
+                            <p className="text-slate-400 text-xs leading-relaxed">{tool.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+
+const SupportWidget = () => {
+    const { user, userProfile } = useApp();
+    const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+    const firestore = useFirestore();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!message.trim() || !user || !firestore) return;
+
+        setIsSubmitting(true);
+        try {
+            await addDoc(collection(firestore, 'supportReports'), {
+                userId: user.uid,
+                userName: userProfile?.username || user.displayName || 'Anonym',
+                userEmail: user.email || 'Ingen email',
+                message: message.trim(),
+                status: 'open',
+                createdAt: serverTimestamp(),
+            });
+            setMessage('');
+            toast({
+                title: 'Tak for din besked!',
+                description: 'Vi kigger på det hurtigst muligt.',
+            });
+        } catch (error) {
+            console.error('Error submitting report:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Ups!',
+                description: 'Der skete en fejl. Prøv igen senere.',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    const normalizedUserInst = normalize(userInst);
-    const instMatches = curriculumsRaw.filter((c: any) => {
-      const nInst = normalize(c.institution || '');
-      return nInst === normalizedUserInst || nInst.includes(normalizedUserInst) || normalizedUserInst.includes(nInst);
-    });
+        return (
+        <section id="support-section" className="max-w-5xl mx-auto mt-32 px-5 mb-20">
+            <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[48px] p-10 sm:p-16 shadow-2xl shadow-indigo-500/20 relative overflow-hidden group border border-white/10">
+                {/* Decorative elements */}
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
+                <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl"></div>
+                
+                <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000 ease-out">
+                    <HandHelping className="w-48 h-48 text-white" />
+                </div>
 
-    if (instMatches.length === 0) return null;
-    if (studyStarted) {
-      const dateMatch = instMatches.find((c: any) => (!c.validFrom || studyStarted >= c.validFrom) && (!c.validTo || studyStarted < c.validTo));
-      if (dateMatch) return dateMatch;
-    }
-    return instMatches[0];
-  }, [curriculumsRaw, userProfile?.studyStarted, userProfile?.institution, userProfile?.customCurriculum]);
-
-  const activeModule = useMemo(() => {
-    if (!curriculum) return null;
-    const currentSem = userProfile?.semester || '1';
-    const semNum = getSemNum(currentSem);
-    const isSimpleNumber = /^\d+$/.test(currentSem.trim());
-    
-    // 1. Try exact ID match
-    let found = curriculum.modules.find((m: any) => String(m.id) === String(currentSem));
-    
-    // 2. Try exact name match (case insensitive)
-    if (!found) {
-      found = curriculum.modules.find((m: any) => String(m.name).toLowerCase() === currentSem.toLowerCase());
-    }
-    
-    // 3. Try included name match
-    if (!found) {
-      found = curriculum.modules.find((m: any) => String(m.name).toLowerCase().includes(currentSem.toLowerCase()));
-    }
-    
-    // 4. Fallback to semester number ONLY if it's a simple number (e.g. "2")
-    if (!found && isSimpleNumber) {
-      found = curriculum.modules.find((m: any) => m.semester === semNum);
-    }
-    
-    // 5. Ultimate fallback
-    return found || curriculum.modules[0];
-  }, [curriculum, userProfile?.semester]);
-
-  // --- Plan Identification ---
-  const activePlan = useMemo(() => {
-    if (!plans || !activeModule) return null;
-    return plans.find((p: any) => String(p.moduleId) === String(activeModule.id)) || plans[0];
-  }, [plans, activeModule]);
-
-  const activeSchedule = useMemo(() => schedules.find(s => s.semesterPlanId === activePlan?.id || s.planId === activePlan?.id), [schedules, activePlan]);
-
-  const currentWeekNumber = useMemo(() => {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    return Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-  }, []);
-
-  const upcomingEvents = useMemo(() => {
-    if (!activePlan) return [];
-    const now = new Date();
-    const flat: any[] = [];
-    activePlan.weeklyBreakdown?.forEach((w: any) => 
-      w.events?.forEach((e: any) => flat.push({ ...e, weekNumber: w.weekNumber }))
+                <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-center">
+                    <div className="flex-1 text-center lg:text-left">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em] mb-6 border border-white/10">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                            Direkte linje til os
+                        </div>
+                        <h3 className="text-4xl sm:text-5xl font-black text-white serif mb-6 leading-tight tracking-tight">
+                            Oplever du <span className="text-indigo-200">udfordringer</span> eller har du ideer?
+                        </h3>
+                        <p className="text-lg text-indigo-100/80 font-medium max-w-xl leading-relaxed mb-8">
+                            Vi sidder klar til at forbedre din oplevelse. Skriv direkte til admin-teamet herunder – vi læser alt og svarer hurtigt.
+                        </p>
+                    </div>
+                    
+                    <div className="w-full lg:w-[450px]">
+                        <form onSubmit={handleSubmit} className="space-y-4 bg-white/10 backdrop-blur-xl p-8 rounded-[40px] border border-white/20 shadow-2xl">
+                            <textarea 
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                placeholder="Beskriv hvad vi kan hjælpe med..."
+                                className="w-full min-h-[140px] p-6 bg-white/10 border border-white/10 rounded-3xl text-sm font-medium text-white placeholder:text-indigo-200/50 focus:ring-4 focus:ring-white/10 transition-all outline-none resize-none shadow-inner"
+                                required
+                            />
+                            <Button 
+                                type="submit" 
+                                disabled={isSubmitting || !message.trim()}
+                                className="w-full bg-white text-indigo-600 hover:bg-indigo-50 px-8 py-6 h-auto rounded-2xl font-black text-[15px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-indigo-900/20 group/btn overflow-hidden relative"
+                            >
+                                {isSubmitting ? (
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                ) : (
+                                    <span className="flex items-center justify-center gap-3 relative z-10">
+                                        Send besked <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                                    </span>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                            </Button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
     );
-    return flat
-      .filter(e => new Date(e.startDate) >= now)
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-      .slice(0, 3);
-  }, [activePlan]);
+};
 
-  const progressPercentage = useMemo(() => {
-    if (!activePlan?.weeklyBreakdown?.length) return 0;
-    const weeks = activePlan.weeklyBreakdown;
-    const startWeek = weeks[0].weekNumber;
-    const endWeek = weeks[weeks.length - 1].weekNumber;
-    if (currentWeekNumber < startWeek) return 0;
-    if (currentWeekNumber > endWeek) return 100;
-    return Math.round(((currentWeekNumber - startWeek) / (endWeek - startWeek)) * 100);
-  }, [activePlan, currentWeekNumber]);
+const PortalPageContent: React.FC = () => {
+  const { user, userProfile, isUserLoading: isAppLoading, refetchUserProfile, usageLimits, effectiveTheme } = useApp();
+  const router = useRouter();
+  const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const firestore = useFirestore();
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isProcessingSession, setIsProcessingSession] = useState(true);
+  const [politicalNews, setPoliticalNews] = useState<NewsItem[]>([]);
+  const [ministryNews, setMinistryNews] = useState<NewsItem[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
 
+  // Marketplace Pending Payments
+  const pendingMarketplacePaymentsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, 'assistance_requests'),
+      where('citizenId', '==', user.uid),
+      where('status', '==', 'claimed'),
+      where('isPaid', '==', false),
+      orderBy('createdAt', 'desc')
+    );
+  }, [firestore, user]);
+
+  const { data: pendingPayments } = useCollection<AssistanceRequest>(pendingMarketplacePaymentsQuery);
+
+  // Fetch News
   useEffect(() => {
-    if (!user || !firestore) return;
-
-    // Fetch Semester Plans
-    const qPlans = query(collection(firestore, 'users', user.uid, 'semesterPlans'), orderBy('createdAt', 'desc'), limit(1));
-    const unsubPlans = onSnapshot(qPlans, (snap) => {
-      setPlans(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setIsDataLoading(false);
-    });
-
-    // Fetch Study Schedules
-    const qSchedules = query(collection(firestore, 'users', user.uid, 'studySchedules'), limit(5));
-    const unsubSchedules = onSnapshot(qSchedules, (snap) => {
-      setSchedules(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    // Fetch News
     async function getNews() {
-      const [pNews, mNews] = await Promise.all([fetchPoliticalNews(), fetchSocialMinistryNews()]);
-      setNews([...(pNews || []), ...(mNews || [])].slice(0, 3));
-      setNewsLoading(false);
+      try {
+        const [pNews, mNews] = await Promise.all([
+          fetchPoliticalNews(),
+          fetchSocialMinistryNews()
+        ]);
+        setPoliticalNews(pNews || []);
+        setMinistryNews(mNews || []);
+      } catch (error) {
+        console.error("Failed to load news", error);
+      } finally {
+        setNewsLoading(false);
+      }
     }
     getNews();
+  }, []);
 
-    return () => { unsubPlans(); unsubSchedules(); };
-  }, [user, firestore]);
+  const booksQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'books')) : null), [firestore]);
+  const { data: books } = useCollection<DocumentData>(booksQuery);
 
-  // Auto-scroll to active module in timeline
-  useEffect(() => {
-    if (activeModule?.id) {
-      setTimeout(() => {
-        const el = document.getElementById(`module-${activeModule.id}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  const allKeywords = useMemo(() => {
+    if (!books) return [];
+    const keywordSet = new Set<string>();
+    books.forEach(book => {
+        if (book.RAG && typeof book.RAG === 'string') {
+            try {
+                const parsed = JSON.parse(book.RAG);
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(k => {
+                        if (typeof k === 'string') keywordSet.add(k.trim());
+                    });
+                }
+            } catch (e) {
+                book.RAG.split(/[\n,]/).forEach((k: string) => {
+                    const trimmed = k.trim();
+                    if (trimmed) keywordSet.add(trimmed);
+                });
+            }
         }
-      }, 500);
+    });
+    return Array.from(keywordSet).sort((a, b) => a.localeCompare(b, 'da'));
+  }, [books]);
+
+  const semesterPlanQuery = useMemoFirebase(() => (
+      firestore && user ? query(collection(firestore, 'users', user.uid, 'semesterPlans'), orderBy('createdAt', 'desc'), limit(1)) : null
+  ), [firestore, user]);
+  const { data: semesterPlans, isLoading: plansLoading } = useCollection<DocumentData>(semesterPlanQuery);
+
+  const recentCasesQuery = useMemoFirebase(() => (
+      firestore && user ? query(collection(firestore, 'users', user.uid, 'caseAnalyses'), orderBy('createdAt', 'desc'), limit(3)) : null
+  ), [firestore, user]);
+  const { data: recentCases, isLoading: casesLoading } = useCollection<DocumentData>(recentCasesQuery);
+  
+  const nextEvent = useMemo(() => {
+      if (!semesterPlans || semesterPlans.length === 0) return null;
+      const plan = semesterPlans[0];
+      if (!plan.weeklyBreakdown) return null;
+
+      const now = new Date();
+      const allEvents = plan.weeklyBreakdown
+          .flatMap((week: any) => week.events)
+          .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+      
+      return allEvents.find((event: any) => new Date(event.startDate) > now);
+  }, [semesterPlans]);
+
+    const getDailyCount = (lastUsage?: Timestamp, dailyCount?: number) => {
+        if (!lastUsage) return 0;
+        const today = new Date();
+        const lastUsageDate = lastUsage.toDate();
+        return lastUsageDate.toDateString() === today.toDateString() ? dailyCount || 0 : 0;
+    };
+
+    const getMonthlyCount = (lastUsage?: Timestamp, monthlyCount?: number) => {
+        if (!lastUsage) return 0;
+        const today = new Date();
+        const lastUsageDate = lastUsage.toDate();
+        return lastUsageDate.getFullYear() === today.getFullYear() && lastUsageDate.getMonth() === today.getMonth() ? monthlyCount || 0 : 0;
+    };
+
+  const limits = useMemo(() => {
+      const defaultLimits = {
+          Kollega: { concepts: 1, cases: 1, journal: 0, architect: 1, oralExam: 1, opinion: 0, star: 1, caseAnalyser: 0 },
+          'Kollega+': { concepts: -1, cases: -1, journal: -1, architect: -1, oralExam: -1, opinion: 10, star: -1, caseAnalyser: -1 }
+      };
+
+      const currentTier = userProfile?.membership || 'Kollega';
+      const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+      const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : defaultLimits[effectiveTier];
+
+      const getLimit = (key: string) => {
+          const val = tierLimits?.[key] !== undefined ? tierLimits[key] : defaultLimits[effectiveTier][key as keyof typeof defaultLimits['Kollega']];
+          return val === -1 ? Infinity : val;
+      };
+
+      if (!userProfile) return { concepts: { used: 0, total: 0 }, cases: { used: 0, total: 0 }, journal: { used: 0, total: 0 }, architect: { used: 0, total: 0 }, opinion: { used: 0, total: 0 }, star: { used: 0, total: 0 } };
+      
+      return {
+          concepts: { 
+              used: getDailyCount(userProfile?.lastConceptExplainerUsage, userProfile?.dailyConceptExplainerCount), 
+              total: getLimit('concepts') 
+          },
+          cases: { 
+              used: getDailyCount(userProfile?.lastCaseTrainerUsage, userProfile?.dailyCaseTrainerCount), 
+              total: getLimit('cases') 
+          },
+          journal: { 
+              used: getDailyCount(userProfile?.lastJournalTrainerUsage, userProfile?.dailyJournalTrainerCount), 
+              total: getLimit('journal') 
+          },
+          architect: { 
+              used: getMonthlyCount(userProfile?.lastExamArchitectUsage, userProfile?.monthlyExamArchitectCount), 
+              total: getLimit('architect') 
+          },
+          oralExam: {
+              used: getDailyCount(userProfile?.lastOralExamUsage, userProfile?.dailyOralExamCount),
+              total: getLimit('oralExam')
+          },
+          opinion: {
+              used: getMonthlyCount(userProfile?.lastSecondOpinionUsage, userProfile?.monthlySecondOpinionCount),
+              total: getLimit('opinion')
+          },
+          star: {
+              used: getDailyCount(userProfile?.lastStarAnalysisUsage, userProfile?.dailyStarAnalysisCount),
+              total: getLimit('star')
+          },
+          caseAnalyser: {
+              used: 0,
+              total: getLimit('caseAnalyser')
+          }
+      };
+  }, [userProfile, usageLimits]);
+
+    const recommendedTool = useMemo(() => {
+        if (!userProfile) return null;
+
+        const tools = [
+
+            { name: 'Journal-træner', usage: getDailyCount(userProfile.lastJournalTrainerUsage, userProfile.dailyJournalTrainerCount), path: '/journal-trainer', icon: FileText, cta: 'Træn din journalføring', color: 'text-emerald-500' },
+            { name: 'Case-træner', usage: getDailyCount(userProfile.lastCaseTrainerUsage, userProfile.dailyCaseTrainerCount), path: '/case-trainer', icon: Zap, cta: 'Test dit skøn', color: 'text-amber-500' },
+            { name: 'Begrebsguide', usage: getDailyCount(userProfile.lastConceptExplainerUsage, userProfile.dailyConceptExplainerCount), path: '/concept-explainer', icon: Book, cta: 'Slå et begreb op', color: 'text-blue-500' },
+            { name: 'Eksamens-Arkitekten', usage: getMonthlyCount(userProfile.lastExamArchitectUsage, userProfile.monthlyExamArchitectCount), path: '/exam-architect', icon: Target, cta: 'Byg din opgave', color: 'text-indigo-500' },
+        ];
+        
+        tools.sort((a, b) => a.usage - b.usage);
+
+        return tools[0];
+
+    }, [userProfile]);
+
+    const isConceptLimitReached = useMemo(() => {
+        if (!userProfile) return false;
+        const dailyCount = getDailyCount(userProfile.lastConceptExplainerUsage, userProfile.dailyConceptExplainerCount);
+        return dailyCount >= limits.concepts.total;
+    }, [userProfile, limits]);
+
+    // Fetch Global Trends for "Hurtig-opslag"
+    const globalActivitiesQuery = useMemoFirebase(() => (
+        firestore ? query(collection(firestore, 'userActivities'), orderBy('createdAt', 'desc'), limit(50)) : null
+    ), [firestore]);
+    const { data: globalActivities } = useCollection<DocumentData>(globalActivitiesQuery);
+
+    const trendingTerms = useMemo(() => {
+        if (!globalActivities || globalActivities.length === 0) return ['§ 81', 'Relationskompetence', 'Tavshedspligt', 'VUM 2.0'];
+        
+        const termCounts: Record<string, number> = {};
+        const conceptRegex = /slog begrebet "([^"]+)" op/;
+        const lawRegex = /slog (§ .+? i .+?) op/;
+
+        globalActivities.forEach(act => {
+            const text = act.actionText || '';
+            const match = text.match(conceptRegex) || text.match(lawRegex);
+            
+            if (match && match[1]) {
+                const term = match[1];
+                termCounts[term] = (termCounts[term] || 0) + 1;
+            }
+        });
+
+        // Convert to array of {term, count}, sort by count desc, and take top 5
+        const sortedTerms = Object.entries(termCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([term]) => term)
+            .slice(0, 5);
+
+        return sortedTerms.length > 0 ? sortedTerms : ['§ 81', 'Relationskompetence', 'Tavshedspligt', 'VUM 2.0'];
+    }, [globalActivities]);
+
+  useEffect(() => {
+      if (isAppLoading || userProfile === undefined) return;
+      const sessionId = searchParams?.get('session_id');
+      if (sessionId && user && firestore) {
+          const processSession = async () => {
+              const result = await processStripeSession(sessionId);
+              if (result.success && result.updateData) {
+                  const userRef = doc(firestore, 'users', user.uid);
+                  try {
+                      await updateDoc(userRef, result.updateData);
+                      toast({
+                          title: 'Opgradering fuldført!',
+                          description: `Du har nu adgang til ${result.updateData.membership}.`,
+                      });
+                      await refetchUserProfile();
+                  } catch (dbError) {
+                      console.error("Firestore update failed:", dbError);
+                      toast({
+                          variant: 'destructive',
+                          title: 'Databasefejl',
+                          description: "Kunne ikke opdatere din profil. Kontakt venligst support.",
+                      });
+                  }
+              } else if (result.message) {
+                  toast({
+                      variant: 'destructive',
+                      title: 'Fejl ved opgradering',
+                      description: result.message,
+                  });
+              }
+              router.replace('/portal', { scroll: false });
+              setIsProcessingSession(false);
+          };
+
+          processSession();
+      } else {
+          setIsProcessingSession(false);
+      }
+  }, [searchParams, user, firestore, userProfile, isAppLoading, router, toast, refetchUserProfile]);
+
+  // AI Security: Log session on portal access to detect account sharing
+  useEffect(() => {
+      if (user && userProfile) {
+          logUserSessionAction(user.uid, userProfile.username || user.displayName || 'Anonym bruger');
+      }
+  }, [user, userProfile]);
+
+    const getTimeOfDayGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 10) return "Godmorgen";
+        if (hour < 18) return "Goddag";
+        return "Godaften";
+    };
+
+    const handleSearch = (e?: React.FormEvent, overrideTerm?: string) => {
+        if (e) e.preventDefault();
+        const term = overrideTerm || searchQuery.trim();
+        if (!term) return;
+
+        // Detect if it's a question
+        const questionWords = ['hvad', 'hvordan', 'hvilke', 'hvilken', 'hvem', 'hvor', 'hvorfor', 'er', 'kan', 'skal', 'bør', 'må'];
+        const isQuestion = term.endsWith('?') || 
+                          questionWords.some(word => term.toLowerCase().startsWith(word + ' ')) ||
+                          term.split(' ').length > 6;
+
+        if (isQuestion) {
+            if (user && firestore) {
+                addDoc(collection(firestore, 'userActivities'), {
+                    userId: user.uid,
+                    userName: userProfile?.username || user.displayName || 'Anonym bruger',
+                    actionText: `startede en sparring om: "${term}".`,
+                    createdAt: serverTimestamp(),
+                }).catch(err => console.error("Failed to record activity:", err));
+            }
+            router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+            return;
+        }
+
+        const isLaw = term.includes('§') || 
+                      /(\d+)/.test(term) || 
+                      term.toLowerCase().includes('lov') || 
+                      term.toLowerCase().includes('bekendtgørelse') ||
+                      term.toLowerCase().includes('vejledning');
+
+        if (isLaw) {
+            if (user && firestore) {
+                addDoc(collection(firestore, 'userActivities'), {
+                    userId: user.uid,
+                    userName: userProfile?.username || user.displayName || 'Anonym bruger',
+                    actionText: `slog ${term} op.`,
+                    createdAt: serverTimestamp(),
+                }).catch(err => console.error("Failed to record activity:", err));
+            }
+            router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+            return;
+        }
+
+        if (isConceptLimitReached) {
+            toast({
+                variant: 'destructive',
+                title: 'Dagsgrænse nået',
+                description: 'Som Kollega-medlem har du 1 dagligt opslag i Begrebsguiden. Opgradér til Kollega+ for fri adgang.',
+            });
+            return;
+        }
+
+        if (user && firestore) {
+            addDoc(collection(firestore, 'userActivities'), {
+                userId: user.uid,
+                userName: userProfile?.username || user.displayName || 'Anonym bruger',
+                actionText: `slog begrebet "${term}" op.`,
+                createdAt: serverTimestamp(),
+            }).catch(err => console.error("Failed to record activity:", err));
+        }
+        router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        if (value.trim().length > 1) {
+            setSuggestions(allKeywords.filter(c => c.toLowerCase().includes(value.toLowerCase())).slice(0, 5));
+            setShowSuggestions(true);
+        } else {
+            setShowSuggestions(false);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
+    const handleSuggestionClick = (term: string) => {
+        setSearchQuery(term);
+        setShowSuggestions(false);
+        handleSearch(undefined, term);
+    };
+
+    useEffect(() => {
+        const down = (e: KeyboardEvent) => {
+            if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                const searchInput = document.getElementById('portal-search-input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+        };
+
+        document.addEventListener('keydown', down);
+        return () => document.removeEventListener('keydown', down);
+    }, []);
+
+    const toolCategories = useMemo(() => {
+        const categories = [
+            {
+                title: "Praksis & Myndighed",
+                subtitle: "Værktøjer til din daglige myndighedsudøvelse",
+                icon: <Gavel className="w-6 h-6 text-slate-700" />,
+                items: [
+                    { title: "Journal-træner", desc: "Kollega-sparring på dine notater", icon: FileText, path: "/journal-trainer", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sparring", limit: limits.journal, limitText: 'i dag' },
+                    { title: "Case-Analytikeren", desc: "AI-drevet PDF sagsanalyse", icon: FileSearch, path: "/case-analyser", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Analyse", limit: limits.caseAnalyser },
+                    { title: "Case-træner", desc: "Træn svære myndighedsvalg", icon: Zap, path: "/case-trainer", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Simulering", limit: limits.cases, limitText: 'i dag' },
+                    { title: "Second Opinion", desc: "Vurdering af klagegrundlag", icon: SearchCode, path: "/second-opinion", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Klage-Tjek", limit: limits.opinion, limitText: 'denne md.' },
+                    (userProfile?.profession === 'Socialrådgiver' || userProfile?.role === 'admin') ? { title: "Markedsplads", desc: "Hjælp borgere og få erfaring", icon: HandHelping, path: "/markedsplads", color: "text-rose-600 bg-rose-50 border-rose-100", badge: "Job" } : null,
+                ].filter(Boolean) as any
+            },
+            {
+                title: "Vidensportalen",
+                subtitle: "Dyk ned i jura, forskning og data",
+                icon: <Scale className="w-6 h-6 text-rose-500" />,
+                items: [
+
+                    { title: "Lovportalen", desc: "Dyk ned i den relevante lovgivning", icon: Scale, path: "/lov-portal", color: "text-sky-600 bg-sky-50 border-sky-100", badge: "Opslag" },
+                    { title: "VIVE Indsigt", desc: "Dansk velfærdsforskning", icon: Building, path: "/vive-indsigt", color: "text-cyan-600 bg-cyan-50 border-cyan-100", badge: "Forskning" },
+                    { title: "STAR Indsigt", desc: "Officiel arbejdsmarksstatistik", icon: BarChart3, path: "/star-indsigt", color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100", badge: "Data", limit: limits.star, limitText: 'i dag' },
+                    { title: "Politisk Puls", desc: "Seneste nyt fra Folketinget", icon: Gavel, path: "/folketinget", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Live" },
+                    { title: "Begrebsguide", desc: "Opslagsværk for socialrådgivere", icon: Book, path: "/concept-explainer", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Opslag", limit: limits.concepts, limitText: 'i dag' },
+                    { title: "Statslig Myndighed", desc: "Forstå arbejdet i staten", icon: Globe, path: "/statslig-myndighed", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Akademi" },
+                ]
+            },
+            {
+                title: "Akademisk & Studieværktøjer",
+                subtitle: "Styrk den røde tråd i dit studie",
+                icon: <GraduationCap className="w-6 h-6 text-indigo-500" />,
+                items: [
+                    { title: "Eksamens-Arkitekten", desc: "Design din opgavestruktur", icon: Layout, path: "/exam-architect", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "AI-Draft", limit: limits.architect, limitText: 'denne md.' },
+                    { title: "Mundtlig Eksamenstræner", desc: "Gennemgang af dit oplæg", icon: Mic, path: "/mundtlig-eksamenstraener", color: "text-blue-600 bg-blue-50 border-blue-100", badge: "Træning", limit: limits.oralExam, limitText: 'i dag' },
+                    { title: "Seminar-Arkitekten", desc: "Fra slides til videnskort", icon: FileSearch, path: "/seminar-architect", color: "text-violet-600 bg-violet-50 border-violet-100", badge: "Transform" },
+                    { title: "Kilde-Generator", desc: "Perfekte kildehenvisninger", icon: Quote, path: "/kilde-generator", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Ref" },
+                    { title: "Pensum", desc: "Oversigt over din litteratur", icon: BookMarked, path: "/pensum", color: "text-slate-600 bg-slate-50 border-slate-100", badge: "Bøger" },
+                    { title: "Mit Semester", desc: "Dybdegående semesteroverblik", icon: Layers, path: "/mit-semester", color: "text-indigo-600 bg-indigo-50 border-indigo-100", badge: "Ny" },
+                    { title: "Semester-Planlægger", desc: "Intelligent planlægning", icon: CalendarDays, path: "/semester-planlaegger", color: "text-emerald-600 bg-emerald-50 border-emerald-100", badge: "Sync" }
+                ]
+            },
+            {
+                title: "Karriere & Netværk",
+                subtitle: "Forbered dig på arbejdslivet",
+                icon: <Compass className="w-6 h-6 text-amber-500" />,
+                items: [
+                    { title: "Institutionssøgning", desc: "Find din næste praktikplads", icon: Building, path: "/institutions", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Data" },
+                    { title: "Praktik-Rating", desc: "Se andres erfaringer i praktik", icon: Star, path: "/praktik-rating", color: "text-amber-600 bg-amber-50 border-amber-100", badge: "Reviews" },
+                ]
+            }
+        ];
+
+        return categories;
+    }, [limits, userProfile?.profession, userProfile?.role]);
+
+    if (isAppLoading || !user || userProfile === undefined) {
+        return <AuthLoadingScreen />;
     }
-  }, [activeModule?.id]);
 
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !firestore) return;
+  const handleTrendClick = (tag: string) => {
+    const isLaw = tag.includes('§') || 
+                  /(\d+)/.test(tag) || 
+                  tag.toLowerCase().includes('lov') || 
+                  tag.toLowerCase().includes('bekendtgørelse') ||
+                  tag.toLowerCase().includes('vejledning');
 
-    if (file.type !== 'application/pdf') {
-        setUploadError('Vælg venligst en PDF-fil.');
+    if (!isLaw && isConceptLimitReached) {
+        toast({
+            variant: 'destructive',
+            title: 'Dagsgrænse nået',
+            description: 'Som Kollega-medlem har du 1 dagligt opslag i Begrebsguiden. Opgradér til Kollega+ for fri adgang.',
+        });
         return;
     }
 
-    setIsProcessingPdf(true);
-    setUploadError(null);
-
-    try {
-        const reader = new FileReader();
-        reader.onload = async () => {
-            const base64 = (reader.result as string).split(',')[1];
-            
-            const result = await processStudyRegulationAction({
-                pdfBase64: base64,
-                institution: userProfile?.institution,
-                profession: userProfile?.profession
-            });
-
-            if (result) {
-                await updateDoc(doc(firestore, 'users', user.uid), {
-                    customCurriculum: result,
-                    updatedAt: serverTimestamp()
-                });
-            }
-            setIsProcessingPdf(false);
-        };
-        reader.readAsDataURL(file);
-    } catch (err: any) {
-        console.error("Error processing custom curriculum:", err);
-        setUploadError("Der skete en fejl under analysen af din studieordning. Prøv igen.");
-        setIsProcessingPdf(false);
-    }
-  };
-
-  const handleRemoveCustomCurriculum = async () => {
-    if (!user || !firestore) return;
-    if (window.confirm("Er du sikker på, at du vil fjerne din egen studieordning og gå tilbage til den officielle?")) {
-        await updateDoc(doc(firestore, 'users', user.uid), {
-            customCurriculum: deleteField(),
-            updatedAt: serverTimestamp()
-        });
-    }
-  };
-
-  const handleSearch = (termOverride?: string) => {
-    const term = termOverride || searchQuery.trim();
-    if (!term) return;
-
-    const questionWords = ['hvad', 'hvordan', 'hvilke', 'hvilken', 'hvem', 'hvor', 'hvorfor', 'er', 'kan', 'skal', 'bør', 'må'];
-    const isQuestion = term.endsWith('?') || 
-                      questionWords.some(word => term.toLowerCase().startsWith(word + ' ')) ||
-                      term.split(' ').length > 6;
-
-    if (isQuestion || term.includes('§') || term.toLowerCase().includes('lov')) {
-      router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+    if (isLaw) {
+        router.push(`/lov-portal?search=${encodeURIComponent(tag)}`);
     } else {
-      router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
+        router.push(`/concept-explainer?term=${encodeURIComponent(tag)}`);
     }
   };
-
-  if (isUserLoading || !user || !userProfile) return <AuthLoadingScreen />;
-
-  const hour = new Date().getHours();
-  const greeting = hour < 10 ? 'Godmorgen' : hour < 18 ? 'Goddag' : 'Godaften';
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen font-sans selection:bg-amber-100 pb-20">
+    <div className="bg-[#FDFBF7] min-h-[100dvh] w-full overflow-x-hidden selection:bg-amber-200 selection:text-amber-950 font-sans pb-12">
       
+      {/* SMART COMMAND HEADER - Mobile First Premium Look */}
+      <header className="bg-white/90 backdrop-blur-2xl border-b border-slate-200/50 px-5 sm:px-8 py-10 md:py-20 relative z-30 transition-all rounded-b-[48px] sm:rounded-b-[72px] shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
+        {/* Dynamic mesh effect - Constrained to prevent horizontal scroll */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.08)_0,transparent_70%)] pointer-events-none -z-10 animate-pulse transition-all duration-1000 overflow-hidden"></div>
+        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle_at_top_left,rgba(79,70,229,0.03)_0,transparent_70%)] pointer-events-none -z-10 animate-pulse delay-700 overflow-hidden"></div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-12 md:mb-20">
+            <div className="text-center sm:text-left flex flex-col items-center sm:items-start max-w-2xl">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-8">
+                <span className="px-4 py-2 bg-slate-950 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-800 flex items-center gap-2 group cursor-default">
+                   <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                   {userProfile?.membership || 'Kollega'} Medlem
+                </span>
+                <div className="flex items-center gap-2 px-4 py-2 bg-white text-rose-600 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border border-rose-100 shadow-sm">
+                   <Flame className="w-3.5 h-3.5 fill-current" /> {userProfile?.dailyChallengeStreak || 0} Dages dannelse
+                </div>
+                {user && (
+                    <Link href={`/u/${user.uid}`} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
+                       <Share2 className="w-3.5 h-3.5" /> Del LinkedIn Profil
+                    </Link>
+                )}
+              </div>
+              <h1 className="text-[38px] sm:text-6xl md:text-7xl font-extrabold text-slate-950 tracking-[-0.03em] leading-[0.95]">
+                {getTimeOfDayGreeting()}, <br className="sm:hidden" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">{user?.displayName?.split(' ')[0]}</span>
+              </h1>
+              <p className="text-[17px] sm:text-xl text-slate-500 mt-6 font-medium max-w-xl mx-auto sm:mx-0 leading-relaxed text-balance">
+                {userProfile?.isQualified 
+                    ? "Din strategiske partner i myndighedsarbejdet. Hold dig opdateret på de nyeste tendenser." 
+                    : "Alt hvad du skal bruge til socialrådgiverstudiet, samlet ét sted. Klar til dagens udfordringer?"}
+              </p>
+
+              <div className="mt-10 flex flex-col gap-4 py-6 px-7 bg-white/80 backdrop-blur-md border border-slate-200/50 rounded-[32px] sm:rounded-[40px] max-w-xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] group hover:bg-white hover:shadow-2xl hover:shadow-rose-500/5 transition-all duration-700 animate-in fade-in slide-in-from-left-6 duration-1000 relative overflow-hidden group">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-rose-50 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center border border-rose-100/50 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                    <Flame className="w-6 h-6 fill-current" />
+                  </div>
+                  <div>
+                    <h3 className="text-[14px] font-black uppercase text-slate-950 tracking-[0.1em]">Høj Engagement = Din Fremtid</h3>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-0.5">Din uddannelse sker dag for dag</p>
+                  </div>
+                </div>
+                <p className="text-[15px] text-slate-700 font-medium leading-relaxed italic border-l-4 border-rose-500/20 pl-6 py-1 relative z-10 text-balance">
+                  "Høj streak er et tegn på høj engagement. Din fremtidige arbejdsgiver vil elske at vide, at du har dygtiggjort dig hver dag. Log ind hver dag for at holde din streak i live!"
+                </p>
+                <div className="absolute top-4 right-6 text-[10px] font-black text-rose-600/20 uppercase tracking-widest hidden sm:block">Faglig Stolthed</div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-8">
+                  <Button asChild className="h-14 px-8 bg-amber-500 text-white rounded-[20px] font-bold hover:bg-amber-600 transition-all shadow-lg hover:scale-105 active:scale-95 border-none">
+                      <Link href="/praktik-rating" className="flex items-center gap-2.5">
+                        <Star className="w-5 h-5 fill-current" />
+                        <span className="uppercase tracking-widest text-[12px]">Praktik-Rating</span>
+                      </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-14 px-8 border-slate-200 text-slate-600 rounded-[20px] font-bold hover:bg-slate-50 transition-all hover:border-slate-300">
+                      <Link href="/institutions" className="flex items-center gap-2.5">
+                        <Users className="w-5 h-5" />
+                        <span className="uppercase tracking-widest text-[12px]">Find Praktikplads</span>
+                      </Link>
+                  </Button>
+              </div>
+              
+              {/* Premium Search Experience */}
+              <div className="relative w-full max-w-xl mt-12 group">
+                  <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none z-10">
+                      <Search className="w-6 h-6 text-slate-400 group-focus-within:text-amber-500 group-focus-within:scale-110 transition-all duration-300" />
+                  </div>
+                  <Input 
+                      id="portal-search-input"
+                      type="text" 
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Søg i din viden, paragraffer og værktøjer..." 
+                      className="h-20 pl-16 pr-24 bg-slate-50 border-slate-200/60 rounded-[32px] focus:ring-0 focus:border-amber-400 focus:bg-white text-slate-950 placeholder:text-slate-400 placeholder:font-semibold transition-all duration-500 shadow-[0_4px_20px_rgba(0,0,0,0.03)] group-focus-within:shadow-[0_20px_50px_rgba(0,0,0,0.08)] group-focus-within:-translate-y-1 text-lg font-medium"
+                  />
+                  <div className="absolute inset-y-0 right-6 flex items-center gap-3">
+                      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-200/50 rounded-xl text-[10px] font-black text-slate-500 tracking-widest border border-slate-300/30">
+                        <Command className="w-3 h-3" /> K
+                      </div>
+                      <button 
+                        onClick={() => handleSearch()}
+                        className="w-10 h-10 bg-amber-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20 hover:bg-amber-600 active:scale-95 transition-all"
+                      >
+                         <ArrowRight className="w-5 h-5" />
+                      </button>
+                  </div>
+
+                  {/* Suggestions Dropdown for the new search experience */}
+                  <AnimatePresence>
+                    {showSuggestions && suggestions.length > 0 && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute top-full left-0 right-0 mt-4 bg-white border border-slate-200 rounded-[32px] shadow-2xl z-50 p-6 overflow-hidden"
+                        >
+                            <p className="px-5 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-3">Søgninger der hitter</p>
+                            <div className="grid grid-cols-1 gap-2">
+                                {suggestions.map((s, i) => (
+                                    <button 
+                                        key={i} 
+                                        type="button"
+                                        onClick={() => handleSuggestionClick(s)} 
+                                        className="w-full text-left px-5 py-4 hover:bg-slate-50 rounded-[20px] transition-all flex items-center gap-4 text-[16px] font-bold text-slate-600 hover:text-slate-950 group/item"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center group-hover/item:bg-amber-100 transition-colors">
+                                            <Sparkles className="w-5 h-5 text-amber-500" /> 
+                                        </div>
+                                        {s}
+                                        <ArrowUpRight className="w-4 h-4 ml-auto opacity-0 group-hover/item:opacity-40 transition-opacity" />
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                  </AnimatePresence>
+              </div>
+
+              {/* Popular Trends Integrated Under Search */}
+              <div className="mt-8 flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 hidden sm:inline-block mr-1">Populært:</span>
+                {trendingTerms.map((tag: string) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleTrendClick(tag)}
+                      className="px-5 py-2.5 bg-slate-100/50 text-slate-600 rounded-full text-[11px] font-bold border border-slate-200/50 hover:bg-white hover:text-slate-950 hover:border-amber-200 hover:shadow-sm transition-all uppercase tracking-wider whitespace-nowrap active:scale-95"
+                    >
+                      <TrendingUp className="w-3.5 h-3.5 inline-block mr-2 -mt-0.5 text-amber-500" />
+                      {tag}
+                    </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 sm:gap-5 p-4 sm:p-6 bg-slate-50/50 backdrop-blur-md rounded-[40px] border border-slate-100 shadow-inner shrink-0">
+                <Button asChild variant="outline" className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden">
+                    <Link href="/mine-kurser">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-500 shrink-0 group-hover:scale-110 transition-transform relative z-10"/>
+                        <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Kurser</span>
+                    </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden">
+                    <Link href="https://group.cohero.dk">
+                        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        <Users className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600 shrink-0 group-hover:scale-110 transition-transform relative z-10"/>
+                        <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Grupper</span>
+                    </Link>
+                </Button>
+                <Button 
+                    onClick={() => document.getElementById("support-section")?.scrollIntoView({ behavior: "smooth" })}
+                    variant="outline" 
+                    className="h-[76px] w-[92px] sm:h-24 sm:w-32 flex-col gap-2 text-center font-black !bg-white hover:!bg-slate-50 border-slate-200 shadow-sm rounded-[24px] sm:rounded-[32px] active:scale-[0.96] transition-all group overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                    <AlertCircle className="w-7 h-7 sm:w-8 sm:h-8 text-rose-500 shrink-0 group-hover:scale-110 transition-transform relative z-10"/>
+                    <span className="text-[10px] sm:text-[11px] text-slate-800 uppercase tracking-widest relative z-10">Fejl</span>
+                </Button>
+                <div className="hidden md:block w-px h-16 bg-slate-200/50 mx-2" />
+                <Link href="/settings" passHref>
+                  <div className="relative group cursor-pointer transition-all duration-500 hover:rotate-2">
+                    <div className="h-[80px] w-[80px] sm:w-24 sm:h-24 rounded-[32px] sm:rounded-[40px] bg-slate-950 text-white flex items-center justify-center font-black text-[32px] sm:text-4xl shadow-2xl shadow-slate-950/20 active:scale-[0.94] transition-all border-[3px] border-white group-hover:border-amber-400 group-hover:shadow-amber-500/20">
+                      {user?.displayName?.charAt(0)}
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-6 h-6 sm:w-8 sm:h-8 bg-emerald-400 rounded-full border-[4px] border-white shadow-lg pointer-events-none group-hover:scale-110 transition-transform"></div>
+                    <div className="absolute bottom-0 inset-x-0 h-1 bg-amber-400 rounded-full scale-x-0 group-hover:scale-x-50 transition-transform origin-center translate-y-4" />
+                  </div>
+                </Link>
+            </div>
+          </div>
+        </div>
+      </header>
 
 
-      <main className="max-w-[1400px] mx-auto px-6 py-8">
+      {/* SURVEY & ANNOUNCEMENT AREA */}
+      <div className="max-w-7xl mx-auto w-full px-5 sm:px-8 mt-12 mb-8 relative z-20">
+        <SurveyWidget membership={userProfile?.membership || 'Kollega'} />
+        
+        {/* NEWS BANNER: Mine Seminarer Sharing Management */}
+        <Link href="/mine-seminarer" className="group block mt-4 outline-none">
+          <div className="bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#1e293b] border border-slate-800 p-8 sm:p-12 rounded-[48px] sm:rounded-[64px] flex flex-col md:flex-row items-center justify-between gap-10 hover:shadow-[0_40px_80px_rgba(0,0,0,0.3)] transition-all duration-500 active:scale-[0.98] relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-700"></div>
+            <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+            
+            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-10 relative z-10 w-full sm:w-auto">
+              <div className="w-20 h-20 bg-emerald-500 text-black rounded-[28px] flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.3)] group-hover:rotate-6 group-hover:scale-110 transition-all duration-500 flex-shrink-0">
+                <Presentation className="w-10 h-10" />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-center sm:justify-start gap-2.5">
+                   <div className="px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-inner mb-2 lg:mb-0">
+                      Personligt Bibliotek
+                   </div>
+                   <div className="px-3.5 py-1.5 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] mb-2 lg:mb-0">
+                      Privat
+                   </div>
+                </div>
+                <div>
+                  <h3 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight tracking-tight">
+                    Dit faglige univers, <span className="text-emerald-400">helt privat.</span>
+                  </h3>
+                  <p className="text-lg text-slate-400 font-medium max-w-lg mt-3 leading-relaxed">
+                    Organisér dine PowerPoint-slides, find svære faglige begreber øjeblikkeligt og bevar kontrollen over din viden.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-center w-full sm:w-auto h-16 px-10 bg-white text-slate-950 rounded-[28px] font-black text-[13px] uppercase tracking-[0.2em] hover:bg-emerald-400 transition-all shadow-2xl shrink-0 relative z-10">
+              Udforsk bibliotek <ArrowRight className="w-5 h-5 ml-3" />
+            </div>
+          </div>
+        </Link>
+        
+        <Link href="/lov-portal" className="group block mt-4 outline-none">
+          <div className="bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-[0_20px_40px_rgba(79,70,229,0.1)] hover:border-indigo-200 transition-all active:scale-[0.98]">
+            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6">
+              <div className="w-16 h-16 bg-indigo-600 text-white rounded-[24px] flex items-center justify-center shadow-lg shadow-indigo-600/20 group-hover:rotate-6 transition-transform flex-shrink-0">
+                <Scale className="w-7 h-7" />
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-[9px] font-black uppercase tracking-widest mb-2.5 mx-auto sm:mx-0">
+                  <Zap className="w-3 h-3 fill-current" /> Nyt værktøj
+                </div>
+                <h3 className="text-[20px] font-extrabold text-slate-900 leading-tight">
+                  Udforsk vores nye intelligente Lovportal
+                </h3>
+                <p className="text-[14px] text-slate-500 font-medium max-w-md mt-1.5">
+                  Find juridiske kilder samlet ét sted. Dyk ned med AI-sparring og automatiseret kildegenerator.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center w-full sm:w-auto h-14 px-6 bg-white border border-indigo-100 rounded-[20px] shadow-sm text-indigo-600 font-bold text-[12px] uppercase tracking-widest group-hover:bg-indigo-50 transition-colors shrink-0">
+              Udforsk nu <ArrowRight className="w-4 h-4 ml-2" />
+            </div>
+          </div>
+        </Link>
+
+        {/* BISTAND / MARKETPLACE BANNER */}
+        <Link href="/markedsplads" className="group block mt-4 outline-none">
+          <div className="bg-gradient-to-br from-rose-50 via-white to-orange-50/30 border border-rose-200 p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-[0_20px_40px_rgba(225,29,72,0.15)] hover:border-rose-300 transition-all active:scale-[0.98] relative overflow-hidden">
+            <div className="absolute -top-16 -right-16 w-48 h-48 bg-rose-100/30 rounded-full blur-[60px] pointer-events-none group-hover:scale-110 transition-transform duration-500"></div>
+            
+            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6 relative z-10">
+              <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-orange-600 text-white rounded-[24px] flex items-center justify-center shadow-lg shadow-rose-500/30 group-hover:rotate-6 transition-transform flex-shrink-0">
+                <HandHelping className="w-7 h-7" />
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-[9px] font-black uppercase tracking-widest mb-2.5 mx-auto sm:mx-0">
+                  <Star className="w-3 h-3 fill-current" /> Markedsplads
+                </div>
+                <h3 className="text-[20px] font-extrabold text-slate-900 leading-tight">
+                  Tjen penge mens du læser
+                </h3>
+                <p className="text-[14px] text-slate-600 font-medium max-w-md mt-1.5">
+                  Brug din faglighed til at hjælpe borgere og få værdifuld erhvervserfaring til dit CV.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center w-full sm:w-auto h-14 px-6 bg-white border border-rose-200 rounded-[20px] shadow-sm text-rose-600 font-bold text-[12px] uppercase tracking-widest group-hover:bg-rose-50 transition-colors shrink-0 relative z-10">
+              Se opgaver <ArrowRight className="w-4 h-4 ml-2" />
+            </div>
+          </div>
+        </Link>
+      </div>
+
+
+      <main className="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-12 gap-10 lg:gap-14">
         
         {/* SYSTEM UPDATE ANNOUNCEMENT */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 bg-white border border-amber-100 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center gap-8 shadow-[0_20px_50px_rgba(245,158,11,0.05)] relative overflow-hidden group"
+          className="lg:col-span-12 mb-2 bg-white border border-amber-100 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center gap-8 shadow-[0_20px_50px_rgba(245,158,11,0.05)] relative overflow-hidden group"
         >
           <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-1000">
             <Zap className="w-24 h-24 text-amber-500" />
@@ -381,586 +1245,420 @@ const PortalPageContent: React.FC = () => {
             </p>
           </div>
         </motion.div>
-
-
-        {/* --- DASHBOARD GRID --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* LEFT COLUMN: THE WORKSPACE */}
+        <div className="lg:col-span-8 space-y-16">
           
-          {/* LEFT COLUMN: Academic/Professional Focus */}
-          <div className="lg:col-span-8 space-y-8">
-            
-            {/* GRADUATED / PROFESSIONAL HEADER */}
-            {userProfile?.isQualified && (
-               <div className="relative bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl overflow-hidden group">
-                  {/* Filmic Ambient Background */}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_-20%,#312e81_0%,transparent_50%)] opacity-40" />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_120%,#1e1b4b_0%,transparent_50%)] opacity-40" />
-                  <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[2000ms]">
-                    <Building className="w-64 h-64" />
-                  </div>
+          {/* Prominent Upgrade Banner for free users */}
+          {(userProfile?.membership === 'Kollega' || !userProfile?.membership) && (
+              <UpgradeIncentiveBanner />
+          )}
 
-                  <div className="relative z-10 space-y-8">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-white/10 rounded-[1.5rem] flex items-center justify-center backdrop-blur-xl border border-white/20 shadow-2xl">
-                        <Crown className="w-8 h-8 text-amber-400" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-3 mb-1">
-                          <span className="px-3 py-1 bg-amber-400/20 text-amber-400 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-amber-400/20">Professionel Profil</span>
-                          <span className="text-white/40 text-[9px] font-black uppercase tracking-[0.2em]">Kollega+</span>
-                        </div>
-                        <div className="flex flex-col md:flex-row md:items-center gap-4">
-                          <h2 className="text-3xl md:text-5xl font-black tracking-tight serif">{greeting}, {userProfile.username || 'Kollega'}</h2>
-                        </div>
-                      </div>
-                    </div>
+          {/* Automatic Semester Insight - Identifying based on uploaded Curriculums */}
+          {!userProfile?.isQualified && (
+            <div className="space-y-12">
+              <CareerTransitionView semester={userProfile?.semester || ''} />
 
-                    <div className="grid md:grid-cols-3 gap-6 pt-4">
-                      {[
-                        { label: 'Profession', value: userProfile.profession || 'Socialrådgiver', icon: Briefcase },
-                        { label: 'Status', value: 'Færdiguddannet', icon: CheckCircle2 },
-                        { label: 'Erfaring', value: 'Autoriseret Praktiker', icon: Star },
-                      ].map((stat, i) => (
-                        <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-md">
-                          <div className="flex items-center gap-3 text-white/40 mb-2">
-                            <stat.icon className="w-3.5 h-3.5" />
-                            <span className="text-[9px] font-black uppercase tracking-widest">{stat.label}</span>
-                          </div>
-                          <p className="text-sm font-bold text-white">{stat.value}</p>
-                        </div>
-                      ))}
-                    </div>
+              <SemesterFocusView 
+                institution={userProfile?.institution as string} 
+                semester={userProfile?.semester as string} 
+                profession={userProfile?.profession as string}
+                studyStarted={userProfile?.studyStarted as string}
+              />
+            </div>
+          )}
+          
+          {/* Active Work (The Focus Card) */}
+          {!userProfile?.isQualified && (
+            <section>
+              <div className="flex items-center gap-4 mb-8 px-2">
+                  <div className="w-12 h-12 bg-amber-500 rounded-2xl shadow-[0_8px_20px_rgba(245,158,11,0.2)] flex items-center justify-center text-white">
+                    <Target className="w-6 h-6" />
                   </div>
-               </div>
-            )}
-            {/* EDUCATION OVERVIEW & TIMELINE (Students Only) */}
-            {curriculum && !userProfile?.isQualified && (
-              <div className="space-y-8 mb-4">
-                <div className="px-2">
-                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                    <Library className="w-4 h-4 text-indigo-500" />
-                    {curriculum.institution} · {curriculum.profession}
-                  </h3>
-                  <p className="text-xs font-medium text-slate-400 mt-2">{curriculum.title}</p>
-                </div>
-
-                <div className="relative">
-                  <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-100 -translate-y-1/2 z-0" />
-                  <div className="flex items-center gap-6 overflow-x-auto pb-6 pt-2 px-2 no-scrollbar relative z-10">
-                    {curriculum.modules.map((m: any, i: number) => {
-                      const isCurrent = String(m.id) === String(activeModule?.id);
-                      const isPast = !isCurrent && curriculum.modules.indexOf(m) < curriculum.modules.indexOf(activeModule as any);
-                      
-                      return (
-                        <div key={i} id={`module-${m.id}`} className="flex-shrink-0 w-48 group">
-                          <div className="relative flex flex-col items-center text-center gap-4">
-                            <div className={`w-10 h-10 rounded-full border-4 flex items-center justify-center font-black text-[10px] transition-all duration-500 ${
-                              isCurrent ? 'bg-indigo-600 border-indigo-100 text-white scale-110 shadow-lg shadow-indigo-200' : 
-                              isPast ? 'bg-emerald-500 border-emerald-50 text-white' : 
-                              'bg-white border-slate-100 text-slate-300 group-hover:border-indigo-200 group-hover:text-indigo-400'
-                            }`}>
-                              {i + 1}
-                            </div>
-                            <div className="space-y-1">
-                              <p className={`text-[9px] font-black uppercase tracking-widest ${isCurrent ? 'text-indigo-600' : 'text-slate-400'}`}>
-                                {m.semester ? `${m.semester}. Semester` : `Modul ${i + 1}`}
-                              </p>
-                              <p className={`text-[10px] font-bold leading-tight line-clamp-2 px-2 transition-colors ${isCurrent ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>
-                                {m.name}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">Anbefalet til dig</h2>
+                    <p className="text-[13px] text-slate-500 font-bold uppercase tracking-widest mt-1">Dagens faglige fokus</p>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* SEMESTER SELECTION ANNOUNCEMENT */}
-            {!userProfile?.isQualified && !activeModule?.id?.includes('-') && userProfile?.semester?.length === 1 && (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-indigo-600 to-indigo-900 rounded-[2.5rem] p-8 text-white shadow-xl shadow-indigo-200 relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-transform duration-1000">
-                  <Sparkles className="w-24 h-24" />
-                </div>
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-xl border border-white/20">
-                    <Layout className="w-8 h-8 text-white" />
-                  </div>
-                  <div className="flex-1 text-center md:text-left space-y-2">
-                    <h3 className="text-xl font-black tracking-tight">Nyt: Præcis modul-styring! 🚀</h3>
-                    <p className="text-indigo-100/80 text-sm font-medium leading-relaxed">
-                      Du kan nu vælge dit helt konkrete modul under indstillinger. Det gør din studieplan, dine materialer og AI-værktøjer endnu mere præcise for netop din hverdag.
-                    </p>
-                  </div>
-                  <Link href="/settings">
-                    <Button className="bg-white text-indigo-900 hover:bg-indigo-50 font-black uppercase tracking-widest text-[10px] px-8 h-12 rounded-2xl shadow-lg transition-all active:scale-95">
-                      Opdater indstillinger
-                    </Button>
-                  </Link>
-                </div>
-              </motion.div>
-            )}
-
-            {/* SEMESTER HUB HERO (Students Only) */}
-            {!userProfile?.isQualified && (
-              <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
-                <GraduationCap className="w-64 h-64" />
               </div>
               
-              <div className="relative z-10 space-y-8">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200">
-                    <CalendarDays className="w-3.5 h-3.5" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Uge {currentWeekNumber}</span>
-                  </div>
-                  {activeModule?.ects && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
-                      <Star className="w-3.5 h-3.5 fill-current" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">{activeModule.ects} ECTS</span>
-                    </div>
-                  )}
-                </div>
+              <div 
+                onClick={() => router.push(recommendedTool?.path || '/portal')}
+                className="bg-[#0f172a] p-10 sm:p-12 md:p-16 rounded-[48px] sm:rounded-[64px] text-white shadow-[0_30px_100px_-20px_rgba(15,23,42,0.4)] relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all duration-700 border border-white/5"
+              >
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-amber-500/10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
+                  <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-amber-400/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 animate-pulse" />
 
-                <div className="grid md:grid-cols-2 gap-10">
-                  <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h2 className="text-4xl font-black text-slate-950 leading-tight tracking-tighter serif">
-                      {activeModule?.name || activePlan?.title || 'Mit Semester'}
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest rounded-full">
-                        {userProfile?.semester || '1. Semester'}
-                      </span>
-                    </div>
-                    <p className="text-slate-500 text-sm leading-relaxed font-medium line-clamp-4">
-                      {activeModule?.about && activeModule.about !== 'Ukendt semester' 
-                        ? activeModule.about 
-                        : activePlan?.semesterInfo && activePlan.semesterInfo !== 'Ukendt semester'
-                        ? activePlan.semesterInfo
-                        : 'Her får du det fulde overblik over dit aktuelle modul og dine akademiske mål.'}
-                    </p>
-                  </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                      <Link href="/mine-semesterplaner">
-                        <Button className="rounded-2xl bg-slate-950 text-white font-black uppercase tracking-widest text-[10px] px-8 h-12 hover:bg-indigo-600 transition-all shadow-xl">
-                          Se studieplan
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </Link>
-                      <div className="flex items-center gap-3">
-                        {curriculum?.pdfUrl && (
-                          <a href={curriculum.pdfUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" className="rounded-2xl border-slate-200 text-slate-600 font-black uppercase tracking-widest text-[10px] px-8 h-12 hover:bg-slate-50 transition-all">
-                              <BookOpen className="w-4 h-4 mr-2" />
-                              Se original kilde
-                            </Button>
-                          </a>
-                        )}
-
-                        {/* Custom Curriculum Upload / Remove */}
-                        <div className="relative">
-                            <input 
-                                type="file" 
-                                id="custom-curriculum-upload" 
-                                className="hidden" 
-                                accept=".pdf"
-                                onChange={handlePdfUpload}
-                                disabled={isProcessingPdf}
-                            />
-                            {userProfile?.customCurriculum ? (
-                                <Button 
-                                    variant="outline" 
-                                    onClick={handleRemoveCustomCurriculum}
-                                    className="rounded-2xl border-rose-100 text-rose-500 font-black uppercase tracking-widest text-[10px] px-8 h-12 hover:bg-rose-50 transition-all"
-                                >
-                                    Fjern egen ordning
-                                </Button>
-                            ) : (
-                                <label 
-                                    htmlFor="custom-curriculum-upload"
-                                    className={`flex items-center gap-2 px-8 h-12 rounded-2xl border border-dashed border-amber-200 bg-amber-50/30 text-amber-700 font-black uppercase tracking-widest text-[10px] hover:bg-amber-50 transition-all cursor-pointer ${isProcessingPdf ? 'opacity-50 pointer-events-none' : ''}`}
-                                >
-                                    {isProcessingPdf ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Analyserer...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Upload className="w-4 h-4" />
-                                            Upload egen ordning
-                                        </>
-                                    )}
-                                </label>
-                            )}
+                  <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-12">
+                    <div className="flex-1 space-y-8 text-left">
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-amber-400 text-amber-950 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-amber-400/20">
+                          <Sparkles className="w-4 h-4" /> AI-Anbefaling
                         </div>
-                      </div>
+                          {recommendedTool ? (
+                            <div className="space-y-6">
+                                <h3 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1] text-balance">
+                                    Styrk dit faglige skøn med <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">{recommendedTool.name}</span>.
+                                </h3>
+                                <p className="text-slate-400 text-lg sm:text-xl leading-relaxed font-medium max-w-lg">
+                                    Vi har analyseret dine seneste aktiviteter. Dette værktøj vil give dig mest værdi lige nu.
+                                </p>
+                                <div className="pt-4">
+                                  <Button size="lg" className="h-16 px-10 rounded-[28px] bg-white text-slate-950 font-black uppercase tracking-[0.2em] text-[14px] hover:bg-amber-400 hover:scale-105 shadow-2xl w-full sm:w-auto transition-all duration-300">
+                                      {recommendedTool.cta}
+                                      <ArrowRight className="w-5 h-5 ml-3" />
+                                  </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-4 py-16">
+                                <Loader2 className="w-8 h-8 animate-spin text-amber-400"/>
+                                <span className="text-slate-400 text-xl font-bold uppercase tracking-widest">Opdaterer din profil...</span>
+                            </div>
+                        )}
                     </div>
-                  </div>
-
-                  {uploadError && (
-                      <div className="mt-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 text-xs font-bold">
-                          <AlertTriangle className="w-4 h-4" />
-                          {uploadError}
-                      </div>
-                  )}
-
-
-
-                  <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 space-y-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dagens Program</p>
-                    {upcomingEvents.length > 0 ? (
-                      <div className="space-y-3">
-                        {upcomingEvents.map((e, i) => (
-                          <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                            <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black text-xs">
-                              {new Date(e.startDate).getDate()}
+                    {recommendedTool && (
+                        <div className="hidden lg:flex w-72 h-72 bg-white/5 backdrop-blur-3xl rounded-[48px] border border-white/10 p-10 flex-col justify-center items-center text-center group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-700 shrink-0 shadow-inner">
+                            <div className={`w-28 h-28 bg-white rounded-[32px] flex items-center justify-center mb-6 shadow-[0_20px_50px_rgba(255,255,255,0.1)] group-hover:-translate-y-3 transition-transform duration-700 ${recommendedTool.color}`}>
+                                {React.createElement(recommendedTool.icon, { className: 'w-12 h-12' })}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-slate-900 truncate">{e.summary}</p>
-                              <p className="text-[9px] text-slate-400 font-medium uppercase mt-0.5">{e.startTime || 'Heldags'} · Uge {e.weekNumber}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-12 text-center italic text-slate-300 text-xs font-medium">
-                        Ingen planlagte timer i dag
-                      </div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Fokusområde</p>
+                            <p className="text-[20px] font-black text-white tracking-tight">{recommendedTool.name}</p>
+                        </div>
                     )}
                   </div>
+              </div>
+            </section>
+          )}
+
+          {/* Core Categories with Mobile-First Grid Stacking */}
+          {toolCategories.map((category, idx) => (
+            <section key={idx}>
+              <div className="flex items-center gap-4 mb-8 px-2">
+                <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+                  {category.icon}
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-950 tracking-tight">{category.title}</h3>
+                  <p className="text-[14px] text-slate-500 font-medium mt-0.5">{category.subtitle}</p>
                 </div>
               </div>
-            </div>
-            )}
-
-            {/* PROFESSIONAL TOOLS / GUIDELINES for Graduated users */}
-            {userProfile?.isQualified && (
-               <div className="space-y-8">
-                  <div className="flex items-center justify-between px-2">
-                    <h3 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2">
-                      <Scale className="w-4 h-4 text-indigo-500" />
-                      Professionelle Værktøjer
-                    </h3>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <Link href="/lov-portal" className="group relative bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Scale className="w-7 h-7" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+                {category.items.map((item, i) => (
+                    <Link
+                        key={i}
+                        href={item.limit && item.limit.used >= item.limit.total ? '/upgrade' : item.path}
+                        style={{ 
+                            borderColor: 'var(--theme-border, rgba(241, 245, 249, 1))', 
+                            backgroundColor: effectiveTheme !== 'default' ? 'var(--theme-accent, rgba(255, 255, 255, 1))' : 'white' 
+                        }}
+                        className={`group p-8 rounded-[40px] border outline-none focus-visible:ring-4 focus-visible:ring-slate-900/5 transition-all duration-500 relative overflow-hidden flex flex-col justify-between h-[260px] sm:h-[280px] ${
+                            item.limit && item.limit.used >= item.limit.total 
+                              ? 'opacity-80 border-slate-200 cursor-not-allowed shadow-none' 
+                              : `active:scale-[0.98] lg:hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] lg:hover:border-slate-300 cursor-pointer shadow-sm shadow-slate-200/50 ${
+                                  effectiveTheme === 'christmas' ? 'lg:hover:-translate-y-1 lg:hover:shadow-white/20' :
+                                  effectiveTheme === 'easter' ? 'lg:hover:-translate-y-4' :
+                                  effectiveTheme === 'halloween' ? 'lg:hover:-translate-y-1 lg:hover:shadow-orange-500/20' :
+                                  'lg:hover:-translate-y-1'
+                                }`
+                        }`}
+                    >
+                        <div className="relative z-10 flex justify-between items-start">
+                         <div className={`w-16 h-16 rounded-[22px] border flex items-center justify-center shadow-sm ${item.color} ${item.limit && item.limit.used >= item.limit.total ? 'grayscale opacity-30' : 'group-hover:scale-110 group-hover:rotate-3 transition-all duration-500'}`}>
+                           {React.createElement(item.icon, { className: 'w-7 h-7' })}
                         </div>
-                        <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-amber-500 transition-colors" />
-                      </div>
-                      <h4 className="text-xl font-black text-slate-900 mb-2">Juridisk Lovportal</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Få direkte adgang til alle relevante love, cirkulærer og vejledninger for din profession.</p>
-                    </Link>
-
-                    <Link href="/mine-vive-analyser" className="group relative bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <TrendingUp className="w-7 h-7" />
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <h4 className="text-xl font-black text-slate-900 mb-2">VIVE Analyser</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Hold dig opdateret med de seneste forskningsbaserede analyser og evalueringer på velfærdsområdet.</p>
-                    </Link>
-
-                    <Link href="/case-trainer" className="group relative bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Brain className="w-7 h-7" />
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-emerald-500 transition-colors" />
-                      </div>
-                      <h4 className="text-xl font-black text-slate-900 mb-2">Metode-træner</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Træn komplekse faglige problemstillinger og få AI-feedback på din metodiske tilgang.</p>
-                    </Link>
-
-                    <Link href="/concept-explainer" className="group relative bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-14 h-14 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Library className="w-7 h-7" />
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-sky-500 transition-colors" />
-                      </div>
-                      <h4 className="text-xl font-black text-slate-900 mb-2">Begrebs-Opslagsværk</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Hurtig adgang til præcise definitioner af komplekse fagudtryk og lovbegreber.</p>
-                    </Link>
-                  </div>
-               </div>
-            )}
-
-            {/* LEARNING GOALS - (Only for students) */}
-            {!userProfile?.isQualified && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between px-2">
-                  <h3 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2">
-                    <Target className="w-4 h-4 text-amber-500" />
-                    Centrale Læringsmål
-                  </h3>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full">
-                    {activeModule?.learningGoals?.length || 0} mål fundet
-                  </span>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {(activeModule?.learningGoals || ['Find dine læringsmål ved at vælge din uddannelse i indstillinger.']).map((goal: string, i: number) => (
-                    <div key={i} className="flex items-start gap-4 p-6 bg-white rounded-[2rem] border border-slate-100 group hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500">
-                      <div className="w-8 h-8 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center text-[11px] font-black shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                        {i + 1}
-                      </div>
-                      <p className="text-xs font-bold text-slate-700 leading-relaxed pt-1.5">{goal}</p>
+                        {/* Thematic Accent Icon */}
+                        {effectiveTheme !== 'default' && (
+                             <div className="absolute -right-4 -top-4 opacity-[0.05] group-hover:opacity-10 group-hover:scale-125 transition-all duration-700 pointer-events-none">
+                                {effectiveTheme === 'christmas' ? <Snowflake className="w-24 h-24" /> :
+                                 effectiveTheme === 'easter' ? <Egg className="w-24 h-24" /> :
+                                 effectiveTheme === 'halloween' ? <Ghost className="w-24 h-24" /> : null}
+                             </div>
+                        )}
+                        {item.limit && item.limit.total !== Infinity && (
+                             <div className="text-right flex flex-col items-end">
+                                <div className="flex items-baseline gap-1 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 group-hover:bg-white group-hover:border-slate-200 transition-colors">
+                                   <p className="font-black text-lg leading-none text-slate-950">{item.limit.used}</p>
+                                   <p className="font-bold text-[13px] leading-none text-slate-400">/{item.limit.total}</p>
+                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2 mr-1">{item.limitText}</p>
+                            </div>
+                        )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* DEADLINE CLUSTERS & CRITICAL PERIODS */}
-            {activePlan?.deadlineClusters && activePlan.deadlineClusters.length > 0 && (
-              <div className="space-y-6">
-                <h3 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2 px-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-500" />
-                  Kritiske Perioder
-                </h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activePlan.deadlineClusters.map((cluster: any, i: number) => (
-                    <div key={i} className="bg-rose-50/50 border border-rose-100 rounded-[2rem] p-6 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="px-3 py-1 bg-rose-500 text-white text-[9px] font-black rounded-full uppercase">Uge {cluster.weeks}</span>
-                        <Flag className="w-4 h-4 text-rose-300" />
-                      </div>
-                      <h4 className="text-xs font-black text-rose-900">{cluster.title}</h4>
-                      <p className="text-[11px] text-rose-800/60 font-medium leading-relaxed">{cluster.description}</p>
+                    
+                    <div className="relative z-10 mt-auto">
+                        <div className="flex items-center gap-2.5 mb-3">
+                           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 group-hover:bg-slate-100 group-hover:text-slate-600 transition-colors">{item.badge}</span>
+                        </div>
+                        <h4 className="text-[22px] font-black text-slate-950 leading-tight tracking-tight group-hover:text-black transition-colors">{item.title}</h4>
+                        <p className="text-[15px] text-slate-500 mt-2.5 font-medium leading-relaxed line-clamp-2">{item.desc}</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
+                    {item.limit && item.limit.used >= item.limit.total && (
+                        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[12px] flex items-center justify-center p-6 z-20 group-hover:bg-slate-950/70 transition-all duration-700">
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                className="bg-slate-900/40 backdrop-blur-3xl p-8 rounded-[48px] shadow-2xl flex flex-col items-center text-center gap-6 max-w-[280px] border border-white/10 relative overflow-hidden group/limit"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
+                                
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-amber-500 blur-2xl opacity-20 group-hover/limit:opacity-40 transition-opacity" />
+                                    <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 rounded-[24px] flex items-center justify-center shadow-2xl relative z-10 group-hover/limit:scale-110 group-hover/limit:rotate-12 transition-transform duration-500">
+                                      <Crown className="w-8 h-8 fill-current" />
+                                    </div>
+                                </div>
 
+                                <div className="space-y-2 relative z-10">
+                                    <h5 className="text-[22px] font-black text-white leading-none tracking-tight">{item.title}</h5>
+                                    <p className="text-[13px] font-medium text-slate-400 leading-relaxed px-2">
+                                        {item.desc}. <br />
+                                        Som Kollega+ får du <span className="text-amber-400 font-bold">ubegrænset adgang</span> til dette og alle vores andre AI-værktøjer.
+                                    </p>
+                                </div>
 
-          </div>
-
-          {/* RIGHT COLUMN: Tools & News */}
-          <div className="lg:col-span-4 space-y-8">
-            
-            {/* STREAK CARD */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm relative overflow-hidden group"
-            >
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
-                <Flame className="w-32 h-32 text-amber-500" />
-              </div>
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Din Daglige Streak</p>
-                  <h3 className="text-3xl font-black text-slate-950 serif">
-                    {userProfile.dailyChallengeStreak || 0} dage
-                  </h3>
-                  <p className="text-[10px] font-bold text-amber-600/80 leading-relaxed max-w-[160px]">
-                    Lidt har også ret! Din streak er beviset på, at du faktisk har fået studeret hver eneste dag. Godt gået!
-                  </p>
-                </div>
-                <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center">
-                   <Flame className={`w-8 h-8 ${ (userProfile.dailyChallengeStreak || 0) > 0 ? 'text-amber-500 fill-amber-500 animate-pulse' : 'text-slate-200' }`} />
-                </div>
-              </div>
-              <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Personlig Rekord</span>
-                <span className="text-sm font-black text-slate-400">{userProfile.highestStreak || 0} dage</span>
-              </div>
-            </motion.div>
-
-            {/* CORE TOOLS GRID */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 mb-6 pl-2">Værktøjskasse</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { title: "Case-træner", icon: Zap, path: "/case-trainer", color: "bg-sky-50 text-sky-600" },
-                  { title: "Eksamen", icon: Layout, path: "/exam-architect", color: "bg-indigo-50 text-indigo-600" },
-                  { title: "Case Analyser", icon: FileSearch, path: "/case-analyser", color: "bg-purple-50 text-purple-600" },
-                  { title: "Lærings-sti", icon: Target, path: "/laerings-sti", color: "bg-rose-50 text-rose-600" },
-                  { title: "Begreber", icon: Brain, path: "/concept-explainer", color: "bg-emerald-50 text-emerald-600" },
-                ].map((tool, i) => (
-                  <Link key={i} href={tool.path} className="group flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-3xl border border-transparent hover:border-amber-200 hover:bg-white transition-all shadow-sm">
-                    <div className={`w-12 h-12 ${tool.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <tool.icon className="w-6 h-6" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{tool.title}</span>
+                                <div className="w-full space-y-3 relative z-10">
+                                    <div className="w-full py-4 bg-white text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-amber-400 hover:text-amber-950 transition-all shadow-xl shadow-white/5 active:scale-95">
+                                        Opgradér nu
+                                    </div>
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-300 transition-colors cursor-pointer">Læs mere om fordele</p>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
                   </Link>
                 ))}
               </div>
-            </div>
-
-            {/* INTEGRATION CARD */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#7737ad]/5 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-all duration-700" />
-              <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-[#7737ad]/10 rounded-2xl flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="#7737ad"/>
-                        <path d="M8 7H11V17H8V7Z" fill="white"/>
-                        <path d="M12 7H16V9H12V7Z" fill="white"/>
-                        <path d="M12 11H16V13H12V11Z" fill="white"/>
-                        <path d="M12 15H16V17H12V15Z" fill="white"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[#7737ad]">Integration</p>
-                    <h3 className="text-sm font-black serif">OneNote Sync</h3>
-                  </div>
-                </div>
-                <p className="text-[11px] font-medium text-slate-500 leading-relaxed mb-6">Få dine OneNote-noter direkte ind i Cohero til quizzer og AI-hjælp.</p>
-                {userProfile?.oneNoteAuth ? (
-                    <Button 
-                        onClick={async () => {
-                            toast({ title: "Synkronisering startet", description: "Henter dine seneste noter fra OneNote..." });
-                            try {
-                                // For simplicity, we sync the first notebook or a default one if we had its ID.
-                                // In a real app, we might want a 'lastSelectedNotebookId' in userProfile.
-                                // For now, let's just redirect to settings if they haven't synced before,
-                                // or try to sync if they have.
-                                router.push('/settings?tab=integrations');
-                            } catch (e) {
-                                toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke starte synkronisering." });
-                            }
-                        }}
-                        className="w-full rounded-2xl bg-[#7737ad] text-white font-black uppercase tracking-widest text-[9px] h-10 transition-all shadow-lg hover:bg-[#5e2b8a]"
-                    >
-                      Synkronisér nu
-                    </Button>
-                ) : (
-                    <Link href="/settings?tab=integrations">
-                        <Button className="w-full rounded-2xl bg-slate-900 text-white font-black uppercase tracking-widest text-[9px] h-10 transition-all shadow-xl hover:bg-slate-800">
-                          Forbind OneNote
-                        </Button>
-                    </Link>
-                )}
-              </div>
-            </div>
-
-            {/* EXAM INFO CARD */}
-            {activeModule?.examForm && (
-              <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
-                <div className="absolute -right-10 -top-10 w-40 h-40 bg-indigo-600/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
-                
-                <div className="relative z-10 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10">
-                      <GraduationCap className="w-6 h-6 text-indigo-400" />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Eksamen</p>
-                      <h3 className="text-sm font-black serif">Prøveform</h3>
-                    </div>
-                  </div>
-
-                  <div className="p-5 bg-white/5 border border-white/5 rounded-2xl">
-                    <p className="text-xs font-bold text-slate-300 leading-snug">{activeModule.examForm}</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Gode råd</p>
-                    <ul className="space-y-3">
-                      {[
-                        "Læs studieordningens kriterier grundigt.",
-                        "Inddrag praksis-cases i din besvarelse.",
-                        "Fokusér på den røde tråd i din argumentation."
-                      ].map((tip, i) => (
-                        <li key={i} className="flex gap-3 items-start">
-                          <div className="w-4 h-4 rounded bg-indigo-600/30 flex items-center justify-center shrink-0 mt-0.5">
-                            <ArrowRight className="w-2.5 h-2.5 text-indigo-400" />
-                          </div>
-                          <p className="text-[10px] font-medium text-slate-400 leading-relaxed">{tip}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* NEWS FEED */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm space-y-6">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 pl-2">Seneste Nyt</h3>
-              <div className="space-y-4 divide-y divide-slate-50">
-                {newsLoading ? (
-                  <div className="py-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-200" /></div>
-                ) : (
-                  news.map((item, i) => (
-                    <a key={i} href={item.link} target="_blank" className="block pt-4 first:pt-0 hover:opacity-60 transition-opacity">
-                      <p className="text-[12px] font-bold text-slate-700 leading-relaxed line-clamp-2">{item.title}</p>
-                      <p className="text-[9px] font-black text-slate-300 uppercase mt-2">{new Date(item.pubDate).toLocaleDateString('da-DK')}</p>
-                    </a>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* SUPPORT BUTTON */}
-            <Link href="/raadgivning" className="block bg-amber-50 border border-amber-100 rounded-3xl p-6 hover:bg-amber-100 transition-all group">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shadow-sm group-hover:rotate-6 transition-transform">
-                  <MessageSquare className="w-5 h-5" />
+            </section>
+          ))}
+          
+          {/* USER ARCHIVE SECTION */}
+          {!userProfile?.isQualified && (
+            <section>
+              <div className="flex items-center gap-4 mb-8 px-2">
+                <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+                  <Layers className="w-6 h-6 text-slate-700" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-amber-950 uppercase tracking-widest">Få Hjælp</h4>
-                  <p className="text-[10px] font-bold text-amber-600 mt-0.5">Skriv til os direkte</p>
+                  <h3 className="text-2xl font-black text-slate-950 tracking-tight">Mit Arkiv</h3>
+                  <p className="text-[14px] text-slate-500 font-medium mt-0.5">Dine personlige viden-skatte</p>
                 </div>
-                <ChevronRight className="w-4 h-4 ml-auto text-amber-400" />
               </div>
-            </Link>
-
-          </div>
-
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8">
+                  {[
+                    { title: "Byggeplaner", desc: "Forberedelse", icon: DraftingCompass, path: "/mine-byggeplaner", color: "text-indigo-600 bg-indigo-50" },
+                    { title: "Seminarer", desc: "Bibliotek", icon: Presentation, path: "/mine-seminarer", color: "text-emerald-600 bg-emerald-50" },
+                    { title: "Begreber", desc: "Videns-arkiv", icon: Brain, path: "/mine-gemte-begreber", color: "text-amber-900 bg-amber-50 border-amber-100" },
+                    { title: "Artikler", desc: "Indsigter", icon: Bookmark, path: "/mine-gemte-artikler", color: "text-rose-600 bg-rose-50" },
+                    { title: "Kurser", desc: "Digital læring", icon: BookOpen, path: "/mine-kurser", color: "text-amber-600 bg-amber-50" },
+                    { title: "Paragraffer", desc: "Jura-opslag", icon: Scale, path: "/mine-gemte-paragraffer", color: "text-sky-600 bg-sky-50" },
+                    { title: "Kalender", desc: "Overblik", icon: CalendarDays, path: "/mine-semesterplaner", color: "text-violet-600 bg-violet-50" }
+                  ].map((item, i) => (
+                    <Link key={i} href={item.path} className="group p-8 rounded-[40px] border border-slate-100 bg-white hover:border-slate-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-500 active:scale-[0.98] outline-none flex flex-col items-center justify-center text-center shadow-sm h-48 sm:h-56">
+                        <div className={`w-16 h-16 rounded-[24px] border border-slate-50 ${item.color} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-2 transition-all duration-500 shadow-sm`}>
+                          {React.createElement(item.icon, { className: 'w-7 h-7' })}
+                        </div>
+                        <h4 className="text-[17px] font-black text-slate-950 leading-tight group-hover:text-black transition-colors">{item.title}</h4>
+                        <p className="text-[10px] text-slate-400 mt-2 uppercase font-black tracking-[0.2em]">{item.desc}</p>
+                    </Link>
+                  ))}
+              </div>
+            </section>
+          )}
         </div>
-      </main>
 
-      {/* --- UPGRADE FLOATER --- */}
-      {userProfile?.membership !== 'Kollega+' && (
-        <motion.div 
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          className="fixed bottom-8 inset-x-0 flex justify-center z-50 px-6"
-        >
-          <Link href="/upgrade" className="bg-slate-950 text-white px-8 py-4 rounded-full flex items-center gap-4 shadow-2xl hover:scale-105 transition-all border border-white/10 group">
-            <Crown className="w-5 h-5 text-amber-400" />
-            <span className="text-xs font-black uppercase tracking-widest">Opgrader til Kollega+</span>
-            <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-amber-400 group-hover:text-amber-950 transition-colors">
-              <ArrowRight className="w-3 h-3" />
+        {/* RIGHT COLUMN: THE DASHBOARD RAIL */}
+        <aside className="lg:col-span-4 space-y-8 lg:space-y-10">
+          
+          {/* Upgrade Incentive Card for free users */}
+          {(userProfile?.membership === 'Kollega' || !userProfile?.membership) && (
+            <Link href="/upgrade" className="block outline-none">
+              <section className="bg-slate-950 p-8 sm:p-10 rounded-[48px] text-white shadow-2xl relative overflow-hidden group border border-white/5 active:scale-[0.98] transition-all duration-500">
+                 {/* Premium Background Effects */}
+                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-400/20 rounded-full blur-[80px] group-hover:bg-amber-400/30 transition-all duration-700"></div>
+                 <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-rose-500/10 rounded-full blur-[60px]"></div>
+                 
+                 <div className="relative z-10 flex flex-col gap-8">
+                    <div className="flex items-center justify-between">
+                      <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 text-amber-950 rounded-3xl flex items-center justify-center shadow-[0_10px_30px_-5px_rgba(245,158,11,0.5)] group-hover:rotate-12 group-hover:scale-110 transition-all duration-500">
+                          <Zap className="w-8 h-8 fill-current" />
+                      </div>
+                      <div className="px-4 py-1.5 bg-white/5 rounded-full border border-white/10 text-[9px] font-black uppercase tracking-widest text-amber-400">
+                         Mest Populær
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h3 className="text-3xl font-black text-white leading-[1.1] tracking-tight">Gå efter toppen med <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Kollega+</span></h3>
+                        <p className="text-sm text-slate-400 font-medium leading-relaxed">
+                          Få ubegrænset brug af alle AI-værktøjer, dit eget personlige viden-arkiv og meget mere.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="w-full h-14 bg-white text-slate-950 rounded-[20px] font-black uppercase tracking-widest text-[12px] flex items-center justify-center gap-2.5 hover:bg-amber-400 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.97]">
+                          Prøv gratis i 7 dage <ArrowRight className="w-4 h-4" />
+                      </div>
+                      <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em] text-center">Bliv klar til eksamen med ro i maven</p>
+                    </div>
+                 </div>
+              </section>
+            </Link>
+          )}
+
+          {/* Public Profile / LinkedIn Card */}
+          <section className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 sm:p-10 rounded-[32px] sm:rounded-[48px] text-white shadow-2xl relative overflow-hidden group border border-white/10">
+               <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-[60px] group-hover:scale-125 transition-transform duration-700"></div>
+               <div className="relative z-10 flex flex-col gap-6">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center shadow-lg border border-white/20 group-hover:rotate-12 transition-transform">
+                      <Linkedin className="w-8 h-8 fill-current" />
+                  </div>
+                  <div className="space-y-3">
+                      <h3 className="text-[22px] font-extrabold text-white leading-tight">Del din faglige profil</h3>
+                      <p className="text-[14px] text-indigo-100 font-medium leading-relaxed">Vis dine færdigheder, din streak og dit digitale certifikat på LinkedIn.</p>
+                  </div>
+                  <Link href={`/u/${user?.uid}`} className="w-full h-14 bg-white text-indigo-600 rounded-[20px] font-black uppercase tracking-widest text-[12px] flex items-center justify-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all shadow-xl">
+                      Se din offentlige profil <ChevronRight className="w-4 h-4" />
+                  </Link>
+               </div>
+          </section>
+
+          {/* Recent Case Analyses */}
+          <section className="bg-white p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-8">
+               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Seneste Sagsanalyser</h3>
+               <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+                 <HistoryIcon className="w-4 h-4 text-amber-500" />
+               </div>
             </div>
-          </Link>
-        </motion.div>
-      )}
+            
+            <div className="space-y-4 relative z-10 w-full">
+                {casesLoading ? (
+                    <div className="flex justify-center items-center py-8"><Loader2 className="w-6 h-6 animate-spin text-slate-300"/></div>
+                ) : recentCases && recentCases.length > 0 ? (
+                    <div className="space-y-3">
+                        {recentCases.map((item, i) => (
+                            <Link key={i} href="/case-analyser" className="block p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-amber-200 hover:bg-white transition-all cursor-pointer group/item">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover/item:bg-amber-50 transition-colors">
+                                        <FileText className="w-5 h-5 text-amber-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-bold text-slate-900 truncate">{item.fileName}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">
+                                            {item.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover/item:translate-x-1 transition-transform" />
+                                </div>
+                            </Link>
+                        ))}
+                        <Button 
+                            variant="ghost" 
+                            onClick={() => router.push('/case-analyser')} 
+                            className="w-full text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl py-6"
+                        >
+                            Se alle cases
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="text-center py-10 px-4 border-2 border-dashed border-slate-200 rounded-[24px] bg-slate-50/50">
+                        <p className="text-[14px] text-slate-500 font-medium mb-5">Ingen analyserede cases endnu.</p>
+                        <Button variant="outline" onClick={() => router.push('/case-analyser')} className="h-12 rounded-[16px] border-slate-300 text-slate-700 bg-white hover:bg-slate-50 font-bold px-6 shadow-sm">
+                           Start Analyse
+                        </Button>
+                    </div>
+                )}
+            </div>
+          </section>
+
+          <BriefingReport 
+             title="Nyt fra Borgen" 
+             icon={Gavel} 
+             isLoading={newsLoading} 
+             news={politicalNews} 
+             link="https://www.dr.dk/nyheder/politik"
+             color="text-rose-600"
+          />
+
+          <BriefingReport 
+             title="Social- & Boligministeriet" 
+             icon={Building} 
+             isLoading={newsLoading} 
+             news={ministryNews} 
+             link="https://www.sm.dk/nyheder/nyhedsarkiv"
+             color="text-blue-600"
+          />
+
+          {/* Upcoming Schedule */}
+          <section className="bg-white p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-8">
+               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Næste kalenderaftale</h3>
+               <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center">
+                 <CalendarDays className="w-4 h-4 text-orange-500" />
+               </div>
+            </div>
+            
+            <div className="space-y-4 relative z-10 w-full">
+                {plansLoading ? (
+                    <div className="flex justify-center items-center py-8"><Loader2 className="w-6 h-6 animate-spin text-slate-300"/></div>
+                ) : nextEvent ? (
+                    <Link href="/mine-semesterplaner" className="block p-5 sm:p-6 bg-slate-50 rounded-[24px] border border-slate-100 hover:border-slate-300 active:scale-[0.98] transition-all cursor-pointer">
+                        <div className="flex items-center gap-2.5 mb-3">
+                           <Clock className="w-4 h-4 text-slate-400" />
+                           <p className="text-[11px] font-black uppercase text-slate-500 tracking-widest">{new Date(nextEvent.startDate).toLocaleString('da-DK', { weekday: 'long', hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                        <p className="font-bold text-[16px] sm:text-[18px] text-slate-900 leading-snug tracking-tight mb-4 line-clamp-2">{nextEvent.summary}</p>
+                        <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                           Se detaljer i kalender <ChevronRight className="w-3.5 h-3.5" />
+                        </div>
+                    </Link>
+                ) : (
+                    <div className="text-center py-10 px-4 border-2 border-dashed border-slate-200 rounded-[24px] bg-slate-50/50">
+                        <p className="text-[14px] text-slate-500 font-medium mb-5">Din kalender er fri lige nu.</p>
+                        <Button variant="outline" onClick={() => router.push('/semester-planlaegger')} className="h-12 rounded-[16px] border-slate-300 text-slate-700 bg-white hover:bg-slate-50 font-bold px-6 shadow-sm active:scale-95 transition-transform">
+                           Auto-planlæg semester
+                        </Button>
+                    </div>
+                )}
+            </div>
+          </section>
+        </aside>
+          <SupportWidget />
+      </main>
     </div>
   );
 };
 
+
 const PortalPage: React.FC = () => {
-  const { user, isUserLoading } = useApp();
+  const { user, isUserLoading, userProfile, effectiveTheme } = useApp();
   const router = useRouter();
 
+  const memoizedHooks = useMemo(() => {
+    if (isUserLoading || !user || userProfile === undefined) {
+      return null;
+    }
+    
+    // Brug det nye native UI hvis vi kører som app
+    if (Capacitor.isNativePlatform()) {
+      return <NativeDashboard />;
+    }
+    
+    return <PortalPageContent />;
+  }, [isUserLoading, user, userProfile]);
+
   useEffect(() => {
-    if (!isUserLoading && !user) router.replace('/');
+    if (!isUserLoading && !user) {
+      router.replace('/');
+    }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user) return <AuthLoadingScreen />;
-
+  if (isUserLoading || !user || userProfile === undefined) {
+    return <AuthLoadingScreen />;
+  }
+  
   return (
     <Suspense fallback={<AuthLoadingScreen />}>
-      <PortalPageContent />
+      {memoizedHooks}
     </Suspense>
   );
 };
