@@ -42,7 +42,8 @@ import {
     Target,
     FileSearch,
     BrainCircuit,
-    Presentation as MonitorPlay
+    Presentation as MonitorPlay,
+    Trophy
 } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, limit, doc } from 'firebase/firestore';
@@ -312,6 +313,7 @@ export default function AdminOverviewPage() {
                     <div className="col-span-1 sm:col-span-2 lg:col-span-2 grid grid-cols-2 gap-4">
                         <NexusCard title="Finans" icon={TrendingUp} color="text-emerald-500" bg="bg-emerald-50" href="/admin/finans" desc="ARR, Prognoser, Stripe" />
                         <NexusCard title="Kampagner" icon={Sparkles} color="text-amber-500" bg="bg-amber-50" href="/admin/marketing" desc="Rabatter, Tilbud" />
+                        <NexusCard title="Konkurrence" icon={Trophy} color="text-rose-500" bg="bg-rose-50" href="/admin/konkurrence" desc="Deltagere fra /journey" />
                         <NexusCard title="Markedsplads" icon={HandHelping} color="text-blue-500" bg="bg-blue-50" href="/admin/markedsplads" desc="Opgaver, Matchmaking" />
                         <NexusCard title="Uddannelse" icon={BarChart3} color="text-purple-500" bg="bg-purple-50" href="/admin/education" desc="Kohorte-data, Progression" />
                     </div>
