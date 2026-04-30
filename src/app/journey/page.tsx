@@ -106,15 +106,6 @@ const SLIDES = [
     background: 'bg-slate-900'
   },
   {
-    id: 'begrebsguiden',
-    title: 'Teori',
-    subtitle: 'Begrebsguide',
-    description: 'Begrebsguiden gør op med frustrationen over svære akademiske termer. Vi oversætter teorien til et sprog, alle kan forstå – uden at miste dybden.',
-    icon: null,
-    color: 'from-purple-600 to-pink-600',
-    background: 'bg-slate-950'
-  },
-  {
     id: 'outro',
     title: 'Fremtiden',
     subtitle: 'Rejsen er lige begyndt',
