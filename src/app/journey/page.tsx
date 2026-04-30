@@ -23,6 +23,10 @@ import Link from 'next/link';
 import { BookSpine } from '@/components/BookSpine';
 import { useApp } from '@/app/provider';
 import QRCode from 'react-qr-code';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import confetti from 'canvas-confetti';
+import { Trophy } from 'lucide-react';
 
 const SLIDES = [
   {
@@ -127,6 +131,52 @@ export default function PresentationModule() {
   const [direction, setDirection] = useState(0);
   const [animationScene, setAnimationScene] = useState(0); // 0: Search, 1: Analysis, 2: Quiz
   const [isQRExpanded, setIsQRExpanded] = useState(false);
+  const firestore = useFirestore();
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [winner, setWinner] = useState<string | null>(null);
+  const [shuffleName, setShuffleName] = useState<string | null>(null);
+
+  const drawWinner = async () => {
+    if (!firestore || isDrawing) return;
+    
+    setIsDrawing(true);
+    setWinner(null);
+    
+    try {
+      const snapshot = await getDocs(collection(firestore, 'competition_entries'));
+      const entries = snapshot.docs.map(doc => doc.data().name as string);
+      
+      if (entries.length === 0) {
+        alert('Ingen deltagere fundet endnu!');
+        setIsDrawing(false);
+        return;
+      }
+
+      // Shuffle animation
+      let count = 0;
+      const shuffleInterval = setInterval(() => {
+        setShuffleName(entries[Math.floor(Math.random() * entries.length)]);
+        count++;
+        if (count > 20) {
+          clearInterval(shuffleInterval);
+          const finalWinner = entries[Math.floor(Math.random() * entries.length)];
+          setWinner(finalWinner);
+          setShuffleName(null);
+          setIsDrawing(false);
+          
+          confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#f43f5e', '#fb923c', '#fbbf24']
+          });
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error drawing winner:', error);
+      setIsDrawing(false);
+    }
+  };
 
   const nextSlide = useCallback(() => {
     if (currentSlide < SLIDES.length - 1) {
@@ -1323,10 +1373,21 @@ export default function PresentationModule() {
                       </div>
 
                       <div className="pt-8 flex flex-col md:flex-row items-center justify-center gap-12">
-                         <Link href="/" className="inline-flex items-center gap-4 px-12 py-6 bg-white text-slate-950 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.3)] group/btn">
-                           Start din rejse nu
-                           <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-                         </Link>
+                         <div className="flex flex-col gap-4">
+                            <Link href="/" className="inline-flex items-center gap-4 px-12 py-6 bg-white text-slate-950 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.3)] group/btn">
+                              Start din rejse nu
+                              <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                            </Link>
+                            
+                            <button 
+                              onClick={drawWinner}
+                              disabled={isDrawing}
+                              className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-rose-500 text-white rounded-[1.5rem] font-black uppercase text-xs tracking-widest hover:bg-rose-600 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-rose-500/20 disabled:opacity-50"
+                            >
+                               <Trophy className={`w-4 h-4 ${isDrawing ? 'animate-bounce' : ''}`} />
+                               {isDrawing ? 'Trækker lod...' : 'Træk en vinder'}
+                            </button>
+                         </div>
 
                          <div 
                            className="flex flex-col items-center gap-4 group/qr cursor-zoom-in"
@@ -1390,6 +1451,58 @@ export default function PresentationModule() {
            )}
         </div>
       </div>
+
+      {/* Winner Announcement Modal */}
+      <AnimatePresence>
+        {(winner || shuffleName) && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-slate-950/95 backdrop-blur-3xl flex flex-col items-center justify-center p-6"
+          >
+             {/* Background fireworks-like particles could be here */}
+             <div className="relative text-center space-y-12">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  className="w-32 h-32 bg-amber-500 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(245,158,11,0.5)]"
+                >
+                   <Trophy className="w-16 h-16 text-white" />
+                </motion.div>
+
+                <div className="space-y-4">
+                   <p className="text-xl font-black uppercase tracking-[0.5em] text-amber-500">
+                      {winner ? 'Vi har en vinder!' : 'Trækker vinder...'}
+                   </p>
+                   <motion.h2 
+                     key={winner || shuffleName}
+                     initial={{ y: 40, opacity: 0 }}
+                     animate={{ y: 0, opacity: 1 }}
+                     className="text-6xl md:text-9xl font-black text-white tracking-tighter serif italic"
+                   >
+                      {winner || shuffleName}
+                   </motion.h2>
+                </div>
+
+                {winner && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <button 
+                      onClick={() => setWinner(null)}
+                      className="px-12 py-5 bg-white text-slate-950 rounded-2xl font-black uppercase text-sm tracking-widest hover:scale-105 active:scale-95 transition-all"
+                    >
+                       Tillykke! Luk vinduet
+                    </button>
+                  </motion.div>
+                )}
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* QR Expansion Modal */}
       <AnimatePresence>
