@@ -21,6 +21,7 @@ import {
 import Link from 'next/link';
 import { BookSpine } from '@/components/BookSpine';
 import { useApp } from '@/app/provider';
+import QRCode from 'react-qr-code';
 
 const SLIDES = [
   {
@@ -1319,11 +1320,25 @@ export default function PresentationModule() {
                          </p>
                       </div>
 
-                      <div className="pt-8">
+                      <div className="pt-8 flex flex-col md:flex-row items-center justify-center gap-12">
                          <Link href="/" className="inline-flex items-center gap-4 px-12 py-6 bg-white text-slate-950 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.3)] group/btn">
                            Start din rejse nu
                            <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                          </Link>
+
+                         <div className="flex flex-col items-center gap-4 group/qr">
+                            <div className="p-4 bg-white rounded-3xl shadow-2xl transition-transform group-hover:scale-110 duration-500">
+                               <QRCode 
+                                 value={typeof window !== 'undefined' ? `${window.location.origin}/journey/konkurrence` : ''} 
+                                 size={120}
+                                 level="H"
+                               />
+                            </div>
+                            <div className="text-center">
+                               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-1">Scan & Deltag</p>
+                               <p className="text-xs font-bold text-rose-500">Vind eksklusive præmier</p>
+                            </div>
+                         </div>
                       </div>
                    </div>
                 </div>
