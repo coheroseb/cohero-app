@@ -16,7 +16,8 @@ import {
   Shield,
   Heart,
   Quote,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { BookSpine } from '@/components/BookSpine';
@@ -125,6 +126,7 @@ export default function PresentationModule() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(0);
   const [animationScene, setAnimationScene] = useState(0); // 0: Search, 1: Analysis, 2: Quiz
+  const [isQRExpanded, setIsQRExpanded] = useState(false);
 
   const nextSlide = useCallback(() => {
     if (currentSlide < SLIDES.length - 1) {
@@ -1326,7 +1328,10 @@ export default function PresentationModule() {
                            <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                          </Link>
 
-                         <div className="flex flex-col items-center gap-4 group/qr">
+                         <div 
+                           className="flex flex-col items-center gap-4 group/qr cursor-zoom-in"
+                           onClick={() => setIsQRExpanded(true)}
+                         >
                             <div className="p-4 bg-white rounded-3xl shadow-2xl transition-transform group-hover:scale-110 duration-500">
                                <QRCode 
                                  value={typeof window !== 'undefined' ? `${window.location.origin}/journey/konkurrence` : ''} 
@@ -1385,6 +1390,55 @@ export default function PresentationModule() {
            )}
         </div>
       </div>
+
+      {/* QR Expansion Modal */}
+      <AnimatePresence>
+        {isQRExpanded && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsQRExpanded(false)}
+            className="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white p-12 rounded-[3rem] shadow-[0_0_100px_rgba(244,63,94,0.3)] relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                <p className="text-white font-black uppercase tracking-[0.4em] text-sm">Scan for at deltage</p>
+              </div>
+
+              <QRCode 
+                value={typeof window !== 'undefined' ? `${window.location.origin}/journey/konkurrence` : ''} 
+                size={400}
+                level="H"
+                className="w-[300px] h-[300px] md:w-[400px] md:h-[400px]"
+              />
+
+              <button 
+                onClick={() => setIsQRExpanded(false)}
+                className="absolute -top-4 -right-4 w-12 h-12 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-12 text-center space-y-2"
+            >
+              <h4 className="text-3xl font-black text-white tracking-tighter">Deltag i Konkurrencen</h4>
+              <p className="text-rose-400 font-bold uppercase tracking-widest text-sm">Scan koden med dit kamera</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Logo watermark */}
       <div className="absolute top-6 md:top-12 left-1/2 -translate-x-1/2 opacity-100 flex items-end -space-x-[1px] scale-[0.6] md:scale-[1.2] lg:scale-[1.5] origin-top transition-all hover:scale-[1.3] md:hover:scale-[1.6] cursor-pointer z-[100]">
