@@ -9,8 +9,8 @@ export default function GoogleTagManager() {
   const { cookieConsent } = useApp();
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-N2ZVND23';
 
-  // Don't load on admin pages or if consent is not granted
-  if (pathname?.startsWith('/admin') || cookieConsent !== 'granted') {
+  // Don't load on admin pages, localhost or if consent is not granted
+  if (pathname?.startsWith('/admin') || cookieConsent !== 'granted' || (typeof window !== 'undefined' && window.location.hostname === 'localhost')) {
     return null;
   }
 

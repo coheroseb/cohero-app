@@ -13,6 +13,7 @@ import {
   Zap,
   Sparkles,
   ArrowLeft,
+  ArrowRight,
   Star,
   FileText,
   CheckCircle2,
@@ -83,7 +84,7 @@ const UpgradePageContent: React.FC = () => {
         return;
     }
     if (!user || !userProfile || !firestore) {
-        setError('Du skal være logget ind for at opgradere.');
+        router.push('/auth?mode=signup');
         return;
     }
 
@@ -205,180 +206,127 @@ const UpgradePageContent: React.FC = () => {
 
   // --- STANDARD UPGRADE PAGE ---
   return (
-    <div className="bg-[#FAF9F6] min-h-screen pb-32 selection:bg-amber-200 overflow-x-hidden relative">
-      <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] bg-gradient-to-b from-amber-100/40 to-transparent rounded-full blur-[120px] opacity-70 pointer-events-none"></div>
-      <div className="absolute top-[20%] left-[-10%] w-[600px] h-[600px] bg-gradient-to-tr from-slate-200/50 to-transparent rounded-full blur-[100px] opacity-50 pointer-events-none"></div>
+    <div className="bg-white min-h-screen pb-40 selection:bg-indigo-100 overflow-x-hidden relative font-sans text-slate-950">
+      {/* Subtle Architectural Grid Overlay */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:32px_32px]" />
 
       {error && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-red-50 text-red-600 px-6 py-4 rounded-2xl border border-red-200 shadow-2xl flex items-center gap-3">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-rose-50 text-rose-600 px-6 py-4 rounded-2xl border border-rose-200 shadow-2xl flex items-center gap-3">
             <ShieldAlert className="w-5 h-5" />
             <span className="font-bold text-sm">{error}</span>
         </div>
       )}
 
-      <header className="pt-32 pb-20 px-6 relative z-10">
+      <header className="pt-32 pb-32 px-6 relative z-10 text-center">
         <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="max-w-4xl mx-auto flex flex-col items-center text-center"
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl mx-auto space-y-12"
         >
-          <Link href="/portal" className="mb-12 flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-800 transition-colors bg-white/60 px-5 py-2.5 rounded-full border border-slate-200/50 backdrop-blur-md shadow-sm">
-            <ArrowLeft className="w-4 h-4" /> Tilbage til Portalen
-          </Link>
-          
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl mb-8 shadow-inner ring-4 ring-white">
-             <Crown className="w-8 h-8 text-amber-500" />
-          </div>
-
-          <h1 className="text-5xl md:text-7xl font-black text-slate-800 tracking-tight mb-8 leading-[1.05]">
-            Vælg dit <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-400">kollegaskab</span>.
+          <h1 className="text-6xl sm:text-[100px] font-black leading-[0.8] tracking-tighter mb-12">
+             Invester i din <br />
+             <span className="italic serif text-indigo-600">faglige</span> fremtid.
           </h1>
           
-            <p className="text-xl text-slate-500 max-w-2xl leading-relaxed font-medium">
-            Et fundament i særklasse for alle studerende. Kraftfulde, ubegrænsede AI-værktøjer for dem, der stræber efter toppen.
+          <p className="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium">
+             Vælg den plan der passer til din studieform. Fra de fundamentale værktøjer til den fulde faglige pakke.
           </p>
-
-          {/* Active Campaign Spotlight */}
-          {campaigns && campaigns.length > 0 && (
-            <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ delay: 0.5 }}
-               className={`mt-12 w-full max-w-2xl p-8 rounded-[3rem] border-2 shadow-2xl relative overflow-hidden group ${
-                 campaigns[0].theme === 'christmas' ? 'bg-rose-600 border-rose-500 text-white' :
-                 campaigns[0].theme === 'easter' ? 'bg-yellow-400 border-yellow-300 text-yellow-950' :
-                 campaigns[0].theme === 'halloween' ? 'bg-orange-600 border-orange-500 text-white' :
-                 'bg-slate-900 border-slate-800 text-white'
-               }`}
-            >
-               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
-                  {campaigns[0].theme === 'christmas' ? <Gift className="w-32 h-32" /> :
-                   campaigns[0].theme === 'easter' ? <Bird className="w-32 h-32" /> :
-                   campaigns[0].theme === 'halloween' ? <Ghost className="w-32 h-32" /> :
-                   <Sparkles className="w-32 h-32" />}
-               </div>
-               
-               <div className="relative z-10 text-center flex flex-col items-center">
-                  <div className="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-white/30">Kampagnetilbud</div>
-                  <h3 className="text-3xl font-black mb-3 tracking-tight">{campaigns[0].title}</h3>
-                  <p className="text-[17px] font-medium opacity-80 mb-6 leading-relaxed">"{campaigns[0].bannerText}"</p>
-                  
-                  {campaigns[0].discountCode && (
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="px-6 py-4 bg-white/10 backdrop-blur-xl border-2 border-dashed border-white/40 rounded-2xl">
-                           <span className="text-2xl font-black tracking-[0.2em]">{campaigns[0].discountCode}</span>
-                        </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Indtast i kurven ved betaling</p>
-                    </div>
-                  )}
-               </div>
-            </motion.div>
-          )}
         </motion.div>
       </header>
 
-      <main className="px-6 relative z-10 -mt-8">
+      <main className="px-6 relative z-10">
         <motion.div 
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="max-w-[1240px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 items-end"
+            className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12 items-stretch"
         >
           
           {/* Kollega (Free) */}
           <motion.div 
             variants={fadeIn}
-            className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 lg:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all flex flex-col h-[600px] relative overflow-hidden group"
+            className="bg-white border border-slate-100 rounded-[4rem] p-12 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.05)] flex flex-col relative overflow-hidden group"
           >
-             <div className="absolute -right-8 -top-8 text-slate-100 group-hover:-rotate-12 transition-transform duration-700">
-                <FileText className="w-48 h-48" />
-             </div>
-             <div className="relative z-10 flex flex-col h-full">
-                <div className="mb-8">
-                    <h3 className="text-2xl font-black text-slate-800 mb-2">Kollega</h3>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Det Fundamentale</p>
-                </div>
-                <div className="mb-10">
-                    <div className="text-5xl font-black text-slate-800 tracking-tight">0 <span className="text-xl text-slate-400 font-medium">kr.</span></div>
+             <div className="space-y-8 h-full flex flex-col">
+                <div className="space-y-2">
+                    <h3 className="text-4xl font-black tracking-tighter italic serif">Kollega</h3>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Fundamentet</p>
                 </div>
                 
-                <ul className="space-y-4 mb-auto">
-                 {[
-                   "1 dagligt opslag i Guiden",
-                   "1 daglig STAR-analyse",
-                   "1 månedlig Arkitekt-opgave",
-                   "1 ugentlig Journal-træning",
-                   "Begrænset Lovportal",
-                   "Låst Case-Analytiker"
-                 ].map((item, i) => (
-                   <li key={i} className="flex items-start gap-3 text-sm text-slate-600 font-medium leading-tight">
-                     {item.startsWith('Låst') ? (
-                       <Lock className="w-4 h-4 text-slate-300 shrink-0 mt-0.5" />
-                     ) : (
-                       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                     )}
-                     <span className={item.startsWith('Låst') ? 'text-slate-400' : ''}>{item}</span>
-                   </li>
-                 ))}
-               </ul>
+                <div className="py-8 border-y border-slate-50">
+                    <div className="text-5xl font-black tracking-tighter">0 <span className="text-lg text-slate-300 font-medium tracking-normal">kr. / md</span></div>
+                </div>
+                
+                <ul className="space-y-6 flex-1">
+                  {[
+                    "Adgang til Lovportalen",
+                    "Begrebsguide (1 opslag/dag)",
+                    "Studie-Arkitekt (1 opgave/md)",
+                    "STAR-analyse (1 analyse/dag)",
+                    "Journal-træning (1 ugentlig)"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-center gap-4 text-[13px] font-black uppercase tracking-widest text-slate-400">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
                
-               <div className="w-full py-4 mt-8 bg-slate-100/50 text-slate-400 rounded-2xl font-black uppercase text-[10px] tracking-widest text-center border border-slate-200/50">
-                  Din nuværende plan
+               <div className="w-full py-6 bg-slate-50 text-slate-400 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.3em] text-center border border-slate-100">
+                  Nuværende plan
                </div>
              </div>
           </motion.div>
 
-          {/* Kollega+ (Pro) - Highlighted Dark Card */}
+          {/* Kollega+ (Pro) - The Featured One */}
           <motion.div 
             variants={fadeIn}
-            className="relative h-[640px] z-20 group"
+            className="relative flex flex-col"
           >
-              <div className="absolute -inset-1 bg-gradient-to-t from-amber-400/50 to-amber-200/50 rounded-[3rem] blur-lg opacity-40 group-hover:opacity-70 transition duration-1000"></div>
-              
               <div 
                   onClick={() => handleSubscription(PRICE_IDS.PLUS)}
-                  className="absolute inset-0 bg-slate-900 rounded-[2.5rem] p-8 lg:p-10 shadow-2xl border border-slate-700/50 flex flex-col cursor-pointer overflow-hidden transition-transform group-hover:-translate-y-2 duration-500"
+                  className="bg-slate-950 rounded-[4rem] p-12 shadow-[0_60px_120px_-30px_rgba(0,0,0,0.2)] flex flex-col cursor-pointer overflow-hidden transition-all hover:-translate-y-4 duration-700 h-full relative"
               >
-                  <div className="absolute -right-8 -top-8 text-slate-800 group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
-                      <Zap className="w-56 h-56" />
+                  <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12 group-hover:rotate-0 transition-transform">
+                      <Zap className="w-40 h-40 text-white" />
                   </div>
                   
-                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300"></div>
-                  
-                  <div className="absolute top-6 right-8 bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg animate-pulse whitespace-nowrap z-30">
-                      7 dage gratis
+                  <div className="absolute top-10 right-10 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
+                      Mest Populær
                   </div>
 
-                  <div className="relative z-10 flex flex-col h-full">
-                      <div className="mb-8">
-                          <h3 className="text-3xl font-black text-white mb-2">Kollega+</h3>
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400">Ubegrænset Adgang</p>
-                      </div>
-                      <div className="mb-10">
-                          <div className="text-6xl font-black text-white tracking-tight">89 <span className="text-xl text-slate-500 font-medium">kr. / md</span></div>
+                  <div className="space-y-8 h-full flex flex-col relative z-10">
+                      <div className="space-y-2">
+                          <h3 className="text-4xl font-black tracking-tighter text-white italic serif">Kollega+</h3>
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Ubegrænset adgang</p>
                       </div>
                       
-                      <ul className="space-y-4 mb-auto">
+                      <div className="py-8 border-y border-white/10">
+                          <div className="text-6xl font-black tracking-tighter text-white">89 <span className="text-lg text-slate-500 font-medium tracking-normal">kr. / md</span></div>
+                          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-2">7 dages gratis prøveperiode</p>
+                      </div>
+                      
+                      <ul className="space-y-6 flex-1">
                           {[
-                          "Ubegrænset Case-Analytiker",
+                          "Alt i Kollega pakken",
+                          "Ubegrænset Studie-Arkitekt",
                           "Ubegrænset Lovportal-adgang",
-                          "Ubegrænset Journal-træner",
                           "Ubegrænset STAR-analyse",
-                          "Ubegrænsede opslag i Guiden",
-                          "Overvågning af Folketinget",
-                          "Personligt arkiv over analyser"
+                          "Ubegrænset Journal-træner",
+                          "Fuld overvågning af Folketinget",
+                          "Prioriteret support"
                           ].map((item, i) => (
-                          <li key={i} className="flex items-start gap-4 text-sm text-slate-300 font-medium leading-tight">
-                              <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 fill-amber-400" />
-                              <span>{item}</span>
+                          <li key={i} className="flex items-center gap-4 text-[13px] font-black uppercase tracking-widest text-slate-400">
+                              <Zap className="w-4 h-4 text-indigo-500 fill-indigo-500" />
+                              <span className="text-slate-200">{item}</span>
                           </li>
                           ))}
                       </ul>
                       
-                      <div className="w-full mt-8 py-5 bg-amber-400 text-slate-900 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-[0_0_30px_-5px_rgba(251,191,36,0.3)] group-hover:bg-white transition-colors">
-                          {isSubscribing === process.env.NEXT_PUBLIC_STRIPE_KOLLEGA_PLUS_PRICE_ID ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Kom i gang nu'}
-                          <ArrowUpRight className="w-4 h-4" />
+                      <div className="w-full py-6 bg-white text-slate-950 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.3em] flex items-center justify-center gap-3 group transition-colors">
+                          {isSubscribing === PRICE_IDS.PLUS ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Begynd nu'}
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                       </div>
                   </div>
               </div>
@@ -387,109 +335,89 @@ const UpgradePageContent: React.FC = () => {
           {/* Semesteret (Pack) */}
           <motion.div 
             variants={fadeIn}
-            onClick={() => handleSubscription(PRICE_IDS.SEMESTER)}
-            className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 lg:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all flex flex-col h-[600px] relative overflow-hidden group cursor-pointer hover:-translate-y-2 duration-500"
+            className="flex flex-col"
           >
-             <div className="absolute top-6 right-8 bg-slate-900 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
-                Spar 116 kr.
-             </div>
-             <div className="absolute -right-8 -top-8 text-slate-100 group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
-                <Sparkles className="w-48 h-48" />
-             </div>
-             
-             <div className="relative z-10 flex flex-col h-full">
-                <div className="mb-8">
-                    <h3 className="text-2xl font-black text-slate-800 mb-2">Semesteret</h3>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Kollega+ i 5 mdr.</p>
-                </div>
-                <div className="mb-10">
-                    <div className="text-5xl font-black text-slate-800 tracking-tight">329 <span className="text-xl text-slate-400 font-medium">kr.</span></div>
-                    <div className="text-xs text-slate-400 mt-2 font-bold">Betales engangsbeløb</div>
-                </div>
-                
-                <ul className="space-y-4 mb-auto">
-                  {[
-                    "Alt fra Kollega+",
-                    "Gælder for et helt semester",
-                    "Spar penge ift. månedspris",
-                    "Ingen automatisk fornyelse",
-                    "Fuld adgang til alle værktøjer"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-4 text-sm text-slate-600 font-medium leading-tight">
-                       <CheckCircle2 className="w-4 h-4 text-slate-800 shrink-0 mt-0.5" />
-                       <span>{item}</span>
-                    </li>
-                  ))}
-               </ul>
-               
-               <div className="w-full py-4 mt-8 border-2 border-slate-900 text-slate-900 rounded-2xl font-black uppercase text-[10px] tracking-widest text-center group-hover:bg-slate-900 group-hover:text-white transition-colors">
-                  {isSubscribing === process.env.NEXT_PUBLIC_STRIPE_SEMESTERPAKKEN_PRICE_ID ? <Loader2 className="w-4 h-4 animate-spin mx-auto"/> : 'Køb Semesterpakke'}
-               </div>
-             </div>
+              <div 
+                  onClick={() => handleSubscription(PRICE_IDS.SEMESTER)}
+                  className="bg-white border border-slate-100 rounded-[4rem] p-12 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.05)] flex flex-col cursor-pointer overflow-hidden transition-all hover:-translate-y-4 duration-700 h-full relative"
+              >
+                  <div className="space-y-8 h-full flex flex-col">
+                    <div className="space-y-2">
+                        <h3 className="text-4xl font-black tracking-tighter italic serif">Semesteret</h3>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Engangsbetaling</p>
+                    </div>
+                    
+                    <div className="py-8 border-y border-slate-50">
+                        <div className="text-5xl font-black tracking-tighter">329 <span className="text-lg text-slate-300 font-medium tracking-normal">kr.</span></div>
+                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-2">Spar over 25%</p>
+                    </div>
+                    
+                    <ul className="space-y-6 flex-1">
+                      {[
+                        "Alt fra Kollega+ i 5 måneder",
+                        "Ingen automatisk fornyelse",
+                        "Det økonomisk stærkeste valg",
+                        "Adgang til alle nye features",
+                        "Fuld akademisk rygdækning"
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-4 text-[13px] font-black uppercase tracking-widest text-slate-400">
+                           <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                           <span className="text-slate-950">{item}</span>
+                        </li>
+                      ))}
+                   </ul>
+                   
+                   <div className="w-full py-6 border-2 border-slate-950 text-slate-950 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-slate-950 hover:text-white transition-all">
+                      {isSubscribing === PRICE_IDS.SEMESTER ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Vælg Semesterpakken'}
+                      <ArrowRight className="w-4 h-4" />
+                   </div>
+                  </div>
+              </div>
           </motion.div>
 
         </motion.div>
 
+        {/* B2B / Institution Section */}
         <motion.div 
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="mt-32 max-w-5xl mx-auto pb-20"
+            className="mt-60 max-w-6xl mx-auto pb-40 text-center"
         >
-            <div className="bg-white/80 backdrop-blur-2xl p-12 md:p-20 rounded-[3rem] border border-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-slate-100 rounded-full blur-[80px] -mr-20 -mt-20 opacity-60"></div>
-                
-                <div className="relative z-10 flex flex-col lg:flex-row items-center gap-12 text-center lg:text-left">
-                    <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-white text-slate-800 rounded-[2rem] flex items-center justify-center shadow-inner ring-4 ring-slate-50 shrink-0 group-hover:rotate-6 transition-transform duration-500">
-                        <Building className="w-10 h-10" />
-                    </div>
-                    
-                    <div className="flex-1">
-                        <h3 className="text-3xl md:text-4xl font-black text-slate-800 mb-4 tracking-tight">Uddannelsesinstitution eller Kommune?</h3>
-                        <p className="text-lg text-slate-500 font-medium leading-relaxed mb-0">
-                          Vi tilbyder skræddersyede B2B-løsninger, der giver jeres studerende, lærere, eller praktikanter fuld adgang og styrker den faglige dannelse i stor skala med mærkbare rabatter.
-                        </p>
-                    </div>
-
-                    <Link href="/samarbejde" className="group/btn inline-flex items-center justify-center px-8 py-5 bg-slate-900 text-white rounded-2xl text-sm font-black uppercase tracking-widest transition-all hover:bg-black hover:-translate-y-1 shadow-2xl shadow-slate-900/20 shrink-0 whitespace-nowrap">
-                        Kontakt Os
-                        <ArrowUpRight className="w-4 h-4 ml-3 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                    </Link>
-                </div>
+            <div className="h-px w-32 bg-slate-200 mx-auto mb-20" />
+            
+            <div className="space-y-12">
+                <h3 className="text-4xl sm:text-6xl font-black tracking-tighter italic serif">
+                   Uddannelsesinstitutioner <br /> & Kommuner.
+                </h3>
+                <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
+                   Vi tilbyder skræddersyede løsninger til uddannelser og kommuner, der ønsker at løfte det faglige niveau gennem innovative værktøjer.
+                </p>
+                <Link href="/samarbejde" className="inline-flex items-center justify-center px-12 py-6 bg-slate-950 text-white rounded-[2.5rem] text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-slate-950/20 hover:-translate-y-1 transition-all">
+                   Kontakt for B2B aftale
+                   <ArrowUpRight className="w-4 h-4 ml-3" />
+                </Link>
             </div>
         </motion.div>
       </main>
       
-      <footer className="absolute bottom-6 inset-x-0 text-center pointer-events-none">
-         <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 opacity-40 grayscale pointer-events-auto hover:opacity-100 hover:grayscale-0 transition-all duration-700">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2"><Lock className="w-3 h-3" /> Sikker Betaling (Stripe)</span>
-            <div className="h-1 w-1 rounded-full bg-slate-300 hidden md:block"></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Afmeld når du vil</span>
-            <div className="h-1 w-1 rounded-full bg-slate-300 hidden md:block"></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Support <a href="mailto:kontakt@cohero.dk" className="underline hover:text-slate-800">her</a></span>
+      <footer className="py-20 border-t border-slate-50">
+         <div className="max-w-7xl mx-auto px-6 flex flex-wrap items-center justify-center gap-12 opacity-30">
+            <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><Lock className="w-3 h-3" /> Sikker Betaling</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">Afmeld når du vil</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Cohéro · Innovative Education</span>
          </div>
       </footer>
 
+      <style jsx>{`
+        .serif { font-family: 'Playfair Display', serif; }
+      `}</style>
     </div>
   );
 };
 
-const UpgradePageWrapper = () => {
-    const { user, isUserLoading } = useApp();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.push('/auth?mode=signup');
-        }
-    }, [user, isUserLoading, router]);
-
-    if (isUserLoading || !user) {
-        return <AuthLoadingScreen />;
-    }
-
+const UpgradePage = () => {
     return <UpgradePageContent />;
 };
 
-export default UpgradePageWrapper;
+export default UpgradePage;

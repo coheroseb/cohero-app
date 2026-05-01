@@ -48,9 +48,11 @@ function getAdminApp() {
 }
 
 const app = getAdminApp();
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
 
 export const adminAuth = admin.auth(app);
-export const adminFirestore = admin.firestore(app);
+// @ts-ignore - databaseId is supported in newer versions of firebase-admin
+export const adminFirestore = admin.firestore(app, databaseId);
 export const adminStorage = admin.storage(app);
 
 // Legacy support

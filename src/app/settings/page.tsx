@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '@/app/provider';
 import { useAuth, useFirestore } from '@/firebase';
 import { doc, getDoc, writeBatch, serverTimestamp, deleteDoc, updateDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, ChevronDown, ShieldAlert, Users2, Send, Info, Award, Sparkles, Bell, BellOff, Smartphone, Navigation, Mail, Briefcase, Building2 } from 'lucide-react';
+import { Settings, User, CreditCard, Loader2, CheckCircle, ArrowUpRight, Gift, ChevronDown, ShieldAlert, Users2, Send, Info, Award, Sparkles, Bell, BellOff, Smartphone, Navigation, Mail, Briefcase, Building2, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { cancelSubscription, createPortalSessionAction, redeemCodeAction } from '@/app/actions';
+import { cancelSubscription, createPortalSessionAction, redeemCodeAction, listOneNoteNotebooksAction, syncOneNoteNotebookAction, getMicrosoftAuthUrlAction } from '@/app/actions';
 import DeleteAccountModal from '@/components/DeleteAccountModal';
 import { deleteUser, updateProfile } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
@@ -21,17 +21,18 @@ import { INSTITUTIONS, PROFESSION_OPTIONS, SEMESTER_OPTIONS } from '@/lib/consta
 import { Capacitor } from '@capacitor/core';
 import NativeSettings from '@/components/native/NativeSettings';
 
+function capitalize(str: string) {
+  return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+}
+
 export default function SettingsPage() {
   const { user, userProfile, refetchUserProfile, handleLogout, handleResendVerification } = useApp();
   
-  if (Capacitor.isNativePlatform()) {
-    return <NativeSettings />;
-  }
   const firestore = useFirestore();
   const auth = useAuth();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'membership' | 'notifications' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'membership' | 'notifications' | 'security' | 'integrations'>('profile');
 
   // Profile state
   const [username, setUsername] = useState('');
@@ -43,6 +44,10 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Curriculum/Modules state
+  const [availableModules, setAvailableModules] = useState<{id: string, name: string}[]>([]);
+  const [fetchingCurriculum, setFetchingCurriculum] = useState(false);
 
   // Notification state
   const [notificationStatus, setNotificationStatus] = useState<NotificationPermission | 'unsupported'>('default');
@@ -66,6 +71,11 @@ export default function SettingsPage() {
   const [isResending, setIsResending] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
 
+  // OneNote state
+  const [oneNoteNotebooks, setOneNoteNotebooks] = useState<any[]>([]);
+  const [isOneNoteLoading, setIsOneNoteLoading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState<string | null>(null);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setNotificationStatus(Notification.permission);
@@ -73,6 +83,16 @@ export default function SettingsPage() {
       setNotificationStatus('unsupported');
     }
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'integrations' && userProfile?.oneNoteAuth) {
+        setIsOneNoteLoading(true);
+        listOneNoteNotebooksAction()
+            .then(setOneNoteNotebooks)
+            .catch(err => console.error("Failed to list notebooks:", err))
+            .finally(() => setIsOneNoteLoading(false));
+    }
+  }, [activeTab, userProfile?.oneNoteAuth]);
 
   useEffect(() => {
     if (userProfile) {
@@ -104,6 +124,59 @@ export default function SettingsPage() {
       }
     }
   }, [userProfile, user, firestore]);
+
+  useEffect(() => {
+    const fetchCurriculum = async () => {
+      // Priority 1: Use modules from the user's custom uploaded curriculum
+      if (userProfile?.customCurriculum?.modules && Array.isArray(userProfile.customCurriculum.modules)) {
+        const mods = userProfile.customCurriculum.modules.map((m: any) => ({
+          id: m.id || m.semester?.toString() || '',
+          name: m.name || `${m.semester}. semester`
+        }));
+        setAvailableModules(mods);
+        return;
+      }
+
+      // Priority 2: Use modules from the institutional curriculum
+      if (!institution || !profession || !firestore) {
+        setAvailableModules([]);
+        return;
+      }
+
+      setFetchingCurriculum(true);
+      try {
+        const curriculumsRef = collection(firestore, 'curriculums');
+        const q = query(
+          curriculumsRef,
+          where('institution', '==', institution),
+          where('profession', '==', profession)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const curriculum = querySnapshot.docs[0].data();
+          if (curriculum.modules && Array.isArray(curriculum.modules)) {
+            const mods = curriculum.modules.map((m: any) => ({
+              id: m.id || m.semester?.toString() || '',
+              name: m.name || `${m.semester}. semester`
+            }));
+            setAvailableModules(mods);
+          } else {
+            setAvailableModules([]);
+          }
+        } else {
+          setAvailableModules([]);
+        }
+      } catch (err) {
+        console.error("Error fetching curriculum for settings:", err);
+        setAvailableModules([]);
+      } finally {
+        setFetchingCurriculum(false);
+      }
+    };
+
+    fetchCurriculum();
+  }, [institution, profession, firestore, userProfile?.customCurriculum]);
   
   useEffect(() => {
     if (user?.metadata.lastSignInTime) {
@@ -114,9 +187,10 @@ export default function SettingsPage() {
     }
   }, [user]);
 
-  const capitalize = (s: string) => {
-    if (!s) return "";
-    return s.charAt(0).toUpperCase() + s.slice(1);
+  const handleResendClick = async () => {
+    setIsResending(true);
+    await handleResendVerification();
+    setIsResending(false);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -317,6 +391,7 @@ export default function SettingsPage() {
     
     try {
       // 1. Cancel subscription if active and personal
+      const isSpecialSubscription = userProfile?.stripePriceId?.startsWith('b2b-') || userProfile?.stripePriceId?.startsWith('redeemed-');
       if (userProfile?.stripeSubscriptionId && !isSpecialSubscription) {
         try {
           await cancelSubscription(userProfile.stripeSubscriptionId);
@@ -327,10 +402,6 @@ export default function SettingsPage() {
       }
 
       // 2. Delete Auth user - this is the point of no return.
-      // We do this first because if it fails (e.g. requires recent login),
-      // we don't want to have already deleted the Firestore document.
-      // The onUserDeleteCleanUp Cloud Function will handle deleting the 
-      // Firestore document and all its subcollections automatically.
       await deleteUser(auth.currentUser);
       
       // 3. Logout and clean up navigation
@@ -341,12 +412,25 @@ export default function SettingsPage() {
     }
   };
 
-  
-  const handleResendClick = async () => {
-    setIsResending(true);
-    await handleResendVerification();
-    setIsResending(false);
+  const handleSyncNotebook = async (notebookId: string) => {
+    setIsSyncing(notebookId);
+    try {
+      const result = await syncOneNoteNotebookAction(notebookId);
+      if (result.success) {
+        toast({ title: "Synkronisering færdig", description: `Hentet ${result.count} noter fra OneNote.` });
+      } else {
+        throw new Error(result.error || "Ukendt fejl");
+      }
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: "Synkronisering fejlede", description: err.message });
+    } finally {
+      setIsSyncing(null);
+    }
   };
+
+  if (Capacitor.isNativePlatform()) {
+    return <NativeSettings />;
+  }
 
   if (!userProfile) {
      return (
@@ -365,6 +449,7 @@ export default function SettingsPage() {
     { id: 'profile', label: 'Profil & Uddannelse', icon: User },
     { id: 'membership', label: 'Medlemskab & Adgang', icon: CreditCard },
     { id: 'notifications', label: 'Notifikationer', icon: Bell },
+    { id: 'integrations', label: 'Integrationer', icon: Sparkles },
     { id: 'security', label: 'Sikkerhed & Konto', icon: ShieldAlert },
   ] as const;
 
@@ -492,10 +577,6 @@ export default function SettingsPage() {
                                   {!isQualified && (
                                      <>
                                         <div className="space-y-2">
-
-                                        </div>
-
-                                        <div className="space-y-2">
                                             <label htmlFor="semester" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
                                             <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
                                                 <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -506,11 +587,18 @@ export default function SettingsPage() {
                                                     className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer"
                                                 >
                                                     <option value="" disabled>Vælg semester...</option>
-                                                    {SEMESTER_OPTIONS.map(sem => (
+                                                    {availableModules.map(mod => (
+                                                        <option key={mod.id} value={mod.id}>{mod.name}</option>
+                                                    ))}
+                                                    {!fetchingCurriculum && availableModules.length === 0 && SEMESTER_OPTIONS.map(sem => (
                                                         <option key={sem} value={sem}>{sem}. semester</option>
                                                     ))}
                                                 </select>
-                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                {fetchingCurriculum ? (
+                                                   <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500 animate-spin" />
+                                                ) : (
+                                                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                )}
                                             </div>
                                         </div>
 
@@ -793,6 +881,93 @@ export default function SettingsPage() {
                   )}
 
                   {/* =========================================
+                      INTEGRATIONS TAB
+                      ========================================= */}
+                  {activeTab === 'integrations' && (
+                    <div className="space-y-8">
+                       <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm overflow-hidden">
+                          <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                             <div>
+                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+                                   <Sparkles className="w-5 h-5 text-amber-500" /> 
+                                   Microsoft OneNote
+                                </h2>
+                                <p className="text-xs font-semibold text-slate-500 mt-1">Synkroniser dine noter direkte ind i Cohéro.</p>
+                             </div>
+                             {!userProfile?.oneNoteAuth ? (
+                                <Button 
+                                  onClick={async () => {
+                                    const { getMicrosoftAuthUrlAction } = await import('@/app/actions');
+                                    const url = await getMicrosoftAuthUrlAction();
+                                    window.location.href = url;
+                                  }}
+                                  className="bg-[#0067b8] text-white hover:bg-[#005da6] font-bold rounded-xl h-11 px-6 shadow-sm flex items-center gap-2"
+                                >
+                                   Forbind Microsoft Konto
+                                </Button>
+                             ) : (
+                                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 text-xs font-black uppercase tracking-widest">
+                                   <CheckCircle className="w-4 h-4" /> Forbundet
+                                </div>
+                             )}
+                          </div>
+                          
+                          <div className="p-8">
+                             {userProfile?.oneNoteAuth ? (
+                                <div className="space-y-6">
+                                   <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Dine Notesbøger</h3>
+                                   {isOneNoteLoading ? (
+                                      <div className="flex flex-col items-center py-12">
+                                         <Loader2 className="w-8 h-8 animate-spin text-amber-500 mb-4" />
+                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Henter notesbøger...</p>
+                                      </div>
+                                   ) : oneNoteNotebooks.length > 0 ? (
+                                      <div className="grid gap-4">
+                                         {oneNoteNotebooks.map(nb => (
+                                            <div key={nb.id} className="flex items-center justify-between p-5 bg-slate-50 border border-slate-100 rounded-2xl group hover:border-amber-200 transition-all">
+                                               <div className="flex items-center gap-4">
+                                                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-amber-500 transition-colors">
+                                                     <BookOpen className="w-5 h-5" />
+                                                  </div>
+                                                  <div>
+                                                     <p className="text-sm font-bold text-slate-900">{nb.displayName}</p>
+                                                     <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-0.5">Senest ændret: {new Date(nb.lastModifiedDateTime).toLocaleDateString()}</p>
+                                                  </div>
+                                               </div>
+                                               <Button 
+                                                 onClick={() => handleSyncNotebook(nb.id)}
+                                                 disabled={isSyncing === nb.id}
+                                                 className="h-9 px-5 rounded-lg bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 font-bold text-xs shadow-sm"
+                                               >
+                                                  {isSyncing === nb.id ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <ArrowUpRight className="w-3.5 h-3.5 mr-2" />}
+                                                  Synkroniser
+                                               </Button>
+                                            </div>
+                                         ))}
+                                      </div>
+                                   ) : (
+                                      <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-[2rem]">
+                                         <p className="text-sm font-bold text-slate-400">Ingen notesbøger fundet.</p>
+                                      </div>
+                                   )}
+                                </div>
+                             ) : (
+                                <div className="text-center py-12 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                   <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                      <Sparkles className="w-8 h-8 text-slate-200" />
+                                   </div>
+                                   <p className="text-sm font-bold text-slate-900 mb-1">Forbind dine noter</p>
+                                   <p className="text-xs font-medium text-slate-500 max-w-xs mx-auto px-6">
+                                      Giv Cohéro adgang til dine OneNote notesbøger, så vi automatisk kan indeksere dine egne noter og bruge dem til din lærings-sti.
+                                   </p>
+                                </div>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                  )}
+
+                  {/* =========================================
                       SECURITY TAB
                       ========================================= */}
                   {activeTab === 'security' && (
@@ -801,7 +976,7 @@ export default function SettingsPage() {
                            <div className="absolute top-0 left-0 w-2 h-full bg-rose-500" />
                            <h2 className="text-2xl font-black text-slate-900 mb-2">Farezone</h2>
                            <p className="text-sm font-medium text-slate-500 mb-8 max-w-2xl leading-relaxed">
-                               Ved at slette din konto fjerner du permanent al din data fra Cohéro (journaler, cases, studieplaner m.m.). Denne handling sletter dig og dine data øjeblikkeligt fra databasen. <strong className="text-rose-600 font-bold">Handlingen kan ikke fortrydes.</strong>
+                                Ved at slette din konto fjerner du permanent al din data fra Cohéro (journaler, cases, studieplaner m.m.). Denne handling sletter dig og dine data øjeblikkeligt fra databasen. <strong className="text-rose-600 font-bold">Handlingen kan ikke fortrydes.</strong>
                            </p>
 
                            <TooltipProvider>

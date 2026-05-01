@@ -987,36 +987,66 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
 
   const handleSetCat = (cat: string) => { onCategorize(cat); setShowCatPicker(false); setNewCat(''); };
 
+  const MotionDiv = motion.div;
   const content = (
-    <div className="flex flex-col h-full bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm hover:shadow-2xl transition-all p-0.5 sm:p-1 group relative">
-      <div className="p-4 sm:p-5 md:p-6 lg:p-7 flex-1" onClick={onOpen}>
-        <div className="flex items-start justify-between gap-2 sm:gap-3 mb-4 sm:mb-6">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-slate-900 rounded-lg sm:rounded-2xl flex items-center justify-center text-indigo-400 shadow-xl group-hover:rotate-6 transition-transform flex-shrink-0">
-            <Presentation className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+    <MotionDiv 
+      whileHover={{ y: -8 }}
+      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+      className="group relative h-full"
+    >
+      <div className="h-full bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] hover:border-slate-200 transition-all duration-500 flex flex-col overflow-hidden">
+        {/* Top Section */}
+        <div className="p-8 flex-1 cursor-pointer" onClick={onOpen}>
+          <div className="flex items-start justify-between mb-8">
+            <div className="w-14 h-14 bg-slate-950 rounded-2xl flex items-center justify-center text-indigo-400 shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all duration-500">
+              <Presentation className="w-7 h-7" />
+            </div>
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100/50">
+              <button 
+                onClick={e => { e.stopPropagation(); setShowCatPicker(!showCatPicker); }} 
+                className={`p-2 rounded-lg transition-all ${seminar.category ? 'text-indigo-600 bg-white shadow-sm' : 'text-slate-300 hover:text-indigo-600' }`}
+              >
+                <FolderOpen className="w-4 h-4"/>
+              </button>
+              <button 
+                onClick={e => { e.stopPropagation(); onDelete(); }} 
+                className="p-2 text-slate-200 hover:text-rose-500 transition-colors"
+              >
+                <Trash2 className="w-4 h-4"/>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-0.5 sm:gap-1">
-            <button onClick={e => { e.stopPropagation(); setShowCatPicker(!showCatPicker); }} 
-                className={`p-1.5 sm:p-2 transition-colors rounded-lg sm:rounded-xl ${seminar.category ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:text-indigo-600 hover:bg-slate-50' }`}>
-                <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4"/>
-            </button>
-            <button onClick={e => { e.stopPropagation(); onDelete(); }} className="p-1.5 sm:p-2 text-slate-200 hover:text-rose-500 transition-colors"><Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4"/></button>
+
+          <h3 className="text-2xl font-black text-slate-900 serif leading-tight mb-3 group-hover:text-indigo-900 transition-colors line-clamp-2">
+            {seminar.overallTitle}
+          </h3>
+
+          {seminar.category && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-100/50 mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              {seminar.category}
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400 mt-4">
+            <div className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
+            <div className="w-1 h-1 rounded-full bg-slate-200" />
+            <div>{seminar.slides?.length || 0} Slides</div>
           </div>
         </div>
-        <h3 className="text-base sm:text-lg md:text-xl font-black text-slate-900 serif leading-tight mb-2 truncate group-hover:text-indigo-800 transition-colors">{seminar.overallTitle}</h3>
-        {seminar.category && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 bg-amber-50 text-amber-700 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-widest mb-3 sm:mb-4 border border-amber-100 shadow-sm">
-                <Tags className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {seminar.category}
+
+        {/* Bottom Bar */}
+        <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between group-hover:bg-indigo-50/30 transition-colors">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">
+              {totalConcepts} Begreber
             </span>
-        )}
-        <div className="flex items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-bold text-slate-400 mt-auto">
-          <div className="flex items-center gap-1 whitespace-nowrap"><CalendarDays className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
-          <div className="flex items-center gap-1 tracking-widest uppercase text-[8px] sm:text-[10px] whitespace-nowrap">{seminar.slides?.length || 0} Slides</div>
+          </div>
+          <div className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+            Studér <ArrowRight className="w-3.5 h-3.5" />
+          </div>
         </div>
-      </div>
-      
-      <div className="px-4 sm:px-5 md:px-6 lg:px-7 py-3 sm:py-4 lg:py-5 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
-         <div className="flex items-center gap-1.5 sm:gap-2"><div className="w-1 h-1 rounded-full bg-indigo-400" /><span className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">{totalConcepts} Begreber</span></div>
-         <div className="flex items-center gap-1.5 sm:gap-2 text-indigo-600 font-black text-[9px] sm:text-[11px] group-hover:translate-x-1 transition-transform">ÅBEN <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" /></div>
       </div>
       
       {showCatPicker && (
@@ -1061,7 +1091,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
             </div>
         </div>
       )}
-    </div>
+    </MotionDiv>
   );
 
   if (viewMode === 'list') {
@@ -1074,7 +1104,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
         </motion.div>
     );
   }
-  return <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">{content}</motion.div>;
+  return <MotionDiv layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">{content}</MotionDiv>;
 };
 
 // ---------------------------------------------------------------------------
@@ -1092,7 +1122,7 @@ export default function MineSeminarerPage() {
   const [filterLaws, setFilterLaws] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [categoryConceptListData, setCategoryConceptListData] = useState<{ title: string; slides: any[] } | null>(null);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
   const [categoryChatData, setCategoryChatData] = useState<{ title: string; seminars: any[] } | null>(null);
   const [showCategoryDeepDive, setShowCategoryDeepDive] = useState(false);
   const [categoryQuizData, setCategoryQuizData] = useState<QuizData | null>(null);
@@ -1266,17 +1296,21 @@ export default function MineSeminarerPage() {
   return (
     <div className="min-h-screen bg-[#FDFCF8]">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10">
-        <div className="mb-8 sm:mb-12 flex flex-col md:flex-row items-baseline justify-between gap-6 sm:gap-8">
-            <div className="flex items-start gap-4 sm:gap-6">
-                <Link href="/portal" className="mt-1 p-3.5 bg-white border border-slate-100 text-slate-400 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm shrink-0">
-                    <ArrowLeft className="w-5 h-5" />
+        <div className="mb-12 flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-6">
+                <Link href="/portal" className="p-4 bg-white border border-slate-100 text-slate-400 rounded-[1.5rem] hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-95">
+                    <ArrowLeft className="w-6 h-6" />
                 </Link>
                 <div className="space-y-1">
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 serif tracking-tighter">Mit Vidensbibliotek</h1>
-                    <p className="text-slate-400 font-medium text-xs sm:text-sm">Organiser, repetér og visualiser dine studier.</p>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-indigo-600/20">Arkiv</span>
+                      <span className="text-slate-300 text-[9px] font-black uppercase tracking-widest">Studie-materiale</span>
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-black text-slate-900 serif tracking-tighter">Mit Vidensbibliotek</h1>
+                    <p className="text-slate-400 font-medium text-sm">Organiser, repetér og få AI-indsigt i alle dine seminarer.</p>
                 </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
                  <div className="flex items-center gap-1.5 p-1.5 bg-slate-50/50 backdrop-blur-sm rounded-2xl border border-slate-100 shrink-0">
                     <button onClick={() => setViewMode('grid')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
                         <LayoutGrid className="w-4 h-4" />
@@ -1291,9 +1325,9 @@ export default function MineSeminarerPage() {
                  >
                     <Activity className="w-4 h-4" /> {showStats ? 'Skjul Statistik' : 'Vis Statistik'}
                  </button>
-                 <Link href="/seminar-architect" className="flex-1 md:flex-none">
-                    <Button className="w-full md:w-auto rounded-2xl bg-slate-900 hover:bg-indigo-900 text-white h-14 px-8 shadow-2xl text-base font-black tracking-tight">
-                        <Plus className="w-5 h-5 mr-3" /> NY ANALYSE
+                 <Link href="/seminar-architect" className="flex-1 sm:flex-none">
+                    <Button className="w-full sm:w-auto rounded-2xl bg-slate-950 hover:bg-indigo-600 text-white h-14 px-8 shadow-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                        <Plus className="w-5 h-5 mr-3" /> Ny Analyse
                     </Button>
                 </Link>
             </div>
@@ -1302,22 +1336,22 @@ export default function MineSeminarerPage() {
         <AnimatePresence>
             {showStats && (
                 <motion.div 
-                    initial={{ height: 0, opacity: 0 }} 
-                    animate={{ height: 'auto', opacity: 1 }} 
-                    exit={{ height: 0, opacity: 0 }}
+                    initial={{ height: 0, opacity: 0, y: -20 }} 
+                    animate={{ height: 'auto', opacity: 1, y: 0 }} 
+                    exit={{ height: 0, opacity: 0, y: -20 }}
                     className="overflow-hidden mb-12"
                 >
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 p-10 bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)]">
                         {[
-                            { label: 'Total Viden', val: stats.seminars, sub: 'Gennemførte seminarer', icon: <Presentation className="w-5 h-5"/>, color: 'text-slate-900', bg: 'bg-slate-50' },
-                            { label: 'Faglige Begreber', val: stats.concepts, sub: 'Kortlagt i biblioteket', icon: <Tags className="w-5 h-5"/>, color: 'text-indigo-600', bg: 'bg-indigo-50/50' },
-                            { label: 'Studienoter', val: stats.notes, sub: 'Gemte refleksioner', icon: <FileText className="w-5 h-5"/>, color: 'text-emerald-600', bg: 'bg-emerald-50/50' }
+                            { label: 'Total Viden', val: stats.seminars, sub: 'Seminarer i arkivet', icon: <Presentation className="w-6 h-6"/>, color: 'text-slate-950', bg: 'bg-white shadow-xl shadow-slate-900/5' },
+                            { label: 'Faglige Begreber', val: stats.concepts, sub: 'Kortlagt viden', icon: <Tags className="w-6 h-6"/>, color: 'text-indigo-600', bg: 'bg-indigo-50/50' },
+                            { label: 'Studienoter', val: stats.notes, sub: 'Gemte refleksioner', icon: <FileText className="w-6 h-6"/>, color: 'text-emerald-600', bg: 'bg-emerald-50/50' }
                         ].map((s, i) => (
-                            <div key={i} className="flex items-center gap-6">
-                                <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center`}>{s.icon}</div>
+                            <div key={i} className="flex items-center gap-6 group">
+                                <div className={`w-16 h-16 ${s.bg} ${s.color} rounded-[1.5rem] flex items-center justify-center group-hover:scale-110 transition-all duration-500`}>{s.icon}</div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{s.label}</p>
-                                    <p className={`text-2xl font-black serif ${s.color}`}>{s.val}</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-0.5">{s.label}</p>
+                                    <p className={`text-3xl font-black serif ${s.color}`}>{s.val}</p>
                                     <p className="text-[10px] font-medium text-slate-400">{s.sub}</p>
                                 </div>
                             </div>
@@ -1423,10 +1457,22 @@ export default function MineSeminarerPage() {
         </div>
 
         {!isLoading && filtered.length === 0 && (
-            <div className="py-40 text-center">
-                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mx-auto mb-8"><FileSearch className="w-12 h-12"/></div>
-                <h3 className="text-2xl font-black text-slate-900 serif mb-2">Ingen resultater</h3>
-                <p className="text-slate-400 italic">Prøv en anden søgning eller kategori.</p>
+            <div className="py-40 text-center space-y-6">
+                <div className="w-32 h-32 bg-slate-50 rounded-[3rem] flex items-center justify-center text-slate-200 mx-auto shadow-inner relative group">
+                    <FileSearch className="w-12 h-12 group-hover:scale-110 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-indigo-500/5 rounded-[3rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div className="max-w-xs mx-auto">
+                  <h3 className="text-2xl font-black text-slate-900 serif mb-2 tracking-tight">Biblioteket er tomt</h3>
+                  <p className="text-slate-400 font-medium text-sm leading-relaxed">Der er ikke noget materiale her endnu. Start din første analyse for at se viden tage form.</p>
+                </div>
+                <div className="pt-4">
+                  <Link href="/seminar-architect">
+                      <Button variant="outline" className="rounded-2xl border-slate-200 text-slate-600 font-black uppercase tracking-widest text-[10px] h-12 px-8 hover:bg-slate-50 transition-all active:scale-95">
+                          Start første analyse
+                      </Button>
+                  </Link>
+                </div>
             </div>
         )}
       </main>

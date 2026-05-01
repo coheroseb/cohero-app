@@ -97,6 +97,7 @@ import { unifiedChatFlow } from './flows/unified-chat-flow';
 import { generateCourse } from './flows/generate-course-flow';
 import { generateLearningObjectives } from './flows/generate-learning-objectives-flow';
 import { citizenSimulationFlow } from './flows/citizen-simulation-flow';
+import { analyzeSyllabus } from './flows/analyze-syllabus-flow';
 
 
 import { generateSimulationScenarioFlow, runSimulationTurnFlow, generateSimulationReportFlow } from './flows/simulation-flows';
@@ -297,5 +298,6 @@ export const allFlows: Record<string, any> = {
   'generateLearningObjectives': generateLearningObjectives,
   'generateCourseFlow': generateCourse,
   'generateCourse': generateCourse,
+  'analyzeSyllabusFlow': analyzeSyllabus,
 };
 

@@ -42,11 +42,6 @@ import NativeSavedConcepts from '@/components/native/NativeSavedConcepts';
 
 export default function MineGemteBegreberPage() {
     const { user, isUserLoading } = useApp();
-    
-    if (Capacitor.isNativePlatform()) {
-      return <NativeSavedConcepts />;
-    }
-    
     const router = useRouter();
     const { toast } = useToast();
     const firestore = useFirestore();
@@ -68,6 +63,10 @@ export default function MineGemteBegreberPage() {
             toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke fjerne begrebet." });
         }
     }, [user, firestore, toast]);
+
+    if (Capacitor.isNativePlatform()) {
+      return <NativeSavedConcepts />;
+    }
 
     if (isUserLoading || isLoading) {
         return <AuthLoadingScreen />;

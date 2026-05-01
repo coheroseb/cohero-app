@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import * as dotenv from "dotenv";
 import * as path from "path";
 
@@ -9,11 +10,14 @@ dotenv.config({ path: path.resolve(process.cwd(), "../.env.local") });
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 console.log("GEMINI KEY:", !!process.env.GEMINI_API_KEY);
 
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+
 admin.initializeApp({
   storageBucket: "studio-7870211338-fe921.firebasestorage.app"
 });
 
 export const processNotificationQueue = functions.firestore
+  .database(databaseId)
   .document("notifications_queue/{docId}")
   .onCreate(async (snapshot: functions.firestore.QueryDocumentSnapshot) => {
     const data = snapshot.data();
@@ -24,7 +28,7 @@ export const processNotificationQueue = functions.firestore
 
     const userDocs = await Promise.all(
       recipientUids.map((uid: string) =>
-        admin.firestore().collection("users").doc(uid).get()
+        (admin.firestore as any)(undefined, databaseId).collection("users").doc(uid).get()
       )
     );
 
@@ -80,7 +84,7 @@ export const processNotificationQueue = functions.firestore
           successCount: response.successCount,
           failureCount: response.failureCount,
         },
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processedAt: FieldValue.serverTimestamp(),
       });
     } catch (error) {
       const e = error as Error;

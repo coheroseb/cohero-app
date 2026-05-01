@@ -46,6 +46,7 @@ interface Curriculum {
   validTo?: string | null;
   type?: 'standard' | 'electives';
   modules: CurriculumModule[];
+  pdfUrl?: string;
 }
 
 export default function AdminStudieordningerPage() {
@@ -343,6 +344,19 @@ export default function AdminStudieordningerPage() {
                                     <option value="electives">Valgfag / Specialisering</option>
                                 </select>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-12">
+                        <div>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-3 ml-1">Studieordning PDF (Link)</label>
+                            <input 
+                                type="text" 
+                                placeholder="Indsæt link til original PDF (f.eks. fra PH-hjemmeside eller Firebase Storage)" 
+                                value={activeCurriculum?.pdfUrl || ''} 
+                                onChange={(e) => setActiveCurriculum({...activeCurriculum!, pdfUrl: e.target.value})}
+                                className="w-full h-16 bg-slate-50 border border-slate-100 rounded-3xl px-8 font-bold text-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all outline-none"
+                            />
                         </div>
                     </div>
 

@@ -28,13 +28,16 @@ const wrapEmailHtml = (inner: string) => `
 </html>
 `;
 
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+
 export const onAssistanceRequestCreate = functions.firestore
+  .database(databaseId)
   .document("assistance_requests/{requestId}")
   .onCreate(async (snapshot, context) => {
     const data = snapshot.data();
     if (!data) return null;
 
-    const db = admin.firestore();
+    const db = (admin.firestore as any)(undefined, databaseId);
     const resend = new Resend(process.env.RESEND_API_KEY);
     const requestId = context.params.requestId;
     const taskTitle = data.title;
@@ -70,7 +73,7 @@ export const onAssistanceRequestCreate = functions.firestore
     // Let's assume we want to reach as many as possible
     try {
         const usersSnapshot = await db.collection("users").select().get();
-        const uids = usersSnapshot.docs.map(doc => doc.id);
+        const uids = usersSnapshot.docs.map((doc: any) => doc.id);
 
         if (uids.length > 0) {
             // Queue FCM
@@ -111,6 +114,7 @@ export const onAssistanceRequestCreate = functions.firestore
   });
 
 export const onAssistanceRequestUpdate = functions.firestore
+  .database(databaseId)
   .document("assistance_requests/{requestId}")
   .onUpdate(async (change, context) => {
     const before = change.before.data();
@@ -118,7 +122,7 @@ export const onAssistanceRequestUpdate = functions.firestore
     if (!before || !after) return null;
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const db = admin.firestore();
+    const db = (admin.firestore as any)(undefined, databaseId);
 
     // 1. EVENT: TASK CLAIMED (Status changed from open -> claimed)
     if (before.status === "open" && after.status === "claimed") {

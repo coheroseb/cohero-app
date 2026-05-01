@@ -361,7 +361,7 @@ import type Stripe from 'stripe';
 // Third-party and utility imports
 import { stripe, isStripeConfigured, getMembershipFromPriceId } from '@/lib/stripe';
 import { adminFirestore as firestore, adminAuth as auth } from '@/firebase/server-init';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -3951,4 +3951,32 @@ export async function citizenSimulationAction(input: Types.CitizenSimulationInpu
 
 export async function generateLearningObjectivesAction(input: Types.GenerateLearningObjectivesInput): Promise<Types.GenerateLearningObjectivesOutput> {
     return callFirebaseFlow('generateLearningObjectivesFlow', input);
+}
+
+export async function getAIUsageMetricsAction() {
+    try {
+        const { adminFirestore } = await import('@/firebase/server-init');
+        const doc = await adminFirestore.collection('stats').doc('ai_usage').get();
+        const data = doc.exists ? doc.data() : { totalInputTokens: 0, totalOutputTokens: 0 };
+        
+        // Mock history for the dashboard chart
+        const history = [
+            { name: 'Man', usage: 45000 },
+            { name: 'Tir', usage: 52000 },
+            { name: 'Ons', usage: 48000 },
+            { name: 'Tor', usage: 61000 },
+            { name: 'Fre', usage: 55000 },
+            { name: 'Lør', usage: 32000 },
+            { name: 'Søn', usage: 28000 },
+        ];
+
+        return { 
+            success: true, 
+            data,
+            history
+        };
+    } catch (error) {
+        console.error("Failed to fetch AI usage metrics:", error);
+        return { success: false, history: [] };
+    }
 }

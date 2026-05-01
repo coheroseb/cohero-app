@@ -28,7 +28,9 @@ import {
   ListChecks,
   Activity,
   Printer,
-  Crown
+  Crown,
+  Quote,
+  Clock
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { lawDefinitions } from '@/lib/law-definitions';
@@ -521,26 +523,36 @@ const CaseAnalyserPage: React.FC = () => {
         )}
         {/* SIDEBAR - ANALYSIS RESULTS */}
         <aside className="w-full lg:w-[400px] bg-white border-r border-amber-100 flex flex-col z-30 shadow-sm overflow-y-auto custom-scrollbar shrink-0">
-        <div className="p-6 flex items-center gap-4 border-b border-amber-50 bg-[#FDFCF8]/50 sticky top-0 z-10 backdrop-blur-md">
-            <button onClick={() => router.back()} className="p-2 hover:bg-amber-50 rounded-lg transition-colors">
-                <ArrowLeft className="w-5 h-5 text-amber-900" />
+        <div className="p-8 flex items-center gap-5 border-b border-slate-100 bg-white/80 backdrop-blur-xl sticky top-0 z-20">
+            <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-xl transition-all active:scale-95 text-slate-400 hover:text-slate-900 border border-slate-100">
+                <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-                <h1 className="text-lg font-bold text-amber-950 serif">Case-Analytikeren</h1>
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-700/60">Din faglige AI-assistent</p>
+                <h1 className="text-xl font-[900] text-slate-900 tracking-tight">Case Analyser</h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">AI-Drevet Analyse</span>
+                </div>
             </div>
         </div>
-        <div className="px-6 pt-6 -mb-4">
-            <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 opacity-[0.03] group-hover:opacity-[0.1] transition-opacity">
-                    <Scale className="w-12 h-12" />
+        
+        <div className="px-6 pt-6">
+            <div className="p-6 bg-indigo-50/50 border border-indigo-100 rounded-[2rem] relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform duration-700">
+                    <Scale className="w-16 h-16 text-indigo-900" />
                 </div>
-                <h4 className="text-[9px] font-black uppercase tracking-widest text-amber-900/60 mb-2 flex items-center gap-2">
-                    Peter Bundesens definition
-                </h4>
-                <p className="text-[11px] text-amber-950 font-medium leading-relaxed italic">
-                    "Det er en oplevet, uønsket social livssituation, som der er en udbredt opfattelse om, at politiske institutioner har et ansvar for at afhjælpe. Løsningsindsatsen kan udføres af de politiske institutioner alene eller i samarbejde med andre aktører"
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-sm border border-indigo-100">
+                        <Quote className="w-4 h-4 text-indigo-600" />
+                    </div>
+                    <h4 className="text-[9px] font-black uppercase tracking-widest text-indigo-900/60">
+                        Faglig Definition
+                    </h4>
+                </div>
+                <p className="text-[11px] text-slate-600 font-semibold leading-relaxed italic relative z-10">
+                    "Det er en uønsket social livssituation, som politiske institutioner har et ansvar for at afhjælpe..."
                 </p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-indigo-300 mt-2">Peter Bundesen</p>
             </div>
         </div>
 
@@ -563,37 +575,40 @@ const CaseAnalyserPage: React.FC = () => {
                                     <div 
                                         key={item.id} 
                                         onClick={() => loadAnalysis(item)}
-                                        className="p-4 bg-white border border-amber-50 rounded-2xl shadow-sm hover:shadow-md hover:border-amber-200 transition-all cursor-pointer group"
+                                        className="p-5 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100 transition-all cursor-pointer group"
                                     >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                                                    <FileText className="w-4 h-4" />
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner">
+                                                    <FileText className="w-5 h-5" />
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-amber-950 truncate max-w-[180px]">{item.fileName}</p>
-                                                    <p className="text-[9px] text-slate-400 font-medium">
-                                                        {item.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'long' })}
-                                                    </p>
+                                                <div className="min-w-0">
+                                                    <p className="text-[13px] font-black text-slate-900 truncate pr-2 group-hover:text-indigo-600 transition-colors">{item.fileName}</p>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <Clock className="w-3 h-3 text-slate-300" />
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                                                            {item.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'long' })}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <button 
                                                 onClick={(e) => deleteHistoryItem(item.id, e)}
-                                                className="p-1.5 opacity-0 group-hover:opacity-100 hover:text-rose-500 transition-all"
+                                                className="w-8 h-8 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0"
                                             >
-                                                <X className="w-3.5 h-3.5" />
+                                                <X className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center text-center p-8 opacity-40 py-20">
-                                <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-200 mb-6">
-                                    <Search className="w-8 h-8" />
+                            <div className="flex flex-col items-center justify-center text-center p-10 py-20 bg-slate-50/50 rounded-[3rem] border border-dashed border-slate-200">
+                                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-slate-200 mb-6 shadow-sm">
+                                    <History className="w-8 h-8" />
                                 </div>
-                                <p className="text-sm font-bold text-amber-950 mb-2">Ingen sags-historik</p>
-                                <p className="text-xs text-slate-500 text-balance">Dine gennemgåede cases vil dukke op her, når du uploader din første fil.</p>
+                                <h4 className="text-sm font-black text-slate-900 mb-2">Ingen historik</h4>
+                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">Upload din første case for at starte din historik.</p>
                             </div>
                         )}
                     </div>
@@ -619,28 +634,36 @@ const CaseAnalyserPage: React.FC = () => {
             ) : analysis ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 animate-ink pb-10">
                     {/* Summary */}
-                    <section className="bg-amber-50/50 p-5 rounded-2xl border border-amber-100">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-900/60 mb-3 flex items-center gap-2">
-                           <BookOpen className="w-3 h-3" /> Faglig Opsummering
+                    <section className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                            <Sparkles className="w-20 h-20" />
+                        </div>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-4 flex items-center gap-2">
+                           <BookOpen className="w-3.5 h-3.5" /> Faglig Konklusion
                         </h3>
-                        <p className="text-sm text-amber-950 leading-relaxed italic">
+                        <p className="text-sm font-medium leading-relaxed italic text-indigo-50/90 relative z-10">
                             "{analysis.sammenfatning}"
                         </p>
                     </section>
 
                     {/* Personer & Roller */}
                     <section>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1 flex items-center gap-2">
-                           <Users className="w-3.5 h-3.5" /> Personer & Roller
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5 px-2 flex items-center gap-2">
+                           <Users className="w-4 h-4 text-indigo-500" /> Persongalleri
                         </h3>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {analysis.personer.map((p, i) => (
-                                <div key={i} className="p-4 bg-white border border-amber-50 rounded-2xl shadow-sm hover:shadow-md transition-all group">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-bold text-amber-950">{p.navn}</span>
-                                        <span className="text-[8px] font-black uppercase bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">{p.rolle}</span>
+                                <div key={i} className="p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500 group">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                                {i + 1}
+                                            </div>
+                                            <span className="text-sm font-[900] text-slate-900 tracking-tight">{p.navn}</span>
+                                        </div>
+                                        <span className="text-[8px] font-black uppercase bg-slate-100 text-slate-500 px-3 py-1 rounded-full group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all">{p.rolle}</span>
                                     </div>
-                                    <p className="text-xs text-slate-500 leading-relaxed">{p.beskrivelse}</p>
+                                    <p className="text-[12px] text-slate-500 leading-relaxed font-medium pl-11">{p.beskrivelse}</p>
                                 </div>
                             ))}
                         </div>
@@ -692,10 +715,10 @@ const CaseAnalyserPage: React.FC = () => {
 
                     {/* Relevante Paragraffer */}
                     <section>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1 flex items-center gap-2">
-                           <Scale className="w-3.5 h-3.5" /> Juridisk Fundament
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5 px-2 flex items-center gap-2">
+                           <Scale className="w-4 h-4 text-indigo-500" /> Juridisk Fundament
                         </h3>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {analysis.relevanteParagraffer.map((p, i) => {
                                 const lawId = getLawIdFromName(p.lov);
                                 // Strip anything in parentheses and add a period at the end
@@ -705,27 +728,30 @@ const CaseAnalyserPage: React.FC = () => {
                                 const paragraphParam = encodeURIComponent(rawPara);
                                 
                                 return (
-                                    <div key={i} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 p-3 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
-                                            <Scale className="w-12 h-12" />
+                                    <div key={i} className="p-6 bg-white border border-slate-100 rounded-[2rem] relative overflow-hidden group shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500">
+                                        <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:scale-110 transition-transform duration-700">
+                                            <Scale className="w-16 h-16" />
                                         </div>
                                         <div className="relative z-10">
-                                            <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center justify-between mb-3">
                                                 <button 
                                                     onClick={() => lawId && router.push(`/lov-portal/view/${lawId}?para=${paragraphParam}`)}
-                                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all
+                                                    className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all
                                                         ${lawId 
-                                                            ? 'bg-amber-950 text-white hover:bg-black active:scale-95' 
-                                                            : 'bg-slate-200 text-slate-500 cursor-default'}`}
+                                                            ? 'bg-slate-900 text-white hover:bg-indigo-600 active:scale-95 shadow-lg shadow-slate-200' 
+                                                            : 'bg-slate-50 text-slate-400 cursor-default border border-slate-100'}`}
                                                 >
                                                     {p.lov} {p.paragraf}
                                                     {lawId && <ChevronRight className="w-3 h-3" />}
                                                 </button>
                                                 {lawId && (
-                                                    <span className="text-[8px] font-black uppercase text-amber-900/40">Vis i Lov-portal</span>
+                                                    <div className="flex items-center gap-1.5 opacity-40">
+                                                        <div className="w-1 h-1 rounded-full bg-indigo-600" />
+                                                        <span className="text-[8px] font-black uppercase text-slate-500">Lov-portal</span>
+                                                    </div>
                                                 )}
                                             </div>
-                                            <p className="text-[11px] text-slate-500 leading-relaxed">{p.relevans}</p>
+                                            <p className="text-[12px] text-slate-500 leading-relaxed font-medium">{p.relevans}</p>
                                         </div>
                                     </div>
                                 );
@@ -835,15 +861,19 @@ const CaseAnalyserPage: React.FC = () => {
 
                     {/* Tidslinje */}
                     <section>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1 flex items-center gap-2">
-                           <CalendarDays className="w-3.5 h-3.5" /> Hændelsesforløb
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 px-2 flex items-center gap-2">
+                           <CalendarDays className="w-4 h-4 text-indigo-500" /> Hændelsesforløb
                         </h3>
-                        <div className="space-y-6 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-amber-100">
+                        <div className="space-y-0 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
                             {analysis.tidslinje.map((t, i) => (
-                                <div key={i} className="relative pl-6">
-                                    <div className="absolute left-0 top-1.5 w-3.5 h-3.5 bg-white border-2 border-amber-900 rounded-full z-10" />
-                                    <p className="text-[9px] font-black text-amber-900 uppercase mb-1">{t.dato}</p>
-                                    <p className="text-xs text-slate-600 leading-normal">{t.hændelse}</p>
+                                <div key={i} className="relative pl-10 pb-8 last:pb-0 group">
+                                    <div className="absolute left-0 top-1 w-6 h-6 bg-white border-2 border-slate-200 rounded-full z-10 flex items-center justify-center group-hover:border-indigo-600 transition-colors duration-500 shadow-sm">
+                                        <div className="w-1.5 h-1.5 bg-slate-200 rounded-full group-hover:bg-indigo-600 transition-colors" />
+                                    </div>
+                                    <div className="bg-white p-4 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/50 transition-all">
+                                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1.5">{t.dato}</p>
+                                        <p className="text-[13px] text-slate-600 font-medium leading-relaxed">{t.hændelse}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -885,19 +915,23 @@ const CaseAnalyserPage: React.FC = () => {
         <AnimatePresence mode="wait">
             {!pdfUrl ? (
                 <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="max-w-xl w-full"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-2xl w-full"
                 >
-                    <div className="text-center mb-10">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-100 rounded-full mb-6">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-900">Nyt Værktøj</span>
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 mb-8">
+                            <div className="w-6 h-6 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                                <Sparkles className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="text-[11px] font-[900] uppercase tracking-[0.2em] text-slate-900">Premium Workspace</span>
                         </div>
-                        <h2 className="text-4xl font-bold text-amber-950 serif mb-4">Case-Analytikeren</h2>
-                        <p className="text-slate-500 text-lg italic leading-relaxed">
-                            Upload en PDF af din case og lad AI identificere de faglige nøglepunkter på få sekunder.
+                        <h2 className="text-5xl md:text-6xl font-[900] text-slate-900 tracking-tight mb-6">
+                            Lynhurtig <br />
+                            <span className="text-indigo-600">Sagsanalyse</span>
+                        </h2>
+                        <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-lg mx-auto">
+                            Lad AI gennemgå dine sagsakter for dig. Identificér paragraffer, hændelser og videnshuller på få sekunder.
                         </p>
                     </div>
 
@@ -905,16 +939,27 @@ const CaseAnalyserPage: React.FC = () => {
                         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                         onDragLeave={() => setIsDragging(false)}
                         onDrop={handleDrop}
-                        className={`group relative flex flex-col items-center justify-center border-2 border-dashed rounded-[3rem] p-20 cursor-pointer transition-all duration-500 h-[400px]
-                            ${isDragging ? 'border-amber-500 bg-amber-50/50 scale-[1.02]' : 'border-amber-100 bg-white hover:border-amber-300 hover:bg-amber-50/20'}`}
+                        className={`group relative flex flex-col items-center justify-center border-2 border-dashed rounded-[4rem] p-12 md:p-20 cursor-pointer transition-all duration-700 h-[450px]
+                            ${isDragging 
+                                ? 'border-indigo-600 bg-indigo-50/30 scale-[1.02] shadow-2xl shadow-indigo-100' 
+                                : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50/50 hover:shadow-2xl hover:shadow-slate-200/50'}`}
                     >
-                        <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center mb-8 transition-transform duration-500 group-hover:scale-110 shadow-lg ${isDragging ? 'bg-amber-950 text-white' : 'bg-amber-50 text-amber-200 group-hover:bg-amber-100'}`}>
+                        <div className={`w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-10 transition-all duration-700 shadow-2xl ${
+                            isDragging 
+                                ? 'bg-indigo-600 text-white scale-110 rotate-6' 
+                                : 'bg-slate-900 text-white group-hover:bg-indigo-600 group-hover:-rotate-3'
+                        }`}>
                             <UploadCloud className="w-12 h-12" />
                         </div>
-                        <div className="text-center space-y-2">
-                            <p className="text-xl font-bold text-amber-950 serif">Tryk eller træk din PDF her</p>
-                            <p className="text-sm text-slate-400">Understøtter kun .pdf filer</p>
+                        <div className="text-center space-y-3">
+                            <p className="text-2xl font-[900] text-slate-900 tracking-tight">Tryk eller træk din PDF her</p>
+                            <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Understøtter sagsakter op til 20 MB</p>
                         </div>
+
+                        {/* Decoration */}
+                        <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-indigo-600/5 rounded-full blur-2xl group-hover:scale-150 transition-all" />
+                        <div className="absolute -top-6 -left-6 w-32 h-32 bg-amber-400/5 rounded-full blur-2xl group-hover:scale-150 transition-all" />
+
                         <input
                             type="file"
                             className="hidden"
@@ -924,15 +969,17 @@ const CaseAnalyserPage: React.FC = () => {
                         />
                     </label>
 
-                    <div className="grid grid-cols-3 gap-6 mt-12">
+                    <div className="grid grid-cols-3 gap-8 mt-16">
                         {[
-                            { icon: <Users className="w-5 h-5" />, label: "Person-træning" },
-                            { icon: <Scale className="w-5 h-5" />, label: "Juridisk overblik" },
-                            { icon: <AlertCircle className="w-5 h-5" />, label: "Problem-identifikation" }
+                            { icon: <Users className="w-5 h-5" />, label: "Persongalleri" },
+                            { icon: <Scale className="w-5 h-5" />, label: "Paragraffer" },
+                            { icon: <CalendarDays className="w-5 h-5" />, label: "Tidslinje" }
                         ].map((item, i) => (
-                            <div key={i} className="flex flex-col items-center gap-3 text-amber-900/40">
-                                <div className="p-3 bg-white rounded-xl border border-amber-50 shadow-sm">{item.icon}</div>
-                                <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+                            <div key={i} className="flex flex-col items-center gap-4 group cursor-default">
+                                <div className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-100 group-hover:shadow-md transition-all">
+                                    {item.icon}
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-slate-900 transition-colors">{item.label}</span>
                             </div>
                         ))}
                     </div>

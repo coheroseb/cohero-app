@@ -192,6 +192,9 @@ export interface UserProfile {
   selectedElectives?: Record<string, string>;
   categoryStudyPlans?: Record<string, { plan: CategoryStudyPlan; checkedSteps: string[] }>;
   categoryResearch?: Record<string, ResearchDiscoveryData>;
+  customCurriculum?: any;
+  oneNoteAuth?: any;
+  acceptedTermsVersion?: string;
 }
 
 export interface StudentCardVerification {
@@ -426,6 +429,7 @@ export const ExamArchitectInputSchema = z.object({
     semester: z.string(),
     topic: z.string(),
     problemStatement: z.string(),
+    characterCount: z.string().optional(),
     lawContext: z.string().optional(),
     seminarContext: z.string().optional(),
     profession: z.string().optional(),
@@ -436,6 +440,7 @@ export const PromptInputSchema = z.object({
     semester: z.string(),
     topic: z.string(),
     problemStatement: z.string(),
+    characterCount: z.string().optional(),
     lawContext: z.string().optional(),
     seminarContext: z.string().optional(),
     profession: z.string().optional(),
@@ -2055,3 +2060,27 @@ export type GenerateLearningObjectivesInput = z.infer<typeof GenerateLearningObj
 export type GenerateLearningObjectivesData = z.infer<typeof GenerateLearningObjectivesDataSchema>;
 export type GenerateLearningObjectivesOutput = z.infer<typeof GenerateLearningObjectivesOutputSchema>;
 
+export const AnalyzeSyllabusInputSchema = z.object({
+  userId: z.string(),
+  materialId: z.string(),
+  fileUrl: z.string(),
+  fileName: z.string(),
+  learningGoals: z.array(z.string()),
+  profession: z.string().optional(),
+});
+
+export type AnalyzeSyllabusInput = z.infer<typeof AnalyzeSyllabusInputSchema>;
+
+export const AnalyzeSyllabusOutputSchema = z.object({
+  data: z.object({
+    summary: z.string(),
+    goalMapping: z.array(z.object({
+        goalIndex: z.number(),
+        reason: z.string(),
+        pages: z.string()
+    }))
+  }),
+  usage: UsageSchema
+});
+
+export type AnalyzeSyllabusOutput = z.infer<typeof AnalyzeSyllabusOutputSchema>;

@@ -7,13 +7,13 @@ export const weeklyAdminReport = functions.pubsub
   .schedule('every sunday 09:00')
   .timeZone('Europe/Copenhagen')
   .onRun(async (context) => {
-    const db = admin.firestore();
+    const db = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
     
     // 1. Fetch data
     const usersSnap = await db.collection('users').where('role', '==', 'user').get();
     const aiUsageDoc = await db.collection('stats').doc('ai_usage').get();
     
-    const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+    const allUsers = usersSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as any));
     const totalUsers = allUsers.length;
     
     const now = new Date();
@@ -35,12 +35,12 @@ export const weeklyAdminReport = functions.pubsub
         return null;
     };
 
-    const dau = allUsers.filter(u => {
+    const dau = allUsers.filter((u: any) => {
         const lastActivity = getLastActivity(u);
         return lastActivity && lastActivity > d1;
     }).length;
     
-    const mau = allUsers.filter(u => {
+    const mau = allUsers.filter((u: any) => {
         const lastActivity = getLastActivity(u);
         return lastActivity && lastActivity > d30;
     }).length;
@@ -55,12 +55,12 @@ export const weeklyAdminReport = functions.pubsub
 
     const stickiness = mau > 0 ? (dau / mau) * 100 : 0;
     
-    const usersOlderThan30d = allUsers.filter(u => {
+    const usersOlderThan30d = allUsers.filter((u: any) => {
         const createdAt = u.createdAt ? (typeof u.createdAt.toDate === 'function' ? u.createdAt.toDate() : new Date(u.createdAt)) : null;
         return createdAt && createdAt < d30;
     });
     
-    const churned30d = usersOlderThan30d.filter(u => {
+    const churned30d = usersOlderThan30d.filter((u: any) => {
         const lastActivity = getLastActivity(u);
         return !lastActivity || lastActivity < d30;
     }).length;
@@ -68,7 +68,7 @@ export const weeklyAdminReport = functions.pubsub
     const churnRate30d = usersOlderThan30d.length > 0 ? (churned30d / usersOlderThan30d.length) * 100 : 0;
     const growth30d = usersOlderThan30d.length > 0 ? ((totalUsers - usersOlderThan30d.length) / usersOlderThan30d.length) * 100 : 100;
 
-    const riskUsersCount = allUsers.filter(u => {
+    const riskUsersCount = allUsers.filter((u: any) => {
         const isSubscriber = u.membership === 'Kollega+' && u.stripeSubscriptionStatus === 'active';
         if (!isSubscriber) return false;
         const lastActivity = getLastActivity(u);

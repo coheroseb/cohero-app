@@ -7,7 +7,7 @@ export const weeklyStudyCompanion = functions.pubsub
   .schedule('every tuesday 10:00') // Weekly study boost every Tuesday
   .timeZone('Europe/Copenhagen')
   .onRun(async (context) => {
-    const db = admin.firestore();
+    const db = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
     const resend = new Resend(process.env.RESEND_API_KEY);
     
     // Get all users who are students

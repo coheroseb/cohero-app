@@ -10,7 +10,7 @@ export const incrementUserSemesters = functions.pubsub
   .schedule("0 0 1 2,9 *")
   .timeZone("Europe/Copenhagen")
   .onRun(async (context) => {
-    const firestore = admin.firestore();
+    const firestore = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
     const usersRef = firestore.collection("users");
     
     // Process only students who are not yet qualified

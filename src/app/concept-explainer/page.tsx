@@ -39,15 +39,17 @@ function Section({ title, icon, children, open: defaultOpen = false }: {
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-t border-amber-50">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-7 py-4 hover:bg-amber-50/40 transition-colors">
-        <span className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-amber-950/40">{icon}{title}</span>
-        {open ? <ChevronUp className="w-3.5 h-3.5 text-amber-200" /> : <ChevronDown className="w-3.5 h-3.5 text-amber-200" />}
+    <div className="border-t border-slate-100">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-8 py-5 hover:bg-slate-50/50 transition-colors">
+        <span className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{icon}{title}</span>
+        <div className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`}>
+           <ChevronDown className="w-4 h-4 text-slate-300" />
+        </div>
       </button>
       <AnimatePresence>
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="px-7 pb-6">{children}</div>
+            <div className="px-8 pb-8">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -63,44 +65,49 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400"><BrainCircuit className="w-3.5 h-3.5" /></div>
-        <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/30">Guiden</span>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center text-amber-400 shadow-sm"><BrainCircuit className="w-4 h-4" /></div>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Akademisk Analyse</span>
       </div>
-      <div className="bg-white border border-amber-100 rounded-[2rem] overflow-hidden shadow-lg shadow-amber-950/5">
+      <div className="bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] rounded-[2.5rem] overflow-hidden group hover:border-slate-200 transition-all duration-500">
         {/* Header */}
-        <div className="px-7 py-5 bg-amber-950 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-950 to-amber-900" />
+        <div className="px-8 pt-8 pb-6 bg-slate-50/50 border-b border-slate-100 relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-[8px] font-black uppercase tracking-widest text-amber-400/60 mb-1">Faglig analyse</p>
-            <h3 className="text-xl font-black text-white serif">{conceptName}</h3>
-            {ex.etymology && <p className="text-amber-200/50 text-[10px] italic mt-1 line-clamp-1">{stripHtml(ex.etymology).substring(0, 100)}…</p>}
+            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2 flex items-center gap-2">
+               <Sparkles className="w-3 h-3" />
+               Faglig Dybtjek
+            </p>
+            <h3 className="text-3xl font-black text-slate-950 serif tracking-tight">{conceptName}</h3>
+            {ex.etymology && <p className="text-slate-400 text-xs font-medium mt-3 italic leading-relaxed">{stripHtml(ex.etymology).substring(0, 150)}…</p>}
           </div>
         </div>
 
         {/* Definition */}
-        <div className="px-7 py-7">
+        <div className="px-8 py-8">
           {ex.definition ? (
-            <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed font-medium serif" 
+            <div className="prose prose-sm prose-slate max-w-none text-slate-700 leading-[1.8] font-medium serif text-base" 
                  dangerouslySetInnerHTML={{ __html: marked.parse(ex.definition) as string }} />
           ) : (
-            <div className="space-y-3 animate-pulse">
-              <div className="h-4 bg-amber-100 rounded-full w-3/4" />
-              <div className="h-4 bg-amber-100 rounded-full w-full" />
-              <div className="h-4 bg-amber-100 rounded-full w-5/6" />
+            <div className="space-y-4 animate-pulse">
+              <div className="h-4 bg-slate-100 rounded-full w-3/4" />
+              <div className="h-4 bg-slate-100 rounded-full w-full" />
+              <div className="h-4 bg-slate-100 rounded-full w-5/6" />
             </div>
           )}
         </div>
 
         {/* Disambiguation angles */}
         {ex.disambiguation && ex.disambiguation.length > 0 && (
-          <div className="px-7 pb-5">
-            <p className="text-[9px] font-black uppercase tracking-widest text-amber-950/30 mb-2">Vælg en vinkel</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="px-8 pb-8">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 mb-4">Udforsk flere vinkler</p>
+            <div className="flex flex-wrap gap-2.5">
               {ex.disambiguation.map((a, i) => (
-                <button key={i} onClick={() => onAngleClick(a.query)}
-                  className="px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-bold text-amber-950 hover:bg-amber-100 transition-colors">
-                  {a.title} →
+                <button 
+                  key={i} 
+                  onClick={() => onAngleClick(a.query || a.question)}
+                  className="px-5 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-black text-slate-600 hover:bg-white hover:border-indigo-200 hover:text-indigo-600 transition-all active:scale-95 shadow-sm"
+                >
+                  {a.title || a.label}
                 </button>
               ))}
             </div>
@@ -194,20 +201,20 @@ function FollowUpMsg({ msg }: { msg: ChatMsg }) {
   
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400"><BrainCircuit className="w-3.5 h-3.5" /></div>
-        <span className="text-[9px] font-black uppercase tracking-widest text-amber-950/30">Guiden</span>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center text-amber-400 shadow-sm"><BrainCircuit className="w-4 h-4" /></div>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Opfølgning</span>
       </div>
-      <div className="bg-white border border-amber-100 rounded-[2rem] px-7 py-6 shadow-sm min-h-[80px] flex flex-col justify-center">
+      <div className="bg-white border border-slate-100 rounded-[2.5rem] px-8 py-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] min-h-[100px] flex flex-col justify-center">
         {isEmpty ? (
           <div className="flex items-center gap-2">
             {[0, 1, 2].map(i => (
-              <motion.div key={i} className="w-1.5 h-1.5 bg-amber-200 rounded-full"
-                animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
+              <motion.div key={i} className="w-2 h-2 bg-indigo-200 rounded-full"
+                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }} transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }} />
             ))}
           </div>
         ) : (
-          <div className="prose prose-sm prose-amber max-w-none text-slate-700 leading-relaxed space-y-4" 
+          <div className="prose prose-sm prose-slate max-w-none text-slate-700 leading-[1.8] font-medium text-base serif" 
                dangerouslySetInnerHTML={{ __html: marked.parse(msg.text || '') as string }} />
         )}
       </div>
@@ -220,8 +227,12 @@ function FollowUpMsg({ msg }: { msg: ChatMsg }) {
 function UserBubble({ msg }: { msg: ChatMsg }) {
   return (
     <div className="flex justify-end w-full">
-      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-lg bg-amber-950 text-white rounded-[2rem] rounded-tr-lg px-6 py-4 shadow-lg">
-        <p className="text-sm font-semibold leading-relaxed">{msg.text}</p>
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }} 
+        animate={{ opacity: 1, x: 0 }} 
+        className="max-w-lg bg-slate-900 text-white rounded-[2.5rem] rounded-tr-lg px-8 py-5 shadow-xl shadow-slate-900/10 border border-slate-800"
+      >
+        <p className="text-lg font-bold leading-relaxed tracking-tight">{msg.text}</p>
       </motion.div>
     </div>
   );
@@ -240,54 +251,40 @@ function Thinking() {
   }, []);
 
   const steps = [
-    'Analyserer begrebet...',
-    'Finder faglig kontekst...',
-    'Søger i vidensbasen...',
-    'Slår juridisk forankring op...',
-    'Formulerer forklaring...'
+    'Konsulterer retsgrundlaget...',
+    'Strukturerer analysen...',
+    'Finder praktiske eksempler...',
+    'Formulerer forklaringen...',
+    'Gør det komplekse enkelt...'
   ];
 
   return (
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
-      className="max-w-2xl w-full py-10"
+      className="max-w-2xl w-full py-12"
     >
-      <div className="flex flex-col items-center gap-6">
-        {/* Animated Icon */}
+      <div className="flex flex-col items-center gap-8">
         <div className="relative">
-          <div className="w-16 h-16 bg-amber-50 rounded-[2rem] flex items-center justify-center border border-amber-100/50 shadow-sm">
-            <BrainCircuit className="w-8 h-8 text-amber-400" />
+          <div className="w-20 h-20 bg-white rounded-[2.5rem] flex items-center justify-center border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)]">
+             <BrainCircuit className="w-8 h-8 text-slate-900" />
           </div>
-          <motion.div 
-            className="absolute inset-0 bg-amber-200/20 rounded-[2rem]"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
+          <div className="absolute inset-0 w-20 h-20 bg-indigo-500/10 rounded-[2.5rem] animate-ping" />
         </div>
-
-        {/* Step Text */}
         <div className="flex flex-col items-center gap-3">
-          <AnimatePresence mode="wait">
-            <motion.p 
-              key={step}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              className="text-2xl font-black text-amber-950/80 serif italic tracking-tight"
-            >
+           <div className="flex items-center gap-2">
+             {[0, 1, 2].map(i => (
+               <motion.div 
+                 key={i} 
+                 className="w-1.5 h-1.5 bg-indigo-400 rounded-full"
+                 animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.3, 1, 0.3] }}
+                 transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+               />
+             ))}
+           </div>
+           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">
               {steps[step]}
-            </motion.p>
-          </AnimatePresence>
-          
-          <div className="flex gap-1">
-            {[0, 1, 2, 3, 4].map(i => (
-              <motion.div 
-                key={i} 
-                className={`h-1 rounded-full transition-all duration-700 ${i === step ? 'w-8 bg-amber-400' : 'w-2 bg-amber-100'}`}
-              />
-            ))}
-          </div>
+           </span>
         </div>
       </div>
     </motion.div>
@@ -738,39 +735,41 @@ function ConceptChatContent() {
   }, [searchParams, sendMessage, userProfile, firestore]);
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-[#FDFCF8] z-[9999]">
+    <div className="fixed inset-0 flex flex-col bg-[#F8FAFC] z-[9999]">
 
       {/* ── Header ─────────────────────────────────────── */}
-      <header className="shrink-0 h-16 bg-white/95 backdrop-blur-md border-b border-amber-50 flex items-center justify-between px-6 z-50">
-        <div className="flex items-center gap-4">
-          <Link href="/portal" className="p-2.5 bg-amber-50 text-amber-900 rounded-xl hover:bg-amber-100 transition-all border border-amber-100">
-            <ArrowLeft className="w-4 h-4" />
+      <header className="shrink-0 h-20 bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 flex items-center justify-between px-8 z-50">
+        <div className="flex items-center gap-6">
+          <Link href="/portal" className="p-3 bg-white text-slate-900 rounded-2xl hover:bg-slate-50 transition-all border border-slate-200 shadow-sm active:scale-95">
+            <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-md">
-              <Brain className="w-4 h-4" />
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-400 shadow-xl shadow-slate-900/10">
+              <BrainCircuit className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-sm font-black text-amber-950 leading-none">Guiden</h1>
-              {currentConceptName && <p className="text-[9px] text-amber-600 font-bold uppercase tracking-widest mt-0.5 truncate max-w-[180px]">{currentConceptName}</p>}
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Værktøj</p>
+               <h1 className="text-xl font-black text-slate-900 serif tracking-tight">Begrebsforklarer</h1>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {hasConcept && (
-            <button onClick={startNew}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-950 hover:bg-amber-100 transition-all">
-              <Plus className="w-3.5 h-3.5" /> Nyt begreb
-            </button>
-          )}
-          <button onClick={() => setShowHistory(!showHistory)}
-            className={`p-2.5 rounded-xl border transition-all ${showHistory ? 'bg-amber-950 text-white border-amber-950' : 'bg-white text-slate-400 border-amber-100 hover:bg-amber-50'}`}>
-            <History className="w-4 h-4" />
-          </button>
-          <Link href="/upgrade" prefetch={false} className="hidden sm:flex items-center gap-2 px-4 py-2 bg-amber-950 text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-900 transition-all">
-            Opgrader
-          </Link>
+        <div className="flex items-center gap-4">
+           <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Online</span>
+           </div>
+           <button onClick={() => setShowHistory(!showHistory)}
+             className={`p-3 rounded-2xl border transition-all ${showHistory ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50 shadow-sm'}`}>
+            <History className="w-5 h-5" />
+           </button>
+           <button 
+             onClick={startNew}
+             className="p-3 bg-white text-slate-400 hover:text-rose-600 rounded-2xl hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all shadow-sm active:scale-95 group"
+             title="Start forfra"
+           >
+             <RotateCcw className="w-5 h-5 group-hover:rotate-[-90deg] transition-transform duration-500" />
+           </button>
         </div>
       </header>
       
@@ -784,102 +783,124 @@ function ConceptChatContent() {
         }}
       />
 
-      {/* ── Messages area ──────────────────────────────── */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#FDFCF8] relative">
-        {loading && (
-          <div className="absolute top-0 left-0 right-0 h-1 z-50 overflow-hidden bg-amber-50">
-            <motion.div 
-              initial={{ x: '-100%' }}
-              animate={{ x: '100%' }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-              className="h-full w-1/3 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_10px_rgba(251,191,36,0.5)]"
-            />
-          </div>
-        )}
-        <div className="max-w-4xl mx-auto px-4 py-8 space-y-10 flex flex-col items-center">
-          <div className="w-full max-w-2xl space-y-8">
-          {messages.length === 0 && !loading && (
-            <EmptyState onPick={sendMessage} />
-          )}
+      {/* ── Main Chat Area ─────────────────────────────── */}
+      <main className="grow overflow-y-auto pt-10 pb-40 px-6 bg-[#F8FAFC]">
+        <div className="max-w-3xl mx-auto space-y-12">
+          
+          <AnimatePresence mode="popLayout">
+            {messages.length === 0 && (
+               <motion.div 
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, scale: 0.95 }}
+                 className="py-20 flex flex-col items-center text-center space-y-8"
+               >
+                  <div className="w-24 h-24 bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center justify-center text-slate-900 relative">
+                     <Brain className="w-12 h-12" />
+                     <div className="absolute -top-2 -right-2 w-10 h-10 bg-amber-400 rounded-2xl flex items-center justify-center text-amber-950 shadow-lg rotate-12">
+                        <Sparkles className="w-5 h-5" />
+                     </div>
+                  </div>
+                  <div className="space-y-3">
+                     <h2 className="text-4xl font-black text-slate-950 serif tracking-tight">Hvad vil du forstå i dag?</h2>
+                     <p className="text-slate-400 font-medium max-w-md mx-auto">Indtast et juridisk eller fagligt begreb, og lad AI'en bryde det ned for dig.</p>
+                  </div>
 
-          {messages.map(msg => (
-            <div key={msg.id} className="w-full">
-              {msg.role === 'user' && <UserBubble msg={msg} />}
-              {msg.role === 'concept' && <ConceptCard msg={msg} onAngleClick={sendMessage} />}
-              {msg.role === 'followup' && <FollowUpMsg msg={msg} />}
+                  {/* Suggestions */}
+                  <div className="flex flex-wrap justify-center gap-3 max-w-xl">
+                     {['Retssikkerhed', 'Habilitet', 'Magtfordrejning', 'Socialret', 'Forvaltningsloven'].map((term) => (
+                        <button
+                          key={term}
+                          onClick={() => sendMessage(term)}
+                          className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-xs font-bold text-slate-600 hover:border-indigo-200 hover:text-indigo-600 hover:bg-slate-50/50 transition-all active:scale-95 shadow-sm"
+                        >
+                           {term}
+                        </button>
+                     ))}
+                  </div>
+               </motion.div>
+            )}
+          </AnimatePresence>
+
+          {messages.map((m) => (
+            <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} gap-4`}>
+              {m.role === 'user' && (
+                <div className="max-w-[80%] bg-slate-900 text-white px-8 py-5 rounded-[2.5rem] rounded-tr-lg font-bold text-lg shadow-xl shadow-slate-900/10 border border-slate-800">
+                  {m.text}
+                </div>
+              )}
+              {m.role === 'concept' && <ConceptCard msg={m} onAngleClick={sendMessage} />}
+              {m.role === 'followup' && <FollowUpMsg msg={m} />}
             </div>
           ))}
+          
+          {loading && <Thinking />}
+          
+          <div ref={bottomRef} className="h-10" />
+        </div>
+      </main>
 
-          {loading && (messages[messages.length - 1]?.role === 'user' || messages[messages.length - 1]?.role === 'followup') && <Thinking />}
-
-
-
-          </div>
-          <div ref={bottomRef} />
+      {/* ── Input Area ─────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 p-8 z-50 pointer-events-none">
+        <div className="max-w-3xl mx-auto w-full pointer-events-auto">
+          <form 
+            onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
+            className="bg-white/80 backdrop-blur-3xl p-3 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.15)] border border-white relative group transition-all duration-500 focus-within:ring-4 focus-within:ring-indigo-500/10"
+          >
+            <div className="flex items-center gap-3">
+               <div className="w-12 h-12 bg-slate-50 rounded-[1.5rem] flex items-center justify-center text-slate-400 group-focus-within:text-indigo-600 group-focus-within:bg-indigo-50 transition-all duration-500">
+                  <BrainCircuit className="w-6 h-6" />
+               </div>
+               <input
+                 ref={inputRef}
+                 type="text"
+                 value={input}
+                 onChange={(e) => setInput(e.target.value)}
+                 placeholder={hasConcept ? `Spørg mere om ${currentConceptName}…` : "Indtast begreb (f.eks. Habilitet)..."}
+                 disabled={loading}
+                 className="grow bg-transparent border-none focus:ring-0 text-slate-900 placeholder:text-slate-400 font-bold text-lg px-2 h-14"
+               />
+               <button 
+                 type="submit"
+                 disabled={loading || !input.trim()}
+                 className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center transition-all duration-500 shadow-lg ${
+                   loading || !input.trim() 
+                   ? 'bg-slate-100 text-slate-300' 
+                   : 'bg-slate-900 text-white hover:scale-105 active:scale-95 shadow-slate-900/20'
+                 }`}
+               >
+                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
+               </button>
+            </div>
+          </form>
+          
+          {/* Limit indicator */}
+          {userProfile?.membership === 'Gratis Plan' && (
+             <p className="text-center mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                {20 - (userProfile?.conceptExplainerUsage || 0)} gratis forklaringer tilbage
+             </p>
+          )}
         </div>
       </div>
 
-      {/* ── Input bar ──────────────────────────────────── */}
-      <div className="shrink-0 border-t border-amber-50 bg-white/95 backdrop-blur-xl px-4 py-4 pb-[env(safe-area-inset-bottom,16px)]">
-        <form
-          onSubmit={e => { e.preventDefault(); sendMessage(input); }}
-          className="max-w-3xl mx-auto flex items-center gap-3"
-        >
-          {hasConcept && (
-            <button
-              type="button"
-              onClick={startNew}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-slate-100 transition-colors"
-              title="Start ny samtale"
-            >
-              <RotateCcw className="w-3 h-3 text-slate-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Nyt begreb</span>
-            </button>
-          )}
-          {hasConcept && (
-            <div className="hidden sm:flex shrink-0 items-center gap-1.5 px-3 py-2 bg-amber-50 border border-amber-100 rounded-2xl">
-              <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-amber-800 max-w-[100px] truncate">{currentConceptName}</span>
-            </div>
-          )}
-          <div className="relative flex-1">
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder={hasConcept ? `Spørg mere om ${currentConceptName}…` : 'Søg et begreb, stil et spørgsmål…'}
-              className="w-full pl-5 pr-14 py-4 bg-white border-2 border-amber-100 rounded-2xl text-sm font-medium text-amber-950 focus:border-amber-950 focus:ring-4 focus:ring-amber-950/5 outline-none transition-all placeholder:text-slate-300"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={loading || !input.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg disabled:opacity-40"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </button>
-          </div>
-        </form>
-        <p className="text-center text-[9px] text-slate-300 font-medium mt-2">Guiden husker samtalen – spørg løs om begrebet</p>
-      </div>
       {/* PREMIUM TEASER OVERLAY FOR FREE TIER */}
       {limitError && (
           <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-[2px] flex items-center justify-center p-8">
               <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-amber-100 p-10 text-center space-y-8 relative overflow-hidden"
+                  className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-slate-100 p-10 text-center space-y-8 relative overflow-hidden"
               >
                   <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
                       <Sparkles className="w-32 h-32" />
                   </div>
                   
-                  <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-amber-100/50 relative z-10">
+                  <div className="w-20 h-20 bg-slate-50 text-slate-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-slate-100 relative z-10">
                       <Brain className="w-8 h-8" />
                   </div>
                   
                   <div className="space-y-3 relative z-10">
-                      <h2 className="text-3xl font-black text-amber-950 serif tracking-tight">Kollega+ Eksklusivt</h2>
+                      <h2 className="text-3xl font-black text-slate-950 serif tracking-tight">Kollega+ Eksklusivt</h2>
                       <p className="text-slate-500 leading-relaxed italic text-sm">
                           Få fri adgang til Guiden og dyk ned i alle pensums begreber uden begrænsninger.
                       </p>
@@ -900,9 +921,9 @@ function ConceptChatContent() {
                   </div>
 
                   <div className="space-y-4 relative z-10">
-                      <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 text-[12px]">
+                      <button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 text-[12px]">
                           Opgrader til Kollega+
-                      </Button>
+                      </button>
                       <button onClick={() => setLimitError(null)} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
                           Måske senere
                       </button>

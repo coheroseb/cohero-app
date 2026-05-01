@@ -7,7 +7,7 @@ export const dailyAutomatedNudges = functions.pubsub
   .schedule('every day 11:00')
   .timeZone('Europe/Copenhagen')
   .onRun(async (context) => {
-    const db = admin.firestore();
+    const db = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
     const resend = new Resend(process.env.RESEND_API_KEY);
     
     const now = new Date();

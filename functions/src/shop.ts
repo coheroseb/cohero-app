@@ -3,7 +3,10 @@ import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { Resend } from 'resend';
 
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+
 export const onShopOrderUpdate = functions.firestore
+  .database(databaseId)
   .document("shop_orders/{orderId}")
   .onUpdate(async (change, context) => {
     const newData = change.after.data();
@@ -94,7 +97,7 @@ export const onShopOrderUpdate = functions.firestore
         });
 
         // Log the email success
-        await admin.firestore().collection("mail_logs").add({
+        await (admin.firestore as any)(undefined, databaseId).collection("mail_logs").add({
           orderId: context.params.orderId,
           email,
           type: "order_confirmation",
@@ -104,7 +107,7 @@ export const onShopOrderUpdate = functions.firestore
 
       } catch (error: any) {
         console.error(`[ShopOrder] Failed to send confirmation for ${context.params.orderId}:`, error);
-        await admin.firestore().collection("mail_logs").add({
+        await (admin.firestore as any)(undefined, databaseId).collection("mail_logs").add({
           orderId: context.params.orderId,
           email,
           type: "order_confirmation",

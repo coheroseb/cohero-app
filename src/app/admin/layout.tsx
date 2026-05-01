@@ -58,7 +58,6 @@ const navigationGroups = [
       { id: 'overview', href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'users', href: '/admin/users', label: 'Brugerstyring', icon: Users },
       { id: 'realtime', href: '/admin/realtime', label: 'Live Platform Puls', icon: Activity },
-      { id: 'finans', href: '/admin/finans', label: 'Økonomi & MMR', icon: TrendingUp },
       { id: 'stats', href: '/admin/stats', label: 'Bruger-Analyse', icon: BarChart },
       { id: 'costs', href: '/admin/costs', label: 'AI Omkostninger', icon: CreditCard },
     ]
@@ -67,13 +66,11 @@ const navigationGroups = [
     title: 'Marketing & Leads',
     items: [
         { id: 'korrektur', href: '/admin/korrektur', label: 'Korrektur-styring', icon: FileSearch },
-        { id: 'markedsplads', href: '/admin/markedsplads', label: 'Markedsplads', icon: HandHelping },
         { id: 'marketing', href: '/admin/marketing', label: 'Koder & Tilbud', icon: Sparkles },
         { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
         { id: 'emails', href: '/admin/emails', label: 'E-mail Blasts', icon: Mail },
         { id: 'inbox', href: '/admin/inbox', label: 'Indbakke (Simply)', icon: Inbox },
         { id: 'admin-shop', href: '/admin/shop', label: 'Shop-styring', icon: ShoppingBag },
-        { id: 'seo', href: '/admin/seo', label: 'SEO & Meta-Data', icon: Globe },
     ]
   },
   {
@@ -85,7 +82,6 @@ const navigationGroups = [
         { id: 'admin-seminarer', href: '/admin/seminarer', label: 'Seminar-arkiv', icon: MonitorPlay },
         { id: 'admin-case-analyser', href: '/admin/case-analyser', label: 'Case Analyser', icon: Sparkles },
         { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: Layers },
-        { id: 'dokument-analysator', href: '/admin/dokument-analysator', label: 'PDF Dokument Analysator', icon: FileSearch },
     ]
   },
   {
@@ -94,7 +90,6 @@ const navigationGroups = [
         { id: 'notifications', href: '/admin/notifications', label: 'Push Beskeder', icon: Bell },
         { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
         { id: 'support', href: '/admin/support', label: 'Support & Tickets', icon: ShieldAlert },
-        { id: 'gamification', href: '/admin/gamification', label: 'Challenges & Ritualer', icon: Trophy },
         { id: 'medbestemmelse', href: '/admin/medbestemmelse', label: 'Medbestemmelse', icon: Sparkles },
         { id: 'second-opinions', href: '/admin/second-opinions', label: 'Second Opinions', icon: Scale },
     ]

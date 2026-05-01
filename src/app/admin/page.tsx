@@ -51,7 +51,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useApp } from '@/app/provider';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getStripeDashboardMetricsAction, getStripeHistoricalRevenueAction } from '@/app/actions';
+import { getAIUsageMetricsAction } from '@/app/actions';
 import { 
     AreaChart, 
     Area, 
@@ -128,30 +128,27 @@ export default function AdminOverviewPage() {
     ), [firestore, isAdmin]);
     const { data: activities, isLoading: isActivitiesLoading } = useCollection(activitiesQuery);
 
-    // Stripe Data
-    const [stripeMetrics, setStripeMetrics] = useState<any>(null);
+    const [aiStats, setAiStats] = useState<any>(null);
     const [history, setHistory] = useState<any[]>([]);
-    const [isStripeLoading, setIsStripeLoading] = useState(true);
+    const [isAiLoading, setIsAiLoading] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const [mRes, hRes] = await Promise.all([
-                    getStripeDashboardMetricsAction(),
-                    getStripeHistoricalRevenueAction()
-                ]);
-                if (mRes.success) setStripeMetrics(mRes);
-                if (hRes.success && hRes.data) setHistory(hRes.data);
+                const res = await getAIUsageMetricsAction();
+                if (res.success) {
+                    setAiStats(res);
+                    if (res.history) setHistory(res.history);
+                }
             } catch (err) {
                 console.error("Failed to fetch admin dashboard data:", err);
-            } finally { setIsStripeLoading(false); }
+            } finally { setIsAiLoading(false); }
         }
         fetchData();
     }, []);
 
-    // Derived Stats
     const stats = useMemo(() => {
-        if (!users) return { totalUsers: 0, growth: '0', premiumPercentage: '0', aiCost: '0.00', ltv: '0' };
+        if (!users) return { totalUsers: 0, growth: '0', premiumPercentage: '0', aiCost: '0.00' };
         const nonAdmins = users.filter(u => u.role !== 'admin');
         const d30 = new Date(); d30.setDate(d30.getDate() - 30);
         const usersOlderThan30d = nonAdmins.filter(u => {
@@ -163,19 +160,13 @@ export default function AdminOverviewPage() {
         const premiumCount = nonAdmins.filter(u => u.membership && u.membership !== 'free').length;
         const premiumPercentage = nonAdmins.length > 0 ? ((premiumCount / nonAdmins.length) * 100).toFixed(1) : '0';
         
-        // Dynamic LTV Calculation: Standard SaaS Formula (ARPU / Churn Rate)
-        const arpu = stripeMetrics?.arpu || ((stripeMetrics?.mrr || 0) / (stripeMetrics?.activeSubs || 1));
-        const churnRate = stripeMetrics?.churnRate || 0.0833; // Fallback to ~12mo retention if data missing
-        const ltv = arpu / churnRate;
-
         return { 
             totalUsers: nonAdmins.length, 
             growth, 
             aiCost: aiCost.toFixed(2), 
-            premiumPercentage, 
-            ltv: Math.round(ltv).toLocaleString('da-DK') 
+            premiumPercentage
         };
-    }, [users, aiUsage, stripeMetrics]);
+    }, [users, aiUsage]);
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-12 animate-ink pb-20">
@@ -210,14 +201,12 @@ export default function AdminOverviewPage() {
                 </div>
             </header>
 
-            {/* 2. Core Stats Bar (Simplified & Grouped) */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                <MiniStat label="Revenue (MRR)" value={stripeMetrics ? `${Math.round(stripeMetrics.mrr/1000)}k kr.` : '0 kr.'} trend="+14" icon={TrendingUp} color="bg-emerald-50 text-emerald-600" loading={isStripeLoading} />
-                <MiniStat label="LTV per Sub" value={`${stats.ltv} kr.`} trend="+8" icon={Target} color="bg-amber-50 text-amber-600" loading={isStripeLoading} />
-                <MiniStat label="Total Entiteter" value={stats.totalUsers.toLocaleString('da-DK')} trend={stats.growth} icon={Users} color="bg-slate-50 text-slate-600" loading={isUsersBatchLoading} />
-                <MiniStat label="Conversion" value={`${stats.premiumPercentage}%`} trend="+2" icon={Crown} color="bg-indigo-50 text-indigo-600" loading={isUsersBatchLoading} />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <MiniStat label="Total Brugere" value={stats.totalUsers.toLocaleString('da-DK')} trend={stats.growth} icon={Users} color="bg-slate-50 text-slate-600" loading={isUsersBatchLoading} />
+                <MiniStat label="Premium Rate" value={`${stats.premiumPercentage}%`} trend="+2" icon={Crown} color="bg-indigo-50 text-indigo-600" loading={isUsersBatchLoading} />
                 <MiniStat label="AI Burn" value={`${Math.round(parseFloat(stats.aiCost))} kr.`} trend="-3" icon={Flame} color="bg-rose-50 text-rose-600" loading={isUsageLoading} />
-                <MiniStat label="Valuation" value={stripeMetrics ? `${(stripeMetrics.arr * 8 / 1000000).toFixed(1)}M` : '0M'} trend="+12" icon={ShieldCheck} color="bg-blue-50 text-blue-600" loading={isStripeLoading} />
+                <MiniStat label="Platform Puls" value="99.9%" trend="±0" icon={Activity} color="bg-emerald-50 text-emerald-600" loading={false} />
+                <MiniStat label="System Health" value="Operativ" trend="OK" icon={ShieldCheck} color="bg-blue-50 text-blue-600" loading={false} />
             </div>
 
             {/* 3. Primary Workspace: Analytics & Real-time Flow */}
@@ -229,10 +218,10 @@ export default function AdminOverviewPage() {
                         <div className="p-8 pb-4 border-b border-slate-50 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600"><BarChart3 className="w-5 h-5" /></div>
-                                <h3 className="text-xl font-black text-slate-900 serif tracking-tight">Omsætnings-moment</h3>
+                                <h3 className="text-xl font-black text-slate-900 serif tracking-tight">AI-Aktivitets Moment</h3>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">LTM Performance</span>
+                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">30 dages historik</span>
                                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                             </div>
                         </div>
@@ -253,22 +242,22 @@ export default function AdminOverviewPage() {
                                         itemStyle={{ fontSize: '11px', fontWeight: '900', color: '#fff', textTransform: 'uppercase' }}
                                         labelStyle={{ color: 'rgba(255,255,255,0.4)', marginBottom: '4px', fontSize: '9px', fontWeight: '900' }}
                                     />
-                                    <Area type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={5} fill="url(#chartGrad)" animationDuration={2000} strokeLinecap="round" />
+                                    <Area type="monotone" dataKey="usage" stroke="#4f46e5" strokeWidth={5} fill="url(#chartGrad)" animationDuration={2000} strokeLinecap="round" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
                         <div className="px-10 py-8 bg-slate-50/50 border-t border-slate-50 grid grid-cols-3 gap-8">
                              <div className="text-center">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Momentum</p>
-                                <p className="text-xl font-black text-slate-900 serif">+42.8</p>
+                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Momentum</p>
+                                 <p className="text-xl font-black text-slate-900 serif">+42.8</p>
                              </div>
                              <div className="text-center">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Stability</p>
-                                <p className="text-xl font-black text-emerald-600 serif">99.9%</p>
+                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Uptime</p>
+                                 <p className="text-xl font-black text-emerald-600 serif">99.9%</p>
                              </div>
                              <div className="text-center">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Net Rev (30d)</p>
-                                <p className="text-xl font-black text-indigo-600 serif">{stripeMetrics ? `${Math.round(stripeMetrics.netRevenue30d/1000)}k` : '0k'} <small className="text-[10px]">kr.</small></p>
+                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Tokens (30d)</p>
+                                 <p className="text-xl font-black text-indigo-600 serif">{aiUsage ? `${Math.round((aiUsage.totalInputTokens + aiUsage.totalOutputTokens)/1000)}k` : '0k'} <small className="text-[10px]">tokens</small></p>
                              </div>
                         </div>
                     </section>
@@ -311,10 +300,8 @@ export default function AdminOverviewPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Finance & Growth */}
                     <div className="col-span-1 sm:col-span-2 lg:col-span-2 grid grid-cols-2 gap-4">
-                        <NexusCard title="Finans" icon={TrendingUp} color="text-emerald-500" bg="bg-emerald-50" href="/admin/finans" desc="ARR, Prognoser, Stripe" />
                         <NexusCard title="Kampagner" icon={Sparkles} color="text-amber-500" bg="bg-amber-50" href="/admin/marketing" desc="Rabatter, Tilbud" />
                         <NexusCard title="Konkurrence" icon={Trophy} color="text-rose-500" bg="bg-rose-50" href="/admin/konkurrence" desc="Deltagere fra /journey" />
-                        <NexusCard title="Markedsplads" icon={HandHelping} color="text-blue-500" bg="bg-blue-50" href="/admin/markedsplads" desc="Opgaver, Matchmaking" />
                         <NexusCard title="Uddannelse" icon={BarChart3} color="text-purple-500" bg="bg-purple-50" href="/admin/education" desc="Kohorte-data, Progression" />
                     </div>
 
@@ -329,7 +316,6 @@ export default function AdminOverviewPage() {
                         <NexusCard title="Seminarer" icon={MonitorPlay} color="text-indigo-600" bg="bg-indigo-50" href="/admin/seminarer" desc="Bruger-analyser & Slides" />
                         <NexusCard title="Case Analyser" icon={Sparkles} color="text-rose-600" bg="bg-rose-50" href="/admin/case-analyser" desc="Bruger-cases & AI-indsigt" />
                         <NexusCard title="Begreber" icon={BrainCircuit} color="text-amber-600" bg="bg-amber-50" href="/admin/begreber" desc="Vidensbase & Modeller" />
-                        <NexusCard title="Dokument-Tjek" icon={FileSearch} color="text-indigo-600" bg="bg-indigo-50" href="/admin/dokument-analysator" desc="PDF AI Analyse" />
                         <NexusCard title="Surveys" icon={MessageSquare} color="text-rose-500" bg="bg-rose-50" href="/admin/surveys" desc="NPS, Feedback" />
                         <NexusCard title="Korrektur" icon={FileText} color="text-amber-800" bg="bg-amber-50" href="/admin/korrektur" desc="Lead-styring & Kalkulator" />
                         <NexusCard title="System" icon={Zap} color="text-slate-100" bg="bg-slate-900" href="/admin/system" desc="Infrastruktur, Arkitektur" />

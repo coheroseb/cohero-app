@@ -21,7 +21,11 @@ export default function MetaPixel() {
     }
   }, [pathname]);
 
-  // Don't load on admin pages to keep analytics clean
+  // Don't load on localhost or admin pages to keep analytics clean and avoid console errors
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return null;
+  }
+
   if (pathname.startsWith('/admin')) {
     return null;
   }

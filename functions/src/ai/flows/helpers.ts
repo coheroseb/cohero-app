@@ -6,5 +6,5 @@ export function getDb() {
   if (!admin.apps.length) {
     admin.initializeApp();
   }
-  return admin.firestore();
+  return (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
 }

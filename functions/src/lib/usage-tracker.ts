@@ -1,5 +1,6 @@
 
 import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 /**
  * Centrally log AI token usage to Firestore for platform-wide cost analysis.
@@ -17,14 +18,14 @@ export async function logAiUsage(flowName: string, usage: { inputTokens?: number
   const safeFlowName = flowName.replace(/\./g, '_').replace(/\//g, '_').replace(/\s+/g, '');
 
   try {
-    const db = admin.firestore();
+    const db = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
     await db.collection('stats').doc('ai_usage').set({
-      totalInputTokens: admin.firestore.FieldValue.increment(inputTokens),
-      totalOutputTokens: admin.firestore.FieldValue.increment(outputTokens),
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      totalInputTokens: FieldValue.increment(inputTokens),
+      totalOutputTokens: FieldValue.increment(outputTokens),
+      lastUpdated: FieldValue.serverTimestamp(),
       // Use sanitized name to ensure it's a flat entry in the flows map
-      [`flows.${safeFlowName}.inputTokens`]: admin.firestore.FieldValue.increment(inputTokens),
-      [`flows.${safeFlowName}.outputTokens`]: admin.firestore.FieldValue.increment(outputTokens),
+      [`flows.${safeFlowName}.inputTokens`]: FieldValue.increment(inputTokens),
+      [`flows.${safeFlowName}.outputTokens`]: FieldValue.increment(outputTokens),
     }, { merge: true });
   } catch (usageErr) {
     console.error(`Failed to log usage stats for flow ${flowName}:`, usageErr);

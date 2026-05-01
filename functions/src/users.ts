@@ -3,7 +3,10 @@ import * as admin from "firebase-admin";
 import { scanStudentCard } from "./ai/flows/scan-student-card-flow";
 import { Resend } from 'resend';
 
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+
 export const onUserUpdateScanStudentCard = functions.firestore
+  .database(databaseId)
   .document("users/{userId}")
   .onUpdate(async (change, context) => {
     const before = change.before.data();
@@ -42,7 +45,7 @@ export const onUserUpdateScanStudentCard = functions.firestore
             const isRejected = !data.isStudentCard || data.isExpired || data.nameMismatch;
 
             // Update user with verification result
-            await admin.firestore().collection("users").doc(userId).update({
+            await (admin.firestore as any)(undefined, databaseId).collection("users").doc(userId).update({
                 studentCardVerification: {
                     ...data,
                     status: isRejected ? 'rejected' : 'verified',
@@ -96,7 +99,7 @@ export const onUserDeleteCleanUp = functions.auth.user().onDelete(async (user) =
   const userId = user.uid;
   console.log(`Cleaning up Firestore data for deleted user ${userId}`);
   
-  const firestore = admin.firestore();
+  const firestore = (admin.firestore as any)(undefined, databaseId);
   const userRef = firestore.collection("users").doc(userId);
   
   try {

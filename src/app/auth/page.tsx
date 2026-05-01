@@ -168,32 +168,35 @@ const AuthContent = () => {
   );
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row font-sans bg-[#FDFBF7] selection:bg-amber-200 selection:text-amber-950">
+    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row font-sans bg-white selection:bg-indigo-100 selection:text-indigo-950">
       
       {/* LEFT SIDE - FORM */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-5 sm:p-8 lg:p-12 min-h-[100dvh] relative z-10 lg:pt-8">
+      <div className="w-full lg:w-5/12 flex items-center justify-center p-6 sm:p-12 lg:p-20 min-h-[100dvh] relative z-10">
         
-        {/* Mobile top gradient */}
-        <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-[#FDFBF7] to-transparent lg:hidden pointer-events-none z-0"></div>
+        <div className="w-full max-w-md space-y-12 relative z-10">
+          <div className="space-y-4">
+             <h1 className="text-4xl sm:text-5xl font-black tracking-tighter leading-none">
+               {mode === 'signin' ? "Velkommen tilbage." : "Begynd din rejse."}
+             </h1>
+             <p className="text-lg text-slate-400 font-medium leading-relaxed">
+               {mode === 'signin' ? t.signinSubtext : t.signupSubtext}
+             </p>
+          </div>
 
-        <div className="w-full max-w-md space-y-8 relative z-10 pt-8 sm:pt-0">
-          
-
-
-          <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-10 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100">
+          <div className="bg-white p-2 rounded-[3rem] border border-slate-100 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.05)]">
             
-            {/* iOS-Style Pill Toggle */}
-            <div className="flex p-1 bg-slate-100 rounded-[20px] mb-8 relative">
+            {/* Minimalist Toggle */}
+            <div className="flex p-1 bg-slate-50 rounded-[2.5rem] mb-8 relative">
               <button 
                 type="button"
                 onClick={() => setMode('signin')} 
-                className={`relative flex-1 py-3 text-[14px] font-bold transition-all duration-300 z-10 rounded-[16px] ${mode === 'signin' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`relative flex-1 py-4 text-[13px] font-black uppercase tracking-widest transition-all duration-300 z-10 rounded-[2rem] ${mode === 'signin' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 {t.signin}
                 {mode === 'signin' && (
                   <motion.div 
                     layoutId="activeTabMode"
-                    className="absolute inset-0 bg-white rounded-[16px] shadow-sm border border-slate-200/50 -z-10"
+                    className="absolute inset-0 bg-white rounded-[2rem] shadow-sm border border-slate-200/20 -z-10"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -201,161 +204,151 @@ const AuthContent = () => {
               <button 
                 type="button"
                 onClick={() => setMode('signup')} 
-                className={`relative flex-1 py-3 text-[14px] font-bold transition-all duration-300 z-10 rounded-[16px] ${mode === 'signup' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`relative flex-1 py-4 text-[13px] font-black uppercase tracking-widest transition-all duration-300 z-10 rounded-[2rem] ${mode === 'signup' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 {t.signup}
                 {mode === 'signup' && (
                   <motion.div 
                     layoutId="activeTabMode"
-                    className="absolute inset-0 bg-white rounded-[16px] shadow-sm border border-slate-200/50 -z-10"
+                    className="absolute inset-0 bg-white rounded-[2rem] shadow-sm border border-slate-200/20 -z-10"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {FormFields}
+            <form onSubmit={handleSubmit} className="px-6 pb-8 space-y-6">
+              <div className="space-y-4">
+                 <AnimatePresence mode="popLayout">
+                   {mode === 'signup' && (
+                     <motion.div
+                       initial={{ opacity: 0, height: 0 }}
+                       animate={{ opacity: 1, height: 'auto' }}
+                       exit={{ opacity: 0, height: 0 }}
+                       className="relative"
+                     >
+                       <Input 
+                         type="text" 
+                         placeholder={t.displayName}
+                         value={displayName}
+                         onChange={(e) => setDisplayName(e.target.value)}
+                         required={mode === 'signup'} 
+                         className="h-16 rounded-[2rem] px-8 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-slate-950 transition-all text-[15px] font-medium"
+                       />
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
+                 
+                 <Input 
+                   type="email" 
+                   placeholder={t.email}
+                   value={email}
+                   onChange={(e) => setEmail(e.target.value)}
+                   required 
+                   className="h-16 rounded-[2rem] px-8 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-slate-950 transition-all text-[15px] font-medium"
+                 />
+                 
+                 <Input 
+                   type="password" 
+                   placeholder={t.password}
+                   value={password}
+                   onChange={(e) => setPassword(e.target.value)}
+                   required
+                   className="h-16 rounded-[2rem] px-8 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-slate-950 transition-all text-[15px] font-medium"
+                 />
+              </div>
               
               <AnimatePresence>
                 {error && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="bg-rose-50 text-rose-600 p-4 rounded-[16px] text-[13px] font-bold flex items-start gap-3 border border-rose-100 mt-2">
-                        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> 
-                        <span className="leading-tight">{error}</span>
-                    </div>
-                  </motion.div>
-                )}
-                {success && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
-                  >
-                     <div className="bg-emerald-50 text-emerald-700 p-4 rounded-[16px] text-[13px] font-bold flex items-start gap-3 border border-emerald-100 mt-2">
-                        <Check className="w-4 h-4 mt-0.5 shrink-0" /> 
-                        <span className="leading-tight">{success}</span>
-                     </div>
-                  </motion.div>
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-rose-50 text-rose-600 p-5 rounded-[2rem] text-[13px] font-bold border border-rose-100">{error}</motion.div>
                 )}
               </AnimatePresence>
 
-              {mode === 'signup' && (
-                <p className="text-[12px] text-slate-400 text-center pt-2 leading-relaxed px-4">
-                    {t.terms}
-                </p>
-              )}
-              
               <Button 
                 type="submit" 
-                className="w-full h-14 rounded-[20px] text-[16px] font-black tracking-wide bg-slate-900 text-white shadow-[0_10px_20px_-10px_rgba(15,23,42,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-2" 
+                className="w-full h-16 rounded-[2rem] text-[15px] font-black uppercase tracking-widest bg-slate-950 text-white shadow-2xl shadow-slate-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3" 
                 disabled={isLoading}
               >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : (
                   <>
                     {mode === 'signin' ? t.signin : t.signup}
-                    <ArrowRight className="w-5 h-5 opacity-70" />
+                    <ArrowRight className="w-5 h-5" />
                   </>
                 )}
               </Button>
+
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100" /></div>
+                <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.4em]"><span className="bg-white px-6 text-slate-300">Social Login</span></div>
+              </div>
+
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleGoogleSubmit}
+                disabled={isLoading}
+                className="w-full h-16 rounded-[2rem] text-[13px] font-black uppercase tracking-widest text-slate-600 flex items-center justify-center gap-4 bg-white border border-slate-100 hover:bg-slate-50 transition-all"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 grayscale opacity-70" />
+                Fortsæt med Google
+              </Button>
             </form>
-
-            <div className="mt-8">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-slate-100" />
-                </div>
-                <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
-                  <span className="bg-white px-4 text-slate-300">Eller via Google</span>
-                </div>
-              </div>
-              <div className="mt-6">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleGoogleSubmit}
-                  disabled={isLoading}
-                  className="w-full h-14 rounded-[20px] text-[15px] font-bold text-slate-700 flex items-center justify-center gap-3 bg-white border-2 border-slate-100 hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm"
-                >
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-                  Fortsæt med Google
-                </Button>
-              </div>
-            </div>
-
           </div>
 
-          <div className="text-center pt-4 pb-8 sm:pb-0">
+          <div className="text-center">
             <button 
               onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-              className="text-[14px] text-slate-500 font-medium active:scale-95 transition-transform"
+              className="text-[13px] text-slate-400 font-black uppercase tracking-widest hover:text-slate-950 transition-colors"
             >
               {mode === 'signin' ? t.noAccount : t.hasAccount}{' '} 
-              <span className="font-extrabold text-slate-900 underline decoration-slate-300 underline-offset-4">{mode === 'signin' ? t.signup : t.signin}</span>
+              <span className="text-indigo-600 ml-2">{mode === 'signin' ? t.signup : t.signin}</span>
             </button>
           </div>
         </div>
       </div>
       
-      {/* RIGHT SIDE - DECORATIVE PREMIUM UI (Desktop Only) */}
-      <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-slate-900 flex-col items-center justify-center p-12">
-        {/* Dynamic mesh gradient background simulation */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(245,158,11,0.2)_0%,transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.15)_0%,transparent_50%)]"></div>
-        <div className="absolute w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[120px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+      {/* RIGHT SIDE - THE FLUID CANVAS UI */}
+      <div className="hidden lg:flex w-7/12 relative overflow-hidden bg-slate-50 flex-col items-center justify-center p-20 border-l border-slate-100">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.4] bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:40px_40px]" />
         
-        {/* Decorative Floating Cards */}
-        <div className="relative z-10 w-full max-w-lg">
-            <div className="space-y-6">
+        <div className="relative z-10 w-full max-w-2xl space-y-24">
+            <div className="grid grid-cols-2 gap-8">
                <motion.div 
-                 initial={{ opacity: 0, x: 40 }}
-                 animate={{ opacity: 1, x: 0 }}
-                 transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-                 className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-[32px] w-[80%] ml-auto shadow-2xl relative"
+                 initial={{ opacity: 0, y: 40 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.2 }}
+                 className="bg-white/80 backdrop-blur-3xl border border-slate-100 p-12 rounded-[4rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] space-y-8"
                >
-                  <div className="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center text-amber-950 mb-4 shadow-inner">
-                      <Zap className="w-6 h-6" />
+                  <div className="w-16 h-16 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-indigo-600/30">
+                      <Zap className="w-8 h-8" />
                   </div>
-                  <h3 className="text-white font-bold text-xl leading-tight mb-2">Dit faglige leksikon</h3>
-                  <p className="text-slate-300 text-sm leading-relaxed font-medium">Slå op i begrebsguiden eller lovportalen lyn hurtigt, uanset hvor du er.</p>
+                  <h3 className="text-slate-950 font-black text-3xl tracking-tighter leading-none italic serif">Akademisk præcision.</h3>
+                  <p className="text-slate-500 text-lg font-medium leading-relaxed">Få direkte adgang til lovgivning og begreber, der er skræddersyet til dit studie.</p>
                </motion.div>
 
                <motion.div 
-                 initial={{ opacity: 0, x: -40 }}
-                 animate={{ opacity: 1, x: 0 }}
-                 transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
-                 className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-[32px] w-[85%] shadow-2xl relative"
+                 initial={{ opacity: 0, y: 80 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.4 }}
+                 className="bg-slate-950 p-12 rounded-[4rem] shadow-2xl space-y-8 mt-12"
                >
-                  <div className="w-12 h-12 bg-emerald-400 rounded-2xl flex items-center justify-center text-emerald-950 mb-4 shadow-inner">
-                      <ShieldCheck className="w-6 h-6" />
+                  <div className="w-16 h-16 bg-white/10 text-white rounded-[2rem] flex items-center justify-center">
+                      <ShieldCheck className="w-8 h-8 text-amber-400" />
                   </div>
-                  <h3 className="text-white font-bold text-xl leading-tight mb-2">Faglig rygdækning</h3>
-                  <p className="text-slate-300 text-sm leading-relaxed font-medium">Sørg for, at dine konklusioner er juridisk velfunderede med direkte AI-sparring.</p>
+                  <h3 className="text-white font-black text-3xl tracking-tighter leading-none italic serif">Faglig tryghed.</h3>
+                  <p className="text-slate-400 text-lg font-medium leading-relaxed">Byg bro mellem teori og praksis med værktøjer, der giver dig professionel sikkerhed.</p>
                </motion.div>
             </div>
             
-            <motion.div 
-               initial={{ opacity: 0, y: 30 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ delay: 0.6, duration: 0.8 }}
-               className="mt-16 text-center"
-            >
-               <div className="inline-flex items-center justify-center space-x-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 backdrop-blur-sm">
-                   <div className="flex -space-x-2">
-                      {[1,2,3].map(i => (
-                          <div key={i} className="w-6 h-6 rounded-full bg-slate-800 border-2 border-slate-900" />
-                      ))}
-                   </div>
-                   <span className="text-xs font-bold text-slate-300">Stol på af hundredevis af studerende</span>
-               </div>
-            </motion.div>
+            <div className="flex flex-col items-center gap-8">
+               <div className="h-px w-40 bg-slate-200" />
+               <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-300">Cohéro 2.0 · Innovative Education</p>
+            </div>
         </div>
+
+        <style jsx>{`
+          .serif { font-family: 'Playfair Display', serif; }
+        `}</style>
       </div>
 
     </div>
@@ -364,7 +357,7 @@ const AuthContent = () => {
 
 const AuthPage = () => {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-200" /></div>}>
       <AuthContent />
     </Suspense>
   );

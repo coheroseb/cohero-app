@@ -177,7 +177,7 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Mit pensum", path: "/mine-materialer", icon: <FileBox className="w-5 h-5 text-indigo-500" /> },
           { title: "Akademiet", path: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5" /> },
-          { title: "Jura", path: "https://law.cohero.dk", icon: <Scale className="w-5 h-5" /> },
+          // { title: "Jura", path: "https://law.cohero.dk", icon: <Scale className="w-5 h-5" /> },
           { title: "Shop", path: "/shop", icon: <ShoppingBag className="w-5 h-5" /> },
           { title: "Vores Rejse", path: "/journey", icon: <Rocket className="w-5 h-5 text-rose-500" /> },
           { title: "Form fremtiden", path: "/medbestemmelse", icon: <Lightbulb className="w-5 h-5" /> },
@@ -254,7 +254,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   { label: "Mit pensum", href: "/mine-materialer", icon: <FileBox className="w-5 h-5"/>, color: "bg-indigo-100 text-indigo-700" },
                   { label: "Akademiet", href: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5"/>, color: "bg-purple-100 text-purple-700" },
                   { label: "Slides", href: "/mine-seminarer", icon: <Presentation className="w-5 h-5"/>, color: "bg-emerald-100 text-emerald-700" },
-                  { label: "Jura", href: "https://law.cohero.dk", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" }
+                  // { label: "Jura", href: "https://law.cohero.dk", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" }
                 ].map((item) => (
                   <Link 
                     key={item.label} 

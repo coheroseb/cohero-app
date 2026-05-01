@@ -8,7 +8,7 @@ import { ref, getDownloadURL } from 'firebase/storage';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
   Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle,
-  CheckCircle2, XCircle, GraduationCap, Music, Facebook, Globe, Compass, Smartphone
+  CheckCircle2, XCircle, GraduationCap, Music, Facebook, Globe, Compass, Smartphone, Trophy, Gift
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -192,6 +192,8 @@ const AdminUsersPage = () => {
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [randomUser, setRandomUser] = useState<UserProfile | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
 
   // Filters & Sorting
   const [roleFilter, setRoleFilter] = useState('all');
@@ -374,6 +376,21 @@ const AdminUsersPage = () => {
     }
   };
 
+  const handleDrawRandomUser = () => {
+    if (filteredAndSortedUsers.length === 0) {
+      toast({ variant: 'destructive', title: "Ingen brugere", description: "Der er ingen brugere i den nuværende filtrerede liste." });
+      return;
+    }
+    
+    setIsDrawing(true);
+    // Add a small delay for "suspense"
+    setTimeout(() => {
+      const randomIndex = Math.floor(Math.random() * filteredAndSortedUsers.length);
+      setRandomUser(filteredAndSortedUsers[randomIndex]);
+      setIsDrawing(false);
+    }, 1500);
+  };
+
   return (
     <>
     <div className="space-y-10 animate-ink pb-20">
@@ -388,7 +405,16 @@ const AdminUsersPage = () => {
           </div>
           <p className="text-slate-500 font-medium ml-1">Administrér platformens {stats.total} kolleger og sikr datakvaliteten.</p>
         </div>
-        <div className="relative z-10">
+        <div className="relative z-10 flex flex-wrap gap-4">
+          <Button 
+            variant="outline" 
+            onClick={handleDrawRandomUser}
+            disabled={isDrawing}
+            className="rounded-2xl border-indigo-100 bg-indigo-50/30 text-indigo-600 font-black text-[10px] uppercase tracking-widest h-12 px-6 shadow-sm hover:bg-indigo-50 transition-all"
+          >
+            {isDrawing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trophy className="w-4 h-4 mr-2" />}
+            Træk vinder
+          </Button>
           <Button 
             variant="outline" 
             onClick={handleBulkCalculateStartDates}
@@ -832,21 +858,6 @@ const AdminUsersPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Kolonne 3: Finansiel / Bank */}
-                                    <div className="space-y-6">
-                                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                                            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-sm">
-                                                <CreditCard className="w-4 h-4" />
-                                            </div>
-                                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Udbetaling & Sikkerhed</h4>
-                                        </div>
-                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
-                                            <BankRow label="CPR / CVR" value={u.cprNumber} />
-                                            <BankRow label="Bank Reg" value={u.bankReg} />
-                                            <BankRow label="Konto Nr." value={u.bankAccount} />
-                                            <p className="text-[9px] text-slate-400 leading-relaxed pt-2">Data er krypteret med AES-256 før lagring i databasen.</p>
-                                        </div>
-                                    </div>
 
                                     {/* Kolonne 4: Dokumentation & Studiekort */}
                                     <div className="space-y-6">
@@ -931,17 +942,6 @@ const AdminUsersPage = () => {
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap gap-3">
-                                        <Button 
-                                            size="sm" 
-                                            variant="outline" 
-                                            className="rounded-2xl border-slate-200 h-11 px-6 text-xs font-bold"
-                                            onClick={async () => {
-                                                await clearUserPaymentInfoAction(u.id, u.studentCardUrl);
-                                                toast({ title: "Sensitiv data fjernet" });
-                                            }}
-                                        >
-                                            Ryd Finansiel Data
-                                        </Button>
                                         
                                         {u.isMarketplaceBanned ? (
                                             <Button 
@@ -1042,13 +1042,90 @@ const AdminUsersPage = () => {
     </div>
 
     {userToDelete && (
-        <DeleteUserModal
-          isOpen={!!userToDelete}
-          onClose={() => setUserToDelete(null)}
-          onConfirm={handleConfirmDelete}
-          username={userToDelete.username}
+        <DeleteUserModal 
+            isOpen={!!userToDelete} 
+            onClose={() => setUserToDelete(null)} 
+            onConfirm={handleConfirmDelete} 
+            username={userToDelete?.username || ''} 
         />
     )}
+
+    <AnimatePresence>
+      {randomUser && (
+        <>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setRandomUser(null)}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[100] flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full max-w-lg rounded-[3rem] border border-slate-100 shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500"></div>
+              
+              <div className="p-12 text-center space-y-8">
+                <div className="relative inline-block">
+                  <div className="w-24 h-24 bg-amber-50 text-amber-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-lg shadow-amber-100 relative z-10">
+                    <Trophy className="w-12 h-12" />
+                  </div>
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute inset-0 bg-amber-400/20 rounded-full blur-2xl -z-0"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black text-amber-600 uppercase tracking-[0.3em]">Tilfældig Vinder</h3>
+                  <h2 className="text-4xl font-black text-slate-900 serif">{randomUser.username}</h2>
+                  <p className="text-slate-500 font-medium">{randomUser.email}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 py-6 border-y border-slate-50">
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Institution</p>
+                    <p className="font-bold text-slate-900">{randomUser.institution || 'N/A'}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Semester</p>
+                    <p className="font-bold text-slate-900">{randomUser.semester || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex flex-col gap-3">
+                  <Button 
+                    onClick={() => {
+                      setExpandedUserId(randomUser.id);
+                      setRandomUser(null);
+                    }}
+                    className="w-full h-14 rounded-2xl bg-slate-950 text-white font-black uppercase tracking-widest text-xs hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200"
+                  >
+                    Se Fuld Profil
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setRandomUser(null)}
+                    className="w-full h-12 rounded-2xl text-slate-400 font-black uppercase tracking-widest text-[10px]"
+                  >
+                    Luk Vindue
+                  </Button>
+                </div>
+              </div>
+
+              {/* Decorative elements */}
+              <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-indigo-50 rounded-full blur-3xl opacity-50"></div>
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-50 rounded-full blur-3xl opacity-50"></div>
+            </motion.div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
     </>
   );
 };

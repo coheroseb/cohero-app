@@ -7,7 +7,7 @@ export const checkFolketingetUpdates = functions.pubsub
   .schedule('every 12 hours')
   .timeZone('Europe/Copenhagen')
   .onRun(async (context) => {
-    const db = admin.firestore();
+    const db = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
     const followedSagerCol = db.collection('followedSager');
     const snapshot = await followedSagerCol.get();
     

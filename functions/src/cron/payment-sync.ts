@@ -11,7 +11,7 @@ export const syncPaymentStatus = functions.pubsub
   .schedule("0 6 * * *")
   .timeZone("Europe/Copenhagen")
   .onRun(async (context) => {
-    const firestore = admin.firestore();
+    const firestore = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
     
     const logRef = firestore.collection('systemLogs').doc();
     const startTime = new Date();
