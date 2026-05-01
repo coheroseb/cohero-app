@@ -1,6 +1,7 @@
 'use server';
 
 // Polyfill for Promise.withResolvers to support older Node.js versions
+import { extractTextFromPdf } from '@/lib/pdf-parser';
 if (!Promise.withResolvers) {
     Promise.withResolvers = function withResolvers<T>() {
         let resolve!: (value: T | PromiseLike<T>) => void;
@@ -359,12 +360,10 @@ import type Stripe from 'stripe';
 
 // Third-party and utility imports
 import { stripe, isStripeConfigured, getMembershipFromPriceId } from '@/lib/stripe';
-import { Resend } from 'resend';
-
-import { headers } from 'next/headers';
+import { adminFirestore as firestore, adminAuth as auth } from '@/firebase/server-init';
+import { cookies } from 'next/headers';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { FieldValue } from 'firebase-admin/firestore';
 
 // --- UPDATED ACTION: Sync Calendar Availability (Month-based statistical plan) ---
 
@@ -1016,6 +1015,66 @@ export async function analyzeFtDocumentAction(input: any) { return callFirebaseF
 export async function analyzeCasePdfAction(input: AnalyzeCasePdfInput): Promise<AnalyzeCasePdfOutput> { 
     return callFirebaseFlow('analyzeCasePdfFlow', input); 
 }
+
+export async function analyzeSyllabusAction(input: { 
+    userId: string, 
+    materialId: string, 
+    fileUrl: string, 
+    fileName: string, 
+    learningGoals: string[], 
+    profession?: string 
+}) {
+    try {
+        console.log(`[analyzeSyllabusAction] Starting indexing for: ${input.fileName}`);
+        
+        // 0. Update status to processing immediately
+        await adminFirestore.collection('users')
+            .doc(input.userId)
+            .collection('materials')
+            .doc(input.materialId)
+            .set({
+                isIndexed: 'processing'
+            }, { merge: true });
+
+        const startTime = Date.now();
+        
+        // 1. Fetch file with timeout
+        console.log(`[analyzeSyllabusAction] Fetching file from URL...`);
+        const controller = new AbortController();
+        const fetchTimeout = setTimeout(() => controller.abort(), 20000); // 20s fetch timeout
+        
+        const response = await fetch(input.fileUrl, { signal: controller.signal });
+        clearTimeout(fetchTimeout);
+        
+        if (!response.ok) throw new Error(`Kunne ikke hente fil: ${response.statusText}`);
+        
+        console.log(`[analyzeSyllabusAction] Converting to buffer...`);
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        console.log(`[analyzeSyllabusAction] Buffer ready (${(buffer.length / 1024 / 1024).toFixed(2)} MB). Starting extraction...`);
+        
+        const rawText = await extractTextFromPdf(buffer);
+        console.log(`[analyzeSyllabusAction] Extraction finished in ${Date.now() - startTime}ms. Saving to Firestore...`);
+        
+        // 2. Save raw text and mark as indexed
+        await adminFirestore.collection('users')
+            .doc(input.userId)
+            .collection('materials')
+            .doc(input.materialId)
+            .set({
+                rawText,
+                isIndexed: true,
+                contentIndexedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+        console.log(`[analyzeSyllabusAction] Successfully indexed ${rawText.length} characters.`);
+
+        return { success: true, indexed: true };
+    } catch (error) {
+        console.error('[analyzeSyllabusAction] Indexing failed:', error);
+        throw error;
+    }
+}
 export async function fetchVivePublicationsAction(input: any) { return callFirebaseFlow('fetchVivePublicationsFlow', input); }
 export async function textToSpeechAction(input: any) { return callFirebaseFlow('textToSpeechFlow', input); }
 export async function getViveReportQaAction(input: any) { return callFirebaseFlow('getViveReportQaFlow', input); }
@@ -1027,7 +1086,234 @@ export async function analyzeStarDataAction(input: Types.AnalyzeStarDataInput): 
     return callFirebaseFlow('analyzeStarDataFlow', input);
 }
 
-export async function analyzeLegalDecisionAction(input: any) { return callFirebaseFlow('analyzeLegalDecisionFlow', input); }
+import fsSync from 'fs';
+
+function logToFile(message: string) {
+    const logPath = path.join(process.cwd(), 'action-debug.log');
+    const timestamp = new Date().toISOString();
+    fsSync.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+}
+
+export async function saveMaterialTextAction(input: { 
+    userId: string, 
+    materialId: string, 
+    rawText: string 
+}) {
+    try {
+        logToFile(`Starting saveMaterialTextAction for ${input.materialId}`);
+        console.log(`[saveMaterialTextAction] Saving ${input.rawText.length} characters for material ${input.materialId}`);
+        
+        // 1. Save raw text first
+        await adminFirestore.collection('users')
+            .doc(input.userId)
+            .collection('materials')
+            .doc(input.materialId)
+            .set({
+                rawText: input.rawText,
+                isIndexed: true,
+                contentIndexedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+        logToFile(`Material saved successfully. (No automatic AI overview)`);
+        return { success: true };
+    } catch (error) {
+        logToFile(`saveMaterialTextAction Error: ${error}`);
+        console.error('[saveMaterialTextAction] Failed to save text:', error);
+        throw error;
+    }
+}
+
+export async function generateMaterialAIOverviewAction(input: {
+    userId: string,
+    materialId: string,
+    rawText: string,
+    candidateLearningGoals?: string[]
+}) {
+    try {
+        logToFile(`Starting generateMaterialAIOverviewAction for ${input.materialId}`);
+        
+        await adminFirestore.collection('users')
+            .doc(input.userId)
+            .collection('materials')
+            .doc(input.materialId)
+            .update({
+                isIndexed: 'generating'
+            });
+
+        const geminiKey = process.env.GEMINI_API_KEY;
+        if (!geminiKey) throw new Error("GEMINI_API_KEY mangler.");
+
+        const textToSummarize = input.rawText.substring(0, 30000);
+        const learningGoalsContext = input.candidateLearningGoals && input.candidateLearningGoals.length > 0
+            ? `\nHER ER DE OFFICIELLE LÆRINGSMÅL DU SKAL VÆLGE FRA:\n${input.candidateLearningGoals.map(g => `- ${g}`).join('\n')}\nVælg kun de læringsmål fra denne liste som materialet rent faktisk dækker.`
+            : `\nIdentificer relevante læringsmål eller kompetencer som dette materiale dækker.`;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // Increased to 60s
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: `Du er en ekspert i at analysere studiemateriale og skabe guidede studieforløb. 
+Din opgave er at analysere den vedhæftede tekst og identificere de vigtigste afsnit, der er direkte relevante for de officielle læringsmål.
+
+Du SKAL returnere et JSON objekt med denne struktur:
+{
+  "summary": "En meget kort og præcis opsummering (max 2-3 sætninger)",
+  "complexity": "begynder | øvet | ekspert",
+  "isIntroductory": true,
+  "keyPoints": [
+    { "title": "Overskrift på pointe", "description": "Uddybning" }
+  ],
+  "learningGoals": [
+    { 
+      "goal": "Vælg det præcise navn på læringsmålet fra listen", 
+      "explanation": "Hvorfor er dette dokument vigtigt for netop dette mål?",
+      "steps": [
+        { 
+          "title": "Fokusområde (f.eks. 'Introduktion til kildekritik')", 
+          "description": "Forklar hvad den studerende skal lære i dette specifikke afsnit.", 
+          "context": "Indsæt et REELT citat fra teksten eller en meget specifik beskrivelse af afsnittet, som man kan genkende med det samme.", 
+          "pageNumber": 1 
+        }
+      ]
+    }
+  ]
+}
+
+REGLER FOR STEPS:
+1. Find mindst 2 trin (steps) for hvert relevant læringsmål (MAX 3 TRIN TOTAL pr. mål).
+2. 'context' SKAL indeholde tekst direkte fra dokumentet. 
+3. VIGTIGT: Brug ALDRIG faktiske linjeskift inde i JSON-strenge.
+4. VIGTIGT: Brug ALDRIG dobbelte anførselstegn (") inde i en tekst. Brug enkelte anførselstegn (') i stedet for. Eksempel: 'Dette er et citat'.
+5. 'pageNumber' SKAL være det rigtige sidetal i PDF'en.
+
+${learningGoalsContext}
+
+Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}`
+                    }]
+                }],
+                generationConfig: { 
+                    temperature: 0.1, 
+                    maxOutputTokens: 8192,
+                    response_mime_type: "application/json"
+                }
+            }),
+            signal: controller.signal // Added signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const aiData = await response.json();
+            let overviewJson = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (overviewJson) {
+                try {
+                    // Robust cleaning: Handle unescaped newlines and control characters
+                    let cleanedJson = (overviewJson || "")
+                        .replace(/```json/g, '')
+                        .replace(/```/g, '')
+                        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
+                        .trim();
+
+                    // Swap internal double quotes for single quotes to avoid JSON break
+                    // This finds " when surrounded by alphanumeric chars/spaces
+                    cleanedJson = cleanedJson.replace(/([a-zA-Z0-9æøåÆØÅ\s])"([a-zA-Z0-9æøåÆØÅ\s])/g, "$1'$2");
+
+                    logToFile(`[generateAction] START OF JSON (first 50): ${cleanedJson.substring(0, 50)}`);
+
+                    // JSON HEALER: If truncated, try to close it
+                    if (!cleanedJson.endsWith('}')) {
+                        logToFile(`[generateAction] Truncated JSON detected. Attempting repair...`);
+                        
+                        // 1. Remove the partial property/object at the end
+                        // Look for the last completed object '}' or array item
+                        const lastValidEnd = Math.max(cleanedJson.lastIndexOf('},'), cleanedJson.lastIndexOf('}'));
+                        if (lastValidEnd > 0) {
+                            cleanedJson = cleanedJson.substring(0, lastValidEnd + 1);
+                        }
+
+                        // 2. Close the remaining structure
+                        if (cleanedJson.includes('"steps": [')) {
+                            if (!cleanedJson.endsWith(']')) cleanedJson += ']';
+                            cleanedJson += '}]}'; 
+                        } else if (cleanedJson.includes('"learningGoals": [')) {
+                            if (!cleanedJson.endsWith(']')) cleanedJson += ']';
+                            cleanedJson += '}}';
+                        } else {
+                            if (!cleanedJson.endsWith('}')) cleanedJson += '}'; 
+                        }
+                    }
+
+                    try {
+                        JSON.parse(cleanedJson); // Validate JSON
+                    } catch (parseErr) {
+                        // FINAL DESPERATE ATTEMPT: Keep cutting back to previous brace until it parses or we give up
+                        let attempts = 0;
+                        while (attempts < 5) {
+                            const lastBrace = cleanedJson.lastIndexOf('}');
+                            if (lastBrace <= 0) break;
+                            cleanedJson = cleanedJson.substring(0, lastBrace + 1);
+                            
+                            // Try to close the array/object structure from here
+                            let testJson = cleanedJson;
+                            if (testJson.split('{').length > testJson.split('}').length) testJson += '}';
+                            if (testJson.includes('"steps": [') && !testJson.includes(']')) testJson += ']';
+                            if (testJson.split('[').length > testJson.split(']').length) testJson += ']';
+                            
+                            try {
+                                JSON.parse(testJson);
+                                cleanedJson = testJson;
+                                break;
+                            } catch {
+                                cleanedJson = cleanedJson.substring(0, lastBrace); // Remove the brace and try again
+                                attempts++;
+                            }
+                        }
+                        JSON.parse(cleanedJson);
+                    }
+
+                    logToFile(`[generateAction] Valid JSON received (or healed) for ${input.materialId}`);
+                    
+                    await adminFirestore.collection('users')
+                        .doc(input.userId)
+                        .collection('materials')
+                        .doc(input.materialId)
+                        .update({
+                            aiOverviewData: cleanedJson,
+                            overviewGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+                            isIndexed: true 
+                        });
+                    return { success: true, overview: cleanedJson };
+                } catch (pErr) {
+                    logToFile(`[generateAction] JSON Parse Error: ${pErr}`);
+                    // Fallback: If it fails, log the first 500 chars for debugging
+                    console.error("[generateAction] Failed JSON content:", overviewJson?.substring(0, 500));
+                    throw new Error(`AI svarede med ugyldigt format: ${pErr}`);
+                }
+            } else {
+                throw new Error("AI svarede uden indhold.");
+            }
+        } else {
+            const errorBody = await response.text();
+            console.error("[generateAction] Gemini API Error:", errorBody);
+            throw new Error(`AI Tjeneste Fejl: ${response.status}`);
+        }
+        throw new Error("Kunne ikke generere overblik.");
+    } catch (err) {
+        logToFile(`generateMaterialAIOverviewAction Error: ${err}`);
+        // Reset status to true so they can try again
+        await adminFirestore.collection('users')
+            .doc(input.userId)
+            .collection('materials')
+            .doc(input.materialId)
+            .update({ isIndexed: true });
+        throw err;
+    }
+}
 
 export async function semanticLawSearchAction(query: string, lawId?: string, documentData?: any): Promise<any> {
     try {
@@ -1394,6 +1680,43 @@ export async function generateConceptVideoScriptAction(input: Types.GenerateConc
 }
 
 
+
+// --- OneNote Integration Actions ---
+
+export async function getMicrosoftAuthUrlAction() {
+  const clientId = process.env.AZURE_CLIENT_ID;
+  const redirectUri = process.env.AZURE_REDIRECT_URI || 'https://cohero.dk/api/auth/callback/microsoft';
+  
+  if (!clientId) {
+    throw new Error("Missing AZURE_CLIENT_ID in environment variables");
+  }
+
+  const scopes = ['Notes.Read', 'offline_access', 'User.Read'].join(' ');
+  const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=query&scope=${encodeURIComponent(scopes)}`;
+  
+  return url;
+}
+
+export async function listOneNoteNotebooksAction() {
+  const { adminAuth: auth } = await import('@/firebase/server-init');
+  const session = await auth.verifyIdToken(cookies().get('__session')?.value || '');
+  if (!session) throw new Error("Unauthorized");
+
+  const { getMicrosoftAccessToken, listNotebooks } = await import('@/lib/integrations/onenote');
+  const token = await getMicrosoftAccessToken(session.uid);
+  if (!token) return [];
+
+  return listNotebooks(token);
+}
+
+export async function syncOneNoteNotebookAction(notebookId: string) {
+  const { adminAuth: auth } = await import('@/firebase/server-init');
+  const session = await auth.verifyIdToken(cookies().get('__session')?.value || '');
+  if (!session) throw new Error("Unauthorized");
+
+  const { syncOneNoteToCohero } = await import('@/lib/integrations/onenote');
+  return syncOneNoteToCohero(session.uid, notebookId);
+}
 
 // --- STAR API Actions ---
 
@@ -3614,133 +3937,7 @@ export async function updateProofreadingRequestStatusAction(requestId: string, n
         return { success: false };
     }
 }
-/**
- * getUserPublicProfileAction:
- * Fetches public-safe profile information for a user by their UID.
- * Used for public shareable profile pages.
- */
-export async function getUserPublicProfileAction(uid: string) {
-    console.log('[getUserPublicProfileAction] Fetching public profile for UID:', uid);
-    if (!uid) {
-        console.error('[getUserPublicProfileAction] Error: Missing UID');
-        return { success: false, message: 'UID er påkrævet.' };
-    }
-    
-    try {
-        const { adminFirestore } = await import('@/firebase/server-init');
-        
-        let userDoc = await adminFirestore.collection('users').doc(uid).get();
-        
-        // Fallback: If not found by document ID (UID), try searching by the 'username' field
-        if (!userDoc.exists) {
-            console.log(`[getUserPublicProfileAction] No doc with ID ${uid}, trying username query...`);
-            const usernameQuery = await adminFirestore.collection('users')
-                .where('username', '==', uid)
-                .limit(1)
-                .get();
-            
-            if (!usernameQuery.empty) {
-                userDoc = usernameQuery.docs[0];
-                console.log(`[getUserPublicProfileAction] Found user by username: ${uid}`);
-            }
-        }
-        
-        console.log(`[getUserPublicProfileAction] Result for ${uid} - Exists: ${userDoc.exists}`);
-        
-        if (!userDoc.exists) {
-            console.warn(`[getUserPublicProfileAction] User not found by ID or username: ${uid}`);
-            
-            // Extreme debug: what IDs ARE in the users collection?
-            const sampleSnap = await adminFirestore.collection('users').limit(3).get();
-            if (sampleSnap.empty) {
-                console.error('[getUserPublicProfileAction] The "users" collection is EMPTY in Firestore.');
-            } else {
-                console.log('[getUserPublicProfileAction] Sample UIDs in collection:', sampleSnap.docs.map(d => d.id));
-            }
-            
-            return { success: false, message: 'Bruger kunne ikke findes.' };
-        }
-        
-        const data = userDoc.data();
-        console.log('[getUserPublicProfileAction] Successfully found user:', data?.username || data?.displayName);
-        if (!data) return { success: false, message: 'Ingen data fundet.' };
-        
-        // Sanitize: Only return public fields
-        const publicProfile = {
-            uid: uid,
-            username: data.username || data.displayName || 'Cohéro Bruger',
-            profession: data.profession || 'Socialrådgiver',
-            institution: data.institution || '',
-            semester: data.semester || '',
-            isQualified: data.isQualified || false,
-            membership: data.membership || 'Kollega',
-            dailyChallengeStreak: data.dailyChallengeStreak || 0,
-            highestStreak: data.highestStreak || 0,
-            cohéroPoints: data.cohéroPoints || 0,
-            mementoLevels: data.mementoLevels || { theorist: 0, paragraph: 0, method: 0 },
-            badges: data.badges || [],
-            profilePicture: data.profilePicture || '',
-            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : null,
-        };
-        
-        // Also fetch recent activity (publicly sharable ones)
-        // Note: We fetch without orderBy to avoid composite index requirements, 
-        // and sort in-memory for the small result set.
-        const activitySnap = await adminFirestore.collection('userActivities')
-            .where('userId', '==', uid)
-            .get();
-            
-        let activities = activitySnap.docs.map(doc => {
-            const act = doc.data();
-            return {
-                id: doc.id,
-                actionText: act.actionText,
-                createdAt: act.createdAt?.toDate ? act.createdAt.toDate() : (act.createdAt ? new Date(act.createdAt) : new Date(0))
-            };
-        });
 
-        // Sort descending and take top 5
-        activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        const topActivities = activities.slice(0, 5).map(act => ({
-            ...act,
-            createdAt: act.createdAt.toISOString()
-        }));
-        
-        // Also fetch quiz results (law training progression)
-        const quizSnap = await adminFirestore.collection('users').doc(uid).collection('quizResults').get();
-        
-        let quizResults = quizSnap.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                lawTitle: data.lawTitle || 'Ukendt Lov',
-                topic: data.topic || '',
-                score: data.score || 0,
-                totalQuestions: data.totalQuestions || 5,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date(0))
-            };
-        });
-
-        // Sort descending by date
-        quizResults.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        const topQuizzes = quizResults.slice(0, 10).map(q => ({
-            ...q,
-            createdAt: q.createdAt.toISOString()
-        }));
-        
-        return { 
-            success: true, 
-            data: {
-                profile: publicProfile,
-                activities: topActivities,
-                quizResults: topQuizzes
-            }
-        };
-    } catch (error: any) {
-        console.error('Error fetching public profile:', error);
-        return { success: false, message: 'Der skete en fejl under hentning af profilen.' };
-    }
-}
 
 
 export async function generateCourseAction(input: Types.GenerateCourseInput): Promise<Types.GenerateCourseOutput> {

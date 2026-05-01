@@ -29,25 +29,24 @@ export function initializeFirebase() {
   }
 
   const apps = getApps();
-  let firebaseApp;
+  const firebaseApp = apps.length === 0 ? initializeApp(firebaseConfig) : apps[0];
+  const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
   
-  if (apps.length === 0) {
-    firebaseApp = initializeApp(firebaseConfig);
-    // CRITICAL: initializeFirestore MUST be called before getFirestore
-    // to apply options correctly. We must also disable fetch streams because
-    // Next.js patches `fetch`, which breaks WebChannel streaming over HMR.
-    initializeFirestore(firebaseApp, { 
-      experimentalAutoDetectLongPolling: true,
-      ignoreUndefinedProperties: true,
-      // @ts-ignore
-      useFetchStreams: false
-    });
-  } else {
-    firebaseApp = apps[0];
-  }
+  console.log("[Firebase] Initializing Firestore. Database ID:", databaseId || "(default)");
 
+  // Initialize Firestore
+  let firestore;
+  try {
+    // Try to initialize with settings. This will fail if already initialized (e.g. HMR)
+    firestore = initializeFirestore(firebaseApp, { 
+      ignoreUndefinedProperties: true
+    }, databaseId || undefined);
+  } catch (e) {
+    // If already initialized, just get the existing instance
+    firestore = databaseId ? getFirestore(firebaseApp, databaseId) : getFirestore(firebaseApp);
+  }
+  
   const auth = getAuth(firebaseApp);
-  const firestore = getFirestore(firebaseApp);
   const storage = getStorage(firebaseApp);
   
 

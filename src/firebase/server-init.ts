@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 
 /**
  * Initialiserer Firebase Admin SDK på serveren.
@@ -46,9 +47,13 @@ function getAdminApp() {
 }
 
 const app = getAdminApp();
+const databaseId = 'cohero-database';
+
+console.log(`[Firebase Admin] FORCE Using Firestore Database: ${databaseId}`);
 
 export const adminAuth = admin.auth(app);
-export const adminFirestore = admin.firestore(app);
+// Use the modern getFirestore way for firebase-admin 13.x
+export const adminFirestore = getFirestore(app, databaseId);
 export const adminStorage = admin.storage(app);
 
 // Legacy support
