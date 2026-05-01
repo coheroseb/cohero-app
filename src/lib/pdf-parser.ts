@@ -1,9 +1,10 @@
-// @ts-ignore
-import pdf from 'pdf-parse-fork';
-
 export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
     try {
         console.log('[PdfParser] Starting extraction with pdf-parse-fork...');
+        
+        // Dynamically import to avoid build-time issues with native modules
+        // @ts-ignore
+        const pdf = (await import('pdf-parse-fork')).default;
         
         // Use a promise with a timeout to prevent hanging
         const extractionPromise = pdf(buffer);
