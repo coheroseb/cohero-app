@@ -142,10 +142,10 @@ export default function LandingPage() {
                     repeat: Infinity, 
                     ease: "easeInOut" 
                   }}
-                  className="text-[44px] leading-[0.95] sm:text-7xl md:text-8xl xl:text-[110px] font-[900] text-slate-900 tracking-[-0.06em] w-full max-w-[15ch] lg:max-w-none text-balance"
+                  className="text-[40px] leading-[0.95] sm:text-6xl md:text-7xl xl:text-[85px] font-[900] text-slate-900 tracking-[-0.05em] w-full max-w-4xl lg:max-w-none"
                 >
-                  Fremtidens <br className="hidden sm:block" />
-                  <span className="relative inline-block mt-1 md:mt-2 px-1">
+                  Mindre stress. <br className="hidden sm:block" />
+                  <span className="relative inline-block mt-1 md:mt-2">
                     <motion.span 
                       animate={{ 
                         color: ["#1e293b", "#d97706", "#1e293b"],
@@ -155,17 +155,17 @@ export default function LandingPage() {
                         repeat: Infinity, 
                         ease: "linear" 
                       }}
-                      className="relative z-10 italic font-serif"
+                      className="relative z-10 italic font-serif pr-4"
                     >
-                      velfærd
+                      Mere overskud.
                     </motion.span>
                   </span>
-                  <br />
-                  skabes her.
+                  <br className="hidden lg:block" />
+                  Bedre resultater.
                 </motion.h1>
                 
-                <p className="text-[17px] sm:text-xl lg:text-2xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
-                  Den eneste platform skabt specifikt til socialrådgiverstuderende. Vi kombinerer avanceret AI med realtids-opdateret dansk lovgivning, så du kan mestre alt fra paragraffer til videnskabsteori med fuld professionel rygdækning.
+                <p className="text-[16px] sm:text-lg lg:text-xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
+                  Socialrådgiverstudiet er krævende, og lovgivningen er uoverskuelig. Cohéro strukturerer din viden og validerer din juridiske forståelse i realtid, så du kan fokusere på at gøre en forskel – med fuld professionel rygdækning.
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -186,15 +186,6 @@ export default function LandingPage() {
                           <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1.5 transition-transform" />
                       </span>
                   </button>
-                  
-
-                   <button
-                       onClick={handleInstallClick}
-                       className="flex justify-center items-center gap-2.5 px-6 sm:px-8 py-5 sm:py-6 bg-white/80 backdrop-blur-md border border-slate-200 text-slate-800 rounded-[20px] sm:rounded-2xl font-bold text-[15px] sm:text-[13px] uppercase sm:tracking-widest active:scale-[0.98] sm:hover:bg-slate-50 transition-all shadow-sm w-full sm:w-auto will-change-transform"
-                   >
-                       <Download className="w-5 h-5 sm:w-4 sm:h-4 text-slate-500" />
-                       Hent App
-                   </button>
               </div>
             </motion.div>
           </div>
@@ -328,10 +319,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 2.5 REVIEWS MARQUEE (Social Proof) */}
-      <div className="py-12 bg-[#FDFBF7]">
-         <ReviewMarquee />
-      </div>
+
 
        {/* 1.2 DIFFERENTIATION SECTION (Innovative 'Bento-Neo' Layout) */}
       <section className="py-32 bg-[#FDFBF7] px-5 sm:px-8 relative overflow-hidden">
@@ -728,7 +716,7 @@ export default function LandingPage() {
                 {/* Decorative background elements for the video holder */}
                 <div className="absolute -inset-4 bg-gradient-to-tr from-amber-200/20 to-rose-200/20 blur-3xl opacity-50 -z-10 animate-pulse" />
                 <div className="absolute -top-12 -right-12 w-24 h-24 bg-rose-100/50 rounded-full blur-2xl -z-10" />
-                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-100/50 rounded-full blur-2xl -z-10" />
+                  <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-100/50 rounded-full blur-2xl -z-10" />
                 
                 {/* TikTok Feed Component */}
                 <TikTokFeed />
@@ -738,80 +726,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 5. CITIZEN ASSISTANCE SECTION (Innovative Layered Layout) */}
-      <section className="py-32 sm:py-48 bg-zinc-950 relative overflow-hidden px-5 sm:px-8 border-t border-white/5">
-        <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none">
-            <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-rose-900/40 rounded-full blur-[180px]"></div>
-            <div className="absolute bottom-[-10%] right-[-5%] w-[700px] h-[700px] bg-amber-900/30 rounded-full blur-[180px]"></div>
-        </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-24">
-            <div className="w-full lg:w-1/2 order-2 lg:order-1">
-                <Reveal className="relative flex items-center justify-center">
-                    <div className="relative w-full aspect-square max-w-lg">
-                        <motion.div 
-                            animate={{ 
-                                scale: [1, 1.02, 1],
-                                rotate: [0, 1, 0, -1, 0]
-                            }}
-                            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute inset-0 m-auto w-48 h-48 sm:w-72 sm:h-72 bg-gradient-to-br from-rose-500 to-rose-700 rounded-[4rem] shadow-[0_0_100px_rgba(244,63,94,0.3)] flex items-center justify-center border-4 border-white/10 z-20"
-                        >
-                            <ShieldCheck className="w-24 h-24 sm:w-32 sm:h-32 text-white" />
-                        </motion.div>
-                        
-                        {/* More Organic Orbiting Elements */}
-                        {[
-                            { icon: Heart, delay: 0, color: 'bg-white/5', label: 'Omsorg' },
-                            { icon: Scale, delay: 3.75, color: 'bg-white/5', label: 'Retssikkerhed' },
-                            { icon: Users, delay: 7.5, color: 'bg-white/5', label: 'Bisidder' },
-                            { icon: GraduationCap, delay: 11.25, color: 'bg-white/5', label: 'Ekspertise' },
-                        ].map((item, i) => (
-                            <motion.div
-                                key={i}
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 25, repeat: Infinity, ease: "linear", delay: -item.delay }}
-                                className="absolute inset-0 m-auto w-full h-full pointer-events-none"
-                            >
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 bg-white/5 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 flex flex-col items-center gap-2 pointer-events-auto shadow-2xl">
-                                    <item.icon className="w-8 h-8 text-white" />
-                                    <span className="text-[10px] font-black uppercase text-white tracking-widest">{item.label}</span>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </Reveal>
-            </div>
 
-            <div className="w-full lg:w-1/2 order-1 lg:order-2 space-y-10 text-center lg:text-left">
-                <Reveal>
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-full mb-6">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-400">Socialrådgivning i øjenhøjde</span>
-                    </div>
-                    <h2 className="text-5xl sm:text-7xl font-[900] text-white leading-[0.95] tracking-tight text-balance">
-                      Brug for <br />
-                      <span className="italic font-serif text-rose-500">professionshjælp?</span>
-                    </h2>
-                    <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 mt-8">
-                        Vi forbinder borgere med studerende, der kan assistere med sagsindsigt, bisidderopgaver og juridisk sparring. Det er din genvej til professionel støtte.
-                    </p>
-                </Reveal>
-                <Reveal delay={0.2}>
-                   <Link 
-                        href="https://ask.cohero.dk" 
-                        className="group relative inline-flex px-12 py-6 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl hover:scale-105 transition-all overflow-hidden"
-                    >
-                        <span className="relative z-10 flex items-center justify-center gap-4">
-                            Søg hjælp nu
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-                        </span>
-                    </Link>
-                </Reveal>
-            </div>
-          </div>
-        </div>
-      </section>
 
 
       {/* 6. PRICING SECTION (Premium Membership Experience) */}

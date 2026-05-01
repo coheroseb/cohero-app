@@ -236,7 +236,6 @@ const MobileTabNavigation = ({ userProfile }: { userProfile: any }) => {
 
     const mainTabs = [
         { label: 'Hjem', icon: Home, path: '/portal' },
-        { label: 'Semester', icon: CalendarDays, path: '/mit-semester' },
         { label: 'Jura', icon: Scale, path: '/lov-portal' },
         { label: 'Grupper', icon: MessageSquare, path: '/rum/groups' },
     ];

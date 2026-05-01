@@ -154,7 +154,7 @@ export default function RootLayout({
         />
         <Script id="service-worker-registration" strategy="afterInteractive">
           {`
-            if ('serviceWorker' in navigator) {
+            if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
               window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
                   console.log('ServiceWorker registration successful');

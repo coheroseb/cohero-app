@@ -41,7 +41,8 @@ import {
   Star,
   ShoppingBag,
   Rocket,
-  User as UserIcon
+  User as UserIcon,
+  FileBox
 } from 'lucide-react';
 
 import { User } from 'firebase/auth';
@@ -171,13 +172,12 @@ const Navbar: React.FC<NavbarProps> = ({
       {
         title: "Hovedmenu",
         items: [
-          { title: "Hjem", path: "/portal", icon: <Home className="w-5 h-5" /> },
-          { title: "Offentlig Profil", path: `/u/${user?.uid}`, icon: <UserIcon className="w-5 h-5" /> },
+
           { title: "Korrektur", path: "/korrektur", icon: <Sparkles className="w-5 h-5" /> },
-          { title: "Mit Semester", path: "/mit-semester", icon: <CalendarDays className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
+          { title: "Mit pensum", path: "/mine-materialer", icon: <FileBox className="w-5 h-5 text-indigo-500" /> },
           { title: "Akademiet", path: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5" /> },
-          { title: "Jura", path: "/lov-portal", icon: <Scale className="w-5 h-5" /> },
+          { title: "Jura", path: "https://law.cohero.dk", icon: <Scale className="w-5 h-5" /> },
           { title: "Shop", path: "/shop", icon: <ShoppingBag className="w-5 h-5" /> },
           { title: "Vores Rejse", path: "/journey", icon: <Rocket className="w-5 h-5 text-rose-500" /> },
           { title: "Form fremtiden", path: "/medbestemmelse", icon: <Lightbulb className="w-5 h-5" /> },
@@ -195,49 +195,51 @@ const Navbar: React.FC<NavbarProps> = ({
     <motion.div 
       initial={false}
       animate={{ opacity: scrolled ? 1 : 0 }}
-      className="fixed left-0 right-0 h-28 bg-gradient-to-b from-white/60 via-white/10 to-transparent z-[90] pointer-events-none backdrop-blur-[2px]"
+      className="fixed left-0 right-0 h-28 bg-gradient-to-b from-white/60 via-white/10 to-transparent z-[85] pointer-events-none backdrop-blur-[2px]"
       style={{ top: topOffset }}
     />
 
     <nav 
-      className={`fixed left-0 right-0 z-[500] transition-all duration-700 ease-in-out px-4 py-4 md:px-8`}
+      className={`fixed left-0 right-0 z-[90] transition-all duration-700 ease-in-out px-4 py-6 md:px-12`}
       style={{ top: topOffset }}
     >
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={`max-w-7xl mx-auto w-full transition-all duration-500 will-change-transform
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className={`max-w-7xl mx-auto w-full transition-all duration-700 will-change-transform
           ${scrolled 
-            ? 'bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(45,35,15,0.1)] border border-white/60 h-16 px-6' 
-            : 'bg-white/10 backdrop-blur-[2px] rounded-[2.5rem] border border-white/20 h-20 px-6 sm:px-8 shadow-sm hover:bg-white/20'
+            ? 'bg-white/70 backdrop-blur-3xl rounded-[3rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] border border-white h-20 px-8' 
+            : 'bg-white/40 backdrop-blur-2xl rounded-[3rem] border border-white/40 h-24 px-10 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.05)]'
           }`}
       >
         <div className="flex items-center justify-between h-full">
           
           {/* Brand - Bookshelf Logo (Keep as requested) */}
-          <div className={`flex items-end h-12 mb-1 relative active:scale-[0.98] transition-all origin-bottom ${scrolled ? 'scale-[0.85]' : 'scale-100'}`}>
+          <div className={`flex items-end h-12 mb-1 relative active:scale-[0.98] transition-all origin-bottom ${scrolled ? 'scale-[0.9]' : 'scale-110'}`}>
             <Link
               href={user ? "/portal" : "/"}
-              className="flex items-end -space-x-[1px]"
+              className="flex items-end -space-x-[1.5px]"
               aria-label="Cohéro Hjem"
             >
-              <BookSpine index={0} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-6 sm:h-7" color="bg-white" decoration="plain" tilt="-rotate-1" />
-              <BookSpine index={1} theme={effectiveTheme} width="w-2.5 sm:w-3" height="h-9 sm:h-10" color="bg-white" decoration="bands" />
-              <BookSpine index={2} theme={effectiveTheme} width="w-1 sm:w-1.5" height="h-7 sm:h-8" color="bg-white" decoration="plain" />
+              <BookSpine index={0} theme={effectiveTheme} width="w-2 sm:w-3" height="h-6 sm:h-8" color="bg-white" decoration="plain" tilt="-rotate-1" />
+              <BookSpine index={1} theme={effectiveTheme} width="w-3 sm:w-4" height="h-9 sm:h-11" color="bg-white" decoration="bands" />
+              <BookSpine index={2} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-7 sm:h-9" color="bg-white" decoration="plain" />
 
-              <BookSpine index={3} theme={effectiveTheme} letter="C" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-white" decoration="bands" />
-              <BookSpine index={4} theme={effectiveTheme} letter="o" width="w-3.5 sm:w-4" height="h-8 sm:h-9" color="bg-white" decoration="gold" />
-              <BookSpine index={5} theme={effectiveTheme} letter="h" width="w-3.5 sm:w-4" height="h-11 sm:h-12" color="bg-white" decoration="bands" tilt="-rotate-[1.5deg]" />
-              <BookSpine index={6} theme={effectiveTheme} letter="é" width="w-3.5 sm:w-4" height="h-9 sm:h-10" color="bg-white" decoration="stripes" />
-              <BookSpine index={7} theme={effectiveTheme} letter="r" width="w-3.5 sm:w-4" height="h-10 sm:h-11" color="bg-white" decoration="bands" />
-              <BookSpine index={8} theme={effectiveTheme} letter="o" width="w-3.5 sm:w-4" height="h-7 sm:h-8" color="bg-white" decoration="gold" tilt="rotate-[1deg]" />
+              <BookSpine index={3} theme={effectiveTheme} letter="C" width="w-4 sm:w-5" height="h-10 sm:h-12" color="bg-white" decoration="bands" />
+              <BookSpine index={4} theme={effectiveTheme} letter="o" width="w-4 sm:w-5" height="h-8 sm:h-10" color="bg-white" decoration="gold" />
+              <BookSpine index={5} theme={effectiveTheme} letter="h" width="w-4 sm:w-5" height="h-11 sm:h-13" color="bg-white" decoration="bands" tilt="-rotate-[1.5deg]" />
+              <BookSpine index={6} theme={effectiveTheme} letter="é" width="w-4 sm:w-5" height="h-9 sm:h-11" color="bg-white" decoration="stripes" />
+              <BookSpine index={7} theme={effectiveTheme} letter="r" width="w-4 sm:w-5" height="h-10 sm:h-12" color="bg-white" decoration="bands" />
+              <BookSpine index={8} theme={effectiveTheme} letter="o" width="w-4 sm:w-5" height="h-7 sm:h-9" color="bg-white" decoration="gold" tilt="rotate-[1deg]" />
 
-              <BookSpine index={9} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-9 sm:h-10" color="bg-white" decoration="ornament" />
-              <BookSpine index={10} theme={effectiveTheme} width="w-2.5 sm:w-3" height="h-6 sm:h-7" color="bg-white" decoration="plain" tilt="rotate-2" />
-              <BookSpine index={11} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-8 sm:h-9" color="bg-white" decoration="bands" />
+              <BookSpine index={9} theme={effectiveTheme} width="w-2 sm:w-3" height="h-9 sm:h-11" color="bg-white" decoration="ornament" />
+              <BookSpine index={10} theme={effectiveTheme} width="w-3 sm:w-4" height="h-6 sm:h-8" color="bg-white" decoration="plain" tilt="rotate-2" />
+              <BookSpine index={11} theme={effectiveTheme} width="w-2 sm:w-3" height="h-8 sm:h-10" color="bg-white" decoration="bands" />
             </Link>
           </div>
+          
+
 
           {/* Desktop menu - Modern Sleek Links */}
           <div className="hidden lg:flex items-center space-x-2">
@@ -249,13 +251,18 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center space-x-1"
               >
                 {[
-                  { label: "Hjem", href: "/portal", icon: <Home className="w-5 h-5"/>, color: "bg-amber-100 text-amber-700" },
+                  { label: "Mit pensum", href: "/mine-materialer", icon: <FileBox className="w-5 h-5"/>, color: "bg-indigo-100 text-indigo-700" },
                   { label: "Akademiet", href: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5"/>, color: "bg-purple-100 text-purple-700" },
                   { label: "Slides", href: "/mine-seminarer", icon: <Presentation className="w-5 h-5"/>, color: "bg-emerald-100 text-emerald-700" },
-                  { label: "Jura", href: "/lov-portal", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" },
-                  { label: "Semester", href: "/mit-semester", icon: <CalendarDays className="w-5 h-5"/>, color: "bg-indigo-100 text-indigo-700" }
+                  { label: "Jura", href: "https://law.cohero.dk", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" }
                 ].map((item) => (
-                  <Link key={item.label} href={item.href} className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}>
+                  <Link 
+                    key={item.label} 
+                    href={item.href} 
+                    target={item.href.startsWith('http') ? '_blank' : undefined}
+                    rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className={`flex items-center gap-2 group px-4 py-2 rounded-2xl transition-all duration-300 ${scrolled ? 'hover:bg-slate-50' : 'hover:bg-white/40'}`}
+                  >
                     <div className={`p-1.5 rounded-lg transition-all group-hover:scale-110 ${item.color} ${scrolled ? '' : 'bg-white/60 shadow-sm'}`}>
                       {React.cloneElement(item.icon as React.ReactElement, { className: "w-3.5 h-3.5" })}
                     </div>
@@ -265,7 +272,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
                 <NavDropdown title="Mere" icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}>
                    <NavDropdownLink href="/shop" icon={<ShoppingBag className="w-4 h-4 text-rose-500" />}>Shop</NavDropdownLink>
-                   <NavDropdownLink href={`/u/${user?.uid}`} icon={<UserIcon className="w-4 h-4 text-indigo-500" />}>Offentlig Profil</NavDropdownLink>
+
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
@@ -283,7 +290,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 transition={{ delay: 0.1 }}
                 className="flex items-center space-x-2"
               >
-                <Link href="/hvorfor" prefetch={false} className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Hvorfor Cohéro?</Link>
+                <Link href="/upgrade" prefetch={false} className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Priser</Link>
                 <Link href="/shop" prefetch={false} className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all flex items-center gap-2`}>
                   <ShoppingBag className="w-4 h-4 text-rose-500" />
                   Shop
@@ -291,7 +298,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 
                 <NavDropdown title="Udforsk" icon={<Wand2 className="w-4 h-4 text-amber-500" />}>
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
-                   <NavDropdownLink href="https://ask.cohero.dk" icon={<HandHelping className="w-4 h-4 text-rose-500" />}>Spørg en studerende</NavDropdownLink>
+
                    <NavDropdownLink href="/om-second-opinion" icon={<Scale className="w-4 h-4 text-emerald-500" />}>Få en Second Opinion</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Giv praktik stjerner</NavDropdownLink>
                    <NavDropdownLink href="/journey" icon={<Rocket className="w-4 h-4 text-rose-500" />}>Vores Rejse</NavDropdownLink>
@@ -309,17 +316,7 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-3">
-                {/* Upgrade CTA for free users */}
-                {(userProfile?.membership === 'Kollega' || !userProfile?.membership) && (
-                  <Link 
-                    href="/upgrade" 
-                    className="hidden lg:flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 bg-[length:200%_auto] animate-shimmer text-amber-950 font-black uppercase text-[10px] tracking-widest rounded-xl hover:scale-105 transition-all shadow-lg shadow-amber-500/20 active:scale-95 whitespace-nowrap border border-white/20 group relative overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <Star className="w-4 h-4 fill-amber-950 animate-pulse" />
-                    <span>Opgrader til Kollega+</span>
-                  </Link>
-                )}
+                {/* Upgrade CTA removed as per user request */}
                 <NotificationBell />
                 <div className="text-right hidden sm:block">
                   <p className="text-[10px] font-black uppercase text-amber-500 tracking-widest leading-none mb-1">
@@ -337,12 +334,14 @@ const Navbar: React.FC<NavbarProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="hidden lg:flex items-center gap-4">
-                <button onClick={() => onAuth('signin')} className="px-5 py-2.5 text-[14px] font-bold text-slate-700 hover:text-slate-950 transition-colors">Log ind</button>
-                <button onClick={() => onAuth('signup')} className="relative px-6 py-2.5 bg-gradient-to-br from-amber-950 to-slate-900 text-amber-400 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-[0_10px_30px_-10px_rgba(45,35,15,0.4)] active:scale-95 transition-all flex items-center gap-2 group border border-white/5">
-                  <span className="relative z-10">Opret en gratis konto</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform relative z-10"/>
-                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+              <div className="hidden lg:flex items-center gap-6">
+                <button onClick={() => onAuth('signin')} className="text-[13px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-950 transition-colors">Log ind</button>
+                <button 
+                  onClick={() => onAuth('signup')} 
+                  className="px-8 py-3.5 bg-slate-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-950/20 active:scale-95 transition-all flex items-center gap-3 group"
+                >
+                  Opret gratis konto
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                 </button>
               </div>
             )}
@@ -429,6 +428,8 @@ const Navbar: React.FC<NavbarProps> = ({
                                 <Link 
                                   href={item.path} 
                                   onClick={() => setIsMobileMenuOpen(false)}
+                                  target={item.path.startsWith('http') ? '_blank' : undefined}
+                                  rel={item.path.startsWith('http') ? 'noopener noreferrer' : undefined}
                                   prefetch={false}
                                   className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-[20px] active:scale-[0.98] active:bg-slate-50 transition-all shadow-sm"
                                 >
@@ -466,11 +467,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   </>
                 ) : (
                   <ul className="space-y-4 pt-4">
-                    <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.02 }}>
-                        <Link href="https://ask.cohero.dk" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-[24px] text-[18px] font-extrabold text-rose-600 shadow-sm active:scale-[0.98] transition-all">
-                            Få hjælp fra en studerende <HandHelping className="w-5 h-5 text-rose-400" />
-                        </Link>
-                    </motion.li>
+
                     <motion.li initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 }}>
                         <Link href="/om-second-opinion" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-emerald-50 border border-emerald-100 rounded-[24px] text-[18px] font-extrabold text-emerald-600 shadow-sm active:scale-[0.98] transition-all">
                             Få en Second Opinion <Scale className="w-5 h-5 text-emerald-400" />

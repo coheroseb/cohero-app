@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, School, Sparkles, Send, ChevronDown, User, Loader2, Users, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useFirestore, useUser } from '@/firebase';
-import { doc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, writeBatch, serverTimestamp, query, where, getDocs, collection } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
 import { updateProfile } from 'firebase/auth';
 import { usePathname } from 'next/navigation';
@@ -24,6 +24,8 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
   const [isQualified, setIsQualified] = useState(false);
   
   const [loading, setLoading] = useState(false);
+  const [fetchingCurriculum, setFetchingCurriculum] = useState(false);
+  const [availableModules, setAvailableModules] = useState<{id: string, name: string}[]>([]);
   const [error, setError] = useState<string | null>(null);
   
   const { user } = useUser();
@@ -38,6 +40,48 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       setUsername(user.displayName);
     }
   }, [user]);
+
+  useEffect(() => {
+    const fetchCurriculum = async () => {
+      if (!institution || !profession || !firestore) {
+        setAvailableModules([]);
+        return;
+      }
+
+      setFetchingCurriculum(true);
+      try {
+        const curriculumsRef = collection(firestore, 'curriculums');
+        const q = query(
+          curriculumsRef,
+          where('institution', '==', institution),
+          where('profession', '==', profession)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const curriculum = querySnapshot.docs[0].data();
+          if (curriculum.modules && Array.isArray(curriculum.modules)) {
+            const mods = curriculum.modules.map((m: any) => ({
+              id: m.id || m.semester?.toString() || '',
+              name: m.name || `${m.semester}. semester`
+            }));
+            setAvailableModules(mods);
+          } else {
+            setAvailableModules([]);
+          }
+        } else {
+          setAvailableModules([]);
+        }
+      } catch (err) {
+        console.error("Error fetching curriculum for onboarding:", err);
+        setAvailableModules([]);
+      } finally {
+        setFetchingCurriculum(false);
+      }
+    };
+
+    fetchCurriculum();
+  }, [institution, profession, firestore]);
 
   const capitalize = (s: string) => {
     if (!s) return "";
@@ -304,21 +348,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                             className="space-y-4 overflow-hidden"
                           >
                              <div className="relative group bg-slate-50 rounded-[1.25rem] focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-950/5 transition-all">
-                                <BookOpen className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none group-focus-within:text-amber-950 transition-colors" />
-                                <select
-                                  value={semester}
-                                  onChange={(e) => setSemester(e.target.value)}
-                                  className="w-full appearance-none pl-12 pr-10 py-4 bg-transparent border-transparent rounded-[1.25rem] focus:outline-none text-sm h-14 font-bold text-slate-900 cursor-pointer"
-                                >
-                                  <option value="" disabled className="text-slate-400">Vælg semester</option>
-                                  {SEMESTER_OPTIONS.map(sem => (
-                                    <option key={sem} value={sem}>{sem}. semester</option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
-                             </div>
-                             
-                             <div className="relative group bg-slate-50 rounded-[1.25rem] focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-950/5 transition-all">
                                 <School className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none group-focus-within:text-amber-950 transition-colors" />
                                 <select
                                     value={institution}
@@ -329,6 +358,30 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                                     {INSTITUTIONS.map(inst => (
                                         <option key={inst} value={inst}>{inst}</option>
                                     ))}
+                                </select>
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
+                             </div>
+
+                             <div className="relative group bg-slate-50 rounded-[1.25rem] focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-950/5 transition-all">
+                                <BookOpen className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none group-focus-within:text-amber-950 transition-colors" />
+                                <select
+                                  value={semester}
+                                  onChange={(e) => setSemester(e.target.value)}
+                                  className="w-full appearance-none pl-12 pr-10 py-4 bg-transparent border-transparent rounded-[1.25rem] focus:outline-none text-sm h-14 font-bold text-slate-900 cursor-pointer"
+                                  disabled={fetchingCurriculum}
+                                >
+                                  <option value="" disabled className="text-slate-400">
+                                    {fetchingCurriculum ? 'Henter moduler...' : 'Vælg semester/modul'}
+                                  </option>
+                                  {availableModules.length > 0 ? (
+                                    availableModules.map(mod => (
+                                      <option key={mod.id} value={mod.id}>{mod.name}</option>
+                                    ))
+                                  ) : (
+                                    SEMESTER_OPTIONS.map(sem => (
+                                      <option key={sem} value={sem}>{sem}. semester</option>
+                                    ))
+                                  )}
                                 </select>
                                 <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
                              </div>

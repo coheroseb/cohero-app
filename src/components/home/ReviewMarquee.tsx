@@ -35,51 +35,60 @@ export default function ReviewMarquee() {
     if (reviews.length === 0) return null;
 
     return (
-        <div className="relative w-full bg-slate-900 overflow-hidden py-4 border-y border-white/5">
+        <div className="relative w-full bg-white/50 backdrop-blur-xl overflow-hidden py-12 border-y border-slate-100">
             <div className="flex whitespace-nowrap">
                 <motion.div 
                     animate={{ x: [0, '-50%'] }}
                     transition={{ 
-                        duration: reviews.length * 12, 
+                        duration: reviews.length * 15, 
                         repeat: Infinity, 
                         ease: "linear" 
                     }}
-                    className="flex items-center gap-16 sm:gap-24 px-10"
+                    className="flex items-center gap-12 px-10"
                 >
                     {reviews.map((review, idx) => (
-                        <div key={`${review.id}-${idx}`} className="flex items-center gap-6 sm:gap-8 shrink-0 group">
-                            <div className="flex items-center gap-3">
-                                <div className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-full">
-                                   <span className="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em]">Praktik-indblik</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full border border-white/10 group-hover:border-amber-400/30 transition-colors">
-                                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                    <span className="text-[10px] font-black text-white/90 uppercase tracking-widest">{review.rating}</span>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-4">
-                                <Quote className="w-3.5 h-3.5 text-rose-500/30 rotate-180 shrink-0" />
-                                <p className="text-xs sm:text-[15px] font-bold text-slate-300 group-hover:text-white transition-colors tracking-tight italic">
-                                    "{review.reviewText.length > 100 ? review.reviewText.substring(0, 100) + '...' : review.reviewText}"
-                                </p>
+                        <div key={`${review.id}-${idx}`} className="flex items-center gap-12 shrink-0 group">
+                            {/* Card-like structure but without heavy borders */}
+                            <div className="flex flex-col gap-6 max-w-lg">
+                               <div className="flex items-center gap-4">
+                                   <div className="flex gap-1">
+                                       {[...Array(5)].map((_, i) => (
+                                           <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                                       ))}
+                                   </div>
+                                   <div className="h-px w-8 bg-slate-100" />
+                                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Indblik</span>
+                               </div>
+
+                               <p className="text-xl sm:text-2xl font-medium text-slate-900 leading-tight tracking-tight whitespace-normal max-w-sm italic serif">
+                                  "{review.reviewText.length > 120 ? review.reviewText.substring(0, 120) + '...' : review.reviewText}"
+                               </p>
+
+                               <div className="flex items-center gap-5">
+                                   <div className="w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-sm shadow-lg shadow-indigo-600/20">
+                                       {review.userName?.charAt(0) || 'A'}
+                                   </div>
+                                   <div className="flex flex-col">
+                                       <span className="text-[11px] font-black uppercase tracking-widest text-slate-900">{review.userName || 'Anonym'}</span>
+                                       <span className="text-[10px] font-bold text-indigo-500/60 uppercase tracking-[0.1em]">{review.institutionName || 'Ukendt sted'}</span>
+                                   </div>
+                               </div>
                             </div>
 
-                            <div className="flex items-center gap-3 text-slate-500 group-hover:text-slate-300 transition-colors">
-                                <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{review.userName || 'Anonym'}</span>
-                                    <span className="text-[9px] font-bold text-rose-500/50 uppercase tracking-widest">{review.institutionName || 'Ukendt sted'}</span>
-                                </div>
-                            </div>
+                            {/* Architectural Divider */}
+                            <div className="h-40 w-px bg-slate-100/50" />
                         </div>
                     ))}
                 </motion.div>
             </div>
 
-            {/* Fades on the sides for depth */}
-            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-900 to-transparent z-10 pointer-events-none" />
-            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-900 to-transparent z-10 pointer-events-none" />
+            {/* Premium Edge Fades */}
+            <div className="absolute inset-y-0 left-0 w-64 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-64 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none" />
+
+            <style jsx>{`
+              .serif { font-family: 'Playfair Display', serif; }
+            `}</style>
         </div>
     );
 }
