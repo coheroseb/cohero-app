@@ -401,10 +401,13 @@ export default function SettingsPage() {
         }
       }
 
-      // 2. Delete Auth user - this is the point of no return.
+      // 2. Delete Firestore document first while we still have auth permissions
+      await deleteDoc(doc(firestore, 'users', user.uid));
+
+      // 3. Delete Auth user - this is the point of no return.
       await deleteUser(auth.currentUser);
       
-      // 3. Logout and clean up navigation
+      // 4. Logout and clean up navigation
       handleLogout();
     } catch (err: any) {
       setIsDeleting(false);
