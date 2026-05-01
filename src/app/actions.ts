@@ -1685,7 +1685,19 @@ export async function generateConceptVideoScriptAction(input: Types.GenerateConc
 
 export async function getMicrosoftAuthUrlAction() {
   const clientId = process.env.AZURE_CLIENT_ID;
-  const redirectUri = process.env.AZURE_REDIRECT_URI || 'https://cohero.dk/api/auth/callback/microsoft';
+  
+  // Use environment variable if set, otherwise try to detect host from headers
+  let redirectUri = process.env.AZURE_REDIRECT_URI;
+  
+  if (!redirectUri) {
+    try {
+      const host = headers().get('host');
+      const protocol = host?.includes('localhost') ? 'http' : 'https';
+      redirectUri = `${protocol}://${host}/api/auth/callback/microsoft`;
+    } catch (e) {
+      redirectUri = 'https://cohero.dk/api/auth/callback/microsoft';
+    }
+  }
   
   if (!clientId) {
     throw new Error("Missing AZURE_CLIENT_ID in environment variables");
