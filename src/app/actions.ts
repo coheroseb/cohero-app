@@ -1089,10 +1089,9 @@ export async function analyzeStarDataAction(input: Types.AnalyzeStarDataInput): 
 
 import fsSync from 'fs';
 
-function logToFile(message: string) {
-    const logPath = path.join(process.cwd(), 'action-debug.log');
+function logToConsole(message: string) {
     const timestamp = new Date().toISOString();
-    fsSync.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+    console.log(`[ACTION-DEBUG][${timestamp}] ${message}`);
 }
 
 export async function saveMaterialTextAction(input: { 
@@ -1101,7 +1100,7 @@ export async function saveMaterialTextAction(input: {
     rawText: string 
 }) {
     try {
-        logToFile(`Starting saveMaterialTextAction for ${input.materialId}`);
+        logToConsole(`Starting saveMaterialTextAction for ${input.materialId}`);
         console.log(`[saveMaterialTextAction] Saving ${input.rawText.length} characters for material ${input.materialId}`);
         
         // 1. Save raw text first
@@ -1115,10 +1114,10 @@ export async function saveMaterialTextAction(input: {
                 contentIndexedAt: admin.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
 
-        logToFile(`Material saved successfully. (No automatic AI overview)`);
+        logToConsole(`Material saved successfully. (No automatic AI overview)`);
         return { success: true };
     } catch (error) {
-        logToFile(`saveMaterialTextAction Error: ${error}`);
+        logToConsole(`saveMaterialTextAction Error: ${error}`);
         console.error('[saveMaterialTextAction] Failed to save text:', error);
         throw error;
     }
@@ -1131,7 +1130,7 @@ export async function generateMaterialAIOverviewAction(input: {
     candidateLearningGoals?: string[]
 }) {
     try {
-        logToFile(`Starting generateMaterialAIOverviewAction for ${input.materialId}`);
+        logToConsole(`Starting generateMaterialAIOverviewAction for ${input.materialId}`);
         
         await adminFirestore.collection('users')
             .doc(input.userId)
@@ -1224,11 +1223,11 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                     // This finds " when surrounded by alphanumeric chars/spaces
                     cleanedJson = cleanedJson.replace(/([a-zA-Z0-9æøåÆØÅ\s])"([a-zA-Z0-9æøåÆØÅ\s])/g, "$1'$2");
 
-                    logToFile(`[generateAction] START OF JSON (first 50): ${cleanedJson.substring(0, 50)}`);
+                    logToConsole(`[generateAction] START OF JSON (first 50): ${cleanedJson.substring(0, 50)}`);
 
                     // JSON HEALER: If truncated, try to close it
                     if (!cleanedJson.endsWith('}')) {
-                        logToFile(`[generateAction] Truncated JSON detected. Attempting repair...`);
+                        logToConsole(`[generateAction] Truncated JSON detected. Attempting repair...`);
                         
                         // 1. Remove the partial property/object at the end
                         // Look for the last completed object '}' or array item
@@ -1277,7 +1276,7 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                         JSON.parse(cleanedJson);
                     }
 
-                    logToFile(`[generateAction] Valid JSON received (or healed) for ${input.materialId}`);
+                    logToConsole(`[generateAction] Valid JSON received (or healed) for ${input.materialId}`);
                     
                     await adminFirestore.collection('users')
                         .doc(input.userId)
@@ -1290,7 +1289,7 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                         });
                     return { success: true, overview: cleanedJson };
                 } catch (pErr) {
-                    logToFile(`[generateAction] JSON Parse Error: ${pErr}`);
+                    logToConsole(`[generateAction] JSON Parse Error: ${pErr}`);
                     // Fallback: If it fails, log the first 500 chars for debugging
                     console.error("[generateAction] Failed JSON content:", overviewJson?.substring(0, 500));
                     throw new Error(`AI svarede med ugyldigt format: ${pErr}`);
@@ -1305,7 +1304,7 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
         }
         throw new Error("Kunne ikke generere overblik.");
     } catch (err) {
-        logToFile(`generateMaterialAIOverviewAction Error: ${err}`);
+        logToConsole(`generateMaterialAIOverviewAction Error: ${err}`);
         // Reset status to true so they can try again
         await adminFirestore.collection('users')
             .doc(input.userId)

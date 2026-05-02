@@ -103,6 +103,20 @@ const PortalPageContent: React.FC = () => {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showSemesterReminder, setShowSemesterReminder] = useState(false);
+
+  // Initialize reminder visibility from localStorage
+  useEffect(() => {
+    const isDismissed = localStorage.getItem('semester_reminder_dismissed_v1');
+    if (!isDismissed) {
+      setShowSemesterReminder(true);
+    }
+  }, []);
+
+  const dismissReminder = () => {
+    localStorage.setItem('semester_reminder_dismissed_v1', 'true');
+    setShowSemesterReminder(false);
+  };
 
   // --- Curriculum / Module Identification ---
   const curriculumsQuery = useMemoFirebase(() => {
@@ -303,11 +317,17 @@ const PortalPageContent: React.FC = () => {
                 profession: userProfile?.profession
             });
 
-            if (result) {
+            if (result.success && result.data) {
                 await updateDoc(doc(firestore, 'users', user.uid), {
-                    customCurriculum: result,
+                    customCurriculum: result.data,
                     updatedAt: serverTimestamp()
                 });
+                toast({
+                    title: "Studieordning opdateret",
+                    description: "Vi har nu analyseret din studieordning og tilpasset din portal.",
+                });
+            } else {
+                setUploadError(result.message || "Kunne ikke analysere studieordningen.");
             }
             setIsProcessingPdf(false);
         };
@@ -358,34 +378,46 @@ const PortalPageContent: React.FC = () => {
       <main className="max-w-[1400px] mx-auto px-6 py-8">
         
         {/* --- GLOBAL SEMESTER REMINDER --- */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10 relative overflow-hidden group"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-[2.5rem] opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-700" />
-          <div className="bg-white border border-indigo-100 rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(79,70,229,0.08)] flex flex-col md:flex-row items-center gap-8 relative z-10">
-            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-sm">
-              <RefreshCw className="w-8 h-8 animate-spin-slow" />
-            </div>
-            <div className="flex-1 text-center md:text-left space-y-2">
-              <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
-                <span className="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full">System Opdatering</span>
-                <span className="text-indigo-400 text-[9px] font-black uppercase tracking-[0.2em]">Vigtigt</span>
+        <AnimatePresence>
+          {showSemesterReminder && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -20, height: 0 }}
+              className="mb-10 relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-[2.5rem] opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-700" />
+              <div className="bg-white border border-indigo-100 rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(79,70,229,0.08)] flex flex-col md:flex-row items-center gap-8 relative z-10">
+                <button 
+                  onClick={dismissReminder}
+                  className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center text-slate-300 hover:text-slate-900 transition-colors"
+                  title="Luk reminder"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+                <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-sm">
+                  <RefreshCw className="w-8 h-8 animate-spin-slow" />
+                </div>
+                <div className="flex-1 text-center md:text-left space-y-2">
+                  <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
+                    <span className="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full">System Opdatering</span>
+                    <span className="text-indigo-400 text-[9px] font-black uppercase tracking-[0.2em]">Vigtigt</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight serif">Husk at tjekke dit semester! 🎓</h3>
+                  <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-3xl">
+                    For at vi kan give dig de helt rigtige lovparagraffer, læringsmål og studieplaner, er det vigtigt at du har valgt dit **aktuelle semester eller modul** i indstillingerne. Tjek det lige efter en ekstra gang!
+                  </p>
+                </div>
+                <Link href="/settings" className="shrink-0 w-full md:w-auto">
+                  <Button className="w-full md:w-auto bg-slate-900 text-white hover:bg-indigo-600 font-black uppercase tracking-widest text-[11px] px-10 h-14 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center gap-3">
+                    Opdatér Semester
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
               </div>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight serif">Husk at tjekke dit semester! 🎓</h3>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-3xl">
-                For at vi kan give dig de helt rigtige lovparagraffer, læringsmål og studieplaner, er det vigtigt at du har valgt dit **aktuelle semester eller modul** i indstillingerne. Tjek det lige efter en ekstra gang!
-              </p>
-            </div>
-            <Link href="/settings" className="shrink-0 w-full md:w-auto">
-              <Button className="w-full md:w-auto bg-slate-900 text-white hover:bg-indigo-600 font-black uppercase tracking-widest text-[11px] px-10 h-14 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center gap-3">
-                Opdatér Semester
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
 
 

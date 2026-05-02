@@ -84,7 +84,7 @@ interface SemesterPlan {
 }
 
 export default function MineMaterialerPage() {
-  const { user, userProfile } = useApp();
+  const { user, userProfile, isUserLoading } = useApp();
   const firestore = useFirestore();
   const storage = useStorage();
   const { toast } = useToast();
@@ -156,9 +156,9 @@ export default function MineMaterialerPage() {
   useEffect(() => {
     if (!user || !firestore || !userProfile) return;
     
+    console.log("[MineMaterialer] Fetching materials for UID:", user.uid, "Semester:", currentSemesterId);
     const q = query(
-      collection(firestore, 'users', user.uid, 'materials'),
-      where('semester', '==', currentSemesterId)
+      collection(firestore, 'users', user.uid, 'materials')
     );
     const unsub = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Material));
@@ -169,6 +169,15 @@ export default function MineMaterialerPage() {
       })));
       setMaterials(docs);
       setIsLoading(false);
+    }, (err) => {
+      console.error("[MineMaterialer] FULL Error Object:", JSON.stringify(err, null, 2));
+      console.error("[MineMaterialer] Error message:", err.message);
+      setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Fejl ved hentning af materialer",
+        description: `Error: ${err.message} (${err.code}). Prøv at genopfriske eller tjek dine rettigheder.`
+      });
     });
     return () => unsub();
   }, [user, firestore, userProfile, currentSemesterId]);
@@ -303,7 +312,9 @@ export default function MineMaterialerPage() {
     }
   };
 
-  if (isLoading) return <AuthLoadingScreen />;
+  if (isUserLoading || userProfile === undefined || (userProfile && isLoading)) {
+    return <AuthLoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col selection:bg-indigo-100 font-sans">
