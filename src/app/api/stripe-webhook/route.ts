@@ -12,6 +12,13 @@ const relevantEvents = new Set([
   'invoice.payment_succeeded',
   'invoice.payment_failed'
 ]);
+ 
+ // Helper to safely convert Unix timestamp (seconds) to ISO string
+ function safeIsoDate(seconds: number | undefined | null): string | null {
+   if (!seconds) return null;
+   const date = new Date(seconds * 1000);
+   return isNaN(date.getTime()) ? null : date.toISOString();
+ }
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -91,7 +98,7 @@ export async function POST(req: NextRequest) {
                 stripeSubscriptionId: subscription.id,
                 stripePriceId: price.id,
                 stripeSubscriptionStatus: subscription.status,
-                stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+                stripeCurrentPeriodEnd: safeIsoDate(subscription.current_period_end),
                 membership: membershipLevel,
                 stripeCancelAtPeriodEnd: false,
             }, { merge: true });
@@ -111,7 +118,7 @@ export async function POST(req: NextRequest) {
             const updateData: any = {
                 stripeSubscriptionStatus: subscription.status,
                 stripeCancelAtPeriodEnd: subscription.cancel_at_period_end,
-                stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+                stripeCurrentPeriodEnd: safeIsoDate(subscription.current_period_end),
             };
 
             // Reactivate membership logic
@@ -157,7 +164,7 @@ export async function POST(req: NextRequest) {
                     await userDoc.ref.set({
                         membership: membershipLevel,
                         stripeSubscriptionStatus: 'active',
-                        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+                        stripeCurrentPeriodEnd: safeIsoDate(subscription.current_period_end),
                         stripeLastPaymentFailed: false, // Reset failure flag
                         stripeLastPaymentError: null
                     }, { merge: true });

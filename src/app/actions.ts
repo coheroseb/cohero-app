@@ -76,6 +76,7 @@ if (!Promise.withResolvers) {
 
 
 import { adminFirestore, admin } from '@/firebase/server-init';
+const FieldValue = admin.firestore.FieldValue;
 
 import { uploadMediaToStorage } from '@/lib/storage-utils';
 
