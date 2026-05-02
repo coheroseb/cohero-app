@@ -68,7 +68,6 @@ const navigationGroups = [
         { id: 'korrektur', href: '/admin/korrektur', label: 'Korrektur-styring', icon: FileSearch },
         { id: 'marketing', href: '/admin/marketing', label: 'Koder & Tilbud', icon: Sparkles },
         { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
-        { id: 'emails', href: '/admin/emails', label: 'E-mail Blasts', icon: Mail },
         { id: 'inbox', href: '/admin/inbox', label: 'Indbakke (Simply)', icon: Inbox },
         { id: 'admin-shop', href: '/admin/shop', label: 'Shop-styring', icon: ShoppingBag },
     ]

@@ -579,6 +579,20 @@ export default function SettingsPage() {
 
                                   {!isQualified && (
                                      <>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label htmlFor="institution" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Uddannelsesinstitution</label>
+                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
+                                                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer">
+                                                    <option value="" disabled>Vælg institution...</option>
+                                                    {INSTITUTIONS.map(inst => (
+                                                        <option key={inst} value={inst}>{inst}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
                                         <div className="space-y-2">
                                             <label htmlFor="semester" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
                                             <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
@@ -602,20 +616,6 @@ export default function SettingsPage() {
                                                 ) : (
                                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                                 )}
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2 md:col-span-2">
-                                            <label htmlFor="institution" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Uddannelsesinstitution</label>
-                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
-                                                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                                <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer">
-                                                    <option value="" disabled>Vælg institution...</option>
-                                                    {INSTITUTIONS.map(inst => (
-                                                        <option key={inst} value={inst}>{inst}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                             </div>
                                         </div>
                                      </>
@@ -648,27 +648,6 @@ export default function SettingsPage() {
                           </div>
                        </form>
 
-                       {/* Financial Form */}
-                       <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm shadow-slate-200/20 overflow-hidden">
-                          <div className="p-8 border-b border-slate-100 bg-slate-50/50">
-                             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-3"><WalletIcon className="w-5 h-5 text-slate-400" /> Udbetalingsinfo</h2>
-                             <p className="text-xs font-semibold text-slate-500 mt-1">Sikkert krypteret. Bruges til honorering ved opgaver.</p>
-                          </div>
-                          <div className="p-8 grid md:grid-cols-3 gap-6">
-                              <div className="space-y-2">
-                                  <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">CPR Nummer</label>
-                                  <Input placeholder="DDMMYY-XXXX" value={userProfile?.cprNumber ? '••••••-••••' : ''} onChange={async (e) => { const enc = await encryptData(e.target.value); updateDoc(doc(firestore!, 'users', user!.uid), { cprNumber: enc }).then(refetchUserProfile); }} className="w-full h-12 bg-slate-50 rounded-xl font-mono text-center tracking-widest" />
-                              </div>
-                              <div className="space-y-2">
-                                  <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Reg. Nr.</label>
-                                  <Input placeholder="4 cifre" value={userProfile?.bankReg ? '••••' : ''} onChange={async (e) => { const enc = await encryptData(e.target.value); updateDoc(doc(firestore!, 'users', user!.uid), { bankReg: enc }).then(refetchUserProfile); }} className="w-full h-12 bg-slate-50 rounded-xl font-mono text-center tracking-widest" />
-                              </div>
-                              <div className="space-y-2">
-                                  <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Kontonummer</label>
-                                  <Input placeholder="10 cifre" value={userProfile?.bankAccount ? '••••••••' : ''} onChange={async (e) => { const enc = await encryptData(e.target.value); updateDoc(doc(firestore!, 'users', user!.uid), { bankAccount: enc }).then(refetchUserProfile); }} className="w-full h-12 bg-slate-50 rounded-xl font-mono text-center tracking-widest" />
-                              </div>
-                          </div>
-                       </div>
                        
                        {/* Badges Section */}
                        <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm shadow-slate-200/20 p-8">
@@ -899,14 +878,10 @@ export default function SettingsPage() {
                              </div>
                              {!userProfile?.oneNoteAuth ? (
                                 <Button 
-                                  onClick={async () => {
-                                    const { getMicrosoftAuthUrlAction } = await import('@/app/actions');
-                                    const url = await getMicrosoftAuthUrlAction();
-                                    window.location.href = url;
-                                  }}
-                                  className="bg-[#0067b8] text-white hover:bg-[#005da6] font-bold rounded-xl h-11 px-6 shadow-sm flex items-center gap-2"
+                                  disabled
+                                  className="bg-slate-100 text-slate-400 font-bold rounded-xl h-11 px-6 shadow-sm flex items-center gap-2 cursor-not-allowed"
                                 >
-                                   Forbind Microsoft Konto
+                                   Kommer snart
                                 </Button>
                              ) : (
                                 <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 text-xs font-black uppercase tracking-widest">

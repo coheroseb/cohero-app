@@ -308,7 +308,6 @@ export default function AdminOverviewPage() {
                     {/* Communication */}
                     <div className="col-span-1 lg:col-span-1 space-y-4">
                         <NexusCard title="Notifikationer" icon={Smartphone} color="text-indigo-500" bg="bg-indigo-50" href="/admin/notifications" desc="Push, Direkte beskeder" />
-                        <NexusCard title="Emails" icon={Mail} color="text-slate-800" bg="bg-slate-100" href="/admin/emails" desc="Segmenterede blasts" />
                     </div>
 
                     {/* Research & Core */}

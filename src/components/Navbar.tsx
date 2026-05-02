@@ -179,7 +179,6 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Akademiet", path: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5" /> },
           // { title: "Jura", path: "https://law.cohero.dk", icon: <Scale className="w-5 h-5" /> },
           { title: "Shop", path: "/shop", icon: <ShoppingBag className="w-5 h-5" /> },
-          { title: "Vores Rejse", path: "/journey", icon: <Rocket className="w-5 h-5 text-rose-500" /> },
           { title: "Form fremtiden", path: "/medbestemmelse", icon: <Lightbulb className="w-5 h-5" /> },
         ]
       }
@@ -277,7 +276,6 @@ const Navbar: React.FC<NavbarProps> = ({
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
                    <NavDropdownLink href="/videnskabsteori" icon={<Scale className="w-4 h-4 text-indigo-500" />}>Videnskabsteori</NavDropdownLink>
-                   <NavDropdownLink href="/journey" icon={<Rocket className="w-4 h-4 text-rose-500" />}>Vores Rejse</NavDropdownLink>
                    {userProfile?.role === 'admin' && (
                      <NavDropdownLink href="/admin" icon={<Shield className="w-4 h-4 text-rose-500" />}>Admin Panel</NavDropdownLink>
                    )}
@@ -301,7 +299,6 @@ const Navbar: React.FC<NavbarProps> = ({
 
                    <NavDropdownLink href="/om-second-opinion" icon={<Scale className="w-4 h-4 text-emerald-500" />}>Få en Second Opinion</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Giv praktik stjerner</NavDropdownLink>
-                   <NavDropdownLink href="/journey" icon={<Rocket className="w-4 h-4 text-rose-500" />}>Vores Rejse</NavDropdownLink>
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-indigo-500" />}>Form platformen</NavDropdownLink>
                 </NavDropdown>
 

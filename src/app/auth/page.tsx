@@ -95,77 +95,6 @@ const AuthContent = () => {
     terms: (<>Ved at oprette en konto, accepterer du vores <Link href="/terms-of-service" className="font-bold underline text-slate-700 hover:text-slate-900 transition-colors">betingelser</Link>.</>)
   };
 
-  const FormFields = (
-    <div className="space-y-4">
-      <AnimatePresence mode="popLayout">
-        {mode === 'signup' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, scale: 0.95 }}
-            animate={{ opacity: 1, height: 'auto', scale: 1 }}
-            exit={{ opacity: 0, height: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="relative"
-          >
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <Input 
-              type="text" 
-              placeholder={t.displayName}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required={mode === 'signup'} 
-              className="h-14 rounded-[20px] pl-12 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all shadow-sm text-[15px] font-medium placeholder:text-slate-400"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      <div className="relative">
-        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-        <Input 
-          type="email" 
-          placeholder={t.email}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required 
-          className="h-14 rounded-[20px] pl-12 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all shadow-sm text-[15px] font-medium placeholder:text-slate-400"
-        />
-      </div>
-      
-      <div className="relative">
-        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-        <Input 
-          type="password" 
-          placeholder={t.password}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="h-14 rounded-[20px] pl-12 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all shadow-sm text-[15px] font-medium placeholder:text-slate-400"
-        />
-      </div>
-      
-      <AnimatePresence mode="popLayout">
-        {mode === 'signup' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, scale: 0.95 }}
-            animate={{ opacity: 1, height: 'auto', scale: 1 }}
-            exit={{ opacity: 0, height: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="relative"
-          >
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <Input 
-              type="password" 
-              placeholder={t.confirmPassword}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required={mode === 'signup'}
-              className="h-14 rounded-[20px] pl-12 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all shadow-sm text-[15px] font-medium placeholder:text-slate-400"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row font-sans bg-white selection:bg-indigo-100 selection:text-indigo-950">
@@ -256,6 +185,26 @@ const AuthContent = () => {
                    required
                    className="h-16 rounded-[2rem] px-8 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-slate-950 transition-all text-[15px] font-medium"
                  />
+                 
+                 <AnimatePresence mode="popLayout">
+                   {mode === 'signup' && (
+                     <motion.div
+                       initial={{ opacity: 0, height: 0 }}
+                       animate={{ opacity: 1, height: 'auto' }}
+                       exit={{ opacity: 0, height: 0 }}
+                       className="relative"
+                     >
+                       <Input 
+                         type="password" 
+                         placeholder={t.confirmPassword}
+                         value={confirmPassword}
+                         onChange={(e) => setConfirmPassword(e.target.value)}
+                         required={mode === 'signup'}
+                         className="h-16 rounded-[2rem] px-8 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-slate-950 transition-all text-[15px] font-medium"
+                       />
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
               </div>
               
               <AnimatePresence>

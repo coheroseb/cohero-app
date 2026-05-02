@@ -8,14 +8,14 @@ import { ref, getDownloadURL } from 'firebase/storage';
 import { 
   Loader2, Search, Trash2, ChevronDown, Briefcase, User, Shield, Zap,
   Users, TrendingUp, Activity, Crown, Filter, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, CreditCard, Eye, EyeOff, AlertCircle,
-  CheckCircle2, XCircle, GraduationCap, Music, Facebook, Globe, Compass, Smartphone, Trophy, Gift
+  CheckCircle2, XCircle, GraduationCap, Music, Facebook, Globe, Compass, Smartphone, Trophy, Gift, RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import DeleteUserModal from '@/components/DeleteUserModal';
 import { useDebounce } from 'use-debounce';
 import { decryptData } from '@/lib/encryption';
-import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarketplaceBanAction, clearUserPaymentInfoAction, adminDeleteUserAction } from '@/app/actions';
+import { scanStudentCardAction, updateStudentCardVerificationAction, toggleMarketplaceBanAction, clearUserPaymentInfoAction, adminDeleteUserAction, syncSubscriptionStatusAction, syncAllSubscriptionsAction } from '@/app/actions';
 
 import { StudentCardVerification } from '@/ai/flows/types';
 import { calculateStudyStarted } from '@/lib/education';
@@ -50,6 +50,7 @@ interface UserProfile {
   utm_source?: string;
   convertedAt?: { toDate: () => Date };
   stripeSubscriptionId?: string;
+  stripeCustomerId?: string;
   stripeSubscriptionStatus?: string;
   isPremium?: boolean;
   fcmTokens?: string[];
@@ -391,6 +392,42 @@ const AdminUsersPage = () => {
     }, 1500);
   };
 
+  const [isSyncingStripe, setIsSyncingStripe] = useState<string | null>(null);
+  const handleSyncStripe = async (userId: string, customerId: string) => {
+    setIsSyncingStripe(userId);
+    try {
+        const result = await syncSubscriptionStatusAction(customerId);
+        if (result) {
+            await updateDoc(doc(firestore!, 'users', userId), result);
+            toast({ title: "Synkronisering fuldført", description: "Brugerens betalingsstatus er nu opdateret fra Stripe." });
+        } else {
+            toast({ variant: 'destructive', title: "Ingen abonnement fundet", description: "Vi kunne ikke finde et aktivt abonnement hos Stripe for denne kunde." });
+        }
+    } catch (err) {
+        toast({ variant: 'destructive', title: "Fejl", description: "Der opstod en fejl under synkronisering med Stripe." });
+    } finally {
+        setIsSyncingStripe(null);
+    }
+  };
+
+  const [isBulkSyncing, setIsBulkSyncing] = useState(false);
+  const handleBulkSyncStripe = async () => {
+    if (!confirm("Er du sikker på du vil synkronisere Stripe-status for ALLE betalende brugere? Dette kan tage et øjeblik.")) return;
+    setIsBulkSyncing(true);
+    try {
+        const result = await syncAllSubscriptionsAction();
+        if (result.success) {
+            toast({ title: "Bulk Sync Fuldført", description: `${result.updatedCount} brugere blev opdateret.` });
+        } else {
+            toast({ variant: 'destructive', title: "Fejl", description: result.message || "Der opstod en fejl under bulk synkronisering." });
+        }
+    } catch (err) {
+        toast({ variant: 'destructive', title: "Kritisk Fejl", description: "Kunne ikke starte bulk synkronisering." });
+    } finally {
+        setIsBulkSyncing(false);
+    }
+  };
+
   return (
     <>
     <div className="space-y-10 animate-ink pb-20">
@@ -406,6 +443,15 @@ const AdminUsersPage = () => {
           <p className="text-slate-500 font-medium ml-1">Administrér platformens {stats.total} kolleger og sikr datakvaliteten.</p>
         </div>
         <div className="relative z-10 flex flex-wrap gap-4">
+           <Button 
+             variant="outline" 
+             onClick={handleBulkSyncStripe}
+             disabled={isBulkSyncing}
+             className="rounded-2xl border-emerald-100 bg-emerald-50/30 text-emerald-600 font-black text-[10px] uppercase tracking-widest h-12 px-6 shadow-sm hover:bg-emerald-50 transition-all"
+           >
+             {isBulkSyncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+             Bulk Sync Stripe
+           </Button>
           <Button 
             variant="outline" 
             onClick={handleDrawRandomUser}
@@ -808,7 +854,19 @@ const AdminUsersPage = () => {
                                                  {u.stripeSubscriptionId && (
                                                      <div className="flex flex-col pt-2 border-t border-slate-50">
                                                          <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-1">Stripe Billing ID</span>
-                                                         <code className="text-[9px] font-mono text-indigo-400 bg-indigo-50/30 px-3 py-1.5 rounded-lg border border-indigo-100/50 w-fit select-all cursor-copy" title="Klik for at kopiere">{u.stripeSubscriptionId}</code>
+                                                         <div className="flex items-center justify-between gap-2">
+                                                             <code className="text-[9px] font-mono text-indigo-400 bg-indigo-50/30 px-3 py-1.5 rounded-lg border border-indigo-100/50 w-fit select-all cursor-copy" title="Klik for at kopiere">{u.stripeSubscriptionId}</code>
+                                                             <Button 
+                                                                 size="sm" 
+                                                                 variant="ghost" 
+                                                                 disabled={isSyncingStripe === u.id || !u.stripeCustomerId}
+                                                                 onClick={(e) => { e.stopPropagation(); handleSyncStripe(u.id, u.stripeCustomerId!); }}
+                                                                 className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-50 text-indigo-600"
+                                                                 title="Synkronisér med Stripe"
+                                                             >
+                                                                 <RefreshCw className={`w-3.5 h-3.5 ${isSyncingStripe === u.id ? 'animate-spin' : ''}`} />
+                                                             </Button>
+                                                         </div>
                                                      </div>
                                                  )}
                                              </div>

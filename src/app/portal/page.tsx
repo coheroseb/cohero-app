@@ -35,7 +35,8 @@ import {
   Mic,
   Upload,
   CheckCircle2,
-  Briefcase
+  Briefcase,
+  RefreshCw
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useToast } from '@/hooks/use-toast';
@@ -355,6 +356,36 @@ const PortalPageContent: React.FC = () => {
 
 
       <main className="max-w-[1400px] mx-auto px-6 py-8">
+        
+        {/* --- GLOBAL SEMESTER REMINDER --- */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10 relative overflow-hidden group"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-[2.5rem] opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-700" />
+          <div className="bg-white border border-indigo-100 rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(79,70,229,0.08)] flex flex-col md:flex-row items-center gap-8 relative z-10">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-sm">
+              <RefreshCw className="w-8 h-8 animate-spin-slow" />
+            </div>
+            <div className="flex-1 text-center md:text-left space-y-2">
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
+                <span className="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full">System Opdatering</span>
+                <span className="text-indigo-400 text-[9px] font-black uppercase tracking-[0.2em]">Vigtigt</span>
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight serif">Husk at tjekke dit semester! 🎓</h3>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-3xl">
+                For at vi kan give dig de helt rigtige lovparagraffer, læringsmål og studieplaner, er det vigtigt at du har valgt dit **aktuelle semester eller modul** i indstillingerne. Tjek det lige efter en ekstra gang!
+              </p>
+            </div>
+            <Link href="/settings" className="shrink-0 w-full md:w-auto">
+              <Button className="w-full md:w-auto bg-slate-900 text-white hover:bg-indigo-600 font-black uppercase tracking-widest text-[11px] px-10 h-14 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center gap-3">
+                Opdatér Semester
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
         
 
 
@@ -793,36 +824,17 @@ const PortalPageContent: React.FC = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[#7737ad]">Integration</p>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-[#7737ad]">Integration</p>
+                      <span className="px-2 py-0.5 bg-[#7737ad]/10 text-[#7737ad] text-[8px] font-black uppercase tracking-widest rounded-full border border-[#7737ad]/10">Kommer snart</span>
+                    </div>
                     <h3 className="text-sm font-black serif">OneNote Sync</h3>
                   </div>
                 </div>
                 <p className="text-[11px] font-medium text-slate-500 leading-relaxed mb-6">Få dine OneNote-noter direkte ind i Cohero til quizzer og AI-hjælp.</p>
-                {userProfile?.oneNoteAuth ? (
-                    <Button 
-                        onClick={async () => {
-                            toast({ title: "Synkronisering startet", description: "Henter dine seneste noter fra OneNote..." });
-                            try {
-                                // For simplicity, we sync the first notebook or a default one if we had its ID.
-                                // In a real app, we might want a 'lastSelectedNotebookId' in userProfile.
-                                // For now, let's just redirect to settings if they haven't synced before,
-                                // or try to sync if they have.
-                                router.push('/settings?tab=integrations');
-                            } catch (e) {
-                                toast({ variant: 'destructive', title: "Fejl", description: "Kunne ikke starte synkronisering." });
-                            }
-                        }}
-                        className="w-full rounded-2xl bg-[#7737ad] text-white font-black uppercase tracking-widest text-[9px] h-10 transition-all shadow-lg hover:bg-[#5e2b8a]"
-                    >
-                      Synkronisér nu
-                    </Button>
-                ) : (
-                    <Link href="/settings?tab=integrations">
-                        <Button className="w-full rounded-2xl bg-slate-900 text-white font-black uppercase tracking-widest text-[9px] h-10 transition-all shadow-xl hover:bg-slate-800">
-                          Forbind OneNote
-                        </Button>
-                    </Link>
-                )}
+                <Button disabled className="w-full rounded-2xl bg-slate-100 text-slate-400 font-black uppercase tracking-widest text-[9px] h-10 cursor-not-allowed">
+                  Kommer snart
+                </Button>
               </div>
             </div>
 

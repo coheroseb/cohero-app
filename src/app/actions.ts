@@ -282,7 +282,7 @@ export async function syncAllSubscriptionsAction() {
                 await userDoc.ref.set({
                     stripeSubscriptionStatus: subscription.status,
                     membership: isActive ? membershipLevel : 'Kollega',
-                    stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+                    stripeCurrentPeriodEnd: safeIsoDate(subscription.current_period_end),
                     stripeCancelAtPeriodEnd: subscription.cancel_at_period_end,
                     updatedAt: admin.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
@@ -2207,7 +2207,7 @@ export async function syncSubscriptionStatusAction(stripeCustomerId: string): Pr
 
         return {
             stripeSubscriptionStatus: sub.status,
-            stripeCurrentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
+            stripeCurrentPeriodEnd: safeIsoDate(sub.current_period_end),
             membership: isActive ? membershipLevel : 'Kollega',
             stripeCancelAtPeriodEnd: sub.cancel_at_period_end,
             stripePriceId: price.id,
@@ -3985,7 +3985,11 @@ export async function getAIUsageMetricsAction() {
 
         return { 
             success: true, 
-            data,
+            data: {
+                totalInputTokens: data?.totalInputTokens || 0,
+                totalOutputTokens: data?.totalOutputTokens || 0,
+                // Add other numeric/string fields explicitly if they exist
+            },
             history
         };
     } catch (error) {
