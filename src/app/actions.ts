@@ -1219,22 +1219,81 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                         .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
                         .trim();
 
-                    // Swap internal double quotes for single quotes to avoid JSON break
-                    cleanedJson = cleanedJson.replace(/([a-zA-Z0-9æøåÆØÅ\s])"([a-zA-Z0-9æøåÆØÅ\s])/g, "$1'$2");
+                    // --- ROBUST QUOTE NORMALIZER ---
+                    // This function ensures all structural quotes are " and fixes common AI mistakes
+                    const normalizeQuotes = (str: string) => {
+                        let result = "";
+                        let inString = false;
+                        let startQuote = "";
+                        let i = 0;
 
+                        while (i < str.length) {
+                            const char = str[i];
+                            
+                            if (!inString) {
+                                if (char === '"' || char === "'") {
+                                    inString = true;
+                                    startQuote = char;
+                                    result += '"'; // Always use double quote for structure
+                                } else {
+                                    result += char;
+                                }
+                            } else {
+                                // We are inside a string. Look for the closing quote.
+                                // But be careful: AI often uses ' inside a "string" or vice-versa.
+                                // Logic: A structural closing quote is usually followed by : , } ] or whitespace
+                                if (char === startQuote) {
+                                    // Potential end of string. Check next non-whitespace char.
+                                    let nextIdx = i + 1;
+                                    while (nextIdx < str.length && /\s/.test(str[nextIdx])) nextIdx++;
+                                    const nextChar = str[nextIdx];
+
+                                    if (nextChar === ":" || nextChar === "," || nextChar === "}" || nextChar === "]" || nextIdx >= str.length) {
+                                        inString = false;
+                                        result += '"';
+                                    } else {
+                                        // It's likely an internal apostrophe/quote, not a structural one
+                                        result += char === '"' ? "'" : char; 
+                                    }
+                                } else if (char === '"' && startQuote === "'") {
+                                    // Mismatched quote inside. AI might have started with ' and ended with "
+                                    // Check if this is the structural end
+                                    let nextIdx = i + 1;
+                                    while (nextIdx < str.length && /\s/.test(str[nextIdx])) nextIdx++;
+                                    const nextChar = str[nextIdx];
+                                    if (nextChar === ":" || nextChar === "," || nextChar === "}" || nextChar === "]" || nextIdx >= str.length) {
+                                        inString = false;
+                                        result += '"';
+                                    } else {
+                                        result += "'";
+                                    }
+                                } else if (char === '"') {
+                                    result += "'"; // Escape internal double quotes
+                                } else {
+                                    result += char;
+                                }
+                            }
+                            i++;
+                        }
+                        if (inString) result += '"'; // Close if truncated
+                        return result;
+                    };
+
+                    // Robust cleaning
+                    let cleanedJson = (overviewJson || "")
+                        .replace(/```json/g, '')
+                        .replace(/```/g, '')
+                        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
+                        .trim();
+
+                    cleanedJson = normalizeQuotes(cleanedJson);
                     logToConsole(`[generateAction] START OF JSON (first 50): ${cleanedJson.substring(0, 50)}`);
 
                     // --- IMPROVED JSON REPAIR LOGIC ---
                     const repairJson = (json: string) => {
-                        // 1. Pre-process: Handle AI using mixed quotes like 'summary": or "summary':
-                        // Replace 'key": or "key': with "key":
-                        let processed = json
-                            .replace(/['"]([a-zA-Z0-9_]+)['"]\s*:/g, '"$1":') // Normalize keys
-                            .replace(/:\s*'([^']*)'([,}\]])/g, ':"$1"$2');   // Normalize values (simple case)
-
                         try {
-                            JSON.parse(processed);
-                            return processed;
+                            JSON.parse(json);
+                            return json;
                         } catch (e) {
                             // Continue to repair if still invalid
                         }
@@ -1244,7 +1303,6 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                         const attemptRepair = (input: string) => {
                             let stack: string[] = [];
                             let inString = false;
-                            let quoteChar = '"';
                             let escaped = false;
 
                             for (let i = 0; i < input.length; i++) {
@@ -1252,11 +1310,10 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                                 if (inString) {
                                     if (escaped) { escaped = false; }
                                     else if (char === '\\') { escaped = true; }
-                                    else if (char === quoteChar) { inString = false; }
+                                    else if (char === '"') { inString = false; }
                                 } else {
-                                    if (char === '"' || char === "'") {
+                                    if (char === '"') {
                                         inString = true;
-                                        quoteChar = char;
                                     } else if (char === '{') { stack.push('{'); }
                                     else if (char === '[') { stack.push('['); }
                                     else if (char === '}') { if (stack[stack.length - 1] === '{') stack.pop(); }
@@ -1265,7 +1322,7 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                             }
 
                             let repaired = input;
-                            if (inString) repaired += quoteChar === "'" ? "'" : '"';
+                            if (inString) repaired += '"';
 
                             for (let i = stack.length - 1; i >= 0; i--) {
                                 const opener = stack[i];
@@ -1276,15 +1333,13 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                             return repaired;
                         };
 
-                        // Try initial repair
-                        let result = attemptRepair(processed);
+                        let result = attemptRepair(json);
                         try {
                             JSON.parse(result);
                             return result;
                         } catch (err) {
                             logToConsole(`[generateAction] Deep repair failed, trying aggressive back-trimming...`);
-                            // Iterative back-trimming to avoid recursion
-                            let temp = processed;
+                            let temp = json;
                             while (temp.length > 0) {
                                 const lastBrace = Math.max(temp.lastIndexOf('}'), temp.lastIndexOf(']'));
                                 if (lastBrace === -1) break;
@@ -1295,11 +1350,11 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                                     JSON.parse(backTrimmed);
                                     return backTrimmed;
                                 } catch {
-                                    temp = temp.substring(0, lastBrace); // Cut further back
+                                    temp = temp.substring(0, lastBrace);
                                 }
                             }
                         }
-                        return result; // Return best effort
+                        return result;
                     };
 
                     cleanedJson = repairJson(cleanedJson);
