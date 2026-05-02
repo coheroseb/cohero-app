@@ -18,7 +18,7 @@ export async function logAiUsage(flowName: string, usage: { inputTokens?: number
   const safeFlowName = flowName.replace(/\./g, '_').replace(/\//g, '_').replace(/\s+/g, '');
 
   try {
-    const db = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
+    const db = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "cohero-database");
     await db.collection('stats').doc('ai_usage').set({
       totalInputTokens: FieldValue.increment(inputTokens),
       totalOutputTokens: FieldValue.increment(outputTokens),

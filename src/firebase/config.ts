@@ -30,7 +30,7 @@ export function initializeFirebase() {
 
   const apps = getApps();
   const firebaseApp = apps.length === 0 ? initializeApp(firebaseConfig) : apps[0];
-  const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID;
+  const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'cohero-database';
   
   console.log("[Firebase] Initializing Firestore. Database ID:", databaseId || "(default)");
 

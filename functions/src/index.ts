@@ -10,7 +10,7 @@ dotenv.config({ path: path.resolve(process.cwd(), "../.env.local") });
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 console.log("GEMINI KEY:", !!process.env.GEMINI_API_KEY);
 
-const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'cohero-database';
 
 admin.initializeApp({
   storageBucket: "studio-7870211338-fe921.firebasestorage.app"
