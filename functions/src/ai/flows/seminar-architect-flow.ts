@@ -17,8 +17,8 @@ import {
     type SeminarAnalysis,
 } from './types';
 
-const CHUNK_SIZE = 20; // slides per batch
-const MAX_OUTPUT_TOKENS = 65536; // Gemini 2.5 Flash max
+const CHUNK_SIZE = 12; // slides per batch
+const MAX_OUTPUT_TOKENS = 8192; // Gemini Flash actual output limit per request
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -64,7 +64,7 @@ function buildSystem(count: number): string {
 async function analyzeBatch(
     slides: { number: number; text: string }[],
     semester: string
-): Promise<any[]> {
+): Promise<{ slides: any[], usage: any }> {
     const batchText = slides.map(s => s.text).join('\n\n');
     const count = slides.length;
 
@@ -94,7 +94,10 @@ Husk: Output SKAL indeholde præcis ${count} slides-objekter med slideNumber ${s
         throw new Error(`Batch ${slides[0].number}-${slides[slides.length - 1].number}: Ingen output fra AI.`);
     }
 
-    return response.output.slides;
+    return { 
+        slides: response.output.slides, 
+        usage: response.usage || { inputTokens: 0, outputTokens: 0 } 
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -115,7 +118,7 @@ export async function seminarArchitect(input: SeminarArchitectInput): Promise<Se
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
 
-    if (slideCount <= CHUNK_SIZE * 2) {
+    if (slideCount <= 15) {
         // ── SINGLE PASS for smaller decks ──────────────────────────────────────
         console.log(`[SEMINAR-ARCHITECT] Single-pass mode (${slideCount} slides)`);
         
@@ -172,8 +175,10 @@ ${input.slideText}
         for (let ci = 0; ci < chunks.length; ci++) {
             const chunk = chunks[ci];
             console.log(`[SEMINAR-ARCHITECT] Processing batch ${ci + 1}/${chunks.length} (slides ${chunk[0].number}-${chunk[chunk.length - 1].number})`);
-            const batchResult = await analyzeBatch(chunk, input.semester);
+            const { slides: batchResult, usage: batchUsage } = await analyzeBatch(chunk, input.semester);
             allProcessedSlides.push(...batchResult);
+            totalInputTokens += batchUsage.inputTokens || 0;
+            totalOutputTokens += batchUsage.outputTokens || 0;
         }
     }
 

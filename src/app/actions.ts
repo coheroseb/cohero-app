@@ -1220,60 +1220,109 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
                         .trim();
 
                     // Swap internal double quotes for single quotes to avoid JSON break
-                    // This finds " when surrounded by alphanumeric chars/spaces
                     cleanedJson = cleanedJson.replace(/([a-zA-Z0-9æøåÆØÅ\s])"([a-zA-Z0-9æøåÆØÅ\s])/g, "$1'$2");
 
                     logToConsole(`[generateAction] START OF JSON (first 50): ${cleanedJson.substring(0, 50)}`);
 
-                    // JSON HEALER: If truncated, try to close it
-                    if (!cleanedJson.endsWith('}')) {
-                        logToConsole(`[generateAction] Truncated JSON detected. Attempting repair...`);
+                    // --- IMPROVED JSON REPAIR LOGIC ---
+                    const repairJson = (json: string) => {
+                        try {
+                            JSON.parse(json);
+                            return json;
+                        } catch (e) {
+                            // If it's already valid, return it. If not, try to fix it.
+                        }
+
+                        logToConsole(`[generateAction] Truncated JSON detected. Attempting deep repair...`);
                         
-                        // 1. Remove the partial property/object at the end
-                        // Look for the last completed object '}' or array item
-                        const lastValidEnd = Math.max(cleanedJson.lastIndexOf('},'), cleanedJson.lastIndexOf('}'));
-                        if (lastValidEnd > 0) {
-                            cleanedJson = cleanedJson.substring(0, lastValidEnd + 1);
+                        let stack: string[] = [];
+                        let inString = false;
+                        let escaped = false;
+                        let lastValidIndex = -1;
+
+                        for (let i = 0; i < json.length; i++) {
+                            const char = json[i];
+                            
+                            if (inString) {
+                                if (escaped) {
+                                    escaped = false;
+                                } else if (char === '\\') {
+                                    escaped = true;
+                                } else if (char === '"') {
+                                    inString = false;
+                                }
+                            } else {
+                                if (char === '"') {
+                                    inString = true;
+                                } else if (char === '{') {
+                                    stack.push('{');
+                                } else if (char === '[') {
+                                    stack.push('[');
+                                } else if (char === '}') {
+                                    if (stack[stack.length - 1] === '{') stack.pop();
+                                } else if (char === ']') {
+                                    if (stack[stack.length - 1] === '[') stack.pop();
+                                }
+                            }
+                            
+                            // If we're not in a string and the stack is balanced at this point (and it's a structural end)
+                            // Or just track the progress
                         }
 
-                        // 2. Close the remaining structure
-                        if (cleanedJson.includes('"steps": [')) {
-                            if (!cleanedJson.endsWith(']')) cleanedJson += ']';
-                            cleanedJson += '}]}'; 
-                        } else if (cleanedJson.includes('"learningGoals": [')) {
-                            if (!cleanedJson.endsWith(']')) cleanedJson += ']';
-                            cleanedJson += '}}';
-                        } else {
-                            if (!cleanedJson.endsWith('}')) cleanedJson += '}'; 
+                        let repaired = json;
+                        
+                        // 1. If we are inside a string, close it
+                        if (inString) {
+                            repaired += '"';
                         }
-                    }
 
-                    try {
-                        JSON.parse(cleanedJson); // Validate JSON
-                    } catch (parseErr) {
-                        // FINAL DESPERATE ATTEMPT: Keep cutting back to previous brace until it parses or we give up
-                        let attempts = 0;
-                        while (attempts < 5) {
-                            const lastBrace = cleanedJson.lastIndexOf('}');
-                            if (lastBrace <= 0) break;
-                            cleanedJson = cleanedJson.substring(0, lastBrace + 1);
-                            
-                            // Try to close the array/object structure from here
-                            let testJson = cleanedJson;
-                            if (testJson.split('{').length > testJson.split('}').length) testJson += '}';
-                            if (testJson.includes('"steps": [') && !testJson.includes(']')) testJson += ']';
-                            if (testJson.split('[').length > testJson.split(']').length) testJson += ']';
-                            
-                            try {
-                                JSON.parse(testJson);
-                                cleanedJson = testJson;
-                                break;
-                            } catch {
-                                cleanedJson = cleanedJson.substring(0, lastBrace); // Remove the brace and try again
-                                attempts++;
+                        // 2. Close all open structures in reverse order
+                        for (let i = stack.length - 1; i >= 0; i--) {
+                            const opener = stack[i];
+                            if (opener === '{') {
+                                // Before closing an object, check if we're trailing a comma or incomplete property
+                                repaired = repaired.trim();
+                                if (repaired.endsWith(',')) repaired = repaired.slice(0, -1);
+                                repaired += '}';
+                            } else if (opener === '[') {
+                                repaired = repaired.trim();
+                                if (repaired.endsWith(',')) repaired = repaired.slice(0, -1);
+                                repaired += ']';
                             }
                         }
-                        JSON.parse(cleanedJson);
+
+                        // 3. Final validation attempt - if it still fails, try aggressive back-trimming
+                        try {
+                            JSON.parse(repaired);
+                            return repaired;
+                        } catch (finalErr) {
+                            logToConsole(`[generateAction] Deep repair failed, trying aggressive back-trimming...`);
+                            let temp = json;
+                            while (temp.length > 0) {
+                                // Find the last potential break point
+                                const lastBrace = Math.max(temp.lastIndexOf('}'), temp.lastIndexOf(']'));
+                                if (lastBrace === -1) break;
+                                temp = temp.substring(0, lastBrace + 1);
+                                try {
+                                    // Try to close this truncated version
+                                    const retry = repairJson(temp);
+                                    JSON.parse(retry);
+                                    return retry;
+                                } catch {
+                                    temp = temp.substring(0, lastBrace);
+                                }
+                            }
+                        }
+                        return repaired;
+                    };
+
+                    cleanedJson = repairJson(cleanedJson);
+
+                    try {
+                        JSON.parse(cleanedJson); // Final validation check
+                    } catch (pErr) {
+                        logToConsole(`[generateAction] ALL REPAIR ATTEMPTS FAILED.`);
+                        throw pErr;
                     }
 
                     logToConsole(`[generateAction] Valid JSON received (or healed) for ${input.materialId}`);
