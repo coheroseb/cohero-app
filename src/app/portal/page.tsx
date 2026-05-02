@@ -831,6 +831,7 @@ const PortalPageContent: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { title: "Case-træner", icon: Zap, path: "/case-trainer", color: "bg-sky-50 text-sky-600" },
+                  { title: "Journal-træner", icon: FileText, path: "/journal-trainer", color: "bg-indigo-50 text-indigo-600" },
                   { title: "Eksamen", icon: Layout, path: "/exam-architect", color: "bg-indigo-50 text-indigo-600" },
                   { title: "Case Analyser", icon: FileSearch, path: "/case-analyser", color: "bg-purple-50 text-purple-600" },
                   { title: "Lærings-sti", icon: Target, path: "/laerings-sti", color: "bg-rose-50 text-rose-600" },

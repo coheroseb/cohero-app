@@ -301,19 +301,19 @@ export default function LandingPage() {
         <div className="absolute inset-y-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-white to-transparent z-10"></div>
         <div className="max-w-7xl mx-auto flex flex-col items-center">
            <Reveal>
-             <p className="text-[10px] items-center text-center font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400 mb-6 sm:mb-8 px-4">Styrker dannelsen på tværs af professionshøjskoler</p>
+             <p className="text-[10px] items-center text-center font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400 mb-6 sm:mb-8 px-4">Styrker dannelsen på tværs af professionshøjskoler i København, Aarhus, Odense & Roskilde</p>
            </Reveal>
            <div className="w-full overflow-x-auto no-scrollbar px-4 sm:px-6">
-             <div className="flex items-center justify-start sm:justify-center gap-8 sm:gap-16 min-w-max pb-2 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">VIA UC</span>
+              <div className="flex items-center justify-start sm:justify-center gap-8 sm:gap-16 min-w-max pb-2 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">VIA UC Aarhus</span>
                 <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">KP</span>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">KP København</span>
                 <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">UCL</span>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">UCL Odense</span>
                 <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">Absalon</span>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">Absalon Roskilde</span>
                 <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">AAU</span>
+                <span className="text-[15px] sm:text-lg font-black uppercase tracking-[0.2em] text-slate-800">AAU Aalborg</span>
              </div>
            </div>
         </div>

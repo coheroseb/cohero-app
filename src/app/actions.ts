@@ -4080,3 +4080,15 @@ export async function getAIUsageMetricsAction() {
         return { success: false, history: [] };
     }
 }
+
+/**
+ * Journal Trainer V2 Actions
+ */
+
+export async function generateJournalScenarioAction(input: { topic?: string, profession?: string }) {
+    return callFirebaseFlow('generateJournalScenarioFlow', input);
+}
+
+export async function evaluateJournalEntryAction(input: { scenario: any, journalContent: string, profession?: string }) {
+    return callFirebaseFlow('evaluateJournalEntryFlow', input);
+}

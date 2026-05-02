@@ -34,9 +34,7 @@ import {
     Layers,
     History as HistoryIcon,
     Target,
-    Inbox,
     ShieldAlert,
-    Trophy,
     Gavel,
     Globe,
     Lightbulb,
@@ -48,7 +46,7 @@ import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirestore } from '@/firebase';
-import { getUnreadCount } from './inbox/actions';
+
 
 // Navigation structure categorized for better visibility
 const navigationGroups = [
@@ -68,7 +66,6 @@ const navigationGroups = [
         { id: 'korrektur', href: '/admin/korrektur', label: 'Korrektur-styring', icon: FileSearch },
         { id: 'marketing', href: '/admin/marketing', label: 'Koder & Tilbud', icon: Sparkles },
         { id: 'campaigns', href: '/admin/campaigns', label: 'Salgskampagner', icon: Megaphone },
-        { id: 'inbox', href: '/admin/inbox', label: 'Indbakke (Simply)', icon: Inbox },
         { id: 'admin-shop', href: '/admin/shop', label: 'Shop-styring', icon: ShoppingBag },
     ]
   },
@@ -112,18 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    const fetchCount = async () => {
-        const count = await getUnreadCount();
-        setUnreadCount(count);
-    }
-    fetchCount();
-    // Poll every 5 mins
-    const interval = setInterval(fetchCount, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (!isUserLoading && (!user || userProfile?.role !== 'admin')) {
@@ -183,11 +169,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <div className="flex items-center gap-3.5 relative z-10">
                           <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-indigo-400' : 'text-slate-300 group-hover:text-slate-600'}`} />
                           {item.label}
-                          {item.id === 'inbox' && unreadCount > 0 && (
-                            <span className="flex-shrink-0 w-5 h-5 bg-rose-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-rose-600/20 translate-x-1">
-                                {unreadCount > 9 ? '9+' : unreadCount}
-                            </span>
-                          )}
                         </div>
                         {isActive && (
                           <motion.div layoutId="activeNavIndicator" className="w-1.5 h-1.5 bg-indigo-400 rounded-full shadow-[0_0_12px_rgba(129,140,248,0.8)]" />
@@ -290,9 +271,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                         <div className="flex items-center gap-4">
                                             <item.icon className="w-5 h-5" />
                                             <span className="font-bold">{item.label}</span>
-                                            {item.id === 'inbox' && unreadCount > 0 && (
-                                                <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">{unreadCount}</span>
-                                            )}
                                         </div>
                                         <ChevronRight className="w-4 h-4 opacity-20" />
                                     </Link>

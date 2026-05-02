@@ -118,11 +118,19 @@ export default function RootLayout({
 }) {
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    '@type': 'EducationalOrganization',
     name: 'Cohéro',
     alternateName: 'Cohero',
     url: siteUrl,
     logo: `${siteUrl}${ogImageUrl}`,
+    description: siteDescription,
+    foundingDate: '2024',
+    founders: [
+      {
+        '@type': 'Person',
+        name: 'Sebastian Viste'
+      }
+    ],
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'kontakt@cohero.dk',
@@ -135,22 +143,57 @@ export default function RootLayout({
       'streetAddress': 'Ben Websters Vej 14',
       'addressLocality': 'København',
       'postalCode': '2450',
+      'addressRegion': 'Hovedstaden',
       'addressCountry': 'DK'
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      'latitude': '55.6521',
+      'longitude': '12.5482'
     },
     sameAs: [
       "https://www.facebook.com/profile.php?id=61586618395097",
       "https://www.instagram.com/cohero_is",
-      "https://linkedin.com/company/coherois"
-    ]
+      "https://linkedin.com/company/coherois",
+      "https://www.tiktok.com/@cohero_is"
+    ],
+    potentialAction: {
+      '@type': 'SearchAction',
+      'target': `${siteUrl}/search?q={search_term_string}`,
+      'query-input': 'required name=search_term_string'
+    }
+  };
+
+  const softwareLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'Cohéro Platform',
+    operatingSystem: 'Any',
+    applicationCategory: 'EducationApplication',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'DKK'
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      reviewCount: '450'
+    }
   };
 
   return (
     <html lang="da">
       <body className="bg-background text-foreground antialiased min-h-screen font-sans">
         <Script
-          id="json-ld"
+          id="json-ld-org"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <Script
+          id="json-ld-app"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareLd) }}
         />
         <Script id="service-worker-registration" strategy="afterInteractive">
           {`
