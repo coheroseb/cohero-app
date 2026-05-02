@@ -258,10 +258,8 @@ service cloud.firestore {
       match /tokenUsage/{usageId} { allow read, create: if isOwner(userId); }
 
       match /blueprints/{blueprintId} { allow read, write: if isOwner(userId); }
-      match /seminars { allow read, write: if isOwner(userId); }
-      match /seminars/{seminarId} { 
-        allow read: if isOwner(userId) || (isSignedIn() && request.auth.uid in resource.data.get('sharedWith', []));
-        allow write: if isOwner(userId); 
+      match /seminars/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       match /semesterPlans { allow read, write: if request.auth.uid == userId; }
       match /semesterPlans/{planId} { allow read, write: if request.auth.uid == userId; }
@@ -316,7 +314,11 @@ service cloud.firestore {
     }
 
     match /{path=**}/seminars/{seminarId} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid in resource.data.get('sharedWith', []));
+      allow read: if isAdmin() || 
+                    (isSignedIn() && (
+                      request.auth.uid == userId || 
+                      request.auth.uid in resource.data.get('sharedWith', [])
+                    ));
     }
 
     // Global Admin fallback

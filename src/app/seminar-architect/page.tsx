@@ -558,7 +558,6 @@ function SeminarArchitectPageContent() {
 
       const analysisData = response.data;
       const newSeminarRef = doc(collection(firestore!, 'users', user.uid, 'seminars'));
-      console.log('[SeminarArchitect] Saving new seminar to:', newSeminarRef.path, 'on Database:', (firestore as any)._databaseId?.database || 'default');
 
       // Collect all slide numbers (AI results + extracted images)
       const allSlideNums = Array.from(new Set([

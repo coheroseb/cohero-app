@@ -1132,16 +1132,11 @@ export default function MineSeminarerPage() {
 
   useEffect(() => {
     if (!user || !firestore) return;
-    console.log('[MineSeminarer] Fetching seminars for UID:', user.uid, 'on Database:', (firestore as any)._databaseId?.database || 'default');
     const q = query(collection(firestore, 'users', user.uid, 'seminars'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, snap => { 
-      console.log('[MineSeminarer] Successfully fetched', snap.docs.length, 'seminars');
       setSeminars(snap.docs.map(d => ({ id: d.id, ...d.data() } as SavedSeminar))); 
       setIsLoading(false); 
-    }, (err) => {
-      console.error('[MineSeminarer] Firestore error:', err);
-      setIsLoading(false);
-    });
+    }, () => setIsLoading(false));
     return () => unsub();
   }, [user, firestore]);
 
