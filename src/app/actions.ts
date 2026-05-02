@@ -1212,13 +1212,6 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
             let overviewJson = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
             if (overviewJson) {
                 try {
-                    // Robust cleaning: Handle unescaped newlines and control characters
-                    let cleanedJson = (overviewJson || "")
-                        .replace(/```json/g, '')
-                        .replace(/```/g, '')
-                        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
-                        .trim();
-
                     // --- ROBUST QUOTE NORMALIZER ---
                     // This function ensures all structural quotes are " and fixes common AI mistakes
                     const normalizeQuotes = (str: string) => {
