@@ -258,6 +258,7 @@ service cloud.firestore {
       match /tokenUsage/{usageId} { allow read, create: if isOwner(userId); }
 
       match /blueprints/{blueprintId} { allow read, write: if isOwner(userId); }
+      match /seminars { allow read, write: if isOwner(userId); }
       match /seminars/{seminarId} { 
         allow read: if isOwner(userId) || (isSignedIn() && request.auth.uid in resource.data.get('sharedWith', []));
         allow write: if isOwner(userId); 
