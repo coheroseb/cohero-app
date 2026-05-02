@@ -1,0 +1,87 @@
+[dotenv@17.3.1] injecting env (24) from .env.local -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Dumping titles from [default]...
+[default] | Path: users/8CtX1pjeBwYcGeWN7GZRDCrTSkK2/seminars/4Je0lrpPIhP6AR0CMWyE | Title: Fysisk og Psykosocialt Arbejdsmiljø
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/640ARgi9S515HcUVB5WB | Title: Retskilderne og Juridisk metode
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/7lbc8eOYll8enMc2jBNi | Title: Semesteropstart - Velkommen til Arbejdsliv kandidat
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/I2vDmIBtRZ9IaEaT8fm5 | Title: Kritisk teori og perspektiver: Hvad vil det sige at arbejde kritisk?
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/IJJCvBYQn8ecOapscYv0 | Title: Videnskabsteori i samfundsvidenskaberne: Introduktion
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/Jxvqb4vPiL8LKVDRRuKQ | Title: Relationel koordinering, jobcrafting og psykologisk tryghed
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/KaLFan6Uu6tcj11zUMox | Title: Fysisk arbejdsmiljø
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/PFLvnjoc03gbbWUgNUY3 | Title: Social arv, karriereveje og chanceulighed i arbejdslivet
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/PwRVf1ltmPqIZAWHQP9T | Title: Arbejdsmarkedsregulering: Den danske model og Industrial Relations
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/QLgcOsdEXgW9gZfodW5b | Title: Rytmer mellem stabilitet og grænseløshed
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/Qi7hO9QIt6zPCLw69m9x | Title: Uddannelsers betydning og funktion
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/U5fAs7z9tbpWPa4izPbK | Title: Om arbejdstidens periodicitet - hvorfor er arbejdstid et vigtigt spørgsmål for arbejdslivsforskningen?
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/VJQnC79SgrgkTlbE8WDA | Title: Metode & Videnskabsteori: Analyse ved Mads Andersen
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/Z5ayZZ0KxeTxWBw1G2VV | Title: Skøn og fortolkning
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/aTZbQPRZdx2kDKdE6XPx | Title: Introduktion til Mennesker og Samfundsvidenskaberne
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/gnxzlUXJmFsj9tRbnMbb | Title: Stress: Årsager og konsekvenser
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/i52Ar6LezTpoagRUrjpr | Title: Poststrukturalisme: Introduktion
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/iOFZwFtkVXQOubiesOKl | Title: Vidensformer og Praksischok i Arbejdslivet
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/m3Pkhfk9IDgyLOSMiTlx | Title: Sociale konstruktivismer: Videnskabsteori på sommersupplering
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/qoNIzyj4pcQLxCB55eyX | Title: Spørgsmål til Thomsen-artikel om chanceulighed og social arv
+[default] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/qsEeIwqV9A2WfnKKg1oc | Title: Introduktion til Blok 1
+[default] | Path: users/GGOrrJ5y4AhhGOXQHUkpBVndHE03/seminars/A2yeTsJ9NIU8jO79xS3l | Title: Introduktion til central teori og praksis i socialt arbejde
+[default] | Path: users/GGOrrJ5y4AhhGOXQHUkpBVndHE03/seminars/yricwlM5MHmRCC1uyyFM | Title: Det potentielle menneske i socialt arbejde
+[default] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/5OoVHRTbj5RCMgpySVAL | Title: Børn, unge og familier i det senmoderne samfund
+[default] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/BGAkPFgLDQIteWkXSLoR | Title: Børnesyn, Børneperspektiv og Barnets Perspektiv
+[default] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/NHRRPtRZY92S8ngehoAi | Title: Udviklingspsykologi til udviklingsvidenskab
+[default] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/q8qPqs6GsDWww0me8qRC | Title: Børns udvikling – Psykologiværksted
+[default] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/wy8eSuTMGWRqo1cHVngX | Title: Sagsforløbet i en børnesag
+[default] | Path: users/KLM2iSYLzdV8ZT8EL3vIH1YfXgq1/seminars/jH94XhEVQpvgyEp9H91s | Title: Sagsbehandlingsregler, Borgerinddragelse og Retssikkerhed
+[default] | Path: users/indRszGJvDcoemKBghJJIif6k5F2/seminars/isazOCqy4UHlRbEtwfxp | Title: Arbejdstid og arbejdslivets temporalitet: Tidslige betingelser, mønstre og kvalitet i arbejdet
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/4QBMlYiGasND2oSsM2RK | Title: Technology of Automation: Introduktion
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/5A8OUinLxHpaLBW2DzfG | Title: Branding: Introduktion og kontaktinformation
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/Lilq2XKCYkkKJh3LsV7z | Title: Organisatorisk kultur, diversitet og globalisering: Kommunikation, strategi og ledelse
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/OGOzH98Vzrw9lku85LG5 | Title: Velkomst til Corporate Communication og kursusagenda
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/TSmlBM6C7wTMdZO9D3SV | Title: Plan: Theories of Deliberate Strategy and Communication
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/UEY2quNFxqfWxIebHWp4 | Title: Plan for process - Theories of strategizing
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/ZxavGB7fLntCpOWU9dWt | Title: Introduktion til CSR og Etik
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/dhhprQ2rrgJ9oJhkMSE7 | Title: Strategic Communication as Emergent Action
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/qYFYQqjtkqdFL63i9sER | Title: Strategizing cross-media communication
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/tN1hi1HUSDxdvhu0J8RM | Title: Conclusion: Key takeaways and exam information
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/xin1TZg8S7wh225lfqL4 | Title: Stakeholder relations: Definitioner, modeller og gæsteforelæser
+[default] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/yQ25S57S3YoZ3ojljf4p | Title: Risk and Crisis Communication Introduction
+Dumping titles from [cohero-database]...
+[cohero-database] | Path: users/8CtX1pjeBwYcGeWN7GZRDCrTSkK2/seminars/4Je0lrpPIhP6AR0CMWyE | Title: Fysisk og Psykosocialt Arbejdsmiljø
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/640ARgi9S515HcUVB5WB | Title: Retskilderne og Juridisk metode
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/7lbc8eOYll8enMc2jBNi | Title: Semesteropstart - Velkommen til Arbejdsliv kandidat
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/I2vDmIBtRZ9IaEaT8fm5 | Title: Kritisk teori og perspektiver: Hvad vil det sige at arbejde kritisk?
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/IJJCvBYQn8ecOapscYv0 | Title: Videnskabsteori i samfundsvidenskaberne: Introduktion
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/Jxvqb4vPiL8LKVDRRuKQ | Title: Relationel koordinering, jobcrafting og psykologisk tryghed
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/KaLFan6Uu6tcj11zUMox | Title: Fysisk arbejdsmiljø
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/PFLvnjoc03gbbWUgNUY3 | Title: Social arv, karriereveje og chanceulighed i arbejdslivet
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/PwRVf1ltmPqIZAWHQP9T | Title: Arbejdsmarkedsregulering: Den danske model og Industrial Relations
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/QLgcOsdEXgW9gZfodW5b | Title: Rytmer mellem stabilitet og grænseløshed
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/Qi7hO9QIt6zPCLw69m9x | Title: Uddannelsers betydning og funktion
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/U5fAs7z9tbpWPa4izPbK | Title: Om arbejdstidens periodicitet - hvorfor er arbejdstid et vigtigt spørgsmål for arbejdslivsforskningen?
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/VJQnC79SgrgkTlbE8WDA | Title: Metode & Videnskabsteori: Analyse ved Mads Andersen
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/Z5ayZZ0KxeTxWBw1G2VV | Title: Skøn og fortolkning
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/aTZbQPRZdx2kDKdE6XPx | Title: Introduktion til Mennesker og Samfundsvidenskaberne
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/gnxzlUXJmFsj9tRbnMbb | Title: Stress: Årsager og konsekvenser
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/i52Ar6LezTpoagRUrjpr | Title: Poststrukturalisme: Introduktion
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/iOFZwFtkVXQOubiesOKl | Title: Vidensformer og Praksischok i Arbejdslivet
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/m3Pkhfk9IDgyLOSMiTlx | Title: Sociale konstruktivismer: Videnskabsteori på sommersupplering
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/qoNIzyj4pcQLxCB55eyX | Title: Spørgsmål til Thomsen-artikel om chanceulighed og social arv
+[cohero-database] | Path: users/GEyA853LNTde2oX134uHagrBLIF2/seminars/qsEeIwqV9A2WfnKKg1oc | Title: Introduktion til Blok 1
+[cohero-database] | Path: users/GGOrrJ5y4AhhGOXQHUkpBVndHE03/seminars/A2yeTsJ9NIU8jO79xS3l | Title: Introduktion til central teori og praksis i socialt arbejde
+[cohero-database] | Path: users/GGOrrJ5y4AhhGOXQHUkpBVndHE03/seminars/yricwlM5MHmRCC1uyyFM | Title: Det potentielle menneske i socialt arbejde
+[cohero-database] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/5OoVHRTbj5RCMgpySVAL | Title: Børn, unge og familier i det senmoderne samfund
+[cohero-database] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/BGAkPFgLDQIteWkXSLoR | Title: Børnesyn, Børneperspektiv og Barnets Perspektiv
+[cohero-database] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/NHRRPtRZY92S8ngehoAi | Title: Udviklingspsykologi til udviklingsvidenskab
+[cohero-database] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/q8qPqs6GsDWww0me8qRC | Title: Børns udvikling – Psykologiværksted
+[cohero-database] | Path: users/I6wHOZ7rjuZ8VbhnzLoYteRnsZ82/seminars/wy8eSuTMGWRqo1cHVngX | Title: Sagsforløbet i en børnesag
+[cohero-database] | Path: users/KLM2iSYLzdV8ZT8EL3vIH1YfXgq1/seminars/jH94XhEVQpvgyEp9H91s | Title: Sagsbehandlingsregler, Borgerinddragelse og Retssikkerhed
+[cohero-database] | Path: users/indRszGJvDcoemKBghJJIif6k5F2/seminars/isazOCqy4UHlRbEtwfxp | Title: Arbejdstid og arbejdslivets temporalitet: Tidslige betingelser, mønstre og kvalitet i arbejdet
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/4QBMlYiGasND2oSsM2RK | Title: Technology of Automation: Introduktion
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/5A8OUinLxHpaLBW2DzfG | Title: Branding: Introduktion og kontaktinformation
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/Lilq2XKCYkkKJh3LsV7z | Title: Organisatorisk kultur, diversitet og globalisering: Kommunikation, strategi og ledelse
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/OGOzH98Vzrw9lku85LG5 | Title: Velkomst til Corporate Communication og kursusagenda
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/TSmlBM6C7wTMdZO9D3SV | Title: Plan: Theories of Deliberate Strategy and Communication
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/UEY2quNFxqfWxIebHWp4 | Title: Plan for process - Theories of strategizing
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/ZxavGB7fLntCpOWU9dWt | Title: Introduktion til CSR og Etik
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/dhhprQ2rrgJ9oJhkMSE7 | Title: Strategic Communication as Emergent Action
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/qYFYQqjtkqdFL63i9sER | Title: Strategizing cross-media communication
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/tN1hi1HUSDxdvhu0J8RM | Title: Conclusion: Key takeaways and exam information
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/xin1TZg8S7wh225lfqL4 | Title: Stakeholder relations: Definitioner, modeller og gæsteforelæser
+[cohero-database] | Path: users/mm73ZlcI9PTdJ2DFxVAj9t9h4Ag2/seminars/yQ25S57S3YoZ3ojljf4p | Title: Risk and Crisis Communication Introduction

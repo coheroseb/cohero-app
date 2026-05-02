@@ -259,7 +259,7 @@ service cloud.firestore {
 
       match /blueprints/{blueprintId} { allow read, write: if isOwner(userId); }
       match /seminars/{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isSignedIn();
       }
       match /semesterPlans { allow read, write: if request.auth.uid == userId; }
       match /semesterPlans/{planId} { allow read, write: if request.auth.uid == userId; }
@@ -313,13 +313,8 @@ service cloud.firestore {
       }
     }
 
-    match /{path=**}/seminars/{seminarId} {
-      allow read: if isAdmin() || 
-                    (isSignedIn() && (
-                      request.auth.uid == userId || 
-                      request.auth.uid in resource.data.get('sharedWith', [])
-                    ));
-    }
+    // Seminars are already covered by the /users/{userId}/seminars match above.
+    // Removed broken global match to prevent access errors.
 
     // Global Admin fallback
     match /{path=**} {

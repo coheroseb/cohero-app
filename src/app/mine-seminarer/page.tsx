@@ -41,6 +41,7 @@ import {
   Share,
   BookOpen,
   FolderOpen,
+  Eye,
   Link as LinkIcon,
   Target
 } from 'lucide-react';
@@ -569,7 +570,7 @@ interface SlideCardProps {
   onSelect?: (e: React.MouseEvent) => void;
 }
 
-function SlideCard({ slide, note, onNoteChange, isOpen, onToggle, index, isSelected, onSelect }: SlideCardProps) {
+const SlideCard = React.memo(({ slide, note, onNoteChange, isOpen, onToggle, index, isSelected, onSelect }: SlideCardProps) => {
   const MotionDiv = motion.div;
   return (
     <MotionDiv
@@ -725,7 +726,8 @@ function SlideCard({ slide, note, onNoteChange, isOpen, onToggle, index, isSelec
       </AnimatePresence>
     </MotionDiv>
   );
-}
+});
+SlideCard.displayName = 'SlideCard';
 
 // ---------------------------------------------------------------------------
 // Seminar Detail (Feed View)
@@ -745,7 +747,9 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
   const [selectedSlides, setSelectedSlides] = useState<Set<number>>(new Set());
   const [isDeletingSlides, setIsDeletingSlides] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [readingMode, setReadingMode] = useState(false);
   const isInitialMount = useRef(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const slides = seminar.slides || [];
   
@@ -828,119 +832,178 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
     finally { setIsGeneratingQuiz(false); }
   };
 
+  const scrollToSlide = (index: number) => {
+    setOpenSlides(prev => new Set([...Array.from(prev), index]));
+    const element = document.getElementById(`slide-${index}`);
+    if (element && scrollContainerRef.current) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const totals = { 
     concepts: slides.reduce((a, s) => a + (s.keyConcepts?.length || 0), 0),
     law: slides.reduce((a, s) => a + (s.legalFrameworks?.length || 0), 0),
     tools: slides.reduce((a, s) => a + (s.practicalTools?.length || 0), 0)
   };
 
-  const isPremium = useMemo(() => {
-    if (!userProfile) return false;
-    if (userProfile.isQualified) return true;
-    return ['Kollega+', 'Semesterpakken'].includes(userProfile.membership || '');
-  }, [userProfile]);
-
-
   return (
-    <div className="fixed inset-x-0 bottom-0 top-0 sm:top-[80px] z-[1500] bg-[#FDFCF8] overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-500">
-      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-3 sm:px-6 md:px-10 py-3 sm:py-5 flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0 h-14 sm:h-16 md:h-24">
-        <button onClick={quizData ? () => setQuizData(null) : onClose} className="p-2 sm:p-3 bg-slate-50 rounded-lg sm:rounded-[1.25rem] text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-90 shrink-0 shadow-sm border border-slate-100"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></button>
+    <div className="fixed inset-x-0 bottom-0 top-0 sm:top-[80px] z-[1500] bg-[#FDFCF8] overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-500 font-sans">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-3 sm:px-6 md:px-10 py-3 sm:py-5 flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0 h-16 sm:h-20 md:h-24 z-50 shadow-sm">
+        <button onClick={quizData ? () => setQuizData(null) : onClose} className="p-2 sm:p-3 bg-white border border-slate-100 rounded-xl sm:rounded-2xl text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-90 shrink-0 shadow-sm"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></button>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5"><h2 className="font-black text-slate-900 truncate text-xs sm:text-lg md:text-lg serif tracking-tight">{seminar.overallTitle}</h2><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20 flex-shrink-0" /></div>
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 line-clamp-1">{slides.length} slides · {seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="font-black text-slate-950 truncate text-sm sm:text-xl md:text-2xl serif tracking-tight">{seminar.overallTitle}</h2>
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)] flex-shrink-0 animate-pulse" />
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{slides.length} slides</p>
+            <div className="w-1 h-1 rounded-full bg-slate-200" />
+            <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">{seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 shrink-0">
-          {saveStatus === 'saved' && <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-1 whitespace-nowrap hidden sm:flex"><CheckCircle className="w-3 h-3" /> Gemt</span>}
-          <Button size="sm" variant="outline" onClick={() => setShowChat(true)} className="rounded-lg sm:rounded-2xl bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-600 h-8 sm:h-10 md:h-12 px-2.5 sm:px-4 md:px-6 flex items-center gap-1 sm:gap-2 transition-all text-[10px] sm:text-[12px] md:text-[14px]">
-            <BrainCircuit className="w-3.5 h-3.5 sm:w-4 md:w-4" />
-            <span className="md:inline">CHAT MED AI</span>
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          <button 
+            onClick={() => setReadingMode(!readingMode)}
+            className={`p-3 rounded-2xl transition-all border ${readingMode ? 'bg-slate-950 text-white border-slate-900 shadow-xl' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+            title="Læse Mode"
+          >
+            <Eye className="w-5 h-5" />
+          </button>
+          <div className="h-10 w-px bg-slate-100 hidden sm:block" />
+          <Button size="sm" variant="outline" onClick={() => setShowChat(true)} className="rounded-xl sm:rounded-2xl bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-600 h-10 sm:h-12 px-3 sm:px-6 flex items-center gap-2 transition-all text-[10px] sm:text-xs font-black tracking-widest shadow-sm">
+            <BrainCircuit className="w-4 h-4" />
+            <span className="hidden md:inline">SPØRG AI</span>
           </Button>
-          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-lg sm:rounded-2xl bg-slate-900 hover:bg-slate-800 text-white h-8 sm:h-10 md:h-12 px-2.5 sm:px-4 md:px-6 shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group text-[10px] sm:text-[12px] md:text-[14px]">
-            {isGeneratingQuiz ? <Loader2 className="w-3 h-3 sm:w-4 md:w-4 animate-spin" /> : <Trophy className="w-3.5 h-3.5 sm:w-4 md:w-4 group-hover:rotate-12 transition-transform" />}
+          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-xl sm:rounded-2xl bg-slate-950 hover:bg-slate-800 text-white h-10 sm:h-12 px-3 sm:px-6 shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group text-[10px] sm:text-xs font-black tracking-widest">
+            {isGeneratingQuiz ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4 group-hover:rotate-12 transition-transform" />}
             <span className="hidden sm:inline md:ml-2">TAG QUIZ</span>
           </Button>
         </div>
       </header>
-      <AnimatePresence mode="wait">
-        {quizData ? (
-          <motion.div key="quiz" className="flex-1 overflow-y-auto bg-white"><QuizView userId={user.uid} topic={seminar.overallTitle} quizData={quizData} onFinish={() => setQuizData(null)} /></motion.div>
-        ) : (
-          <motion.div key="feed" className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="max-w-4xl mx-auto px-4 sm:px-8 py-10">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                {[
-                  { label: 'Indhold', val: slides.length, icon: <Presentation className="w-4 h-4"/>, color: 'bg-slate-900 text-white' },
-                  { label: 'Begreber', val: totals.concepts, icon: <Tags className="w-4 h-4"/>, color: 'bg-indigo-50 text-indigo-700' },
-                  { label: 'Love', val: totals.law, icon: <Scale className="w-4 h-4"/>, color: 'bg-rose-50 text-rose-700' },
-                  { label: 'Metoder', val: totals.tools, icon: <Wrench className="w-4 h-4"/>, color: 'bg-emerald-50 text-emerald-700' }
-                ].map(s => (
-                  <div key={s.label} className={`${s.color} rounded-[2rem] p-5 text-center`}>
-                    <div className="flex items-center justify-center gap-2 mb-2 opacity-60">{s.icon}<span className="text-[10px] font-black uppercase tracking-widest">{s.label}</span></div>
-                    <p className="text-3xl font-black serif">{s.val}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between mb-6 px-2">
-                <div className="flex items-center gap-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Gennemgang</p>
-                  <button 
-                    onClick={handleSelectAll}
-                    className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-700 transition-colors"
-                  >
-                    {selectedSlides.size === slides.length ? 'Fravælg alle' : 'Vælg alle'}
-                  </button>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setShowConceptList(true)} className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-600 active:scale-95 transition-all shadow-lg shadow-amber-600/10 border-b-4 border-amber-700">
-                    <BookOpen className="w-4 h-4" /> Begreber
-                  </button>
-                </div>
-              </div>
 
-              <div className="space-y-4 relative">
+      <div className="flex-1 flex overflow-hidden">
+        {/* SIDE NAV FOR SLIDES */}
+        {!readingMode && !quizData && (
+            <aside className="w-16 md:w-20 border-r border-slate-100 bg-white/50 backdrop-blur-sm flex flex-col items-center py-8 gap-3 overflow-y-auto hidden sm:flex shrink-0 custom-scrollbar">
                 {slides.map((s, i) => (
-                  <SlideCard 
-                    key={`${s.slideNumber}-${i}`} 
-                    slide={s} 
-                    note={notes[s.slideNumber] || ''} 
-                    onNoteChange={v => setNotes(prev => ({ ...prev, [s.slideNumber]: v }))} 
-                    isOpen={openSlides.has(i)} 
-                    onToggle={() => toggleSlide(i)} 
-                    index={i}
-                    isSelected={selectedSlides.has(i)}
-                    onSelect={(e) => handleToggleSelect(i, e)}
-                  />
-                ))}
-
-                <AnimatePresence>
-                  {selectedSlides.size > 0 && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 50, scale: 0.9 }}
-                      className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center gap-8 border border-slate-800"
+                    <button 
+                        key={i}
+                        onClick={() => scrollToSlide(i)}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${openSlides.has(i) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-white border border-slate-100 text-slate-400 hover:border-indigo-200 hover:text-indigo-600'}`}
                     >
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valgt</span>
-                        <span className="text-xl font-black serif">{selectedSlides.size} {selectedSlides.size === 1 ? 'slide' : 'slides'}</span>
-                      </div>
-                      <div className="w-px h-10 bg-slate-800" />
-                      <button 
-                        onClick={handleDeleteSelected}
-                        disabled={isDeletingSlides}
-                        className="flex items-center gap-3 px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        {isDeletingSlides ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                        Slet valgte
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.div>
+                        {s.slideNumber}
+                    </button>
+                ))}
+            </aside>
         )}
-      </AnimatePresence>
+
+        <AnimatePresence mode="wait">
+            {quizData ? (
+            <motion.div key="quiz" className="flex-1 overflow-y-auto bg-white custom-scrollbar"><QuizView userId={user.uid} topic={seminar.overallTitle} quizData={quizData} onFinish={() => setQuizData(null)} /></motion.div>
+            ) : (
+            <motion.div 
+                key="feed" 
+                ref={scrollContainerRef}
+                className={`flex-1 overflow-y-auto custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/notebook.png')] ${readingMode ? 'px-4' : 'px-4 sm:px-8'}`}
+            >
+                <div className={`${readingMode ? 'max-w-5xl' : 'max-w-4xl'} mx-auto py-12`}>
+                
+                <AnimatePresence>
+                    {!readingMode && (
+                        <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden mb-12"
+                        >
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                                {[
+                                    { label: 'Indhold', val: slides.length, icon: <Presentation className="w-5 h-5"/>, bg: 'bg-slate-950 text-white shadow-2xl shadow-slate-900/20', sub: 'Slides i alt' },
+                                    { label: 'Begreber', val: totals.concepts, icon: <Tags className="w-5 h-5"/>, bg: 'bg-white text-indigo-600 border border-indigo-50 shadow-sm', sub: 'Kortlagt viden' },
+                                    { label: 'Love', val: totals.law, icon: <Scale className="w-5 h-5"/>, bg: 'bg-white text-rose-600 border border-rose-50 shadow-sm', sub: 'Juridisk fundament' },
+                                    { label: 'Metoder', val: totals.tools, icon: <Wrench className="w-5 h-5"/>, bg: 'bg-white text-emerald-600 border border-emerald-50 shadow-sm', sub: 'Praksis værktøjer' }
+                                ].map(s => (
+                                    <div key={s.label} className={`${s.bg} rounded-[2.5rem] p-6 text-center group hover:scale-105 transition-all duration-500`}>
+                                        <div className="flex items-center justify-center gap-2 mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
+                                            {s.icon}
+                                            <span className="text-[10px] font-black uppercase tracking-widest">{s.label}</span>
+                                        </div>
+                                        <p className="text-4xl font-black serif mb-1">{s.val}</p>
+                                        <p className="text-[9px] font-bold opacity-40 uppercase tracking-widest">{s.sub}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div className="flex items-center justify-between mb-8 px-4">
+                    <div className="flex items-center gap-6">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Gennemgang</span>
+                            <div className="w-12 h-1 bg-indigo-500 rounded-full mt-1" />
+                        </div>
+                        <button 
+                            onClick={handleSelectAll}
+                            className="text-[10px] font-black uppercase text-indigo-400 hover:text-indigo-600 transition-colors tracking-widest"
+                        >
+                            {selectedSlides.size === slides.length ? 'Fravælg alle' : 'Vælg alle'}
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setShowConceptList(true)} className="flex items-center gap-3 px-6 py-3 bg-amber-400 text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-500 active:scale-95 transition-all shadow-xl shadow-amber-400/20">
+                            <BookOpen className="w-4 h-4" /> Begreber
+                        </button>
+                    </div>
+                </div>
+
+                <div className="space-y-6 relative">
+                    {slides.map((s, i) => (
+                    <div id={`slide-${i}`} key={`${s.slideNumber}-${i}`}>
+                        <SlideCard 
+                            slide={s} 
+                            note={notes[s.slideNumber] || ''} 
+                            onNoteChange={v => setNotes(prev => ({ ...prev, [s.slideNumber]: v }))} 
+                            isOpen={openSlides.has(i)} 
+                            onToggle={() => toggleSlide(i)} 
+                            index={i}
+                            isSelected={selectedSlides.has(i)}
+                            onSelect={(e) => handleToggleSelect(i, e)}
+                        />
+                    </div>
+                    ))}
+
+                    <AnimatePresence>
+                    {selectedSlides.size > 0 && (
+                        <motion.div 
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                        className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-white px-10 py-5 rounded-[2.5rem] shadow-3xl flex items-center gap-10 border border-white/5 backdrop-blur-2xl"
+                        >
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Markerede slides</span>
+                            <span className="text-2xl font-black serif">{selectedSlides.size} <span className="text-slate-500 font-medium">stk</span></span>
+                        </div>
+                        <div className="w-px h-12 bg-white/10" />
+                        <button 
+                            onClick={handleDeleteSelected}
+                            disabled={isDeletingSlides}
+                            className="flex items-center gap-3 px-8 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-rose-600/20"
+                        >
+                            {isDeletingSlides ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                            Fjern fra arkiv
+                        </button>
+                        </motion.div>
+                    )}
+                    </AnimatePresence>
+                </div>
+                </div>
+            </motion.div>
+            )}
+        </AnimatePresence>
+      </div>
+
       <AnimatePresence>
             {showConceptList && (
               <ConceptListOverlay 
@@ -1131,12 +1194,25 @@ export default function MineSeminarerPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("Seminar useEffect triggered. User:", user?.uid, "Firestore instance exists:", !!firestore);
     if (!user || !firestore) return;
-    const q = query(collection(firestore, 'users', user.uid, 'seminars'), orderBy('createdAt', 'desc'));
+    console.log("Setting up seminars listener for user:", user.uid, "on database: cohero-database");
+    const q = query(
+      collection(firestore, 'users', user.uid, 'seminars')
+    );
     const unsub = onSnapshot(q, snap => { 
+      console.log("Seminars snapshot received, size:", snap.size);
       setSeminars(snap.docs.map(d => ({ id: d.id, ...d.data() } as SavedSeminar))); 
       setIsLoading(false); 
-    }, () => setIsLoading(false));
+    }, (error) => {
+      console.error("Firestore error in MineSeminarerPage:", error);
+      toast({
+        title: "Database Fejl",
+        description: "Kunne ikke hente dine seminarer: " + error.message,
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    });
     return () => unsub();
   }, [user, firestore]);
 

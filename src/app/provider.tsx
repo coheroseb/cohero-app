@@ -380,7 +380,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!firestore) return;
     const maintRef = doc(firestore, 'systemSettings', 'maintenance');
     const unsubscribe = onSnapshot(maintRef, (docSnap) => {
-        if (docSnap.exists()) {
+        const isLocalhost = typeof window !== 'undefined' && 
+                           (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        
+        if (docSnap.exists() && !isLocalhost) {
             setIsMaintenanceMode(docSnap.data().enabled || false);
         } else {
             setIsMaintenanceMode(false);

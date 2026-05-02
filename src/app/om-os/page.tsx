@@ -35,13 +35,6 @@ const TeamSection = () => {
             status: "active"
         },
         {
-            name: "Nanna Hougaard Ungermand",
-            role: "Medstifter",
-            bio: "Nanna har været en central del af Cohéros start. Hun er ikke længere en aktiv del af teamet, da hun har solgt sin andel for at søge nye eventyr.",
-            image: "/team/nan.png",
-            status: "former"
-        },
-        {
             name: "Julie Lee Hansen",
             role: "Uddannelseskonsulent & medstifter",
             bio: "Uddannelsesvidenskabelig baggrund. Sikrer, at alt vores indhold er pædagogisk funderet og læringsoptimeret.",

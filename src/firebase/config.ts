@@ -20,9 +20,9 @@ let cachedFirebase: any = null;
 // Initialize Firebase
 export function initializeFirebase() { 
   // Check if we already have it in window (browser only singleton for HMR)
-  if (typeof window !== 'undefined' && (window as any)._firebaseServices) {
-    return (window as any)._firebaseServices;
-  }
+  // if (typeof window !== 'undefined' && (window as any)._firebaseServices) {
+  //   return (window as any)._firebaseServices;
+  // }
   
   if (cachedFirebase) {
     return cachedFirebase;
@@ -30,20 +30,20 @@ export function initializeFirebase() {
 
   const apps = getApps();
   const firebaseApp = apps.length === 0 ? initializeApp(firebaseConfig) : apps[0];
-  const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'cohero-database';
+  const databaseId = 'cohero-database';
   
-  console.log("[Firebase] Initializing Firestore. Database ID:", databaseId || "(default)");
+  console.log("[Firebase] Initializing Firestore. Database ID:", databaseId);
 
   // Initialize Firestore
   let firestore;
   try {
-    // Try to initialize with settings. This will fail if already initialized (e.g. HMR)
+    // Try to initialize with settings.
     firestore = initializeFirestore(firebaseApp, { 
       ignoreUndefinedProperties: true
-    }, databaseId || undefined);
+    }, databaseId);
   } catch (e) {
     // If already initialized, just get the existing instance
-    firestore = databaseId ? getFirestore(firebaseApp, databaseId) : getFirestore(firebaseApp);
+    firestore = getFirestore(firebaseApp, databaseId);
   }
   
   const auth = getAuth(firebaseApp);

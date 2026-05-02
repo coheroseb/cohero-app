@@ -12,165 +12,279 @@ import {
     Zap,
     Quote,
     CheckCircle2,
-    Lock
+    Lock,
+    Sparkles,
+    Eye,
+    HandMetal
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 
-const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
+const Reveal = ({ children, delay = 0, y = 20 }: { children: React.ReactNode, delay?: number, y?: number }) => (
     <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 1.2, delay, ease: [0.22, 1, 0.36, 1] }}
     >
         {children}
     </motion.div>
 );
 
-const EthicsCard = ({ icon: Icon, title, children, delay }: { icon: any, title: string, children: React.ReactNode, delay: number }) => (
-    <Reveal delay={delay}>
-        <div className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-900/5 hover:-translate-y-1 transition-all">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                <Icon className="w-7 h-7" />
-            </div>
-            <h2 className="text-2xl font-black text-slate-900 mb-4 tracking-tight uppercase tracking-widest text-[13px]">{title}</h2>
-            <div className="space-y-4 text-slate-600 leading-relaxed font-medium">
-                {children}
+const EthicsCard = ({ icon: Icon, title, children, delay, gradient }: { icon: any, title: string, children: React.ReactNode, delay: number, gradient: string }) => (
+    <Reveal delay={delay} y={40}>
+        <div className="group relative bg-white/[0.03] backdrop-blur-3xl p-10 md:p-12 rounded-[3.5rem] border border-white/10 shadow-2xl overflow-hidden hover:border-white/20 transition-all duration-700">
+            {/* Animated Gradient Background */}
+            <div className={`absolute -top-24 -right-24 w-64 h-64 blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity duration-700 ${gradient}`} />
+            
+            <div className="relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 text-white flex items-center justify-center mb-10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-2xl">
+                    <Icon className="w-8 h-8" />
+                </div>
+                <h2 className="text-[11px] font-black text-amber-500 uppercase tracking-[0.4em] mb-6">{title}</h2>
+                <div className="space-y-6 text-slate-400 leading-relaxed font-medium text-lg">
+                    {children}
+                </div>
             </div>
         </div>
     </Reveal>
 );
 
 export default function EthicsPage() {
-    return (
-        <div className="bg-[#fafafa] min-h-screen selection:bg-amber-500/10 selection:text-amber-600">
-            {/* HEADER */}
-            <header className="relative pt-32 pb-20 px-6 overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full -z-10">
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-100/30 blur-[120px] rounded-full" />
-                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-rose-50/30 blur-[120px] rounded-full" />
-                </div>
+    const { scrollYProgress } = useScroll();
+    const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
 
-                <div className="max-w-4xl mx-auto text-center space-y-8">
+    return (
+        <div className="bg-[#FDFCF8] min-h-screen selection:bg-amber-500/10 selection:text-amber-600 overflow-hidden font-sans">
+            
+            {/* AMBIENT BACKGROUND */}
+            <motion.div 
+                style={{ y: backgroundY }}
+                className="fixed inset-0 pointer-events-none z-0"
+            >
+                <div className="absolute top-0 left-[-10%] w-[60%] h-[60%] bg-amber-100/30 blur-[150px] rounded-full animate-pulse" />
+                <div className="absolute bottom-[10%] right-[-5%] w-[50%] h-[50%] bg-rose-50/40 blur-[150px] rounded-full" />
+                <div className="absolute top-[40%] left-[20%] w-[30%] h-[30%] bg-indigo-50/30 blur-[120px] rounded-full" />
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay" />
+            </motion.div>
+
+            {/* NAV BAR */}
+            <nav className="fixed top-0 left-0 right-0 z-[100] px-6 py-8 flex justify-between items-center pointer-events-none">
+                <div className="pointer-events-auto">
+                    <Link href="/" className="group flex items-center gap-4 px-6 py-3 bg-white border border-slate-100 shadow-sm rounded-full hover:bg-slate-50 transition-all">
+                        <ArrowLeft className="w-4 h-4 text-slate-400 group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Retur</span>
+                    </Link>
+                </div>
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    <div className="px-5 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-3">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-[0.2em]">Kollega+ Standard</span>
+                    </div>
+                </div>
+            </nav>
+
+            {/* HERO SECTION */}
+            <header className="relative pt-48 pb-32 px-6 z-10">
+                <div className="max-w-6xl mx-auto">
                     <Reveal>
-                        <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all mb-8">
-                            <ArrowLeft className="w-3 h-3" /> Tilbage til forsiden
-                        </Link>
-                    </Reveal>
-                    
-                    <Reveal delay={0.1}>
-                        <div className="flex justify-center mb-6">
-                            <div className="w-20 h-20 bg-amber-900 text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-amber-900/20">
-                                <Scale className="w-10 h-10" />
+                        <div className="flex flex-col items-center text-center">
+                            <motion.div 
+                                animate={{ rotate: [0, 10, -10, 0] }}
+                                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                                className="w-28 h-28 bg-slate-900 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-slate-900/10 mb-12"
+                            >
+                                <Scale className="w-12 h-12 text-white" />
+                            </motion.div>
+                            
+                            <h1 className="text-6xl md:text-9xl font-black text-slate-950 tracking-tighter leading-[0.9] mb-12 italic">
+                                ETISK <br /> 
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-600 to-amber-400 animate-gradient-x">FAGLIGHED</span>
+                            </h1>
+                            
+                            <p className="max-w-3xl text-xl md:text-2xl text-slate-500 font-medium leading-relaxed mb-16">
+                                Som fremtidens velfærdsarbejder er din menneskelige dømmekraft din stærkeste valuta. <br className="hidden md:block" />
+                                Cohéro er her for at <span className="text-slate-950 italic">forstærke</span> den – aldrig erstatte den.
+                            </p>
+
+                            <div className="flex items-center gap-12 text-slate-300">
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Status</span>
+                                    <span className="text-xs font-bold text-emerald-500 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" /> Aktiv Protokol
+                                    </span>
+                                </div>
+                                <div className="w-px h-10 bg-slate-200" />
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Version</span>
+                                    <span className="text-xs font-bold text-slate-900">4.0.2 High-Fidelity</span>
+                                </div>
                             </div>
                         </div>
-                        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-950 tracking-[-0.03em] serif">
-                            Etik & Faglighed: <br /> <span className="text-amber-600 italic">Brug AI med Omtanke</span>
-                        </h1>
-                        <p className="max-w-2xl mx-auto text-xl text-slate-500 font-medium leading-relaxed mt-10">
-                            Som pædagog- eller socialrådgiverstuderende er din dømmekraft dit vigtigste redskab. Cohéro er designet til at skærpe den – ikke erstatte den.
-                        </p>
                     </Reveal>
                 </div>
             </header>
 
-            <main className="max-w-6xl mx-auto px-6 pb-40">
-                <div className="grid md:grid-cols-2 gap-8">
+            {/* MAIN CONTENT */}
+            <main className="max-w-7xl mx-auto px-6 pb-60 relative z-10">
+                <div className="grid lg:grid-cols-2 gap-8 md:gap-12 mb-32">
                     
-                    <EthicsCard icon={BrainCircuit} title="AI er en Assistent, ikke et Facit" delay={0.2}>
+                    <EthicsCard 
+                        icon={BrainCircuit} 
+                        title="Assistent, ikke Facit" 
+                        delay={0.2}
+                        gradient="bg-indigo-500"
+                    >
                         <p>
-                            Betragt Cohéros AI-værktøjer som en avanceret lommeregner for fagligt arbejde. Den kan udføre komplekse analyser og finde mønstre i lovtekster, men den kan ikke udøve et <span className="text-slate-900 font-bold">fagligt skøn</span>.
+                            Betragt Cohéros AI som en <span className="text-slate-900 font-bold underline decoration-amber-500/50 underline-offset-4">kognitiv lommeregner</span>. Den findes for at håndtere den tunge data-analyse, så du kan fokusere på det menneskelige.
                         </p>
                         <p>
-                            Et fagligt skøn kræver empati og situationsfornemmelse – alt det, der adskiller dig fra en algoritme. AI'ens output er derfor altid et forslag, aldrig et facit.
+                            AI kan finde paragraffer og mønstre, men den ejer ikke <span className="text-slate-900 italic">situationsfornemmelse</span>. Dit faglige skøn er det eneste, der kan navigere i komplekse menneskelige relationer.
                         </p>
-                        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex gap-4 mt-6">
-                            <Quote className="w-5 h-5 text-amber-500 shrink-0" />
-                            <p className="text-xs font-bold text-slate-500 italic uppercase tracking-wider leading-relaxed">
-                                Brug AI-feedback til at opdage blinde pletter i din argumentation – men lad aldrig AI'en tænke for dig.
+                        <div className="p-8 bg-slate-50 border border-slate-100 rounded-[2rem] flex gap-6 mt-8 shadow-inner">
+                            <Quote className="w-6 h-6 text-amber-500 shrink-0" />
+                            <p className="text-sm font-bold text-slate-600 italic uppercase tracking-wider leading-relaxed">
+                                Lad AI oplyse dine blinde vinkler, men lad den aldrig træffe valgene for dig.
                             </p>
                         </div>
                     </EthicsCard>
 
-                    <EthicsCard icon={UserCheck} title="Dit Personlige Ansvar" delay={0.3}>
+                    <EthicsCard 
+                        icon={UserCheck} 
+                        title="Det Radikale Ansvar" 
+                        delay={0.3}
+                        gradient="bg-rose-500"
+                    >
                         <p>
-                            Ethvert ord, du afleverer i en opgave, og enhver beslutning, du træffer i en case, er dit ansvar. Når du anvender output fra Cohéro, er det din opgave at validere, redigere og fagligt begrunde det.
+                            Når du sender en opgave eller træffer en beslutning, er der kun ét navn på dokumentet: <span className="text-slate-950 font-black tracking-wider uppercase">DIT</span>.
                         </p>
                         <p>
-                            Spørg altid dig selv: <span className="italic">"Hvordan ville jeg forsvare denne analyse over for en borger eller en vejleder med mine egne ord?"</span>
+                            Hver eneste konklusion Cohéro genererer skal passere gennem dit kritiske filter. Hvis du ikke kan forsvare en analyse med din egen faglige stemme, skal den ikke bruges.
                         </p>
+                        <div className="pt-6 flex items-center gap-4 border-t border-slate-100 mt-8">
+                            <HandMetal className="w-5 h-5 text-amber-500" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ejerskab er fundamentet</span>
+                        </div>
                     </EthicsCard>
 
-                    <EthicsCard icon={Shield} title="Dataetik: Beskyt Borgeren" delay={0.4}>
-                        <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 mb-6">
-                            <Lock className="w-5 h-5 text-rose-500" />
-                            <p className="text-[10px] font-black text-rose-700 uppercase tracking-widest leading-relaxed">
-                                DU MÅ ALDRIG INDTASTE PERSONFØLSOMME OPLYSNINGER OM VIRKELIGE PERSONER.
+                    <EthicsCard 
+                        icon={Shield} 
+                        title="Hellig Tavshedspligt" 
+                        delay={0.4}
+                        gradient="bg-emerald-500"
+                    >
+                        <div className="p-6 bg-rose-50 border border-rose-100 rounded-[2rem] flex items-center gap-5 mb-8">
+                            <Lock className="w-6 h-6 text-rose-500 animate-pulse" />
+                            <p className="text-[11px] font-black text-rose-600 uppercase tracking-widest leading-tight">
+                                ABSOLUT FORBUD MOD PERSONFØLSOM DATA.
                             </p>
                         </div>
                         <p>
-                            Alle cases, journalnotater og eksempler, du indtaster, skal være 100% anonymiserede og fiktionaliserede. At bruge AI til at behandle rigtige borgerdata er et alvorligt brud på din lovpligtige <span className="font-bold">tavshedspligt</span>.
+                            At beskytte borgerens privatliv er ikke bare en regel – det er en <span className="text-slate-900 font-bold">hellig ed</span>. Alt indhold i Cohéro skal være 100% fiktionaliseret.
+                        </p>
+                        <p>
+                            Brug aldrig rigtige navne, adresser eller personnumre. AI-behandling af persondata uden samtykke er et direkte brud på din tavshedspligt og GDPR.
                         </p>
                     </EthicsCard>
 
-                    <EthicsCard icon={AlertCircle} title="AI løser ikke dilemmaer" delay={0.5}>
+                    <EthicsCard 
+                        icon={AlertCircle} 
+                        title="Etikkens Grænseland" 
+                        delay={0.5}
+                        gradient="bg-amber-500"
+                    >
                         <p>
-                            Etisk refleksion er kernen i dit fremtidige arbejde. Cohéro kan give dig information om lovgivning og teori, der kan <span className="font-bold">oplyse</span> dit dilemma, men den kan aldrig løse det for dig.
+                            Etik handler ikke om at følge regler, men om at navigere i <span className="text-slate-950 italic">dilemmaer</span>. AI har ingen samvittighed og føler ikke vægten af et svært valg.
                         </p>
                         <p>
-                            Brug platformen til at få overblik over de faglige rammer, og tag derefter den svære dialog med medstuderende eller din praktikvejleder.
+                            Brug platformen til at belyse dilemmaet fra teoretiske og juridiske vinkler, men husk: Den svære beslutning skal altid tages sammen med dine levende kollegaer.
                         </p>
+                        <div className="flex gap-2 mt-8">
+                            {[1,2,3].map(i => (
+                                <div key={i} className="w-1.5 h-1.5 rounded-full bg-amber-500/30" />
+                            ))}
+                        </div>
                     </EthicsCard>
                 </div>
 
-                {/* PRINCIPLES SECTION */}
-                <Reveal delay={0.6}>
-                    <div className="mt-20 bg-slate-900 rounded-[3rem] p-12 md:p-20 text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 blur-[100px] -z-1" />
-                        
-                        <div className="relative z-10 max-w-3xl mx-auto">
-                            <div className="flex items-center gap-4 mb-8">
-                                <CheckSquare className="w-8 h-8 text-amber-400" />
-                                <h2 className="text-3xl font-black uppercase tracking-widest text-[14px]">Principper for Ansvarlig AI</h2>
+                {/* MANIFESTO SECTION */}
+                <Reveal delay={0.6} y={60}>
+                    <div className="relative group">
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-rose-400 blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity duration-1000" />
+                        <div className="relative bg-white/40 backdrop-blur-3xl rounded-[4rem] p-16 md:p-24 border border-white shadow-2xl overflow-hidden">
+                            <div className="absolute top-0 right-0 p-12 text-slate-100 rotate-12">
+                                <Scale className="w-64 h-64" />
                             </div>
                             
-                            <div className="grid gap-6">
-                                {[
-                                    "Brug AI som en sparringspartner – ikke som en erstatning for din hjerne.",
-                                    "Validér altid alle kilder og lovhenvisninger, AI'en præsenterer.",
-                                    "Hold alle cases 100% anonyme og fiktive.",
-                                    "Vær kritisk over for eventuelle biases og systemfejl i AI-outputtet.",
-                                    "Brug AI til at bygge selvtillid, ikke til at finde genveje."
-                                ].map((step, i) => (
-                                    <div key={i} className="flex items-start gap-4 p-6 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
-                                        <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                                        <p className="text-lg font-medium text-slate-300">{step}</p>
+                            <div className="max-w-3xl relative z-10">
+                                <div className="flex items-center gap-5 mb-12">
+                                    <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-2xl shadow-slate-900/20">
+                                        <CheckSquare className="w-6 h-6" />
                                     </div>
-                                ))}
-                            </div>
+                                    <h2 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter">VORES MANIFEST</h2>
+                                </div>
+                                
+                                <div className="space-y-8">
+                                    {[
+                                        "Sparring før Kopiering: Brug AI til refleksion, aldrig reproduktion.",
+                                        "Kildekritik er Konge: Validér hver eneste henvisning manuelt.",
+                                        "Beskyttelse frem for alt: Anonymitet er ikke til diskussion.",
+                                        "Kritisk Blik: Udfordr AI-modellens biases og 'hallucinationer'.",
+                                        "Vækst gennem Indsigt: Brug værktøjet til at blive klogere, ikke hurtigere."
+                                    ].map((step, i) => (
+                                        <motion.div 
+                                            key={i} 
+                                            whileHover={{ x: 20 }}
+                                            className="flex items-start gap-6 p-8 bg-white/50 border border-white rounded-3xl hover:bg-white transition-all cursor-default shadow-sm"
+                                        >
+                                            <div className="mt-1">
+                                                <div className="w-6 h-6 rounded-full border-2 border-amber-500 flex items-center justify-center">
+                                                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
+                                                </div>
+                                            </div>
+                                            <p className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight leading-tight">{step}</p>
+                                        </motion.div>
+                                    ))}
+                                </div>
 
-                            <div className="mt-16 pt-12 border-t border-white/10 text-center">
-                                <p className="text-slate-400 text-sm italic">
-                                    "Den sande læring sker i det refleksive mellemrum – i din kritiske bearbejdning af det materiale, AI'en præsenterer."
-                                </p>
+                                <div className="mt-20 pt-16 border-t border-slate-100">
+                                    <p className="text-2xl md:text-3xl text-slate-500 font-medium italic leading-relaxed">
+                                        "Den sande læring opstår i det <span className="text-slate-950">kritiske mellemrum</span> mellem AI'ens forslag og din bearbejdning."
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </Reveal>
             </main>
 
-            {/* FOOTER BADGE */}
-            <footer className="fixed bottom-0 left-0 right-0 p-8 z-[90] pointer-events-none flex justify-center">
-                <div className="px-6 py-2 bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl flex items-center gap-3">
-                    <div className="flex -space-x-1 items-end h-3">
-                        <div className="w-0.5 h-full bg-amber-400 rounded-full" />
-                        <div className="w-0.5 h-4 bg-amber-500 rounded-full" />
-                        <div className="w-0.5 h-full bg-amber-600 rounded-full" />
+            {/* FLOATING ACTION BUTTON */}
+            <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100]">
+                <Link href="/portal" className="group flex items-center gap-4 px-10 py-5 bg-slate-950 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                    <span>Gå til portalen</span>
+                    <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-1 transition-transform" />
+                </Link>
+            </div>
+
+            {/* SIDE NAVIGATION DECORATION */}
+            <div className="fixed left-8 top-1/2 -translate-y-1/2 hidden xl:flex flex-col gap-6 z-50">
+                {[Eye, Zap, Shield, HandMetal].map((Icon, i) => (
+                    <div key={i} className="w-10 h-10 bg-white border border-slate-100 rounded-xl shadow-sm flex items-center justify-center text-slate-300 hover:text-amber-500 transition-colors cursor-help">
+                        <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.3em]">Etisk Faglighed</span>
-                </div>
-            </footer>
+                ))}
+            </div>
+
+            <style jsx global>{`
+                @keyframes gradient-x {
+                    0%, 100% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                }
+                .animate-gradient-x {
+                    background-size: 200% 200%;
+                    animation: gradient-x 10s ease infinite;
+                }
+            `}</style>
         </div>
     );
 }

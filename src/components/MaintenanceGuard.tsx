@@ -23,8 +23,10 @@ export const MaintenanceGuard = ({ children }: { children: React.ReactNode }) =>
     const isMaintenance = maintenance?.enabled || false;
     const isAdmin = userProfile?.role === 'admin';
     const isAuthPath = pathname?.startsWith('/auth');
+    const isLocalhost = typeof window !== 'undefined' && 
+                       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-    if (isMaintenance && !isAdmin && !isAuthPath) {
+    if (isMaintenance && !isAdmin && !isAuthPath && !isLocalhost) {
         return (
             <div className="fixed inset-0 z-[9999] bg-[#0A0A0A] flex items-center justify-center p-6 font-sans">
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
