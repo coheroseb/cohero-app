@@ -263,26 +263,43 @@ service cloud.firestore {
         allow read: if isOwner(userId) || (isSignedIn() && request.auth.uid in resource.data.get('sharedWith', []));
         allow write: if isOwner(userId); 
       }
+      match /semesterPlans { allow read, write: if request.auth.uid == userId; }
       match /semesterPlans/{planId} { allow read, write: if request.auth.uid == userId; }
       match /materials { allow read, write: if request.auth.uid == userId; }
       match /materials/{materialId} { allow read, write: if request.auth.uid == userId; }
+      match /pensum { allow read, write: if request.auth.uid == userId; }
       match /pensum/{bookId} { allow read, write: if request.auth.uid == userId; }
+      match /courseDesigns { allow read, write: if request.auth.uid == userId; }
       match /courseDesigns/{courseId} { allow read, write: if request.auth.uid == userId; }
+      match /studySchedules { allow read, write: if request.auth.uid == userId; }
       match /studySchedules/{scheduleId} { allow read, write: if request.auth.uid == userId; }
+      match /journalScenarios { allow read, write: if request.auth.uid == userId; }
       match /journalScenarios/{scenarioId} { allow read, write: if request.auth.uid == userId; }
+      match /practiceGuides { allow read, write: if request.auth.uid == userId; }
       match /practiceGuides/{guideId} { allow read, write: if request.auth.uid == userId; }
+      match /reflections { allow read, write: if request.auth.uid == userId; }
       match /reflections/{reflectionId} { allow read, write: if request.auth.uid == userId; }
+      match /savedViveArticles { allow read, write: if request.auth.uid == userId; }
       match /savedViveArticles/{articleId} { allow read, write: if request.auth.uid == userId; }
+      match /readDocuments { allow read, write: if request.auth.uid == userId; }
       match /readDocuments/{docId} { allow read, write: if request.auth.uid == userId; }
+      match /savedParagraphs { allow read, write: if request.auth.uid == userId; }
       match /savedParagraphs/{savedId} { allow read, write: if request.auth.uid == userId; }
+      match /quizResults { allow read, write: if request.auth.uid == userId; }
       match /quizResults/{resultId} { allow read, write: if request.auth.uid == userId; }
+      match /notifications { allow read, write: if request.auth.uid == userId; }
       match /notifications/{notificationId} { allow read, write: if request.auth.uid == userId; }
+      match /viveAnalyses { allow read, write: if request.auth.uid == userId; }
       match /viveAnalyses/{analysisId} { allow read, write: if request.auth.uid == userId; }
+      match /caseAnalyses { allow read, write: if request.auth.uid == userId; }
       match /caseAnalyses/{analysisId} { allow read, write: if request.auth.uid == userId; }
+      match /savedConcepts { allow read, write: if request.auth.uid == userId; }
       match /savedConcepts/{conceptId} { allow read, write: if request.auth.uid == userId; }
+      match /courseProgress { allow read, write: if request.auth.uid == userId; }
       match /courseProgress/{courseId} { allow read, write: if request.auth.uid == userId; }
-      match /conversations/{conversationId} { 
+      match /conversations { 
         allow read, write: if request.auth.uid == userId; 
+        match /messages { allow read, write: if request.auth.uid == userId; }
         match /messages/{messageId} { allow read, write: if request.auth.uid == userId; }
       }
     }
