@@ -1226,94 +1226,80 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
 
                     // --- IMPROVED JSON REPAIR LOGIC ---
                     const repairJson = (json: string) => {
+                        // 1. Pre-process: Handle AI using mixed quotes like 'summary": or "summary':
+                        // Replace 'key": or "key': with "key":
+                        let processed = json
+                            .replace(/['"]([a-zA-Z0-9_]+)['"]\s*:/g, '"$1":') // Normalize keys
+                            .replace(/:\s*'([^']*)'([,}\]])/g, ':"$1"$2');   // Normalize values (simple case)
+
                         try {
-                            JSON.parse(json);
-                            return json;
+                            JSON.parse(processed);
+                            return processed;
                         } catch (e) {
-                            // If it's already valid, return it. If not, try to fix it.
+                            // Continue to repair if still invalid
                         }
 
                         logToConsole(`[generateAction] Truncated JSON detected. Attempting deep repair...`);
                         
-                        let stack: string[] = [];
-                        let inString = false;
-                        let escaped = false;
-                        let lastValidIndex = -1;
+                        const attemptRepair = (input: string) => {
+                            let stack: string[] = [];
+                            let inString = false;
+                            let quoteChar = '"';
+                            let escaped = false;
 
-                        for (let i = 0; i < json.length; i++) {
-                            const char = json[i];
-                            
-                            if (inString) {
-                                if (escaped) {
-                                    escaped = false;
-                                } else if (char === '\\') {
-                                    escaped = true;
-                                } else if (char === '"') {
-                                    inString = false;
-                                }
-                            } else {
-                                if (char === '"') {
-                                    inString = true;
-                                } else if (char === '{') {
-                                    stack.push('{');
-                                } else if (char === '[') {
-                                    stack.push('[');
-                                } else if (char === '}') {
-                                    if (stack[stack.length - 1] === '{') stack.pop();
-                                } else if (char === ']') {
-                                    if (stack[stack.length - 1] === '[') stack.pop();
+                            for (let i = 0; i < input.length; i++) {
+                                const char = input[i];
+                                if (inString) {
+                                    if (escaped) { escaped = false; }
+                                    else if (char === '\\') { escaped = true; }
+                                    else if (char === quoteChar) { inString = false; }
+                                } else {
+                                    if (char === '"' || char === "'") {
+                                        inString = true;
+                                        quoteChar = char;
+                                    } else if (char === '{') { stack.push('{'); }
+                                    else if (char === '[') { stack.push('['); }
+                                    else if (char === '}') { if (stack[stack.length - 1] === '{') stack.pop(); }
+                                    else if (char === ']') { if (stack[stack.length - 1] === '[') stack.pop(); }
                                 }
                             }
-                            
-                            // If we're not in a string and the stack is balanced at this point (and it's a structural end)
-                            // Or just track the progress
-                        }
 
-                        let repaired = json;
-                        
-                        // 1. If we are inside a string, close it
-                        if (inString) {
-                            repaired += '"';
-                        }
+                            let repaired = input;
+                            if (inString) repaired += quoteChar === "'" ? "'" : '"';
 
-                        // 2. Close all open structures in reverse order
-                        for (let i = stack.length - 1; i >= 0; i--) {
-                            const opener = stack[i];
-                            if (opener === '{') {
-                                // Before closing an object, check if we're trailing a comma or incomplete property
+                            for (let i = stack.length - 1; i >= 0; i--) {
+                                const opener = stack[i];
                                 repaired = repaired.trim();
                                 if (repaired.endsWith(',')) repaired = repaired.slice(0, -1);
-                                repaired += '}';
-                            } else if (opener === '[') {
-                                repaired = repaired.trim();
-                                if (repaired.endsWith(',')) repaired = repaired.slice(0, -1);
-                                repaired += ']';
+                                repaired += opener === '{' ? '}' : ']';
                             }
-                        }
-
-                        // 3. Final validation attempt - if it still fails, try aggressive back-trimming
-                        try {
-                            JSON.parse(repaired);
                             return repaired;
-                        } catch (finalErr) {
+                        };
+
+                        // Try initial repair
+                        let result = attemptRepair(processed);
+                        try {
+                            JSON.parse(result);
+                            return result;
+                        } catch (err) {
                             logToConsole(`[generateAction] Deep repair failed, trying aggressive back-trimming...`);
-                            let temp = json;
+                            // Iterative back-trimming to avoid recursion
+                            let temp = processed;
                             while (temp.length > 0) {
-                                // Find the last potential break point
                                 const lastBrace = Math.max(temp.lastIndexOf('}'), temp.lastIndexOf(']'));
                                 if (lastBrace === -1) break;
                                 temp = temp.substring(0, lastBrace + 1);
+                                
+                                const backTrimmed = attemptRepair(temp);
                                 try {
-                                    // Try to close this truncated version
-                                    const retry = repairJson(temp);
-                                    JSON.parse(retry);
-                                    return retry;
+                                    JSON.parse(backTrimmed);
+                                    return backTrimmed;
                                 } catch {
-                                    temp = temp.substring(0, lastBrace);
+                                    temp = temp.substring(0, lastBrace); // Cut further back
                                 }
                             }
                         }
-                        return repaired;
+                        return result; // Return best effort
                     };
 
                     cleanedJson = repairJson(cleanedJson);
