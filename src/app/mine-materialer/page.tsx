@@ -156,27 +156,21 @@ export default function MineMaterialerPage() {
   useEffect(() => {
     if (!user || !firestore || !userProfile) return;
     
-    console.log("[MineMaterialer] Fetching materials for UID:", user.uid, "Semester:", currentSemesterId);
     const q = query(
-      collection(firestore, 'users', user.uid, 'materials')
+      collection(firestore, 'users', user.uid, 'materials'),
+      where('semester', '==', currentSemesterId)
     );
     const unsub = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Material));
-      console.log(`[MineMaterialer] 🔥 Firestore Sync: ${docs.length} docs`, docs.map(d => ({ 
-        name: d.name, 
-        indexed: d.isIndexed, 
-        raw: d 
-      })));
       setMaterials(docs);
       setIsLoading(false);
     }, (err) => {
-      console.error("[MineMaterialer] FULL Error Object:", JSON.stringify(err, null, 2));
-      console.error("[MineMaterialer] Error message:", err.message);
+      console.error("[MineMaterialer] Firestore listener error:", err);
       setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Fejl ved hentning af materialer",
-        description: `Error: ${err.message} (${err.code}). Prøv at genopfriske eller tjek dine rettigheder.`
+        description: "Du har muligvis ikke adgang, eller der er en netværksfejl. Prøv at genopfriske siden."
       });
     });
     return () => unsub();

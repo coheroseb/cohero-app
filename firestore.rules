@@ -26,19 +26,6 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // EMERGENCY DEBUG: Allow this specific user full read access to debug permission issues
-    match /{path=**} {
-      allow read: if request.auth.uid == '5tt70aNvVzMaG6MkBxbKT8jxyq42';
-    }
-
-    // DEBUG RULE: Allow everyone to read materials temporarily to check if rules are loading
-    match /users/{userId}/materials {
-      allow read: if true;
-    }
-    match /users/{userId}/materials/{materialId} {
-      allow read: if true;
-    }
-
     match /systemSettings/{document=**} {
       allow read: if true;
     }
@@ -255,7 +242,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isSignedIn();
-      allow list: if isSignedIn(); // TEMPORARY TEST: Restrict listing all users to admins
+      allow list: if isAdmin(); // Restrict listing all users to admins
       allow create: if isOwner(userId) && request.resource.data.get('role', 'user') == 'user';
       allow update: if isOwner(userId) && (
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
