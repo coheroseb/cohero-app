@@ -127,32 +127,41 @@ export default function AdminStudieordningerPage() {
     setIsParsingPdf(true);
     try {
         const reader = new FileReader();
-        reader.readAsDataURL(file);
         reader.onload = async () => {
-            const base64 = (reader.result as string).split(',')[1];
-            const res = await processStudyRegulationAction({
-                pdfBase64: base64,
-                institution: activeCurriculum?.institution,
-                profession: activeCurriculum?.profession
-            });
-            
-            if (res.success && res.data) {
-                const aiData = res.data;
-                setActiveCurriculum({
-                    ...activeCurriculum,
-                    title: aiData.title || activeCurriculum?.title,
-                    institution: aiData.institution || activeCurriculum?.institution,
-                    validFrom: aiData.validFrom || aiData.year || activeCurriculum?.validFrom,
-                    modules: aiData.modules || []
+            try {
+                const base64 = (reader.result as string).split(',')[1];
+                const res = await processStudyRegulationAction({
+                    pdfBase64: base64,
+                    institution: activeCurriculum?.institution,
+                    profession: activeCurriculum?.profession
                 });
-                toast({ title: "PDF Analyseret", description: "Studieordningens struktur er blevet indlæst automatisk." });
-            } else {
-                throw new Error("AI kunne ikke læse filen.");
+                
+                if (res.success && res.data) {
+                    const aiData = res.data;
+                    setActiveCurriculum({
+                        ...activeCurriculum,
+                        title: aiData.title || activeCurriculum?.title,
+                        institution: aiData.institution || activeCurriculum?.institution,
+                        validFrom: aiData.validFrom || aiData.year || activeCurriculum?.validFrom,
+                        modules: aiData.modules || []
+                    });
+                    toast({ title: "PDF Analyseret", description: "Studieordningens struktur er blevet indlæst automatisk." });
+                } else {
+                    toast({ title: "Fejl ved analyse", description: res.message || "AI kunne ikke læse filen korrekt.", variant: 'destructive' });
+                }
+            } catch (err: any) {
+                toast({ title: "Fejl", description: "Der skete en fejl under behandlingen af PDF'en.", variant: 'destructive' });
+            } finally {
+                setIsParsingPdf(false);
             }
         };
+        reader.onerror = () => {
+            toast({ title: "Filfejl", description: "Kunne ikke læse filen.", variant: 'destructive' });
+            setIsParsingPdf(false);
+        };
+        reader.readAsDataURL(file);
     } catch (err: any) {
-        toast({ title: "Fejl ved PDF", description: err.message || "Kunne ikke behandle PDF.", variant: 'destructive' });
-    } finally {
+        toast({ title: "Kritisk fejl", description: "Kunne ikke starte PDF upload.", variant: 'destructive' });
         setIsParsingPdf(false);
     }
   };

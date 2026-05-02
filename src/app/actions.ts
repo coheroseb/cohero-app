@@ -1563,10 +1563,11 @@ export async function sendBulkEmailAction(input: { recipients: { email: string, 
 
 export async function processStudyRegulationAction(input: any) { 
     try {
-        return await callFirebaseFlow('processStudyRegulationFlow', input); 
+        const result = await callFirebaseFlow('processStudyRegulationFlow', input); 
+        return { success: true, data: result };
     } catch (e: any) {
         console.error("Study Regulation Action Error:", e);
-        throw new Error(e.message || "Fejl ved behandling af studieordning.");
+        return { success: false, message: e.message || "Fejl ved behandling af studieordning." };
     }
 }
 
