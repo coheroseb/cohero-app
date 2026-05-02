@@ -36,7 +36,8 @@ import {
   Upload,
   CheckCircle2,
   Briefcase,
-  RefreshCw
+  RefreshCw,
+  XCircle
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useToast } from '@/hooks/use-toast';
@@ -226,9 +227,11 @@ const PortalPageContent: React.FC = () => {
   const activeSchedule = useMemo(() => schedules.find(s => s.semesterPlanId === activePlan?.id || s.planId === activePlan?.id), [schedules, activePlan]);
 
   const currentWeekNumber = useMemo(() => {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    return Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+    const d = new Date();
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   }, []);
 
   const upcomingEvents = useMemo(() => {
@@ -773,7 +776,9 @@ const PortalPageContent: React.FC = () => {
                   {activePlan.deadlineClusters.map((cluster: any, i: number) => (
                     <div key={i} className="bg-rose-50/50 border border-rose-100 rounded-[2rem] p-6 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="px-3 py-1 bg-rose-500 text-white text-[9px] font-black rounded-full uppercase">Uge {cluster.weeks}</span>
+                        <span className="px-3 py-1 bg-rose-500 text-white text-[9px] font-black rounded-full uppercase">
+                          Uge {Array.isArray(cluster.weeks) ? cluster.weeks.join(' - ') : cluster.weeks}
+                        </span>
                         <Flag className="w-4 h-4 text-rose-300" />
                       </div>
                       <h4 className="text-xs font-black text-rose-900">{cluster.title}</h4>
