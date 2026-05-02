@@ -62,7 +62,7 @@ function parseDescription(description: string): { [key: string]: string } {
 
 
 // Main parsing function (deterministic)
-function parseIcal(icalContent: string): Omit<SemesterPlan, 'title' | 'mainSubjects' | 'studyTips' | 'semesterInfo' | 'deadlineClusters'> & { allSummaries: string[] } {
+function parseIcal(icalContent: string): Omit<SemesterPlan, 'title' | 'mainSubjects' | 'studyTips' | 'semesterInfo' | 'deadlineClusters'> & { summariesWithWeeks: { title: string, week: number }[] } {
     const events: any[] = [];
     const eventBlocks = icalContent.split('BEGIN:VEVENT');
     eventBlocks.shift(); // Remove the part before the first event
@@ -122,7 +122,7 @@ function parseIcal(icalContent: string): Omit<SemesterPlan, 'title' | 'mainSubje
 
     const weeklyBreakdown: SemesterPlan['weeklyBreakdown'] = [];
     const keyDates: SemesterPlan['keyDates'] = { examPeriods: [], projectDeadlines: [], holidays: [] };
-    const allSummaries: string[] = [];
+    const summariesWithWeeks: { title: string, week: number }[] = [];
 
     if (minDate && maxDate) {
         const startWeek = getWeekNumber(minDate);
@@ -135,10 +135,11 @@ function parseIcal(icalContent: string): Omit<SemesterPlan, 'title' | 'mainSubje
             if (!weekMap[week]) weekMap[week] = [];
             weekMap[week].push(event);
 
-            // Also populate allSummaries and keyDates here
-            if(!allSummaries.includes(event.summary)){
-                 allSummaries.push(event.summary);
+            // Also populate summariesWithWeeks and keyDates here
+            if (!summariesWithWeeks.some(s => s.title === event.summary && s.week === week)) {
+                 summariesWithWeeks.push({ title: event.summary, week });
             }
+
             const summaryLower = event.summary.toLowerCase();
             const eventExists = (arr: any[], ev: any) => arr.some(e => e.summary === ev.summary && e.startDate === ev.startDate);
 
@@ -166,13 +167,16 @@ function parseIcal(icalContent: string): Omit<SemesterPlan, 'title' | 'mainSubje
     keyDates.projectDeadlines.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
     keyDates.holidays.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
     
-    return { weeklyBreakdown, keyDates, allSummaries };
+    return { weeklyBreakdown, keyDates, summariesWithWeeks };
 }
 
 
 // Simplified AI Prompt for analysis only
 const AnalysisInputSchema = z.object({
-  summaries: z.array(z.string()).describe("A list of all event titles for the semester."),
+  events: z.array(z.object({
+    title: z.string(),
+    week: z.number()
+  })).describe("A list of all event titles for the semester with their week numbers."),
 });
 
 const AnalysisOutputSchema = z.object({
@@ -191,21 +195,21 @@ const analysisPrompt = ai.definePrompt({
   name: 'semesterAnalysisPrompt',
   input: { schema: AnalysisInputSchema },
   output: { schema: AnalysisOutputSchema },
-  prompt: `You are an expert academic advisor for Danish university students. I will provide a list of all calendar event titles for a semester.
-
-Your tasks, based *only* on this list of titles, are to:
+  prompt: `You are an expert academic advisor for Danish university students. I will provide a list of all calendar events for a semester, including their titles and week numbers.
+  
+Your tasks, based on this list, are to:
 1.  **Determine Semester Info**: Analyze the titles to determine the semester (e.g., "3. Semester", "Efterår 2024").
 2.  **Create Title**: Create a clear title like "Semesterplan for [The Semester Info you extracted]". If you can't find semester info, use a generic title like "Dit Semesteroverblik".
 3.  **Identify Main Subjects**: Identify and list 3-5 recurring main subjects or themes (e.g., "Socialret", "Psykologi", "Videnskabsteori").
 4.  **Generate Study Tips**: Based on the distribution of events (especially those with "eksamen", "aflevering", "deadline"), write a short paragraph with 2-3 concrete study tips. Point out busy periods or suggest when to start preparing.
-5.  **Identify Deadline Clusters**: Identify periods (weeks) where major academic pressure occurs (e.g., clusters of exams or project deadlines). Give each cluster a short title like "Projekteksamen" and a description of why it's a tight period.
+5.  **Identify Deadline Clusters**: Identify periods (weeks) where major academic pressure occurs (e.g., clusters of exams or project deadlines). Give each cluster a short title like "Projekteksamen" and a description of why it's a tight period. Use the EXACT week numbers from the provided list.
 
 Your entire response must be a single JSON object. All text must be in Danish.
 
-**Event Titles:**
+**Calendar Events (Title and Week Number):**
 ---
-{{#each summaries}}
-- {{{this}}}
+{{#each events}}
+- {{{title}}} (Uge {{{week}}})
 {{/each}}
 ---
 `,
@@ -235,10 +239,10 @@ const semesterPlannerFlow = ai.defineFlow(
     const icalContent = await response.text();
 
     // 1. Deterministic parsing in code
-    const { weeklyBreakdown, keyDates, allSummaries } = parseIcal(icalContent);
+    const { weeklyBreakdown, keyDates, summariesWithWeeks } = parseIcal(icalContent);
 
     // 2. Focused AI analysis
-    const { output: analysis, usage } = await analysisPrompt({ summaries: allSummaries });
+    const { output: analysis, usage } = await analysisPrompt({ events: summariesWithWeeks });
     
     // 3. Calculate Intensity per week
     const maxEvents = Math.max(...weeklyBreakdown.map(w => w.events.length), 1);

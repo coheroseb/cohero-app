@@ -1,0 +1,179 @@
+
+> cohero-din-fagfalle@0.1.0 lint
+> next lint
+
+
+./src/app/AuthModal.tsx
+80:6  Warning: React Hook useEffect has a missing dependency: 'initiateCheckout'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/case-analyser/page.tsx
+103:6  Warning: React Hook React.useEffect has a missing dependency: 'userCache'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/education/kurser/page.tsx
+699:41  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+798:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/admin/notifications/page.tsx
+203:40  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/admin/shop/page.tsx
+271:26  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/admin/system/compliance/page.tsx
+77:8  Warning: React Hook useEffect has a missing dependency: 'fetchLogs'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+81:8  Warning: React Hook useEffect has a missing dependency: 'fetchPolicy'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/system/security/page.tsx
+44:8  Warning: React Hook useEffect has a missing dependency: 'fetchSecurityData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/users/page.tsx
+171:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/auth/page.tsx
+292:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/case-analyser/page.tsx
+235:6  Warning: React Hook useEffect has missing dependencies: 'fetchHistory' and 'fetchLaws'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/concept-explainer/page.tsx
+717:6  Warning: React Hook useCallback has an unnecessary dependency: 'refetchUserProfile'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/folketinget/case/view/[sagId]/page.tsx
+211:8  Warning: React Hook useEffect has a missing dependency: 'isPremiumUser'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/folketinget/page.tsx
+425:6  Warning: React Hook useEffect has a missing dependency: 'fetchSagerData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/klage-hjaelp/page.tsx
+94:6  Warning: React Hook useEffect has a missing dependency: 'analysis'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/kp/page.tsx
+254:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/kursus/[id]/page.tsx
+119:8  Warning: React Hook useEffect has missing dependencies: 'router' and 'toast'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/laerings-sti/page.tsx
+98:6  Warning: React Hook useMemo has a missing dependency: 'userProfile?.studyStarted'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/medarbejder-portal/components/PortalSidebar.tsx
+69:14  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/mine-gemte-begreber/page.tsx
+50:20  Error: React Hook "useRouter" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+51:23  Error: React Hook "useToast" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+52:23  Error: React Hook "useFirestore" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+54:32  Error: React Hook "useMemoFirebase" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+57:43  Error: React Hook "useCollection" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+59:26  Error: React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+
+./src/app/mine-semesterplaner/page.tsx
+148:6  Warning: React Hook useEffect has a missing dependency: 'saveNotes'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+662:8  Warning: React Hook useEffect has a missing dependency: 'selectedId'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/mine-seminarer/page.tsx
+396:6  Warning: React Hook useMemo has a missing dependency: 'title'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+649:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/portal/page.tsx
+175:6  Warning: React Hook useMemo has a missing dependency: 'userProfile?.semester'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/raadgivning/page.tsx
+167:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/raadgivning/status/[id]/page.tsx
+81:6  Warning: React Hook useEffect has a missing dependency: 'handleStripePayment'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/raadgivning/vilkaar/page.tsx
+25:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/second-opinion/page.tsx
+370:8  Warning: React Hook useEffect has missing dependencies: 'selectedCurriculumId', 'userProfile?.semester', and 'userProfile?.studyStarted'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/seminar-architect/page.tsx
+266:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+652:6  Warning: React Hook useCallback has an unnecessary dependency: 'extractData'. Either exclude it or remove the dependency array. Outer scope values like 'extractData' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+
+./src/app/settings/page.tsx
+30:21  Error: React Hook "useFirestore" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+31:16  Error: React Hook "useAuth" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+32:21  Error: React Hook "useToast" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+34:37  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+37:35  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+38:41  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+39:35  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+40:41  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+41:39  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+42:41  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+43:37  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+44:55  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+45:51  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+46:33  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+47:29  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+50:55  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+51:69  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+54:47  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+55:41  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+56:43  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+59:43  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+60:55  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+63:53  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+64:45  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+65:39  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+68:41  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+69:49  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+72:51  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+73:51  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+74:37  Error: React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+76:3  Error: React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+84:3  Error: React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+94:3  Error: React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+125:3  Error: React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+178:3  Error: React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+
+./src/app/shop/ShopClient.tsx
+59:6  Warning: React Hook useEffect has a missing dependency: 'toast'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+442:41  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+529:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+530:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+531:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/vive-indsigt/page.tsx
+173:8  Warning: React Hook useEffect has a missing dependency: 'loadPublications'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/ConceptVideoPlayer.tsx
+142:8  Warning: React Hook useEffect has missing dependencies: 'currentSceneIndex' and 'playScene'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+190:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+227:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/MobileNativeLayout.tsx
+46:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/QRScanner.tsx
+40:8  Warning: React Hook useEffect has missing dependencies: 'onScanFailure' and 'onScanSuccess'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/home/HeroIllustration.tsx
+35:8  Warning: React Hook useEffect has a missing dependency: 'tabs.length'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/home/ReviewMarquee.tsx
+33:8  Warning: React Hook useEffect has a missing dependency: 'FALLBACK_REVIEWS'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/lov-portal/LovPortalViewer.tsx
+1034:37  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+1974:6  Warning: React Hook useEffect has missing dependencies: 'bibMetadata' and 'docsData'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/native/NativeLawViewer.tsx
+162:8  Warning: React Hook useEffect has a missing dependency: 'searchParams'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/portfolio/FocusedPortfolioWorkspace.tsx
+201:8  Warning: React Hook useEffect has missing dependencies: 'localContent', 'localTitle', and 'newPortfolioEntry.content'. Either include them or remove the dependency array. If 'setLocalContent' needs the current value of 'newPortfolioEntry.content', you can also switch to useReducer instead of useState and read 'newPortfolioEntry.content' in the reducer.  react-hooks/exhaustive-deps
+219:8  Warning: React Hook useEffect has missing dependencies: 'newPortfolioEntry.content' and 'setNewPortfolioEntry'. Either include them or remove the dependency array. If 'setNewPortfolioEntry' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+295:8  Warning: React Hook useEffect has a missing dependency: 'selectedLiterature.length'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+458:8  Warning: React Hook useEffect has missing dependencies: 'newPortfolioEntry.title' and 'setNewPortfolioEntry'. Either include them or remove the dependency array. If 'setNewPortfolioEntry' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./src/components/seminars/CategoryDeepDiveOverlay.tsx
+77:6  Warning: React Hook useEffect has a missing dependency: 'userProfile?.categoryResearch'. Either include it or remove the dependency array. If 'setResearchResult' needs the current value of 'userProfile.categoryResearch', you can also switch to useReducer instead of useState and read 'userProfile.categoryResearch' in the reducer.  react-hooks/exhaustive-deps
+85:6  Warning: React Hook useEffect has missing dependencies: 'category' and 'userProfile.categoryResearch'. Either include them or remove the dependency array. If 'setResearchResult' needs the current value of 'userProfile.categoryResearch', you can also switch to useReducer instead of useState and read 'userProfile.categoryResearch' in the reducer.  react-hooks/exhaustive-deps
+104:6  Warning: React Hook useEffect has a missing dependency: 'researchSteps.length'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
