@@ -1,7 +1,6 @@
 import { ai } from '../genkit';
 import { z } from 'zod';
-import * as admin from 'firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 export const indexMaterialFlow = ai.defineFlow(
     {
@@ -65,9 +64,9 @@ export const indexMaterialFlow = ai.defineFlow(
                     materialId,
                     text: batchChunks[j],
                     // Truncér til 768 dimensioner (Firestore tillader max 2048, og vores index er 768)
-                    embedding: admin.firestore.FieldValue.vector(embeddings[j][0].embedding.slice(0, 768)),
+                    embedding: FieldValue.vector(embeddings[j][0].embedding.slice(0, 768)),
                     chunkIndex: count,
-                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                    createdAt: FieldValue.serverTimestamp()
                 });
                 count++;
             }
@@ -77,12 +76,30 @@ export const indexMaterialFlow = ai.defineFlow(
             await batch.commit();
         }
         
-        // Opdater materialet med at vector indekseringen er fuldført
+        // 4. Generér automatiske tags og smarte spørgsmål (Option 4)
+        let tags: string[] = [];
+        let suggestedQuestions: string[] = [];
+        try {
+            const insightRes = await ai.generate({
+                model: 'googleai/gemini-2.5-flash',
+                system: "Du er en ekspert i akademisk arkivering. Din opgave er at analysere teksten og generere 3-5 korte tags og 3 smarte spørgsmål, som en studerende kunne stille til dette materiale. Svar KUN med et JSON objekt: { \"tags\": [\"tag1\", \"tag2\"], \"questions\": [\"spørgsmål 1\", \"spørgsmål 2\", \"spørgsmål 3\"] }",
+                prompt: `Her er starten af dokumentet:\n${rawText.substring(0, 5000)}`,
+                output: { schema: z.object({ tags: z.array(z.string()), questions: z.array(z.string()) }) }
+            });
+            tags = insightRes.output?.tags || [];
+            suggestedQuestions = insightRes.output?.questions || [];
+        } catch (e) {
+            console.error("Auto-insights fejlede:", e);
+        }
+        
+        // 5. Opdater materialet med at vector indekseringen er fuldført og tilføj tags + spørgsmål
         await db.collection(`users/${userId}/materials`).doc(materialId).set({
             isIndexed: true,
             vectorIndexed: true,
             chunksCount: count,
-            contentIndexedAt: admin.firestore.FieldValue.serverTimestamp()
+            tags: tags,
+            suggestedQuestions: suggestedQuestions,
+            contentIndexedAt: FieldValue.serverTimestamp()
         }, { merge: true });
         
         return { success: true, chunksIndexed: count };

@@ -99,6 +99,7 @@ import { generateLearningObjectives } from './flows/generate-learning-objectives
 import { citizenSimulationFlow } from './flows/citizen-simulation-flow';
 import { analyzeSyllabus } from './flows/analyze-syllabus-flow';
 import { generateJournalScenarioFlow, evaluateJournalEntryFlow } from './flows/journal-trainer-v2-flows';
+import { migrateMaterialsFlow } from './flows/migrate-materials-flow';
 
 
 import { generateSimulationScenarioFlow, runSimulationTurnFlow, generateSimulationReportFlow } from './flows/simulation-flows';
@@ -306,5 +307,6 @@ export const allFlows: Record<string, any> = {
   'evaluateJournalEntryFlow': evaluateJournalEntryFlow,
   'indexMaterialFlow': indexMaterialFlow,
   'materialVectorChatFlow': materialVectorChatFlow,
+  'migrateMaterialsFlow': migrateMaterialsFlow,
 };
 

@@ -33,7 +33,11 @@ import {
   AlertTriangle,
   Library,
   History,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Hash,
+  Sparkles,
+  MessageSquare,
+  ArrowRight
 } from 'lucide-react';
 import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction, materialVectorChatAction } from '@/app/actions';
 import { extractText } from 'unpdf';
@@ -801,219 +805,84 @@ export default function MineMaterialerPage() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                
                                                 <div className="space-y-10 pb-12">
-                                                    {(() => {
-                                                        try {
-                                                            const data = activeMaterial.aiOverviewData ? JSON.parse(activeMaterial.aiOverviewData) : null;
-                                                            
-                                                            if (isGenerating === activeMaterial.id) {
-                                                                return (
-                                                                    <div className="space-y-12 py-4">
-                                                                        <div className="flex flex-col items-center justify-center space-y-4">
-                                                                            <div className="relative">
-                                                                                <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-2xl animate-pulse" />
-                                                                                <div className="relative bg-white p-6 rounded-[2.5rem] border border-indigo-100 shadow-xl shadow-indigo-50">
-                                                                                    <Brain className="w-10 h-10 text-indigo-500 animate-bounce" />
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="text-center space-y-1">
-                                                                                <p className="text-indigo-600 text-xs font-black uppercase tracking-[0.3em] animate-pulse">
-                                                                                    AI skaber overblik...
-                                                                                </p>
-                                                                                <p className="text-slate-400 text-[10px] font-medium">Analyserer ud fra dine læringsmål</p>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="space-y-8">
-                                                                            <div className="space-y-3">
-                                                                                <div className="h-2 bg-slate-100 rounded-full w-24" />
-                                                                                <div className="h-4 bg-slate-50 rounded-2xl w-full" />
-                                                                                <div className="h-4 bg-slate-50 rounded-2xl w-[90%]" />
-                                                                            </div>
-                                                                            <div className="grid grid-cols-2 gap-4">
-                                                                                <div className="h-32 bg-slate-50 rounded-[2rem] animate-pulse" />
-                                                                                <div className="h-32 bg-slate-50 rounded-[2rem] animate-pulse delay-75" />
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            }
+                                                    {/* VECTOR INSIGHTS (NEW SMARTER UI) */}
+                                                    <div className="space-y-12">
+                                                        {/* Tags Section */}
+                                                        {activeMaterial.tags && activeMaterial.tags.length > 0 && (
+                                                            <div className="space-y-4">
+                                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                                    <Hash className="w-3 h-3 text-amber-500" />
+                                                                    Emner & Tags
+                                                                </h4>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {activeMaterial.tags.map((tag: string, idx: number) => (
+                                                                        <span key={idx} className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-full text-[11px] font-bold text-slate-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 transition-all cursor-default">
+                                                                            {tag}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
 
-                                                            if (!data) return (
-                                                                <div className="flex flex-col items-center justify-center py-12 space-y-4 bg-slate-50 rounded-[3rem] border border-slate-100 border-dashed">
-                                                                    <p className="text-slate-400 text-sm font-medium italic text-center max-w-xs">
-                                                                        Der er ikke dannet et instrumentelt overblik endnu. Tryk på knappen for at analysere.
-                                                                    </p>
-                                                                    <Button 
-                                                                        onClick={async (e) => {
-                                                                            e.stopPropagation();
-                                                                            setIsGenerating(activeMaterial.id);
-                                                                            console.log("[MineMaterialer] Clicked button for ID:", activeMaterial.id, "Name:", activeMaterial.name, "Semester:", activeMaterial.semester);
-                                                                            if (!user) {
-                                                                                console.error("[MineMaterialer] No user found");
-                                                                                setIsGenerating(null);
-                                                                                return;
-                                                                            }
-                                                                            try {
-                                                                                let textToUse = activeMaterial.rawText;
-                                                                                console.log("[MineMaterialer] Current text length:", textToUse?.length || 0);
-                                                                                
-                                                                                // If text is missing, extract it now
-                                                                                if (!textToUse) {
-                                                                                    toast({ title: "Uddrager tekst...", description: "Henter indholdet fra din PDF først." });
-                                                                                    const response = await fetch(activeMaterial.url);
-                                                                                    const arrayBuffer = await response.arrayBuffer();
-                                                                                    const pdfjs = await import('pdfjs-dist');
-                                                                                    pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-                                                                                    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-                                                                                    let extracted = "";
-                                                                                    for (let i = 1; i <= pdf.numPages; i++) {
-                                                                                        const page = await pdf.getPage(i);
-                                                                                        const content = await page.getTextContent();
-                                                                                        extracted += content.items.map((item: any) => item.str).join(" ") + " ";
-                                                                                    }
-                                                                                    textToUse = extracted;
-                                                                                    await saveMaterialTextAction({ userId: user.uid, materialId: activeMaterial.id, text: extracted });
-                                                                                }
-
-                                                                                const result = await generateMaterialAIOverviewAction({
-                                                                                    userId: user.uid,
-                                                                                    materialId: activeMaterial.id,
-                                                                                    rawText: textToUse || "",
-                                                                                    candidateLearningGoals: activeModule?.learningGoals || []
-                                                                                });
-                                                                                
-                                                                                if (result.success && result.overview) {
-                                                                                    setLocalOverview(prev => ({ ...prev, [activeMaterial.id]: result.overview }));
-                                                                                }
-                                                                                toast({ title: "Overblik genereret", description: "AI har nu analyseret dit materiale." });
-                                                                            } catch (err) {
-                                                                                console.error("[MineMaterialer] CRITICAL ERROR:", err);
-                                                                                toast({ title: "Fejl", description: "Kunne ikke danne overblik. Prøv igen.", variant: "destructive" });
-                                                                            } finally {
-                                                                                setIsGenerating(null);
-                                                                            }
+                                                        {/* Suggested Questions (The "Smarter" part) */}
+                                                        <div className="space-y-6">
+                                                            <div className="flex items-center justify-between">
+                                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                                    <Sparkles className="w-3 h-3 text-indigo-500" />
+                                                                    Smarte spørgsmål
+                                                                </h4>
+                                                                <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">Vector Powered</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-1 gap-4">
+                                                                {(activeMaterial.suggestedQuestions || [
+                                                                    "Hvad er de vigtigste pointer i dette dokument?",
+                                                                    "Er der specifik lovgivning nævnt her?",
+                                                                    "Hvordan kan jeg bruge dette i min eksamen?"
+                                                                ]).map((q: string, idx: number) => (
+                                                                    <button 
+                                                                        key={idx}
+                                                                        onClick={() => {
+                                                                            setGlobalChatInput(q);
+                                                                            setIsGlobalChatOpen(true);
+                                                                            // Scroll til chat efter modalen er åben (vi giver den lidt tid)
+                                                                            setTimeout(() => {
+                                                                                const chatElem = document.getElementById('vector-chat-input');
+                                                                                chatElem?.focus();
+                                                                            }, 100);
                                                                         }}
-                                                                        className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 shadow-xl shadow-indigo-100 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                                                                        className="group text-left p-5 bg-white border border-slate-100 rounded-[2rem] hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/20 transition-all relative overflow-hidden active:scale-[0.98]"
                                                                     >
-                                                                        <Brain className="w-4 h-4" />
-                                                                        Danne AI Overblik
-                                                                    </Button>
-                                                                </div>
-                                                            );
-
-                                                            return (
-                                                                <div className="space-y-12">
-                                                                    {/* Summary Section */}
-                                                                    <div className="relative group">
-                                                                        <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 rounded-[3rem] opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                                        <div className="relative space-y-4">
-                                                                            <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                                                <Quote className="w-3 h-3" />
-                                                                                Kort Resumé
-                                                                            </h4>
-                                                                            <p className="text-slate-600 text-base font-medium leading-relaxed italic">
-                                                                                "{data.summary}"
+                                                                        <div className="absolute right-0 top-0 p-4 opacity-0 group-hover:opacity-10 transition-opacity">
+                                                                            <MessageSquare className="w-12 h-12" />
+                                                                        </div>
+                                                                        <div className="flex items-center gap-4 relative z-10">
+                                                                            <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-[10px] font-black group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                                                                {idx + 1}
+                                                                            </div>
+                                                                            <p className="text-sm font-bold text-slate-700 group-hover:text-slate-950 transition-colors">
+                                                                                {q}
                                                                             </p>
+                                                                            <ArrowRight className="w-4 h-4 ml-auto text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
                                                                         </div>
-                                                                    </div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
 
-                                                                    {/* Key Points Cards */}
-                                                                    <div className="space-y-6">
-                                                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                                            <Target className="w-3 h-3 text-rose-400" />
-                                                                            Centrale Pointer
-                                                                        </h4>
-                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                                            {data.keyPoints?.map((point: any, idx: number) => (
-                                                                                <div key={idx} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
-                                                                                    <div className="w-10 h-10 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                                                                        <span className="text-xs font-black">{idx + 1}</span>
-                                                                                    </div>
-                                                                                    <h5 className="text-sm font-bold text-slate-950 mb-2">{point.title}</h5>
-                                                                                    <p className="text-xs text-slate-500 font-medium leading-relaxed">{point.description}</p>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Learning Goals */}
-                                                                    <div className="space-y-6">
-                                                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                                            <GraduationCap className="w-3 h-3 text-emerald-400" />
-                                                                            Relevante Læringsmål
-                                                                        </h4>
-                                                                        <div className="grid grid-cols-1 gap-3">
-                                                                            {data.learningGoals?.map((item: any, idx: number) => {
-                                                                                const goalText = typeof item === 'string' ? item : item.goal;
-                                                                                const isChatting = chatState?.goal === goalText;
-                                                                                return (
-                                                                                    <div key={idx} className="bg-emerald-50/50 p-5 rounded-[2rem] border border-emerald-100/50 space-y-4">
-                                                                                        <div className="flex items-start justify-between gap-4">
-                                                                                            <div className="space-y-2 flex-1">
-                                                                                                <div className="flex items-center gap-2">
-                                                                                                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                                                                                                    <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-tight">
-                                                                                                        {goalText}
-                                                                                                    </span>
-                                                                                                </div>
-                                                                                                {item.explanation && (
-                                                                                                    <p className="text-[11px] text-emerald-700/70 font-medium leading-relaxed pl-3.5 border-l border-emerald-200 ml-0.5">
-                                                                                                        {item.explanation}
-                                                                                                    </p>
-                                                                                                )}
-                                                                                            </div>
-                                                                                            <Button 
-                                                                                                variant="ghost"
-                                                                                                onClick={(e) => {
-                                                                                                    e.stopPropagation();
-                                                                                                    if (isChatting) {
-                                                                                                        setChatState(null);
-                                                                                                    } else {
-                                                                                                        setChatState({ goal: goalText, text: '', loading: true });
-                                                                                                        handleAskAboutGoal(goalText, activeMaterial.rawText);
-                                                                                                    }
-                                                                                                }}
-                                                                                                className={`shrink-0 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all ${isChatting ? 'bg-emerald-200 text-emerald-800 hover:bg-emerald-300' : 'bg-white text-emerald-600 border border-emerald-200 shadow-sm hover:bg-emerald-100'}`}
-                                                                                            >
-                                                                                                <Brain className="w-3 h-3 mr-2" />
-                                                                                                {isChatting ? 'Luk Svar' : 'Spørg AI'}
-                                                                                            </Button>
-                                                                                        </div>
-                                                                                        <AnimatePresence>
-                                                                                            {isChatting && (
-                                                                                                <motion.div 
-                                                                                                    initial={{ height: 0, opacity: 0 }}
-                                                                                                    animate={{ height: 'auto', opacity: 1 }}
-                                                                                                    exit={{ height: 0, opacity: 0 }}
-                                                                                                    className="overflow-hidden"
-                                                                                                >
-                                                                                                    <div className="pt-4 mt-2 border-t border-emerald-200/50">
-                                                                                                        {chatState.loading ? (
-                                                                                                            <div className="flex items-center gap-3 text-emerald-600 text-xs font-bold animate-pulse">
-                                                                                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                                                                                Analyserer materialet ift. læringsmålet...
-                                                                                                            </div>
-                                                                                                        ) : (
-                                                                                                            <div className="prose prose-sm max-w-none text-emerald-900/80 font-medium leading-relaxed" 
-                                                                                                                dangerouslySetInnerHTML={{ __html: chatState.text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') }} 
-                                                                                                            />
-                                                                                                        )}
-                                                                                                    </div>
-                                                                                                </motion.div>
-                                                                                            )}
-                                                                                        </AnimatePresence>
-                                                                                    </div>
-                                                                                );
-                                                                            })}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        } catch (e) {
-                                                            return <p className="text-rose-500 text-xs italic">Fejl i visning af AI overblik. Prøv at danne det igen.</p>;
-                                                        }
-                                                    })()}
+                                                        {/* Status Indicator */}
+                                                        <div className="p-8 bg-indigo-50/50 border border-indigo-100/50 rounded-[2.5rem] flex items-start gap-4">
+                                                            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                                                                <Zap className="w-5 h-5 text-indigo-600" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <h5 className="text-xs font-black text-slate-900 uppercase tracking-tight">Klar til Vector Chat</h5>
+                                                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                                                                    Dette dokument er fuldt indekseret. Du kan nu stille komplekse spørgsmål til det i chatten nedenfor.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1031,7 +900,7 @@ export default function MineMaterialerPage() {
                                                     {activeMaterial.isIndexed === 'generating' ? 'AI analyserer dokumentet...' : 'Læser indhold...'}
                                                 </p>
                                                 <p className="text-amber-700/60 text-xs font-medium italic">
-                                                    {activeMaterial.isIndexed === 'generating' ? 'Cohéro danner overblik og pointer' : 'Cohéro udtrækker tekst fra PDF\'en (Dette kan tage op til 30 sek.)'}
+                                                    {activeMaterial.isIndexed === 'generating' ? 'Cohéro analyserer og skaber indsigt...' : 'Cohéro udtrækker tekst fra PDF\'en (Dette kan tage op til 30 sek.)'}
                                                 </p>
                                             </div>
                                         </div>
@@ -1188,8 +1057,9 @@ export default function MineMaterialerPage() {
                         <form onSubmit={handleGlobalChatSubmit} className="flex gap-3">
                             <input 
                                 type="text"
+                                id="vector-chat-input"
                                 value={globalChatInput}
-                                onChange={e => setGlobalChatInput(e.target.value)}
+                                onChange={(e) => setGlobalChatInput(e.target.value)}
                                 placeholder="Stil et spørgsmål om dit pensum..."
                                 className="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all"
                             />
