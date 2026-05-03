@@ -60,6 +60,11 @@ service cloud.firestore {
       allow read: if true;
     }
 
+    match /portal_laws/{lawId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /curriculums/{curriculumId} {
       allow read: if isSignedIn();
     }

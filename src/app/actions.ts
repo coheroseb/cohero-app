@@ -876,7 +876,105 @@ export async function generateSemesterPlanAction(input: any) { return callFireba
 export async function suggestConceptsForEventAction(input: any) { return callFirebaseFlow('suggestConceptsForEventFlow', input); }
 export async function generateStudyScheduleAction(input: any) { return callFirebaseFlow('generateStudyScheduleFlow', input); }
 export async function generateCategoryStudyPlanAction(input: { topic: string, context: string }) { return callFirebaseFlow('generateCategoryStudyPlanFlow', input); }
-export async function explainFolketingetSagAction(input: any) { return callFirebaseFlow('explainFolketingetSagFlow', input); }
+export async function explainFolketingetSagAction(input: { caseTitle: string, caseResume?: string, sagId?: number }) { 
+    let deepContext = "";
+    
+    if (input.sagId) {
+        try {
+            console.log(`[AI-DEEP] Fetching documents for sagId: ${input.sagId}...`);
+            const docs = await fetchSagDokumenter(input.sagId);
+            
+            // Look for the most representative document (type 13 is often "Lovforslag som fremsat")
+            const targetDoc = docs.find(d => d.Dokument?.Fil?.some(f => f.format === 'PDF' || f.filurl.toLowerCase().endsWith('.pdf')));
+            
+            if (targetDoc) {
+                const pdf = targetDoc.Dokument.Fil.find(f => f.format === 'PDF' || f.filurl.toLowerCase().endsWith('.pdf'));
+                const { base64 } = await fetchFolketingetPdfAction(pdf.filurl);
+                const text = await extractTextFromPdf(Buffer.from(base64, 'base64'));
+                deepContext = `DOKUMENT-KONTEKST (Udtræk fra officielt PDF-dokument):\n\n${text.substring(0, 15000)}`;
+            }
+        } catch (e) {
+            console.error("[AI-DEEP] Failed to extract deep context:", e);
+        }
+    }
+
+    return callFirebaseFlow('explainFolketingetSagFlow', { ...input, deepContext }); 
+}
+
+export async function startFolketingetCaseChatAction(input: { sagId: number, message: string, chatHistory: any[] }) {
+    try {
+        console.log(`[CHAT-STRICT] >>> STARTING CHAT SESSION FOR SAG ID: ${input.sagId}`);
+        const docs = await fetchSagDokumenter(input.sagId);
+        
+        // Prepare a list of document references (Titles + Links)
+        const docReferences = docs.map(d => {
+            const pdf = d.Dokument?.Fil?.find(f => f.format === 'PDF' || f.filurl.toLowerCase().endsWith('.pdf'));
+            return {
+                titel: d.Dokument?.titel || 'Ukendt titel',
+                url: pdf?.filurl || 'Ingen PDF tilgængelig'
+            };
+        });
+
+        const pdfDocs = docs.filter(d => d.Dokument?.Fil?.some(f => f.format === 'PDF' || f.filurl.toLowerCase().endsWith('.pdf')));
+        console.log(`[CHAT-STRICT] Identified ${pdfDocs.length} PDF documents for extraction.`);
+        
+        // Fetch and extract text from up to 3 major documents
+        const textParts = await Promise.all(pdfDocs.slice(0, 3).map(async (d, idx) => {
+            try {
+                const pdf = d.Dokument.Fil.find(f => f.format === 'PDF' || f.filurl.toLowerCase().endsWith('.pdf'));
+                
+                console.log(`[CHAT-STRICT] Fetching Doc ${idx + 1}: ${pdf.filurl}`);
+                const result = await fetchFolketingetPdfAction(pdf.filurl);
+                
+                if (result.error) {
+                    console.warn(`[CHAT-STRICT] Skipping Doc ${idx + 1} due to error: ${result.error}`);
+                    return `DOKUMENT: ${d.Dokument.titel}\nFEJL: Kunne ikke læse filen automatisk (Bot-protection). Brugeren skal selv tjekke linket: ${pdf.filurl}`;
+                }
+
+                const text = await extractTextFromPdf(Buffer.from(result.base64, 'base64'));
+                console.log(`[CHAT-STRICT] Extracted ${text.length} chars from Doc ${idx + 1}`);
+                return `DOKUMENT: ${d.Dokument.titel}\nURL: ${pdf.filurl}\n---\n${text.substring(0, 15000)}`;
+            } catch (e) {
+                console.error(`[CHAT-STRICT] Failed to extract Doc ${idx + 1}:`, e);
+                return "";
+            }
+        }));
+
+        const aggregatedContext = textParts.filter(Boolean).join('\n\n####################\n\n');
+        const linksContext = docReferences.map(r => `- ${r.titel}: ${r.url}`).join('\n');
+
+        return callFirebaseFlow('unifiedChatFlow', {
+            message: input.message,
+            chatHistory: input.chatHistory,
+            persona: 'academic',
+            context: {
+                relevantDocumentIds: [],
+                lawContext: `KILDEKRITISK INSTRUKS: 
+                Du er en juridisk assistent der hjælper en socialrådgiver med at analysere Folketingets sag ID ${input.sagId}. 
+                
+                VIGTIG STATUS: 
+                Folketingets servere blokerer i øjeblikket for direkte automatisk læsning af visse PDF-filer. 
+                Hvis du ser "FEJL: Kunne ikke læse filen", skal du informere brugeren om dette og i stedet basere dit svar på:
+                1. Sagens officielle resume og titel.
+                2. De links der er vedlagt nedenfor (guide brugeren til selv at læse dem).
+                3. Din generelle viden om dansk lovgivningsproces, HVIS det er relevant for at forklare sagens gang.
+                
+                REGLER:
+                1. Vær ærlig om hvad du kan læse og hvad du ikke kan.
+                2. Henvis altid til de specifikke dokument-links nedenfor.
+                
+                DOKUMENT-LISTE (REFERENCER):
+                ${linksContext}
+                
+                DOKUMENT-DATA (INDHOLD):
+                ${aggregatedContext || 'Ingen læsbar dokumenttekst fundet grundet tekniske begrænsninger hos ft.dk.'}`
+            }
+        });
+    } catch (error) {
+        console.error("[CHAT-STRICT] Critical failure in chat action:", error);
+        throw error;
+    }
+}
 
 export async function getFTSagMetadataAction(input: { sagId: number, title: string, resume?: string }) {
     try {
@@ -2437,6 +2535,28 @@ export async function fetchFolketingetSager(params: { searchTerm?: string, typeI
         return [];
     }
 
+    // 1. Create a unique cache key based on params
+    const cacheKey = Buffer.from(JSON.stringify({ searchTerm, typeId, statusId, followedIds, skip, top })).toString('base64');
+    const cacheRef = adminFirestore.collection('folketingetCache').doc(cacheKey);
+
+    try {
+        // 2. Try to get from cache first
+        const cacheSnap = await cacheRef.get();
+        if (cacheSnap.exists) {
+            const data = cacheSnap.data();
+            const now = Date.now();
+            const cacheAge = now - (data?.timestamp?.toMillis() || 0);
+            
+            // Cache valid for 24 hours
+            if (cacheAge < 24 * 60 * 60 * 1000) {
+                console.log(">>> ACTION: Serving Folketinget Sager from cache.");
+                return data?.sager || [];
+            }
+        }
+    } catch (e) {
+        console.error("Cache fetch failed, falling back to live API:", e);
+    }
+
     let filters: string[] = [];
     if (searchTerm) {
         const escapedSearchTerm = searchTerm.replace(/'/g, "''");
@@ -2463,7 +2583,15 @@ export async function fetchFolketingetSager(params: { searchTerm?: string, typeI
             return [];
         }
         const data = await response.json();
-        return data.value || [];
+        const sager = data.value || [];
+
+        // 3. Save to cache asynchronously
+        cacheRef.set({
+            sager,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+        }).catch(err => console.error("Failed to update FT cache:", err));
+
+        return sager;
     } catch (error) {
         console.error("Failed to fetch Folketinget sager:", error);
         return [];
@@ -2483,56 +2611,102 @@ export async function fetchFolketingetSagById(id: number): Promise<any> {
 }
 
 export async function fetchSagDokumenter(sagId: number): Promise<any[]> {
+    console.log(`[ODA] Fetching documents for Sag ID: ${sagId}`);
     const sagDokUrl = `https://oda.ft.dk/api/SagDokument?$filter=sagid eq ${sagId}`;
     try {
-        const sagDokResponse = await fetch(sagDokUrl, {
-            headers: { 'Accept': 'application/json' },
+        const response = await fetch(sagDokUrl, { 
+            headers: { 
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
             next: { revalidate: 3600 }
         });
-
-        if (!sagDokResponse.ok) {
-            console.error(`Failed to fetch SagDokument list for sagId ${sagId}: ${sagDokResponse.statusText}`);
+        if (!response.ok) {
+            console.error(`[ODA] Failed to fetch SagDokument list: ${response.status}`);
             return [];
         }
-
-        const sagDokData = await sagDokResponse.json();
-        const sagDokumenterRefs = sagDokData.value || [];
-
-        if (sagDokumenterRefs.length === 0) {
-            return [];
-        }
-
-        const dokumentPromises = sagDokumenterRefs.map(async (sagDokRef: any) => {
-            if (!sagDokRef.dokumentid) {
-                return null;
-            }
-            const dokUrl = `https://oda.ft.dk/api/Dokument(${sagDokRef.dokumentid})?$expand=Fil`;
-
+        const data = await response.json();
+        const value = data.value || [];
+        console.log(`[ODA] Found ${value.length} document references.`);
+        
+        // Enrich with Dokument details and Fil details
+        const enriched = await Promise.all(value.map(async (item: any) => {
             try {
-                const dokResponse = await fetch(dokUrl, { headers: { 'Accept': 'application/json' }, next: { revalidate: 3600 } });
-                if (!dokResponse.ok) {
-                    console.warn(`Could not fetch details for dokumentid ${sagDokRef.dokumentid}. Status: ${dokResponse.statusText}`);
-                    return null;
+                const dokUrl = `https://oda.ft.dk/api/Dokument(${item.dokumentid})?$expand=Fil`;
+                const dokRes = await fetch(dokUrl, { 
+                    headers: { 
+                        'Accept': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    } 
+                });
+                if (dokRes.ok) {
+                    item.Dokument = await dokRes.json();
                 }
-                const dokDetails = await dokResponse.json();
-
-                return {
-                    ...sagDokRef,
-                    Dokument: dokDetails
-                };
             } catch (e) {
-                console.error(`Error fetching details for dokumentid ${sagDokRef.dokumentid}:`, e);
-                return null;
+                console.warn(`[ODA] Failed to enrich document ${item.dokumentid}`);
             }
-        });
+            return item;
+        }));
 
-        const fullDokumenter = await Promise.all(dokumentPromises);
-
-        return fullDokumenter.filter((d): d is any => d !== null);
-
+        return enriched;
     } catch (error) {
-        console.error("General error in fetchSagDokumenter:", error);
+        console.error("[ODA] Critical error in fetchSagDokumenter:", error);
         return [];
+    }
+}
+
+/**
+ * fetchFolketingetPdfAction:
+ * Fetches a PDF from ft.dk using browser-like headers to bypass bot protection.
+ */
+export async function fetchFolketingetPdfAction(url: string) {
+    const isOda = url.includes('oda.ft.dk');
+    const targetUrl = isOda ? url.replace('https://', 'http://') : url;
+    
+    console.log(`[BYPASS-PROXY] Attempting primary fetch: ${targetUrl}`);
+    
+    const headers: any = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept': 'application/pdf, */*',
+    };
+
+    try {
+        // Try Direct Fetch First
+        let response = await fetch(targetUrl, { headers, redirect: 'follow', cache: 'no-store' });
+
+        // If Direct Fetch fails (403/501), try Proxy Fallback
+        if (!response.ok) {
+            console.warn(`[BYPASS-PROXY] Primary fetch failed (${response.status}). Trying Proxy Fallback...`);
+            
+            // Proxy 1: AllOrigins (Free, open)
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+            console.log(`[BYPASS-PROXY] Trying Proxy 1 (AllOrigins): ${proxyUrl}`);
+            
+            response = await fetch(proxyUrl, { cache: 'no-store' });
+            
+            if (!response.ok) {
+                // Proxy 2: CORS Proxy Fallback
+                const proxyUrl2 = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                console.log(`[BYPASS-PROXY] Trying Proxy 2 (CORSProxy): ${proxyUrl2}`);
+                response = await fetch(proxyUrl2, { cache: 'no-store' });
+            }
+        }
+
+        if (!response.ok) {
+            console.error(`[BYPASS-PROXY] All fetch attempts failed for ${targetUrl}`);
+            return { error: `Kunne ikke hente fil (Status: ${response.status})`, base64: "", contentType: "" };
+        }
+
+        const buffer = await response.arrayBuffer();
+        console.log(`[BYPASS-PROXY] SUCCESS! Size: ${buffer.byteLength} bytes.`);
+        
+        return {
+            base64: Buffer.from(buffer).toString('base64'),
+            contentType: response.headers.get('content-type') || 'application/pdf'
+        };
+    } catch (error) {
+        console.error(`[BYPASS-PROXY] Critical failure:`, error);
+        return { error: "Network failure during proxy fetch", base64: "", contentType: "" };
     }
 }
 

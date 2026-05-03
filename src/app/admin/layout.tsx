@@ -39,7 +39,8 @@ import {
     Globe,
     Lightbulb,
     ShoppingBag,
-    Presentation as MonitorPlay
+    Presentation as MonitorPlay,
+    FileText
 } from 'lucide-react';
 
 import { useApp } from '@/app/provider';
@@ -78,6 +79,7 @@ const navigationGroups = [
         { id: 'admin-seminarer', href: '/admin/seminarer', label: 'Seminar-arkiv', icon: MonitorPlay },
         { id: 'admin-case-analyser', href: '/admin/case-analyser', label: 'Case Analyser', icon: Sparkles },
         { id: 'studieordninger', href: '/admin/education/studieordninger', label: 'Studieordninger', icon: Layers },
+        { id: 'admin-materials', href: '/admin/materials', label: 'Brugermaterialer', icon: FileText },
     ]
   },
   {

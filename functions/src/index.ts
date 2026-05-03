@@ -206,3 +206,6 @@ export { onUserUpdateScanStudentCard, onUserDeleteCleanUp };
 import { onShopOrderUpdate } from "./shop";
 export { onShopOrderUpdate };
 
+import { retsinformationProxy } from "./retsinformation";
+export { retsinformationProxy };
+

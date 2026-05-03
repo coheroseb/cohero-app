@@ -29,10 +29,11 @@ import {
   Info,
   CheckCircle2,
   Brain,
-  Target,
   Quote,
   AlertTriangle,
-  Library
+  Library,
+  History,
+  MessageSquarePlus
 } from 'lucide-react';
 import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction } from '@/app/actions';
 import { extractText } from 'unpdf';
@@ -139,6 +140,116 @@ export default function MineMaterialerPage() {
   
   const [localOverview, setLocalOverview] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
+  const [chatState, setChatState] = useState<{ goal: string, text: string, loading: boolean } | null>(null);
+  
+  const [isGlobalChatOpen, setIsGlobalChatOpen] = useState(false);
+  const [globalChatMessages, setGlobalChatMessages] = useState<{ id: string, role: 'user' | 'assistant', text: string }[]>([]);
+  const [globalChatInput, setGlobalChatInput] = useState('');
+  const [isGlobalChatLoading, setIsGlobalChatLoading] = useState(false);
+  
+  const [chatThreads, setChatThreads] = useState<{ id: string, title: string, messages: any[], updatedAt: number }[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [showChatHistory, setShowChatHistory] = useState(false);
+
+  useEffect(() => {
+      const saved = localStorage.getItem('cohero-material-chats');
+      if (saved) {
+          try { setChatThreads(JSON.parse(saved)); } catch(e) {}
+      }
+  }, []);
+
+  const handleGlobalChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!globalChatInput.trim() || isGlobalChatLoading) return;
+    
+    const userMessage = globalChatInput;
+    setGlobalChatInput('');
+    
+    let currentThreadId = activeThreadId;
+    let isNewThread = false;
+    if (!currentThreadId) {
+        currentThreadId = Date.now().toString();
+        setActiveThreadId(currentThreadId);
+        isNewThread = true;
+    }
+    
+    const newMsg = { id: Date.now().toString(), role: 'user' as const, text: userMessage };
+    setGlobalChatMessages(prev => [...prev, newMsg]);
+    setIsGlobalChatLoading(true);
+
+    try {
+        const contextText = filteredMaterials
+            .filter(m => m.rawText)
+            .map(m => `--- DOKUMENT: ${m.name} ---\n${m.rawText?.substring(0, 8000)}`) // Limit slightly to avoid huge payloads
+            .join('\n\n');
+
+        const prompt = `Du har adgang til følgende dokumenter fra brugerens vidensarkiv:\n\n${contextText}\n\nBesvar brugerens spørgsmål baseret på ovenstående dokumenter. Skriv i et naturligt, menneskeligt og dialogbaseret sprog frem for at lyde som en robot. Vær gerne uformel, men faglig. Hvis svaret ikke findes heri, så brug din generelle faglige viden, men gør opmærksom på det. BRUG KUN HTML-tags (<b>, <ul>, <li>) til formatering, BRUG ALDRIG markdown asterisker (**). Start dit svar direkte uden nogen form for hilsen (ingen "Kære studerende", "Hej" eller lignende).`;
+
+        const response = await unifiedChatAction({
+            message: userMessage,
+            chatHistory: globalChatMessages.map(m => ({ role: m.role, content: m.text })),
+            persona: 'academic',
+            context: { relevantDocumentIds: [], lawContext: prompt }
+        });
+
+        const answer = response?.data?.answer || response?.answer || "Kunne ikke generere et svar.";
+        const botMsg = { id: Date.now().toString(), role: 'assistant' as const, text: answer };
+        
+        setGlobalChatMessages(prev => {
+            const newMsgs = [...prev, botMsg];
+            
+            setChatThreads(threads => {
+                let newThreads = [...threads];
+                if (isNewThread) {
+                    newThreads.unshift({
+                        id: currentThreadId!,
+                        title: userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : ''),
+                        messages: [newMsg, botMsg],
+                        updatedAt: Date.now()
+                    });
+                } else {
+                    const idx = newThreads.findIndex(t => t.id === currentThreadId);
+                    if (idx >= 0) {
+                        newThreads[idx].messages = newMsgs;
+                        newThreads[idx].updatedAt = Date.now();
+                        const [t] = newThreads.splice(idx, 1);
+                        newThreads.unshift(t);
+                    }
+                }
+                localStorage.setItem('cohero-material-chats', JSON.stringify(newThreads));
+                return newThreads;
+            });
+            return newMsgs;
+        });
+    } catch (error) {
+        console.error("Global chat error:", error);
+        toast({ variant: 'destructive', title: 'Fejl', description: 'Kunne ikke kontakte AI.' });
+    } finally {
+        setIsGlobalChatLoading(false);
+    }
+  };
+
+  const handleAskAboutGoal = async (goal: string, rawText?: string) => {
+    if (!user) return;
+    try {
+        const textToAnalyze = rawText ? rawText.substring(0, 15000) : "Ingen tekst fundet i dokumentet.";
+        const prompt = `Du er en akademisk mentor. Forklar præcist, pædagogisk og i et naturligt, menneskeligt sprog, hvordan dokumentet bidrager til at opfylde følgende læringsmål: "${goal}".\nBrug konkrete eksempler fra teksten. Sørg for ikke at lyde maskinel. BRUG KUN HTML-tags (<b>, <ul>, <li>) til formatering, BRUG ALDRIG markdown asterisker (**). Start dit svar direkte uden nogen form for indledende hilsen (ingen "Kære studerende", "Hej" eller lignende).\n\nMateriale-uddrag:\n${textToAnalyze}`;
+        
+        const response = await unifiedChatAction({
+            message: prompt,
+            chatHistory: [],
+            persona: 'academic',
+            context: { relevantDocumentIds: [], lawContext: '' }
+        });
+        
+        const answer = response?.data?.answer || response?.answer || "Kunne ikke generere et svar.";
+        setChatState(prev => prev?.goal === goal ? { goal, text: answer, loading: false } : prev);
+    } catch (e) {
+        console.error("Chat error:", e);
+        setChatState(prev => prev?.goal === goal ? { goal, text: "Der opstod en fejl under analysen. Prøv igen.", loading: false } : prev);
+        toast({ variant: 'destructive', title: 'Fejl', description: 'Kunne ikke kontakte AI.' });
+    }
+  };
   
   const activeMaterial = useMemo(() => {
     if (!selectedMaterial) return null;
@@ -480,15 +591,25 @@ export default function MineMaterialerPage() {
                     </div>
                   </div>
 
-                  <div className="relative group flex-grow max-w-md">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
-                    <input 
-                      type="text" 
-                      placeholder="Søg i dine materialer..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-300 shadow-sm"
-                    />
+                  <div className="flex items-center gap-4 flex-grow max-w-xl">
+                    <div className="relative group flex-grow">
+                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                      <input 
+                        type="text" 
+                        placeholder="Søg i dine materialer..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-300 shadow-sm"
+                      />
+                    </div>
+                    
+                    <Button 
+                        onClick={() => setIsGlobalChatOpen(true)}
+                        className="h-14 px-6 sm:px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100 flex items-center gap-2 shrink-0 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <Brain className="w-4 h-4" />
+                        <span className="hidden sm:inline">Chat med arkiv</span>
+                    </Button>
                   </div>
               </div>
 
@@ -809,21 +930,68 @@ export default function MineMaterialerPage() {
                                                                             Relevante Læringsmål
                                                                         </h4>
                                                                         <div className="grid grid-cols-1 gap-3">
-                                                                            {data.learningGoals?.map((item: any, idx: number) => (
-                                                                                <div key={idx} className="bg-emerald-50/50 p-5 rounded-[2rem] border border-emerald-100/50 space-y-2">
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                                                                                        <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-tight">
-                                                                                            {typeof item === 'string' ? item : item.goal}
-                                                                                        </span>
+                                                                            {data.learningGoals?.map((item: any, idx: number) => {
+                                                                                const goalText = typeof item === 'string' ? item : item.goal;
+                                                                                const isChatting = chatState?.goal === goalText;
+                                                                                return (
+                                                                                    <div key={idx} className="bg-emerald-50/50 p-5 rounded-[2rem] border border-emerald-100/50 space-y-4">
+                                                                                        <div className="flex items-start justify-between gap-4">
+                                                                                            <div className="space-y-2 flex-1">
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                                                                                                    <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-tight">
+                                                                                                        {goalText}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                                {item.explanation && (
+                                                                                                    <p className="text-[11px] text-emerald-700/70 font-medium leading-relaxed pl-3.5 border-l border-emerald-200 ml-0.5">
+                                                                                                        {item.explanation}
+                                                                                                    </p>
+                                                                                                )}
+                                                                                            </div>
+                                                                                            <Button 
+                                                                                                variant="ghost"
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    if (isChatting) {
+                                                                                                        setChatState(null);
+                                                                                                    } else {
+                                                                                                        setChatState({ goal: goalText, text: '', loading: true });
+                                                                                                        handleAskAboutGoal(goalText, activeMaterial.rawText);
+                                                                                                    }
+                                                                                                }}
+                                                                                                className={`shrink-0 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all ${isChatting ? 'bg-emerald-200 text-emerald-800 hover:bg-emerald-300' : 'bg-white text-emerald-600 border border-emerald-200 shadow-sm hover:bg-emerald-100'}`}
+                                                                                            >
+                                                                                                <Brain className="w-3 h-3 mr-2" />
+                                                                                                {isChatting ? 'Luk Svar' : 'Spørg AI'}
+                                                                                            </Button>
+                                                                                        </div>
+                                                                                        <AnimatePresence>
+                                                                                            {isChatting && (
+                                                                                                <motion.div 
+                                                                                                    initial={{ height: 0, opacity: 0 }}
+                                                                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                                                                    exit={{ height: 0, opacity: 0 }}
+                                                                                                    className="overflow-hidden"
+                                                                                                >
+                                                                                                    <div className="pt-4 mt-2 border-t border-emerald-200/50">
+                                                                                                        {chatState.loading ? (
+                                                                                                            <div className="flex items-center gap-3 text-emerald-600 text-xs font-bold animate-pulse">
+                                                                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                                                                                Analyserer materialet ift. læringsmålet...
+                                                                                                            </div>
+                                                                                                        ) : (
+                                                                                                            <div className="prose prose-sm max-w-none text-emerald-900/80 font-medium leading-relaxed" 
+                                                                                                                dangerouslySetInnerHTML={{ __html: chatState.text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') }} 
+                                                                                                            />
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </motion.div>
+                                                                                            )}
+                                                                                        </AnimatePresence>
                                                                                     </div>
-                                                                                    {item.explanation && (
-                                                                                        <p className="text-[11px] text-emerald-700/70 font-medium leading-relaxed pl-3.5 border-l border-emerald-200 ml-0.5">
-                                                                                            {item.explanation}
-                                                                                        </p>
-                                                                                    )}
-                                                                                </div>
-                                                                            ))}
+                                                                                );
+                                                                            })}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -864,6 +1032,162 @@ export default function MineMaterialerPage() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </motion.div>
+            </>
+        )}
+      </AnimatePresence>
+
+      {/* GLOBAL CHAT MODAL */}
+      <AnimatePresence>
+        {isGlobalChatOpen && (
+            <>
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsGlobalChatOpen(false)}
+                    className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[90]"
+                />
+                <motion.div 
+                    initial={{ x: '100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '100%' }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    className="fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-2xl z-[101] flex"
+                >
+                    {/* Sidebar / History */}
+                    <AnimatePresence>
+                        {showChatHistory && (
+                            <motion.div 
+                                initial={{ width: 0, opacity: 0 }}
+                                animate={{ width: 280, opacity: 1 }}
+                                exit={{ width: 0, opacity: 0 }}
+                                className="border-r border-slate-100 bg-slate-50 flex flex-col shrink-0 overflow-hidden"
+                            >
+                                <div className="p-6 border-b border-slate-100 bg-white">
+                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                        <History className="w-4 h-4 text-indigo-500" />
+                                        Tidligere chats
+                                    </h3>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                                    {chatThreads.map(t => (
+                                        <button 
+                                            key={t.id} 
+                                            onClick={() => {
+                                                setActiveThreadId(t.id);
+                                                setGlobalChatMessages(t.messages);
+                                                if (window.innerWidth < 768) setShowChatHistory(false);
+                                            }}
+                                            className={`w-full text-left p-4 rounded-2xl border transition-all ${
+                                                activeThreadId === t.id 
+                                                ? 'bg-indigo-50 border-indigo-200 text-indigo-900 shadow-sm' 
+                                                : 'bg-white border-transparent text-slate-600 hover:border-slate-200 hover:shadow-sm'
+                                            }`}
+                                        >
+                                            <p className="text-sm font-bold truncate mb-1">{t.title}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">
+                                                {new Date(t.updatedAt).toLocaleDateString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                        </button>
+                                    ))}
+                                    {chatThreads.length === 0 && (
+                                        <p className="text-xs font-medium text-slate-400 text-center py-10">Ingen tidligere chats endnu.</p>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Chat Area */}
+                    <div className="flex-1 flex flex-col h-full bg-[#F8F9FA] relative">
+                        <div className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-white z-10 shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100 text-white shrink-0">
+                                    <Brain className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">Vidensarkiv Chat</h3>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-0.5">Søg på tværs af {filteredMaterials.length} dokumenter</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => setShowChatHistory(!showChatHistory)}
+                                    className={`p-3 border rounded-xl transition-all shadow-sm flex items-center gap-2 ${showChatHistory ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
+                                    title="Vis historik"
+                                >
+                                    <History className="w-5 h-5" />
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        setActiveThreadId(null);
+                                        setGlobalChatMessages([]);
+                                        if (window.innerWidth < 768) setShowChatHistory(false);
+                                    }}
+                                    className="p-3 bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 rounded-xl transition-all shadow-sm"
+                                    title="Ny chat"
+                                >
+                                    <MessageSquarePlus className="w-5 h-5" />
+                                </button>
+                                <div className="w-px h-8 bg-slate-200 mx-1" />
+                                <button 
+                                    onClick={() => setIsGlobalChatOpen(false)}
+                                    className="p-3 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 rounded-xl transition-all shadow-sm"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+                        {globalChatMessages.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
+                                <div className="w-20 h-20 bg-indigo-100 text-indigo-300 rounded-[2rem] flex items-center justify-center">
+                                    <Brain className="w-10 h-10" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-500">Stil et spørgsmål til dit samlede arkiv.</p>
+                            </div>
+                        )}
+                        {globalChatMessages.map(msg => (
+                            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[85%] p-5 rounded-[1.5rem] shadow-sm ${
+                                    msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
+                                }`}>
+                                    <div className={msg.role === 'user' ? 'text-white font-bold text-sm leading-relaxed [&_*]:text-white' : 'prose prose-sm max-w-none prose-p:leading-relaxed font-medium'}
+                                         dangerouslySetInnerHTML={{ __html: msg.text.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') }} />
+                                </div>
+                            </div>
+                        ))}
+                        {isGlobalChatLoading && (
+                            <div className="flex justify-start">
+                                <div className="bg-white border border-slate-200 p-5 rounded-[1.5rem] rounded-tl-sm text-slate-500 flex items-center gap-3 shadow-sm">
+                                    <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+                                    <span className="text-xs font-black uppercase tracking-widest">Gennemsøger arkivet...</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="p-6 border-t border-slate-100 bg-white">
+                        <form onSubmit={handleGlobalChatSubmit} className="flex gap-3">
+                            <input 
+                                type="text"
+                                value={globalChatInput}
+                                onChange={e => setGlobalChatInput(e.target.value)}
+                                placeholder="Stil et spørgsmål om dit pensum..."
+                                className="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all"
+                            />
+                            <Button 
+                                type="submit" 
+                                disabled={isGlobalChatLoading || !globalChatInput.trim()}
+                                className="h-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-8 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-indigo-100 active:scale-95 transition-all"
+                            >
+                                Send
+                            </Button>
+                        </form>
+                    </div>
                     </div>
                 </motion.div>
             </>
