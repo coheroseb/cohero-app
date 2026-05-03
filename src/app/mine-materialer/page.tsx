@@ -37,9 +37,10 @@ import {
   Hash,
   Sparkles,
   MessageSquare,
-  ArrowRight
+  ArrowRight,
+  Edit2
 } from 'lucide-react';
-import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction, materialVectorChatAction } from '@/app/actions';
+import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction, materialVectorChatAction, indexMaterialAction, migrateMaterialsAction } from '@/app/actions';
 import { extractText } from 'unpdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -79,6 +80,9 @@ interface Material {
   rawText?: string;
   aiOverviewData?: string;
   overviewGeneratedAt?: any;
+  tags?: string[];
+  suggestedQuestions?: string[];
+  vectorIndexed?: boolean;
 }
 
 interface SemesterPlan {
@@ -150,10 +154,14 @@ export default function MineMaterialerPage() {
   const [globalChatMessages, setGlobalChatMessages] = useState<{ id: string, role: 'user' | 'assistant', text: string }[]>([]);
   const [globalChatInput, setGlobalChatInput] = useState('');
   const [isGlobalChatLoading, setIsGlobalChatLoading] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [isMigrating, setIsMigrating] = useState(false);
   
   const [chatThreads, setChatThreads] = useState<{ id: string, title: string, messages: any[], updatedAt: number }[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [showChatHistory, setShowChatHistory] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renamingValue, setRenamingValue] = useState('');
 
   useEffect(() => {
       const saved = localStorage.getItem('cohero-material-chats');
@@ -305,15 +313,22 @@ export default function MineMaterialerPage() {
     return () => unsub();
   }, [user, firestore, userProfile, currentSemesterId]);
 
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    materials.forEach(m => m.tags?.forEach(t => tags.add(t)));
+    return Array.from(tags).sort();
+  }, [materials]);
+
   const filteredMaterials = useMemo(() => {
     return materials
       .filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter(m => !selectedTag || m.tags?.includes(selectedTag))
       .sort((a, b) => {
         const dateA = a.createdAt?.toDate?.() || new Date(0);
         const dateB = b.createdAt?.toDate?.() || new Date(0);
         return dateB.getTime() - dateA.getTime();
       });
-  }, [materials, searchQuery]);
+  }, [materials, searchQuery, selectedTag]);
 
   // 3. Handle File Upload
   const handleUpload = async (files: FileList | null) => {
@@ -417,6 +432,58 @@ export default function MineMaterialerPage() {
     }
   };
 
+  // 7. Manual migration / re-index
+  const handleMigrateArchive = async () => {
+    if (!user || isMigrating) return;
+    setIsMigrating(true);
+    toast({ title: "Opdaterer arkiv...", description: "AI'en gennemgår nu alle dine dokumenter for at tilføje tags og optimere søgning." });
+    
+    try {
+        const res = await migrateMaterialsAction({ userId: user.uid });
+        if (res.success) {
+            toast({ title: "Arkiv opdateret!", description: `Færdig med at optimere ${res.processedCount} dokumenter.` });
+        }
+    } catch (e) {
+        console.error("Migration fejlede:", e);
+        toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke opdatere arkivet." });
+    } finally {
+        setIsMigrating(false);
+    }
+  };
+
+  const handleRescanMaterial = async (e: React.MouseEvent, material: Material) => {
+    e.stopPropagation();
+    if (!user || !material.rawText) return;
+    
+    toast({ title: "Gen-indlæser...", description: `AI'en gen-analyserer ${material.name}.` });
+    try {
+        await indexMaterialAction({
+            userId: user.uid,
+            materialId: material.id,
+            rawText: material.rawText
+        });
+        toast({ title: "Fuldført", description: "Tags og søgning er nu opdateret." });
+    } catch (e) {
+        console.error("Rescan failed:", e);
+    }
+  };
+
+  const handleRenameMaterial = async (e: React.MouseEvent, materialId: string, newName: string) => {
+    e.stopPropagation();
+    if (!newName.trim() || !user) return;
+    
+    try {
+        await updateDoc(doc(firestore!, 'users', user.uid, 'materials', materialId), {
+            name: newName.trim()
+        });
+        setRenamingId(null);
+        toast({ title: "Omdøbt", description: "Materialet har nu fået nyt navn." });
+    } catch (e) {
+        console.error("Rename failed:", e);
+        toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke omdøbe materialet." });
+    }
+  };
+
   const handleDeleteMaterial = async (material: Material) => {
     if (!user || !firestore || !storage || !window.confirm('Er du sikker på, at du vil slette dette materiale?')) return;
     
@@ -493,7 +560,7 @@ export default function MineMaterialerPage() {
                       </div>
                       <div>
                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Semester / Modul</p>
-                         <p className="text-sm font-bold text-slate-900 leading-tight">{currentDisplayName}</p>
+                         <p className="text-sm font-bold text-slate-900 leading-tight break-words">{currentDisplayName}</p>
                       </div>
                    </div>
                 </div>
@@ -586,7 +653,7 @@ export default function MineMaterialerPage() {
                         <h3 className="text-2xl font-[900] text-slate-900 tracking-tight">Upload dit pensum</h3>
                         <p className="text-sm text-slate-400 font-medium">
                           Træk PDF, Word eller Slides hertil. <br />
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mt-4 inline-block">
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mt-4 inline-block max-w-2xl break-words px-4">
                              Automatisk tilknytning: {currentDisplayName}
                           </span>
                         </p>
@@ -608,6 +675,25 @@ export default function MineMaterialerPage() {
                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{filteredMaterials.length} dokumenter</p>
                     </div>
                   </div>
+                  
+                  <Button 
+                    onClick={handleMigrateArchive}
+                    disabled={isMigrating || materials.length === 0}
+                    variant="outline"
+                    className="h-10 px-4 rounded-xl border-indigo-100 text-indigo-600 font-black text-[9px] uppercase tracking-widest hover:bg-indigo-50 transition-all flex items-center gap-2"
+                  >
+                    {isMigrating ? (
+                        <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>Optimerer...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Zap className="w-3 h-3" />
+                            <span>Optimer Arkiv</span>
+                        </>
+                    )}
+                  </Button>
 
                   <div className="flex items-center gap-4 flex-grow max-w-xl">
                     <div className="relative group flex-grow">
@@ -633,6 +719,32 @@ export default function MineMaterialerPage() {
 
               <div className="grid gap-4">
                 <AnimatePresence mode="popLayout">
+                    {/* Tag Filter Bar */}
+                    {allTags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-10 pb-6 border-b border-slate-50">
+                            <button 
+                                onClick={() => setSelectedTag(null)}
+                                className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${
+                                    !selectedTag ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'bg-white text-slate-400 border border-slate-100 hover:border-indigo-100 hover:text-indigo-600'
+                                }`}
+                            >
+                                Alle Materialer
+                            </button>
+                            {allTags.map(tag => (
+                                <button 
+                                    key={tag}
+                                    onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
+                                    className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 ${
+                                        selectedTag === tag ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'bg-white text-slate-400 border border-slate-100 hover:border-indigo-100 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <Hash className="w-3 h-3" />
+                                    {tag}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                   {filteredMaterials.length === 0 ? (
                     <motion.div 
                       initial={{ opacity: 0 }}
@@ -667,7 +779,38 @@ export default function MineMaterialerPage() {
                           </div>
                           <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-3 mb-2">
-                                <h4 className="text-base font-black text-slate-950 truncate tracking-tight">{material.name}</h4>
+                                {renamingId === material.id ? (
+                                    <div className="flex items-center gap-2 flex-grow" onClick={e => e.stopPropagation()}>
+                                        <input 
+                                            autoFocus
+                                            type="text"
+                                            value={renamingValue}
+                                            onChange={e => setRenamingValue(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleRenameMaterial(e as any, material.id, renamingValue);
+                                                if (e.key === 'Escape') setRenamingId(null);
+                                            }}
+                                            className="px-3 py-1 bg-slate-50 border border-indigo-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 flex-grow"
+                                        />
+                                        <Button 
+                                            size="sm" 
+                                            className="h-8 w-8 p-0 bg-indigo-600 rounded-lg"
+                                            onClick={(e) => handleRenameMaterial(e, material.id, renamingValue)}
+                                        >
+                                            <Check className="w-4 h-4" />
+                                        </Button>
+                                        <Button 
+                                            size="sm" 
+                                            variant="ghost"
+                                            className="h-8 w-8 p-0 text-slate-400 rounded-lg"
+                                            onClick={() => setRenamingId(null)}
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <h4 className="text-base font-black text-slate-950 break-all leading-snug">{material.name}</h4>
+                                )}
                                 {material.isIndexed === false ? (
                                     <div className="flex items-center gap-2 bg-amber-50 px-3 py-1 rounded-full border border-amber-100 animate-pulse">
                                         <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
@@ -695,22 +838,58 @@ export default function MineMaterialerPage() {
                                  <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{(material.size / 1024 / 1024).toFixed(1)} MB</span>
                               </div>
+                              
+                              {/* Display Tags on Card */}
+                              {material.tags && material.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 mt-4">
+                                      {material.tags.slice(0, 3).map((tag, idx) => (
+                                          <span key={idx} className="px-3 py-1 bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] rounded-lg border border-slate-100/50">
+                                              {tag}
+                                          </span>
+                                      ))}
+                                      {material.tags.length > 3 && (
+                                          <span className="px-2 py-1 bg-slate-50 text-[9px] font-black text-slate-300 uppercase rounded-lg border border-dashed border-slate-100">
+                                              +{material.tags.length - 3}
+                                          </span>
+                                      )}
+                                  </div>
+                              )}
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                           <button 
+                             onClick={(e) => {
+                                 e.stopPropagation();
+                                 setRenamingId(material.id);
+                                 setRenamingValue(material.name);
+                             }}
+                             className="p-4 bg-white text-slate-400 hover:text-indigo-600 border border-slate-100 hover:border-indigo-100 rounded-2xl transition-all shadow-sm"
+                             title="Omdøb"
+                           >
+                              <Edit2 className="w-5 h-5" />
+                           </button>
+                           {(!material.tags || material.tags.length === 0) && material.isIndexed === true && (
+                               <button 
+                                 onClick={(e) => handleRescanMaterial(e, material)}
+                                 className="p-4 bg-white text-slate-400 hover:text-indigo-600 border border-slate-100 hover:border-indigo-100 rounded-2xl transition-all shadow-sm"
+                                 title="Gen-analyser for tags"
+                               >
+                                  <Sparkles className="w-5 h-5" />
+                               </button>
+                           )}
                            <a 
                              href={material.url} 
                              target="_blank" 
                              rel="noopener noreferrer"
                              onClick={(e) => e.stopPropagation()}
-                             className="p-4 bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-white border border-transparent hover:border-indigo-100 rounded-2xl transition-all shadow-sm"
+                             className="p-4 bg-white text-slate-400 hover:text-indigo-600 border border-slate-100 hover:border-indigo-100 rounded-2xl transition-all shadow-sm"
                            >
                               <ExternalLink className="w-5 h-5" />
                            </a>
                            <button 
                              onClick={(e) => { e.stopPropagation(); handleDeleteMaterial(material); }}
-                             className="p-4 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-white border border-transparent hover:border-rose-100 rounded-2xl transition-all shadow-sm"
+                             className="p-4 bg-white text-slate-400 hover:text-rose-600 border border-slate-100 hover:border-rose-100 rounded-2xl transition-all shadow-sm"
                            >
                               <Trash2 className="w-5 h-5" />
                            </button>

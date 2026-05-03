@@ -209,3 +209,6 @@ export { onShopOrderUpdate };
 import { retsinformationProxy } from "./retsinformation";
 export { retsinformationProxy };
 
+import { onMaterialDelete } from "./materials";
+export { onMaterialDelete };
+

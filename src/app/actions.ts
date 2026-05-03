@@ -1036,6 +1036,14 @@ export async function materialVectorChatAction(input: { userId: string, message:
     return callFirebaseFlow('materialVectorChatFlow', input);
 }
 
+export async function indexMaterialAction(input: { userId: string, materialId: string, rawText: string }) {
+    return callFirebaseFlow('indexMaterialFlow', input);
+}
+
+export async function migrateMaterialsAction(input: { userId: string }) {
+    return callFirebaseFlow('migrateMaterialsFlow', input);
+}
+
 
 /**
  * identifyReformAction
@@ -4285,3 +4293,4 @@ export async function generateJournalScenarioAction(input: { topic?: string, pro
 export async function evaluateJournalEntryAction(input: { scenario: any, journalContent: string, profession?: string }) {
     return callFirebaseFlow('evaluateJournalEntryFlow', input);
 }
+
