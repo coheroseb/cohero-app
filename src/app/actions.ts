@@ -1032,6 +1032,9 @@ export async function unifiedChatAction(input: Types.UnifiedChatInput): Promise<
     return callFirebaseFlow('unifiedChatFlow', input); 
 }
 
+export async function materialVectorChatAction(input: { userId: string, message: string, chatHistory?: any[] }): Promise<{ answer: string }> {
+    return callFirebaseFlow('materialVectorChatFlow', input);
+}
 
 
 /**
@@ -1201,18 +1204,34 @@ export async function saveMaterialTextAction(input: {
         logToConsole(`Starting saveMaterialTextAction for ${input.materialId}`);
         console.log(`[saveMaterialTextAction] Saving ${input.rawText.length} characters for material ${input.materialId}`);
         
-        // 1. Save raw text first
+        // 1. Gem rå-teksten i Firestore (for backup/legacy search)
         await adminFirestore.collection('users')
             .doc(input.userId)
             .collection('materials')
             .doc(input.materialId)
             .set({
                 rawText: input.rawText,
-                isIndexed: true,
-                contentIndexedAt: admin.firestore.FieldValue.serverTimestamp()
+                isIndexed: 'generating', // status mens vi bygger embeddings
             }, { merge: true });
 
-        logToConsole(`Material saved successfully. (No automatic AI overview)`);
+        // 2. Kald Firebase Function for at generere embeddings asynkront
+        // (Vi venter ikke nødvendigvis på denne i backend, men her gør vi for sikkerhedens skyld)
+        try {
+            await callFirebaseFlow('indexMaterialFlow', {
+                userId: input.userId,
+                materialId: input.materialId,
+                rawText: input.rawText
+            });
+            logToConsole(`Vector indeksering fuldført for ${input.materialId}.`);
+        } catch (e) {
+            console.error("Vector indexering fejlede:", e);
+            // Revert status
+            await adminFirestore.collection('users').doc(input.userId).collection('materials').doc(input.materialId).set({
+                isIndexed: true, // fallback til normal
+                vectorIndexed: false
+            }, { merge: true });
+        }
+
         return { success: true };
     } catch (error) {
         logToConsole(`saveMaterialTextAction Error: ${error}`);

@@ -1,6 +1,5 @@
 
-import * as admin from 'firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 /**
  * Centrally log AI token usage to Firestore for platform-wide cost analysis.
@@ -18,7 +17,7 @@ export async function logAiUsage(flowName: string, usage: { inputTokens?: number
   const safeFlowName = flowName.replace(/\./g, '_').replace(/\//g, '_').replace(/\s+/g, '');
 
   try {
-    const db = (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "cohero-database");
+    const db = getFirestore('cohero-database');
     await db.collection('stats').doc('ai_usage').set({
       totalInputTokens: FieldValue.increment(inputTokens),
       totalOutputTokens: FieldValue.increment(outputTokens),

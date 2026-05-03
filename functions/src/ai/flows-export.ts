@@ -102,6 +102,8 @@ import { generateJournalScenarioFlow, evaluateJournalEntryFlow } from './flows/j
 
 
 import { generateSimulationScenarioFlow, runSimulationTurnFlow, generateSimulationReportFlow } from './flows/simulation-flows';
+import { indexMaterialFlow } from './flows/index-material-flow';
+import { materialVectorChatFlow } from './flows/material-vector-chat-flow';
 
 export const allFlows: Record<string, any> = {
   'generateSimulationScenarioFlow': generateSimulationScenarioFlow,
@@ -302,5 +304,7 @@ export const allFlows: Record<string, any> = {
   'analyzeSyllabusFlow': analyzeSyllabus,
   'generateJournalScenarioFlow': generateJournalScenarioFlow,
   'evaluateJournalEntryFlow': evaluateJournalEntryFlow,
+  'indexMaterialFlow': indexMaterialFlow,
+  'materialVectorChatFlow': materialVectorChatFlow,
 };
 

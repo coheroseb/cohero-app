@@ -35,7 +35,7 @@ import {
   History,
   MessageSquarePlus
 } from 'lucide-react';
-import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction } from '@/app/actions';
+import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction, materialVectorChatAction } from '@/app/actions';
 import { extractText } from 'unpdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -178,21 +178,35 @@ export default function MineMaterialerPage() {
     setIsGlobalChatLoading(true);
 
     try {
-        const contextText = filteredMaterials
-            .filter(m => m.rawText)
-            .map(m => `--- DOKUMENT: ${m.name} ---\n${m.rawText?.substring(0, 8000)}`) // Limit slightly to avoid huge payloads
-            .join('\n\n');
+        const hasVectorIndexed = filteredMaterials.some(m => m.vectorIndexed || m.isIndexed === true);
+        
+        let answer = "Kunne ikke generere et svar.";
+        
+        if (hasVectorIndexed && user) {
+            // Brug den nye Vector Database RAG søgning
+            const response = await materialVectorChatAction({
+                userId: user.uid,
+                message: userMessage,
+                chatHistory: globalChatMessages.map(m => ({ role: m.role, content: m.text }))
+            });
+            answer = response?.answer || "Kunne ikke generere et svar.";
+        } else {
+            // Fallback til legacy RAG (sender hele teksten med op til token limit)
+            const contextText = filteredMaterials
+                .filter(m => m.rawText)
+                .map(m => `--- DOKUMENT: ${m.name} ---\n${m.rawText?.substring(0, 8000)}`) // Limit slightly to avoid huge payloads
+                .join('\n\n');
 
-        const prompt = `Du har adgang til følgende dokumenter fra brugerens vidensarkiv:\n\n${contextText}\n\nBesvar brugerens spørgsmål baseret på ovenstående dokumenter. Skriv i et naturligt, menneskeligt og dialogbaseret sprog frem for at lyde som en robot. Vær gerne uformel, men faglig. Hvis svaret ikke findes heri, så brug din generelle faglige viden, men gør opmærksom på det. BRUG KUN HTML-tags (<b>, <ul>, <li>) til formatering, BRUG ALDRIG markdown asterisker (**). Start dit svar direkte uden nogen form for hilsen (ingen "Kære studerende", "Hej" eller lignende).`;
+            const prompt = `Du har adgang til følgende dokumenter fra brugerens vidensarkiv:\n\n${contextText}\n\nBesvar brugerens spørgsmål baseret på ovenstående dokumenter. Skriv i et naturligt, menneskeligt og dialogbaseret sprog frem for at lyde som en robot. Vær gerne uformel, men faglig. Hvis svaret ikke findes heri, så brug din generelle faglige viden, men gør opmærksom på det. BRUG KUN HTML-tags (<b>, <ul>, <li>) til formatering, BRUG ALDRIG markdown asterisker (**). Start dit svar direkte uden nogen form for hilsen (ingen "Kære studerende", "Hej" eller lignende).`;
 
-        const response = await unifiedChatAction({
-            message: userMessage,
-            chatHistory: globalChatMessages.map(m => ({ role: m.role, content: m.text })),
-            persona: 'academic',
-            context: { relevantDocumentIds: [], lawContext: prompt }
-        });
-
-        const answer = response?.data?.answer || response?.answer || "Kunne ikke generere et svar.";
+            const response = await unifiedChatAction({
+                message: userMessage,
+                chatHistory: globalChatMessages.map(m => ({ role: m.role, content: m.text })),
+                persona: 'academic',
+                context: { relevantDocumentIds: [], lawContext: prompt }
+            });
+            answer = response?.data?.answer || response?.answer || "Kunne ikke generere et svar.";
+        }
         const botMsg = { id: Date.now().toString(), role: 'assistant' as const, text: answer };
         
         setGlobalChatMessages(prev => {

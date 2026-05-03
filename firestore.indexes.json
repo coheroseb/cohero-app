@@ -123,6 +123,19 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "materialChunks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "embedding",
+          "vectorConfig": {
+            "dimension": 768,
+            "flat": {}
+          }
+        }
+      ]
     }
   ],
   "fieldOverrides": [
