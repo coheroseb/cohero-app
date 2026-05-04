@@ -43,7 +43,7 @@ import {
 import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction, materialVectorChatAction, indexMaterialAction, migrateMaterialsAction, generateMaterialMindmapAction } from '@/app/actions';
 import { extractText } from 'unpdf';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/app/provider';
 import { useFirestore, useStorage, useCollection, useMemoFirebase } from '@/firebase';
@@ -93,11 +93,20 @@ interface SemesterPlan {
 }
 
 export default function MineMaterialerPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center"><Loader2 className="w-12 h-12 text-indigo-600 animate-spin" /></div>}>
+        <MineMaterialerContent />
+    </Suspense>
+  );
+}
+
+function MineMaterialerContent() {
   const { user, userProfile, isUserLoading } = useApp();
   const firestore = useFirestore();
   const storage = useStorage();
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [materials, setMaterials] = useState<Material[]>([]);
   const [isUploading, setIsUploading] = useState(false);
