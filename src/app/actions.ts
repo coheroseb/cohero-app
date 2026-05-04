@@ -1601,37 +1601,42 @@ export async function generateMaterialMindmapAction(input: {
         }
 
         const prompt = `Du er en ekspert i at analysere pensum og identificere tværgående temaer. 
-Din opgave er at analysere den vedhæftede tekst (som består af uddrag fra flere dokumenter i et studieforløb) og skabe et omfattende, hierarkisk mindmap.
+Din opgave er at analysere den vedhæftede tekst og skabe et omfattende, hierarkisk mindmap med tværgående forbindelser.
 
-${input.focus ? `VIGTIGT FOKUS: Brugeren har bedt om at mindmapet skal have særligt fokus på: "${input.focus}". Sørg for at dette fokus gennemsyrer analysen og temaerne.` : 'VIGTIGT: Du SKAL identificere de mest centrale TEMAER, der optræder i materialet. Gruppér viden logisk efter disse temaer, så den studerende kan se sammenhænge og de røde tråde i sit pensum.'}
+${input.focus ? `VIGTIGT FOKUS: "${input.focus}". Du SKAL bruge "${input.focus}" som titlen på din 'root' node.` : 'VIGTIGT: Identificer de mest centrale TEMAER og gruppér viden logisk.'}
 
 Du SKAL returnere et JSON objekt med denne struktur:
 {
   "root": {
-    "text": "Overordnet Tema / Modulnavn",
+    "id": "root",
+    "text": "${input.focus || 'Overordnet Tema'}",
     "children": [
       {
-        "text": "Identificeret Tema",
+        "id": "theme_1",
+        "text": "Tema Navn",
         "color": "indigo | emerald | rose | amber | sky",
         "children": [
           {
-            "text": "Underpunkt / Koncept",
-            "description": "Kort forklaring af hvordan dette punkt relaterer sig til temaet",
+            "id": "sub_1",
+            "text": "Koncept",
+            "description": "Forklaring",
             "children": []
           }
         ]
       }
     ]
-  }
+  },
+  "connections": [
+    { "from": "id_a", "to": "id_b", "label": "Forklaring på sammenhæng" }
+  ]
 }
 
 REGLER:
-1. Identificer mindst 6-8 unikke temaer hvis muligt.
-2. Hver temagren skal have mindst 3-5 underpunkter.
-3. Brug 'color' feltet til at give forskellige farver til temaerne.
-4. Sørg for at 'text' er kort og sigende.
-5. 'description' skal give en hurtig indsigt i punktets betydning.
-6. Returner KUN JSON. Ingen forklarende tekst.
+1. GIV ALLE NODER ET UNIKT ID.
+2. Identificer 3-5 vigtige 'connections' mellem noder i FORSKELLIGE grene.
+3. Hver temagren skal have 3-5 underpunkter.
+4. Brug kun de angivne farver.
+5. Returner KUN JSON.
 
 Teksten:\n\n${textToAnalyze}`;
 
@@ -4538,14 +4543,25 @@ export async function getMindmapNodeSourceAction(input: {
         const sourceResults: { text: string, citation: string }[] = [];
         const seenMaterialIds = new Set<string>();
 
-        // Sort chunks by relevance
+        // Sort chunks by relevance and quality
         const scoredChunks = chunksSnapshot.docs.map(doc => {
             const text = doc.data().text || "";
             const materialId = doc.data().materialId;
             let score = 0;
+            
+            // Check for keywords
             for (const kw of keywords) {
-                if (text.toLowerCase().includes(kw)) score++;
+                if (text.toLowerCase().includes(kw)) score += 2;
             }
+
+            // Quality Penalties: Ignore TOCs and page headers
+            const lowerText = text.toLowerCase();
+            const isTOC = lowerText.includes('.......') || lowerText.includes('indholdsfortegnelse') || (lowerText.match(/[0-9]{1,3}$/gm) || []).length > 5;
+            if (isTOC) score -= 10;
+            
+            // Benefit longer, paragraph-like chunks
+            if (text.length > 500) score += 1;
+
             return { text, materialId, score };
         }).filter(c => c.score > 0).sort((a, b) => b.score - a.score);
 
@@ -4566,22 +4582,18 @@ export async function getMindmapNodeSourceAction(input: {
             
             if (matDoc.exists) {
                 const data = matDoc.data();
-                
-                // Try multiple field names for author
-                let author = data?.author || data?.metadata?.author || data?.createdBy || "Ukendt forfatter";
-                // If it's a full name like "Sebastian Viste", we can keep it, but if it's "Ukendt", try to find a better one
-                
-                let year = data?.year || data?.metadata?.year || data?.createdAt?.toDate?.()?.getFullYear?.() || "u.å.";
-                
-                // Try multiple field names for title
-                let title = data?.title || data?.name || data?.fileName || data?.metadata?.title || "Uden titel";
-
-                citation = `${author} (${year}). ${title}.`;
+                citation = data?.title || data?.name || data?.fileName || "Uden titel";
 
                 try {
-                    const formatPrompt = `Du er en redaktør. Her er et uddrag fra et studiemateriale om "${input.nodeText}". 
-                    Gør teksten mere læsevenlig ved at tilføje logiske afsnit. Bevar det præcise indhold.
-                    TEKST: ${chunkObj.text}`;
+                    const formatPrompt = `Du er en redaktør. Din opgave er at uddrage det mest relevante, meningsfulde AFSNIT fra nedenstående rå tekst om emnet "${input.nodeText}". 
+                    
+                    REGLER:
+                    1. Hvis teksten ligner en indholdsfortegnelse, sidetal eller overskrifter uden indhold, skal du IGNORERE det og i stedet lede efter et rigtigt afsnit.
+                    2. Du skal returnere det fulde afsnit, så man får hele konteksten med.
+                    3. Fjern unødig støj som sidehoved/sidefod.
+                    
+                    RÅ TEKST FRA MATERIALET:
+                    ${chunkObj.text}`;
 
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, {
                         method: 'POST',

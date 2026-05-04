@@ -54,6 +54,8 @@ function MindmapContent() {
     const [error, setError] = useState<string | null>(null);
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [loadingContext, setLoadingContext] = useState<string | null>(null);
+    const containerRef = React.useRef<HTMLDivElement>(null);
     const [savedMindmaps, setSavedMindmaps] = useState<any[]>([]);
     const [activeTabId, setActiveTabId] = useState<string | 'new'>('new');
     const [isSaving, setIsSaving] = useState(false);
@@ -96,6 +98,15 @@ function MindmapContent() {
         window.addEventListener('wheel', handleWheel, { passive: false });
         return () => window.removeEventListener('wheel', handleWheel);
     }, []);
+    // Auto-center on load (Start at top)
+    useEffect(() => {
+        if (mindmapData && containerRef.current) {
+            const container = containerRef.current;
+            container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+            container.scrollTop = (container.scrollHeight - container.clientHeight) * 0.45; // Start near the top area where root is
+        }
+    }, [mindmapData]);
+
     const fetchMindmap = async (customFocus?: string) => {
         if (!user) {
             console.log("Mindmap: No user found yet");
@@ -107,6 +118,7 @@ function MindmapContent() {
         }
 
         console.log("Mindmap: Starting fetch for", materialId || 'all', "Focus:", customFocus);
+        setLoadingContext(customFocus || "et generelt overblik");
         setIsLoading(true);
         setError(null);
         try {
@@ -228,6 +240,91 @@ function MindmapContent() {
         sky: 'bg-sky-500/10 border-sky-500/30 text-sky-100',
     };
 
+    const handleExport = () => {
+        if (!mindmapData) return;
+        
+        let content = `# Studie-guide: ${mindmapData.root.text}\n\n`;
+        content += `Genereret af Cohéro AI\n\n`;
+        
+        mindmapData.root.children?.forEach((branch: any) => {
+            content += `## ${branch.text}\n`;
+            branch.children?.forEach((child: any) => {
+                content += `### ${child.text}\n`;
+                content += `${child.description}\n\n`;
+            });
+            content += `\n`;
+        });
+        
+        if (mindmapData.connections && mindmapData.connections.length > 0) {
+            content += `## Tværgående Sammenhænge\n`;
+            mindmapData.connections.forEach((conn: any) => {
+                content += `- **Forbindelse:** ${conn.label}\n`;
+            });
+        }
+        
+        const blob = new Blob([content], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Studieguide - ${mindmapData.root.text}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleOneNoteExport = () => {
+        if (!mindmapData) return;
+        
+        let html = `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px;">
+                <h1 style="color: #6366f1;">Mindmap: ${mindmapData.root.text}</h1>
+                <p><i>Genereret af Cohéro AI - Studieguide</i></p>
+                <hr />
+                <ul style="list-style-type: none; padding-left: 0;">
+                    <li style="margin-bottom: 20px;">
+                        <strong style="font-size: 24px; color: #1e293b;">${mindmapData.root.text}</strong>
+                        <ul style="margin-top: 15px;">
+                            ${mindmapData.root.children?.map((branch: any) => `
+                                <li style="margin-bottom: 15px;">
+                                    <span style="font-size: 18px; font-weight: bold; color: ${
+                                        branch.color === 'indigo' ? '#6366f1' :
+                                        branch.color === 'emerald' ? '#10b981' :
+                                        branch.color === 'rose' ? '#f43f5e' :
+                                        branch.color === 'amber' ? '#f59e0b' :
+                                        branch.color === 'sky' ? '#0ea5e9' : '#64748b'
+                                    }; text-transform: uppercase;">${branch.text}</span>
+                                    <ul style="margin-top: 5px;">
+                                        ${branch.children?.map((child: any) => `
+                                            <li style="margin-bottom: 10px;">
+                                                <strong>${child.text}</strong><br />
+                                                <span style="color: #64748b; font-size: 14px;">${child.description || ''}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </li>
+                </ul>
+                ${mindmapData.connections && mindmapData.connections.length > 0 ? `
+                    <div style="margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+                        <h3 style="color: #f59e0b; margin-top: 0;">Tværgående Sammenhænge</h3>
+                        <ul>
+                            ${mindmapData.connections.map((conn: any) => `<li>${conn.label}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        const type = "text/html";
+        const blob = new Blob([html], { type });
+        const data = [new ClipboardItem({ [type]: blob })];
+        
+        navigator.clipboard.write(data).then(() => {
+            alert("Mindmap er nu kopieret i OneNote-format! Du kan nu sætte det direkte ind i OneNote (Ctrl+V).");
+        });
+    };
+
     const handleNodeClick = async (node: any) => {
         if (!user || !semester) return;
         setSelectedNode(node);
@@ -279,6 +376,22 @@ function MindmapContent() {
                         <Zap className="w-3.5 h-3.5" />
                         Gendan AI
                     </button>
+                    <button 
+                        onClick={handleExport}
+                        className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                    >
+                        <Download className="w-3.5 h-3.5 text-amber-500" />
+                        Eksportér Noter
+                    </button>
+                    <button 
+                        onClick={handleOneNoteExport}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                    >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.52,2.05L2.34,3.94C2.14,3.98 2,4.16 2,4.37V19.63C2,19.84 2.14,20.02 2.34,20.06L11.52,21.95C11.54,21.95 11.57,21.95 11.6,21.95C11.82,21.95 12,21.77 12,21.55V2.45C12,2.23 11.82,2.05 11.6,2.05C11.57,2.05 11.54,2.05 11.52,2.05M22,5.25V18.75C22,19.3 21.55,19.75 21,19.75H13V4.25H21C21.55,4.25 22,4.7 22,5.25Z" />
+                        </svg>
+                        OneNote
+                    </button>
                 </div>
             </header>
 
@@ -313,7 +426,10 @@ function MindmapContent() {
             </div>
 
             {/* MINDMAP CANVAS */}
-            <main className="flex-1 overflow-auto relative bg-[#0B0E14] scrollbar-hide">
+            <main 
+                ref={containerRef}
+                className="flex-1 overflow-auto relative bg-[#0B0E14] scrollbar-hide"
+            >
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
                     style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} 
@@ -337,14 +453,33 @@ function MindmapContent() {
                         className="absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing p-[1000px] min-w-max min-h-max"
                     >
                         {isLoading ? (
-                            <div className="flex flex-col items-center gap-8">
+                            <div className="flex flex-col items-center gap-10">
                                 <div className="relative">
-                                    <Loader2 className="w-24 h-24 text-indigo-500 animate-spin" />
-                                    <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
+                                    <motion.div 
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                        className="w-24 h-24 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 shadow-[0_0_50px_rgba(99,102,241,0.2)]"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <Zap className="w-8 h-8 text-indigo-500 animate-pulse" />
+                                    </div>
                                 </div>
-                                <div className="text-center">
-                                    <h2 className="text-2xl font-black text-white mb-2">Konstruerer Mindmap...</h2>
-                                    <p className="text-slate-500 font-bold italic">AI analyserer sammenhænge i dit pensum</p>
+                                <div className="text-center space-y-4">
+                                    <h2 className="text-xl font-[950] text-white uppercase tracking-[0.4em]">AI Arkitekten Konstruerer</h2>
+                                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-8 py-4">
+                                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Analyserer pensum om:</p>
+                                        <p className="text-indigo-400 font-black italic text-lg">"{loadingContext}"</p>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-1.5 pt-2">
+                                        {[0, 1, 2].map((i) => (
+                                            <motion.div
+                                                key={i}
+                                                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                                                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                                                className="w-2 h-2 bg-indigo-500 rounded-full"
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         ) : error ? (
@@ -357,7 +492,25 @@ function MindmapContent() {
                                 <Button onClick={() => fetchMindmap()} className="bg-indigo-600 text-white rounded-2xl h-14 px-10 mt-4">Prøv igen</Button>
                             </div>
                         ) : mindmapData ? (
-                            <div className="flex flex-col items-center space-y-24 min-w-max">
+                            <div className="flex flex-col items-center space-y-24 min-w-max relative">
+                                {/* SVG CONNECTIONS (Cross-links) */}
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-0 opacity-40">
+                                    <defs>
+                                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                            <polygon points="0 0, 10 3.5, 0 7" fill="rgba(245, 158, 11, 0.5)" />
+                                        </marker>
+                                    </defs>
+                                    {mindmapData.connections?.map((conn: any, cIdx: number) => {
+                                        const fromEl = document.getElementById(conn.from);
+                                        const toEl = document.getElementById(conn.to);
+                                        if (!fromEl || !toEl) return null;
+                                        
+                                        // Simple approximation as we are in a motion div
+                                        // Real implementation would use absolute positioning tracking
+                                        return null; 
+                                    })}
+                                </svg>
+
                                 {/* ROOT NODE */}
                                 <motion.div 
                                     initial={{ opacity: 0, scale: 0.9 }}
@@ -365,6 +518,7 @@ function MindmapContent() {
                                     className="relative group"
                                 >
                                     <div 
+                                        id={mindmapData.root.id || 'root'}
                                         onClick={() => handleNodeClick(mindmapData.root)}
                                         className="px-16 py-10 bg-white text-slate-950 rounded-[3rem] shadow-[0_0_100px_rgba(99,102,241,0.2)] relative z-10 border-[6px] border-indigo-500/20 cursor-pointer hover:scale-105 transition-transform"
                                     >
@@ -385,6 +539,7 @@ function MindmapContent() {
                                                 className="w-full relative"
                                             >
                                                 <div 
+                                                    id={branch.id}
                                                     onClick={() => handleNodeClick(branch)}
                                                     className={`p-10 rounded-[2.5rem] ${colorClasses[branch.color as keyof typeof colorClasses] || colorClasses.indigo} shadow-2xl relative z-10 min-w-[300px] cursor-pointer hover:scale-105 transition-transform`}
                                                 >
@@ -411,6 +566,7 @@ function MindmapContent() {
                                                         className="relative"
                                                     >
                                                         <motion.div 
+                                                            id={child.id}
                                                             onClick={() => handleNodeClick(child)}
                                                             whileHover={{ x: 10, scale: 1.02 }}
                                                             className="p-8 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-3xl hover:border-white/20 transition-all group/node cursor-pointer"
@@ -512,8 +668,8 @@ function MindmapContent() {
                                                 </p>
                                                 
                                                 <div className="bg-white/5 rounded-2xl p-6 border border-white/5">
-                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">APA Reference</p>
-                                                    <p className="text-xs text-slate-400 leading-relaxed italic">
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Kilde</p>
+                                                    <p className="text-xs text-slate-400 leading-relaxed font-bold">
                                                         {source.citation}
                                                     </p>
                                                 </div>
