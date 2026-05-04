@@ -23,7 +23,6 @@ import {
   Zap,
   Filter,
   GraduationCap,
-  Building,
   Crown,
   Lock,
   Info,
@@ -38,9 +37,10 @@ import {
   Sparkles,
   MessageSquare,
   ArrowRight,
-  Edit2
+  Edit2,
+  Maximize
 } from 'lucide-react';
-import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction, materialVectorChatAction, indexMaterialAction, migrateMaterialsAction } from '@/app/actions';
+import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction, materialVectorChatAction, indexMaterialAction, migrateMaterialsAction, generateMaterialMindmapAction } from '@/app/actions';
 import { extractText } from 'unpdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -76,9 +76,9 @@ interface Material {
   institution: string;
   profession: string;
   createdAt: any;
-  isIndexed?: boolean | 'error' | 'pending' | 'success' | 'generating' | 'true';
+  isIndexed?: boolean | 'error' | 'pending' | 'success' | 'generating' | 'true' | 'processing' | 'loading' | 'indexing' | 'failed';
   rawText?: string;
-  aiOverviewData?: string;
+  aiOverviewData?: any; // Changed from string to any
   overviewGeneratedAt?: any;
   tags?: string[];
   suggestedQuestions?: string[];
@@ -104,6 +104,7 @@ export default function MineMaterialerPage() {
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [studyMode, setStudyMode] = useState<{ active: boolean, materialId: string | null, page: number }>({ active: false, materialId: null, page: 1 });
 
   const currentSemesterId = userProfile?.semester || '1';
   const currentInstitution = userProfile?.institution || 'Ikke angivet';
@@ -242,7 +243,6 @@ export default function MineMaterialerPage() {
         let answer = "Kunne ikke generere et svar.";
         
         if (hasVectorIndexed && user) {
-            // Brug den nye Vector Database RAG søgning
             const response = await materialVectorChatAction({
                 userId: user.uid,
                 message: userMessage,
@@ -250,10 +250,9 @@ export default function MineMaterialerPage() {
             });
             answer = response?.answer || "Kunne ikke generere et svar.";
         } else {
-            // Fallback til legacy RAG (sender hele teksten med op til token limit)
             const contextText = filteredMaterials
                 .filter(m => m.rawText)
-                .map(m => `--- DOKUMENT: ${m.name} ---\n${m.rawText?.substring(0, 8000)}`) // Limit slightly to avoid huge payloads
+                .map(m => `--- DOKUMENT: ${m.name} ---\n${m.rawText?.substring(0, 8000)}`)
                 .join('\n\n');
 
             const prompt = `Du har adgang til følgende dokumenter fra brugerens vidensarkiv:\n\n${contextText}\n\nBesvar brugerens spørgsmål baseret på ovenstående dokumenter. Skriv i et naturligt, menneskeligt og dialogbaseret sprog frem for at lyde som en robot. Vær gerne uformel, men faglig. Hvis svaret ikke findes heri, så brug din generelle faglige viden, men gør opmærksom på det. BRUG KUN HTML-tags (<b>, <ul>, <li>) til formatering, BRUG ALDRIG markdown asterisker (**). Start dit svar direkte uden nogen form for hilsen (ingen "Kære studerende", "Hej" eller lignende).`;
@@ -261,10 +260,10 @@ export default function MineMaterialerPage() {
             const response = await unifiedChatAction({
                 message: userMessage,
                 chatHistory: globalChatMessages.map(m => ({ role: m.role, content: m.text })),
-                persona: 'academic',
+                persona: 'kollega', // Changed from 'academic' to 'kollega'
                 context: { relevantDocumentIds: [], lawContext: prompt }
             });
-            answer = response?.data?.answer || response?.answer || "Kunne ikke generere et svar.";
+            answer = response?.data?.answer || "Kunne ikke generere et svar.";
         }
         const botMsg = { id: Date.now().toString(), role: 'assistant' as const, text: answer };
         
@@ -301,6 +300,23 @@ export default function MineMaterialerPage() {
         setIsGlobalChatLoading(false);
     }
   };
+
+  const parseCitations = (html: string, materialId?: string) => {
+    if (!html) return html;
+    return html.replace(/(\(S\.\s*(\d+)\)|\[S\.\s*(\d+)\])/gi, (match, full, p1, p2) => {
+        const page = p1 || p2;
+        return `<button class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md font-black text-[10px] hover:bg-indigo-600 hover:text-white transition-all ml-1 border border-indigo-100" onclick="window.openAtPage('${materialId || ''}', ${page})">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            S. ${page}
+        </button>`;
+    });
+  };
+
+  useEffect(() => {
+    (window as any).openAtPage = (materialId: string, page: number) => {
+        setStudyMode({ active: true, materialId: materialId || selectedMaterial?.id || null, page });
+    };
+  }, [selectedMaterial]);
 
   const handleGenerateGoalInsight = async (goal: string) => {
     if (!user || isInsightLoading) return;
@@ -352,11 +368,11 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
         const response = await unifiedChatAction({
             message: prompt,
             chatHistory: [],
-            persona: 'academic',
+            persona: 'kollega', // Changed from 'academic' to 'kollega'
             context: { relevantDocumentIds: [], lawContext: '' }
         });
         
-        const answer = response?.data?.answer || response?.answer || "Kunne ikke generere et svar.";
+        const answer = response?.data?.answer || "Kunne ikke generere et svar.";
         setChatState(prev => prev?.goal === goal ? { goal, text: answer, loading: false } : prev);
     } catch (e) {
         console.error("Chat error:", e);
@@ -370,14 +386,23 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
     const fromList = materials.find(m => m.id === selectedMaterial.id);
     const material = fromList || selectedMaterial;
     
-    // Merge in local overview if we just generated it
     if (localOverview[material.id]) {
-      return { ...material, aiOverviewData: localOverview[material.id] };
+      const parsed = typeof localOverview[material.id] === 'string' ? JSON.parse(localOverview[material.id]) : localOverview[material.id];
+      return { ...material, aiOverviewData: parsed };
     }
+    
+    // Ensure aiOverviewData is parsed if it's a string
+    if (typeof material.aiOverviewData === 'string') {
+        try {
+            return { ...material, aiOverviewData: JSON.parse(material.aiOverviewData) };
+        } catch (e) {
+            console.error("Failed to parse aiOverviewData", e);
+        }
+    }
+
     return material;
   }, [materials, selectedMaterial, localOverview]);
 
-  // Fetch Materials for current semester
   useEffect(() => {
     if (!user || !firestore || !userProfile) return;
     
@@ -418,7 +443,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
       });
   }, [materials, searchQuery, selectedTag]);
 
-  // 3. Handle File Upload
   const handleUpload = async (files: FileList | null) => {
     if (!files || !user || !storage || !firestore || !userProfile || !isKollegaPlus) return;
     
@@ -442,7 +466,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
         async () => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           
-          // 1. Save initial record
           const materialRef = await addDoc(collection(firestore, 'users', user.uid, 'materials'), {
             name: file.name,
             type: file.type,
@@ -457,11 +480,8 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
             createdAt: serverTimestamp()
           });
 
-          // 2. Trigger Client-side PDF Indexing
           try {
             console.log(`[MineMaterialer] Extracting text from ${file.name}...`);
-            
-            // Mark as processing in Firestore via update (it exists now)
             const refDoc = doc(firestore, 'users', user.uid, 'materials', materialRef.id);
             await updateDoc(refDoc, { isIndexed: 'processing' });
 
@@ -484,7 +504,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
               rawText: rawText.trim()
             });
             
-            // 2.5 Trigger AI Overview generation (BACKGROUND - don't await fully)
             console.log(`[MineMaterialer] Starting AI overview generation in background for ${file.name}...`);
             generateMaterialAIOverviewAction({
               userId: user.uid,
@@ -493,10 +512,9 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
               candidateLearningGoals: activeModule?.learningGoals || [] 
             }).catch(e => console.error("Auto-AI generation failed:", e));
 
-            // 3. Final update on client to ensure UI reflects success immediately
             await updateDoc(refDoc, { 
                 isIndexed: true,
-                rawText: rawText.trim() // Also update rawText locally
+                rawText: rawText.trim()
             });
             
             console.log(`[MineMaterialer] Indexing complete for ${file.name}!`);
@@ -520,7 +538,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
     }
   };
 
-  // 7. Manual migration / re-index
   const handleMigrateArchive = async () => {
     if (!user || isMigrating) return;
     
@@ -578,7 +595,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
   const handleSuggestedQuestionClick = async (question: string, material: Material) => {
     if (!user || loadingQuestion) return;
     
-    // Hvis vi allerede har svaret, så gør ikke mere (eller vi kan lade den køre igen)
     if (suggestedAnswers[`${material.id}_${question}`]) return;
 
     setLoadingQuestion(`${material.id}_${question}`);
@@ -587,7 +603,7 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
             userId: user.uid,
             message: question,
             materialId: material.id,
-            chatHistory: [] // Vi vil have et rent svar på dette spørgsmål
+            chatHistory: []
         });
         
         if (res.answer) {
@@ -601,6 +617,15 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
         toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke hente svar på spørgsmålet." });
     } finally {
         setLoadingQuestion(null);
+    }
+  };
+
+  const handleOpenMindmap = (materialId?: string) => {
+    console.log("Opening mindmap for:", materialId || 'all');
+    if (materialId) {
+        router.push(`/mine-materialer/mindmap?materialId=${materialId}`);
+    } else {
+        router.push('/mine-materialer/mindmap');
     }
   };
 
@@ -628,7 +653,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col selection:bg-indigo-100 font-sans">
-      {/* Decorative Background */}
       <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.03)_0%,transparent_70%)] rounded-full blur-[120px] pointer-events-none z-0"></div>
       
       <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 py-6 sticky top-0 z-[60]">
@@ -658,7 +682,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
       <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-12 relative z-10">
         <div className="grid lg:grid-cols-[380px,1fr] gap-12 items-start">
           
-          {/* SIDEBAR */}
           <aside className="space-y-8">
             <section className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
               <div className="space-y-6">
@@ -687,8 +710,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
               </div>
             </section>
 
-
-            {/* SYLLABUS MAPPING DASHBOARD (SIDEBAR VERSION) */}
             {activeModule?.learningGoals && activeModule.learningGoals.length > 0 && (
                 <section className="bg-slate-950 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group border border-slate-800">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000">
@@ -770,9 +791,7 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
             )}
           </aside>
 
-          {/* MAIN CONTENT */}
           <div className="space-y-10">
-            {/* UPLOAD AREA */}
             <section className="bg-white p-12 rounded-[3.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-all group relative overflow-hidden shadow-sm">
                {!isKollegaPlus ? (
                  <div className="flex flex-col items-center justify-center py-10 space-y-8 text-center">
@@ -850,10 +869,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                )}
             </section>
 
-
-
-
-            {/* MATERIAL LIST */}
             <section className="space-y-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
                   <div className="flex items-center gap-4">
@@ -885,31 +900,41 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                     )}
                   </Button>
 
-                  <div className="flex items-center gap-4 flex-grow max-w-xl">
-                    <div className="relative group flex-grow">
-                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
-                      <input 
-                        type="text" 
-                        placeholder="Søg i dine materialer..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-300 shadow-sm"
-                      />
+                    <div className="flex items-center gap-4 flex-grow max-w-xl">
+                      <div className="relative group flex-grow">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                        <input 
+                          type="text" 
+                          placeholder="Søg i dine materialer..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-300 shadow-sm"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <Link href="/mine-materialer/mindmap">
+                            <Button 
+                                className="h-14 px-6 bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100/20 flex items-center gap-2 shrink-0 transition-all hover:scale-105 active:scale-95"
+                            >
+                                <Layout className="w-4 h-4" />
+                                <span className="hidden sm:inline">Vis Mindmap</span>
+                            </Button>
+                        </Link>
+
+                        <Button 
+                            onClick={() => setIsGlobalChatOpen(true)}
+                            className="h-14 px-6 sm:px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100 flex items-center gap-2 shrink-0 transition-all hover:scale-105 active:scale-95"
+                        >
+                            <Brain className="w-4 h-4" />
+                            <span className="hidden sm:inline">Chat med arkiv</span>
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <Button 
-                        onClick={() => setIsGlobalChatOpen(true)}
-                        className="h-14 px-6 sm:px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100 flex items-center gap-2 shrink-0 transition-all hover:scale-105 active:scale-95"
-                    >
-                        <Brain className="w-4 h-4" />
-                        <span className="hidden sm:inline">Chat med arkiv</span>
-                    </Button>
-                  </div>
               </div>
 
               <div className="grid gap-4">
                 <AnimatePresence mode="popLayout">
-                    {/* Tag Filter Bar */}
                     {allTags.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-10 pb-6 border-b border-slate-50">
                             <button 
@@ -1034,7 +1059,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{(material.size / 1024 / 1024).toFixed(1)} MB</span>
                               </div>
                               
-                              {/* Display Tags on Card */}
                               {material.tags && material.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5 mt-4">
                                       {material.tags.slice(0, 3).map((tag, idx) => (
@@ -1099,11 +1123,9 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
         </div>
       </main>
 
-      {/* DETAIL MODAL / DRAWER */}
       <AnimatePresence>
         {activeMaterial && (
             <>
-                {console.log("[MineMaterialer] Modal active material status:", activeMaterial.isIndexed)}
                 <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -1128,6 +1150,15 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                 <X className="w-6 h-6" />
                             </button>
                             <div className="flex items-center gap-3">
+                                <Link href={`/mine-materialer/mindmap?materialId=${activeMaterial.id}`}>
+                                    <Button 
+                                        variant="outline" 
+                                        className="rounded-2xl border-indigo-100 text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 font-black uppercase tracking-widest text-[10px] h-12 px-8 flex items-center gap-2"
+                                    >
+                                        <Layout className="w-4 h-4" />
+                                        <span>Mindmap</span>
+                                    </Button>
+                                </Link>
                                 <a href={activeMaterial.url} target="_blank" rel="noopener noreferrer">
                                     <Button variant="outline" className="rounded-2xl border-slate-200 font-black uppercase tracking-widest text-[10px] h-12 px-8">Åbn original</Button>
                                 </a>
@@ -1180,9 +1211,7 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                                     )}
                                                 </div>
                                                 <div className="space-y-10 pb-12">
-                                                    {/* VECTOR INSIGHTS (NEW SMARTER UI) */}
                                                     <div className="space-y-12">
-                                                        {/* Tags Section */}
                                                         {activeMaterial.tags && activeMaterial.tags.length > 0 && (
                                                             <div className="space-y-4">
                                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
@@ -1199,7 +1228,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                                             </div>
                                                         )}
 
-                                                        {/* Suggested Questions (The "Smarter" part) */}
                                                         <div className="space-y-6">
                                                             <div className="flex items-center justify-between">
                                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
@@ -1208,6 +1236,34 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                                                 </h4>
                                                                 <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">Vector Powered</span>
                                                             </div>
+                                                            
+                                                            {/* Entities (Concepts, Theories, etc.) - NEW */}
+                                                            {activeMaterial.aiOverviewData?.entities && activeMaterial.aiOverviewData.entities.length > 0 && (
+                                                                <div className="flex flex-wrap gap-3 mb-8">
+                                                                    {activeMaterial.aiOverviewData.entities.map((entity: any, idx: number) => (
+                                                                        <button 
+                                                                            key={idx}
+                                                                            onClick={() => entity.pageNumber && setStudyMode({ active: true, materialId: activeMaterial.id, page: entity.pageNumber })}
+                                                                            className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-2xl hover:border-indigo-400 hover:shadow-lg transition-all group/entity"
+                                                                        >
+                                                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                                                                                entity.type === 'theory' ? 'bg-amber-50 text-amber-600' :
+                                                                                entity.type === 'concept' ? 'bg-indigo-50 text-indigo-600' :
+                                                                                'bg-slate-50 text-slate-600'
+                                                                            }`}>
+                                                                                {entity.type === 'theory' ? <BookOpen className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
+                                                                            </div>
+                                                                            <div className="text-left">
+                                                                                <p className="text-[11px] font-black text-slate-900 group-hover/entity:text-indigo-600 transition-colors">{entity.name}</p>
+                                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                                    {entity.type} {entity.pageNumber ? `• Side ${entity.pageNumber}` : ''}
+                                                                                </p>
+                                                                            </div>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                             )}
+
                                                             <div className="grid grid-cols-1 gap-4">
                                                                 {(activeMaterial.suggestedQuestions || [
                                                                     "Hvad er de vigtigste pointer i dette dokument?",
@@ -1255,7 +1311,7 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                                                                                 <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">AI Svar</span>
                                                                                             </div>
                                                                                             <div 
-                                                                                                dangerouslySetInnerHTML={{ __html: answer }}
+                                                                                                dangerouslySetInnerHTML={{ __html: parseCitations(answer, activeMaterial.id) }}
                                                                                                 className="prose prose-slate prose-sm max-w-none"
                                                                                             />
                                                                                         </div>
@@ -1268,7 +1324,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                                             </div>
                                                         </div>
 
-                                                        {/* Status Indicator */}
                                                         <div className="p-8 bg-indigo-50/50 border border-indigo-100/50 rounded-[2.5rem] flex items-start gap-4">
                                                             <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm">
                                                                 <Zap className="w-5 h-5 text-indigo-600" />
@@ -1319,7 +1374,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
         )}
       </AnimatePresence>
 
-      {/* GLOBAL CHAT MODAL */}
       <AnimatePresence>
         {isGlobalChatOpen && (
             <>
@@ -1337,7 +1391,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                     className="fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-2xl z-[101] flex"
                 >
-                    {/* Sidebar / History */}
                     <AnimatePresence>
                         {showChatHistory && (
                             <motion.div 
@@ -1381,7 +1434,6 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                         )}
                     </AnimatePresence>
 
-                    {/* Chat Area */}
                     <div className="flex-1 flex flex-col h-full bg-[#F8F9FA] relative">
                         <div className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-white z-10 shrink-0">
                             <div className="flex items-center gap-4">
@@ -1437,7 +1489,7 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                     msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
                                 }`}>
                                     <div className={msg.role === 'user' ? 'text-white font-bold text-sm leading-relaxed [&_*]:text-white' : 'prose prose-sm max-w-none prose-p:leading-relaxed font-medium'}
-                                         dangerouslySetInnerHTML={{ __html: msg.text.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') }} />
+                                         dangerouslySetInnerHTML={{ __html: parseCitations(msg.text.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')) }} />
                                 </div>
                             </div>
                         ))}
@@ -1525,7 +1577,7 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                   </div>
                               ) : (
                                   <div 
-                                      dangerouslySetInnerHTML={{ __html: selectedGoalInsight.insight }}
+                                      dangerouslySetInnerHTML={{ __html: parseCitations(selectedGoalInsight.insight) }}
                                       className="prose prose-slate prose-xl max-w-none w-full text-slate-600 leading-[1.6] font-medium space-y-10 
                                                  prose-b:text-slate-950 prose-b:font-black
                                                  prose-ul:space-y-4 prose-li:pl-2
@@ -1582,6 +1634,53 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
               </motion.div>
           )}
       </AnimatePresence>
+      {/* STUDY MODE MODAL (PDF VIEWER) */}
+      <AnimatePresence>
+        {studyMode.active && (
+            <>
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[200]"
+                />
+                <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="fixed inset-4 sm:inset-10 bg-white rounded-[3rem] shadow-2xl z-[201] overflow-hidden flex flex-col"
+                >
+                    <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                <BookOpen className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-900 tracking-tight">Studie-flow: {materials.find(m => m.id === studyMode.materialId)?.name}</h3>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Side {studyMode.page}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Button 
+                                onClick={() => setStudyMode(prev => ({ ...prev, active: false }))}
+                                className="h-10 px-6 bg-slate-900 text-white rounded-xl font-black uppercase tracking-widest text-[10px]"
+                            >
+                                Luk Studie-flow
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="flex-1 bg-slate-100 relative">
+                        <iframe 
+                            src={`${materials.find(m => m.id === studyMode.materialId)?.url}#page=${studyMode.page}`}
+                            className="w-full h-full border-none"
+                            title="PDF Viewer"
+                        />
+                    </div>
+                </motion.div>
+            </>
+        )}
+      </AnimatePresence>
+      
     </div>
   );
 }

@@ -1312,7 +1312,8 @@ Du SKAL returnere et JSON objekt med denne struktur:
       "name": "Navn på begreb, teori eller person",
       "type": "concept | theory | person | organization",
       "description": "Kort forklaring af hvad det er",
-      "relatedGoals": ["Navn på læringsmål det understøtter"]
+      "relatedGoals": ["Navn på læringsmål det understøtter"],
+      "pageNumber": 1
     }
   ]
 }
@@ -1528,6 +1529,147 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
             .doc(input.materialId)
             .update({ isIndexed: true });
         throw err;
+    }
+}
+
+export async function generateMaterialMindmapAction(input: {
+    userId: string,
+    materialId?: string, // If missing, use all materials for the semester
+    semesterId: string,
+    rawText?: string, // If provided, use this. Otherwise fetch from Firestore.
+    focus?: string // Optional special focus
+}) {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    try {
+        const geminiKey = process.env.GEMINI_API_KEY;
+        if (!geminiKey) throw new Error("GEMINI_API_KEY mangler.");
+
+        let textToAnalyze = input.rawText || "";
+
+        if (!textToAnalyze && input.userId && input.semesterId) {
+            if (input.materialId) {
+                // Fetch chunks for specific material
+                const chunksSnapshot = await adminFirestore.collection('users')
+                    .doc(input.userId)
+                    .collection('materialChunks')
+                    .where('materialId', '==', input.materialId)
+                    .orderBy('chunkIndex', 'asc')
+                    .get();
+                
+                textToAnalyze = chunksSnapshot.docs
+                    .map(doc => doc.data().text || "")
+                    .join('\n');
+            } else {
+                // Fetch materials for this semester to get their IDs
+                const materialsSnapshot = await adminFirestore.collection('users')
+                    .doc(input.userId)
+                    .collection('materials')
+                    .where('semester', '==', input.semesterId)
+                    .get();
+                
+                const materialIds = materialsSnapshot.docs.map(doc => doc.id);
+                
+                if (materialIds.length > 0) {
+                    console.log(`[Mindmap] Fetching diverse chunks for ${materialIds.length} materials`);
+                    
+                    // Fetch top 30 chunks from EACH material to ensure diversity
+                    const materialPromises = materialIds.map(id => 
+                        adminFirestore.collection('users')
+                            .doc(input.userId)
+                            .collection('materialChunks')
+                            .where('materialId', '==', id)
+                            .limit(30)
+                            .get()
+                    );
+                    
+                    const snapshots = await Promise.all(materialPromises);
+                    let allChunks: any[] = [];
+                    snapshots.forEach(snap => {
+                        allChunks.push(...snap.docs.map(doc => doc.data()));
+                    });
+                    
+                    console.log(`[Mindmap] Total diverse chunks collected: ${allChunks.length}`);
+                    
+                    textToAnalyze = allChunks
+                        .map(c => c.text || "")
+                        .join('\n')
+                        .substring(0, 60000); // Increased limit slightly for more detail
+                    
+                    console.log(`[Mindmap] Final diverse text length: ${textToAnalyze.length}`);
+                }
+            }
+        }
+
+        const prompt = `Du er en ekspert i at analysere pensum og identificere tværgående temaer. 
+Din opgave er at analysere den vedhæftede tekst (som består af uddrag fra flere dokumenter i et studieforløb) og skabe et omfattende, hierarkisk mindmap.
+
+${input.focus ? `VIGTIGT FOKUS: Brugeren har bedt om at mindmapet skal have særligt fokus på: "${input.focus}". Sørg for at dette fokus gennemsyrer analysen og temaerne.` : 'VIGTIGT: Du SKAL identificere de mest centrale TEMAER, der optræder i materialet. Gruppér viden logisk efter disse temaer, så den studerende kan se sammenhænge og de røde tråde i sit pensum.'}
+
+Du SKAL returnere et JSON objekt med denne struktur:
+{
+  "root": {
+    "text": "Overordnet Tema / Modulnavn",
+    "children": [
+      {
+        "text": "Identificeret Tema",
+        "color": "indigo | emerald | rose | amber | sky",
+        "children": [
+          {
+            "text": "Underpunkt / Koncept",
+            "description": "Kort forklaring af hvordan dette punkt relaterer sig til temaet",
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}
+
+REGLER:
+1. Identificer mindst 6-8 unikke temaer hvis muligt.
+2. Hver temagren skal have mindst 3-5 underpunkter.
+3. Brug 'color' feltet til at give forskellige farver til temaerne.
+4. Sørg for at 'text' er kort og sigende.
+5. 'description' skal give en hurtig indsigt i punktets betydning.
+6. Returner KUN JSON. Ingen forklarende tekst.
+
+Teksten:\n\n${textToAnalyze}`;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 35000); // 35 seconds
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { 
+                    temperature: 0.2, 
+                    maxOutputTokens: 8192,
+                    response_mime_type: "application/json"
+                }
+            }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const aiData = await response.json();
+            const result = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+            const mindmapJson = JSON.parse(result);
+
+            // Optional: Auto-save could be here, but let's do it via a separate action for more control
+            
+            return { success: true, mindmap: mindmapJson };
+        } else {
+            const errorBody = await response.text();
+            console.error("[generateMindmap] Gemini API Error:", errorBody);
+            throw new Error(`AI Tjeneste Fejl: ${response.status}`);
+        }
+    } catch (err: any) {
+        console.error("generateMaterialMindmapAction Error:", err);
+        return { success: false, error: err.message };
     }
 }
 
@@ -4300,5 +4442,170 @@ export async function generateJournalScenarioAction(input: { topic?: string, pro
 
 export async function evaluateJournalEntryAction(input: { scenario: any, journalContent: string, profession?: string }) {
     return callFirebaseFlow('evaluateJournalEntryFlow', input);
+}
+
+export async function saveMindmapAction(input: {
+    userId: string,
+    semesterId: string,
+    title: string,
+    data: any
+}) {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    try {
+        const docRef = await adminFirestore.collection('users')
+            .doc(input.userId)
+            .collection('userMindmaps')
+            .add({
+                semesterId: input.semesterId,
+                title: input.title,
+                data: input.data,
+                createdAt: new Date().toISOString()
+            });
+        return { success: true, id: docRef.id };
+    } catch (error: any) {
+        console.error("Error saving mindmap:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function getMindmapsAction(userId: string, semesterId: string) {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    try {
+        const snapshot = await adminFirestore.collection('users')
+            .doc(userId)
+            .collection('userMindmaps')
+            .where('semesterId', '==', semesterId)
+            .get();
+        
+        const mindmaps = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        return { success: true, mindmaps };
+    } catch (error: any) {
+        console.error("Error fetching mindmaps:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function deleteMindmapAction(userId: string, mindmapId: string) {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    try {
+        await adminFirestore.collection('users')
+            .doc(userId)
+            .collection('userMindmaps')
+            .doc(mindmapId)
+            .delete();
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error deleting mindmap:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function getMindmapNodeSourceAction(input: {
+    userId: string,
+    semesterId: string,
+    nodeText: string
+}) {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    try {
+        // Fetch chunks for this semester
+        const materialsSnapshot = await adminFirestore.collection('users')
+            .doc(input.userId)
+            .collection('materials')
+            .where('semester', '==', input.semesterId)
+            .get();
+        
+        const materialIds = materialsSnapshot.docs.map(doc => doc.id);
+        if (materialIds.length === 0) return { success: true, sourceText: "Ingen materialer fundet." };
+
+        // Search across ALL materials for this semester
+        const chunksSnapshot = await adminFirestore.collection('users')
+            .doc(input.userId)
+            .collection('materialChunks')
+            .where('materialId', 'in', materialIds) // Use all IDs
+            .limit(1000) // Increase limit to find more relevant chunks
+            .get();
+        
+        const chunks = chunksSnapshot.docs.map(doc => ({
+            text: doc.data().text || "",
+            materialId: doc.data().materialId
+        }));
+        
+        const keywords = input.nodeText.toLowerCase().split(' ').filter(w => w.length > 3);
+        const sourceResults: { text: string, citation: string }[] = [];
+        const seenMaterialIds = new Set<string>();
+
+        // Sort chunks by relevance
+        const scoredChunks = chunksSnapshot.docs.map(doc => {
+            const text = doc.data().text || "";
+            const materialId = doc.data().materialId;
+            let score = 0;
+            for (const kw of keywords) {
+                if (text.toLowerCase().includes(kw)) score++;
+            }
+            return { text, materialId, score };
+        }).filter(c => c.score > 0).sort((a, b) => b.score - a.score);
+
+        // Take top 3 unique materials
+        for (const chunkObj of scoredChunks) {
+            if (sourceResults.length >= 3) break;
+            if (seenMaterialIds.has(chunkObj.materialId)) continue;
+            seenMaterialIds.add(chunkObj.materialId);
+
+            let citation = "Kilde ukendt";
+            let formattedSource = chunkObj.text;
+
+            const matDoc = await adminFirestore.collection('users')
+                .doc(input.userId)
+                .collection('materials')
+                .doc(chunkObj.materialId)
+                .get();
+            
+            if (matDoc.exists) {
+                const data = matDoc.data();
+                
+                // Try multiple field names for author
+                let author = data?.author || data?.metadata?.author || data?.createdBy || "Ukendt forfatter";
+                // If it's a full name like "Sebastian Viste", we can keep it, but if it's "Ukendt", try to find a better one
+                
+                let year = data?.year || data?.metadata?.year || data?.createdAt?.toDate?.()?.getFullYear?.() || "u.å.";
+                
+                // Try multiple field names for title
+                let title = data?.title || data?.name || data?.fileName || data?.metadata?.title || "Uden titel";
+
+                citation = `${author} (${year}). ${title}.`;
+
+                try {
+                    const formatPrompt = `Du er en redaktør. Her er et uddrag fra et studiemateriale om "${input.nodeText}". 
+                    Gør teksten mere læsevenlig ved at tilføje logiske afsnit. Bevar det præcise indhold.
+                    TEKST: ${chunkObj.text}`;
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: formatPrompt }] }] })
+                    });
+
+                    if (response.ok) {
+                        const resData = await response.json();
+                        const result = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (result) formattedSource = result;
+                    }
+                } catch (err) {}
+            }
+            sourceResults.push({ text: formattedSource, citation });
+        }
+
+        return { 
+            success: true, 
+            sources: sourceResults.length > 0 ? sourceResults : [{ text: "Ingen præcise kilder fundet.", citation: "Kilde ukendt" }]
+        };
+    } catch (error: any) {
+        console.error("Error fetching node source:", error);
+        return { success: false, error: error.message };
+    }
 }
 

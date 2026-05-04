@@ -796,8 +796,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           </>
         )}
         <main 
-          className={`relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage || isJourney) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${((isLovPortal || isMitSemester) && !isNativeApp) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
-          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' && !isJourney ? `calc(${totalBannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (totalBannerOffset > 0 && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${totalBannerOffset}px` : undefined) }}
+          className={`relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage || isJourney || pathname?.includes('/mindmap')) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${((isLovPortal || isMitSemester) && !isNativeApp) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
+          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' && !isJourney && !pathname?.includes('/mindmap') ? `calc(${totalBannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (totalBannerOffset > 0 && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${totalBannerOffset}px` : undefined) }}
         >
             {/* Soft top gradient to blend with navbar when scrolling */}
             {!isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && (
@@ -814,7 +814,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/klaus-viste') && !isJourney && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/klaus-viste') && !isJourney && !pathname?.includes('/mindmap') && <Footer />}
 
 
         

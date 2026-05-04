@@ -83,6 +83,7 @@ Besvar brugerens spørgsmål baseret på den givne kontekst.
 - Hvis svaret findes i uddragene, så giv et præcist og hjælpsomt svar.
 - Hvis svaret IKKE findes i uddragene, så svar ud fra din generelle viden, men gør opmærksom på at informationen ikke findes i ${materialId ? 'det valgte dokument' : 'arkivet'}.
 - Skriv i et naturligt, pædagogisk og menneskeligt sprog.
+- VIGTIGT: Hvis informationen findes i uddragene, SKAL du inkludere sidetal som reference i parentes til sidst i sætningen, f.eks. (S. 12).
 - Brug KUN HTML-tags (<b>, <ul>, <li>) til formatering. BRUG ALDRIG markdown.
 - Start dit svar direkte uden hilsen.`,
             prompt: `
