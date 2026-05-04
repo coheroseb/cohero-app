@@ -834,7 +834,6 @@ const PortalPageContent: React.FC = () => {
                   { title: "Journal-træner", icon: FileText, path: "/journal-trainer", color: "bg-indigo-50 text-indigo-600" },
                   { title: "Eksamen", icon: Layout, path: "/exam-architect", color: "bg-indigo-50 text-indigo-600" },
                   { title: "Case Analyser", icon: FileSearch, path: "/case-analyser", color: "bg-purple-50 text-purple-600" },
-                  { title: "Lærings-sti", icon: Target, path: "/laerings-sti", color: "bg-rose-50 text-rose-600" },
                   { title: "Begreber", icon: Brain, path: "/concept-explainer", color: "bg-emerald-50 text-emerald-600" },
                 ].map((tool, i) => (
                   <Link key={i} href={tool.path} className="group flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-3xl border border-transparent hover:border-amber-200 hover:bg-white transition-all shadow-sm">

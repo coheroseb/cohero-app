@@ -1032,7 +1032,7 @@ export async function unifiedChatAction(input: Types.UnifiedChatInput): Promise<
     return callFirebaseFlow('unifiedChatFlow', input); 
 }
 
-export async function materialVectorChatAction(input: { userId: string, message: string, chatHistory?: any[] }): Promise<{ answer: string }> {
+export async function materialVectorChatAction(input: { userId: string, message: string, materialId?: string, chatHistory?: any[] }): Promise<{ answer: string }> {
     return callFirebaseFlow('materialVectorChatFlow', input);
 }
 
@@ -1040,7 +1040,7 @@ export async function indexMaterialAction(input: { userId: string, materialId: s
     return callFirebaseFlow('indexMaterialFlow', input);
 }
 
-export async function migrateMaterialsAction(input: { userId: string }) {
+export async function migrateMaterialsAction(input: { userId: string, force?: boolean }) {
     return callFirebaseFlow('migrateMaterialsFlow', input);
 }
 
@@ -1305,6 +1305,14 @@ Du SKAL returnere et JSON objekt med denne struktur:
           "pageNumber": 1 
         }
       ]
+    }
+  ],
+  "entities": [
+    {
+      "name": "Navn på begreb, teori eller person",
+      "type": "concept | theory | person | organization",
+      "description": "Kort forklaring af hvad det er",
+      "relatedGoals": ["Navn på læringsmål det understøtter"]
     }
   ]
 }

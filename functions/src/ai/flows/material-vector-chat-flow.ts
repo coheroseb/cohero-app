@@ -10,6 +10,7 @@ export const materialVectorChatFlow = ai.defineFlow(
         inputSchema: z.object({
             userId: z.string(),
             message: z.string(),
+            materialId: z.string().optional(),
             chatHistory: z.array(z.object({
                 role: z.enum(['user', 'assistant']),
                 content: z.string()
@@ -20,7 +21,7 @@ export const materialVectorChatFlow = ai.defineFlow(
         })
     },
     async (input) => {
-        const { userId, message, chatHistory } = input;
+        const { userId, message, materialId, chatHistory } = input;
         
         // 1. Embed brugerens spørgsmål
         const queryEmbedding = await ai.embed({
@@ -34,7 +35,13 @@ export const materialVectorChatFlow = ai.defineFlow(
         // NOTE: Dette kræver at der er oprettet et Vector Index i Firestore for collection 'materialChunks'
         let contextText = '';
         try {
-            const snapshot = await db.collection(`users/${userId}/materialChunks`)
+            let query = db.collection(`users/${userId}/materialChunks`) as any;
+            
+            if (materialId) {
+                query = query.where('materialId', '==', materialId);
+            }
+
+            const snapshot = await query
                 .findNearest('embedding', FieldValue.vector(queryEmbedding[0].embedding.slice(0, 768)), {
                     limit: 10,
                     distanceMeasure: 'COSINE'
@@ -69,12 +76,12 @@ export const materialVectorChatFlow = ai.defineFlow(
         // 3. Generér svar direkte med ai.generate (undgår Dotprompt parsing fejl)
         const res = await ai.generate({
             model: 'googleai/gemini-2.5-flash',
-            system: `Du er en hjælpsom akademisk assistent. Du har adgang til relevante uddrag fra brugerens personlige vidensarkiv.
+            system: `Du er en hjælpsom akademisk assistent. Du har adgang til relevante uddrag fra ${materialId ? 'et specifikt dokument' : 'brugerens personlige vidensarkiv'}.
             
 DIN OPGAVE:
 Besvar brugerens spørgsmål baseret på den givne kontekst. 
 - Hvis svaret findes i uddragene, så giv et præcist og hjælpsomt svar.
-- Hvis svaret IKKE findes i uddragene, så svar ud fra din generelle viden, men gør opmærksom på at informationen ikke findes i det specifikke dokument.
+- Hvis svaret IKKE findes i uddragene, så svar ud fra din generelle viden, men gør opmærksom på at informationen ikke findes i ${materialId ? 'det valgte dokument' : 'arkivet'}.
 - Skriv i et naturligt, pædagogisk og menneskeligt sprog.
 - Brug KUN HTML-tags (<b>, <ul>, <li>) til formatering. BRUG ALDRIG markdown.
 - Start dit svar direkte uden hilsen.`,

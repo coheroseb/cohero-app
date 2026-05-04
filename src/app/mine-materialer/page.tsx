@@ -162,6 +162,53 @@ export default function MineMaterialerPage() {
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renamingValue, setRenamingValue] = useState('');
+  
+  const [suggestedAnswers, setSuggestedAnswers] = useState<Record<string, string>>({});
+  const [loadingQuestion, setLoadingQuestion] = useState<string | null>(null);
+  const [showSyllabus, setShowSyllabus] = useState(false);
+  
+  const [selectedGoalInsight, setSelectedGoalInsight] = useState<{ goal: string, insight: string } | null>(null);
+  const [isInsightLoading, setIsInsightLoading] = useState(false);
+  const { setIsNavbarHidden } = useApp();
+
+  useEffect(() => {
+    if (selectedGoalInsight) {
+      setIsNavbarHidden(true);
+    } else {
+      setIsNavbarHidden(false);
+    }
+    return () => setIsNavbarHidden(false);
+  }, [selectedGoalInsight, setIsNavbarHidden]);
+
+  const learningGoalMapping = useMemo(() => {
+    if (!activeModule?.learningGoals || materials.length === 0) return [];
+    
+    return activeModule.learningGoals.map((goal: string) => {
+        const coveringMaterials = materials.filter(m => {
+            if (!m.aiOverviewData) return false;
+            try {
+                const data = JSON.parse(m.aiOverviewData);
+                return data.learningGoals?.some((lg: any) => 
+                    lg.goal.toLowerCase().includes(goal.toLowerCase()) || 
+                    goal.toLowerCase().includes(lg.goal.toLowerCase())
+                );
+            } catch (e) { return false; }
+        });
+        
+        return {
+            goal,
+            coveredBy: coveringMaterials,
+            status: coveringMaterials.length > 0 ? 'Dækket' : 'Mangler',
+            count: coveringMaterials.length
+        };
+    });
+  }, [activeModule?.learningGoals, materials]);
+
+  const totalCoverage = useMemo(() => {
+    if (learningGoalMapping.length === 0) return 0;
+    const covered = learningGoalMapping.filter(m => m.count > 0).length;
+    return Math.round((covered / learningGoalMapping.length) * 100);
+  }, [learningGoalMapping]);
 
   useEffect(() => {
       const saved = localStorage.getItem('cohero-material-chats');
@@ -252,6 +299,47 @@ export default function MineMaterialerPage() {
         toast({ variant: 'destructive', title: 'Fejl', description: 'Kunne ikke kontakte AI.' });
     } finally {
         setIsGlobalChatLoading(false);
+    }
+  };
+
+  const handleGenerateGoalInsight = async (goal: string) => {
+    if (!user || isInsightLoading) return;
+    
+    setSelectedGoalInsight({ goal, insight: '' });
+    setIsInsightLoading(true);
+    
+    try {
+        const prompt = `Du er en ekspert-vejleder. Brugeren ønsker en dybdegående analyse af deres pensum ift. læringsmålet: "${goal}".
+        
+DIN OPGAVE:
+1. OVERBLIK: Forklar kort og præcist hvad dette mål kræver af den studerende.
+2. NØGLEPUNKTER: Opsummér de 3 vigtigste koncepter fundet i kilderne.
+3. BEVISER & CITATER: Find 2-3 direkte citater eller specifikke referencer fra deres dokumenter, der forklarer dette mål bedst.
+4. TJEK DIN VIDEN (ACTIVE RECALL): Opstil 2 udfordrende spørgsmål, som den studerende bør kunne besvare for at have mestret dette mål.
+
+FORMATERING:
+- Brug <h4> til overskrifter.
+- Brug <b> til vigtige begreber.
+- Brug <blockquote> til citater (hvis muligt, ellers bare kursiv/indrykning med margin).
+- Brug <ul> og <li> til lister.
+- Brug KUN HTML-tags. Ingen markdown asterisker.
+
+Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
+
+        const res = await materialVectorChatAction({
+            userId: user.uid,
+            message: prompt,
+        });
+        
+        if (res.answer) {
+            setSelectedGoalInsight({ goal, insight: res.answer });
+        }
+    } catch (e) {
+        console.error("Goal insight failed:", e);
+        toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke generere indsigt for dette mål." });
+        setSelectedGoalInsight(null);
+    } finally {
+        setIsInsightLoading(false);
     }
   };
 
@@ -435,13 +523,16 @@ export default function MineMaterialerPage() {
   // 7. Manual migration / re-index
   const handleMigrateArchive = async () => {
     if (!user || isMigrating) return;
+    
+    const shouldForce = window.confirm("Vil du køre en fuld optimering af alle dokumenter? (Dette opdaterer også dine tags og smarte spørgsmål)");
+    
     setIsMigrating(true);
-    toast({ title: "Opdaterer arkiv...", description: "AI'en gennemgår nu alle dine dokumenter for at tilføje tags og optimere søgning." });
+    toast({ title: "Opdaterer arkiv...", description: "AI'en gennemgår nu dine dokumenter for at optimere søgning og indsigt." });
     
     try {
-        const res = await migrateMaterialsAction({ userId: user.uid });
-        if (res.success) {
-            toast({ title: "Arkiv opdateret!", description: `Færdig med at optimere ${res.processedCount} dokumenter.` });
+        const res = await migrateMaterialsAction({ userId: user.uid, force: shouldForce });
+        if (res.processed !== undefined) {
+            toast({ title: "Arkiv opdateret!", description: `Færdig med at optimere ${res.processed} dokumenter.` });
         }
     } catch (e) {
         console.error("Migration fejlede:", e);
@@ -481,6 +572,35 @@ export default function MineMaterialerPage() {
     } catch (e) {
         console.error("Rename failed:", e);
         toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke omdøbe materialet." });
+    }
+  };
+
+  const handleSuggestedQuestionClick = async (question: string, material: Material) => {
+    if (!user || loadingQuestion) return;
+    
+    // Hvis vi allerede har svaret, så gør ikke mere (eller vi kan lade den køre igen)
+    if (suggestedAnswers[`${material.id}_${question}`]) return;
+
+    setLoadingQuestion(`${material.id}_${question}`);
+    try {
+        const res = await materialVectorChatAction({
+            userId: user.uid,
+            message: question,
+            materialId: material.id,
+            chatHistory: [] // Vi vil have et rent svar på dette spørgsmål
+        });
+        
+        if (res.answer) {
+            setSuggestedAnswers(prev => ({
+                ...prev,
+                [`${material.id}_${question}`]: res.answer
+            }));
+        }
+    } catch (e) {
+        console.error("Suggested question failed:", e);
+        toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke hente svar på spørgsmålet." });
+    } finally {
+        setLoadingQuestion(null);
     }
   };
 
@@ -567,20 +687,87 @@ export default function MineMaterialerPage() {
               </div>
             </section>
 
-            <div className="bg-slate-900 p-8 rounded-[3rem] text-white shadow-xl relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-125 transition-transform duration-1000">
-                  <Zap className="w-32 h-32" />
-               </div>
-               <div className="relative z-10 space-y-4">
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/20">
-                    <FileText className="w-6 h-6 text-amber-400" />
-                  </div>
-                  <h3 className="text-lg font-black tracking-tight">Dokumentlæsning</h3>
-                  <p className="text-slate-400 text-xs leading-relaxed">
-                    Når du uploader dine materialer, udtrækker Cohéro automatisk teksten. Det gør det muligt at søge i dit pensum og bruge indholdet som reference i dine fremtidige chats.
-                  </p>
-               </div>
-            </div>
+
+            {/* SYLLABUS MAPPING DASHBOARD (SIDEBAR VERSION) */}
+            {activeModule?.learningGoals && activeModule.learningGoals.length > 0 && (
+                <section className="bg-slate-950 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group border border-slate-800">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000">
+                        <GraduationCap className="w-48 h-48" />
+                    </div>
+                    
+                    <div className="relative z-10 space-y-6 mb-8">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                                    <Brain className="w-4 h-4 text-white" />
+                                </div>
+                                <h3 className="text-sm font-black tracking-tight">Pensum-mapping</h3>
+                            </div>
+                            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex items-center gap-4 shadow-inner">
+                                <div className="relative w-12 h-12">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-white/5" />
+                                        <circle 
+                                            cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="6" fill="transparent" 
+                                            strokeDasharray={125.6} 
+                                            strokeDashoffset={125.6 - (125.6 * totalCoverage / 100)}
+                                            className="text-indigo-500 transition-all duration-1000 ease-out"
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-[10px] font-black">{totalCoverage}%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-0.5">Dækning</p>
+                                    <p className="text-[10px] font-bold text-white">
+                                        {learningGoalMapping.filter(m => m.count > 0).length}/{learningGoalMapping.length} mål
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 relative z-10">
+                        {learningGoalMapping.map((m, idx) => (
+                            <button 
+                                key={idx} 
+                                onClick={() => m.count > 0 && handleGenerateGoalInsight(m.goal)}
+                                disabled={m.count === 0}
+                                className={`w-full p-4 rounded-2xl transition-all group/goal border text-left flex items-start gap-3 ${
+                                    m.count > 0 
+                                    ? 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 cursor-pointer' 
+                                    : 'bg-slate-900/50 border-white/5 opacity-40 cursor-default'
+                                }`}
+                            >
+                                <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black shadow-sm ${
+                                    m.count > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+                                }`}>
+                                    {idx + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className={`text-[10px] font-bold leading-tight line-clamp-2 transition-all ${
+                                        m.count > 0 ? 'text-slate-100 group-hover/goal:text-white' : 'text-slate-500'
+                                    }`}>
+                                        {m.goal}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className={`text-[8px] font-black uppercase tracking-widest ${
+                                            m.count > 0 ? 'text-emerald-400' : 'text-slate-600'
+                                        }`}>
+                                            {m.count > 0 ? `${m.count} kilder` : 'mangler'}
+                                        </span>
+                                        {m.count > 0 && (
+                                            <ArrowRight className="w-2.5 h-2.5 text-indigo-400 opacity-0 group-hover/goal:opacity-100 translate-x-[-4px] group-hover/goal:translate-x-0 transition-all" />
+                                        )}
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </section>
+            )}
           </aside>
 
           {/* MAIN CONTENT */}
@@ -662,6 +849,9 @@ export default function MineMaterialerPage() {
                  </>
                )}
             </section>
+
+
+
 
             {/* MATERIAL LIST */}
             <section className="space-y-8">
@@ -815,6 +1005,11 @@ export default function MineMaterialerPage() {
                                     <div className="flex items-center gap-2 bg-amber-50 px-3 py-1 rounded-full border border-amber-100 animate-pulse">
                                         <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
                                         <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Læser indhold...</span>
+                                    </div>
+                                ) : (material.isIndexed === 'generating' || material.isIndexed === 'processing' || material.isIndexed === 'loading' || material.isIndexed === 'indexing') ? (
+                                    <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 animate-pulse shadow-sm shadow-indigo-100/50">
+                                        <Loader2 className="w-3 h-3 text-indigo-600 animate-spin" />
+                                        <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">AI Analyserer...</span>
                                     </div>
                                 ) : material.isIndexed === 'error' ? (
                                     <div className="flex items-center gap-2 bg-rose-50 px-3 py-1 rounded-full border border-rose-100">
@@ -1018,34 +1213,58 @@ export default function MineMaterialerPage() {
                                                                     "Hvad er de vigtigste pointer i dette dokument?",
                                                                     "Er der specifik lovgivning nævnt her?",
                                                                     "Hvordan kan jeg bruge dette i min eksamen?"
-                                                                ]).map((q: string, idx: number) => (
-                                                                    <button 
-                                                                        key={idx}
-                                                                        onClick={() => {
-                                                                            setGlobalChatInput(q);
-                                                                            setIsGlobalChatOpen(true);
-                                                                            // Scroll til chat efter modalen er åben (vi giver den lidt tid)
-                                                                            setTimeout(() => {
-                                                                                const chatElem = document.getElementById('vector-chat-input');
-                                                                                chatElem?.focus();
-                                                                            }, 100);
-                                                                        }}
-                                                                        className="group text-left p-5 bg-white border border-slate-100 rounded-[2rem] hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/20 transition-all relative overflow-hidden active:scale-[0.98]"
-                                                                    >
-                                                                        <div className="absolute right-0 top-0 p-4 opacity-0 group-hover:opacity-10 transition-opacity">
-                                                                            <MessageSquare className="w-12 h-12" />
+                                                                ]).map((q: string, idx: number) => {
+                                                                    const answer = suggestedAnswers[`${activeMaterial.id}_${q}`];
+                                                                    const isLoading = loadingQuestion === `${activeMaterial.id}_${q}`;
+                                                                    
+                                                                    return (
+                                                                        <div key={idx} className="space-y-3">
+                                                                            <button 
+                                                                                disabled={isLoading}
+                                                                                onClick={() => handleSuggestedQuestionClick(q, activeMaterial)}
+                                                                                className={`w-full group text-left p-5 bg-white border rounded-[2rem] transition-all relative overflow-hidden active:scale-[0.98] ${
+                                                                                    isLoading ? 'border-indigo-200 bg-indigo-50/20' : 'border-slate-100 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/20'
+                                                                                }`}
+                                                                            >
+                                                                                <div className="absolute right-0 top-0 p-4 opacity-0 group-hover:opacity-10 transition-opacity">
+                                                                                    <MessageSquare className="w-12 h-12" />
+                                                                                </div>
+                                                                                <div className="flex items-center gap-4 relative z-10">
+                                                                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black transition-colors ${
+                                                                                        isLoading ? 'bg-indigo-600 text-white' : 'bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white'
+                                                                                    }`}>
+                                                                                        {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : idx + 1}
+                                                                                    </div>
+                                                                                    <p className="text-sm font-bold text-slate-700 group-hover:text-slate-950 transition-colors flex-1">
+                                                                                        {q}
+                                                                                    </p>
+                                                                                    {!answer && <ArrowRight className="w-4 h-4 ml-auto text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />}
+                                                                                </div>
+                                                                            </button>
+                                                                            
+                                                                            <AnimatePresence>
+                                                                                {answer && (
+                                                                                    <motion.div 
+                                                                                        initial={{ opacity: 0, y: -10, height: 0 }}
+                                                                                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                                                                        className="overflow-hidden"
+                                                                                    >
+                                                                                        <div className="p-6 bg-indigo-50/30 rounded-[2rem] border border-indigo-100/50 text-sm text-slate-700 leading-relaxed space-y-3">
+                                                                                            <div className="flex items-center gap-2 mb-2">
+                                                                                                <Brain className="w-3.5 h-3.5 text-indigo-500" />
+                                                                                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">AI Svar</span>
+                                                                                            </div>
+                                                                                            <div 
+                                                                                                dangerouslySetInnerHTML={{ __html: answer }}
+                                                                                                className="prose prose-slate prose-sm max-w-none"
+                                                                                            />
+                                                                                        </div>
+                                                                                    </motion.div>
+                                                                                )}
+                                                                            </AnimatePresence>
                                                                         </div>
-                                                                        <div className="flex items-center gap-4 relative z-10">
-                                                                            <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-[10px] font-black group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                                                                {idx + 1}
-                                                                            </div>
-                                                                            <p className="text-sm font-bold text-slate-700 group-hover:text-slate-950 transition-colors">
-                                                                                {q}
-                                                                            </p>
-                                                                            <ArrowRight className="w-4 h-4 ml-auto text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
-                                                                        </div>
-                                                                    </button>
-                                                                ))}
+                                                                    );
+                                                                })}
                                                             </div>
                                                         </div>
 
@@ -1255,6 +1474,113 @@ export default function MineMaterialerPage() {
                 </motion.div>
             </>
         )}
+      </AnimatePresence>
+
+      {/* GOAL INSIGHT OVERLAY */}
+      <AnimatePresence>
+          {selectedGoalInsight && (
+              <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[200] flex items-start justify-center p-6 bg-slate-950/90 backdrop-blur-xl overflow-y-auto pt-16 pb-20"
+                  onClick={() => setSelectedGoalInsight(null)}
+              >
+                  <motion.div 
+                      initial={{ scale: 0.95, y: 40 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.95, y: 40 }}
+                      onClick={e => e.stopPropagation()}
+                      className="bg-white rounded-[3.5rem] w-full max-w-6xl shadow-2xl relative overflow-hidden my-10"
+                  >
+                      <div className="p-10 md:p-16 space-y-12">
+                          <div className="flex items-start justify-between gap-10">
+                              <div className="space-y-6 flex-1">
+                                  <div className="flex items-center gap-4">
+                                      <span className="px-5 py-2 bg-indigo-50 text-[11px] font-black text-indigo-600 uppercase tracking-[0.25em] rounded-full">Læringsmål Indsigt</span>
+                                      <div className="w-10 h-10 bg-indigo-100 rounded-2xl flex items-center justify-center">
+                                          <Brain className="w-5 h-5 text-indigo-600" />
+                                      </div>
+                                  </div>
+                                  <h3 className="text-3xl md:text-5xl font-[900] text-slate-950 tracking-tighter leading-[1.05]">
+                                      {selectedGoalInsight.goal}
+                                  </h3>
+                              </div>
+                              <button 
+                                  onClick={() => setSelectedGoalInsight(null)}
+                                  className="w-14 h-14 bg-slate-100 text-slate-400 hover:text-slate-900 rounded-[1.5rem] flex items-center justify-center transition-all hover:rotate-90 shrink-0 shadow-sm"
+                              >
+                                  <X className="w-8 h-8" />
+                              </button>
+                          </div>
+
+                          <div className="bg-slate-50/50 p-10 md:p-14 rounded-[3.5rem] border border-slate-100 relative shadow-inner">
+                              {isInsightLoading ? (
+                                  <div className="py-32 text-center space-y-8">
+                                      <div className="relative">
+                                          <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mx-auto" />
+                                          <div className="absolute inset-0 bg-indigo-500/10 blur-2xl rounded-full scale-150" />
+                                      </div>
+                                      <p className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">AI genererer din personlige analyse...</p>
+                                  </div>
+                              ) : (
+                                  <div 
+                                      dangerouslySetInnerHTML={{ __html: selectedGoalInsight.insight }}
+                                      className="prose prose-slate prose-xl max-w-none w-full text-slate-600 leading-[1.6] font-medium space-y-10 
+                                                 prose-b:text-slate-950 prose-b:font-black
+                                                 prose-ul:space-y-4 prose-li:pl-2
+                                                 prose-h4:text-2xl prose-h4:font-black prose-h4:text-slate-950 prose-h4:tracking-tight
+                                                 prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-indigo-50/50 prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:rounded-r-2xl prose-blockquote:italic"
+                                  />
+                              )}
+                          </div>
+
+                          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-6 border-t border-slate-100">
+                              <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+                                      <Sparkles className="w-6 h-6 text-amber-500" />
+                                  </div>
+                                  <div>
+                                      <p className="text-slate-950 font-black text-sm">Udnytter Vector-kontekst</p>
+                                      <p className="text-slate-400 text-xs font-bold italic">Analyse baseret på dine egne kilder.</p>
+                                  </div>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+                                  <Button 
+                                      onClick={() => setSelectedGoalInsight(null)}
+                                      variant="ghost"
+                                      className="flex-1 lg:flex-none rounded-2xl px-10 h-16 font-black text-xs uppercase tracking-widest text-slate-400 hover:text-slate-950"
+                                  >
+                                      Luk
+                                  </Button>
+                                  <Button 
+                                      onClick={() => {
+                                          setGlobalChatInput(`Lav en hurtig quiz til mig om dette mål baseret på mit pensum: ${selectedGoalInsight.goal}. Stil mig 3 spørgsmål ét af gangen.`);
+                                          setIsGlobalChatOpen(true);
+                                          setSelectedGoalInsight(null);
+                                      }}
+                                      className="flex-1 lg:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100 rounded-[1.5rem] px-10 h-16 font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
+                                  >
+                                      <CheckCircle2 className="w-5 h-5" />
+                                      <span>Tjek min viden</span>
+                                  </Button>
+                                  <Button 
+                                      onClick={() => {
+                                          setGlobalChatInput(`Jeg vil gerne gå i dybden med dette mål: ${selectedGoalInsight.goal}. Forklar de sværeste dele ud fra mit materiale.`);
+                                          setIsGlobalChatOpen(true);
+                                          setSelectedGoalInsight(null);
+                                      }}
+                                      className="flex-1 lg:flex-none bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] px-10 h-16 font-black text-xs uppercase tracking-widest shadow-2xl shadow-indigo-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
+                                  >
+                                      <MessageSquare className="w-5 h-5" />
+                                      <span>Uddyb i chatten</span>
+                                  </Button>
+                              </div>
+                          </div>
+                      </div>
+                  </motion.div>
+              </motion.div>
+          )}
       </AnimatePresence>
     </div>
   );

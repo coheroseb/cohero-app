@@ -7,7 +7,8 @@ export const migrateMaterialsFlow = ai.defineFlow(
     {
         name: 'migrateMaterialsFlow',
         inputSchema: z.object({
-            limit: z.number().optional().default(20)
+            limit: z.number().optional().default(20),
+            force: z.boolean().optional().default(false)
         }),
         outputSchema: z.object({
             processed: z.number(),
@@ -41,8 +42,8 @@ export const migrateMaterialsFlow = ai.defineFlow(
                 // Stop hvis vi har nået grænsen for denne kørsel
                 if (processedCount >= input.limit) break;
                 
-                // Spring over hvis den allerede er vector indekseret
-                if (data.vectorIndexed === true) continue;
+                // Spring over hvis den allerede er vector indekseret (medmindre vi tvinger)
+                if (data.vectorIndexed === true && !input.force) continue;
                 
                 const rawText = data.rawText || data.extractedText || data.text;
                 

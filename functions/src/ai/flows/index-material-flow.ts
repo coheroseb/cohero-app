@@ -82,8 +82,18 @@ export const indexMaterialFlow = ai.defineFlow(
         try {
             const insightRes = await ai.generate({
                 model: 'googleai/gemini-2.5-flash',
-                system: "Du er en ekspert i akademisk arkivering. Din opgave er at analysere teksten og generere 3-5 korte tags og 3 smarte spørgsmål, som en studerende kunne stille til dette materiale. Svar KUN med et JSON objekt: { \"tags\": [\"tag1\", \"tag2\"], \"questions\": [\"spørgsmål 1\", \"spørgsmål 2\", \"spørgsmål 3\"] }",
-                prompt: `Her er starten af dokumentet:\n${rawText.substring(0, 5000)}`,
+                system: `Du er en ekspert i akademisk analyse. Din opgave er at analysere teksten og generere:
+                1. 3-5 korte, præcise tags (emner).
+                2. 3 "Smarte Spørgsmål", som er DYBT SPECIFIKKE for dette dokument. 
+                
+                REGLER FOR SPØRGSMÅL:
+                - De skal KUN kunne besvares ved at læse dette specifikke dokument.
+                - Undgå generiske spørgsmål som "Hvad handler dokumentet om?".
+                - Stil spørgsmål til specifikke teorier, data, konklusioner eller eksempler nævnt i teksten.
+                - De skal fungere som "teaser" til det vigtigste indhold.
+                
+                Svar KUN med et JSON objekt: { "tags": ["tag1", "tag2"], "questions": ["spørgsmål 1", "spørgsmål 2", "spørgsmål 3"] }`,
+                prompt: `Her er teksten fra dokumentet:\n${rawText.substring(0, 10000)}`,
                 output: { schema: z.object({ tags: z.array(z.string()), questions: z.array(z.string()) }) }
             });
             tags = insightRes.output?.tags || [];
