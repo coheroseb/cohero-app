@@ -47,7 +47,7 @@ function MindmapContent() {
     const searchParams = useSearchParams();
     const materialId = searchParams.get('materialId');
     
-    const semester = userProfile?.semester;
+    const semester = searchParams.get('semesterId') || userProfile?.semester;
     
     const [mindmapData, setMindmapData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);

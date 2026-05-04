@@ -85,6 +85,10 @@ self.addEventListener('fetch', event => {
     url.pathname.includes('_workstation') || 
     url.pathname.includes('forwardAuthCookie') || 
     url.pathname.includes('_next/webpack-hmr') ||
+    url.pathname.includes('webpack.hot-update') || // Skip hot updates
+    url.hostname.includes('firestore.googleapis.com') || // Skip firestore traffic
+    url.hostname.includes('google-analytics') ||
+    url.pathname.includes('cleardot.gif') ||
     url.search.includes('term=') || // Skip concept-explainer and other term-based searches
     url.pathname.includes('api/')   // Skip API routes
   ) return;
@@ -110,7 +114,10 @@ self.addEventListener('fetch', event => {
       if (cachedResponse) return cachedResponse;
       return fetch(event.request).catch(err => {
         // Return a failing response instead of letting the promise reject
-        console.warn('[SW] Fetch failed for:', event.request.url);
+        // Only log in production or for non-noisy URLs
+        if (!url.hostname.includes('localhost') && !url.pathname.includes('cleardot')) {
+            console.warn('[SW] Fetch failed for:', event.request.url);
+        }
         return new Response('Network error occurred', {
           status: 408,
           statusText: 'Network error occurred'

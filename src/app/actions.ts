@@ -4524,29 +4524,34 @@ export async function getMindmapNodeSourceAction(input: {
             .get();
         
         const materialIds = materialsSnapshot.docs.map(doc => doc.id);
-        if (materialIds.length === 0) return { success: true, sourceText: "Ingen materialer fundet." };
+        if (materialIds.length === 0) return { success: true, sources: [], sourceText: "Ingen materialer fundet." };
 
-        // Search across ALL materials for this semester
-        const chunksSnapshot = await adminFirestore.collection('users')
-            .doc(input.userId)
-            .collection('materialChunks')
-            .where('materialId', 'in', materialIds) // Use all IDs
-            .limit(1000) // Increase limit to find more relevant chunks
-            .get();
+        // Search across ALL materials for this semester - Firestore 'in' limit is 10
+        let allChunks: any[] = [];
+        for (let i = 0; i < materialIds.length; i += 10) {
+            const batchIds = materialIds.slice(i, i + 10);
+            const chunksSnapshot = await adminFirestore.collection('users')
+                .doc(input.userId)
+                .collection('materialChunks')
+                .where('materialId', 'in', batchIds)
+                .limit(500)
+                .get();
+            
+            allChunks.push(...chunksSnapshot.docs.map(doc => ({
+                text: doc.data().text || "",
+                materialId: doc.data().materialId
+            })));
+        }
         
-        const chunks = chunksSnapshot.docs.map(doc => ({
-            text: doc.data().text || "",
-            materialId: doc.data().materialId
-        }));
+        const chunks = allChunks;
         
         const keywords = input.nodeText.toLowerCase().split(' ').filter(w => w.length > 3);
-        const sourceResults: { text: string, citation: string }[] = [];
         const seenMaterialIds = new Set<string>();
 
         // Sort chunks by relevance and quality
-        const scoredChunks = chunksSnapshot.docs.map(doc => {
-            const text = doc.data().text || "";
-            const materialId = doc.data().materialId;
+        const scoredChunks = chunks.map(chunk => {
+            const text = chunk.text;
+            const materialId = chunk.materialId;
             let score = 0;
             
             // Check for keywords
@@ -4554,23 +4559,31 @@ export async function getMindmapNodeSourceAction(input: {
                 if (text.toLowerCase().includes(kw)) score += 2;
             }
 
-            // Quality Penalties: Ignore TOCs and page headers
+            // Quality Penalties: Ignore TOCs, colophons and metadata
             const lowerText = text.toLowerCase();
             const isTOC = lowerText.includes('.......') || lowerText.includes('indholdsfortegnelse') || (lowerText.match(/[0-9]{1,3}$/gm) || []).length > 5;
-            if (isTOC) score -= 10;
+            const isMetadata = lowerText.includes('isbn') || lowerText.includes('doi:') || lowerText.includes('copyright') || lowerText.includes('forlag') || lowerText.includes('alle rettigheder');
             
-            // Benefit longer, paragraph-like chunks
-            if (text.length > 500) score += 1;
+            if (isTOC) score -= 15;
+            if (isMetadata) score -= 12;
+            
+            // Benefit longer, paragraph-like chunks that look like real content
+            if (text.length > 400 && !isMetadata) score += 2;
 
             return { text, materialId, score };
         }).filter(c => c.score > 0).sort((a, b) => b.score - a.score);
 
-        // Take top 3 unique materials
+        // Take top 3 unique materials and process in parallel
+        const sourcePromises = [];
+        const uniqueMaterials = [];
         for (const chunkObj of scoredChunks) {
-            if (sourceResults.length >= 3) break;
+            if (uniqueMaterials.length >= 3) break;
             if (seenMaterialIds.has(chunkObj.materialId)) continue;
             seenMaterialIds.add(chunkObj.materialId);
+            uniqueMaterials.push(chunkObj);
+        }
 
+        const sourceResults = await Promise.all(uniqueMaterials.map(async (chunkObj) => {
             let citation = "Kilde ukendt";
             let formattedSource = chunkObj.text;
 
@@ -4585,31 +4598,39 @@ export async function getMindmapNodeSourceAction(input: {
                 citation = data?.title || data?.name || data?.fileName || "Uden titel";
 
                 try {
-                    const formatPrompt = `Du er en redaktør. Din opgave er at uddrage det mest relevante, meningsfulde AFSNIT fra nedenstående rå tekst om emnet "${input.nodeText}". 
+                    const formatPrompt = `Du er en redaktør. Din opgave er at uddrage det mest relevante ANALYTISKE AFSNIT om emnet "${input.nodeText}" fra nedenstående rå tekst. 
                     
-                    REGLER:
-                    1. Hvis teksten ligner en indholdsfortegnelse, sidetal eller overskrifter uden indhold, skal du IGNORERE det og i stedet lede efter et rigtigt afsnit.
-                    2. Du skal returnere det fulde afsnit, så man får hele konteksten med.
-                    3. Fjern unødig støj som sidehoved/sidefod.
+                    VIGTIGE KRAV:
+                    1. FIND INDHOLDET: Du skal finde den faktiske forklaring eller analyse af emnet. IGNORER bibliografisk data (forlag, ISBN, DOI, copyright-sider, indholdsfortegnelser).
+                    2. SAMMENFLET linjer der er knækket midt i en sætning. Teksten SKAL fremstå som sammenhængende afsnit.
+                    3. FJERN STØJ: Sidetal, sidehoveder og scanning-fejl skal fjernes helt.
+                    4. FORMATERING: Teksten skal stå som et sammenhængende, letlæseligt afsnit.
                     
-                    RÅ TEKST FRA MATERIALET:
+                    RÅ TEKST FRA DOKUMENT:
                     ${chunkObj.text}`;
 
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout per call
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: formatPrompt }] }] })
+                        body: JSON.stringify({ contents: [{ parts: [{ text: formatPrompt }] }] }),
+                        signal: controller.signal
                     });
+                    clearTimeout(timeoutId);
 
                     if (response.ok) {
                         const resData = await response.json();
                         const result = resData.candidates?.[0]?.content?.parts?.[0]?.text;
                         if (result) formattedSource = result;
                     }
-                } catch (err) {}
+                } catch (err) {
+                    console.error("Gemini excerpt failed or timed out", err);
+                }
             }
-            sourceResults.push({ text: formattedSource, citation });
-        }
+            return { text: formattedSource, citation };
+        }));
 
         return { 
             success: true, 
