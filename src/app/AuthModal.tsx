@@ -70,7 +70,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
       if (pendingPriceId) {
         initiateCheckout(user, pendingPriceId);
       } else {
-        const callbackUrl = searchParams.get('callbackUrl');
+        const callbackUrl = searchParams?.get('callbackUrl');
         router.push(callbackUrl || '/portal');
         onClose();
       }
@@ -91,7 +91,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
         const currentStripeCustomerId = userData?.stripeCustomerId || null;
         
         const finalUserName = userNameForCheckout || userData?.username || user.displayName;
-        const originPath = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+        const originPath = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ''}`;
 
 
         const { sessionId, stripeCustomerId: newStripeCustomerId } = await createCheckoutSession({

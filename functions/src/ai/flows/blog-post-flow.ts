@@ -1,4 +1,4 @@
-'use client';
+
 
 /**
  * @fileOverview An AI flow to generate SEO-optimized blog posts for Cohéro.

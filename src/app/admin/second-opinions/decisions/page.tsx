@@ -24,6 +24,7 @@ interface Decision {
     outcome: 'justified' | 'unsupported';
     aiAnalysis?: any;
     createdAt?: string;
+    updatedAt?: string;
     tags?: string[];
 }
 
@@ -166,7 +167,7 @@ export default function SecondOpinionDecisionsAdmin() {
                     <button 
                         onClick={() => {
                             setIsAdding(true);
-                            setNewDecision({ title: '', content: '', outcome: 'justified', tags: [] });
+                            setNewDecision({ title: '', content: '', pdfBase64: '', outcome: 'justified', tags: [] });
                             setSelectedFile(null);
                         }}
                         className="h-16 px-10 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-all hover:bg-rose-600 flex items-center justify-center gap-3"

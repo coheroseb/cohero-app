@@ -58,7 +58,6 @@ export default function MineGemteArtiklerPage() {
     
     const { data: articles, isLoading } = useCollection<SavedArticle>(savedArticlesQuery);
     
-    // Motor: Instant Local Filter
     const filteredArticles = useMemo(() => {
         if (!articles) return [];
         if (!searchQuery.trim()) return articles;
@@ -95,141 +94,134 @@ export default function MineGemteArtiklerPage() {
     return (
         <div className="bg-[#FDFCF8] min-h-screen pb-40 selection:bg-cyan-100">
             <style dangerouslySetInnerHTML={{ __html: `
-                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
                 .serif-premium { font-family: 'Playfair Display', serif; }
+                .sans-premium { font-family: 'Plus Jakarta Sans', sans-serif; }
             ` }} />
             
-            {/* SEARCH & NAV HEADER */}
-            <header className="bg-white/80 backdrop-blur-2xl border-b border-amber-100 sticky top-0 z-50 px-8 py-6">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-6">
-                        <Link href="/portal" className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all group shadow-sm">
-                            <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:-translate-x-1 transition-transform" />
-                        </Link>
-                        <div className="h-10 w-[1px] bg-slate-100 hidden sm:block"></div>
-                        <div className="hidden sm:block">
-                            <h2 className="text-sm font-black text-slate-900 tracking-tight leading-none">Mit Videns-Arkiv</h2>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">{filteredArticles.length} Gemte Rapporter</p>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 max-w-xl relative group w-full">
-                        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300">
-                             <Search className="w-4 h-4 transition-colors group-focus-within:text-cyan-600" />
-                        </div>
-                        <input 
-                            type="text" 
-                            placeholder="Søg i dine gemte artikler..."
-                            value={searchQuery} 
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-14 pr-12 h-12 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-cyan-500/5 focus:bg-white focus:outline-none transition-all text-sm font-bold shadow-inner"
-                        />
-                        {searchQuery && (
-                            <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-900"><X className="w-4 h-4" /></button>
-                        )}
-                    </div>
-
-                    <Link href="/vive-indsigt">
-                        <Button className="h-12 px-6 bg-slate-900 text-white rounded-2xl font-bold border-none shadow-xl shadow-slate-900/10 hover:bg-cyan-600 transition-all flex items-center gap-2">
-                            <Plus className="w-4 h-4" /> Udforsk Mere
-                        </Button>
+            {/* DYNAMIC HEADER */}
+            <header className="h-24 glass-card border-b border-slate-100/50 px-8 flex items-center justify-between sticky top-0 z-50">
+                <div className="flex items-center gap-6">
+                    <Link href="/portal" className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex items-center justify-center hover:bg-slate-50 transition-all group shadow-sm">
+                        <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:-translate-x-1 transition-transform" />
                     </Link>
+                    <div className="h-10 w-[1px] bg-slate-100 hidden md:block"></div>
+                    <div className="hidden md:block">
+                        <h2 className="text-sm font-black text-slate-900 tracking-tight leading-none sans-premium">Mit Arkiv</h2>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1">{filteredArticles.length} Gemte Rapporter</p>
+                    </div>
                 </div>
+
+                <div className="flex-1 max-w-2xl relative mx-8">
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300">
+                         <Search className="w-5 h-5" />
+                    </div>
+                    <input 
+                        type="text" 
+                        placeholder="Søg i dine gemte artikler..."
+                        value={searchQuery} 
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-16 pr-12 h-14 bg-slate-100/40 border-none rounded-2xl focus:ring-4 focus:ring-cyan-500/5 focus:bg-white focus:outline-none transition-all text-sm font-semibold sans-premium shadow-inner"
+                    />
+                    {searchQuery && (
+                        <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-900"><X className="w-4 h-4" /></button>
+                    )}
+                </div>
+
+                <Link href="/vive-indsigt">
+                    <button className="h-14 px-8 bg-slate-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-950/10 hover:bg-cyan-600 transition-all flex items-center gap-3 sans-premium">
+                        <Plus className="w-4 h-4" /> Udforsk Videre
+                    </button>
+                </Link>
             </header>
 
-            <main className="max-w-7xl mx-auto px-8 pt-20">
+            <main className="max-w-[1600px] mx-auto px-8 sm:px-12 lg:px-16 pt-20">
                 {/* HERO SECTION */}
                 <div className="mb-20 space-y-4">
                     <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 bg-cyan-100 text-cyan-600 rounded-xl flex items-center justify-center"><History className="w-5 h-5" /></div>
-                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-600">Personligt Bibliotek</span>
+                         <div className="w-10 h-10 bg-cyan-50 text-cyan-500 rounded-xl flex items-center justify-center"><History className="w-5 h-5" /></div>
+                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-600 sans-premium">Personligt Bibliotek</span>
                     </div>
                     <h1 className="text-5xl md:text-7xl font-black text-slate-900 serif-premium tracking-tight leading-none">
                         Dine Gemte <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">Indsigter</span>
                     </h1>
-                    <p className="text-xl text-slate-400 font-medium max-w-2xl leading-relaxed">
-                        Her finder du den vigtigste viden, du har udvalgt fra VIVE og på tværs af platformen.
-                    </p>
                 </div>
 
                 {!articles || articles.length === 0 ? (
-                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="py-32 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100">
+                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100">
                         <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-200 mx-auto mb-8"><Bookmark className="w-10 h-10" /></div>
                         <h3 className="text-2xl font-bold text-slate-900 serif-premium">Din samling er tom</h3>
-                        <p className="text-lg text-slate-400 mt-3 max-w-sm mx-auto font-medium">Brug VIVE Indsigt til at finde relevant forskning til dine opgaver.</p>
-                        <Link href="/vive-indsigt" className="mt-10 inline-block px-10 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-900/20 active:scale-95 transition-all">Start søgning</Link>
+                        <p className="text-sm text-slate-400 mt-3 max-w-sm mx-auto font-medium sans-premium">Brug VIVE Indsigt til at finde relevant forskning til dine opgaver.</p>
+                        <Link href="/vive-indsigt" className="mt-12 inline-block px-12 py-5 bg-slate-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-950/20 active:scale-95 transition-all sans-premium">Start søgning</Link>
                     </motion.div>
                 ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
                         <AnimatePresence mode="popLayout">
                             {filteredArticles.map((article, idx) => (
                                 <motion.div 
                                     layout
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
                                     key={article.id} 
-                                    className="group bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_40px_100px_rgba(0,0,0,0.08)] hover:border-cyan-200 transition-all duration-700 flex flex-col h-full relative overflow-hidden"
+                                    className="group bg-white p-8 lg:p-10 rounded-[3rem] border border-slate-100 shadow-[0_5px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] hover:border-cyan-200 transition-all duration-500 flex flex-col h-full relative overflow-hidden"
                                 >
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] translate-x-12 -translate-y-12 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-700 ease-out"></div>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 border-bl-2 rounded-bl-[4rem] group-hover:bg-cyan-50 transition-colors duration-500 -z-0"></div>
                                     
                                     <div className="relative z-10 flex flex-col h-full">
                                         <div className="flex items-center justify-between mb-8">
-                                            <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                            <div className="px-4 py-2 bg-slate-50/50 text-slate-400 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 group-hover:bg-white group-hover:text-cyan-600 transition-all border border-transparent group-hover:border-cyan-100">
                                                 <CalendarDays className="w-3.5 h-3.5" />
                                                 {article.publicationDate ? new Date(article.publicationDate).toLocaleDateString('da-DK', { year: 'numeric', month: 'short' }) : 'Ukendt'}
                                             </div>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
                                                 <button 
                                                     onClick={() => handleUnsave(article.id)}
-                                                    className="w-12 h-12 bg-white border border-rose-50 text-rose-300 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all active:scale-90 shadow-sm"
+                                                    className="w-10 h-10 bg-white border border-rose-50 text-rose-300 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all active:scale-90 shadow-sm"
                                                     title="Fjern fra gemte"
                                                 >
-                                                    <Trash2 className="w-5 h-5" />
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
-                                                <a href={article.url} target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center hover:bg-cyan-500 hover:text-white transition-all active:scale-90 shadow-sm">
-                                                    <ExternalLink className="w-5 h-5" />
+                                                <a href={article.url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white border border-slate-100 text-slate-300 rounded-xl flex items-center justify-center hover:bg-slate-950 hover:text-white transition-all active:scale-90 shadow-sm">
+                                                    <ExternalLink className="w-4 h-4" />
                                                 </a>
                                             </div>
                                         </div>
 
-                                        <h3 className="text-2xl font-bold text-slate-900 serif-premium leading-[1.25] group-hover:text-cyan-950 transition-colors mb-6 line-clamp-3">
+                                        <h3 className="text-xl sm:text-2xl font-bold serif-premium text-slate-900 group-hover:text-slate-950 transition-colors mb-6 leading-tight tracking-tight line-clamp-3">
                                             {article.title}
                                         </h3>
                                         
-                                        <p className="text-[15px] text-slate-500 leading-relaxed mb-10 line-clamp-5 flex-grow font-medium leading-[1.6] italic">
-                                            &quot;{article.description}&quot;
-                                        </p>
+                                        <div className="relative mb-8">
+                                            <p className="text-sm text-slate-500 font-medium leading-relaxed line-clamp-4 flex-grow italic relative z-10 sans-premium">
+                                                {article.description}
+                                            </p>
+                                        </div>
 
                                         {article.apa && (
-                                            <div className="mb-10 p-6 bg-slate-50/80 rounded-3xl border border-slate-100 group/apa relative overflow-hidden">
+                                            <div className="mb-8 p-6 bg-slate-50/50 rounded-3xl border border-slate-100 group/apa relative overflow-hidden transition-all group-hover:bg-white group-hover:border-cyan-100">
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-slate-400">
-                                                        <Quote className="w-3 h-3 text-cyan-600" /> APA Reference
-                                                    </div>
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 sans-premium">
+                                                        <BookOpen className="w-3.5 h-3.5 text-cyan-600" /> Reference
+                                                    </span>
                                                     <button 
                                                         onClick={(e) => handleCopyApa(e, article.id, article.apa!)}
-                                                        className="text-[8px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-950 px-3 py-1.5 bg-white border border-slate-200 rounded-lg transition-all active:scale-95 shadow-sm"
+                                                        className="text-[9px] font-black uppercase bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-slate-500 hover:bg-slate-950 hover:text-white transition-all shadow-sm flex items-center gap-2 sans-premium"
                                                     >
                                                         {copiedId === article.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                                                        Kopier
                                                     </button>
                                                 </div>
                                                 <div 
-                                                    className="text-[11px] text-slate-500 leading-relaxed italic pr-2 font-serif"
+                                                    className="text-[11px] text-slate-500 leading-relaxed font-serif tracking-wide line-clamp-2"
                                                     dangerouslySetInnerHTML={{ __html: article.apa }}
                                                 />
                                             </div>
                                         )}
 
-                                        <div className="pt-8 border-t border-slate-50 flex items-center justify-between mt-auto">
-                                            <Link 
-                                                href={`/vive-indsigt?analyze=${article.articleId}`}
-                                                className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.25em] text-cyan-600 hover:text-cyan-950 transition-all font-sans"
-                                            >
-                                                <Sparkles className="w-4 h-4" /> AI Analyse
-                                            </Link>
-                                            <a href={article.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-900 transition-all group-hover:translate-x-2">
-                                                Læs <ArrowUpRight className="w-3.5 h-3.5" />
+                                        <div className="mt-auto pt-8 border-t border-slate-100 flex items-center justify-end">
+                                            <a href={article.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all sans-premium group-hover:translate-x-2">
+                                                Læs Rapport <ArrowUpRight className="w-4 h-4" />
                                             </a>
                                         </div>
                                     </div>
@@ -242,7 +234,7 @@ export default function MineGemteArtiklerPage() {
 
             <footer className="fixed bottom-12 left-1/2 -translate-x-1/2 px-8 py-4 bg-white/80 backdrop-blur-xl border border-slate-100 rounded-full flex items-center gap-4 shadow-2xl z-50">
                 <div className="w-2.5 h-2.5 bg-cyan-500 rounded-full animate-ping" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Synkroniseret med VIVE Arkivet</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 sans-premium">Synkroniseret med VIVE Arkivet</span>
             </footer>
         </div>
     );

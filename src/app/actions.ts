@@ -15,6 +15,9 @@ if (!Promise.withResolvers) {
     };
 }
 
+import { safeIsoDate } from '@/lib/utils';
+import { resend } from '@/lib/resend';
+
 // AI Flow Imports
 
 
@@ -607,7 +610,6 @@ export const wrapEmailHtml = (inner: string) => `
 export async function generateWelcomeEmailAction(input: { userName: string, userEmail: string }): Promise<{ success: boolean; message: string }> {
     try {
         const { data: { subject, body } } = await callFirebaseFlow('generateWelcomeEmailFlow', { userName: input.userName, userEmail: input.userEmail });
-        const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
             from: 'Cohéro <kontakt@cohero.dk>',
             to: input.userEmail,
@@ -731,7 +733,7 @@ export const generateCaseAction = generateNewCase;
 export async function generateVerificationEmailAction(input: Types.VerificationEmailInput): Promise<{ success: boolean; message: string; }> {
     try {
         const { subject, body } = await callFirebaseFlow('generateVerificationEmailFlow', input);
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        
         await resend.emails.send({
             from: 'Cohéro <kontakt@cohero.dk>',
             // @ts-ignore
@@ -1797,7 +1799,7 @@ export async function chatWithKnowledgeAction(input: { question: string, chatHis
 export async function generateCaseUpdateEmailAction(input: Types.CaseUpdateEmailInput): Promise<{ success: boolean; message: string; }> {
     try {
         const { subject, body } = await callFirebaseFlow('generateCaseUpdateEmailFlow', input);
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        
         await resend.emails.send({
             from: 'Cohéro Notifikationer <info@platform.cohero.dk>',
             to: input.userEmail,
@@ -1815,7 +1817,7 @@ export async function generateCaseUpdateEmailAction(input: Types.CaseUpdateEmail
 export async function sendStreakReminderEmailAction(input: { userEmail: string, userName: string, streakCount: number, userId: string }): Promise<{ success: boolean; message: string; }> {
     try {
         const { subject, body } = await callFirebaseFlow('generateStreakReminderEmailFlow', { ...input });
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        
         await resend.emails.send({
             from: 'Cohéro Notifikationer <info@platform.cohero.dk>',
             to: input.userEmail,
@@ -1847,7 +1849,7 @@ export async function sendGroupInvitationEmailAction(input: { recipientEmail: st
             groupName: input.groupName,
             groupUrl: input.groupUrl
         });
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        
         await resend.emails.send({
             from: 'Cohéro Studiegrupper <info@platform.cohero.dk>',
             to: input.recipientEmail,
@@ -1886,7 +1888,7 @@ export async function sendBulkEmailAction(input: { recipients: { email: string, 
     }
 
     try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        
         let totalSentCount = 0;
 
         // Resend batch has a limit of 100 emails per request
@@ -2472,7 +2474,7 @@ export async function processStripeSession(sessionId: string): Promise<{ success
                     userName: session.customer_details.name || 'Kollega',
                     membershipLevel: membershipLevel,
                 });
-                const resend = new Resend(process.env.RESEND_API_KEY);
+                
                 await resend.emails.send({
                     from: 'Cohéro <kontakt@cohero.dk>',
                     to: session.customer_details.email,
@@ -2544,7 +2546,7 @@ export async function createPortalSessionAction(stripeCustomerId: string): Promi
 
 export async function syncSubscriptionStatusAction(stripeCustomerId: string): Promise<{
     stripeSubscriptionStatus: string;
-    stripeCurrentPeriodEnd: string;
+    stripeCurrentPeriodEnd: string | null;
     membership: string;
     stripeCancelAtPeriodEnd: boolean;
     stripePriceId: string;
@@ -2588,7 +2590,7 @@ export async function syncSubscriptionStatusAction(stripeCustomerId: string): Pr
 // Other Server Actions
 export async function sendBugReport(reportText: string, pathname: string, username: string, email: string): Promise<{ success: boolean; message: string; }> {
     try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        
         await resend.emails.send({
             from: 'Cohéro Bug Rapport <kontakt@cohero.dk>',
             to: 'kontakt@cohero.dk',
@@ -2610,7 +2612,7 @@ export async function sendBugReport(reportText: string, pathname: string, userna
 
 export async function sendTaskResetEmailAction(recipientEmail: string, taskTitle: string) {
     try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        
         await resend.emails.send({
             from: 'Cohéro Markedsplads <info@platform.cohero.dk>',
             to: recipientEmail,
@@ -2644,7 +2646,7 @@ export async function sendTaskResetEmailAction(recipientEmail: string, taskTitle
 
 export async function sendEmailToConsultant(subject: string, message: string, userName: string, userEmail: string): Promise<{ success: boolean; message: string; }> {
     try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        
         await resend.emails.send({
             from: 'Cohéro Spørgsmål <info@platform.cohero.dk>',
             to: 'kontakt@cohero.dk',
@@ -3954,7 +3956,7 @@ export async function addSecondOpinionDecisionAction(decision: { title: string, 
     if (!adminFirestore) return { success: false };
     try {
         // AI Analysis call
-        let aiAnalysis = { weightingFactors: [], criticalPoint: "Analyseres..." };
+        let aiAnalysis = { weightingFactors: [] as any[], criticalPoint: "Analyseres..." };
         try {
             const flowInput = decision.pdfBase64 
                 ? { title: decision.title, pdfBase64: decision.pdfBase64 }
@@ -3967,7 +3969,7 @@ export async function addSecondOpinionDecisionAction(decision: { title: string, 
                 // Map the output fields to our internal format
                 const raw = analysisResult.data;
                 aiAnalysis = {
-                    weightingFactors: [raw.hvadErAfgørelsen].filter(Boolean),
+                    weightingFactors: [raw.hvadErAfgørelsen].filter(Boolean) as any[],
                     criticalPoint: raw.påBaggrundAfHvad || "Ingen specifik begrundelse udtrukket."
                 };
             }
@@ -4575,7 +4577,7 @@ export async function getMindmapNodeSourceAction(input: {
 
         // Take top 3 unique materials and process in parallel
         const sourcePromises = [];
-        const uniqueMaterials = [];
+        const uniqueMaterials: any[] = [];
         for (const chunkObj of scoredChunks) {
             if (uniqueMaterials.length >= 3) break;
             if (seenMaterialIds.has(chunkObj.materialId)) continue;
@@ -4642,3 +4644,208 @@ export async function getMindmapNodeSourceAction(input: {
     }
 }
 
+/**
+ * processBookTocAction: Extracts book structure from images using Gemini Vision.
+ */
+export async function processBookTocAction(input: { images: string[] }) {
+    try {
+        const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        const prompt = `Du er en ekspert i at digitalisere bøger. Her er billeder af en indholdsfortegnelse. 
+        Din opgave er at udtrække alle punkter (kapitler, underafsnit) præcis som de står.
+        Returner KUN et JSON-objekt med formatet: { "toc": [{ "title": "Kapitel navn", "pageNumber": "42" }] }.
+        Vær meget præcis med sidetal. Hvis et punkt ikke har sidetal, lad feltet være tomt string.`;
+
+        const contents = [{
+            parts: [
+                { text: prompt },
+                ...input.images.map(base64 => {
+                    const data = base64.split(',')[1] || base64;
+                    const mimeType = base64.split(';')[0]?.split(':')[1] || 'image/jpeg';
+                    return { inlineData: { data, mimeType } };
+                })
+            ]
+        }];
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents })
+        });
+
+        if (!response.ok) throw new Error(`Gemini API error: ${response.statusText}`);
+
+        const data = await response.json();
+        const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        
+        // Clean markdown if present
+        const jsonMatch = textResult.match(/\{[\s\S]*\}/);
+        const jsonString = jsonMatch ? jsonMatch[0] : textResult;
+        const parsed = JSON.parse(jsonString);
+
+        return { success: true, toc: parsed.toc };
+    } catch (error: any) {
+        console.error("processBookTocAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * saveBookAction: Saves a digitized book and its structure to Firestore.
+ */
+export async function saveBookAction(input: { title: string, author: string, toc: any[] }) {
+    if (!adminFirestore) return { success: false };
+    try {
+        const bookRef = adminFirestore.collection('books').doc();
+        const now = FieldValue.serverTimestamp();
+        
+        await bookRef.set({
+            title: input.title,
+            author: input.author,
+            toc: input.toc,
+            status: 'metadata_only',
+            createdAt: now,
+            updatedAt: now
+        });
+
+        return { success: true, id: bookRef.id };
+    } catch (error: any) {
+        console.error("saveBookAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * fetchBookMetadataAction: Scrapes book metadata from isbnsearch.org
+ */
+export async function fetchBookMetadataAction(isbn: string) {
+    try {
+        const url = `https://isbnsearch.org/isbn/${isbn.replace(/[-\s]/g, '')}`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Kunne ikke hente data fra ISBN Search (Status: ${response.status})`);
+        }
+
+        const html = await response.text();
+        
+        // Use Gemini to extract metadata from HTML
+        const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        const prompt = `Du får her rå HTML fra en bogside. Din opgave er at udtrække bogens titel og forfatter.
+        Returner KUN et JSON-objekt med formatet: { "title": "Bogens titel", "author": "Forfatterens navn" }.
+        Hvis du ikke kan finde informationerne, returner tomme strenge.
+        
+        HTML:
+        ${html.substring(0, 50000)} // Limit size to avoid token issues`;
+
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+
+        if (!geminiRes.ok) throw new Error("Gemini kunne ikke analysere HTML'en.");
+
+        const data = await geminiRes.json();
+        const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        
+        const jsonMatch = textResult.match(/\{[\s\S]*\}/);
+        const jsonString = jsonMatch ? jsonMatch[0] : textResult;
+        const parsed = JSON.parse(jsonString);
+
+        return { success: true, metadata: parsed };
+    } catch (error: any) {
+        console.error("fetchBookMetadataAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * sendAdminEmailAction: Allows admins to send manual emails to user groups.
+ */
+export async function sendAdminEmailAction(input: {
+    subject: string;
+    body: string;
+    targetGroup: 'Kollega' | 'Kollega+' | 'all';
+    adminUid: string;
+}) {
+    try {
+        // 1. Verify admin role
+        const adminDoc = await adminFirestore.collection('users').doc(input.adminUid).get();
+        if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
+            throw new Error("Ingen adgang: Brugeren er ikke admin.");
+        }
+
+        // 2. Fetch recipients
+        let query: any = adminFirestore.collection('users');
+        if (input.targetGroup !== 'all') {
+            query = query.where('membership', '==', input.targetGroup);
+        }
+        
+        const snap = await query.get();
+        const users = snap.docs.map((doc: any) => ({
+            email: doc.data().email,
+            username: doc.data().username || 'Kollega',
+            emailEnabled: doc.data().emailNotificationsEnabled !== false // Default to true
+        })).filter((u: any) => u.email && u.email.includes('@') && u.emailEnabled);
+
+        if (users.length === 0) {
+            return { success: false, error: "Ingen modtagere fundet i den valgte gruppe." };
+        }
+
+        // 3. Send emails in batches (Resend limit is 100 per batch)
+        const batchSize = 100;
+        let sentCount = 0;
+        
+        for (let i = 0; i < users.length; i += batchSize) {
+            const chunk = users.slice(i, i + batchSize);
+            
+            const emailPayload = chunk.map(u => ({
+                from: 'Cohéro <info@platform.cohero.dk>',
+                to: u.email,
+                subject: input.subject,
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; background-color: #fdfcf8; padding: 40px; border-radius: 20px;">
+                        <h2 style="color: #4338ca; font-size: 24px; font-family: serif;">Hej ${u.username}</h2>
+                        <div style="font-size: 16px; line-height: 1.6; color: #334155;">
+                            ${input.body.replace(/\n/g, '<br/>')}
+                        </div>
+                        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #e2e8f0;" />
+                        <p style="font-size: 11px; color: #94a3b8; text-align: center; text-transform: uppercase; letter-spacing: 1px;">
+                            Du modtager denne mail, fordi du er en del af Cohéro-fællesskabet.<br/>
+                            © ${new Date().getFullYear()} Cohéro I/S • Træn din faglighed. Trygt.
+                        </p>
+                    </div>
+                `
+            }));
+
+            const { data, error } = await resend.batch.send(emailPayload);
+            if (error) {
+                console.error("Resend batch error:", error);
+                throw new Error("Fejl ved afsendelse via Resend: " + (error as any).message);
+            }
+            sentCount += chunk.length;
+        }
+
+        // Log the activity
+        await adminFirestore.collection('admin_logs').add({
+            action: 'broadcast_email',
+            adminUid: input.adminUid,
+            subject: input.subject,
+            targetGroup: input.targetGroup,
+            recipientCount: sentCount,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return { success: true, sentCount };
+
+    } catch (error: any) {
+        console.error("sendAdminEmailAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}

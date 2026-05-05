@@ -68,6 +68,8 @@ interface Course {
     imageUrl: string;
     duration: string;
     status: 'draft' | 'published' | 'coming-soon';
+    isPremium?: boolean;
+    learningObjectives?: string[];
     lessons: Lesson[];
     createdAt: any;
     updatedAt: any;
@@ -102,6 +104,8 @@ export default function CoursesAdminPage() {
             imageUrl: '',
             duration: '',
             status: 'draft',
+            isPremium: false,
+            learningObjectives: [],
             lessons: [],
             createdAt: null,
             updatedAt: null
@@ -201,7 +205,7 @@ export default function CoursesAdminPage() {
             }
 
             // For OCR support: Send the file data if it's a PDF
-            let mediaFiles = [];
+            let mediaFiles: any[] = [];
             if (file.type === "application/pdf") {
                 const reader = new FileReader();
                 const fileBase64 = await new Promise<string>((resolve) => {
@@ -267,6 +271,8 @@ export default function CoursesAdminPage() {
                     imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2670&auto=format&fit=crop',
                     duration: '2 timer',
                     status: 'draft',
+                    isPremium: false,
+                    learningObjectives: design.overallLearningOutcomes,
                     lessons: newLessons,
                     createdAt: null,
                     updatedAt: null

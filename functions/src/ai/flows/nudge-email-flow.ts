@@ -1,4 +1,4 @@
-'use client';
+
 
 /**
  * @fileOverview An AI flow to generate a personalized nudge email.

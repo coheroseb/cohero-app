@@ -360,20 +360,20 @@ function HistorySidebar({
 function EmptyState({ onPick }: { onPick: (s: string) => void }) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center h-full text-center px-6 pb-20 gap-10">
-      <div>
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-900 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-100 mb-6">
+      <div className="space-y-4 px-2">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-900 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest border border-amber-100 mb-2 sm:mb-6">
           <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Din faglige makker
         </div>
-        <h2 className="text-5xl md:text-7xl font-black text-amber-950 serif tracking-tighter">Hvad vil du lære <span className="text-amber-400 italic">nu?</span></h2>
-        <p className="mt-6 text-slate-500 font-medium max-w-md mx-auto text-sm md:text-base leading-relaxed">
+        <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-amber-950 serif tracking-tighter leading-tight sm:leading-none">Hvad vil du lære <span className="text-amber-400 italic">nu?</span></h2>
+        <p className="mt-2 sm:mt-6 text-slate-500 font-medium max-w-md mx-auto text-xs sm:text-sm md:text-base leading-relaxed">
           Søg på begreber fra pensum, lovgivning eller praksis. Jeg forklarer det hurtigt, præcist og pædagogisk.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-2xl px-2">
         {SUGGESTIONS.map(s => (
           <button key={s} onClick={() => onPick(s)}
-            className="p-4 bg-white border border-amber-100 rounded-3xl text-xs font-bold text-amber-900 hover:border-amber-400 hover:bg-amber-50/50 hover:scale-[1.02] transition-all text-center">
+            className="p-4 bg-white border border-amber-100 rounded-2xl sm:rounded-3xl text-xs font-bold text-amber-900 hover:border-amber-400 hover:bg-amber-50/50 hover:scale-[1.02] transition-all text-center shadow-sm">
             {s}
           </button>
         ))}
@@ -738,18 +738,18 @@ function ConceptChatContent() {
     <div className="fixed inset-0 flex flex-col bg-[#F8FAFC] z-[9999]">
 
       {/* ── Header ─────────────────────────────────────── */}
-      <header className="shrink-0 h-20 bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 flex items-center justify-between px-8 z-50">
-        <div className="flex items-center gap-6">
-          <Link href="/portal" className="p-3 bg-white text-slate-900 rounded-2xl hover:bg-slate-50 transition-all border border-slate-200 shadow-sm active:scale-95">
-            <ArrowLeft className="w-5 h-5" />
+      <header className="shrink-0 h-20 bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 flex items-center justify-between px-4 sm:px-8 z-50">
+        <div className="flex items-center gap-3 sm:gap-6">
+          <Link href="/portal" className="p-2 sm:p-3 bg-white text-slate-900 rounded-xl sm:rounded-2xl hover:bg-slate-50 transition-all border border-slate-200 shadow-sm active:scale-95">
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </Link>
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-400 shadow-xl shadow-slate-900/10">
-              <BrainCircuit className="w-5 h-5" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-400 shadow-xl shadow-slate-900/10">
+              <BrainCircuit className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Værktøj</p>
-               <h1 className="text-xl font-black text-slate-900 serif tracking-tight">Begrebsforklarer</h1>
+               <p className="hidden sm:block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Værktøj</p>
+               <h1 className="text-sm sm:text-xl font-black text-slate-900 serif tracking-tight">Begrebsforklarer</h1>
             </div>
           </div>
         </div>

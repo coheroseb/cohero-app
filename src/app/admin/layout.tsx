@@ -85,6 +85,7 @@ const navigationGroups = [
   {
     title: 'Brugeroplevelse',
     items: [
+        { id: 'broadcast', href: '/admin/email', label: 'Email Broadcast', icon: Mail },
         { id: 'notifications', href: '/admin/notifications', label: 'Push Beskeder', icon: Bell },
         { id: 'surveys', href: '/admin/surveys', label: 'Brugerfeedback', icon: MessageSquare },
         { id: 'support', href: '/admin/support', label: 'Support & Tickets', icon: ShieldAlert },

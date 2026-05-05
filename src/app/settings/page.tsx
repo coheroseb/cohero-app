@@ -44,6 +44,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
 
   // Curriculum/Modules state
   const [availableModules, setAvailableModules] = useState<{id: string, name: string}[]>([]);
@@ -110,6 +111,7 @@ export default function SettingsPage() {
 
       setProfession(userProfile.profession || '');
       setIsQualified(userProfile.isQualified || false);
+      setEmailNotificationsEnabled(userProfile.emailNotificationsEnabled ?? true);
 
       if (userProfile.stripePriceId?.startsWith('b2b-') && user?.email && firestore) {
         const domain = user.email.split('@')[1];
@@ -252,6 +254,7 @@ export default function SettingsPage() {
         profession: profession,
         studyStarted: isQualified ? '' : studyStarted,
         isQualified,
+        emailNotificationsEnabled,
       });
 
       await batch.commit();
@@ -459,23 +462,23 @@ export default function SettingsPage() {
   return (
     <div className="bg-[#F8FAFC] min-h-screen pb-32">
       {/* Premium Header Area */}
-      <div className="bg-white border-b border-slate-200/60 pt-28 md:pt-32 pb-10 px-6 relative overflow-hidden">
+      <div className="bg-white border-b border-slate-200/60 pt-20 sm:pt-28 md:pt-32 pb-8 sm:pb-10 px-4 sm:px-6 relative overflow-hidden">
          {/* Minimalist ambient glow */}
-         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-amber-200/20 to-transparent rounded-full blur-[80px] pointer-events-none translate-x-1/2 -translate-y-1/2" />
+         <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-gradient-to-bl from-amber-200/20 to-transparent rounded-full blur-[80px] pointer-events-none translate-x-1/2 -translate-y-1/2" />
          
-         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6 relative z-10">
+         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-4 sm:gap-6 relative z-10">
             <motion.div 
                initial={{ scale: 0.9, opacity: 0 }}
                animate={{ scale: 1, opacity: 1 }}
-               className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-800 shadow-sm shrink-0"
+               className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-[1.5rem] bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-800 shadow-sm shrink-0"
             >
-               <Settings className="w-9 h-9" />
+               <Settings className="w-7 h-7 sm:w-9 sm:h-9" />
             </motion.div>
             <div className="text-center md:text-left">
                <motion.h1 
                  initial={{ y: 10, opacity: 0 }}
                  animate={{ y: 0, opacity: 1 }}
-                 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1"
+                 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1"
                >
                  Indstillinger
                </motion.h1>
@@ -483,7 +486,7 @@ export default function SettingsPage() {
                  initial={{ y: 10, opacity: 0 }}
                  animate={{ y: 0, opacity: 1 }}
                  transition={{ delay: 0.1 }}
-                 className="text-[15px] text-slate-500 font-medium"
+                 className="text-xs sm:text-[15px] text-slate-500 font-medium"
                >
                  Administrer din oplevelse og konto på Cohéro.
                </motion.p>
@@ -533,18 +536,17 @@ export default function SettingsPage() {
                       ========================================= */}
                   {activeTab === 'profile' && (
                     <div className="space-y-8">
-                       <form onSubmit={handleSave} className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm shadow-slate-200/20 overflow-hidden">
-                          <div className="p-8 border-b border-slate-100 bg-slate-50/50">
-                             <h2 className="text-xl font-bold text-slate-900">Personlig Information</h2>
-                             <p className="text-xs font-semibold text-slate-500 mt-1">Opdater dit navn og din uddannelsesstatus.</p>
+                       <form onSubmit={handleSave} className="bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm shadow-slate-200/20 overflow-hidden">
+                          <div className="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50">
+                             <h2 className="text-lg sm:text-xl font-bold text-slate-900">Personlig Information</h2>
+                             <p className="text-[10px] sm:text-xs font-semibold text-slate-500 mt-1">Opdater dit navn og din uddannelsesstatus.</p>
                           </div>
-                          
-                          <div className="p-8 space-y-8">
-                              {error && <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-sm font-bold flex items-center gap-2 animate-in fade-in"><ShieldAlert className="w-4 h-4" />{error}</div>}
+                                     <div className="p-6 sm:p-8 space-y-6 sm:space-y-8">
+                              {error && <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in"><ShieldAlert className="w-4 h-4" />{error}</div>}
                               
-                              <div className="grid md:grid-cols-2 gap-8">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                                   <div className="space-y-2">
-                                      <label htmlFor="username" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Fulde Navn</label>
+                                      <label htmlFor="username" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Fulde Navn</label>
                                       <div className="relative">
                                           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                           <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-amber-500/20" />
@@ -552,7 +554,7 @@ export default function SettingsPage() {
                                   </div>
 
                                   <div className="space-y-2">
-                                      <label htmlFor="phoneNumber" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Telefonnummer</label>
+                                      <label htmlFor="phoneNumber" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Telefonnummer</label>
                                       <div className="relative">
                                           <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                           <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-amber-500/20" placeholder="+45 12 34 56 78" />
@@ -562,12 +564,12 @@ export default function SettingsPage() {
 
                               <div className="w-full h-[1px] bg-slate-100" />
 
-                              <div className="grid md:grid-cols-2 gap-8">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                                   <div className="space-y-2">
-                                      <label htmlFor="profession" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Profession / Studie</label>
+                                      <label htmlFor="profession" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Profession / Studie</label>
                                       <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
                                           <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                          <select id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer">
+                                          <select id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer">
                                               <option value="" disabled>Vælg profession...</option>
                                               {PROFESSION_OPTIONS.map(prof => (
                                                   <option key={prof} value={prof}>{prof}</option>
@@ -580,10 +582,10 @@ export default function SettingsPage() {
                                   {!isQualified && (
                                      <>
                                         <div className="space-y-2 md:col-span-2">
-                                            <label htmlFor="institution" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Uddannelsesinstitution</label>
+                                            <label htmlFor="institution" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Uddannelsesinstitution</label>
                                             <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
                                                 <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                                <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer">
+                                                <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer">
                                                     <option value="" disabled>Vælg institution...</option>
                                                     {INSTITUTIONS.map(inst => (
                                                         <option key={inst} value={inst}>{inst}</option>
@@ -594,14 +596,14 @@ export default function SettingsPage() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label htmlFor="semester" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
+                                            <label htmlFor="semester" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
                                             <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
                                                 <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                                 <select
                                                     id="semester"
                                                     value={semester}
                                                     onChange={(e) => setSemester(e.target.value)}
-                                                    className="w-full h-12 pl-11 pr-10 bg-transparent text-sm font-bold text-slate-900 appearance-none outline-none cursor-pointer"
+                                                    className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer"
                                                 >
                                                     <option value="" disabled>Vælg semester...</option>
                                                     {availableModules.map(mod => (
@@ -622,16 +624,17 @@ export default function SettingsPage() {
                                   )}
                               </div>
 
-                              <div className="w-full p-5 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between cursor-pointer group" onClick={() => setIsQualified(!isQualified)}>
+                              <div className="w-full p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between cursor-pointer group" onClick={() => setIsQualified(!isQualified)}>
                                   <div>
-                                      <p className="text-sm font-bold text-slate-900">Er du færdiguddannet?</p>
-                                      <p className="text-xs font-semibold text-slate-500 mt-0.5">Slå til hvis du har afsluttet dit studie.</p>
+                                      <p className="text-[13px] sm:text-sm font-bold text-slate-900">Er du færdiguddannet?</p>
+                                      <p className="text-[11px] sm:text-xs font-semibold text-slate-500 mt-0.5">Slå til hvis du har afsluttet dit studie.</p>
                                   </div>
-                                  <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${isQualified ? 'bg-amber-500' : 'bg-slate-300'}`}>
+                                  <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out shrink-0 ${isQualified ? 'bg-amber-500' : 'bg-slate-300'}`}>
                                       <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200 ease-in-out ${isQualified ? 'translate-x-5' : 'translate-x-0'}`} />
                                   </div>
                               </div>
-                          </div>
+                           </div>
+                      </div>
 
                           <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-4">
                              <AnimatePresence>
@@ -680,14 +683,14 @@ export default function SettingsPage() {
                       ========================================= */}
                   {activeTab === 'membership' && (
                     <div className="space-y-8">
-                       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2rem] p-8 sm:p-10 shadow-xl overflow-hidden relative group">
+                       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl sm:rounded-[2rem] p-6 sm:p-10 shadow-xl overflow-hidden relative group">
                           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-400/10 rounded-full blur-[80px] -mr-48 -mt-48 pointer-events-none transition-transform duration-1000 group-hover:scale-110" />
                           <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-b border-white/10 pb-8 mb-8">
                              <div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400/80 mb-2 flex items-center gap-2">
                                   <Sparkles className="w-3.5 h-3.5" /> Nuværende Plan
                                 </p>
-                                <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">{userProfile?.membership || 'Gratis Plan'}</h2>
+                                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">{userProfile?.membership || 'Gratis Plan'}</h2>
                                 {partnerInstitution && (
                                   <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/5 backdrop-blur-md">
                                     <Users2 className="w-3.5 h-3.5 text-amber-300" />
@@ -777,14 +780,14 @@ export default function SettingsPage() {
                        </div>
 
                        {/* Redeem Code */}
-                       <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm p-8 flex flex-col md:flex-row gap-8 items-center justify-between">
+                       <div className="bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm p-6 sm:p-8 flex flex-col md:flex-row gap-6 sm:gap-8 items-center justify-between">
                            <div className="flex items-start gap-4 flex-1">
-                               <div className="w-12 h-12 rounded-[1.2rem] bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
-                                   <Gift className="w-6 h-6" />
+                               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[1rem] sm:rounded-[1.2rem] bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                                   <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
                                </div>
                                <div>
-                                   <h3 className="text-lg font-bold text-slate-900 mb-1">Indløs Kampagnekode</h3>
-                                   <p className="text-sm font-medium text-slate-500 leading-relaxed mb-4">Har du modtaget en kode fra dit studie eller en kampagne? Indløs den her for øjeblikkelig premium adgang.</p>
+                                   <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1">Indløs Kampagnekode</h3>
+                                   <p className="text-[11px] sm:text-sm font-medium text-slate-500 leading-relaxed mb-4">Har du modtaget en kode fra dit studie eller en kampagne? Indløs den her for øjeblikkelig premium adgang.</p>
                                    
                                    <form onSubmit={handleRedeemCode} className="flex flex-col sm:flex-row gap-3">
                                        <Input 
@@ -857,6 +860,41 @@ export default function SettingsPage() {
                                         {notificationStatus === 'granted' ? 'Opdater Token' : 'Forbind Enhed'}
                                     </Button>
                                 )}
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm overflow-hidden">
+                            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
+                               <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600"><Mail className="w-5 h-5" /></div>
+                               <div>
+                                  <h2 className="text-xl font-bold text-slate-900">Email-Præferencer</h2>
+                                  <p className="text-xs font-semibold text-slate-500 mt-1">Vælg hvilke mails du ønsker at modtage fra os.</p>
+                               </div>
+                            </div>
+                            <div className="p-8 space-y-6">
+                                <div className="flex items-center justify-between p-6 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer group" onClick={() => setEmailNotificationsEnabled(!emailNotificationsEnabled)}>
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shadow-sm ${emailNotificationsEnabled ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-slate-100 border-slate-200 text-slate-400'}`}>
+                                            <Mail className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-slate-900 mb-0.5">Nyheder & Opdateringer</h3>
+                                            <p className="text-xs font-medium text-slate-500 leading-relaxed">
+                                                Få vigtige platform-opdateringer, tips til din uddannelse og nye funktioner.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out shrink-0 ${emailNotificationsEnabled ? 'bg-amber-500' : 'bg-slate-300'}`}>
+                                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200 ease-in-out ${emailNotificationsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <Button onClick={handleSave} disabled={isLoading} className="h-10 px-6 rounded-xl bg-slate-900 text-white font-bold text-xs">
+                                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
+                                        Gem Præferencer
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>

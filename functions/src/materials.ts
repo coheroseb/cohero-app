@@ -19,22 +19,22 @@ export const onMaterialDelete = functions.firestore
         
         try {
             const chunksCol = firestore.collection(`users/${userId}/materialChunks`);
-            const snapshot = await chunksCol.where('materialId', '==', materialId).get();
+            const querySnapshot = await chunksCol.where('materialId', '==', materialId).get();
             
-            if (snapshot.empty) {
+            if (querySnapshot.empty) {
                 console.log(`[onMaterialDelete] No chunks found for material ${materialId}`);
                 return null;
             }
             
             const batch = firestore.batch();
-            snapshot.docs.forEach((doc: any) => {
+            querySnapshot.docs.forEach((doc: any) => {
                 batch.delete(doc.ref);
             });
             
             await batch.commit();
-            console.log(`[onMaterialDelete] Successfully deleted ${snapshot.size} chunks for material ${materialId}`);
+            console.log(`[onMaterialDelete] Successfully deleted ${querySnapshot.size} chunks for material ${materialId}`);
             
-            return { success: true, deletedCount: snapshot.size };
+            return { success: true, deletedCount: querySnapshot.size };
         } catch (error) {
             console.error(`[onMaterialDelete] Error cleaning up chunks for ${materialId}:`, error);
             return null;

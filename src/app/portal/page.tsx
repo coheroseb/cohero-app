@@ -390,29 +390,28 @@ const PortalPageContent: React.FC = () => {
               className="mb-10 relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-[2.5rem] opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-700" />
-              <div className="bg-white border border-indigo-100 rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(79,70,229,0.08)] flex flex-col md:flex-row items-center gap-8 relative z-10">
+              <div className="bg-white border border-indigo-100 rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-8 flex flex-col md:flex-row items-center gap-4 sm:gap-8 relative overflow-hidden shadow-sm">
                 <button 
                   onClick={dismissReminder}
-                  className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center text-slate-300 hover:text-slate-900 transition-colors"
-                  title="Luk reminder"
+                  className="absolute top-4 right-4 text-slate-300 hover:text-slate-600 transition-colors"
                 >
-                  <XCircle className="w-6 h-6" />
+                  <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
-                <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-sm">
-                  <RefreshCw className="w-8 h-8 animate-spin-slow" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-50 text-indigo-600 rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-sm">
+                  <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 animate-spin-slow" />
                 </div>
                 <div className="flex-1 text-center md:text-left space-y-2">
                   <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
-                    <span className="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full">System Opdatering</span>
-                    <span className="text-indigo-400 text-[9px] font-black uppercase tracking-[0.2em]">Vigtigt</span>
+                    <span className="px-3 py-1 bg-indigo-600 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] rounded-full">System Opdatering</span>
+                    <span className="text-indigo-400 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em]">Vigtigt</span>
                   </div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight serif">Husk at tjekke dit semester! 🎓</h3>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-3xl">
-                    For at vi kan give dig de helt rigtige lovparagraffer, læringsmål og studieplaner, er det vigtigt at du har valgt dit **aktuelle semester eller modul** i indstillingerne. Tjek det lige efter en ekstra gang!
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight serif">Husk dit semester! 🎓</h3>
+                  <p className="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed max-w-3xl">
+                    For at vi kan give dig de helt rigtige lovparagraffer og læringsmål, skal du vælge dit **aktuelle semester** i indstillingerne.
                   </p>
                 </div>
                 <Link href="/settings" className="shrink-0 w-full md:w-auto">
-                  <Button className="w-full md:w-auto bg-slate-900 text-white hover:bg-indigo-600 font-black uppercase tracking-widest text-[11px] px-10 h-14 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center gap-3">
+                  <Button className="w-full md:w-auto bg-slate-900 text-white hover:bg-indigo-600 font-black uppercase tracking-widest text-[10px] sm:text-[11px] px-8 sm:px-10 h-12 sm:h-14 rounded-xl sm:rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
                     Opdatér Semester
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -432,26 +431,25 @@ const PortalPageContent: React.FC = () => {
             
             {/* GRADUATED / PROFESSIONAL HEADER */}
             {userProfile?.isQualified && (
-               <div className="relative bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl overflow-hidden group">
+               <div className="relative bg-slate-900 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-12 text-white shadow-2xl overflow-hidden group">
                   {/* Filmic Ambient Background */}
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_-20%,#312e81_0%,transparent_50%)] opacity-40" />
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_120%,#1e1b4b_0%,transparent_50%)] opacity-40" />
-                  <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[2000ms]">
-                    <Building className="w-64 h-64" />
+                  <div className="absolute top-0 right-0 p-6 sm:p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[2000ms]">
+                    <Building className="w-32 h-32 sm:w-64 sm:h-64" />
                   </div>
 
                   <div className="relative z-10 space-y-8">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-white/10 rounded-[1.5rem] flex items-center justify-center backdrop-blur-xl border border-white/20 shadow-2xl">
-                        <Crown className="w-8 h-8 text-amber-400" />
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/10 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center backdrop-blur-xl border border-white/20 shadow-2xl">
+                        <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-amber-400" />
                       </div>
                       <div>
                         <div className="flex items-center gap-3 mb-1">
-                          <span className="px-3 py-1 bg-amber-400/20 text-amber-400 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-amber-400/20">Professionel Profil</span>
-                          <span className="text-white/40 text-[9px] font-black uppercase tracking-[0.2em]">Kollega+</span>
+                          <span className="px-3 py-1 bg-amber-400/20 text-amber-400 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-amber-400/20">Professionel Profil</span>
                         </div>
-                        <div className="flex flex-col md:flex-row md:items-center gap-4">
-                          <h2 className="text-3xl md:text-5xl font-black tracking-tight serif">{greeting}, {userProfile.username || 'Kollega'}</h2>
+                        <div className="flex flex-col md:flex-row md:items-center gap-1 sm:gap-4">
+                          <h2 className="text-xl sm:text-3xl md:text-5xl font-black tracking-tight serif">{greeting}, {userProfile.username || 'Kollega'}</h2>
                         </div>
                       </div>
                     </div>
@@ -524,7 +522,7 @@ const PortalPageContent: React.FC = () => {
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-amber-50 border-2 border-amber-200 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-amber-500/5 relative overflow-hidden group"
+                className="bg-amber-50 border-2 border-amber-200 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 shadow-xl shadow-amber-500/5 relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-transform duration-1000">
                   <Target className="w-32 h-32 text-amber-600" />
@@ -550,7 +548,7 @@ const PortalPageContent: React.FC = () => {
 
             {/* SEMESTER HUB HERO (Students Only) */}
             {!userProfile?.isQualified && (
-              <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm relative overflow-hidden group">
+              <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 border border-slate-100 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
                 <GraduationCap className="w-64 h-64" />
               </div>
@@ -572,7 +570,7 @@ const PortalPageContent: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-10">
                   <div className="space-y-6">
                   <div className="space-y-4">
-                    <h2 className="text-4xl font-black text-slate-950 leading-tight tracking-tighter serif">
+                    <h2 className="text-2xl sm:text-4xl font-black text-slate-950 leading-tight tracking-tighter serif">
                       {activeModule?.name || activePlan?.title || 'Mit Semester'}
                     </h2>
                     <div className="flex items-center gap-2">
@@ -693,48 +691,49 @@ const PortalPageContent: React.FC = () => {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
-                    <Link href="/lov-portal" className="group relative bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
+                    <Link href="/lov-portal" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
                       <div className="flex items-start justify-between mb-6">
-                        <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Scale className="w-7 h-7" />
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Scale className="w-6 h-6 sm:w-7 sm:h-7" />
                         </div>
                         <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-amber-500 transition-colors" />
                       </div>
-                      <h4 className="text-xl font-black text-slate-900 mb-2">Juridisk Lovportal</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Få direkte adgang til alle relevante love, cirkulærer og vejledninger for din profession.</p>
+                      <h4 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Juridisk Lovportal</h4>
+                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Lovgrundlag og vejledninger.</p>
                     </Link>
 
-                    <Link href="/mine-vive-analyser" className="group relative bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <TrendingUp className="w-7 h-7" />
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-indigo-500 transition-colors" />
-                      </div>
-                      <h4 className="text-xl font-black text-slate-900 mb-2">VIVE Analyser</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Hold dig opdateret med de seneste forskningsbaserede analyser og evalueringer på velfærdsområdet.</p>
-                    </Link>
 
-                    <Link href="/case-trainer" className="group relative bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
+                    <Link href="/case-trainer" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
                       <div className="flex items-start justify-between mb-6">
-                        <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Brain className="w-7 h-7" />
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Brain className="w-6 h-6 sm:w-7 sm:h-7" />
                         </div>
                         <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-emerald-500 transition-colors" />
                       </div>
-                      <h4 className="text-xl font-black text-slate-900 mb-2">Metode-træner</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Træn komplekse faglige problemstillinger og få AI-feedback på din metodiske tilgang.</p>
+                      <h4 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Metode-træner</h4>
+                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Træn faglige problemstillinger.</p>
                     </Link>
 
-                    <Link href="/concept-explainer" className="group relative bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
+                    <Link href="/concept-explainer" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
                       <div className="flex items-start justify-between mb-6">
-                        <div className="w-14 h-14 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Library className="w-7 h-7" />
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Library className="w-6 h-6 sm:w-7 sm:h-7" />
                         </div>
                         <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-sky-500 transition-colors" />
                       </div>
-                      <h4 className="text-xl font-black text-slate-900 mb-2">Begrebs-Opslagsværk</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Hurtig adgang til præcise definitioner af komplekse fagudtryk og lovbegreber.</p>
+                      <h4 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Opslagsværk</h4>
+                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Definitioner og fagudtryk.</p>
+                    </Link>
+
+                    <Link href="/second-opinion" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Scale className="w-6 h-6 sm:w-7 sm:h-7" />
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-rose-500 transition-colors" />
+                      </div>
+                      <h4 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Second Opinion</h4>
+                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Uvildig AI-karakteranalyse.</p>
                     </Link>
                   </div>
                </div>
@@ -832,6 +831,8 @@ const PortalPageContent: React.FC = () => {
                 {[
                   { title: "Case-træner", icon: Zap, path: "/case-trainer", color: "bg-sky-50 text-sky-600" },
                   { title: "Journal-træner", icon: FileText, path: "/journal-trainer", color: "bg-indigo-50 text-indigo-600" },
+                  { title: "Second Opinion", icon: Scale, path: "/second-opinion", color: "bg-amber-50 text-amber-600" },
+                  { title: "VIVE Indsigt", icon: TrendingUp, path: "/vive-indsigt", color: "bg-blue-50 text-blue-600" },
                   { title: "Eksamen", icon: Layout, path: "/exam-architect", color: "bg-indigo-50 text-indigo-600" },
                   { title: "Case Analyser", icon: FileSearch, path: "/case-analyser", color: "bg-purple-50 text-purple-600" },
                   { title: "Begreber", icon: Brain, path: "/concept-explainer", color: "bg-emerald-50 text-emerald-600" },
@@ -959,11 +960,11 @@ const PortalPageContent: React.FC = () => {
           animate={{ y: 0 }}
           className="fixed bottom-8 inset-x-0 flex justify-center z-50 px-6"
         >
-          <Link href="/upgrade" className="bg-slate-950 text-white px-8 py-4 rounded-full flex items-center gap-4 shadow-2xl hover:scale-105 transition-all border border-white/10 group">
-            <Crown className="w-5 h-5 text-amber-400" />
-            <span className="text-xs font-black uppercase tracking-widest">Opgrader til Kollega+</span>
-            <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-amber-400 group-hover:text-amber-950 transition-colors">
-              <ArrowRight className="w-3 h-3" />
+          <Link href="/upgrade" className="bg-slate-950 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full flex items-center gap-3 sm:gap-4 shadow-2xl hover:scale-105 transition-all border border-white/10 group">
+            <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">Opgrader til Kollega+</span>
+            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-amber-400 group-hover:text-amber-950 transition-colors">
+              <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </div>
           </Link>
         </motion.div>

@@ -43,7 +43,8 @@ import {
     FileSearch,
     BrainCircuit,
     Presentation as MonitorPlay,
-    Trophy
+    Trophy,
+    Book
 } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, limit, doc } from 'firebase/firestore';
@@ -308,6 +309,7 @@ export default function AdminOverviewPage() {
                     {/* Communication */}
                     <div className="col-span-1 lg:col-span-1 space-y-4">
                         <NexusCard title="Notifikationer" icon={Smartphone} color="text-indigo-500" bg="bg-indigo-50" href="/admin/notifications" desc="Push, Direkte beskeder" />
+                        <NexusCard title="Email Broadcast" icon={Mail} color="text-indigo-600" bg="bg-indigo-50" href="/admin/email" desc="Send emails via Resend" />
                     </div>
 
                     {/* Research & Core */}
@@ -315,6 +317,7 @@ export default function AdminOverviewPage() {
                         <NexusCard title="Seminarer" icon={MonitorPlay} color="text-indigo-600" bg="bg-indigo-50" href="/admin/seminarer" desc="Bruger-analyser & Slides" />
                         <NexusCard title="Case Analyser" icon={Sparkles} color="text-rose-600" bg="bg-rose-50" href="/admin/case-analyser" desc="Bruger-cases & AI-indsigt" />
                         <NexusCard title="Begreber" icon={BrainCircuit} color="text-amber-600" bg="bg-amber-50" href="/admin/begreber" desc="Vidensbase & Modeller" />
+                        <NexusCard title="Digitaliser Bøger" icon={Book} color="text-emerald-600" bg="bg-emerald-50" href="/admin/books" desc="AI-udlæsning af TOC" />
                         <NexusCard title="Surveys" icon={MessageSquare} color="text-rose-500" bg="bg-rose-50" href="/admin/surveys" desc="NPS, Feedback" />
                         <NexusCard title="Korrektur" icon={FileText} color="text-amber-800" bg="bg-amber-50" href="/admin/korrektur" desc="Lead-styring & Kalkulator" />
                         <NexusCard title="System" icon={Zap} color="text-slate-100" bg="bg-slate-900" href="/admin/system" desc="Infrastruktur, Arkitektur" />

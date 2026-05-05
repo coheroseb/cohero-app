@@ -598,7 +598,7 @@ const SlideCard = React.memo(({ slide, note, onNoteChange, isOpen, onToggle, ind
           onClick={onToggle} 
           className={`w-full h-20 flex items-center gap-6 px-6 text-left transition-colors relative ${onSelect ? 'pl-14' : ''}`}
         >
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 transition-all duration-500 ${
+        <div className={`w-9 h-9 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-2xl flex items-center justify-center font-black text-xs sm:text-sm shrink-0 transition-all duration-500 ${
           isOpen 
             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
             : 'bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'
@@ -610,11 +610,10 @@ const SlideCard = React.memo(({ slide, note, onNoteChange, isOpen, onToggle, ind
           {!isOpen && <p className="text-[11px] text-slate-400 font-medium truncate mt-1 italic">{slide.summary}</p>}
         </div>
         <div className="flex items-center gap-4 shrink-0">
-          <div className="hidden sm:flex items-center gap-2">
-            {slide.keyConcepts?.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />}
-            {slide.legalFrameworks?.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />}
-            {slide.practicalTools?.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-            {slide.imageUrls?.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {slide.keyConcepts?.length > 0 && <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-indigo-400" />}
+            {slide.legalFrameworks?.length > 0 && <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-rose-400" />}
+            {slide.practicalTools?.length > 0 && <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400" />}
           </div>
           {note && <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><FileText className="w-3.5 h-3.5" /></div>}
           <div className={`w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center transition-transform duration-500 ${
@@ -861,22 +860,22 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
             <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">{seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <button 
             onClick={() => setReadingMode(!readingMode)}
-            className={`p-3 rounded-2xl transition-all border ${readingMode ? 'bg-slate-950 text-white border-slate-900 shadow-xl' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+            className={`p-2.5 sm:p-3 rounded-2xl transition-all border ${readingMode ? 'bg-slate-950 text-white border-slate-900 shadow-xl' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
             title="Læse Mode"
           >
-            <Eye className="w-5 h-5" />
+            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
-          <div className="h-10 w-px bg-slate-100 hidden sm:block" />
-          <Button size="sm" variant="outline" onClick={() => setShowChat(true)} className="rounded-xl sm:rounded-2xl bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-600 h-10 sm:h-12 px-3 sm:px-6 flex items-center gap-2 transition-all text-[10px] sm:text-xs font-black tracking-widest shadow-sm">
+          <div className="h-8 sm:h-10 w-px bg-slate-100 hidden xs:block" />
+          <Button size="sm" variant="outline" onClick={() => setShowChat(true)} className="rounded-xl sm:rounded-2xl bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-600 h-10 sm:h-12 px-3 sm:px-6 flex items-center gap-2 transition-all text-[9px] sm:text-xs font-black tracking-widest shadow-sm">
             <BrainCircuit className="w-4 h-4" />
-            <span className="hidden md:inline">SPØRG AI</span>
+            <span className="hidden lg:inline">SPØRG AI</span>
           </Button>
-          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-xl sm:rounded-2xl bg-slate-950 hover:bg-slate-800 text-white h-10 sm:h-12 px-3 sm:px-6 shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group text-[10px] sm:text-xs font-black tracking-widest">
+          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-xl sm:rounded-2xl bg-slate-950 hover:bg-slate-800 text-white h-10 sm:h-12 px-3 sm:px-6 shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group text-[9px] sm:text-xs font-black tracking-widest">
             {isGeneratingQuiz ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4 group-hover:rotate-12 transition-transform" />}
-            <span className="hidden sm:inline md:ml-2">TAG QUIZ</span>
+            <span className="hidden sm:inline sm:ml-1 md:ml-2 uppercase">Quiz</span>
           </Button>
         </div>
       </header>
@@ -916,20 +915,20 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden mb-12"
                         >
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                                 {[
-                                    { label: 'Indhold', val: slides.length, icon: <Presentation className="w-5 h-5"/>, bg: 'bg-slate-950 text-white shadow-2xl shadow-slate-900/20', sub: 'Slides i alt' },
-                                    { label: 'Begreber', val: totals.concepts, icon: <Tags className="w-5 h-5"/>, bg: 'bg-white text-indigo-600 border border-indigo-50 shadow-sm', sub: 'Kortlagt viden' },
-                                    { label: 'Love', val: totals.law, icon: <Scale className="w-5 h-5"/>, bg: 'bg-white text-rose-600 border border-rose-50 shadow-sm', sub: 'Juridisk fundament' },
-                                    { label: 'Metoder', val: totals.tools, icon: <Wrench className="w-5 h-5"/>, bg: 'bg-white text-emerald-600 border border-emerald-50 shadow-sm', sub: 'Praksis værktøjer' }
+                                    { label: 'Indhold', val: slides.length, icon: <Presentation className="w-4 h-4 sm:w-5 sm:h-5"/>, bg: 'bg-slate-950 text-white shadow-2xl shadow-slate-900/20', sub: 'Slides' },
+                                    { label: 'Begreber', val: totals.concepts, icon: <Tags className="w-4 h-4 sm:w-5 sm:h-5"/>, bg: 'bg-white text-indigo-600 border border-indigo-50 shadow-sm', sub: 'Begreber' },
+                                    { label: 'Love', val: totals.law, icon: <Scale className="w-4 h-4 sm:w-5 sm:h-5"/>, bg: 'bg-white text-rose-600 border border-rose-50 shadow-sm', sub: 'Love' },
+                                    { label: 'Metoder', val: totals.tools, icon: <Wrench className="w-4 h-4 sm:w-5 sm:h-5"/>, bg: 'bg-white text-emerald-600 border border-emerald-50 shadow-sm', sub: 'Metoder' }
                                 ].map(s => (
-                                    <div key={s.label} className={`${s.bg} rounded-[2.5rem] p-6 text-center group hover:scale-105 transition-all duration-500`}>
-                                        <div className="flex items-center justify-center gap-2 mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <div key={s.label} className={`${s.bg} rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-6 text-center group hover:scale-105 transition-all duration-500`}>
+                                        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
                                             {s.icon}
-                                            <span className="text-[10px] font-black uppercase tracking-widest">{s.label}</span>
+                                            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{s.label}</span>
                                         </div>
-                                        <p className="text-4xl font-black serif mb-1">{s.val}</p>
-                                        <p className="text-[9px] font-bold opacity-40 uppercase tracking-widest">{s.sub}</p>
+                                        <p className="text-2xl sm:text-4xl font-black serif mb-0.5 sm:mb-1">{s.val}</p>
+                                        <p className="text-[7px] sm:text-[9px] font-bold opacity-40 uppercase tracking-widest">{s.sub}</p>
                                     </div>
                                 ))}
                             </div>
@@ -1389,24 +1388,24 @@ export default function MineSeminarerPage() {
                     <p className="text-slate-400 font-medium text-sm">Organiser, repetér og få AI-indsigt i alle dine seminarer.</p>
                 </div>
             </div>
-            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
-                 <div className="flex items-center gap-1.5 p-1.5 bg-slate-50/50 backdrop-blur-sm rounded-2xl border border-slate-100 shrink-0">
-                    <button onClick={() => setViewMode('grid')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <LayoutGrid className="w-4 h-4" />
+            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 sm:gap-3 w-full lg:w-auto">
+                 <div className="flex items-center gap-1 p-1 bg-slate-50/50 backdrop-blur-sm rounded-xl border border-slate-100 shrink-0">
+                    <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <LayoutGrid className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => setViewMode('list')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <List className="w-4 h-4" />
+                    <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <List className="w-3.5 h-3.5" />
                     </button>
                  </div>
                  <button 
                     onClick={() => setShowStats(!showStats)} 
-                    className={`h-14 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${showStats ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-600/20' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                    className={`h-11 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${showStats ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-600/20' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
                  >
-                    <Activity className="w-4 h-4" /> {showStats ? 'Skjul Statistik' : 'Vis Statistik'}
+                    <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {showStats ? 'Skjul Statistik' : 'Statistik'}
                  </button>
                  <Link href="/seminar-architect" className="flex-1 sm:flex-none">
-                    <Button className="w-full sm:w-auto rounded-2xl bg-slate-950 hover:bg-indigo-600 text-white h-14 px-8 shadow-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
-                        <Plus className="w-5 h-5 mr-3" /> Ny Analyse
+                    <Button className="w-full sm:w-auto rounded-xl sm:rounded-2xl bg-slate-950 hover:bg-indigo-600 text-white h-11 sm:h-14 px-6 sm:px-8 shadow-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-3" /> <span className="sm:inline">Ny Analyse</span>
                     </Button>
                 </Link>
             </div>
@@ -1420,18 +1419,18 @@ export default function MineSeminarerPage() {
                     exit={{ height: 0, opacity: 0, y: -20 }}
                     className="overflow-hidden mb-12"
                 >
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 p-10 bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)]">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 p-6 sm:p-10 bg-white/40 backdrop-blur-xl rounded-[2.5rem] sm:rounded-[3rem] border border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)]">
                         {[
-                            { label: 'Total Viden', val: stats.seminars, sub: 'Seminarer i arkivet', icon: <Presentation className="w-6 h-6"/>, color: 'text-slate-950', bg: 'bg-white shadow-xl shadow-slate-900/5' },
-                            { label: 'Faglige Begreber', val: stats.concepts, sub: 'Kortlagt viden', icon: <Tags className="w-6 h-6"/>, color: 'text-indigo-600', bg: 'bg-indigo-50/50' },
-                            { label: 'Studienoter', val: stats.notes, sub: 'Gemte refleksioner', icon: <FileText className="w-6 h-6"/>, color: 'text-emerald-600', bg: 'bg-emerald-50/50' }
+                            { label: 'Total Viden', val: stats.seminars, sub: 'Seminarer', icon: <Presentation className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-slate-950', bg: 'bg-white shadow-xl shadow-slate-900/5' },
+                            { label: 'Begreber', val: stats.concepts, sub: 'Kortlagt viden', icon: <Tags className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-indigo-600', bg: 'bg-indigo-50/50' },
+                            { label: 'Noter', val: stats.notes, sub: 'Studienoter', icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-emerald-600', bg: 'bg-emerald-50/50' }
                         ].map((s, i) => (
-                            <div key={i} className="flex items-center gap-6 group">
-                                <div className={`w-16 h-16 ${s.bg} ${s.color} rounded-[1.5rem] flex items-center justify-center group-hover:scale-110 transition-all duration-500`}>{s.icon}</div>
+                            <div key={i} className="flex items-center gap-4 sm:gap-6 group">
+                                <div className={`w-12 h-12 sm:w-16 sm:h-16 ${s.bg} ${s.color} rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center group-hover:scale-110 transition-all duration-500`}>{s.icon}</div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-0.5">{s.label}</p>
-                                    <p className={`text-3xl font-black serif ${s.color}`}>{s.val}</p>
-                                    <p className="text-[10px] font-medium text-slate-400">{s.sub}</p>
+                                    <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-0.5">{s.label}</p>
+                                    <p className={`text-2xl sm:text-3xl font-black serif ${s.color}`}>{s.val}</p>
+                                    <p className="text-[8px] sm:text-[10px] font-medium text-slate-400">{s.sub}</p>
                                 </div>
                             </div>
                         ))}
@@ -1531,7 +1530,7 @@ export default function MineSeminarerPage() {
             </motion.div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {filtered.map(s => <SeminarCard key={s.id} seminar={s} viewMode={viewMode} onOpen={() => setOpenSeminar(s)} onDelete={() => handleDelete(s.id)} onCategorize={cat => handleCategorize(s.id, cat)} existingCategories={categories} />)}
         </div>
 

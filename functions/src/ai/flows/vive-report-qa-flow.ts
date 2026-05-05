@@ -32,7 +32,12 @@ Your task is to answer a user's question based EXCLUSIVELY on the provided text 
 {{{reportText}}}
 ---
 
-**User's Question:**
+**Conversation History:**
+{{#each history}}
+{{role}}: {{text}}
+{{/each}}
+
+**Current Question:**
 "{{{question}}}"
 
 **Instructions:**

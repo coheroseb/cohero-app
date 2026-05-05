@@ -529,36 +529,6 @@ export default function LandingPage() {
                </div>
              </Reveal>
 
-             {/* Feature 4: Seminar-Arkitekten Visualization */}
-             <Reveal delay={0.1} className="lg:col-span-12">
-               <div className="h-full bg-slate-900 border border-slate-800 p-8 sm:p-16 lg:p-24 rounded-[4rem] shadow-2xl relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.08)_0%,transparent_70%)] pointer-events-none"></div>
-                  <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-                    <div className="flex-1 space-y-8">
-                      <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-amber-400 uppercase tracking-widest bg-amber-400/10 px-4 py-2 rounded-full border border-amber-400/20">
-                        <Sparkles className="w-3.5 h-3.5" /> Eksklusivt Værktøj
-                      </div>
-                      <h3 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-[1] italic">Seminar-Arkitekten</h3>
-                      <p className="text-slate-400 text-lg sm:text-xl leading-relaxed font-medium max-w-xl">
-                        Design komplekse faglige forløb med automatiseret feedback og direkte pensum-integration. Et uundværligt værktøj til den ambitiøse studerende.
-                      </p>
-                      <div className="flex items-center gap-6 pt-4">
-                        <button onClick={onStart} className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs tracking-[0.15em] hover:scale-105 transition-all active:scale-95 shadow-xl shadow-white/5">Prøv nu</button>
-                        <div className="flex items-center gap-2 text-amber-400 font-bold uppercase text-[11px] tracking-wider cursor-pointer group-hover:translate-x-2 transition-transform">
-                          Se demo <ArrowRight className="w-4 h-4" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-full lg:w-1/2 relative">
-                        {/* More Abstract/Innovative Visualization Wrapper */}
-                        <div className="absolute -inset-10 bg-amber-500/10 blur-[80px] rounded-full animate-pulse"></div>
-                        <div className="relative p-2 bg-white/5 rounded-[3rem] border border-white/10 backdrop-blur-md">
-                           <SeminarArchitectVisualization />
-                        </div>
-                    </div>
-                  </div>
-               </div>
-             </Reveal>
           </div>
         </div>
       </section>

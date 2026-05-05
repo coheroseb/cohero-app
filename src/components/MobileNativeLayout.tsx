@@ -8,6 +8,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { triggerHapticFeedback } from '@/lib/haptics';
 import { ImpactStyle } from '@capacitor/haptics';
 import { useApp } from '@/app/provider';
+import { Gavel, Layout, Settings } from 'lucide-react';
 
 interface MobileNativeLayoutProps {
   children: React.ReactNode;
@@ -67,17 +68,17 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
 
   const tabs = [
     { name: 'Hjem', icon: Home, href: '/portal' },
-    { name: 'Søg', icon: Search, href: '/concept-explainer' },
-    { name: 'Gemt', icon: Bookmark, href: '/mine-gemte-begreber' },
+    { name: 'Værktøjer', icon: Layout, href: '/mine-seminarer' },
+    { name: 'Audit', icon: Gavel, href: '/second-opinion' },
     { name: 'Beskeder', icon: Bell, href: '/notifications' },
-    { name: 'Profil', icon: User, href: '/settings' },
+    { name: 'Indstillinger', icon: Settings, href: '/settings' },
   ];
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
       {/* iOS Header */}
-      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/90 backdrop-blur-xl border-b border-black/[0.05] h-[calc(44px+env(safe-area-inset-top))] flex flex-col justify-end pb-2 px-6">
-        <h1 className="text-[17px] font-bold text-slate-900 tracking-tight text-center truncate">
+      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-2xl border-b border-black/[0.03] h-[calc(50px+env(safe-area-inset-top))] flex flex-col justify-end pb-3 px-6 shadow-sm">
+        <h1 className="text-lg font-black text-amber-950 serif tracking-tight text-center truncate">
           {tabs.find(t => t.href === pathname)?.name || 'Cohéro'}
         </h1>
       </header>
@@ -101,13 +102,21 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
                 key={tab.name} 
                 href={tab.href}
                 onClick={() => triggerHapticFeedback(ImpactStyle.Light)}
-                className="flex flex-col items-center justify-center w-full h-[50px] space-y-0.5 active:opacity-50 transition-opacity"
+                className="flex flex-col items-center justify-center w-full h-[54px] space-y-1 active:opacity-50 transition-opacity"
               >
-                <Icon 
-                  className={`w-6 h-6 ${isActive ? 'text-indigo-600 fill-indigo-600/10' : 'text-slate-400'}`} 
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-                <span className={`text-[10px] font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                <div className={`relative ${isActive ? 'scale-110' : 'scale-100'} transition-transform duration-300`}>
+                  <Icon 
+                    className={`w-6 h-6 ${isActive ? 'text-rose-900 fill-rose-900/5' : 'text-slate-400'}`} 
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                  {isActive && (
+                    <motion.div 
+                      layoutId="active-dot"
+                      className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-rose-500 rounded-full"
+                    />
+                  )}
+                </div>
+                <span className={`text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-rose-900' : 'text-slate-300'}`}>
                   {tab.name}
                 </span>
               </Link>

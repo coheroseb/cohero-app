@@ -14,8 +14,8 @@ export const BookSchemaForPrompt = z.object({
 
 // Shared usage stats
 export const UsageSchema = z.object({
-  inputTokens: z.number(),
-  outputTokens: z.number(),
+  inputTokens: z.number().default(0),
+  outputTokens: z.number().default(0),
 });
 
 // ==========================================
@@ -177,6 +177,8 @@ export interface UserProfile {
   convertedAt?: any;
   selectedElectives?: Record<string, string>;
   categoryStudyPlans?: Record<string, { plan: CategoryStudyPlan; checkedSteps: string[] }>;
+  platformRatingComment?: string;
+  emailNotificationsEnabled?: boolean;
 }
 
 export interface StudentCardVerification {
@@ -591,9 +593,12 @@ export const AnalyzeParagraphInputSchema = z.object({
 });
 
 export const ParagraphAnalysisDataSchema = z.object({
-  subjekt: z.string(),
-  handling: z.string(),
-  betingelser: z.string(),
+  subjekt: z.string().optional(),
+  handling: z.string().optional(),
+  betingelser: z.string().optional(),
+  summary: z.string().optional(),
+  keyPoints: z.array(z.string()).optional(),
+  practitionerTip: z.string().optional(),
 });
 
 export const AnalyzeParagraphOutputSchema = z.object({
@@ -752,6 +757,10 @@ export const FetchVivePublicationsOutputSchema = z.object({
 export const ViveReportQaInputSchema = z.object({
   reportText: z.string(),
   question: z.string(),
+  history: z.array(z.object({
+    role: z.enum(['user', 'model']),
+    text: z.string(),
+  })).optional(),
 });
 
 export const ViveReportQaDataSchema = z.object({

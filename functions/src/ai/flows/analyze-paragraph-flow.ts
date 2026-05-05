@@ -49,13 +49,14 @@ Tekst:
 {{/if}}
 
 **Din opgave (på dansk):**
-Analyser paragraffen og udfyld følgende tre felter i et JSON-objekt.
+Analyser paragraffen og udfyld følgende i et JSON-objekt:
 
-1.  **Subjektet (subjekt):** Hvem henvender reglen sig til? Hvem er målgruppen eller den ansvarlige myndighed ifølge teksten?
-2.  **Handlingen (handling):** Hvad er det helt præcist reglen regulerer, tillader eller påbyder? 
-3.  **Betingelserne (betingelser):** Hvilke specifikke betingelser skal ifølge kilden være opfyldt, før reglen finder anvendelse? List dem punktvist hvis muligt.
+1.  **Opsummering (summary):** En kort og præcis forklaring af, hvad paragraffen betyder i praksis for en borger eller sagsbehandler.
+2.  **Vigtige Betingelser (keyPoints):** En liste (array af strings) med de væsentligste betingelser, der skal være opfyldt ifølge teksten.
+3.  **Sagsbehandler-tip (practitionerTip):** Et proaktivt tip til sagsbehandleren om, hvad de skal være særligt opmærksomme på, eller hvordan reglen typisk anvendes.
 
-Dit svar SKAL være et JSON-objekt, der matcher output-skemaet.`,
+Dit svar SKAL være et JSON-objekt, der matcher output-skemaet. Undgå juridisk volapyk - skriv så det er til at forstå.
+`,
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },

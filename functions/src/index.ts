@@ -185,6 +185,7 @@ import { dailyNewUserActivationNudge } from "./cron/new-user-activation-nudge";
 import { weeklyStudyCompanion } from "./cron/study-companion-newsletter";
 import { cleanupStorageArtifacts } from "./cron/cleanup-storage";
 import { syncPaymentStatus } from "./cron/payment-sync";
+import { checkViveUpdates } from "./cron/check-vive-updates";
 
 export { 
   checkFolketingetUpdates, 
@@ -194,7 +195,8 @@ export {
   dailyNewUserActivationNudge,
   weeklyStudyCompanion,
   cleanupStorageArtifacts,
-  syncPaymentStatus
+  syncPaymentStatus,
+  checkViveUpdates
 };
 
 import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";

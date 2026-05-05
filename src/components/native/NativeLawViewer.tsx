@@ -170,8 +170,8 @@ export default function NativeLawViewer() {
         return lawData.kapitler.map(chapter => ({
             ...chapter,
             paragraffer: chapter.paragraffer.filter(p => 
-                p.id.toLowerCase().includes(q) || 
-                p.text.toLowerCase().includes(q)
+                p.nummer.toLowerCase().includes(q) || 
+                p.tekst.toLowerCase().includes(q)
             )
         })).filter(chapter => chapter.paragraffer.length > 0);
     }, [lawData, searchQuery]);
@@ -197,7 +197,7 @@ export default function NativeLawViewer() {
         if (!user || !firestore) return;
         triggerHapticFeedback(ImpactStyle.Light);
         
-        const saveId = `${lawId}-${paragraph.id.replace(/[§\s\.]/g, '-')}`;
+        const saveId = `${lawId}-${paragraph.nummer.replace(/[§\s\.]/g, '-')}`;
         const isSaved = savedParagraphs.includes(saveId);
 
         try {
@@ -208,8 +208,8 @@ export default function NativeLawViewer() {
                 await setDoc(doc(firestore, 'users', user.uid, 'savedParagraphs', saveId), {
                     lawId,
                     lawTitle: lawData?.titel,
-                    paragraphNumber: paragraph.id,
-                    text: paragraph.text,
+                    paragraphNumber: paragraph.nummer,
+                    text: paragraph.tekst,
                     savedAt: serverTimestamp()
                 });
                 toast({ title: "Gemt!", description: "Paragraffen er tilføjet til din samling." });
@@ -222,18 +222,18 @@ export default function NativeLawViewer() {
     const handleAnalyze = async (paragraph: any) => {
         if (!paragraph) return;
         triggerHapticFeedback(ImpactStyle.Heavy);
-        setAnalysisLoading(paragraph.id);
+        setAnalysisLoading(paragraph.nummer);
         
         try {
             const result = await analyzeParagraphAction({
-                lovTitel: lawData?.name || '',
-                paragrafNummer: paragraph.id,
-                paragrafTekst: paragraph.text,
+                lovTitel: lawData?.titel || '',
+                paragrafNummer: paragraph.nummer,
+                paragrafTekst: paragraph.tekst,
                 fuldLovtekst: "",
                 uniqueDocumentId: lawId
             });
-            if (result.success && result.analysis) {
-                setAnalysisResult({ id: paragraph.id, data: result.analysis });
+            if (result && result.data) {
+                setAnalysisResult({ id: paragraph.nummer, data: result.data });
                 setIsAnalysisDrawerOpen(true);
             }
         } catch (err) {
@@ -339,14 +339,14 @@ export default function NativeLawViewer() {
 
                         <div className="grid gap-6">
                             {chapter.paragraffer.map((para) => {
-                                const isSaved = savedParagraphs.includes(`${lawId}-${para.id.replace(/[§\s\.]/g, '-')}`);
-                                const isAnalyzing = analysisLoading === para.id;
-                                const isTarget = initialPara === para.id;
+                                const isSaved = savedParagraphs.includes(`${lawId}-${para.nummer.replace(/[§\s\.]/g, '-')}`);
+                                const isAnalyzing = analysisLoading === para.nummer;
+                                const isTarget = initialPara === para.nummer;
 
                                 return (
                                     <motion.div
-                                        key={para.id}
-                                        ref={el => paragraphRefs.current[para.id] = el as any}
+                                        key={para.nummer}
+                                        ref={el => paragraphRefs.current[para.nummer] = el as any}
                                         initial={isTarget ? { scale: 1.02 } : {}}
                                         className={`bg-white rounded-[2.5rem] border border-black/[0.04] shadow-[0_4px_20px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-500 ${isTarget ? 'ring-2 ring-amber-500 shadow-2xl' : ''}`}
                                     >
@@ -354,7 +354,7 @@ export default function NativeLawViewer() {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-12 h-12 bg-[#1a1a1a] rounded-[1.25rem] flex items-center justify-center text-amber-400 font-black serif text-2xl shadow-xl shadow-black/10">
-                                                        {para.id.replace('§ ', '')}
+                                                        {para.nummer.replace('§ ', '')}
                                                     </div>
                                                     <div>
                                                         <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300">Lov-Paragraf</div>
@@ -371,7 +371,7 @@ export default function NativeLawViewer() {
                                                     <button 
                                                         onClick={() => {
                                                             triggerHapticFeedback(ImpactStyle.Light);
-                                                            navigator.clipboard.writeText(`${lawData.titel}, § ${para.id}:\n${para.text}`);
+                                                            navigator.clipboard.writeText(`${lawData.titel}, § ${para.nummer}:\n${para.tekst}`);
                                                             toast({ title: "Kopieret", description: "Paragaften er kopieret til udklipsholder." });
                                                         }}
                                                         className="w-11 h-11 bg-slate-50 text-slate-300 rounded-[1rem] flex items-center justify-center hover:text-slate-900 border border-slate-100"
@@ -383,7 +383,7 @@ export default function NativeLawViewer() {
 
                                             <div className="relative">
                                                 <div className="absolute -left-10 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-200/50 to-transparent hidden md:block"></div>
-                                                <InteractiveParagraphBody text={para.text} />
+                                                <InteractiveParagraphBody text={para.tekst} />
                                             </div>
 
                                             <button
@@ -423,7 +423,7 @@ export default function NativeLawViewer() {
                                     <button 
                                         key={i}
                                         onClick={() => {
-                                            const firstPara = chapter.paragraffer[0]?.id;
+                                            const firstPara = chapter.paragraffer[0]?.nummer;
                                             if (firstPara) scrollToPara(firstPara);
                                             setActiveChapter(i);
                                         }}
@@ -514,7 +514,7 @@ export default function NativeLawViewer() {
                                         <div className="h-px flex-1 ml-6 bg-slate-100" />
                                     </div>
                                     <div className="grid gap-3">
-                                        {analysisResult.data.keyPoints.map((point, i) => (
+                                        {analysisResult.data.keyPoints?.map((point, i) => (
                                             <div key={i} className="flex items-start gap-4 p-5 bg-white rounded-3xl border border-slate-50 shadow-sm group active:bg-amber-50 transition-colors">
                                                 <div className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5 group-active:bg-amber-950 group-active:text-white transition-all">
                                                     <Check className="w-4 h-4" />
