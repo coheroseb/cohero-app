@@ -634,7 +634,6 @@ export default function SettingsPage() {
                                   </div>
                               </div>
                            </div>
-                      </div>
 
                           <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-4">
                              <AnimatePresence>

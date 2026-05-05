@@ -9,6 +9,7 @@ import { triggerHapticFeedback } from '@/lib/haptics';
 import { ImpactStyle } from '@capacitor/haptics';
 import { useApp } from '@/app/provider';
 import { Gavel, Layout, Settings } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface MobileNativeLayoutProps {
   children: React.ReactNode;
