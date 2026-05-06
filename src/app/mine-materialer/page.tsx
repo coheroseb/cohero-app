@@ -327,10 +327,9 @@ function MineMaterialerContent() {
     if (!html) return html;
     return html.replace(/(\(S\.\s*(\d+)\)|\[S\.\s*(\d+)\])/gi, (match, full, p1, p2) => {
         const page = p1 || p2;
-        return `<button class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md font-black text-[10px] hover:bg-indigo-600 hover:text-white transition-all ml-1 border border-indigo-100" onclick="window.openAtPage('${materialId || ''}', ${page})">
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-400 rounded-md font-bold text-[10px] ml-1 border border-slate-100">
             S. ${page}
-        </button>`;
+        </span>`;
     });
   };
 

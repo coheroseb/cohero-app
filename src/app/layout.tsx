@@ -124,7 +124,7 @@ export default function RootLayout({
     url: siteUrl,
     logo: `${siteUrl}${ogImageUrl}`,
     description: siteDescription,
-    foundingDate: '2024',
+    foundingDate: '2026',
     founders: [
       {
         '@type': 'Person',

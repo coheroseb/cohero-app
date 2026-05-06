@@ -114,7 +114,7 @@ export default function AboutUsPage() {
                                     <div className="w-20 h-20 bg-indigo-50 rounded-full mx-auto flex items-center justify-center text-indigo-600">
                                         <Sparkles className="w-10 h-10" />
                                     </div>
-                                    <p className="text-xs font-black uppercase tracking-widest text-indigo-900/40">Siden 2024</p>
+                                    <p className="text-xs font-black uppercase tracking-widest text-indigo-900/40">Siden 2026</p>
                                 </div>
                             </div>
                         </div>

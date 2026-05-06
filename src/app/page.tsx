@@ -38,6 +38,8 @@ import HeroIllustration from '@/components/home/HeroIllustration';
 import SeminarArchitectVisualization from '@/components/SeminarArchitectVisualization';
 import TikTokFeed from '@/components/home/TikTokFeed';
 import ReviewMarquee from '@/components/home/ReviewMarquee';
+import TrustStats from '@/components/home/TrustStats';
+
 
 const Reveal = ({ children, delay = 0, className = "" }: { children: React.ReactNode, delay?: number, className?: string }) => (
   <motion.div
@@ -131,7 +133,22 @@ export default function LandingPage() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="space-y-5 sm:space-y-8 flex flex-col items-center lg:items-start w-full"
               >
-                {/* Mobile top badge */}
+                {/* Social Proof Badge */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200/50 rounded-full mb-2"
+                >
+                  <div className="flex -space-x-1.5">
+                    {[1,2,3].map(i => (
+                      <div key={i} className={`w-5 h-5 rounded-full border-2 border-amber-50 bg-slate-${i*100+100}`} />
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-900">
+                    Faglig tyngde til 8 uddannelser
+                  </span>
+                </motion.div>
 
                 <motion.h1 
                   animate={{ 
@@ -319,81 +336,12 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 2.5 STATISTICS (Social Proof) */}
+      <TrustStats />
 
 
-       {/* 1.2 DIFFERENTIATION SECTION (Innovative 'Bento-Neo' Layout) */}
-      <section className="py-32 bg-[#FDFBF7] px-5 sm:px-8 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-end justify-between gap-12 mb-20">
-             <Reveal className="max-w-2xl">
-               <h2 className="text-5xl sm:text-7xl font-[900] text-slate-900 tracking-[-0.05em] leading-[0.9] mb-8">
-                 Designet til <br />
-                 <span className="text-amber-500 italic font-serif">eliten</span> af fremtidens <br />
-                 socialrådgivere.
-               </h2>
-             </Reveal>
-             <Reveal delay={0.2} className="max-w-sm pb-2">
-                <p className="text-lg text-slate-500 font-medium leading-relaxed border-l-2 border-amber-200 pl-6">
-                  Vi bygger ikke bare software. Vi bygger den kognitive arkitektur, der gør dig i stand til at navigere i velfærdssystemets kompleksitet.
-                </p>
-             </Reveal>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-6 auto-rows-[280px] sm:auto-rows-[340px]">
-            {/* Bento Card 1: Power Feature */}
-            <Reveal className="md:col-span-4 lg:col-span-7 row-span-2">
-              <div className="group h-full bg-white border border-slate-100 rounded-[3rem] p-10 sm:p-16 flex flex-col justify-between relative overflow-hidden shadow-sm sm:hover:shadow-2xl transition-all duration-700">
-                <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-slate-50/50 to-transparent -z-10 group-hover:scale-110 transition-transform duration-1000"></div>
-                <div className="relative z-10 space-y-8">
-                  <div className="w-16 h-16 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center rotate-[-8deg] group-hover:rotate-0 transition-transform duration-500 shadow-xl shadow-slate-900/20">
-                    <Scale className="w-8 h-8" />
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-none italic">Socialretlig <br/>præcision.</h3>
-                    <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-sm">
-                      Med 50.000+ siders lovgivning integreret i hvert eneste svar, er Cohero dit anker i de sværeste faglige beslutninger.
-                    </p>
-                  </div>
-                </div>
-                <div className="relative z-10 pt-10">
-                   <div className="inline-flex items-center gap-2 text-slate-900 font-black uppercase text-xs tracking-widest border-b-2 border-slate-900 pb-1 group-hover:gap-4 transition-all">
-                      Se Lovportalen <ArrowRight className="w-4 h-4" />
-                   </div>
-                </div>
-              </div>
-            </Reveal>
 
-            {/* Bento Card 2: Aesthetic Proof */}
-            <Reveal delay={0.1} className="md:col-span-4 lg:col-span-5 row-span-1">
-               <div className="h-full bg-amber-400 rounded-[3rem] p-10 flex flex-col justify-center items-center text-center group cursor-pointer overflow-hidden relative">
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="absolute -top-10 -right-10 w-40 h-40 border-[20px] border-white/10 rounded-full"
-                  />
-                  <h3 className="text-3xl font-black text-amber-950 tracking-tight italic z-10">Fra teori til handling.</h3>
-                  <div className="mt-6 w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform z-10">
-                    <Star className="w-6 h-6 text-white fill-white" />
-                  </div>
-               </div>
-            </Reveal>
-
-            {/* Bento Card 3: Deep Tech */}
-            <Reveal delay={0.2} className="md:col-span-2 lg:col-span-5 row-span-1">
-               <div className="h-full bg-slate-900 text-white rounded-[3rem] p-10 flex flex-col justify-between group overflow-hidden relative border border-slate-800">
-                  <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-amber-500/10 to-transparent -z-10"></div>
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-bold italic">Indbygget rygdækning.</h3>
-                    <p className="text-sm text-slate-400 font-medium">Vi overvåger Folketinget, så du ikke behøver det.</p>
-                  </div>
-                  <div className="flex -space-x-3 pt-6">
-                    {[1,2,3,4,5].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-700 animate-pulse"></div>)}
-                  </div>
-               </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
 
       {/* 1.5 ACTIVE CAMPAIGN SPOTLIGHT (Premium Card) */}
       {campaigns && campaigns.length > 0 && (
@@ -833,6 +781,18 @@ export default function LandingPage() {
               <p className="text-slate-400 text-xl sm:text-2xl mt-10 leading-relaxed font-medium max-w-2xl mx-auto">
                 Bliv en del af eliten. Start din rejse mod en mere sikker og professionel hverdag som socialrådgiver.
               </p>
+              
+              <div className="flex items-center justify-center gap-6 mt-8 opacity-50">
+                 <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">GDPR Overholdt</span>
+                 </div>
+                 <div className="w-1 h-1 rounded-full bg-slate-700" />
+                 <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-amber-500" />
+                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Sikker Kryptering</span>
+                 </div>
+              </div>
             </Reveal>
             <Reveal delay={0.1}>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10">

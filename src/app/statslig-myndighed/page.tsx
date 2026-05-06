@@ -295,7 +295,7 @@ export default function StateAuthorityEducationPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
            <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-xl italic shadow-lg shadow-indigo-600/20">C</div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">© 2024 Cohéro Academy</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">© 2026 Cohéro Academy</p>
            </div>
            <div className="flex items-center gap-8">
               <Link href="/portal" className="text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors">Tilbage til portal</Link>

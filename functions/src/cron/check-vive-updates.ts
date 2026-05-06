@@ -105,7 +105,7 @@ export const checkViveUpdates = functions.pubsub
             if (usersSnapshot.empty) continue;
 
             const usersData = usersSnapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
-            const uids = usersData.map(u => u.id);
+            const uids = usersData.map((u: any) => u.id);
             
             // 4. Notifications & Emails
             const title = "Ny udgivelse fra VIVE! 📚";
@@ -144,7 +144,7 @@ export const checkViveUpdates = functions.pubsub
             }
 
             // B. Individual Emails via Resend (respecting user preference)
-            const emailRecipients = usersData.filter(u => u.email && (u.emailNotificationsEnabled !== false));
+            const emailRecipients = usersData.filter((u: any) => u.email && (u.emailNotificationsEnabled !== false));
             for (const user of emailRecipients) {
                 try {
                     const greetingName = user.firstName || (user.username ? user.username.split(' ')[0] : 'Kollega');
