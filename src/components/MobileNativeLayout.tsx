@@ -69,7 +69,7 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
 
   const tabs = [
     { name: 'Hjem', icon: Home, href: '/portal' },
-    { name: 'Doks', icon: Bookmark, href: '/mine-seminarer' },
+    { name: 'Doks', icon: Bookmark, href: '/mine-materialer' },
     { name: 'Notifikationer', icon: Bell, href: '/notifications' },
     { name: 'Indstillinger', icon: Settings, href: '/settings' },
   ];
