@@ -23,8 +23,7 @@ export function repairJson(json: string): any {
     // 4. Fix unclosed strings (handling escapes)
     let inString = false;
     let escaped = false;
-    let lastValidCharIndex = -1;
-
+    
     for (let i = 0; i < cleaned.length; i++) {
         const char = cleaned[i];
         if (inString) {
@@ -40,11 +39,6 @@ export function repairJson(json: string): any {
                 inString = true;
             }
         }
-        if (!inString) {
-            if (/[0-9a-zA-Z\}\]\" \n\t\r]/.test(char)) {
-                lastValidCharIndex = i;
-            }
-        }
     }
 
     if (inString) {
@@ -52,6 +46,12 @@ export function repairJson(json: string): any {
             cleaned = cleaned.slice(0, -1); // Remove trailing backslash
         }
         cleaned += '"';
+    }
+    
+    // 4.5 Handle dangling colons (e.g., "key":)
+    let tempCleaned = cleaned.trim();
+    if (tempCleaned.endsWith(':')) {
+        cleaned = cleaned.trim() + ' ""'; // Add empty string value
     }
     
     // 5. Close unclosed brackets/braces
@@ -69,9 +69,15 @@ export function repairJson(json: string): any {
             if (char === '"') inString = true;
             else if (char === '{') stack.push('}');
             else if (char === '[') stack.push(']');
-            else if (char === '}') { if (stack[stack.length - 1] === '}') stack.pop(); }
-            else if (char === ']') { if (stack[stack.length - 1] === ']') stack.pop(); }
+            else if (char === '}') { if (stack.length > 0 && stack[stack.length - 1] === '}') stack.pop(); }
+            else if (char === ']') { if (stack.length > 0 && stack[stack.length - 1] === ']') stack.pop(); }
         }
+    }
+    
+    // If we have a dangling comma before closing, remove it
+    cleaned = cleaned.trim();
+    if (cleaned.endsWith(',')) {
+        cleaned = cleaned.slice(0, -1);
     }
     
     while (stack.length > 0) {
@@ -84,12 +90,16 @@ export function repairJson(json: string): any {
     } catch (e) {
         console.error("[JSONRepair] Failed to repair JSON:", e);
         // If it still fails, try to find the last valid closing brace/bracket
-        const lastBrace = Math.max(cleaned.lastIndexOf('}'), cleaned.lastIndexOf(']'));
-        if (lastBrace !== -1) {
+        // This is a fallback to the last "safe" structural point
+        let temp = cleaned;
+        while (temp.length > 0) {
+            const lastPoint = Math.max(temp.lastIndexOf('}'), temp.lastIndexOf(']'));
+            if (lastPoint === -1) break;
+            temp = temp.substring(0, lastPoint + 1);
             try {
-                return JSON.parse(cleaned.substring(0, lastBrace + 1));
-            } catch (e2) {
-                throw new Error(`JSON parsing failed even after repair: ${e.message}`);
+                return JSON.parse(temp);
+            } catch {
+                temp = temp.substring(0, lastPoint);
             }
         }
         throw e;
