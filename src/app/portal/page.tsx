@@ -42,6 +42,8 @@ import {
 import { useApp } from '@/app/provider';
 import { useToast } from '@/hooks/use-toast';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
+import { Capacitor } from '@capacitor/core';
+import NativePortal from '@/components/native/NativePortal';
 import { fetchPoliticalNews, fetchSocialMinistryNews, processStudyRegulationAction } from '@/app/actions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -97,6 +99,7 @@ const PortalPageContent: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [news, setNews] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
+  const [isNative, setIsNative] = useState(false);
 
   // Dashboard Data
   const [plans, setPlans] = useState<any[]>([]);
@@ -108,6 +111,7 @@ const PortalPageContent: React.FC = () => {
 
   // Initialize reminder visibility from localStorage
   useEffect(() => {
+    setIsNative(Capacitor.isNativePlatform());
     const isDismissed = localStorage.getItem('semester_reminder_dismissed_v1');
     if (!isDismissed) {
       setShowSemesterReminder(true);
@@ -369,6 +373,8 @@ const PortalPageContent: React.FC = () => {
   };
 
   if (isUserLoading || !user || !userProfile) return <AuthLoadingScreen />;
+
+  if (isNative) return <NativePortal />;
 
   const hour = new Date().getHours();
   const greeting = hour < 10 ? 'Godmorgen' : hour < 18 ? 'Goddag' : 'Godaften';
