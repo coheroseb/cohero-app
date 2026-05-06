@@ -18,7 +18,13 @@ import {
   Save,
   Trash2,
   FileText,
-  History
+  History,
+  BookOpen,
+  Wrench,
+  Lightbulb,
+  Scale,
+  FileSearch,
+  Book
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -45,9 +51,9 @@ function MindmapContent() {
     const { user, userProfile, isUserLoading, setIsNavbarHidden } = useApp();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const materialId = searchParams.get('materialId');
+    const materialId = searchParams?.get('materialId');
     
-    const semester = searchParams.get('semesterId') || userProfile?.semester;
+    const semester = searchParams?.get('semesterId') || userProfile?.semester;
     
     const [mindmapData, setMindmapData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -568,12 +574,24 @@ function MindmapContent() {
                                                         <motion.div 
                                                             id={child.id}
                                                             onClick={() => handleNodeClick(child)}
-                                                            whileHover={{ x: 10, scale: 1.02 }}
-                                                            className="p-8 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-3xl hover:border-white/20 transition-all group/node cursor-pointer"
+                                                            whileHover={{ x: 10, scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+                                                            className="p-8 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-[2rem] hover:border-white/20 transition-all group/node cursor-pointer shadow-xl"
                                                         >
-                                                            <h4 className="text-sm font-black text-white group-hover/node:text-amber-400 transition-colors mb-3">{child.text}</h4>
+                                                            <div className="flex items-start gap-4 mb-3">
+                                                                <div className="mt-1 shrink-0">
+                                                                    {child.type === 'concept' && <BookOpen className="w-4 h-4 text-indigo-400" />}
+                                                                    {child.type === 'method' && <Wrench className="w-4 h-4 text-emerald-400" />}
+                                                                    {child.type === 'theory' && <Lightbulb className="w-4 h-4 text-amber-400" />}
+                                                                    {child.type === 'law' && <Scale className="w-4 h-4 text-rose-400" />}
+                                                                    {child.type === 'case' && <FileSearch className="w-4 h-4 text-sky-400" />}
+                                                                    {!child.type && <Sparkles className="w-4 h-4 text-slate-500" />}
+                                                                </div>
+                                                                <h4 className="text-sm font-black text-white group-hover/node:text-amber-400 transition-colors leading-tight">{child.text}</h4>
+                                                            </div>
                                                             {child.description && (
-                                                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed max-w-[250px]">{child.description}</p>
+                                                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed max-w-[250px] pl-8 border-l border-white/5">
+                                                                    {child.description}
+                                                                </p>
                                                             )}
                                                         </motion.div>
                                                         {/* Connector to Branch */}

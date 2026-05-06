@@ -1574,13 +1574,13 @@ export async function generateMaterialMindmapAction(input: {
                 if (materialIds.length > 0) {
                     console.log(`[Mindmap] Fetching diverse chunks for ${materialIds.length} materials`);
                     
-                    // Fetch top 30 chunks from EACH material to ensure diversity
+                    // Fetch top 35 chunks from EACH material to ensure diversity
                     const materialPromises = materialIds.map(id => 
                         adminFirestore.collection('users')
                             .doc(input.userId)
                             .collection('materialChunks')
                             .where('materialId', '==', id)
-                            .limit(30)
+                            .limit(35)
                             .get()
                     );
                     
@@ -1595,33 +1595,44 @@ export async function generateMaterialMindmapAction(input: {
                     textToAnalyze = allChunks
                         .map(c => c.text || "")
                         .join('\n')
-                        .substring(0, 60000); // Increased limit slightly for more detail
+                        .substring(0, 120000); // Increased limit significantly for deeper analysis
                     
                     console.log(`[Mindmap] Final diverse text length: ${textToAnalyze.length}`);
                 }
             }
         }
 
-        const prompt = `Du er en ekspert i at analysere pensum og identificere tværgående temaer. 
-Din opgave er at analysere den vedhæftede tekst og skabe et omfattende, hierarkisk mindmap med tværgående forbindelser.
+        const prompt = `Du er en højt kvalificeret akademisk analytiker og pædagogisk arkitekt. 
+Din opgave er at gennemføre en dybdegående analyse af det vedhæftede pensum-materiale og skabe et struktureret, hierarkisk mindmap.
 
-${input.focus ? `VIGTIGT FOKUS: "${input.focus}". Du SKAL bruge "${input.focus}" som titlen på din 'root' node.` : 'VIGTIGT: Identificer de mest centrale TEMAER og gruppér viden logisk.'}
+FORMÅL:
+At identificere de mest centrale elementer, begreber, metoder og teorier, så den studerende får et knivskarpt overblik til eksamen.
 
-Du SKAL returnere et JSON objekt med denne struktur:
+DU SKAL IDENTIFICERE OG ORGANISERE FØLGENDE KATEGORIER:
+1. **Centrale Begreber**: Kernebegreber og definitioner der er fundamentale for emnet.
+2. **Metoder & Værktøjer**: Specifikke fremgangsmåder, analysemodeller eller praktiske metoder beskrevet i teksten.
+3. **Teorier & Modeller**: De teoretiske rammeværk eller videnskabelige modeller der understøtter emnet.
+4. **Væsentlig Praksis/Regler**: Hvordan viden anvendes i praksis (f.eks. lovgivning, cases eller kliniske retningslinjer).
+5. **Tværgående Sammenhænge**: Hvordan elementer fra forskellige kategorier relaterer sig til hinanden.
+
+${input.focus ? `VIGTIGT EKSTRA FOKUS: "${input.focus}". Du SKAL bruge "${input.focus}" som titlen på din 'root' node og vinkle hele analysen mod dette emne.` : 'VIGTIGT: Identificer det absolutte hovedtema som din "root" node.'}
+
+DU SKAL RETURNERE ET JSON OBJEKT MED DENNE STRUKTUR:
 {
   "root": {
     "id": "root",
-    "text": "${input.focus || 'Overordnet Tema'}",
+    "text": "Overordnet Emne",
     "children": [
       {
         "id": "theme_1",
-        "text": "Tema Navn",
+        "text": "Tema Navn (f.eks. Centrale Begreber / Metoder / Teorier)",
         "color": "indigo | emerald | rose | amber | sky",
         "children": [
           {
             "id": "sub_1",
-            "text": "Koncept",
-            "description": "Forklaring",
+            "text": "Navn på elementet (f.eks. 'Strafudmåling' eller 'PARETO-modellen')",
+            "description": "En præcis, akademisk forklaring på 1-2 sætninger, der opsummerer essensen.",
+            "type": "concept | method | theory | law | case",
             "children": []
           }
         ]
@@ -1629,21 +1640,22 @@ Du SKAL returnere et JSON objekt med denne struktur:
     ]
   },
   "connections": [
-    { "from": "id_a", "to": "id_b", "label": "Forklaring på sammenhæng" }
+    { "from": "id_a", "to": "id_b", "label": "Beskriv sammenhængen kort (f.eks. 'Anvendes til at analysere...')" }
   ]
 }
 
 REGLER:
-1. GIV ALLE NODER ET UNIKT ID.
-2. Identificer 3-5 vigtige 'connections' mellem noder i FORSKELLIGE grene.
-3. Hver temagren skal have 3-5 underpunkter.
-4. Brug kun de angivne farver.
-5. Returner KUN JSON.
+1. **Unikke ID'er**: Giv alle noder et unikt, beskrivende ID (f.eks. 'begreb_retskraft').
+2. **Kategorisering**: Gruppér elementerne i de 4-6 mest logiske overordnede temaer (brug kategorierne ovenfor som inspiration).
+3. **Dybde**: Hver temagren skal have 4-8 underpunkter for at sikre en høj informations-densitet.
+4. **Connections**: Identificer 5-10 meningsfulde forbindelser på tværs af forskellige grene.
+5. **Sprog**: Al tekst skal være på dansk og i en akademisk, men letforståelig tone.
+6. **Output**: Returner KUN JSON-objektet. Intet andet tekst.
 
-Teksten:\n\n${textToAnalyze}`;
+Teksten der skal analyseres:\n\n${textToAnalyze}`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 35000); // 35 seconds
+        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 seconds for deeper analysis
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
             method: "POST",
@@ -1651,7 +1663,7 @@ Teksten:\n\n${textToAnalyze}`;
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: { 
-                    temperature: 0.2, 
+                    temperature: 0.1, // Lower temperature for more consistent structural analysis
                     maxOutputTokens: 8192,
                     response_mime_type: "application/json"
                 }
@@ -1665,8 +1677,6 @@ Teksten:\n\n${textToAnalyze}`;
             const aiData = await response.json();
             const result = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
             const mindmapJson = JSON.parse(result);
-
-            // Optional: Auto-save could be here, but let's do it via a separate action for more control
             
             return { success: true, mindmap: mindmapJson };
         } else {
@@ -4607,6 +4617,7 @@ export async function getMindmapNodeSourceAction(input: {
                     2. SAMMENFLET linjer der er knækket midt i en sætning. Teksten SKAL fremstå som sammenhængende afsnit.
                     3. FJERN STØJ: Sidetal, sidehoveder og scanning-fejl skal fjernes helt.
                     4. FORMATERING: Teksten skal stå som et sammenhængende, letlæseligt afsnit.
+                    5. STRUKTUR: Tilføj en 'type' (f.eks. 'teori', 'case', 'definition') til hvert logisk underafsnit.
                     
                     RÅ TEKST FRA DOKUMENT:
                     ${chunkObj.text}`;
@@ -4615,9 +4626,16 @@ export async function getMindmapNodeSourceAction(input: {
                     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout per call
 
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: formatPrompt }] }] }),
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: formatPrompt }] }],
+                            generationConfig: { 
+                                temperature: 0.2, 
+                                maxOutputTokens: 8192,
+                                response_mime_type: "application/json"
+                            }
+                        }),
                         signal: controller.signal
                     });
                     clearTimeout(timeoutId);

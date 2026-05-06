@@ -15,7 +15,7 @@ import { useMemo } from 'react';
  */
 export const useMemoFirebase = <T>(
   factory: () => T,
-  deps: React.DependencyList | undefined
+  deps: React.DependencyList
 ): T => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const value = useMemo(factory, deps);
