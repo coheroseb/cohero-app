@@ -18,7 +18,7 @@ if (!Promise.withResolvers) {
 import { safeIsoDate } from '@/lib/utils';
 import { resend } from '@/lib/resend';
 
-// AI Flow Imports
+import { repairJson } from '@/lib/json-repair';
 
 
 
@@ -1348,168 +1348,22 @@ Sørg for at svaret KUN indeholder JSON objektet. Teksten:\n\n${textToSummarize}
             let overviewJson = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
             if (overviewJson) {
                 try {
-                    // --- ROBUST QUOTE NORMALIZER ---
-                    // This function ensures all structural quotes are " and fixes common AI mistakes
-                    const normalizeQuotes = (str: string) => {
-                        let result = "";
-                        let inString = false;
-                        let startQuote = "";
-                        let i = 0;
-
-                        while (i < str.length) {
-                            const char = str[i];
-                            
-                            if (!inString) {
-                                if (char === '"' || char === "'") {
-                                    inString = true;
-                                    startQuote = char;
-                                    result += '"'; // Always use double quote for structure
-                                } else {
-                                    result += char;
-                                }
-                            } else {
-                                // We are inside a string. Look for the closing quote.
-                                // But be careful: AI often uses ' inside a "string" or vice-versa.
-                                // Logic: A structural closing quote is usually followed by : , } ] or whitespace
-                                if (char === startQuote) {
-                                    // Potential end of string. Check next non-whitespace char.
-                                    let nextIdx = i + 1;
-                                    while (nextIdx < str.length && /\s/.test(str[nextIdx])) nextIdx++;
-                                    const nextChar = str[nextIdx];
-
-                                    if (nextChar === ":" || nextChar === "," || nextChar === "}" || nextChar === "]" || nextIdx >= str.length) {
-                                        inString = false;
-                                        result += '"';
-                                    } else {
-                                        // It's likely an internal apostrophe/quote, not a structural one
-                                        result += char === '"' ? "'" : char; 
-                                    }
-                                } else if (char === '"' && startQuote === "'") {
-                                    // Mismatched quote inside. AI might have started with ' and ended with "
-                                    // Check if this is the structural end
-                                    let nextIdx = i + 1;
-                                    while (nextIdx < str.length && /\s/.test(str[nextIdx])) nextIdx++;
-                                    const nextChar = str[nextIdx];
-                                    if (nextChar === ":" || nextChar === "," || nextChar === "}" || nextChar === "]" || nextIdx >= str.length) {
-                                        inString = false;
-                                        result += '"';
-                                    } else {
-                                        result += "'";
-                                    }
-                                } else if (char === '"') {
-                                    result += "'"; // Escape internal double quotes
-                                } else {
-                                    result += char;
-                                }
-                            }
-                            i++;
-                        }
-                        if (inString) result += '"'; // Close if truncated
-                        return result;
-                    };
-
-                    // Robust cleaning
-                    let cleanedJson = (overviewJson || "")
-                        .replace(/```json/g, '')
-                        .replace(/```/g, '')
-                        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
-                        .trim();
-
-                    cleanedJson = normalizeQuotes(cleanedJson);
-                    logToConsole(`[generateAction] START OF JSON (first 50): ${cleanedJson.substring(0, 50)}`);
-
-                    // --- IMPROVED JSON REPAIR LOGIC ---
-                    const repairJson = (json: string) => {
-                        try {
-                            JSON.parse(json);
-                            return json;
-                        } catch (e) {
-                            // Continue to repair if still invalid
-                        }
-
-                        logToConsole(`[generateAction] Truncated JSON detected. Attempting deep repair...`);
-                        
-                        const attemptRepair = (input: string) => {
-                            let stack: string[] = [];
-                            let inString = false;
-                            let escaped = false;
-
-                            for (let i = 0; i < input.length; i++) {
-                                const char = input[i];
-                                if (inString) {
-                                    if (escaped) { escaped = false; }
-                                    else if (char === '\\') { escaped = true; }
-                                    else if (char === '"') { inString = false; }
-                                } else {
-                                    if (char === '"') {
-                                        inString = true;
-                                    } else if (char === '{') { stack.push('{'); }
-                                    else if (char === '[') { stack.push('['); }
-                                    else if (char === '}') { if (stack[stack.length - 1] === '{') stack.pop(); }
-                                    else if (char === ']') { if (stack[stack.length - 1] === '[') stack.pop(); }
-                                }
-                            }
-
-                            let repaired = input;
-                            if (inString) repaired += '"';
-
-                            for (let i = stack.length - 1; i >= 0; i--) {
-                                const opener = stack[i];
-                                repaired = repaired.trim();
-                                if (repaired.endsWith(',')) repaired = repaired.slice(0, -1);
-                                repaired += opener === '{' ? '}' : ']';
-                            }
-                            return repaired;
-                        };
-
-                        let result = attemptRepair(json);
-                        try {
-                            JSON.parse(result);
-                            return result;
-                        } catch (err) {
-                            logToConsole(`[generateAction] Deep repair failed, trying aggressive back-trimming...`);
-                            let temp = json;
-                            while (temp.length > 0) {
-                                const lastBrace = Math.max(temp.lastIndexOf('}'), temp.lastIndexOf(']'));
-                                if (lastBrace === -1) break;
-                                temp = temp.substring(0, lastBrace + 1);
-                                
-                                const backTrimmed = attemptRepair(temp);
-                                try {
-                                    JSON.parse(backTrimmed);
-                                    return backTrimmed;
-                                } catch {
-                                    temp = temp.substring(0, lastBrace);
-                                }
-                            }
-                        }
-                        return result;
-                    };
-
-                    cleanedJson = repairJson(cleanedJson);
-
-                    try {
-                        JSON.parse(cleanedJson); // Final validation check
-                    } catch (pErr) {
-                        logToConsole(`[generateAction] ALL REPAIR ATTEMPTS FAILED.`);
-                        throw pErr;
-                    }
-
+                    const overviewData = repairJson(overviewJson);
+                    const overviewDataStr = JSON.stringify(overviewData);
                     logToConsole(`[generateAction] Valid JSON received (or healed) for ${input.materialId}`);
                     
-                    await adminFirestore.collection('users')
+                    await adminFirestore.collection("users")
                         .doc(input.userId)
-                        .collection('materials')
+                        .collection("materials")
                         .doc(input.materialId)
                         .update({
-                            aiOverviewData: cleanedJson,
+                            aiOverviewData: overviewDataStr,
                             overviewGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
                             isIndexed: true 
                         });
-                    return { success: true, overview: cleanedJson };
+                    return { success: true, overview: overviewDataStr };
                 } catch (pErr) {
                     logToConsole(`[generateAction] JSON Parse Error: ${pErr}`);
-                    // Fallback: If it fails, log the first 500 chars for debugging
                     console.error("[generateAction] Failed JSON content:", overviewJson?.substring(0, 500));
                     throw new Error(`AI svarede med ugyldigt format: ${pErr}`);
                 }
@@ -1646,11 +1500,12 @@ DU SKAL RETURNERE ET JSON OBJEKT MED DENNE STRUKTUR:
 
 REGLER:
 1. **Unikke ID'er**: Giv alle noder et unikt, beskrivende ID (f.eks. 'begreb_retskraft').
-2. **Kategorisering**: Gruppér elementerne i de 4-6 mest logiske overordnede temaer (brug kategorierne ovenfor som inspiration).
-3. **Dybde**: Hver temagren skal have 4-8 underpunkter for at sikre en høj informations-densitet.
+2. **Kategorisering (VIGTIGT)**: Du SKAL inkludere mindst 4 af de ovennævnte kategorier som hovedgrene (f.eks. Begreber, Teorier, Metoder, Praksis). Skab et BREDT mindmap, ikke kun et dybt.
+3. **Dybde**: Hver temagren skal have 3-6 underpunkter. Vær præcis frem for langhåret i dine beskrivelser.
 4. **Connections**: Identificer 5-10 meningsfulde forbindelser på tværs af forskellige grene.
 5. **Sprog**: Al tekst skal være på dansk og i en akademisk, men letforståelig tone.
 6. **Output**: Returner KUN JSON-objektet. Intet andet tekst.
+7. **Kildetrohed (ULTRA VIGTIGT)**: Du må KUN bruge information fra de vedhæftede materialer. Du må UNDER INGEN OMSTÆNDIGHEDER bruge din generelle viden eller eksterne kilder. Hvis noget ikke står i teksten, må det ikke komme med i dit mindmap.
 
 Teksten der skal analyseres:\n\n${textToAnalyze}`;
 
@@ -1676,9 +1531,18 @@ Teksten der skal analyseres:\n\n${textToAnalyze}`;
         if (response.ok) {
             const aiData = await response.json();
             const result = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
-            const mindmapJson = JSON.parse(result);
             
-            return { success: true, mindmap: mindmapJson };
+            if (!result) throw new Error("AI returnerede et tomt svar.");
+            
+            try {
+                const mindmapJson = repairJson(result);
+                console.log(`[generateMindmap] Successfully parsed mindmap for user ${input.userId}. Branches: ${mindmapJson.root?.children?.length || 0}`);
+                return { success: true, mindmap: mindmapJson };
+            } catch (parseErr) {
+                console.error("[generateMindmap] JSON Parse Error after repair:", parseErr);
+                console.log("[generateMindmap] Raw AI result (truncated/malformed):", result);
+                throw new Error("Kunne ikke læse AI-svaret (ugyldigt format). Prøv igen.");
+            }
         } else {
             const errorBody = await response.text();
             console.error("[generateMindmap] Gemini API Error:", errorBody);
