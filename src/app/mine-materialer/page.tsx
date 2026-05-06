@@ -47,6 +47,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/app/provider';
 import { Capacitor } from '@capacitor/core';
+import NativeMineMaterialer from '@/components/native/NativeMineMaterialer';
 import { useFirestore, useStorage, useCollection, useMemoFirebase } from '@/firebase';
 import { 
   collection, 
@@ -667,6 +668,10 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
       toast({ variant: 'destructive', title: 'Fejl', description: 'Kunne ikke slette materialet.' });
     }
   };
+
+  if (isNative) {
+    return <NativeMineMaterialer />;
+  }
 
   if (isUserLoading || userProfile === undefined || (userProfile && isLoading)) {
     return <AuthLoadingScreen />;
