@@ -89,17 +89,40 @@ export function repairJson(json: string): any {
         return JSON.parse(cleaned);
     } catch (e) {
         console.error("[JSONRepair] Failed to repair JSON:", e);
-        // If it still fails, try to find the last valid closing brace/bracket
-        // This is a fallback to the last "safe" structural point
-        let temp = cleaned;
-        while (temp.length > 0) {
-            const lastPoint = Math.max(temp.lastIndexOf('}'), temp.lastIndexOf(']'));
-            if (lastPoint === -1) break;
-            temp = temp.substring(0, lastPoint + 1);
+        
+        // Aggressive fallback: Try to find a valid JSON structure by stripping lines from the end
+        let lines = cleaned.split('\n');
+        while (lines.length > 0) {
+            lines.pop();
+            let potentialJson = lines.join('\n').trim();
+            
+            // Try to close the structure for this truncated version
             try {
-                return JSON.parse(temp);
+                // We need to re-run the bracket closer for this partial version
+                let partialStack: string[] = [];
+                let pInString = false;
+                let pEscaped = false;
+                for (let i = 0; i < potentialJson.length; i++) {
+                    const char = potentialJson[i];
+                    if (pInString) {
+                        if (pEscaped) pEscaped = false;
+                        else if (char === '\\') pEscaped = true;
+                        else if (char === '"') pInString = false;
+                    } else {
+                        if (char === '"') pInString = true;
+                        else if (char === '{') partialStack.push('}');
+                        else if (char === '[') partialStack.push(']');
+                        else if (char === '}') { if (partialStack.length > 0) partialStack.pop(); }
+                        else if (char === ']') { if (partialStack.length > 0) partialStack.pop(); }
+                    }
+                }
+                if (pInString) potentialJson += '"';
+                if (potentialJson.endsWith(',')) potentialJson = potentialJson.slice(0, -1);
+                while (partialStack.length > 0) potentialJson += partialStack.pop();
+                
+                return JSON.parse(potentialJson);
             } catch {
-                temp = temp.substring(0, lastPoint);
+                // Continue stripping lines
             }
         }
         throw e;

@@ -1426,15 +1426,18 @@ export async function generateMaterialMindmapAction(input: {
                 const materialIds = materialsSnapshot.docs.map(doc => doc.id);
                 
                 if (materialIds.length > 0) {
-                    console.log(`[Mindmap] Fetching diverse chunks for ${materialIds.length} materials`);
+                    console.log(`[Mindmap] Fetching balanced chunks for ${materialIds.length} materials`);
                     
-                    // Fetch top 35 chunks from EACH material to ensure diversity
+                    // Dynamically decide how many chunks to take from each to fit within our limit
+                    // Aiming for a total of ~60-80 chunks across all materials
+                    const chunksPerMaterial = Math.max(2, Math.floor(80 / materialIds.length));
+                    
                     const materialPromises = materialIds.map(id => 
                         adminFirestore.collection('users')
                             .doc(input.userId)
                             .collection('materialChunks')
                             .where('materialId', '==', id)
-                            .limit(35)
+                            .limit(chunksPerMaterial)
                             .get()
                     );
                     
@@ -1444,19 +1447,23 @@ export async function generateMaterialMindmapAction(input: {
                         allChunks.push(...snap.docs.map(doc => doc.data()));
                     });
                     
-                    console.log(`[Mindmap] Total diverse chunks collected: ${allChunks.length}`);
+                    console.log(`[Mindmap] Total balanced chunks collected: ${allChunks.length}`);
                     
                     textToAnalyze = allChunks
                         .map(c => c.text || "")
                         .join('\n')
-                        .substring(0, 120000); // Increased limit significantly for deeper analysis
+                        .substring(0, 80000); // Slightly higher for more breadth
                     
-                    console.log(`[Mindmap] Final diverse text length: ${textToAnalyze.length}`);
+                    console.log(`[Mindmap] Final balanced text length: ${textToAnalyze.length}`);
                 }
             }
         }
 
-        const prompt = `Du er en højt kvalificeret akademisk analytiker og pædagogisk arkitekt. 
+        const prompt = `${input.focus ? `DU SKAL ANALYSERE TEKSTEN MED ET EKSTREMT STÆRKT OG EKSKLUSIVT FOKUS PÅ: "${input.focus}". 
+Alt i dit mindmap SKAL være direkte relateret til "${input.focus}". Du må IKKE inkludere andre teoretikere eller begreber fra teksten, medmindre de bruges til at forklare eller perspektivere "${input.focus}". 
+Hvis teksten handler om andre emner (f.eks. andre forskere), skal du ignorere dem og kun udtrække det, der vedrører "${input.focus}".` : 'Identificer det absolutte hovedtema i teksten som din "root" node.'}
+
+Du er en højt kvalificeret akademisk analytiker og pædagogisk arkitekt. 
 Din opgave er at gennemføre en dybdegående analyse af det vedhæftede pensum-materiale og skabe et struktureret, hierarkisk mindmap.
 
 FORMÅL:
@@ -1468,8 +1475,6 @@ DU SKAL IDENTIFICERE OG ORGANISERE FØLGENDE KATEGORIER:
 3. **Teorier & Modeller**: De teoretiske rammeværk eller videnskabelige modeller der understøtter emnet.
 4. **Væsentlig Praksis/Regler**: Hvordan viden anvendes i praksis (f.eks. lovgivning, cases eller kliniske retningslinjer).
 5. **Tværgående Sammenhænge**: Hvordan elementer fra forskellige kategorier relaterer sig til hinanden.
-
-${input.focus ? `VIGTIGT EKSTRA FOKUS: "${input.focus}". Du SKAL bruge "${input.focus}" som titlen på din 'root' node og vinkle hele analysen mod dette emne.` : 'VIGTIGT: Identificer det absolutte hovedtema som din "root" node.'}
 
 DU SKAL RETURNERE ET JSON OBJEKT MED DENNE STRUKTUR:
 {
@@ -1500,8 +1505,8 @@ DU SKAL RETURNERE ET JSON OBJEKT MED DENNE STRUKTUR:
 
 REGLER:
 1. **Unikke ID'er**: Giv alle noder et unikt, beskrivende ID (f.eks. 'begreb_retskraft').
-2. **Kategorisering (VIGTIGT)**: Du SKAL inkludere mindst 4 af de ovennævnte kategorier som hovedgrene (f.eks. Begreber, Teorier, Metoder, Praksis). Skab et BREDT mindmap, ikke kun et dybt.
-3. **Dybde**: Hver temagren skal have 3-6 underpunkter. Vær præcis frem for langhåret i dine beskrivelser.
+2. **Kategorisering (VIGTIGT)**: Du SKAL inkludere mindst 4-5 hovedgrene (f.eks. Begreber, Teorier, Metoder, Praksis). Skab et BREDT mindmap.
+3. **Dybde & Koncision**: Maks 4-5 underpunkter pr. gren. Beskrivelserne SKAL være ekstremt korte (maks 15 ord). Dette er vigtigt for at nå at dække alle kategorier.
 4. **Connections**: Identificer 5-10 meningsfulde forbindelser på tværs af forskellige grene.
 5. **Sprog**: Al tekst skal være på dansk og i en akademisk, men letforståelig tone.
 6. **Output**: Returner KUN JSON-objektet. Intet andet tekst.
@@ -1510,7 +1515,7 @@ REGLER:
 Teksten der skal analyseres:\n\n${textToAnalyze}`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 seconds for deeper analysis
+        const timeoutId = setTimeout(() => controller.abort(), 90000); // Increased to 90 seconds for deep analysis
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
             method: "POST",
