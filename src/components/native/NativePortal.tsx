@@ -141,7 +141,7 @@ export default function NativePortal() {
         <div className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm p-5 space-y-4">
            <div className="flex items-center gap-3 text-slate-600">
                <Building className="w-4 h-4 text-slate-400" />
-               <span className="text-sm font-bold">{userProfile?.institution || 'Vælg institution'}</span>
+               <span className="text-sm font-bold">{curriculum?.institution || userProfile?.institution || 'Vælg institution'}</span>
            </div>
            <div className="flex items-center gap-3 text-slate-600">
                <CalendarDays className="w-4 h-4 text-slate-400" />
