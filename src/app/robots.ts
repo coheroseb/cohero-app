@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   // IMPORTANT: Remember to change this to your actual production URL
-  const baseUrl = 'https://cohero.dk';
+  const baseUrl = 'https://student.cohero.dk';
 
   return {
     rules: {

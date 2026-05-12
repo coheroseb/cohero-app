@@ -13,7 +13,7 @@ const wrapEmailHtml = (inner: string) => `
     <div style="background-color: #f8fafc; padding: 40px 20px; width: 100%; box-sizing: border-box;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);">
             <div style="background-color: #451a03; padding: 32px 40px; text-align: center;">
-                <img src="https://cohero.dk/main_logo.png" alt="Cohéro Logo" style="height: 40px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
+                <img src="https://student.cohero.dk/main_logo.png" alt="Cohéro Logo" style="height: 40px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
             </div>
             <div style="padding: 40px; font-size: 16px; line-height: 1.6; color: #334155;">
                 ${inner}
@@ -59,7 +59,7 @@ export const onAssistanceRequestCreate = functions.firestore
             <p>Din anmodning er nu lagt ud på vores markedsplads, hvor dygtige socialrådgiverstuderende kan se den. Du får en e-mail så snart en studerende har takket ja til at hjælpe dig.</p>
             <p>Du kan løbende følge status på din sag og se næste skridt via din personlige status-side:</p>
             <div style="margin-top: 32px; text-align: center;">
-                <a href="https://cohero.dk/raadgivning/status/${requestId}" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Gå til din status-side</a>
+                <a href="https://student.cohero.dk/raadgivning/status/${requestId}" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Gå til din status-side</a>
             </div>
             <p style="font-size: 13px; color: #64748b; margin-top: 24px; font-style: italic;">Har du spørgsmål til processen? Skriv til os på <a href="mailto:kontakt@cohero.dk" style="color: #451a03; font-weight: bold;">kontakt@cohero.dk</a> – vi står klar til at hjælpe dig.</p>
           `),
@@ -144,7 +144,7 @@ export const onAssistanceRequestUpdate = functions.firestore
             <p>Vi kan med glæde meddele, at <strong>${studentName}</strong> har takket ja til at hjælpe dig med din opgave: <strong>"${taskTitle}"</strong>.</p>
             <p>Det næste skridt er betaling. Når din betaling er registreret, vil den studerende få adgang til dine kontaktoplysninger og kontakte dig med det samme.</p>
             <div style="margin-top: 32px; text-align: center;">
-                <a href="https://cohero.dk/raadgivning/status/${context.params.requestId}" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Gå til betaling</a>
+                <a href="https://student.cohero.dk/raadgivning/status/${context.params.requestId}" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Gå til betaling</a>
             </div>
             <p style="font-size: 13px; color: #64748b; margin-top: 24px; font-style: italic;">Hvis du ikke er blevet kontaktet af den studerende inden for 24 timer efter gennemført betaling, beder vi dig henvende dig til Cohéro på <a href="mailto:kontakt@cohero.dk" style="color: #451a03; font-weight: bold;">kontakt@cohero.dk</a>.</p>
           `),
@@ -204,7 +204,7 @@ export const onAssistanceRequestUpdate = functions.firestore
                 <p>Du har nu adgang til borgerens e-mail og telefonnummer inde i portalen, så I kan aftale de nærmere detaljer.</p>
                 <p style="font-weight: bold; color: #451a03;">Vigtigt: Du skal kontakte borgeren inden for 24 timer for at starte hjælpen.</p>
                 <div style="margin-top: 32px; text-align: center;">
-                    <a href="https://cohero.dk/markedsplads" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Se kontaktoplysninger</a>
+                    <a href="https://student.cohero.dk/markedsplads" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Se kontaktoplysninger</a>
                 </div>
               `),
             });

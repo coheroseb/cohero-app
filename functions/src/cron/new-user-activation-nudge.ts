@@ -95,19 +95,19 @@ export const dailyNewUserActivationNudge = functions.pubsub
           html: `
             <div style="font-family: 'Inter', sans-serif; max-width: 620px; margin: 0 auto; color: #1e293b; line-height: 1.7; background:#fff; border-radius:24px; overflow:hidden; border: 1px solid #f1f5f9;">
               <div style="background: #0f172a; padding: 32px 40px; text-align:center;">
-                <img src="https://cohero.dk/Lovportal.png" width="48" height="48" style="border-radius:12px; margin-bottom:12px;" />
+                <img src="https://student.cohero.dk/Lovportal.png" width="48" height="48" style="border-radius:12px; margin-bottom:12px;" />
                 <p style="text-transform:uppercase; font-size:10px; font-weight:900; letter-spacing:0.3em; color:#94a3b8; margin:0;">Cohéro – Din faglige makker</p>
               </div>
               <div style="padding: 40px;">
                 ${content.replace(/\n/g, '<br/>')}
               </div>
               <div style="padding: 24px 40px; border-top: 1px solid #f1f5f9; text-align:center;">
-                <a href="https://cohero.dk/portal" style="display:inline-block; background:#0f172a; color:#fbbf24; padding:14px 32px; border-radius:14px; font-weight:900; font-size:13px; text-decoration:none; text-transform:uppercase; letter-spacing:0.1em;">
+                <a href="https://student.cohero.dk/portal" style="display:inline-block; background:#0f172a; color:#fbbf24; padding:14px 32px; border-radius:14px; font-weight:900; font-size:13px; text-decoration:none; text-transform:uppercase; letter-spacing:0.1em;">
                   Gå til din portal →
                 </a>
                 <p style="font-size:11px; color:#cbd5e1; margin-top:20px;">
                   Du modtager denne mail fordi du oprettede en gratis Kollega-konto på Cohéro.<br/>
-                  <a href="https://cohero.dk/indstillinger" style="color:#6366f1; text-decoration:none;">Afmeld her</a>
+                  <a href="https://student.cohero.dk/indstillinger" style="color:#6366f1; text-decoration:none;">Afmeld her</a>
                 </p>
               </div>
             </div>

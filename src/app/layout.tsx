@@ -11,8 +11,8 @@ import { Suspense } from 'react';
 import { MaintenanceGuard } from '@/components/MaintenanceGuard';
 import SourceKeeper from '@/components/SourceKeeper';
 import MobileNativeLayout from '@/components/MobileNativeLayout';
-const siteUrl = 'https://cohero.dk';
-const siteTitle = 'Cohéro (Cohero) - Din Digitale Kollega for Socialrådgiverstuderende';
+const baseUrl = 'https://student.cohero.dk';
+const siteTitle = 'Cohéro Student - Din Digitale Kollega for Socialrådgiverstuderende';
 const siteDescription = 'Cohéro er din professionelle rygdækning på velfærdsstudierne. Vi tilbyder intelligente værktøjer som sags-analytiker, journal-feedback og lovportal, der sikrer din faglige præcision og tryghed fra studiestart til eksamen.';
 const ogImageUrl = '/team_cohero.png';
 
@@ -45,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(siteUrl),
     title: {
       default: title,
-      template: `%s | Cohéro`,
+      template: `%s | Cohéro Student`,
     },
     description: description,
     manifest: '/manifest.json',

@@ -52,7 +52,7 @@ export const weeklyStudyCompanion = functions.pubsub
                 html: `
                     <div style="font-family: 'Inter', sans-serif; max-width: 650px; margin: 0 auto; border: 1px solid #f1f5f9; border-radius: 24px; padding: 40px; background: #ffffff; color: #1e293b;">
                         <div style="text-align: center; margin-bottom: 40px;">
-                            <img src="https://cohero.dk/Lovportal.png" width="50" height="50" style="margin-bottom: 12px;"/>
+                            <img src="https://student.cohero.dk/Lovportal.png" width="50" height="50" style="margin-bottom: 12px;"/>
                             <p style="text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 0.3em; color: #94a3b8; margin: 0;">Din AI-Studiepartner</p>
                         </div>
                         
@@ -62,13 +62,13 @@ export const weeklyStudyCompanion = functions.pubsub
                         
                         <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #f1f5f9; text-align: center;">
                             <p style="font-size: 14px; font-weight: 700; color: #6366f1; margin-bottom: 20px;">Klar på en ny uge med studiet?</p>
-                            <a href="https://cohero.dk/portal" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em;">ÅBN DIN PORTAL NU</a>
+                            <a href="https://student.cohero.dk/portal" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em;">ÅBN DIN PORTAL NU</a>
                         </div>
                         
                         <div style="margin-top: 40px; text-align: center;">
                              <p style="font-size: 11px; color: #cbd5e1;">
                                 Dette er din personlige ugentlige studieopdatering fra Cohéro.<br/>
-                                <a href="https://cohero.dk/settings" style="color: #6366f1; text-decoration: none;">Indstillinger & Afmelding</a>
+                                <a href="https://student.cohero.dk/settings" style="color: #6366f1; text-decoration: none;">Indstillinger & Afmelding</a>
                              </p>
                         </div>
                     </div>

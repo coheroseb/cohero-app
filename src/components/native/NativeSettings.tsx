@@ -129,7 +129,7 @@ const NativeSettings: React.FC = () => {
   return (
     <div className="pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-50 min-h-screen">
       {/* Profile Header */}
-      <div className="px-5 pt-4 pb-8 flex items-center gap-5">
+      <div className="px-5 pt-[calc(env(safe-area-inset-top)+1rem)] pb-8 flex items-center gap-5">
         <div className="w-20 h-20 rounded-[2rem] bg-slate-900 text-white flex items-center justify-center text-3xl font-black border-4 border-white shadow-2xl relative overflow-hidden">
           {user?.displayName?.charAt(0) || user?.email?.charAt(0)}
           <div className="absolute top-0 right-0 p-2 text-white/10"><User className="w-12 h-12" /></div>
@@ -228,7 +228,7 @@ const NativeSettings: React.FC = () => {
           className="w-full h-14 bg-white border border-slate-100 rounded-3xl flex items-center justify-center gap-3 font-black text-rose-500 uppercase tracking-widest text-[11px] active:bg-rose-50 transition-all shadow-sm"
         >
           <LogOut className="w-5 h-5" />
-          Log ud af Cohéro
+          Log ud af Cohéro Student
         </button>
         
         <p className="text-center text-[9px] text-slate-300 font-black uppercase tracking-[0.3em] pt-6">

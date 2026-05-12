@@ -66,9 +66,9 @@ export const processNotificationQueue = functions.firestore
         notification: {
           title: title,
           body: body,
-          icon: "https://cohero.dk/Lovportal.png",
-          badge: "https://cohero.dk/Lovportal.png",
-          click_action: "https://cohero.dk/portal",
+          icon: "https://student.cohero.dk/Lovportal.png",
+          badge: "https://student.cohero.dk/Lovportal.png",
+          click_action: "https://student.cohero.dk/portal",
           requireInteraction: true,
         },
       },

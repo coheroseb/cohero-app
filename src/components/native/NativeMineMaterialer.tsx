@@ -180,7 +180,7 @@ export default function NativeMineMaterialer() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* iOS Header */}
-      <div className="bg-white border-b border-slate-200/60 pt-6 pb-6 px-4 relative">
+      <div className="bg-white border-b border-slate-200/60 pt-[env(safe-area-inset-top)] pb-6 px-4 relative">
          <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-[1rem] bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
                  <FileBox className="w-5 h-5" />

@@ -1058,10 +1058,10 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
     >
       <div className="h-full bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] hover:border-slate-200 transition-all duration-500 flex flex-col overflow-hidden">
         {/* Top Section */}
-        <div className="p-8 flex-1 cursor-pointer" onClick={onOpen}>
-          <div className="flex items-start justify-between mb-8">
-            <div className="w-14 h-14 bg-slate-950 rounded-2xl flex items-center justify-center text-indigo-400 shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all duration-500">
-              <Presentation className="w-7 h-7" />
+        <div className="p-6 sm:p-8 flex-1 cursor-pointer" onClick={onOpen}>
+          <div className="flex items-start justify-between mb-6 sm:mb-8">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-950 rounded-2xl flex items-center justify-center text-indigo-400 shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all duration-500">
+              <Presentation className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100/50">
               <button 
@@ -1079,7 +1079,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
             </div>
           </div>
 
-          <h3 className="text-2xl font-black text-slate-900 serif leading-tight mb-3 group-hover:text-indigo-900 transition-colors line-clamp-2">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 serif leading-tight mb-3 group-hover:text-indigo-900 transition-colors line-clamp-2">
             {seminar.overallTitle}
           </h3>
 
@@ -1090,7 +1090,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
             </div>
           )}
 
-          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400 mt-4">
+          <div className="flex items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400 mt-4">
             <div className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
             <div className="w-1 h-1 rounded-full bg-slate-200" />
             <div>{seminar.slides?.length || 0} Slides</div>
@@ -1374,21 +1374,21 @@ export default function MineSeminarerPage() {
   return (
     <div className="min-h-screen bg-[#FDFCF8]">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10">
-        <div className="mb-12 flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-6">
-                <Link href="/portal" className="p-4 bg-white border border-slate-100 text-slate-400 rounded-[1.5rem] hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-95">
-                    <ArrowLeft className="w-6 h-6" />
+        <div className="mb-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+            <div className="flex items-center gap-4 sm:gap-6">
+                <Link href="/portal" className="p-3 sm:p-4 bg-white border border-slate-100 text-slate-400 rounded-[1.25rem] sm:rounded-[1.5rem] hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0">
+                    <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Link>
-                <div className="space-y-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-indigo-600/20">Arkiv</span>
-                      <span className="text-slate-300 text-[9px] font-black uppercase tracking-widest">Studie-materiale</span>
+                <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-1 overflow-x-auto no-scrollbar">
+                      <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-indigo-600 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-indigo-600/20 whitespace-nowrap">Arkiv</span>
+                      <span className="text-slate-300 text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap">Studie-materiale</span>
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black text-slate-900 serif tracking-tighter">Mit Vidensbibliotek</h1>
-                    <p className="text-slate-400 font-medium text-sm">Organiser, repetér og få AI-indsigt i alle dine seminarer.</p>
+                    <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-slate-900 serif tracking-tighter leading-tight">Mit Vidensbibliotek</h1>
+                    <p className="text-slate-400 font-medium text-xs sm:text-sm line-clamp-1 sm:line-clamp-none">Organiser, repetér og få AI-indsigt i alle dine seminarer.</p>
                 </div>
             </div>
-            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 sm:gap-3 w-full lg:w-auto">
+            <div className="flex flex-row items-center justify-start lg:justify-end gap-2 sm:gap-3 w-full lg:w-auto overflow-x-auto no-scrollbar pb-2 lg:pb-0">
                  <div className="flex items-center gap-1 p-1 bg-slate-50/50 backdrop-blur-sm rounded-xl border border-slate-100 shrink-0">
                     <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
                         <LayoutGrid className="w-3.5 h-3.5" />
@@ -1399,13 +1399,13 @@ export default function MineSeminarerPage() {
                  </div>
                  <button 
                     onClick={() => setShowStats(!showStats)} 
-                    className={`h-11 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${showStats ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-600/20' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                    className={`h-11 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border shrink-0 ${showStats ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-600/20' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
                  >
                     <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {showStats ? 'Skjul Statistik' : 'Statistik'}
                  </button>
-                 <Link href="/seminar-architect" className="flex-1 sm:flex-none">
-                    <Button className="w-full sm:w-auto rounded-xl sm:rounded-2xl bg-slate-950 hover:bg-indigo-600 text-white h-11 sm:h-14 px-6 sm:px-8 shadow-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
-                        <Plus className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-3" /> <span className="sm:inline">Ny Analyse</span>
+                 <Link href="/seminar-architect" className="shrink-0">
+                    <Button className="rounded-xl sm:rounded-2xl bg-slate-950 hover:bg-indigo-600 text-white h-11 sm:h-14 px-6 sm:px-8 shadow-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-3" /> <span className="hidden sm:inline">Ny Analyse</span>
                     </Button>
                 </Link>
             </div>
@@ -1439,47 +1439,45 @@ export default function MineSeminarerPage() {
             )}
         </AnimatePresence>
 
-        <div className="mb-8 sm:mb-10 p-1.5 sm:p-2 bg-white rounded-lg sm:rounded-[2rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2">
+        <div className="mb-8 sm:mb-10 p-1.5 sm:p-2 bg-white rounded-2xl sm:rounded-[2rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 overflow-hidden">
             <div className="flex-1 relative w-full group">
-                <Search className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+                <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
                 <input 
                     type="text" 
-                    placeholder="Søg..." 
+                    placeholder="Søg i dine seminarer..." 
                     value={searchQuery} onChange={e => setSearchQuery(e.target.value)} 
-                    className="w-full h-10 sm:h-14 pl-10 sm:pl-14 pr-3 sm:pr-6 bg-transparent rounded-lg sm:rounded-2xl text-xs sm:text-sm font-semibold focus:outline-none" 
+                    className="w-full h-11 sm:h-14 pl-11 sm:pl-14 pr-4 sm:pr-6 bg-transparent rounded-lg sm:rounded-2xl text-xs sm:text-sm font-semibold focus:outline-none" 
                 />
             </div>
             
-            <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto p-1.5 sm:p-0">
                 <div className="h-8 w-px bg-slate-100 mx-1 hidden md:block" />
                 
                 <select 
                     value={activeCategory || ''} 
                     onChange={e => setActiveCategory(e.target.value || null)} 
-                    className="flex-1 sm:flex-none h-9 sm:h-10 px-2 sm:px-4 bg-slate-50 border-none rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer"
+                    className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-slate-50 border-none rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer"
                 >
-                    <option value="">Alle Kategorier</option>
+                    <option value="">Kategori</option>
                     {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
 
-                <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-50 p-1 rounded-lg sm:rounded-xl">
+                <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
                     {['newest', 'title'].map(s => (
                         <button 
                             key={s} onClick={() => setSortBy(s as any)} 
-                            className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+                            className={`px-3 sm:px-4 py-2 rounded-lg text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
                         >
                             {s === 'newest' ? 'Dato' : 'A-Z'}
                         </button>
                     ))}
                 </div>
 
-                <div className="h-8 w-px bg-slate-100 mx-1 hidden md:block" />
-
                 <button 
                     onClick={() => setFilterLaws(!filterLaws)} 
-                    className={`h-9 sm:h-10 px-2 sm:px-4 rounded-lg sm:rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLaws ? 'bg-rose-50 text-rose-600 shadow-sm' : 'text-slate-300 hover:text-slate-600' }`}
+                    className={`h-10 px-3 sm:px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 ${filterLaws ? 'bg-rose-50 text-rose-600 shadow-sm' : 'text-slate-300 hover:text-slate-600' }`}
                 >
-                    <Scale className="w-3.5 h-3.5" />
+                    <Scale className="w-4 h-4" />
                 </button>
             </div>
         </div>

@@ -65,7 +65,7 @@ export const dailyAutomatedNudges = functions.pubsub
                         <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;"/>
                         <p style="font-size: 11px; color: #94a3b8;">
                             Du modtager denne mail, fordi du er ${membership} medlem hos Cohéro.<br/>
-                            <a href="https://cohero.dk/settings" style="color: #6366f1; text-decoration: none;">Administrer dine indstillinger her</a>
+                            <a href="https://student.cohero.dk/settings" style="color: #6366f1; text-decoration: none;">Administrer dine indstillinger her</a>
                         </p>
                     </div>
                 `

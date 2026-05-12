@@ -79,7 +79,7 @@ export const onUserUpdateScanStudentCard = functions.firestore
                             </ul>
                             <p><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%</p>
                             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;"/>
-                            <p><a href="https://cohero.dk/admin/users" style="display: inline-block; padding: 10px 20px; background: #0f172a; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Gå til adminpanel</a></p>
+                            <p><a href="https://student.cohero.dk/admin/users" style="display: inline-block; padding: 10px 20px; background: #0f172a; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Gå til adminpanel</a></p>
                         </div>
                     `
                 });

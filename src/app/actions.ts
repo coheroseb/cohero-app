@@ -589,7 +589,7 @@ export const wrapEmailHtml = (inner: string) => `
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);">
             
             <div style="background-color: #451a03; padding: 32px 40px; text-align: center;">
-                <img src="https://cohero.dk/main_logo.png" alt="Cohéro Logo" style="height: 40px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
+                <img src="https://student.cohero.dk/main_logo.png" alt="Cohéro Logo" style="height: 40px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
             </div>
             
             <div style="padding: 40px; font-size: 16px; line-height: 1.6; color: #334155;">
@@ -1940,7 +1940,7 @@ export async function getMicrosoftAuthUrlAction() {
       const protocol = host?.includes('localhost') ? 'http' : 'https';
       redirectUri = `${protocol}://${host}/api/auth/callback/microsoft`;
     } catch (e) {
-      redirectUri = 'https://cohero.dk/api/auth/callback/microsoft';
+      redirectUri = 'https://student.cohero.dk/api/auth/callback/microsoft';
     }
   }
   
@@ -2854,7 +2854,7 @@ export async function checkFollowedSagerUpdatesAction(userId: string, userEmail:
                 userEmail,
                 userName: "Bruger",
                 caseTitle: updates.length === 1 ? updates[0].title : `${updatedCount} sager`,
-                caseUrl: `https://cohero.dk/folketinget`
+                caseUrl: `https://student.cohero.dk/folketinget`
             });
         }
 

@@ -110,7 +110,7 @@ export const weeklyAdminReport = functions.pubsub
             html: `
                 <div style="font-family: sans-serif; max-width: 700px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 20px; padding: 40px; background: #fff; color: #0f172a;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                         <img src="https://cohero.dk/Lovportal.png" width="60" height="60" style="margin-bottom: 10px;" />
+                         <img src="https://student.cohero.dk/Lovportal.png" width="60" height="60" style="margin-bottom: 10px;" />
                          <p style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 10px; font-weight: 800; color: #94a3b8; margin: 0;">Weekly AI Insight Report</p>
                     </div>
                     
@@ -144,7 +144,7 @@ export const weeklyAdminReport = functions.pubsub
                     </p>
                     
                     <div style="text-align: center; margin-top: 20px;">
-                        <a href="https://cohero.dk/admin/stats" style="display: inline-block; background: #0f172a; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 10px; font-weight: 800; font-size: 13px;">GÅ TIL DASHBOARD</a>
+                        <a href="https://student.cohero.dk/admin/stats" style="display: inline-block; background: #0f172a; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 10px; font-weight: 800; font-size: 13px;">GÅ TIL DASHBOARD</a>
                     </div>
                 </div>
             `

@@ -2,7 +2,8 @@
     {
         "origin": [
             "http://localhost:3000",
-            "https://cohero.dk"
+            "https://cohero.dk",
+            "https://student.cohero.dk"
         ],
         "method": [
             "GET",

@@ -55,6 +55,8 @@ interface UserProfile {
   isPremium?: boolean;
   fcmTokens?: string[];
   dailyChallengeStreak?: number;
+  stripeCurrentPeriodEnd?: string;
+  stripeCancelAtPeriodEnd?: boolean;
 }
 
 const SourceBadge = ({ source }: { source?: string }) => {
@@ -685,6 +687,14 @@ const AdminUsersPage = () => {
                                }`}>
                                  {u.membership || 'Kollega (Gratis)'}
                                </span>
+                               {u.stripeCurrentPeriodEnd && (
+                                 <div className="flex items-center gap-1.5 mt-1">
+                                    <CalendarDays className="w-3 h-3 text-slate-300" />
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                                      {u.stripeCancelAtPeriodEnd ? 'Udløber' : 'Fornyes'}: {new Date(u.stripeCurrentPeriodEnd).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' })}
+                                    </span>
+                                 </div>
+                               )}
                            </div>
                         </td>
                         <td className="px-10 py-6">
@@ -852,21 +862,35 @@ const AdminUsersPage = () => {
                                                     <option value="Mentor">Mentor</option>
                                                  </select>
                                                  {u.stripeSubscriptionId && (
-                                                     <div className="flex flex-col pt-2 border-t border-slate-50">
-                                                         <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-1">Stripe Billing ID</span>
-                                                         <div className="flex items-center justify-between gap-2">
-                                                             <code className="text-[9px] font-mono text-indigo-400 bg-indigo-50/30 px-3 py-1.5 rounded-lg border border-indigo-100/50 w-fit select-all cursor-copy" title="Klik for at kopiere">{u.stripeSubscriptionId}</code>
-                                                             <Button 
-                                                                 size="sm" 
-                                                                 variant="ghost" 
-                                                                 disabled={isSyncingStripe === u.id || !u.stripeCustomerId}
-                                                                 onClick={(e) => { e.stopPropagation(); handleSyncStripe(u.id, u.stripeCustomerId!); }}
-                                                                 className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-50 text-indigo-600"
-                                                                 title="Synkronisér med Stripe"
-                                                             >
-                                                                 <RefreshCw className={`w-3.5 h-3.5 ${isSyncingStripe === u.id ? 'animate-spin' : ''}`} />
-                                                             </Button>
+                                                     <div className="flex flex-col pt-3 border-t border-slate-50 space-y-3">
+                                                         <div className="flex flex-col">
+                                                            <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest mb-1">Stripe Billing ID</span>
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <code className="text-[9px] font-mono text-indigo-400 bg-indigo-50/30 px-3 py-1.5 rounded-lg border border-indigo-100/50 w-fit select-all cursor-copy" title="Klik for at kopiere">{u.stripeSubscriptionId}</code>
+                                                                <Button 
+                                                                    size="sm" 
+                                                                    variant="ghost" 
+                                                                    disabled={isSyncingStripe === u.id || !u.stripeCustomerId}
+                                                                    onClick={(e) => { e.stopPropagation(); handleSyncStripe(u.id, u.stripeCustomerId!); }}
+                                                                    className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-50 text-indigo-600"
+                                                                    title="Synkronisér med Stripe"
+                                                                >
+                                                                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncingStripe === u.id ? 'animate-spin' : ''}`} />
+                                                                </Button>
+                                                            </div>
                                                          </div>
+                                                         
+                                                         {u.stripeCurrentPeriodEnd && (
+                                                            <div className="flex flex-col bg-slate-50/80 p-3 rounded-xl border border-slate-100/50">
+                                                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Abonnementsperiode</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <CalendarDays className="w-4 h-4 text-slate-400" />
+                                                                    <span className="text-xs font-bold text-slate-700">
+                                                                        {u.stripeCancelAtPeriodEnd ? 'Udløber den' : 'Fornyes den'} {new Date(u.stripeCurrentPeriodEnd).toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                         )}
                                                      </div>
                                                  )}
                                              </div>

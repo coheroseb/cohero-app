@@ -35,7 +35,7 @@ async function setCors() {
       {
         maxAgeSeconds: 3600,
         method: ['GET', 'POST', 'PUT', 'DELETE'],
-        origin: ['http://localhost:3000', 'https://cohero.dk', 'https://www.cohero.dk'],
+        origin: ['http://localhost:3000', 'https://cohero.dk', 'https://www.cohero.dk', 'https://student.cohero.dk'],
         responseHeader: ['Content-Type', 'Authorization', 'x-goog-meta-path'],
       },
     ]);

@@ -14,7 +14,7 @@ const wrapEmailHtml = (inner: string) => `
     <div style="background-color: #f8fafc; padding: 40px 20px; width: 100%; box-sizing: border-box;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);">
             <div style="background-color: #451a03; padding: 32px 40px; text-align: center;">
-                <img src="https://cohero.dk/main_logo.png" alt="Cohéro Logo" style="height: 40px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
+                <img src="https://student.cohero.dk/main_logo.png" alt="Cohéro Logo" style="height: 40px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
             </div>
             <div style="padding: 40px; font-size: 16px; line-height: 1.6; color: #334155;">
                 ${inner}
@@ -150,7 +150,7 @@ export const checkViveUpdates = functions.pubsub
                     const greetingName = user.firstName || (user.username ? user.username.split(' ')[0] : 'Kollega');
 
                     await resend.emails.send({
-                        from: 'Cohéro <info@platform.cohero.dk>',
+                        from: 'Cohéro <info@platform.student.cohero.dk>',
                         to: user.email,
                         subject: `Nyt forskningsresultat fra VIVE: ${pub.name}`,
                         html: wrapEmailHtml(`
@@ -160,10 +160,10 @@ export const checkViveUpdates = functions.pubsub
                                "${pub.teaser || 'Gå ind på platformen for at læse hele resuméet og hente rapporten.'}"
                             </p>
                             <div style="margin-top: 32px; text-align: center;">
-                                <a href="https://cohero.dk/vive-indsigt" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Læs mere på platformen</a>
+                                <a href="https://student.cohero.dk/vive-indsigt" style="background-color: #451a03; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold;">Læs mere på platformen</a>
                             </div>
                             <p style="font-size: 13px; color: #64748b; margin-top: 32px;">
-                                Du modtager denne mail, fordi du følger et emneområde i VIVE Indsigt. Du kan til enhver tid ændre dine notifikationsindstillinger under <a href="https://cohero.dk/settings" style="color: #451a03;">Indstillinger</a>.
+                                Du modtager denne mail, fordi du følger et emneområde i VIVE Indsigt. Du kan til enhver tid ændre dine notifikationsindstillinger under <a href="https://student.cohero.dk/settings" style="color: #451a03;">Indstillinger</a>.
                              </p>
                         `)
                     });

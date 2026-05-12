@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { wrapEmailHtml } from '@/app/actions';
 
 const PLATFORM_FEE_PERCENT = 15;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cohero.dk';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://student.cohero.dk';
 
 /**
  * Creates a new assistance request and sends confirmation email.

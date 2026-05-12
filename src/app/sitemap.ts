@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // IMPORTANT: Remember to change this to your actual production URL
-  const baseUrl = 'https://cohero.dk';
+  const baseUrl = 'https://student.cohero.dk';
 
   // List of public-facing pages you want to include in the sitemap
   const staticRoutes = [
