@@ -85,7 +85,6 @@ export const requestNotificationPermission = async (userId: string, silent: bool
         });
         return token;
     }
-    }
   } catch (error: any) {
     if (silent) {
       console.warn('Notification permission failed silently:', error.message);
