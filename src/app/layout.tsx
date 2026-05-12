@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const indexing = customSeo?.indexing !== undefined ? customSeo.indexing : true;
 
   return {
-    metadataBase: new URL(siteUrl),
+    metadataBase: new URL(baseUrl),
     title: {
       default: title,
       template: `%s | Cohéro Student`,
