@@ -19,7 +19,7 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
   const [isNative, setIsNative] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading } = useApp();
+  const { user, isUserLoading } = useApp();
 
   useEffect(() => {
     setIsNative(Capacitor.isNativePlatform());
@@ -36,7 +36,7 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
   if (!isNative) return <>{children}</>;
 
   // Vis en ren splash screen mens vi tjekker login eller redirecter
-  if (loading || (!user && pathname !== '/auth')) {
+  if (isUserLoading || (!user && pathname !== '/auth')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white animate-in fade-in duration-500">
           <div className="flex flex-col items-center gap-6">
@@ -89,7 +89,8 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
       <nav className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 right-4 z-[100] bg-white/85 backdrop-blur-3xl border border-black/[0.05] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden">
         <div className="h-[72px] flex items-center justify-around px-4">
           {tabs.map((tab) => {
-            const isActive = pathname === tab.href || (tab.href !== '/portal' && pathname.startsWith(tab.href));
+            const currentPath = pathname || '';
+            const isActive = currentPath === tab.href || (tab.href !== '/portal' && currentPath.startsWith(tab.href));
             const Icon = tab.icon;
             
             return (
