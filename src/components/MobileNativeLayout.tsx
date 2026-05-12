@@ -39,7 +39,7 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
           // Vi tjekker om vi allerede har spurgt i denne session for at undgå loops
           const hasAsked = sessionStorage.getItem('hasAskedNotifications');
           if (!hasAsked) {
-            await requestNotificationPermission(user.uid);
+            await requestNotificationPermission(user.uid, true);
             sessionStorage.setItem('hasAskedNotifications', 'true');
           }
         } catch (error) {

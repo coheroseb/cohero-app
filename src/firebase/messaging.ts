@@ -4,7 +4,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { initializeFirebase } from './config';
 
-export const requestNotificationPermission = async (userId: string) => {
+export const requestNotificationPermission = async (userId: string, silent: boolean = false) => {
   const { firestore, firebaseApp } = initializeFirebase();
   if (!firestore) return;
 
@@ -85,7 +85,12 @@ export const requestNotificationPermission = async (userId: string) => {
         });
         return token;
     }
+    }
   } catch (error: any) {
+    if (silent) {
+      console.warn('Notification permission failed silently:', error.message);
+      return null;
+    }
     console.error('Notification error:', error);
     throw error;
   }
