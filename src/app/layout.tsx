@@ -63,13 +63,13 @@ export async function generateMetadata(): Promise<Metadata> {
       apple: '/App_Icon.png',
     },
     keywords: keywords,
-    authors: [{ name: 'Cohéro Team', url: `${siteUrl}/om-os` }],
+    authors: [{ name: 'Cohéro Team', url: `${baseUrl}/om-os` }],
     creator: 'Cohéro I/S',
     publisher: 'Cohéro I/S',
     openGraph: {
       title: title,
       description: description,
-      url: siteUrl,
+      url: baseUrl,
       siteName: 'Cohéro / Cohero',
       images: [
         {
@@ -121,8 +121,8 @@ export default function RootLayout({
     '@type': 'EducationalOrganization',
     name: 'Cohéro',
     alternateName: 'Cohero',
-    url: siteUrl,
-    logo: `${siteUrl}${ogImageUrl}`,
+    url: baseUrl,
+    logo: `${baseUrl}${ogImageUrl}`,
     description: siteDescription,
     foundingDate: '2026',
     founders: [
@@ -159,7 +159,7 @@ export default function RootLayout({
     ],
     potentialAction: {
       '@type': 'SearchAction',
-      'target': `${siteUrl}/search?q={search_term_string}`,
+      'target': `${baseUrl}/search?q={search_term_string}`,
       'query-input': 'required name=search_term_string'
     }
   };
