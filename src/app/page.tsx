@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { 
   Sparkles, 
@@ -60,6 +61,14 @@ export default function LandingPage() {
   const [showStickyCTA, setShowStickyCTA] = useState(false);
   
   const { isUserLoading, user } = useApp();
+  const router = useRouter();
+
+  // Redirect til portal hvis logget ind
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.replace('/portal');
+    }
+  }, [user, isUserLoading, router]);
   const activeTrack = 'social';
 
   useEffect(() => {
