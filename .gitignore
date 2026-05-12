@@ -41,3 +41,7 @@ yarn-error.log*
 .firebase/
 functions/.next/
 functions/node_modules/
+
+# Capacitor (Moved to separate repo)
+ios/
+capacitor.config.ts
