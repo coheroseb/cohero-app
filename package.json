@@ -11,17 +11,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest --passWithNoTests",
-    "ios:build": "next build && npx cap sync ios",
-    "ios:open": "npx cap open ios"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
-    "@capacitor/cli": "^7.6.1",
-    "@capacitor/core": "^8.3.0",
-    "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.3.0",
-    "@capacitor/push-notifications": "^8.0.3",
-    "@capacitor/splash-screen": "^8.0.1",
-    "@capacitor/status-bar": "^8.0.2",
+
     "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-slot": "^1.0.2",
