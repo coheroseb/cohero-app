@@ -9,6 +9,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { triggerHapticFeedback } from '@/lib/haptics';
 import { ImpactStyle } from '@capacitor/haptics';
 import { useApp } from '@/app/provider';
+import { NativeAuth } from './native/NativeAuth';
 
 interface MobileNativeLayoutProps {
   children: React.ReactNode;
@@ -29,12 +30,8 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
     }
   }, []);
 
-  // Redirect ulogget brugere til /auth i native app
-  useEffect(() => {
-    if (isNative && !loading && !user && pathname !== '/auth') {
-      router.replace('/auth');
-    }
-  }, [isNative, user, loading, pathname, router]);
+  // Vi håndterer auth direkte i render logikken nedenfor for native brugere
+  // for at undgå unødvendige redirects til web-auth siden.
 
   if (!isNative) return <>{children}</>;
 
@@ -61,16 +58,14 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
     );
   }
 
-  // Hvis man er på /auth og ikke logget ind, vis KUN indholdet (ingen barer)
-  if (!user && pathname === '/auth') {
-    return <main className="min-h-screen bg-white">{children}</main>;
+  // Hvis man ikke er logget ind på native, vis den dedikerede NativeAuth side
+  if (!user) {
+    return <NativeAuth />;
   }
 
   const tabs = [
     { name: 'Hjem', icon: Home, href: '/portal' },
-    { name: 'Jura', icon: Scale, href: '/lov-portal' },
     { name: 'Materialer', icon: BookMarked, href: '/mine-materialer' },
-    { name: 'Grupper', icon: MessageSquare, href: '/rum/groups' },
     { name: 'Profil', icon: Settings, href: '/settings' },
   ];
 
