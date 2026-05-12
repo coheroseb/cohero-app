@@ -10,6 +10,7 @@ import { triggerHapticFeedback } from '@/lib/haptics';
 import { ImpactStyle } from '@capacitor/haptics';
 import { useApp } from '@/app/provider';
 import { NativeAuth } from './native/NativeAuth';
+import { requestNotificationPermission } from '@/firebase/messaging';
 
 interface MobileNativeLayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,26 @@ const MobileNativeLayout: React.FC<MobileNativeLayoutProps> = ({ children }) => 
       document.documentElement.classList.add('is-native');
     }
   }, []);
+
+  // Spørg om notifikationer når man starter appen og er logget ind
+  useEffect(() => {
+    if (isNative && user && !isUserLoading) {
+      const askForNotifications = async () => {
+        try {
+          // Vi tjekker om vi allerede har spurgt i denne session for at undgå loops
+          const hasAsked = sessionStorage.getItem('hasAskedNotifications');
+          if (!hasAsked) {
+            await requestNotificationPermission(user.uid);
+            sessionStorage.setItem('hasAskedNotifications', 'true');
+          }
+        } catch (error) {
+          console.warn('Kunne ikke aktivere notifikationer automatisk:', error);
+        }
+      };
+      
+      askForNotifications();
+    }
+  }, [isNative, user, isUserLoading]);
 
   // Vi håndterer auth direkte i render logikken nedenfor for native brugere
   // for at undgå unødvendige redirects til web-auth siden.
