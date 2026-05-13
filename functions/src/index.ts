@@ -202,8 +202,8 @@ export {
 import { onAssistanceRequestUpdate, onAssistanceRequestCreate } from "./assistance_notifications";
 export { onAssistanceRequestUpdate, onAssistanceRequestCreate };
 
-import { onUserUpdateScanStudentCard, onUserDeleteCleanUp } from "./users";
-export { onUserUpdateScanStudentCard, onUserDeleteCleanUp };
+import { onUserUpdateScanStudentCard, onUserDeleteCleanUp, generateSSOToken } from "./users";
+export { onUserUpdateScanStudentCard, onUserDeleteCleanUp, generateSSOToken };
 
 import { onShopOrderUpdate } from "./shop";
 export { onShopOrderUpdate };

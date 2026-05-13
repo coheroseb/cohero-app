@@ -4,6 +4,7 @@ import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from "firebase/analytics";
 import { getMessaging } from 'firebase/messaging';
+import { getFunctions } from 'firebase/functions';
 
 export const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyAc9loZEcoQ4u0umlkioccfzp1kD0YURtI",
@@ -48,6 +49,7 @@ export function initializeFirebase() {
   
   const auth = getAuth(firebaseApp);
   const storage = getStorage(firebaseApp);
+  const functions = getFunctions(firebaseApp, 'europe-west1');
   
 
   // Initialize Analytics and Messaging only in the browser
@@ -63,7 +65,7 @@ export function initializeFirebase() {
     }
   }
 
-  const services = { firebaseApp, auth, firestore, storage, analytics, messaging };
+  const services = { firebaseApp, auth, firestore, storage, analytics, messaging, functions };
   
   if (typeof window !== 'undefined') {
     (window as any)._firebaseServices = services;

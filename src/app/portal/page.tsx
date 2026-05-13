@@ -48,8 +48,9 @@ import { fetchPoliticalNews, fetchSocialMinistryNews, processStudyRegulationActi
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useFunctions } from '@/firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, where, doc, updateDoc, deleteField } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 
 // --- Sub-components for a "Light" feel ---
 
@@ -100,6 +101,37 @@ const PortalPageContent: React.FC = () => {
   const [news, setNews] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [isNative, setIsNative] = useState(false);
+  const functions = useFunctions();
+  const [isSSOLoading, setIsSSOLoading] = useState(false);
+
+  const handleSSORedirect = async (url: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (!functions || isSSOLoading) {
+      window.open(url, '_blank');
+      return;
+    }
+
+    setIsSSOLoading(true);
+    try {
+      const generateSSOToken = httpsCallable(functions, 'generateSSOToken');
+      const result = await generateSSOToken();
+      const token = (result.data as any).token;
+      
+      const targetUrl = new URL(url);
+      targetUrl.searchParams.set('token', token);
+      window.open(targetUrl.toString(), '_blank');
+    } catch (err) {
+      console.error("SSO failed", err);
+      window.open(url, '_blank');
+    } finally {
+      setIsSSOLoading(false);
+    }
+  };
+
 
   // Dashboard Data
   const [plans, setPlans] = useState<any[]>([]);
@@ -366,7 +398,7 @@ const PortalPageContent: React.FC = () => {
                       term.split(' ').length > 6;
 
     if (isQuestion || term.includes('§') || term.toLowerCase().includes('lov')) {
-      window.location.href = `https://law.cohero.dk/?search=${encodeURIComponent(term)}`;
+      handleSSORedirect(`https://law.cohero.dk/?search=${encodeURIComponent(term)}`);
     } else {
       router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
     }
@@ -697,7 +729,10 @@ const PortalPageContent: React.FC = () => {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
-                    <Link href="https://law.cohero.dk/" target="_blank" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
+                    <div 
+                      onClick={(e) => handleSSORedirect("https://law.cohero.dk/", e)}
+                      className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 cursor-pointer"
+                    >
                       <div className="flex items-start justify-between mb-6">
                         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                           <Scale className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -706,7 +741,8 @@ const PortalPageContent: React.FC = () => {
                       </div>
                       <h4 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Juridisk Lovportal</h4>
                       <p className="text-xs font-medium text-slate-500 leading-relaxed">Lovgrundlag og vejledninger.</p>
-                    </Link>
+                      {isSSOLoading && <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center rounded-[1.5rem] sm:rounded-[2.5rem] z-20"><Loader2 className="w-6 h-6 animate-spin text-amber-600" /></div>}
+                    </div>
 
 
                     <Link href="/case-trainer" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
@@ -844,12 +880,16 @@ const PortalPageContent: React.FC = () => {
                   { title: "Begreber", icon: Brain, path: "/concept-explainer", color: "bg-emerald-50 text-emerald-600" },
                   { title: "Lovportal", icon: Scale, path: "https://law.cohero.dk/", color: "bg-amber-50 text-amber-600" },
                 ].map((tool, i) => (
-                  <Link key={i} href={tool.path} className="group flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-3xl border border-transparent hover:border-amber-200 hover:bg-white transition-all shadow-sm">
+                  <div 
+                    key={i} 
+                    onClick={(e) => tool.path.startsWith('http') ? handleSSORedirect(tool.path, e) : router.push(tool.path)}
+                    className="group flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-3xl border border-transparent hover:border-amber-200 hover:bg-white transition-all shadow-sm cursor-pointer"
+                  >
                     <div className={`w-12 h-12 ${tool.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
                       <tool.icon className="w-6 h-6" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{tool.title}</span>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </div>

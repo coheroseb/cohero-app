@@ -5,6 +5,23 @@ import { Resend } from 'resend';
 
 const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
 
+export const generateSSOToken = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Brugeren skal være logget ind for at generere et SSO-token.');
+    }
+    
+    try {
+        const uid = context.auth.uid;
+        // Generate a custom token for the same UID
+        const token = await admin.auth().createCustomToken(uid);
+        return { token };
+    } catch (error) {
+        console.error("Error generating SSO token:", error);
+        throw new functions.https.HttpsError('internal', 'Kunne ikke generere SSO-token.');
+    }
+});
+
+
 export const onUserUpdateScanStudentCard = functions.firestore
   .database(databaseId)
   .document("users/{userId}")

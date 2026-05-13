@@ -1,5 +1,6 @@
 export * from './config';
 export * from './provider';
+export { useFunctions } from './provider';
 export * from './firestore/use-collection';
 export * from './firestore/use-doc';
 export * from './client-provider';

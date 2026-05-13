@@ -18,6 +18,7 @@ import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { type Functions } from 'firebase/functions';
 
 import { initializeFirebase } from './config';
 
@@ -26,6 +27,7 @@ interface FirebaseContextType {
   auth: Auth | null;
   firestore: Firestore | null;
   storage: FirebaseStorage | null;
+  functions: Functions | null;
 }
 
 const FirebaseContext = createContext<FirebaseContextType>({
@@ -33,6 +35,7 @@ const FirebaseContext = createContext<FirebaseContextType>({
   auth: null,
   firestore: null,
   storage: null,
+  functions: null,
 });
 
 interface FirebaseProviderProps {
@@ -41,6 +44,7 @@ interface FirebaseProviderProps {
   auth?: Auth | null;
   firestore?: Firestore | null;
   storage?: FirebaseStorage | null;
+  functions?: Functions | null;
 }
 
 export const FirebaseProvider = ({ 
@@ -48,11 +52,12 @@ export const FirebaseProvider = ({
     firebaseApp: providedApp, 
     auth: providedAuth, 
     firestore: providedFirestore, 
-    storage: providedStorage 
+    storage: providedStorage,
+    functions: providedFunctions
 }: FirebaseProviderProps) => {
   // Use provided services or initialize them if not present (fallback)
-  const services = providedApp ? { firebaseApp: providedApp, auth: providedAuth, firestore: providedFirestore, storage: providedStorage } : initializeFirebase();
-  const { firebaseApp, auth, firestore, storage } = services;
+  const services = providedApp ? { firebaseApp: providedApp, auth: providedAuth, firestore: providedFirestore, storage: providedStorage, functions: providedFunctions } : initializeFirebase();
+  const { firebaseApp, auth, firestore, storage, functions } = services;
 
   useEffect(() => {
     if (typeof window !== 'undefined' && firebaseApp) {
@@ -61,7 +66,7 @@ export const FirebaseProvider = ({
   }, [firebaseApp]);
 
   return (
-    <FirebaseContext.Provider value={{ firebaseApp, auth, firestore, storage }}>
+    <FirebaseContext.Provider value={{ firebaseApp, auth, firestore, storage, functions }}>
       {children}
     </FirebaseContext.Provider>
   );
@@ -71,6 +76,7 @@ export const useFirebase = () => useContext(FirebaseContext);
 export const useAuth = () => useContext(FirebaseContext).auth;
 export const useFirestore = () => useContext(FirebaseContext).firestore;
 export const useStorage = () => useContext(FirebaseContext).storage;
+export const useFunctions = () => useContext(FirebaseContext).functions;
 
 export const useUser = () => {
   const auth = useAuth();
