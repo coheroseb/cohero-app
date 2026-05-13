@@ -4,7 +4,7 @@
  * @fileOverview An AI flow to generate a personalized nudge email.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai } from '../genkit';
 import { 
     NudgeEmailInputSchema,
     NudgeEmailOutputSchema,

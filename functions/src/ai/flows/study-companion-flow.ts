@@ -4,7 +4,7 @@
  * @fileOverview An AI flow to generate a personalized weekly study companion newsletter.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai } from '../genkit';
 import { 
     StudyCompanionInputSchema,
     StudyCompanionOutputSchema,

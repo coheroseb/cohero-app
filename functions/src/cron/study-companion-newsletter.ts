@@ -21,6 +21,9 @@ export const weeklyStudyCompanion = functions.pubsub
         const u = doc.data() as any;
         if (!u.email) continue;
 
+        // Skip if user has disabled email notifications
+        if (u.emailNotificationsEnabled === false) continue;
+
         const userName = u.username || "Studerende";
         const semester = u.semester || "Ukendt Semester";
         const institution = u.institution || "Ukendt Studiested";

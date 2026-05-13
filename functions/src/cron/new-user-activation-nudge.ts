@@ -39,6 +39,9 @@ export const dailyNewUserActivationNudge = functions.pubsub
       const u = doc.data() as any;
       if (!u.email) continue;
 
+      // Skip if user has disabled email notifications
+      if (u.emailNotificationsEnabled === false) continue;
+
       // Skip hvis de har en aktiv Kollega+ subscription
       if (u.stripeSubscriptionStatus === 'active') continue;
 

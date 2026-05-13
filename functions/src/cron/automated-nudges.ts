@@ -1,7 +1,7 @@
-
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { Resend } from 'resend';
+
 
 export const dailyAutomatedNudges = functions.pubsub
   .schedule('every day 11:00')
@@ -14,14 +14,19 @@ export const dailyAutomatedNudges = functions.pubsub
     const d14 = new Date();
     d14.setDate(d14.getDate() - 14);
 
-    // Limit to 50 users per run to handle larger base while staying safe
+    // Find users who haven't been active for a while, prioritizing the most inactive ones
     const inactiveSnap = await db.collection('users')
         .where('role', '==', 'user')
-        .limit(50)
+        .orderBy('lastActivityAt', 'asc')
+        .limit(100)
         .get();
 
     for (const doc of inactiveSnap.docs) {
         const u = doc.data() as any;
+        
+        // Skip if user has disabled email notifications
+        if (u.emailNotificationsEnabled === false) continue;
+
         const lastAct = u.lastActivityAt || u.lastLogin;
         
         if (!lastAct) continue;
@@ -88,9 +93,16 @@ export const dailyAutomatedNudges = functions.pubsub
             });
 
             console.log(`Nudge sent successfully to ${u.email}`);
-
-        } catch (e) {
+        } catch (e: any) {
             console.error(`Failed to nudge user ${u.email}:`, e);
+            // Log the error to mail_logs as well
+            await db.collection("mail_logs").add({
+                userId: doc.id,
+                email: u.email,
+                type: "nudge_email_failed",
+                error: e.message || String(e),
+                sentAt: admin.firestore.FieldValue.serverTimestamp(),
+            }).catch(() => {});
         }
     }
 

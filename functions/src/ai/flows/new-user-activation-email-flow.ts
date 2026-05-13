@@ -5,7 +5,7 @@
  * new Kollega (free) users who have signed up but haven't used the platform yet.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai } from '../genkit';
 import { z } from 'genkit';
 
 const NewUserActivationEmailInputSchema = z.object({
