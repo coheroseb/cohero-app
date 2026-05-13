@@ -49,7 +49,7 @@ export function initializeFirebase() {
   
   const auth = getAuth(firebaseApp);
   const storage = getStorage(firebaseApp);
-  const functions = getFunctions(firebaseApp, 'europe-west1');
+  const functions = getFunctions(firebaseApp, 'us-central1');
   
 
   // Initialize Analytics and Messaging only in the browser
