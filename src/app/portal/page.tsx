@@ -366,7 +366,7 @@ const PortalPageContent: React.FC = () => {
                       term.split(' ').length > 6;
 
     if (isQuestion || term.includes('§') || term.toLowerCase().includes('lov')) {
-      router.push(`/lov-portal?search=${encodeURIComponent(term)}`);
+      window.location.href = `https://law.cohero.dk/?search=${encodeURIComponent(term)}`;
     } else {
       router.push(`/concept-explainer?term=${encodeURIComponent(term)}`);
     }
@@ -697,7 +697,7 @@ const PortalPageContent: React.FC = () => {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
-                    <Link href="/lov-portal" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
+                    <Link href="https://law.cohero.dk/" target="_blank" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
                       <div className="flex items-start justify-between mb-6">
                         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                           <Scale className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -842,6 +842,7 @@ const PortalPageContent: React.FC = () => {
                   { title: "Eksamen", icon: Layout, path: "/exam-architect", color: "bg-indigo-50 text-indigo-600" },
                   { title: "Case Analyser", icon: FileSearch, path: "/case-analyser", color: "bg-purple-50 text-purple-600" },
                   { title: "Begreber", icon: Brain, path: "/concept-explainer", color: "bg-emerald-50 text-emerald-600" },
+                  { title: "Lovportal", icon: Scale, path: "https://law.cohero.dk/", color: "bg-amber-50 text-amber-600" },
                 ].map((tool, i) => (
                   <Link key={i} href={tool.path} className="group flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-3xl border border-transparent hover:border-amber-200 hover:bg-white transition-all shadow-sm">
                     <div className={`w-12 h-12 ${tool.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>

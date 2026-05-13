@@ -67,6 +67,11 @@ const nextConfig = {
         destination: 'https://ask.cohero.dk',
         permanent: true,
       },
+      {
+        source: '/lov-portal',
+        destination: 'https://law.cohero.dk',
+        permanent: true,
+      },
     ];
   },
 
