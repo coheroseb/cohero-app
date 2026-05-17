@@ -173,9 +173,28 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
             <p className="text-[9px] font-black uppercase tracking-widest text-amber-950/30 mb-3">Anbefalet litteratur</p>
             <div className="space-y-2">
               {ex.suggestedLiterature.map((b, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                  <BookOpen className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <div><p className="text-[11px] font-bold text-amber-950">{b.title}</p><p className="text-[10px] text-amber-700">{b.author}</p></div>
+                <div key={i} className="flex flex-col gap-2 p-4 bg-amber-50 rounded-2xl border border-amber-100/50">
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-amber-950">{b.title}</p>
+                      <p className="text-[10px] text-amber-700 font-medium">{b.author}</p>
+                    </div>
+                  </div>
+                  {(b.relevance || (b.chapters && b.chapters.length > 0)) && (
+                    <div className="mt-1 pl-7 space-y-2">
+                      {b.relevance && <p className="text-[10px] text-amber-900/60 leading-relaxed italic">"{b.relevance}"</p>}
+                      {b.chapters && b.chapters.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {b.chapters.map((ch, j) => (
+                            <span key={j} className="px-2 py-0.5 bg-white/50 border border-amber-200/50 rounded-lg text-[9px] font-bold text-amber-800">
+                              {ch}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -877,7 +896,7 @@ function ConceptChatContent() {
           {/* Limit indicator */}
           {userProfile?.membership === 'Gratis Plan' && (
              <p className="text-center mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                {20 - (userProfile?.conceptExplainerUsage || 0)} gratis forklaringer tilbage
+                {20 - (userProfile?.dailyConceptExplainerCount || 0)} gratis forklaringer tilbage
              </p>
           )}
         </div>

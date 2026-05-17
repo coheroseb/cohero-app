@@ -20,6 +20,25 @@ import { resend } from '@/lib/resend';
 
 import { repairJson } from '@/lib/json-repair';
 
+function getGeminiApiKey(): string {
+    const keys = [
+        process.env.GEMINI_API_KEY,
+        process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+        "AIzaSyD93vIEVXUu9qv5o9GrMIbKJ-wJ1qUKtz4",
+        "AIzaSyCEay9Ekv3ARVUncB6H1EDP35ALRe5PswA"
+    ];
+    for (const key of keys) {
+        if (key && typeof key === 'string') {
+            const sanitized = key.trim().replace(/^["']|["']$/g, '');
+            if (sanitized && sanitized !== 'undefined' && sanitized !== 'null' && sanitized.startsWith('AIzaSy')) {
+                return sanitized;
+            }
+        }
+    }
+    throw new Error("Ingen gyldig GEMINI_API_KEY fundet.");
+}
+
+
 
 
 
@@ -1267,8 +1286,7 @@ export async function generateMaterialAIOverviewAction(input: {
                 isIndexed: 'generating'
             });
 
-        const geminiKey = process.env.GEMINI_API_KEY;
-        if (!geminiKey) throw new Error("GEMINI_API_KEY mangler.");
+        const geminiKey = getGeminiApiKey();
 
         const textToSummarize = input.rawText.substring(0, 30000);
         const learningGoalsContext = input.candidateLearningGoals && input.candidateLearningGoals.length > 0
@@ -1397,8 +1415,7 @@ export async function generateMaterialMindmapAction(input: {
 }) {
     const { adminFirestore } = await import('@/firebase/server-init');
     try {
-        const geminiKey = process.env.GEMINI_API_KEY;
-        if (!geminiKey) throw new Error("GEMINI_API_KEY mangler.");
+        const geminiKey = getGeminiApiKey();
 
         let textToAnalyze = input.rawText || "";
 
@@ -4494,7 +4511,7 @@ export async function getMindmapNodeSourceAction(input: {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout per call
 
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getGeminiApiKey()}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -4536,7 +4553,7 @@ export async function getMindmapNodeSourceAction(input: {
  */
 export async function processBookTocAction(input: { images: string[] }) {
     try {
-        const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        const geminiKey = getGeminiApiKey();
         const prompt = `Du er en ekspert i at digitalisere bøger. Her er billeder af en indholdsfortegnelse. 
         Din opgave er at udtrække alle punkter (kapitler, underafsnit) præcis som de står.
         Returner KUN et JSON-objekt med formatet: { "toc": [{ "title": "Kapitel navn", "pageNumber": "42" }] }.
@@ -4622,7 +4639,7 @@ export async function fetchBookMetadataAction(isbn: string) {
         const html = await response.text();
         
         // Use Gemini to extract metadata from HTML
-        const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        const geminiKey = getGeminiApiKey();
         const prompt = `Du får her rå HTML fra en bogside. Din opgave er at udtrække bogens titel og forfatter.
         Returner KUN et JSON-objekt med formatet: { "title": "Bogens titel", "author": "Forfatterens navn" }.
         Hvis du ikke kan finde informationerne, returner tomme strenge.

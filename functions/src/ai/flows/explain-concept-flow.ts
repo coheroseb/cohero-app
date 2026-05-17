@@ -96,7 +96,7 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
    - Hvad mangler der – hvad kan metoden/tilgangen IKKE? 
    Skriv mindst 3 afsnit med HTML-formatering.
 
-7. **suggestedLiterature**: 1-3 bøger KUN fra den vedlagte pensumliste, der bedst belyser emnet. Angiv specifikt hvilke kapitler/sider der er mest relevante baseret på RAG-information.
+7. **suggestedLiterature**: 1-3 bøger/redskaber KUN fra den vedlagte pensumliste, der bedst belyser emnet. Angiv specifikt hvilke kapitler/sider der er mest relevante baseret på RAG-information. Inkludér altid mindst én bog hvis listen ikke er tom.
 
 8. **relevantTheorists**: 2-4 centrale teoretikere. For HVER: navn, tidsperiode, specifikt bidrag til dette emne, og reference til pensumliste hvis muligt.
 
@@ -131,7 +131,7 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
     ],
   },
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-2.0-flash',
 });
 
 export const explainConceptFlow = ai.defineFlow(
@@ -189,8 +189,15 @@ export const explainConceptFlow = ai.defineFlow(
       .sort((a, b) => b.score - a.score)
       .slice(0, 8); // Top 8 most relevant books
     
-    // Fallback: If no matches, send top 4 general books
+    // 3. Fallback: If no matches, send top 4 general books
     const booksForPrompt = scoredBooks.length > 0 ? scoredBooks.map(s => s.book) : allBooks.slice(0, 4);
+
+    // If the concept is "books" or "bøger", ensure we have good matches
+    if (input.concept.toLowerCase().includes('book') || input.concept.toLowerCase().includes('bøg')) {
+        // Boost literature related books if they exist in allBooks
+        const litBooks = allBooks.filter(b => b.title.toLowerCase().includes('litteratur') || b.RAG?.toLowerCase().includes('kildehenvisning'));
+        if (litBooks.length > 0) booksForPrompt.push(...litBooks.slice(0, 2));
+    }
     
     let lawContext = input.lawContext || '';
     
