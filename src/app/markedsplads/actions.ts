@@ -6,7 +6,7 @@ import { stripe } from '@/lib/stripe';
 import { AssistanceRequest } from '@/ai/flows/types';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import { wrapEmailHtml } from '@/app/actions';
+import { wrapEmailHtml } from '@/lib/email-helper';
 
 const PLATFORM_FEE_PERCENT = 15;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://student.cohero.dk';

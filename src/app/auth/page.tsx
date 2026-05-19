@@ -10,10 +10,10 @@ import { Loader2, Check, AlertTriangle, Mail, Lock, User, ArrowRight, Sparkles, 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Suspense } from 'react';
 
-type AuthMode = 'signin' | 'signup';
+type AuthMode = 'signin' | 'signup' | 'forgot';
 
 const AuthContent = () => {
-  const { user, handleLogin, handleSignup, handleGoogleLogin } = useApp();
+  const { user, handleLogin, handleSignup, handleGoogleLogin, handleResetPassword } = useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialMode = searchParams?.get('mode') === 'signup' ? 'signup' : 'signin';
@@ -55,6 +55,15 @@ const AuthContent = () => {
         } else {
           setError('Der skete en ukendt fejl under oprettelse.');
         }
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (mode === 'forgot') {
+      try {
+        await handleResetPassword(email);
+        setSuccess("Vi har sendt en e-mail til dig med instruktioner om, hvordan du nulstiller din adgangskode.");
+      } catch (err: any) {
+        setError(err.message || 'Der skete en fejl. Prøv igen.');
       } finally {
         setIsLoading(false);
       }
@@ -105,46 +114,48 @@ const AuthContent = () => {
         <div className="w-full max-w-md space-y-12 relative z-10">
           <div className="space-y-4">
              <h1 className="text-4xl sm:text-5xl font-black tracking-tighter leading-none">
-               {mode === 'signin' ? "Velkommen tilbage." : "Begynd din rejse."}
+               {mode === 'signin' ? "Velkommen tilbage." : mode === 'signup' ? "Begynd din rejse." : "Nulstil adgangskode."}
              </h1>
              <p className="text-lg text-slate-400 font-medium leading-relaxed">
-               {mode === 'signin' ? t.signinSubtext : t.signupSubtext}
+               {mode === 'signin' ? t.signinSubtext : mode === 'signup' ? t.signupSubtext : "Indtast din email for at modtage et link til at nulstille din adgangskode."}
              </p>
           </div>
 
           <div className="bg-white p-2 rounded-[3rem] border border-slate-100 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.05)]">
             
             {/* Minimalist Toggle */}
-            <div className="flex p-1 bg-slate-50 rounded-[2.5rem] mb-8 relative">
-              <button 
-                type="button"
-                onClick={() => setMode('signin')} 
-                className={`relative flex-1 py-4 text-[13px] font-black uppercase tracking-widest transition-all duration-300 z-10 rounded-[2rem] ${mode === 'signin' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                {t.signin}
-                {mode === 'signin' && (
-                  <motion.div 
-                    layoutId="activeTabMode"
-                    className="absolute inset-0 bg-white rounded-[2rem] shadow-sm border border-slate-200/20 -z-10"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </button>
-              <button 
-                type="button"
-                onClick={() => setMode('signup')} 
-                className={`relative flex-1 py-4 text-[13px] font-black uppercase tracking-widest transition-all duration-300 z-10 rounded-[2rem] ${mode === 'signup' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                {t.signup}
-                {mode === 'signup' && (
-                  <motion.div 
-                    layoutId="activeTabMode"
-                    className="absolute inset-0 bg-white rounded-[2rem] shadow-sm border border-slate-200/20 -z-10"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </button>
-            </div>
+            {mode !== 'forgot' && (
+              <div className="flex p-1 bg-slate-50 rounded-[2.5rem] mb-8 relative">
+                <button 
+                  type="button"
+                  onClick={() => setMode('signin')} 
+                  className={`relative flex-1 py-4 text-[13px] font-black uppercase tracking-widest transition-all duration-300 z-10 rounded-[2rem] ${mode === 'signin' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  {t.signin}
+                  {mode === 'signin' && (
+                    <motion.div 
+                      layoutId="activeTabMode"
+                      className="absolute inset-0 bg-white rounded-[2rem] shadow-sm border border-slate-200/20 -z-10"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setMode('signup')} 
+                  className={`relative flex-1 py-4 text-[13px] font-black uppercase tracking-widest transition-all duration-300 z-10 rounded-[2rem] ${mode === 'signup' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  {t.signup}
+                  {mode === 'signup' && (
+                    <motion.div 
+                      layoutId="activeTabMode"
+                      className="absolute inset-0 bg-white rounded-[2rem] shadow-sm border border-slate-200/20 -z-10"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                </button>
+              </div>
+            )}
             
             <form onSubmit={handleSubmit} className="px-6 pb-8 space-y-6">
               <div className="space-y-4">
@@ -177,14 +188,40 @@ const AuthContent = () => {
                    className="h-16 rounded-[2rem] px-8 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-slate-950 transition-all text-[15px] font-medium"
                  />
                  
-                 <Input 
-                   type="password" 
-                   placeholder={t.password}
-                   value={password}
-                   onChange={(e) => setPassword(e.target.value)}
-                   required
-                   className="h-16 rounded-[2rem] px-8 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-slate-950 transition-all text-[15px] font-medium"
-                 />
+                 <AnimatePresence mode="popLayout">
+                   {mode !== 'forgot' && (
+                     <motion.div
+                       initial={{ opacity: 0, height: 0 }}
+                       animate={{ opacity: 1, height: 'auto' }}
+                       exit={{ opacity: 0, height: 0 }}
+                       className="relative space-y-4"
+                     >
+                       <Input 
+                         type="password" 
+                         placeholder={t.password}
+                         value={password}
+                         onChange={(e) => setPassword(e.target.value)}
+                         required
+                         className="h-16 rounded-[2rem] px-8 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-slate-950 transition-all text-[15px] font-medium"
+                       />
+                       {mode === 'signin' && (
+                         <div className="flex justify-end px-2">
+                           <button
+                             type="button"
+                             onClick={() => {
+                               setMode('forgot');
+                               setError(null);
+                               setSuccess(null);
+                             }}
+                             className="text-[12px] font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+                           >
+                             Glemt adgangskode?
+                           </button>
+                         </div>
+                       )}
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
                  
                  <AnimatePresence mode="popLayout">
                    {mode === 'signup' && (
@@ -211,6 +248,9 @@ const AuthContent = () => {
                 {error && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-rose-50 text-rose-600 p-5 rounded-[2rem] text-[13px] font-bold border border-rose-100">{error}</motion.div>
                 )}
+                {success && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-emerald-50 text-emerald-600 p-5 rounded-[2rem] text-[13px] font-bold border border-emerald-100">{success}</motion.div>
+                )}
               </AnimatePresence>
 
               <Button 
@@ -220,38 +260,61 @@ const AuthContent = () => {
               >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : (
                   <>
-                    {mode === 'signin' ? t.signin : t.signup}
+                    {mode === 'signin' ? t.signin : mode === 'signup' ? t.signup : "Send nulstillingslink"}
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
               </Button>
 
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100" /></div>
-                <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.4em]"><span className="bg-white px-6 text-slate-300">Social Login</span></div>
-              </div>
+              {mode !== 'forgot' && (
+                <>
+                  <div className="relative py-4">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100" /></div>
+                    <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.4em]"><span className="bg-white px-6 text-slate-300">Social Login</span></div>
+                  </div>
 
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleGoogleSubmit}
-                disabled={isLoading}
-                className="w-full h-16 rounded-[2rem] text-[13px] font-black uppercase tracking-widest text-slate-600 flex items-center justify-center gap-4 bg-white border border-slate-100 hover:bg-slate-50 transition-all"
-              >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 grayscale opacity-70" />
-                Fortsæt med Google
-              </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleGoogleSubmit}
+                    disabled={isLoading}
+                    className="w-full h-16 rounded-[2rem] text-[13px] font-black uppercase tracking-widest text-slate-600 flex items-center justify-center gap-4 bg-white border border-slate-100 hover:bg-slate-50 transition-all"
+                  >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 grayscale opacity-70" />
+                    Fortsæt med Google
+                  </Button>
+                </>
+              )}
             </form>
           </div>
 
           <div className="text-center">
-            <button 
-              onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-              className="text-[13px] text-slate-400 font-black uppercase tracking-widest hover:text-slate-950 transition-colors"
-            >
-              {mode === 'signin' ? t.noAccount : t.hasAccount}{' '} 
-              <span className="text-indigo-600 ml-2">{mode === 'signin' ? t.signup : t.signin}</span>
-            </button>
+            {mode === 'forgot' ? (
+              <button 
+                type="button"
+                onClick={() => {
+                  setMode('signin');
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="text-[13px] text-slate-400 font-black uppercase tracking-widest hover:text-slate-950 transition-colors"
+              >
+                Tilbage til <span className="text-indigo-600 ml-2">Log ind</span>
+              </button>
+            ) : (
+              <button 
+                type="button"
+                onClick={() => {
+                  setMode(mode === 'signin' ? 'signup' : 'signin');
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="text-[13px] text-slate-400 font-black uppercase tracking-widest hover:text-slate-950 transition-colors"
+              >
+                {mode === 'signin' ? t.noAccount : t.hasAccount}{' '} 
+                <span className="text-indigo-600 ml-2">{mode === 'signin' ? t.signup : t.signin}</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

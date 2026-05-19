@@ -21,6 +21,7 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { type Functions } from 'firebase/functions';
 
 import { initializeFirebase } from './config';
+import { sendPasswordResetEmailAction } from '@/app/actions';
 
 interface FirebaseContextType {
   firebaseApp: FirebaseApp | null;
@@ -224,5 +225,12 @@ export const useUser = () => {
     return userCredential;
   };
 
-  return { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin };
+  const handleResetPassword = async (email: string) => {
+    const res = await sendPasswordResetEmailAction({ userEmail: email });
+    if (!res.success) {
+      throw new Error(res.message);
+    }
+  };
+
+  return { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin, handleResetPassword };
 };

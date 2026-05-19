@@ -17,6 +17,8 @@ if (!Promise.withResolvers) {
 
 import { safeIsoDate } from '@/lib/utils';
 import { resend } from '@/lib/resend';
+import https from 'https';
+import { wrapEmailHtml } from '@/lib/email-helper';
 
 import { repairJson } from '@/lib/json-repair';
 
@@ -597,34 +599,6 @@ export async function getCaseFeedbackAction(input: { topic: string, scenario: st
     return callFirebaseFlow('getCaseFeedbackFlow', { ...input, lawContext });
 }
 
-export const wrapEmailHtml = (inner: string) => `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-</head>
-<body style="font-family: 'Inter', Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; -webkit-font-smoothing: antialiased;">
-    <div style="background-color: #f8fafc; padding: 40px 20px; width: 100%; box-sizing: border-box;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);">
-            
-            <div style="background-color: #451a03; padding: 32px 40px; text-align: center;">
-                <img src="https://student.cohero.dk/main_logo.png" alt="Cohéro Logo" style="height: 40px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
-            </div>
-            
-            <div style="padding: 40px; font-size: 16px; line-height: 1.6; color: #334155;">
-                ${inner}
-            </div>
-            
-            <div style="background-color: #f1f5f9; padding: 32px 40px; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5;">
-                <p style="margin-bottom: 8px;">Du har modtaget denne besked som en del af platformens funktionalitet.</p>
-                <p style="margin: 0;">&copy; ${new Date().getFullYear()} Cohéro I/S. Alle rettigheder forbeholdes.</p>
-            </div>
-            
-        </div>
-    </div>
-</body>
-</html>
-`;
 
 export async function generateWelcomeEmailAction(input: { userName: string, userEmail: string }): Promise<{ success: boolean; message: string }> {
     try {
@@ -639,6 +613,138 @@ export async function generateWelcomeEmailAction(input: { userName: string, user
     } catch (error) {
         console.error('Failed to send welcome email:', error);
         return { success: false, message: 'Failed to send welcome email.' };
+    }
+}
+
+function sendResendEmailRaw(payload: {
+    from: string;
+    to: string;
+    subject: string;
+    html: string;
+}): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const apiKey = process.env.RESEND_API_KEY;
+        const postData = JSON.stringify(payload);
+        
+        const options = {
+            hostname: 'api.resend.com',
+            port: 443,
+            path: '/emails',
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    resolve({ ok: res.statusCode && res.statusCode >= 200 && res.statusCode < 300, data: parsed });
+                } catch (e) {
+                    resolve({ ok: res.statusCode && res.statusCode >= 200 && res.statusCode < 300, raw: data });
+                }
+            });
+        });
+
+        req.on('error', (e) => {
+            reject(e);
+        });
+
+        req.write(postData);
+        req.end();
+    });
+}
+
+export async function sendPasswordResetEmailAction(input: { userEmail: string }): Promise<{ success: boolean; message: string }> {
+    const sanitizedEmail = input.userEmail.trim().toLowerCase();
+    try {
+        let resetLink: string | null = null;
+        try {
+            resetLink = await auth.generatePasswordResetLink(sanitizedEmail);
+        } catch (error: any) {
+            // Rate limit — rethrow immediately with a friendly message
+            if (error.message?.includes('RESET_PASSWORD_EXCEED_LIMIT')) {
+                throw new Error('Du har anmodet om nulstilling for mange gange. Vent venligst et par minutter og prøv igen.');
+            }
+            const isUserNotFound = error.code === 'auth/user-not-found' || 
+                                   (error.code === 'auth/internal-error' && error.message?.includes('Unable to create the email action link'));
+            if (!isUserNotFound) {
+                throw error;
+            }
+        }
+
+        if (resetLink) {
+            const htmlContent = wrapEmailHtml(`
+              <h1 style="color: #451a03; font-size: 24px; margin-bottom: 20px; font-family: serif;">Nulstil din adgangskode</h1>
+              <p>Hej,</p>
+              <p>Du har anmodet om at nulstille din adgangskode til din Cohéro-konto.</p>
+              <p>Klik på knappen nedenfor for at vælge en ny adgangskode:</p>
+              <div style="margin: 30px 0; text-align: center;">
+                <a href="${resetLink}" style="background-color: #451a03; color: white; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Nulstil adgangskode</a>
+              </div>
+              <p style="font-size: 13px; color: #64748b;">Hvis du ikke har anmodet om dette, kan du roligt ignorere denne e-mail. Dit kodeord forbliver uændret.</p>
+              <p style="font-size: 11px; color: #94a3b8; word-break: break-all; margin-top: 20px;">Hvis knappen ikke virker, kan du kopiere og indsætte dette link i din browser:<br/>${resetLink}</p>
+            `);
+            const emailResult = await sendResendEmailRaw({
+                from: 'Cohéro <info@platform.cohero.dk>',
+                to: sanitizedEmail,
+                subject: 'Nulstil din adgangskode til Cohéro',
+                html: htmlContent,
+            });
+            if (!emailResult.ok) {
+                console.error("Resend API error:", emailResult);
+                throw new Error(emailResult.data?.message || emailResult.raw || 'Kunne ikke sende e-mail via Resend.');
+            }
+            console.log(`Password reset email sent successfully to registered user: ${sanitizedEmail}. Result:`, JSON.stringify(emailResult));
+        } else {
+            // User does not exist, send a registration nudge email!
+            const nudgeHtml = wrapEmailHtml(`
+              <h1 style="color: #451a03; font-size: 24px; margin-bottom: 20px; font-family: serif;">Ingen bruger fundet</h1>
+              <p>Hej,</p>
+              <p>Du har anmodet om at nulstille din adgangskode til Cohéro på denne e-mailadresse.</p>
+              <p>Vi kan dog se, at der ikke er oprettet nogen bruger med denne e-mailadresse i vores system.</p>
+              <p>Hvis du ønsker at oprette en gratis konto, kan du gøre det her:</p>
+              <div style="margin: 30px 0; text-align: center;">
+                <a href="https://student.cohero.dk" style="background-color: #451a03; color: white; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Opret gratis konto</a>
+              </div>
+              <p style="font-size: 13px; color: #64748b;">Hvis du allerede har en konto hos os under en anden e-mail, kan du prøve igen med den.</p>
+            `);
+            const emailResult = await sendResendEmailRaw({
+                from: 'Cohéro <info@platform.cohero.dk>',
+                to: sanitizedEmail,
+                subject: 'Ingen bruger fundet hos Cohéro',
+                html: nudgeHtml,
+            });
+            if (!emailResult.ok) {
+                console.error("Resend API error:", emailResult);
+                throw new Error(emailResult.data?.message || emailResult.raw || 'Kunne ikke sende e-mail via Resend.');
+            }
+            console.log(`Sent registration nudge email to unregistered address: ${sanitizedEmail}. Result:`, JSON.stringify(emailResult));
+        }
+
+        return { success: true, message: 'Password reset flow processed.' };
+    } catch (error: any) {
+        console.error('Failed to process password reset request:', error);
+        const errMessage = error.message || '';
+        const errCode = error.code || error.errorInfo?.code || '';
+        
+        if (errMessage.includes('RESET_PASSWORD_EXCEED_LIMIT')) {
+            return { success: false, message: 'Du har anmodet om nulstilling for mange gange. Vent venligst et par minutter og prøv igen.' };
+        }
+        if (errCode === 'auth/invalid-email') {
+            return { success: false, message: 'Ugyldig e-mailadresse.' };
+        }
+        if (errCode === 'auth/user-not-found') {
+            return { success: false, message: 'Ingen bruger fundet med denne e-mail.' };
+        }
+        return { success: false, message: 'Der skete en fejl. Prøv igen.' };
     }
 }
 

@@ -11,9 +11,10 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   getAdditionalUserInfo,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, writeBatch, getDoc, query, where, getDocs, collection, increment, updateDoc } from 'firebase/firestore';
-import { generateWelcomeEmailAction, createCheckoutSession } from '@/app/actions';
+import { generateWelcomeEmailAction, createCheckoutSession, sendPasswordResetEmailAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
@@ -39,10 +40,11 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = 'signup', priceId: initialPriceId }) => {
-  const [isLogin, setIsLogin] = useState(initialState === 'login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(initialState === 'login' ? 'login' : 'signup');
   const [loading, setLoading] = useState(false);
   const [isWaitingForProfile, setIsWaitingForProfile] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   
   const { user, userProfile, refetchUserProfile } = useApp();
   const auth = useAuth();
@@ -57,7 +59,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
   const [pendingPriceId, setPendingPriceId] = useState<string | null>(initialPriceId || null);
 
   useEffect(() => {
-    setIsLogin(initialState === 'login');
+    setMode(initialState === 'login' ? 'login' : 'signup');
   }, [initialState]);
   
   useEffect(() => {
@@ -109,6 +111,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
 
         const stripe = await stripePromise;
         if (!stripe) throw new Error('Stripe.js has not loaded yet.');
+        if (!sessionId) throw new Error('Failed to create a valid checkout session.');
 
         await stripe.redirectToCheckout({ sessionId });
 
@@ -206,6 +209,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
 
 
   const handleGoogleSignIn = async () => {
+    if (!auth) return;
     setLoading(true);
     setError(null);
     const provider = new GoogleAuthProvider();
@@ -236,13 +240,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
     setLoading(true);
     setError(null);
+    setSuccess(null);
     
     try {
-      if (isLogin) {
+      if (mode === 'login') {
         await signInWithEmailAndPassword(auth, email, password);
         setIsWaitingForProfile(true);
+      } else if (mode === 'forgot') {
+        const res = await sendPasswordResetEmailAction({ userEmail: email });
+        if (!res.success) throw new Error(res.message);
+        setSuccess("Vi har sendt en e-mail til dig med instruktioner om, hvordan du nulstiller din adgangskode.");
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
@@ -250,24 +260,32 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
         await handleNewUser(user, pendingPriceId, email.split('@')[0]);
       }
     } catch (err: any) {
-       switch (err.code) {
-        case 'auth/user-not-found':
-        case 'auth/invalid-credential':
-          setError('Ugyldig email eller adgangskode.');
-          break;
-        case 'auth/wrong-password':
-          setError('Forkert adgangskode.');
-          break;
-        case 'auth/email-already-in-use':
-          setError('Emailen er allerede i brug.');
-          break;
-        case 'auth/weak-password':
-          setError('Adgangskoden skal være på mindst 6 tegn.');
-          break;
-        default:
-          setError('Der opstod en fejl. Prøv venligst igen.');
-          break;
+      if (err.message && !err.code) {
+        setError(err.message);
+      } else {
+        switch (err.code) {
+          case 'auth/user-not-found':
+          case 'auth/invalid-credential':
+            setError(mode === 'forgot' ? 'Ingen bruger fundet med denne email.' : 'Ugyldig email eller adgangskode.');
+            break;
+          case 'auth/wrong-password':
+            setError('Forkert adgangskode.');
+            break;
+          case 'auth/email-already-in-use':
+            setError('Emailen er allerede i brug.');
+            break;
+          case 'auth/weak-password':
+            setError('Adgangskoden skal være på mindst 6 tegn.');
+            break;
+          case 'auth/invalid-email':
+            setError('Ugyldig email adresse.');
+            break;
+          default:
+            setError('Der opstod en fejl. Prøv venligst igen.');
+            break;
+        }
       }
+    } finally {
       setLoading(false);
     }
   };
@@ -318,38 +336,44 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
           <div className="max-w-xs mx-auto md:mx-0 w-full">
             <div className="mb-8 sm:mb-10 text-center md:text-left">
               <h3 className="text-2xl sm:text-3xl font-bold text-amber-950 serif mb-2">
-                {isLogin ? 'Velkommen tilbage' : 'Opret konto'}
+                {mode === 'login' ? 'Velkommen tilbage' : mode === 'signup' ? 'Opret konto' : 'Glemt adgangskode?'}
               </h3>
               <p className="text-slate-500 text-xs sm:text-sm leading-relaxed italic">
-                {pendingPriceId ? `Opret din konto for at fuldføre dit køb.` : 'Opret en gratis konto for at komme i gang.'}
+                {mode === 'forgot' 
+                  ? 'Indtast din e-mail for at modtage et link til at nulstille din adgangskode.'
+                  : pendingPriceId ? `Opret din konto for at fuldføre dit køb.` : 'Opret en gratis konto for at komme i gang.'}
               </p>
             </div>
 
-             <button
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="w-full mb-4 py-3 sm:py-4 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all disabled:opacity-50 flex items-center justify-center group h-12 sm:h-14"
-            >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-slate-400/30 border-t-slate-400 rounded-full animate-spin"></div>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 mr-3" viewBox="0 0 48 48">
-                      <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                      <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
-                      <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
-                      <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.02,35.636,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                    </svg>
-                    Fortsæt med Google
-                  </>
-                )}
-            </button>
+            {mode !== 'forgot' && (
+              <button
+                 onClick={handleGoogleSignIn}
+                 disabled={loading}
+                 className="w-full mb-4 py-3 sm:py-4 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all disabled:opacity-50 flex items-center justify-center group h-12 sm:h-14"
+              >
+                 {loading ? (
+                   <div className="w-5 h-5 border-2 border-slate-400/30 border-t-slate-400 rounded-full animate-spin"></div>
+                 ) : (
+                   <>
+                     <svg className="w-5 h-5 mr-3" viewBox="0 0 48 48">
+                       <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                       <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+                       <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+                       <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.02,35.636,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                     </svg>
+                     Fortsæt med Google
+                   </>
+                 )}
+              </button>
+            )}
 
-            <div className="flex items-center my-6">
-                <hr className="flex-grow border-amber-100/80"/>
-                <span className="mx-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Eller</span>
-                <hr className="flex-grow border-amber-100/80"/>
-            </div>
+            {mode !== 'forgot' && (
+              <div className="flex items-center my-6">
+                  <hr className="flex-grow border-amber-100/80"/>
+                  <span className="mx-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Eller</span>
+                  <hr className="flex-grow border-amber-100/80"/>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <input type="hidden" name="pendingPriceId" value={pendingPriceId || ''} />
@@ -366,19 +390,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
                 />
               </div>
 
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="password" 
-                  placeholder={isLogin ? "Din adgangskode" : "Vælg adgangskode"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-white border-amber-100 rounded-xl focus:ring-2 focus:ring-amber-900 focus:outline-none transition-all text-sm h-12"
-                  required
-                />
-              </div>
+              {mode !== 'forgot' && (
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="password" 
+                    placeholder={mode === 'login' ? "Din adgangskode" : "Vælg adgangskode"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-white border-amber-100 rounded-xl focus:ring-2 focus:ring-amber-900 focus:outline-none transition-all text-sm h-12"
+                    required
+                  />
+                </div>
+              )}
 
               {error && <p className="text-[10px] text-rose-600 font-bold text-center pt-2">{error}</p>}
+              {success && <p className="text-[10px] text-emerald-600 font-bold text-center pt-2">{success}</p>}
 
               <button 
                 type="submit"
@@ -389,26 +416,47 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   <>
-                    <span>{pendingPriceId ? 'Opret & Fortsæt' : (isLogin ? 'Log ind' : 'Opret min profil')}</span>
+                    <span>{mode === 'forgot' ? 'Send nulstillingslink' : pendingPriceId ? 'Opret & Fortsæt' : (mode === 'login' ? 'Log ind' : 'Opret min profil')}</span>
                     <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
               </button>
             </form>
 
-            <div className="mt-8 text-center md:text-left">
-              <p className="text-[10px] text-slate-400 mb-2 leading-relaxed">
-                 {!isLogin && <>Ved at oprette dig accepterer du vores <Link href="/terms-of-service" className="underline hover:text-amber-800">handelsbetingelser</Link> og vores <Link href="/etik" className="underline hover:text-amber-800">retningslinjer for etik</Link>.</>}
-              </p>
-              <button 
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError(null);
-                }}
-                className="text-xs font-black uppercase tracking-widest text-amber-900 hover:underline"
-              >
-                {isLogin ? 'Ny her? Opret en konto' : 'Har du allerede en konto? Log ind'}
-              </button>
+            <div className="mt-8 text-center md:text-left flex flex-col gap-3">
+              {mode === 'signup' && (
+                <p className="text-[10px] text-slate-400 mb-2 leading-relaxed">
+                   Ved at oprette dig accepterer du vores <Link href="/terms-of-service" className="underline hover:text-amber-800">handelsbetingelser</Link> og vores <Link href="/etik" className="underline hover:text-amber-800">retningslinjer for etik</Link>.
+                </p>
+              )}
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <button 
+                  onClick={() => {
+                    setMode(mode === 'login' ? 'signup' : 'login');
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                  className="text-xs font-black uppercase tracking-widest text-amber-900 hover:underline text-left"
+                  type="button"
+                >
+                  {mode === 'login' ? 'Ny her? Opret en konto' : 'Har du allerede en konto? Log ind'}
+                </button>
+                
+                {mode === 'login' && (
+                  <button
+                    onClick={() => {
+                      setMode('forgot');
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                    className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 text-left sm:text-right"
+                    type="button"
+                  >
+                    Glemt adgangskode?
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
