@@ -742,14 +742,21 @@ export default function LandingPage() {
                  <div className="absolute inset-0 bg-slate-50/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                  <div className="relative z-10">
                     <h3 className="text-2xl font-black text-slate-900 mb-2">Semesteret</h3>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10">Best Value Bundle</p>
-                    <div className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">329 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/5 mdr</span></div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">Kollega+ · Forudbetalt</p>
+                    <div className="mb-10">
+                      <div className="text-5xl font-black text-slate-900 tracking-tighter">329 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/5 mdr</span></div>
+                      <p className="text-emerald-600 text-xs font-black uppercase tracking-widest flex items-center gap-1.5 mt-3">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Spar 116 kr. vs. månedlig betaling
+                      </p>
+                    </div>
+                    <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed">Præcis det samme som Kollega+ – alle funktioner og ubegrænset adgang – bare betalt samlet for et helt semester.</p>
                     <ul className="space-y-6 mb-16 flex-grow">
                     {[
-                        "Alt fra Kollega+ inkluderet",
-                        "Spar 115 kr. vs. månedlig betaling",
-                        "Adgang fastlåst i 5 måneder",
-                        "2nd Opinion & Eksamenshjælp"
+                        "Ubegrænset AI Case-Analytiker",
+                        "Alle love med AI-forklaring",
+                        "Journal-træning med feedback",
+                        "Design egne kurser & pensum",
+                        "Gem vigtige kilder & arkiv",
                     ].map((item, i) => (
                         <li key={i} className="flex items-center gap-5 text-[16px] text-slate-600 font-medium">
                             <CheckCircle2 className="w-5 h-5 text-indigo-500" />
