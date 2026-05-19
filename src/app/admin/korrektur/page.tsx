@@ -17,17 +17,65 @@ import {
   Box,
   ChevronRight,
   MoreVertical,
-  Loader2
+  Loader2,
+  CreditCard,
+  Send,
+  ExternalLink
 } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { updateProofreadingRequestStatusAction } from '@/app/actions';
+import { updateProofreadingRequestStatusAction, sendKorrekturPaymentLinkAction } from '@/app/actions';
 
 export default function AdminKorrekturPage() {
   const firestore = useFirestore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  const [activeReqId, setActiveReqId] = useState<string | null>(null);
+  const [priceInput, setPriceInput] = useState<string>('');
+  const [descInput, setDescInput] = useState<string>('');
+  const [isSubmittingLink, setIsSubmittingLink] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState<boolean | null>(null);
+
+  const openPaymentPanel = (req: any) => {
+    setActiveReqId(req.id);
+    setPriceInput(req.estimatedPrice.toString());
+    setDescInput(`Korrekturlæsning – ${req.charCount.toLocaleString('da-DK')} tegn / deadline d. ${req.deadline}`);
+    setSubmitMessage('');
+    setSubmitSuccess(null);
+  };
+
+  const handleSendPaymentLink = async (req: any) => {
+    setIsSubmittingLink(true);
+    setSubmitMessage('Genererer betalingslink og sender mail...');
+    setSubmitSuccess(null);
+    try {
+      const res = await sendKorrekturPaymentLinkAction({
+        requestId: req.id,
+        customerName: req.name,
+        customerEmail: req.email,
+        amountDkk: parseFloat(priceInput),
+        description: descInput
+      });
+      if (res.success) {
+        setSubmitSuccess(true);
+        setSubmitMessage('Betalingslinket er oprettet og sendt til kunden!');
+        setTimeout(() => {
+          setActiveReqId(null);
+        }, 3000);
+      } else {
+        setSubmitSuccess(false);
+        setSubmitMessage(res.message || 'Der opstod en fejl.');
+      }
+    } catch (err: any) {
+      setSubmitSuccess(false);
+      setSubmitMessage(err.message || 'Der opstod en uventet fejl.');
+    } finally {
+      setIsSubmittingLink(false);
+    }
+  };
 
   const requestsQuery = useMemoFirebase(() => (
     firestore ? query(collection(firestore, 'proofreadingRequests'), orderBy('createdAt', 'desc')) : null
@@ -183,12 +231,92 @@ export default function AdminKorrekturPage() {
                       <p className="text-xs text-slate-600 italic leading-relaxed">"{req.message}"</p>
                     </div>
                   )}
+
+                  {activeReqId === req.id && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="bg-indigo-50/30 p-6 rounded-[2rem] border border-indigo-100/50 mt-4 space-y-4 text-left"
+                    >
+                      <h4 className="text-xs font-black text-indigo-900 flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-indigo-600" />
+                        Generer Stripe betalingslink & send mail
+                      </h4>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Pris (DKK)</label>
+                          <input
+                            type="number"
+                            value={priceInput}
+                            onChange={(e) => setPriceInput(e.target.value)}
+                            placeholder="f.eks. 350"
+                            className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Beskrivelse</label>
+                          <input
+                            type="text"
+                            value={descInput}
+                            onChange={(e) => setDescInput(e.target.value)}
+                            placeholder="f.eks. Opgavekorrektur"
+                            className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 transition-colors"
+                          />
+                        </div>
+                      </div>
+                      
+                      {submitMessage && (
+                        <p className={`text-xs font-bold ${submitSuccess === true ? 'text-emerald-600' : submitSuccess === false ? 'text-rose-500' : 'text-slate-500'}`}>
+                          {submitMessage}
+                        </p>
+                      )}
+
+                      <div className="flex justify-end gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setActiveReqId(null)}
+                          className="px-4 py-2 border border-slate-200 text-slate-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-colors"
+                        >
+                          Annuller
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isSubmittingLink}
+                          onClick={() => handleSendPaymentLink(req)}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                        >
+                          {isSubmittingLink ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                          Generer & Send
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
 
-                <div className="shrink-0 flex items-center gap-3">
+                <div className="shrink-0 flex flex-wrap items-center gap-3">
+                   {req.paymentUrl && (
+                     <a
+                       href={req.paymentUrl}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl hover:bg-emerald-100 transition-colors text-xs font-black uppercase tracking-widest"
+                       title="Vis betalingslink"
+                     >
+                       <ExternalLink className="w-4 h-4" />
+                       Link
+                     </a>
+                   )}
+                   <button
+                     onClick={() => openPaymentPanel(req)}
+                     className="flex items-center gap-2 px-4 py-3 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-2xl hover:bg-indigo-100 transition-colors text-xs font-black uppercase tracking-widest"
+                   >
+                     <CreditCard className="w-4 h-4" />
+                     {req.paymentUrl ? 'Send nyt' : 'Send link'}
+                   </button>
                    <a 
                     href={`mailto:${req.email}?subject=Vedr. din forespørgsel på korrektur`}
-                    className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-amber-600 transition-colors shadow-lg"
+                    className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-amber-600 transition-colors shadow-lg animate-all"
                    >
                      <Mail className="w-5 h-5" />
                    </a>

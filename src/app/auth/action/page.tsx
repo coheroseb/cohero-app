@@ -23,8 +23,8 @@ function HandleAction() {
   const [actionCode, setActionCode] = useState<string | null>(null);
 
   useEffect(() => {
-    const mode = searchParams.get('mode');
-    const code = searchParams.get('oobCode');
+    const mode = searchParams?.get('mode');
+    const code = searchParams?.get('oobCode');
 
     if (!code || !auth) {
       setStatus('error');

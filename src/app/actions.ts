@@ -4394,6 +4394,88 @@ export async function updateProofreadingRequestStatusAction(requestId: string, n
     }
 }
 
+/**
+ * sendKorrekturPaymentLinkAction:
+ * Creates a Stripe Payment Link for a specific proofreading order and
+ * sends it to the customer via email.
+ */
+export async function sendKorrekturPaymentLinkAction(input: {
+    requestId: string;
+    customerName: string;
+    customerEmail: string;
+    amountDkk: number;
+    description?: string;
+}): Promise<{ success: boolean; message: string; paymentUrl?: string }> {
+    try {
+        const { stripe } = await import('@/lib/stripe');
+        const { adminFirestore } = await import('@/firebase/server-init');
+        const { wrapEmailHtml } = await import('@/lib/email-helper');
+
+        // Create a Stripe Price on the fly (one-time)
+        const price = await stripe.prices.create({
+            currency: 'dkk',
+            unit_amount: Math.round(input.amountDkk * 100), // øre
+            product_data: {
+                name: `Korrekturlæsning – ${input.description || 'Académisk opgave'}`,
+            },
+        });
+
+        // Create a Payment Link
+        const paymentLink = await stripe.paymentLinks.create({
+            line_items: [{ price: price.id, quantity: 1 }],
+            after_completion: {
+                type: 'redirect',
+                redirect: { url: 'https://student.cohero.dk/korrektur?betalt=1' },
+            },
+            metadata: {
+                requestId: input.requestId,
+                type: 'korrektur',
+            },
+        });
+
+        const paymentUrl = paymentLink.url;
+
+        // Send email to customer
+        const html = wrapEmailHtml(`
+            <h1 style="color: #451a03; font-size: 24px; margin-bottom: 20px; font-family: serif;">Dit betalingslink er klar</h1>
+            <p>Hej ${input.customerName},</p>
+            <p>Tak for din forespørgsel på korrekturlæsning. Vi har gennemgået dit materiale og er klar til at gå i gang, så snart betalingen er modtaget.</p>
+            <p><strong>Beløb: ${input.amountDkk} kr.</strong></p>
+            <p>Klik på knappen herunder for at gennemføre betalingen sikkert via Stripe:</p>
+            <div style="margin: 30px 0; text-align: center;">
+                <a href="${paymentUrl}" style="background-color: #451a03; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">Betal ${input.amountDkk} kr.</a>
+            </div>
+            <p style="font-size: 13px; color: #64748b;">Når betalingen er gennemført, går vi i gang med din korrekturlæsning og sender resultatet til dig inden din deadline. Betalingen håndteres sikkert af Stripe.</p>
+            <p style="font-size: 11px; color: #94a3b8; word-break: break-all; margin-top: 20px;">Virker knappen ikke? Kopiér dette link: ${paymentUrl}</p>
+        `);
+
+        const emailResult = await sendResendEmailRaw({
+            from: 'Cohéro Korrektur <info@platform.cohero.dk>',
+            to: input.customerEmail,
+            subject: `Betalingslink til din korrekturlæsning – ${input.amountDkk} kr.`,
+            html,
+        });
+
+        if (!emailResult.ok) {
+            console.error('Resend error:', emailResult);
+            return { success: false, message: 'Betalingslink oprettet, men e-mail kunne ikke sendes.' };
+        }
+
+        // Save payment link URL to Firestore
+        await adminFirestore.collection('proofreadingRequests').doc(input.requestId).update({
+            paymentUrl,
+            paymentLinkSentAt: new Date(),
+            status: 'contacted',
+        });
+
+        console.log(`Korrektur payment link sent to ${input.customerEmail}: ${paymentUrl}`);
+        return { success: true, message: 'Betalingslink sendt til kunden.', paymentUrl };
+    } catch (error: any) {
+        console.error('sendKorrekturPaymentLinkAction error:', error);
+        return { success: false, message: error.message || 'Der opstod en fejl.' };
+    }
+}
+
 
 
 export async function generateCourseAction(input: Types.GenerateCourseInput): Promise<Types.GenerateCourseOutput> {
