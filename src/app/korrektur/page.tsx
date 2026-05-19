@@ -231,7 +231,8 @@ export default function KorrekturPage() {
                   { title: "Sætningskonstruktion", desc: "Vi sikrer, at dit sprog flyder og er letlæseligt." },
                   { title: "Akademisk Niveau", desc: "Vi løfter din tekst fra hverdagssprog til professionel stil." },
                   { title: "Den Røde Tråd", desc: "Vi tjekker den logiske sammenhæng i din argumentation." },
-                  { title: "Kildehenvisninger", desc: "Sikring af korrekt format (APA, Harvard m.m.)." }
+                  { title: "Kildehenvisninger", desc: "Sikring af korrekt format (APA, Harvard m.m.)." },
+                  { title: "Teori & Videnskabsteori", desc: "Vi sikrer korrekt anvendelse og formidling af teorier og videnskabsteoretiske positioner." }
                 ].map((item, i) => (
                   <motion.div 
                     key={i}
