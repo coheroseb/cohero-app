@@ -4395,6 +4395,21 @@ export async function updateProofreadingRequestStatusAction(requestId: string, n
 }
 
 /**
+ * deleteProofreadingRequestAction:
+ * Deletes a proofreading request from Firestore.
+ */
+export async function deleteProofreadingRequestAction(requestId: string) {
+    try {
+        const { adminFirestore } = await import('@/firebase/server-init');
+        await adminFirestore.collection('proofreadingRequests').doc(requestId).delete();
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete proofreading request:", error);
+        return { success: false, message: "Kunne ikke slette anmodning." };
+    }
+}
+
+/**
  * sendKorrekturPaymentLinkAction:
  * Creates a Stripe Payment Link for a specific proofreading order and
  * sends it to the customer via email.

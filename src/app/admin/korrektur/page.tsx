@@ -20,12 +20,13 @@ import {
   Loader2,
   CreditCard,
   Send,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { updateProofreadingRequestStatusAction, sendKorrekturPaymentLinkAction } from '@/app/actions';
+import { updateProofreadingRequestStatusAction, sendKorrekturPaymentLinkAction, deleteProofreadingRequestAction } from '@/app/actions';
 
 export default function AdminKorrekturPage() {
   const firestore = useFirestore();
@@ -91,6 +92,20 @@ export default function AdminKorrekturPage() {
 
   const handleStatusUpdate = async (id: string, newStatus: any) => {
     await updateProofreadingRequestStatusAction(id, newStatus);
+  };
+
+  const handleDeleteRequest = async (id: string) => {
+    if (!window.confirm('Er du sikker på, at du vil slette denne anmodning? Denne handling kan ikke fortrydes.')) {
+      return;
+    }
+    try {
+      const res = await deleteProofreadingRequestAction(id);
+      if (!res.success) {
+        alert(res.message || 'Der opstod en fejl under sletning.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Der opstod en fejl.');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -314,12 +329,20 @@ export default function AdminKorrekturPage() {
                      <CreditCard className="w-4 h-4" />
                      {req.paymentUrl ? 'Send nyt' : 'Send link'}
                    </button>
-                   <a 
-                    href={`mailto:${req.email}?subject=Vedr. din forespørgsel på korrektur`}
-                    className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-amber-600 transition-colors shadow-lg animate-all"
-                   >
-                     <Mail className="w-5 h-5" />
-                   </a>
+                    <a 
+                     href={`mailto:${req.email}?subject=Vedr. din forespørgsel på korrektur`}
+                     className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-amber-600 transition-colors shadow-lg animate-all"
+                     title="Send e-mail"
+                    >
+                      <Mail className="w-5 h-5" />
+                    </a>
+                    <button
+                      onClick={() => handleDeleteRequest(req.id)}
+                      className="p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl hover:bg-rose-100 hover:text-rose-700 transition-colors shadow-lg"
+                      title="Slet anmodning"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                 </div>
               </div>
             </motion.div>
