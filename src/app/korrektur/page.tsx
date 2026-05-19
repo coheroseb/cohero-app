@@ -86,6 +86,21 @@ export default function KorrekturPage() {
         >
           Sikr din faglige formidling med knivskarp korrekturlæsning. Vi sikrer, at din sensor fokuserer på dit indhold – ikke dine kommaer.
         </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="flex items-center gap-3 px-6 py-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-sm text-slate-600 font-medium"
+        >
+          <div className="flex -space-x-2">
+            <div className="w-8 h-8 rounded-full bg-indigo-200 border-2 border-white flex items-center justify-center text-[11px] font-black text-indigo-700">S</div>
+            <div className="w-8 h-8 rounded-full bg-violet-200 border-2 border-white flex items-center justify-center text-[11px] font-black text-violet-700">J</div>
+          </div>
+          <span>
+            <span className="font-black text-slate-900">Sebastian & Julie</span> læser kandidat i Arbejdsliv ved Roskilde Universitet
+          </span>
+        </motion.div>
       </section>
 
       {/* Pricing Calculator */}
