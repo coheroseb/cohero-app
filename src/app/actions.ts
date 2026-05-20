@@ -25,9 +25,7 @@ import { repairJson } from '@/lib/json-repair';
 function getGeminiApiKey(): string {
     const keys = [
         process.env.GEMINI_API_KEY,
-        process.env.NEXT_PUBLIC_GEMINI_API_KEY,
-        "AIzaSyD93vIEVXUu9qv5o9GrMIbKJ-wJ1qUKtz4",
-        "AIzaSyCEay9Ekv3ARVUncB6H1EDP35ALRe5PswA"
+        process.env.NEXT_PUBLIC_GEMINI_API_KEY
     ];
     for (const key of keys) {
         if (key && typeof key === 'string') {
