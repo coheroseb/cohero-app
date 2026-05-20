@@ -533,31 +533,36 @@ function ConceptChatContent() {
             for (const part of parts) {
               const line = part.trim();
               if (line.startsWith('data: ')) {
+                let chunk;
                 try {
                   const lineData = line.substring(6).trim();
                   if (!lineData) continue;
-                  
-                  const chunk = JSON.parse(lineData);
-                  console.log("[Stream] Raw chunk:", chunk);
-                  
-                  // Genkit sends data in various nested forms:
-                  // 1. { chunk: { ... } } -> streaming partials
-                  // 2. { done: true, result: { data: { ... } } } -> final result
-                  // 3. { message: { ... } } -> sometimes used in different versions
-                  
-                  let data = null;
-                  if (chunk.chunk) data = chunk.chunk;
-                  else if (chunk.done && chunk.result) data = chunk.result.data || chunk.result;
-                  else if (chunk.message) data = chunk.message;
-                  else if (!chunk.index && !chunk.done) data = chunk; // Raw object
-                  
-                  if (data) {
-                    console.log("[Stream] Extracted data:", data);
-                    onChunk(data);
-                  }
+                  chunk = JSON.parse(lineData);
                 } catch (e) {
                   // Partial JSON is common in streaming, but SSE should deliver whole lines
                   console.warn("[Stream] Parse error for line:", line, e);
+                  continue;
+                }
+                
+                console.log("[Stream] Raw chunk:", chunk);
+                if (chunk && chunk.error) {
+                  throw new Error(chunk.error);
+                }
+                
+                // Genkit sends data in various nested forms:
+                // 1. { chunk: { ... } } -> streaming partials
+                // 2. { done: true, result: { data: { ... } } } -> final result
+                // 3. { message: { ... } } -> sometimes used in different versions
+                
+                let data = null;
+                if (chunk.chunk) data = chunk.chunk;
+                else if (chunk.done && chunk.result) data = chunk.result.data || chunk.result;
+                else if (chunk.message) data = chunk.message;
+                else if (!chunk.index && !chunk.done) data = chunk; // Raw object
+                
+                if (data) {
+                  console.log("[Stream] Extracted data:", data);
+                  onChunk(data);
                 }
               }
             }
@@ -716,11 +721,17 @@ function ConceptChatContent() {
         }
     } catch (err: any) {
       console.error('[ConceptExplainer] Error:', err);
+      // Remove placeholder AI message
+      setMessages(prev => prev.filter(m => m.id !== aiMsgId));
+
       if (err.name !== 'AbortError') {
+        const isGeminiError = err.message?.includes('GoogleGenerativeAI') || err.message?.includes('Gemini');
         toast({ 
           variant: 'destructive', 
           title: 'Fejl', 
-          description: 'Noget gik galt. Prøv igen.' 
+          description: isGeminiError 
+            ? 'Der opstod en midlertidig fejl hos Google Gemini. Prøv venligst igen om et øjeblik.' 
+            : 'Noget gik galt. Prøv igen.' 
         });
       } else {
         toast({ 

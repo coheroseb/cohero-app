@@ -14,7 +14,7 @@ export async function translateSeminar(input: TranslateSeminarInput): Promise<Tr
     console.log(`[TRANSLATE-SEMINAR] Translating seminar to ${langLabel}`);
 
     const response = await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
+        model: 'googleai/gemini-3.5-flash',
         system: `Du er en ekspert i akademisk oversættelse (Socialrådgiver-faglighed). 
 Oversæt det modtagne seminar-videnskort til ${langLabel}.
 BEVAR den præcise JSON-struktur og bevar slide-numrene. 

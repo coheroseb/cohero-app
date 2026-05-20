@@ -10,7 +10,7 @@ import { AnalyzeTaskScheduleInputSchema, AnalyzeTaskScheduleOutputSchema } from 
 
 export async function analyzeTaskSchedule(input: z.infer<typeof AnalyzeTaskScheduleInputSchema>) {
   const { output } = await ai.generate({
-    model: 'googleai/gemini-2.5-flash', // Model updated as per instruction
+    model: 'googleai/gemini-3.5-flash', // Model updated as per instruction
     output: { schema: AnalyzeTaskScheduleOutputSchema },
     system: `Du er en ekspert i projektledelse med speciale i akademisk arbejde. Din opgave er at analysere en liste af opgaver og gruppens tilgængelighed for en studiegruppe og komme med konkrete, handlingsorienterede forslag til optimering. Svar på dansk.
 

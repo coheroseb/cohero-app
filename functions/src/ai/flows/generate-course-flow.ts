@@ -45,7 +45,7 @@ Din opgave er at designe et professionelt kursusforløb.
 Målet er at give brugeren en fuld læringsoplevelse med dybdegående faglighed og interaktion.`;
 
     const response = await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
+        model: 'googleai/gemini-3.5-flash',
         system: systemPrompt,
         prompt: `Design et kursus baseret på følgende input:
 
