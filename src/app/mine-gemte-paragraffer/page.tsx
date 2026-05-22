@@ -204,11 +204,11 @@ export default function MineGemteParagrafferPage() {
                                 Generer Litteraturliste
                             </Button>
                         )}
-                        <Link href="/lov-portal">
+                        <a href="/lov-portal">
                             <Button variant="outline" className="rounded-xl border-amber-200 text-amber-700 hover:bg-amber-50">
                                 Find flere i Lovportalen
                             </Button>
-                        </Link>
+                        </a>
                     </div>
                 </div>
             </header>
@@ -307,7 +307,7 @@ export default function MineGemteParagrafferPage() {
                         <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed border-amber-200 shadow-inner animate-ink">
                             <Bookmark className="w-12 h-12 text-amber-100 mx-auto mb-4" />
                             <p className="text-slate-500 font-bold text-lg">Dit arkiv er tomt</p>
-                            <p className="text-sm text-slate-400 mt-2 max-w-xs mx-auto leading-relaxed">Gå til <Link href="/lov-portal" className="underline font-semibold text-amber-700">Lovportalen</Link> for at gemme din første paragraf eller reference.</p>
+                            <p className="text-sm text-slate-400 mt-2 max-w-xs mx-auto leading-relaxed">Gå til <a href="/lov-portal" className="underline font-semibold text-amber-700">Lovportalen</a> for at gemme din første paragraf eller reference.</p>
                         </div>
                     ) : filteredParagraphs.length === 0 ? (
                         <div className="py-24 text-center bg-white/50 rounded-[3rem] border border-dashed border-amber-100 shadow-inner">

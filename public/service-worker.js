@@ -90,6 +90,9 @@ self.addEventListener('fetch', event => {
     url.hostname.includes('google-analytics') ||
     url.pathname.includes('cleardot.gif') ||
     url.search.includes('term=') || // Skip concept-explainer and other term-based searches
+    url.search.includes('_rsc=') || // Skip Next.js RSC payload requests
+    event.request.headers.has('rsc') || // Skip Next.js RSC headers
+    event.request.headers.has('next-router-state-tree') || // Skip Next.js router headers
     url.pathname.includes('api/')   // Skip API routes
   ) return;
 

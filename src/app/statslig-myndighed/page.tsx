@@ -85,9 +85,9 @@ export default function StateAuthorityEducationPage() {
                 Begrebsguide
              </Link>
              <div className="w-1 h-1 bg-slate-300 rounded-full" />
-             <Link href="/lov-portal" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors">
+             <a href="/lov-portal" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors">
                 Lovportal
-             </Link>
+             </a>
           </div>
         </div>
       </header>
@@ -280,9 +280,9 @@ export default function StateAuthorityEducationPage() {
                     <Link href="/concept-explainer" className="w-full sm:w-auto h-20 px-12 bg-white text-indigo-600 rounded-full font-black uppercase tracking-[0.2em] text-[13px] hover:scale-105 active:scale-95 transition-all flex items-center justify-center shadow-2xl">
                        Udforsk alle begreber <ArrowRight className="w-5 h-5 ml-4" />
                     </Link>
-                    <Link href="/lov-portal" className="text-[12px] font-black uppercase tracking-[0.2em] border-b-2 border-indigo-400 pb-1 hover:text-white transition-all">
+                    <a href="/lov-portal" className="text-[12px] font-black uppercase tracking-[0.2em] border-b-2 border-indigo-400 pb-1 hover:text-white transition-all">
                        Se Lovportalen
-                    </Link>
+                    </a>
                  </div>
               </div>
            </div>

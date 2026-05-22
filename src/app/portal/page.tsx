@@ -982,7 +982,7 @@ const PortalPageContent: React.FC = () => {
             </div>
 
             {/* SUPPORT BUTTON */}
-            <Link href="/raadgivning" className="block bg-amber-50 border border-amber-100 rounded-3xl p-6 hover:bg-amber-100 transition-all group">
+            <a href="/raadgivning" className="block bg-amber-50 border border-amber-100 rounded-3xl p-6 hover:bg-amber-100 transition-all group">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shadow-sm group-hover:rotate-6 transition-transform">
                   <MessageSquare className="w-5 h-5" />
@@ -993,7 +993,7 @@ const PortalPageContent: React.FC = () => {
                 </div>
                 <ChevronRight className="w-4 h-4 ml-auto text-amber-400" />
               </div>
-            </Link>
+            </a>
 
           </div>
 
