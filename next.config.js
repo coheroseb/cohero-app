@@ -77,7 +77,7 @@ const nextConfig = {
 
   experimental: {
     serverActions: {
-      bodySizeLimit: '20mb',
+      bodySizeLimit: '30mb',
     },
     outputFileTracingIncludes: {
       '/admin/content': ['./docs/**/*'],

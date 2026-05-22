@@ -103,6 +103,53 @@ interface TocItem {
     pageNumber: string;
 }
 
+function compressImage(file: File, maxWidth = 1600, maxHeight = 1600, quality = 0.85): Promise<string> {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(event.target?.result as string);
+                    return;
+                }
+
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                resolve(dataUrl);
+            };
+            img.onerror = () => {
+                resolve(event.target?.result as string);
+            };
+        };
+        reader.onerror = () => {
+            resolve('');
+        };
+    });
+}
+
 export default function AdminBooksPage() {
     const router = useRouter();
     const { toast } = useToast();
@@ -252,13 +299,9 @@ export default function AdminBooksPage() {
         
         setIsProcessing(true);
         try {
-            const base64Images = await Promise.all(selectedImages.map(file => {
-                return new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                });
-            }));
+            const base64Images = await Promise.all(
+                selectedImages.map((file) => compressImage(file))
+            );
 
             const res = await processBookTocAction({ images: base64Images });
             
