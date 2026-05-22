@@ -37,14 +37,19 @@ import {
   CheckCircle2,
   Briefcase,
   RefreshCw,
-  XCircle
+  XCircle,
+  Heart,
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  Check
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useToast } from '@/hooks/use-toast';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { Capacitor } from '@capacitor/core';
 import NativePortal from '@/components/native/NativePortal';
-import { fetchPoliticalNews, fetchSocialMinistryNews, processStudyRegulationAction } from '@/app/actions';
+import { fetchPoliticalNews, fetchSocialMinistryNews, processStudyRegulationAction, searchLiteratureAction } from '@/app/actions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -91,6 +96,24 @@ const SmallTool = ({ title, icon: Icon, path }: any) => (
 function getSemNum(semester: string): number {
   return parseInt(semester?.match(/\d+/)?.[0] ?? '1');
 }
+
+// Deterministic gradients for book cards
+const getGradient = (title: string) => {
+  const gradients = [
+    'from-rose-500 to-orange-500',
+    'from-emerald-500 to-teal-500',
+    'from-blue-600 to-indigo-600',
+    'from-violet-600 to-purple-600',
+    'from-amber-500 to-red-500',
+    'from-cyan-500 to-blue-500',
+    'from-pink-500 to-rose-500',
+  ];
+  let sum = 0;
+  for (let i = 0; i < title.length; i++) {
+    sum += title.charCodeAt(i);
+  }
+  return gradients[sum % gradients.length];
+};
 
 const PortalPageContent: React.FC = () => {
   const { user, userProfile, isUserLoading, refetchUserProfile } = useApp();
@@ -153,6 +176,54 @@ const PortalPageContent: React.FC = () => {
   const dismissReminder = () => {
     localStorage.setItem('semester_reminder_dismissed_v1', 'true');
     setShowSemesterReminder(false);
+  };
+
+  // Relevant Literature for Learning Goals
+  const [expandedGoalIndex, setExpandedGoalIndex] = useState<number | null>(null);
+  const [goalLiterature, setGoalLiterature] = useState<Record<string, { loading: boolean; results?: any[]; error?: string }>>({});
+  const [copiedCitation, setCopiedCitation] = useState<string | null>(null);
+
+  const fetchLiteratureForGoal = async (goal: string) => {
+    if (goalLiterature[goal]?.results || goalLiterature[goal]?.loading) return;
+
+    setGoalLiterature(prev => ({
+      ...prev,
+      [goal]: { loading: true }
+    }));
+
+    try {
+      const response = await searchLiteratureAction(goal, 3); // limit to 3
+      setGoalLiterature(prev => ({
+        ...prev,
+        [goal]: { loading: false, results: response?.results || [] }
+      }));
+    } catch (error: any) {
+      console.error("Failed to fetch literature for goal:", error);
+      setGoalLiterature(prev => ({
+        ...prev,
+        [goal]: { loading: false, error: "Kunne ikke hente litteraturforslag." }
+      }));
+    }
+  };
+
+  const handleCopyCitation = async (citation: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(citation);
+      setCopiedCitation(citation);
+      setTimeout(() => setCopiedCitation(null), 2000);
+      toast({
+        title: "Kopieret!",
+        description: "Litteraturhenvisningen er kopieret til udklipsholderen.",
+      });
+    } catch (err) {
+      console.error("Failed to copy citation:", err);
+      toast({
+        variant: "destructive",
+        title: "Fejl",
+        description: "Kunne ikke kopiere henvisningen.",
+      });
+    }
   };
 
   // --- Curriculum / Module Identification ---
@@ -794,14 +865,137 @@ const PortalPageContent: React.FC = () => {
                   </span>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {(activeModule?.learningGoals || ['Find dine læringsmål ved at vælge din uddannelse i indstillinger.']).map((goal: string, i: number) => (
-                    <div key={i} className="flex items-start gap-4 p-6 bg-white rounded-[2rem] border border-slate-100 group hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500">
-                      <div className="w-8 h-8 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center text-[11px] font-black shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                        {i + 1}
+                  {(activeModule?.learningGoals || ['Find dine læringsmål ved at vælge din uddannelse i indstillinger.']).map((goal: string, i: number) => {
+                    const isExpanded = expandedGoalIndex === i;
+                    const toggleExpand = () => {
+                      if (isExpanded) {
+                        setExpandedGoalIndex(null);
+                      } else {
+                        setExpandedGoalIndex(i);
+                        fetchLiteratureForGoal(goal);
+                      }
+                    };
+
+                    return (
+                      <div 
+                        key={i} 
+                        onClick={toggleExpand}
+                        className="flex flex-col items-start p-6 bg-white rounded-[2rem] border border-slate-100 group hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500 cursor-pointer"
+                      >
+                        <div className="flex items-start gap-4 w-full">
+                          <div className="w-8 h-8 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center text-[11px] font-black shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            {i + 1}
+                          </div>
+                          <p className="text-xs font-bold text-slate-700 leading-relaxed pt-1.5 flex-grow">{goal}</p>
+                          <div className="shrink-0 pt-1 text-slate-300 group-hover:text-indigo-500 transition-colors">
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </div>
+                        </div>
+
+                        {/* Expandable Section */}
+                        <AnimatePresence initial={false}>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden w-full"
+                            >
+                              <div className="mt-6 pt-6 border-t border-slate-100 space-y-4 w-full">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1.5">
+                                    <Library className="w-3.5 h-3.5" />
+                                    Foreslået Litteratur
+                                  </h4>
+                                  <Link 
+                                    href={`/pensum-search?q=${encodeURIComponent(goal)}`} 
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-[9px] font-black text-indigo-500 hover:text-indigo-700 uppercase tracking-widest flex items-center gap-1 transition-colors"
+                                  >
+                                    Søg mere <ArrowRight className="w-2.5 h-2.5" />
+                                  </Link>
+                                </div>
+
+                                {/* Loader */}
+                                {goalLiterature[goal]?.loading && (
+                                  <div className="py-6 flex flex-col items-center justify-center gap-2">
+                                    <Loader2 className="w-5 h-5 text-indigo-500 animate-spin" />
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Søger i bogbasen...</span>
+                                  </div>
+                                )}
+
+                                {/* Error */}
+                                {goalLiterature[goal]?.error && (
+                                  <p className="text-xs text-rose-500 font-bold">{goalLiterature[goal].error}</p>
+                                )}
+
+                                {/* Results */}
+                                {!goalLiterature[goal]?.loading && !goalLiterature[goal]?.error && (
+                                  <div className="space-y-3">
+                                    {(!goalLiterature[goal]?.results || goalLiterature[goal].results.length === 0) ? (
+                                      <p className="text-xs text-slate-400 italic">Ingen kilder fundet i pensum-databasen for dette mål.</p>
+                                    ) : (
+                                      goalLiterature[goal].results.map((book: any, bIdx: number) => (
+                                        <div key={bIdx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3" onClick={(e) => e.stopPropagation()}>
+                                          <div className="flex gap-3">
+                                            {/* Miniature Spine Cover */}
+                                            <div className={`w-8 h-12 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded-md shadow-sm shrink-0 flex items-end p-1`}>
+                                              <BookOpen className="w-2.5 h-2.5 text-white/50" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-xs font-black text-slate-900 leading-snug truncate" title={book.bookTitle}>
+                                                {book.bookTitle}
+                                              </p>
+                                              <p className="text-[10px] text-slate-400 font-bold truncate">
+                                                {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''}
+                                              </p>
+                                            </div>
+                                          </div>
+
+                                          {/* Matching Chapters */}
+                                          {book.matchingChapters && book.matchingChapters.length > 0 && (
+                                            <div className="pl-11 space-y-1">
+                                              {book.matchingChapters.map((chap: any, cIdx: number) => (
+                                                <div key={cIdx} className="flex justify-between text-[10px] text-slate-500 font-bold">
+                                                  <span className="truncate pr-2">· {chap.title}</span>
+                                                  {chap.pageNumber && <span className="shrink-0 text-slate-400">Side {chap.pageNumber}</span>}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+
+                                          {/* Copy Reference */}
+                                          {book.apaCitation && (
+                                            <div className="pl-11 flex items-center justify-between gap-2 pt-1 border-t border-slate-200/50">
+                                              <span className="text-[9px] text-slate-400 font-medium italic truncate max-w-[150px] md:max-w-[200px]" title={book.apaCitation}>
+                                                {book.apaCitation}
+                                              </span>
+                                              <button
+                                                onClick={(e) => handleCopyCitation(book.apaCitation, e)}
+                                                className="p-1 rounded-md bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 transition-colors shadow-sm shrink-0 flex items-center justify-center"
+                                                title="Kopier reference"
+                                              >
+                                                {copiedCitation === book.apaCitation ? (
+                                                  <Check className="w-3 h-3 text-emerald-600" />
+                                                ) : (
+                                                  <Copy className="w-3 h-3" />
+                                                )}
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
-                      <p className="text-xs font-bold text-slate-700 leading-relaxed pt-1.5">{goal}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -38,9 +38,24 @@ import {
   MessageSquare,
   ArrowRight,
   Edit2,
-  Maximize
+  Maximize,
+  Heart,
+  Copy,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
-import { analyzeCasePdfAction, unifiedChatAction, analyzeSyllabusAction, saveMaterialTextAction, generateMaterialAIOverviewAction, materialVectorChatAction, indexMaterialAction, migrateMaterialsAction, generateMaterialMindmapAction } from '@/app/actions';
+import { 
+  analyzeCasePdfAction, 
+  unifiedChatAction, 
+  analyzeSyllabusAction, 
+  saveMaterialTextAction, 
+  generateMaterialAIOverviewAction, 
+  materialVectorChatAction, 
+  indexMaterialAction, 
+  migrateMaterialsAction, 
+  generateMaterialMindmapAction,
+  searchLiteratureAction
+} from '@/app/actions';
 import { extractText } from 'unpdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -102,6 +117,24 @@ export default function MineMaterialerPage() {
   );
 }
 
+// Deterministic gradients for book cards
+const getGradient = (title: string) => {
+  const gradients = [
+    'from-rose-500 to-orange-500',
+    'from-emerald-500 to-teal-500',
+    'from-blue-600 to-indigo-600',
+    'from-violet-600 to-purple-600',
+    'from-amber-500 to-red-500',
+    'from-cyan-500 to-blue-500',
+    'from-pink-500 to-rose-500',
+  ];
+  let sum = 0;
+  for (let i = 0; i < title.length; i++) {
+    sum += title.charCodeAt(i);
+  }
+  return gradients[sum % gradients.length];
+};
+
 function MineMaterialerContent() {
   const { user, userProfile, isUserLoading } = useApp();
   const firestore = useFirestore();
@@ -145,7 +178,7 @@ function MineMaterialerContent() {
     if (userProfile?.customCurriculum) return userProfile.customCurriculum;
     if (!curriculumsRaw || curriculumsRaw.length === 0) return null;
     
-    const semester = searchParams.get('semesterId') || userProfile?.semester;
+    const semester = searchParams?.get('semesterId') || userProfile?.semester;
     const userInst = (userProfile?.institution || '').toLowerCase().trim();
     const normalize = (s: string) => s.toLowerCase().replace(/professionshøjskolen\s+/gs, '').replace(/university college\s+/gs, '').trim();
     const normalizedUserInst = normalize(userInst);
@@ -192,6 +225,9 @@ function MineMaterialerContent() {
   
   const [selectedGoalInsight, setSelectedGoalInsight] = useState<{ goal: string, insight: string } | null>(null);
   const [isInsightLoading, setIsInsightLoading] = useState(false);
+  const [selectedGoalLiterature, setSelectedGoalLiterature] = useState<any[] | null>(null);
+  const [isGoalLiteratureLoading, setIsGoalLiteratureLoading] = useState(false);
+  const [copiedCitation, setCopiedCitation] = useState<string | null>(null);
   const { setIsNavbarHidden } = useApp();
 
   useEffect(() => {
@@ -339,45 +375,74 @@ function MineMaterialerContent() {
     };
   }, [selectedMaterial]);
 
-  const handleGenerateGoalInsight = async (goal: string) => {
-    if (!user || isInsightLoading) return;
+  const handleGenerateGoalInsight = async (goal: string, count: number) => {
+    if (!user) return;
     
     setSelectedGoalInsight({ goal, insight: '' });
-    setIsInsightLoading(true);
-    
-    try {
-        const prompt = `Du er en ekspert-vejleder. Brugeren ønsker en dybdegående analyse af deres pensum ift. læringsmålet: "${goal}".
-        
-DIN OPGAVE:
-1. OVERBLIK: Forklar kort og præcist hvad dette mål kræver af den studerende.
-2. NØGLEPUNKTER: Opsummér de 3 vigtigste koncepter fundet i kilderne.
-3. BEVISER & CITATER: Find 2-3 direkte citater eller specifikke referencer fra deres dokumenter, der forklarer dette mål bedst.
-4. TJEK DIN VIDEN (ACTIVE RECALL): Opstil 2 udfordrende spørgsmål, som den studerende bør kunne besvare for at have mestret dette mål.
+    setSelectedGoalLiterature(null);
+    setCopiedCitation(null);
+    setIsGoalLiteratureLoading(true);
 
-FORMATERING:
-- Brug <h4> til overskrifter.
-- Brug <b> til vigtige begreber.
-- Brug <blockquote> til citater (hvis muligt, ellers bare kursiv/indrykning med margin).
-- Brug <ul> og <li> til lister.
-- Brug KUN HTML-tags. Ingen markdown asterisker.
+    const literaturePromise = searchLiteratureAction(goal, 3)
+      .then(res => {
+        setSelectedGoalLiterature(res?.results || []);
+      })
+      .catch(error => {
+        console.error("Failed to fetch literature for goal:", error);
+        setSelectedGoalLiterature([]);
+      })
+      .finally(() => {
+        setIsGoalLiteratureLoading(false);
+      });
 
-Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
-
-        const res = await materialVectorChatAction({
-            userId: user.uid,
-            message: prompt,
-        });
-        
-        if (res.answer) {
-            setSelectedGoalInsight({ goal, insight: res.answer });
-        }
-    } catch (e) {
-        console.error("Goal insight failed:", e);
-        toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke generere indsigt for dette mål." });
-        setSelectedGoalInsight(null);
-    } finally {
-        setIsInsightLoading(false);
+    if (count > 0) {
+      setIsInsightLoading(true);
+      try {
+          const prompt = `Du er en ekspert-vejleder. Brugeren ønsker en dybdegående analyse af deres pensum ift. læringsmålet: "${goal}".
+          
+  DIN OPGAVE:
+  1. OVERBLIK: Forklar kort og præcist hvad dette mål kræver af den studerende.
+  2. NØGLEPUNKTER: Opsummér de 3 vigtigste koncepter fundet i kilderne.
+  3. BEVISER & CITATER: Find 2-3 direkte citater eller specifikke referencer fra deres dokumenter, der forklarer dette mål bedst.
+  4. TJEK DIN VIDEN (ACTIVE RECALL): Opstil 2 udfordrende spørgsmål, som den studerende bør kunne besvare for at have mestret dette mål.
+  
+  FORMATERING:
+  - Brug <h4> til overskrifter.
+  - Brug <b> til vigtige begreber.
+  - Brug <blockquote> til citater (hvis muligt, ellers bare kursiv/indrykning med margin).
+  - Brug <ul> og <li> til lister.
+  - Brug KUN HTML-tags. Ingen markdown asterisker.
+  
+  Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
+  
+          const res = await materialVectorChatAction({
+              userId: user.uid,
+              message: prompt,
+          });
+          
+          if (res.answer) {
+              setSelectedGoalInsight({ goal, insight: res.answer });
+          }
+      } catch (e) {
+          console.error("Goal insight failed:", e);
+          toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke generere indsigt for dette mål." });
+          setSelectedGoalInsight(null);
+      } finally {
+          setIsInsightLoading(false);
+      }
+    } else {
+      setIsInsightLoading(false);
+      await literaturePromise;
     }
+  };
+
+  const handleCopyCitation = (citation: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(citation);
+    setCopiedCitation(citation);
+    setTimeout(() => {
+        setCopiedCitation(null);
+    }, 2000);
   };
 
   const handleAskAboutGoal = async (goal: string, rawText?: string) => {
@@ -668,6 +733,11 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
     }
   };
 
+  const currentGoalMapping = selectedGoalInsight 
+    ? learningGoalMapping.find(m => m.goal === selectedGoalInsight.goal)
+    : null;
+  const hasMaterialsForGoal = currentGoalMapping ? currentGoalMapping.count > 0 : false;
+
   if (isNative) {
     return <NativeMineMaterialer />;
   }
@@ -795,34 +865,27 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                         {learningGoalMapping.map((m, idx) => (
                             <button 
                                 key={idx} 
-                                onClick={() => m.count > 0 && handleGenerateGoalInsight(m.goal)}
-                                disabled={m.count === 0}
-                                className={`w-full p-4 rounded-2xl transition-all group/goal border text-left flex items-start gap-3 ${
-                                    m.count > 0 
-                                    ? 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 cursor-pointer' 
-                                    : 'bg-slate-900/50 border-white/5 opacity-40 cursor-default'
-                                }`}
+                                onClick={() => handleGenerateGoalInsight(m.goal, m.count)}
+                                className="w-full p-4 rounded-2xl transition-all group/goal border text-left flex items-start gap-3 bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 cursor-pointer"
                             >
                                 <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black shadow-sm ${
-                                    m.count > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+                                    m.count > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800/80 text-slate-400'
                                 }`}>
                                     {idx + 1}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className={`text-[10px] font-bold leading-tight line-clamp-2 transition-all ${
-                                        m.count > 0 ? 'text-slate-100 group-hover/goal:text-white' : 'text-slate-500'
+                                        m.count > 0 ? 'text-slate-100 group-hover/goal:text-white' : 'text-slate-400 group-hover/goal:text-slate-200'
                                     }`}>
                                         {m.goal}
                                     </p>
                                     <div className="flex items-center gap-2 mt-2">
                                         <span className={`text-[8px] font-black uppercase tracking-widest ${
-                                            m.count > 0 ? 'text-emerald-400' : 'text-slate-600'
+                                            m.count > 0 ? 'text-emerald-400' : 'text-slate-500'
                                         }`}>
-                                            {m.count > 0 ? `${m.count} kilder` : 'mangler'}
+                                            {m.count > 0 ? `${m.count} kilder` : 'mangler kilder'}
                                         </span>
-                                        {m.count > 0 && (
-                                            <ArrowRight className="w-2.5 h-2.5 text-indigo-400 opacity-0 group-hover/goal:opacity-100 translate-x-[-4px] group-hover/goal:translate-x-0 transition-all" />
-                                        )}
+                                        <ArrowRight className="w-2.5 h-2.5 text-indigo-400 opacity-0 group-hover/goal:opacity-100 translate-x-[-4px] group-hover/goal:translate-x-0 transition-all" />
                                     </div>
                                 </div>
                             </button>
@@ -1615,36 +1678,159 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                               </button>
                           </div>
 
-                          <div className="bg-slate-50/50 p-10 md:p-14 rounded-[3.5rem] border border-slate-100 relative shadow-inner">
-                              {isInsightLoading ? (
-                                  <div className="py-32 text-center space-y-8">
-                                      <div className="relative">
-                                          <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mx-auto" />
-                                          <div className="absolute inset-0 bg-indigo-500/10 blur-2xl rounded-full scale-150" />
+                          {!hasMaterialsForGoal && (
+                              <div className="p-8 md:p-10 rounded-[2.5rem] bg-indigo-50/50 border border-indigo-100/80 flex flex-col md:flex-row items-center gap-6 md:gap-8 shadow-sm">
+                                  <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shrink-0 shadow-md">
+                                      <Upload className="w-8 h-8 text-indigo-600 animate-bounce" />
+                                  </div>
+                                  <div className="space-y-2 text-center md:text-left flex-1">
+                                      <h4 className="text-lg font-black text-slate-900">Ingen studiematerialer fundet</h4>
+                                      <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                                          Du har endnu ikke uploadet egne noter eller slides om dette mål. Upload filer til dit semester for at få en personlig AI-analyse af dit materiale.
+                                      </p>
+                                  </div>
+                              </div>
+                          )}
+
+                          {hasMaterialsForGoal && (
+                              <div className="bg-slate-50/50 p-10 md:p-14 rounded-[3.5rem] border border-slate-100 relative shadow-inner">
+                                  {isInsightLoading ? (
+                                      <div className="py-32 text-center space-y-8">
+                                          <div className="relative">
+                                              <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mx-auto" />
+                                              <div className="absolute inset-0 bg-indigo-500/10 blur-2xl rounded-full scale-150" />
+                                          </div>
+                                          <p className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">AI genererer din personlige analyse...</p>
                                       </div>
-                                      <p className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">AI genererer din personlige analyse...</p>
+                                  ) : (
+                                      <div 
+                                          dangerouslySetInnerHTML={{ __html: parseCitations(selectedGoalInsight.insight) }}
+                                          className="prose prose-slate prose-xl max-w-none w-full text-slate-600 leading-[1.6] font-medium space-y-10 
+                                                     prose-b:text-slate-950 prose-b:font-black
+                                                     prose-ul:space-y-4 prose-li:pl-2
+                                                     prose-h4:text-2xl prose-h4:font-black prose-h4:text-slate-950 prose-h4:tracking-tight
+                                                     prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-indigo-50/50 prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:rounded-r-2xl prose-blockquote:italic"
+                                      />
+                                  )}
+                              </div>
+                          )}
+
+                          {/* Foreslået Litteratur fra Bogbasen */}
+                          <div className="space-y-6">
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                                  <h4 className="text-xs font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                                      <Library className="w-4 h-4" />
+                                      Foreslået Litteratur fra Bogbasen
+                                  </h4>
+                                  <Link 
+                                      href={`/pensum-search?q=${encodeURIComponent(selectedGoalInsight.goal)}`}
+                                      className="text-[10px] font-black text-indigo-500 hover:text-indigo-700 uppercase tracking-widest flex items-center gap-1.5 transition-all hover:translate-x-1"
+                                  >
+                                      Søg mere i bogbasen <ArrowRight className="w-3 h-3" />
+                                  </Link>
+                              </div>
+
+                              {isGoalLiteratureLoading ? (
+                                  <div className="py-12 text-center space-y-4">
+                                      <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+                                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Finder relevante bøger og kapitler...</p>
                                   </div>
                               ) : (
-                                  <div 
-                                      dangerouslySetInnerHTML={{ __html: parseCitations(selectedGoalInsight.insight) }}
-                                      className="prose prose-slate prose-xl max-w-none w-full text-slate-600 leading-[1.6] font-medium space-y-10 
-                                                 prose-b:text-slate-950 prose-b:font-black
-                                                 prose-ul:space-y-4 prose-li:pl-2
-                                                 prose-h4:text-2xl prose-h4:font-black prose-h4:text-slate-950 prose-h4:tracking-tight
-                                                 prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-indigo-50/50 prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:rounded-r-2xl prose-blockquote:italic"
-                                  />
+                                  <div className="grid md:grid-cols-3 gap-6">
+                                      {!selectedGoalLiterature || selectedGoalLiterature.length === 0 ? (
+                                          <p className="col-span-3 text-sm text-slate-400 italic text-center py-6">
+                                              Ingen matchende litteratur fundet i bogbasen.
+                                          </p>
+                                      ) : (
+                                          selectedGoalLiterature.slice(0, 3).map((book: any, bIdx: number) => (
+                                              <div 
+                                                  key={bIdx} 
+                                                  className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-6 hover:-translate-y-0.5 group relative"
+                                              >
+                                                  <div className="space-y-4">
+                                                      <div className="flex gap-4 items-start">
+                                                          {/* Miniature Spine Cover */}
+                                                          <div className={`w-12 h-16 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded-xl shadow-md shrink-0 flex items-end p-2 transition-transform group-hover:scale-105`}>
+                                                              <BookOpen className="w-4 h-4 text-white/50" />
+                                                          </div>
+                                                          <div className="min-w-0 space-y-1">
+                                                              <h5 className="text-sm font-black text-slate-950 leading-snug line-clamp-2" title={book.bookTitle}>
+                                                                  {book.bookTitle}
+                                                              </h5>
+                                                              <p className="text-[11px] text-slate-400 font-bold truncate">
+                                                                  {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''}
+                                                              </p>
+                                                          </div>
+                                                      </div>
+
+                                                      {/* Matching Chapters */}
+                                                      {book.matchingChapters && book.matchingChapters.length > 0 && (
+                                                          <div className="space-y-2 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                                                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Relevante kapitler</p>
+                                                              <div className="space-y-1.5">
+                                                                  {book.matchingChapters.map((chap: any, cIdx: number) => (
+                                                                      <div key={cIdx} className="flex justify-between text-[11px] text-slate-600 font-semibold gap-2 leading-tight">
+                                                                          <span className="line-clamp-1">· {chap.title}</span>
+                                                                          {chap.pageNumber && <span className="shrink-0 text-slate-400 text-[10px]">S. {chap.pageNumber}</span>}
+                                                                      </div>
+                                                                  ))}
+                                                              </div>
+                                                          </div>
+                                                      )}
+                                                  </div>
+
+                                                  {/* Copy Reference */}
+                                                  {book.apaCitation && (
+                                                      <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                                                          <span 
+                                                              className="text-[10px] text-slate-400 font-medium italic truncate flex-1" 
+                                                              title={book.apaCitation}
+                                                          >
+                                                              {book.apaCitation}
+                                                          </span>
+                                                          <button
+                                                              onClick={(e) => handleCopyCitation(book.apaCitation, e)}
+                                                              className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors shadow-sm shrink-0 flex items-center justify-center active:scale-95"
+                                                              title="Kopier reference"
+                                                          >
+                                                              {copiedCitation === book.apaCitation ? (
+                                                                  <Check className="w-4 h-4 text-emerald-600" />
+                                                              ) : (
+                                                                  <Copy className="w-4 h-4" />
+                                                              )}
+                                                          </button>
+                                                      </div>
+                                                  )}
+                                              </div>
+                                          ))
+                                      )}
+                                  </div>
                               )}
                           </div>
 
                           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-6 border-t border-slate-100">
                               <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
-                                      <Sparkles className="w-6 h-6 text-amber-500" />
-                                  </div>
-                                  <div>
-                                      <p className="text-slate-950 font-black text-sm">Udnytter Vector-kontekst</p>
-                                      <p className="text-slate-400 text-xs font-bold italic">Analyse baseret på dine egne kilder.</p>
-                                  </div>
+                                  {hasMaterialsForGoal ? (
+                                      <>
+                                          <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+                                              <Sparkles className="w-6 h-6 text-amber-500" />
+                                          </div>
+                                          <div>
+                                              <p className="text-slate-950 font-black text-sm">Udnytter Vector-kontekst</p>
+                                              <p className="text-slate-400 text-xs font-bold italic">Analyse baseret på dine egne kilder.</p>
+                                          </div>
+                                      </>
+                                  ) : (
+                                      <>
+                                          <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                                              <Library className="w-6 h-6 text-indigo-500" />
+                                          </div>
+                                          <div>
+                                              <p className="text-slate-950 font-black text-sm">Viser Bogbase-forslag</p>
+                                              <p className="text-slate-400 text-xs font-bold italic">Litteraturforslag baseret på dit holds pensum.</p>
+                                          </div>
+                                      </>
+                                  )}
                               </div>
                               <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
                                   <Button 
@@ -1654,28 +1840,32 @@ Sørg for at svaret føles akademisk tungt men pædagogisk let tilgængeligt.`;
                                   >
                                       Luk
                                   </Button>
-                                  <Button 
-                                      onClick={() => {
-                                          setGlobalChatInput(`Lav en hurtig quiz til mig om dette mål baseret på mit pensum: ${selectedGoalInsight.goal}. Stil mig 3 spørgsmål ét af gangen.`);
-                                          setIsGlobalChatOpen(true);
-                                          setSelectedGoalInsight(null);
-                                      }}
-                                      className="flex-1 lg:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100 rounded-[1.5rem] px-10 h-16 font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
-                                  >
-                                      <CheckCircle2 className="w-5 h-5" />
-                                      <span>Tjek min viden</span>
-                                  </Button>
-                                  <Button 
-                                      onClick={() => {
-                                          setGlobalChatInput(`Jeg vil gerne gå i dybden med dette mål: ${selectedGoalInsight.goal}. Forklar de sværeste dele ud fra mit materiale.`);
-                                          setIsGlobalChatOpen(true);
-                                          setSelectedGoalInsight(null);
-                                      }}
-                                      className="flex-1 lg:flex-none bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] px-10 h-16 font-black text-xs uppercase tracking-widest shadow-2xl shadow-indigo-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
-                                  >
-                                      <MessageSquare className="w-5 h-5" />
-                                      <span>Uddyb i chatten</span>
-                                  </Button>
+                                  {hasMaterialsForGoal && (
+                                      <>
+                                          <Button 
+                                              onClick={() => {
+                                                  setGlobalChatInput(`Lav en hurtig quiz til mig om dette mål baseret på mit pensum: ${selectedGoalInsight.goal}. Stil mig 3 spørgsmål ét af gangen.`);
+                                                  setIsGlobalChatOpen(true);
+                                                  setSelectedGoalInsight(null);
+                                              }}
+                                              className="flex-1 lg:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100 rounded-[1.5rem] px-10 h-16 font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
+                                          >
+                                              <CheckCircle2 className="w-5 h-5" />
+                                              <span>Tjek min viden</span>
+                                          </Button>
+                                          <Button 
+                                              onClick={() => {
+                                                  setGlobalChatInput(`Jeg vil gerne gå i dybden med dette mål: ${selectedGoalInsight.goal}. Forklar de sværeste dele ud fra mit materiale.`);
+                                                  setIsGlobalChatOpen(true);
+                                                  setSelectedGoalInsight(null);
+                                              }}
+                                              className="flex-1 lg:flex-none bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] px-10 h-16 font-black text-xs uppercase tracking-widest shadow-2xl shadow-indigo-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
+                                          >
+                                              <MessageSquare className="w-5 h-5" />
+                                              <span>Uddyb i chatten</span>
+                                          </Button>
+                                      </>
+                                  )}
                               </div>
                           </div>
                       </div>
