@@ -506,16 +506,6 @@ function PensumSearchContent() {
                                           </p>
                                         )}
                                       </div>
-                                      
-                                      {/* Link to Concept Explainer */}
-                                      <Link 
-                                        href={`/concept-explainer?term=${encodeURIComponent(chapter.title)}`}
-                                        className="shrink-0 px-3 py-1.5 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-600 hover:text-indigo-600 transition-all flex items-center gap-1 active:scale-95"
-                                        title="Læs uddybning af dette emne"
-                                      >
-                                        Uddyb begreb
-                                        <ArrowRight className="w-3 h-3" />
-                                      </Link>
                                     </div>
                                   ))}
                                 </div>
