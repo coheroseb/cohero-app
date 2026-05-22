@@ -16,17 +16,20 @@ import {
   ArrowRight,
   Filter,
   FileText,
-  Volume2
+  Volume2,
+  Heart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import { useToast } from '@/hooks/use-toast';
-import { searchLiteratureAction } from '@/app/actions';
+import { searchLiteratureAction, toggleLikeBookAction, toggleLikeChapterAction } from '@/app/actions';
 
 // --- Types ---
 interface ChapterMatch {
   title: string;
   pageNumber?: string;
+  likesCount?: number;
+  likedBy?: string[];
 }
 
 interface BookResult {
@@ -39,6 +42,8 @@ interface BookResult {
   apaCitation?: string;
   matchingChapters: ChapterMatch[];
   chunkCount: number;
+  likesCount?: number;
+  likedBy?: string[];
 }
 
 interface SearchLiteratureOutput {
@@ -118,7 +123,7 @@ function CopyCitationButton({ citation }: { citation: string }) {
 
 // Main page content that uses SearchParams
 function PensumSearchContent() {
-  const { user } = useApp();
+  const { user, openAuthPage } = useApp();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -135,6 +140,224 @@ function PensumSearchContent() {
   // Filters state
   const [relevanceFilter, setRelevanceFilter] = useState<'all' | 'high'>('all');
   const [languageFilter, setLanguageFilter] = useState<'all' | 'da'>('all');
+
+  const handleLikeBook = async (bookId: string) => {
+    if (!user) {
+      toast({
+        title: "Log venligst ind",
+        description: "Du skal være logget ind for at kunne like bøger.",
+        variant: "destructive"
+      });
+      openAuthPage('signin');
+      return;
+    }
+
+    // Optimistic UI update
+    setResults(prevResults => prevResults.map(book => {
+      if (book.bookId === bookId) {
+        const likedBy = book.likedBy || [];
+        const index = likedBy.indexOf(user.uid);
+        let newLikedBy = [...likedBy];
+        let newLikesCount = book.likesCount || 0;
+        if (index > -1) {
+          newLikedBy.splice(index, 1);
+          newLikesCount = Math.max(0, newLikesCount - 1);
+        } else {
+          newLikedBy.push(user.uid);
+          newLikesCount += 1;
+        }
+        return {
+          ...book,
+          likedBy: newLikedBy,
+          likesCount: newLikesCount
+        };
+      }
+      return book;
+    }));
+
+    try {
+      const res = await toggleLikeBookAction(bookId, user.uid);
+      if (!res.success) {
+        toast({
+          title: "Fejl",
+          description: res.error || "Kunne ikke gemme dit like. Prøv igen.",
+          variant: "destructive"
+        });
+        // Rollback state by re-toggling
+        setResults(prevResults => prevResults.map(book => {
+          if (book.bookId === bookId) {
+            const likedBy = book.likedBy || [];
+            const index = likedBy.indexOf(user.uid);
+            let newLikedBy = [...likedBy];
+            let newLikesCount = book.likesCount || 0;
+            if (index > -1) {
+              newLikedBy.splice(index, 1);
+              newLikesCount = Math.max(0, newLikesCount - 1);
+            } else {
+              newLikedBy.push(user.uid);
+              newLikesCount += 1;
+            }
+            return {
+              ...book,
+              likedBy: newLikedBy,
+              likesCount: newLikesCount
+            };
+          }
+          return book;
+        }));
+      } else {
+        toast({
+          title: res.liked ? "Synes godt om" : "Fjernet synes godt om",
+          description: res.liked ? "Du har nu liket denne bog." : "Du har fjernet dit like fra denne bog.",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to toggle like on book:", err);
+      // Rollback state by re-toggling
+      setResults(prevResults => prevResults.map(book => {
+        if (book.bookId === bookId) {
+          const likedBy = book.likedBy || [];
+          const index = likedBy.indexOf(user.uid);
+          let newLikedBy = [...likedBy];
+          let newLikesCount = book.likesCount || 0;
+          if (index > -1) {
+            newLikedBy.splice(index, 1);
+            newLikesCount = Math.max(0, newLikesCount - 1);
+          } else {
+            newLikedBy.push(user.uid);
+            newLikesCount += 1;
+          }
+          return {
+            ...book,
+            likedBy: newLikedBy,
+            likesCount: newLikesCount
+          };
+        }
+        return book;
+      }));
+    }
+  };
+
+  const handleLikeChapter = async (bookId: string, chapterTitle: string) => {
+    if (!user) {
+      toast({
+        title: "Log venligst ind",
+        description: "Du skal være logget ind for at kunne like kapitler.",
+        variant: "destructive"
+      });
+      openAuthPage('signin');
+      return;
+    }
+
+    // Optimistic UI update
+    setResults(prevResults => prevResults.map(book => {
+      if (book.bookId === bookId) {
+        return {
+          ...book,
+          matchingChapters: book.matchingChapters.map(chap => {
+            if (chap.title === chapterTitle) {
+              const likedBy = chap.likedBy || [];
+              const index = likedBy.indexOf(user.uid);
+              let newLikedBy = [...likedBy];
+              let newLikesCount = chap.likesCount || 0;
+              if (index > -1) {
+                newLikedBy.splice(index, 1);
+                newLikesCount = Math.max(0, newLikesCount - 1);
+              } else {
+                newLikedBy.push(user.uid);
+                newLikesCount += 1;
+              }
+              return {
+                ...chap,
+                likedBy: newLikedBy,
+                likesCount: newLikesCount
+              };
+            }
+            return chap;
+          })
+        };
+      }
+      return book;
+    }));
+
+    try {
+      const res = await toggleLikeChapterAction(bookId, chapterTitle, user.uid);
+      if (!res.success) {
+        toast({
+          title: "Fejl",
+          description: res.error || "Kunne ikke gemme dit like. Prøv igen.",
+          variant: "destructive"
+        });
+        // Rollback state by re-toggling
+        setResults(prevResults => prevResults.map(book => {
+          if (book.bookId === bookId) {
+            return {
+              ...book,
+              matchingChapters: book.matchingChapters.map(chap => {
+                if (chap.title === chapterTitle) {
+                  const likedBy = chap.likedBy || [];
+                  const index = likedBy.indexOf(user.uid);
+                  let newLikedBy = [...likedBy];
+                  let newLikesCount = chap.likesCount || 0;
+                  if (index > -1) {
+                    newLikedBy.splice(index, 1);
+                    newLikesCount = Math.max(0, newLikesCount - 1);
+                  } else {
+                    newLikedBy.push(user.uid);
+                    newLikesCount += 1;
+                  }
+                  return {
+                    ...chap,
+                    likedBy: newLikedBy,
+                    likesCount: newLikesCount
+                  };
+                }
+                return chap;
+              })
+            };
+          }
+          return book;
+        }));
+      } else {
+        toast({
+          title: res.liked ? "Synes godt om" : "Fjernet synes godt om",
+          description: res.liked ? "Du har nu liket dette kapitel." : "Du har fjernet dit like fra dette kapitel.",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to toggle like on chapter:", err);
+      // Rollback state by re-toggling
+      setResults(prevResults => prevResults.map(book => {
+        if (book.bookId === bookId) {
+          return {
+            ...book,
+            matchingChapters: book.matchingChapters.map(chap => {
+              if (chap.title === chapterTitle) {
+                const likedBy = chap.likedBy || [];
+                const index = likedBy.indexOf(user.uid);
+                let newLikedBy = [...likedBy];
+                let newLikesCount = chap.likesCount || 0;
+                if (index > -1) {
+                  newLikedBy.splice(index, 1);
+                  newLikesCount = Math.max(0, newLikesCount - 1);
+                } else {
+                  newLikedBy.push(user.uid);
+                  newLikesCount += 1;
+                }
+                return {
+                  ...chap,
+                  likedBy: newLikedBy,
+                  likesCount: newLikesCount
+                };
+              }
+              return chap;
+            })
+          };
+        }
+        return book;
+      }));
+    }
+  };
 
   // Search input placeholder rotation list
   const placeholders = [
@@ -465,24 +688,48 @@ function PensumSearchContent() {
                             <div className="flex-1 space-y-6 w-full">
                               
                               {/* Title block */}
-                              <div className="space-y-2">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className={`px-2.5 py-0.5 border text-[9px] font-black uppercase tracking-widest rounded-full ${badgeColor}`}>
-                                    {badgeText}
-                                  </span>
-                                  {book.bookPublisher && (
-                                    <span className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold uppercase rounded-md">
-                                      {book.bookPublisher}
+                              <div className="flex justify-between items-start gap-4">
+                                <div className="space-y-2 flex-grow">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className={`px-2.5 py-0.5 border text-[9px] font-black uppercase tracking-widest rounded-full ${badgeColor}`}>
+                                      {badgeText}
                                     </span>
-                                  )}
+                                    {book.bookPublisher && (
+                                      <span className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold uppercase rounded-md">
+                                        {book.bookPublisher}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight serif group-hover:text-indigo-600 transition-colors">
+                                    {book.bookTitle}
+                                  </h2>
+                                  <p className="text-sm font-bold text-slate-500 leading-none">
+                                    af {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''} 
+                                    {book.bookEdition ? ` · ${book.bookEdition}` : ''}
+                                  </p>
                                 </div>
-                                <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight serif group-hover:text-indigo-600 transition-colors">
-                                  {book.bookTitle}
-                                </h2>
-                                <p className="text-sm font-bold text-slate-500 leading-none">
-                                  af {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''} 
-                                  {book.bookEdition ? ` · ${book.bookEdition}` : ''}
-                                </p>
+
+                                {/* Book Like Button */}
+                                <button
+                                  onClick={() => handleLikeBook(book.bookId)}
+                                  className={`p-2.5 rounded-2xl border transition-all duration-300 active:scale-90 flex items-center justify-center gap-2 shrink-0 ${
+                                    user && book.likedBy?.includes(user.uid)
+                                    ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-sm shadow-rose-500/5'
+                                    : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50 text-slate-400 hover:text-slate-600'
+                                  }`}
+                                  title={user && book.likedBy?.includes(user.uid) ? "Fjern synes godt om" : "Synes godt om denne bog"}
+                                >
+                                  <Heart 
+                                    className={`w-4 h-4 transition-transform duration-300 ${
+                                      user && book.likedBy?.includes(user.uid) 
+                                      ? 'fill-rose-500 text-rose-500 scale-110' 
+                                      : ''
+                                    }`} 
+                                  />
+                                  <span className="text-xs font-bold font-sans">
+                                    {book.likesCount || 0}
+                                  </span>
+                                </button>
                               </div>
 
                               {/* Matching chunks list */}
@@ -494,9 +741,9 @@ function PensumSearchContent() {
                                   {book.matchingChapters.map((chapter, cIdx) => (
                                     <div 
                                       key={cIdx} 
-                                      className="flex items-center justify-between gap-4 p-4 bg-slate-50/50 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-colors"
+                                      className="flex items-center justify-between gap-4 p-4 bg-slate-50/50 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-200"
                                     >
-                                      <div className="min-w-0">
+                                      <div className="min-w-0 flex-grow">
                                         <h4 className="text-xs font-bold text-slate-800 leading-snug truncate">
                                           {chapter.title}
                                         </h4>
@@ -506,6 +753,28 @@ function PensumSearchContent() {
                                           </p>
                                         )}
                                       </div>
+
+                                      {/* Chapter Heart Button */}
+                                      <button
+                                        onClick={() => handleLikeChapter(book.bookId, chapter.title)}
+                                        className={`px-3 py-1.5 rounded-xl border transition-all duration-300 active:scale-95 flex items-center gap-1.5 shrink-0 ${
+                                          user && chapter.likedBy?.includes(user.uid)
+                                          ? 'bg-rose-50/70 border-rose-100 text-rose-600 shadow-sm shadow-rose-500/5'
+                                          : 'bg-transparent border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
+                                        }`}
+                                        title={user && chapter.likedBy?.includes(user.uid) ? "Fjern synes godt om" : "Synes godt om dette kapitel"}
+                                      >
+                                        <Heart 
+                                          className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                                            user && chapter.likedBy?.includes(user.uid) 
+                                            ? 'fill-rose-500 text-rose-500 scale-110' 
+                                            : ''
+                                          }`} 
+                                        />
+                                        <span className="text-[10px] font-bold font-sans">
+                                          {chapter.likesCount || 0}
+                                        </span>
+                                      </button>
                                     </div>
                                   ))}
                                 </div>

@@ -5216,6 +5216,126 @@ export async function clearConceptExplanationsCacheAction() {
 }
 
 export async function searchLiteratureAction(query: string, limit?: number) {
-    return callFirebaseFlow('searchLiteratureFlow', { query, limit });
+    const flowResult = await callFirebaseFlow('searchLiteratureFlow', { query, limit });
+    if (flowResult && flowResult.results) {
+        try {
+            // Fetch likes in parallel
+            const enrichedResults = await Promise.all(flowResult.results.map(async (book: any) => {
+                try {
+                    // Fetch book likes
+                    const bookSnap = await adminFirestore.collection('books').doc(book.bookId).get();
+                    const bookData = bookSnap.exists ? bookSnap.data() : null;
+                    const bookLikesCount = bookData?.likesCount || 0;
+                    const bookLikedBy = bookData?.likedBy || [];
+
+                    // Fetch chapter likes for all matching chapters in parallel
+                    const enrichedChapters = await Promise.all(book.matchingChapters.map(async (chapter: any) => {
+                        const cleanTitle = chapter.title.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const docId = `${book.bookId}_${cleanTitle}`.substring(0, 100);
+                        const chapSnap = await adminFirestore.collection('chapterLikes').doc(docId).get();
+                        const chapData = chapSnap.exists ? chapSnap.data() : null;
+                        return {
+                            ...chapter,
+                            likesCount: chapData?.likesCount || 0,
+                            likedBy: chapData?.likedBy || [],
+                        };
+                    }));
+
+                    return {
+                        ...book,
+                        likesCount: bookLikesCount,
+                        likedBy: bookLikedBy,
+                        matchingChapters: enrichedChapters,
+                    };
+                } catch (err) {
+                    console.error("Failed to load likes for book/chapters:", book.bookId, err);
+                    return {
+                        ...book,
+                        likesCount: 0,
+                        likedBy: [],
+                        matchingChapters: book.matchingChapters.map((c: any) => ({ ...c, likesCount: 0, likedBy: [] })),
+                    };
+                }
+            }));
+            
+            return {
+                ...flowResult,
+                results: enrichedResults
+            };
+        } catch (error: any) {
+            console.error("Error enriching search literature results with likes:", error);
+        }
+    }
+    return flowResult;
+}
+
+export async function toggleLikeBookAction(bookId: string, userId: string) {
+    try {
+        const bookRef = adminFirestore.collection('books').doc(bookId);
+        const bookSnap = await bookRef.get();
+        if (!bookSnap.exists) {
+            return { success: false, error: "Bogen findes ikke." };
+        }
+        const data = bookSnap.data();
+        const likedBy: string[] = data?.likedBy || [];
+        const index = likedBy.indexOf(userId);
+        let newLikedBy = [...likedBy];
+        let liked = false;
+        if (index > -1) {
+            // Unlike
+            newLikedBy.splice(index, 1);
+        } else {
+            // Like
+            newLikedBy.push(userId);
+            liked = true;
+        }
+        const likesCount = newLikedBy.length;
+        await bookRef.update({
+            likedBy: newLikedBy,
+            likesCount
+        });
+        return { success: true, likesCount, likedBy: newLikedBy, liked };
+    } catch (error: any) {
+        console.error("toggleLikeBookAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function toggleLikeChapterAction(bookId: string, chapterTitle: string, userId: string) {
+    try {
+        const cleanTitle = chapterTitle.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+        const docId = `${bookId}_${cleanTitle}`.substring(0, 100);
+        const ref = adminFirestore.collection('chapterLikes').doc(docId);
+        const snap = await ref.get();
+        
+        let likedBy: string[] = [];
+        if (snap.exists) {
+            likedBy = snap.data()?.likedBy || [];
+        }
+        
+        const index = likedBy.indexOf(userId);
+        let newLikedBy = [...likedBy];
+        let liked = false;
+        if (index > -1) {
+            newLikedBy.splice(index, 1);
+        } else {
+            newLikedBy.push(userId);
+            liked = true;
+        }
+        
+        const likesCount = newLikedBy.length;
+        await ref.set({
+            bookId,
+            chapterTitle,
+            likedBy: newLikedBy,
+            likesCount,
+            updatedAt: new Date()
+        }, { merge: true });
+        
+        return { success: true, likesCount, likedBy: newLikedBy, liked };
+    } catch (error: any) {
+        console.error("toggleLikeChapterAction failed:", error);
+        return { success: false, error: error.message };
+    }
 }
 
