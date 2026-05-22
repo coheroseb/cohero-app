@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { 
     ArrowLeft, 
@@ -12,13 +12,25 @@ import {
     Star,
     GraduationCap,
     Info,
-    ArrowRight
+    ArrowRight,
+    ChevronDown,
+    ChevronUp,
+    CheckCircle2,
+    PlayCircle,
+    XCircle,
+    AlertCircle,
+    Circle
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+
+interface TocItem {
+    title: string;
+    pageNumber: string;
+}
 
 interface BookItem {
     id: string;
@@ -27,6 +39,7 @@ interface BookItem {
     year?: string;
     publisher?: string;
     isbn?: string;
+    toc?: TocItem[];
 }
 
 const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
@@ -41,12 +54,45 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
 );
 
 export default function PensumPage() {
-    const { user } = useApp();
+    const { user, openAuthPage } = useApp();
     const firestore = useFirestore();
     const [searchQuery, setSearchQuery] = useState('');
     
+    // Pensum-tracker state
+    const [expandedBookId, setExpandedBookId] = useState<string | null>(null);
+    const [progressMap, setProgressMap] = useState<Record<string, Record<number, string>>>({});
+    const [isProgressLoading, setIsProgressLoading] = useState(true);
+
     const booksQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'books'), orderBy('title', 'asc')) : null), [firestore]);
     const { data: books, isLoading: booksLoading } = useCollection<BookItem>(booksQuery);
+
+    // Subscribe to user's tracked book progress in real-time
+    useEffect(() => {
+        if (!firestore || !user) {
+            setProgressMap({});
+            setIsProgressLoading(false);
+            return;
+        }
+
+        setIsProgressLoading(true);
+        const q = collection(firestore, 'users', user.uid, 'pensum');
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const newProgressMap: Record<string, Record<number, string>> = {};
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                if (data.progress) {
+                    newProgressMap[docSnap.id] = data.progress;
+                }
+            });
+            setProgressMap(newProgressMap);
+            setIsProgressLoading(false);
+        }, (error) => {
+            console.error("Error fetching pensum progress:", error);
+            setIsProgressLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [firestore, user]);
 
     const filteredBooks = useMemo(() => {
         if (!books) return [];
@@ -59,6 +105,75 @@ export default function PensumPage() {
     const formatAuthors = (authorString: string): string => {
         if (!authorString) return '';
         return authorString.split(';').map(name => name.trim()).join(', ');
+    };
+
+    const handleStatusChange = async (bookId: string, chapterIndex: number, newStatus: string) => {
+        if (!user) {
+            openAuthPage?.('signin');
+            return;
+        }
+        
+        if (!firestore) return;
+
+        // Get current book progress
+        const currentBookProgress = { ...(progressMap[bookId] || {}) };
+        
+        // Update locally (optimistic update)
+        const updatedProgress = {
+            ...currentBookProgress,
+            [chapterIndex]: newStatus
+        };
+        
+        setProgressMap(prev => ({
+            ...prev,
+            [bookId]: updatedProgress
+        }));
+
+        try {
+            const bookRef = doc(firestore, 'users', user.uid, 'pensum', bookId);
+            await setDoc(bookRef, {
+                progress: updatedProgress,
+                updatedAt: new Date()
+            }, { merge: true });
+        } catch (error) {
+            console.error("Fejl ved gemning af pensum progress:", error);
+            // Rollback state on error
+            setProgressMap(prev => ({
+                ...prev,
+                [bookId]: currentBookProgress
+            }));
+        }
+    };
+
+    const STATUS_OPTIONS = [
+        { value: 'unread', label: 'Ikke læst', color: 'border-slate-200 text-slate-500 bg-white hover:bg-slate-50' },
+        { value: 'reading', label: 'Læser', color: 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100' },
+        { value: 'read', label: 'Læst', color: 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100' },
+        { value: 'difficult', label: 'Svært', color: 'border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100' }
+    ];
+
+    const renderProgressBar = (book: BookItem) => {
+        const total = book.toc?.length || 0;
+        if (total === 0) return null;
+        
+        const bookProgress = progressMap[book.id] || {};
+        const readCount = Object.values(bookProgress).filter(status => status === 'read').length;
+        const percent = Math.round((readCount / total) * 100);
+
+        return (
+            <div className="space-y-1">
+                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <span>{readCount} af {total} læst</span>
+                    <span className="text-amber-600">{percent}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                        className="h-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-500 rounded-full"
+                        style={{ width: `${percent}%` }}
+                    />
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -151,35 +266,161 @@ export default function PensumPage() {
                         </div>
                     ) : (
                         <AnimatePresence mode="popLayout">
-                            {filteredBooks.map((book, index) => (
-                                <motion.div 
-                                    layout
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    key={book.id} 
-                                    transition={{ duration: 0.5, delay: index * 0.05 }}
-                                    className="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-900/5 hover:-translate-y-1 transition-all flex flex-col md:flex-row md:items-center justify-between gap-8"
-                                >
-                                    <div className="flex items-start gap-6">
-                                        <div className="w-16 h-20 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-slate-100 group-hover:bg-amber-50 group-hover:border-amber-100 transition-colors">
-                                            <Book className="w-8 h-8 text-slate-300 group-hover:text-amber-500 transition-colors" />
+                            {filteredBooks.map((book, index) => {
+                                const isExpanded = expandedBookId === book.id;
+                                return (
+                                    <motion.div 
+                                        layout
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        key={book.id} 
+                                        transition={{ duration: 0.5, delay: index * 0.05 }}
+                                        className="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-amber-900/5 transition-all flex flex-col"
+                                    >
+                                        <div 
+                                            onClick={() => setExpandedBookId(isExpanded ? null : book.id)}
+                                            className="w-full flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer select-none"
+                                        >
+                                            <div className="flex items-start gap-6 flex-1 min-w-0">
+                                                <div className="w-16 h-20 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-slate-100 group-hover:bg-amber-50 group-hover:border-amber-100 transition-colors">
+                                                    <Book className="w-8 h-8 text-slate-300 group-hover:text-amber-500 transition-colors" />
+                                                </div>
+                                                <div className="space-y-1.5 flex-1 min-w-0">
+                                                    <h3 className="text-xl font-bold text-slate-900 leading-tight group-hover:text-amber-950 transition-colors">
+                                                        {book.title}
+                                                    </h3>
+                                                    <p className="text-slate-400 font-medium text-sm">
+                                                        <span className="text-amber-600/60 font-black uppercase tracking-widest text-[10px] mr-2">Forfatter:</span>
+                                                        {formatAuthors(book.author)}
+                                                        {book.year && <span className="ml-2 text-slate-300">• {book.year}</span>}
+                                                    </p>
+                                                    {/* Mobile progress bar */}
+                                                    {book.toc && book.toc.length > 0 && user && (
+                                                        <div className="md:hidden mt-3">
+                                                            {renderProgressBar(book)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-6 shrink-0 justify-between md:justify-start">
+                                                {/* Desktop progress bar */}
+                                                {book.toc && book.toc.length > 0 && user && (
+                                                    <div className="hidden md:block w-48 shrink-0">
+                                                        {renderProgressBar(book)}
+                                                    </div>
+                                                )}
+                                                <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-amber-50 text-slate-400 group-hover:text-amber-600 flex items-center justify-center transition-colors">
+                                                    {isExpanded ? (
+                                                        <ChevronUp className="w-5 h-5" />
+                                                    ) : (
+                                                        <ChevronDown className="w-5 h-5" />
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="space-y-1">
-                                            <h3 className="text-xl font-bold text-slate-900 leading-tight group-hover:text-amber-950 transition-colors">{book.title}</h3>
-                                            <p className="text-slate-400 font-medium text-sm">
-                                                <span className="text-amber-600/60 font-black uppercase tracking-widest text-[10px] mr-2">Forfatter:</span>
-                                                {formatAuthors(book.author)}
-                                                {book.year && <span className="ml-2 text-slate-300">• {book.year}</span>}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-3">
-                                        {/* Opslagstavle fjernet */}
-                                    </div>
-                                </motion.div>
-                            ))}
+
+                                        <AnimatePresence initial={false}>
+                                            {isExpanded && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    {book.toc && book.toc.length > 0 ? (
+                                                        <div className="mt-8 pt-8 border-t border-slate-100 space-y-4">
+                                                            {/* Guest login banner */}
+                                                            {!user && (
+                                                                <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-amber-600 shrink-0 shadow-sm border border-amber-100/30">
+                                                                            <Info className="w-4 h-4" />
+                                                                        </div>
+                                                                        <p className="text-xs font-semibold text-amber-950">
+                                                                            Log ind for at gemme din læse-status og tracke dit pensum.
+                                                                        </p>
+                                                                    </div>
+                                                                    <Button 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            openAuthPage?.('signin');
+                                                                        }}
+                                                                        className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs px-4 py-2 font-bold h-auto shadow-sm self-start sm:self-auto shrink-0"
+                                                                    >
+                                                                        Log ind
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+
+                                                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
+                                                                Indholdsfortegnelse ({book.toc.length} kapitler)
+                                                            </h4>
+                                                            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                                                {book.toc.map((chapter, idx) => {
+                                                                    const currentStatus = (user && progressMap[book.id]?.[idx]) || 'unread';
+                                                                    return (
+                                                                        <div key={idx} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                                            <div className="flex items-start gap-3 min-w-0">
+                                                                                <span className="text-xs font-bold text-slate-300 select-none pt-0.5 shrink-0">
+                                                                                    {(idx + 1).toString().padStart(2, '0')}
+                                                                                </span>
+                                                                                <div className="min-w-0">
+                                                                                    <p className="text-sm font-bold text-slate-800 leading-tight">
+                                                                                        {chapter.title}
+                                                                                    </p>
+                                                                                    {chapter.pageNumber && (
+                                                                                        <p className="text-[11px] font-semibold text-slate-400 mt-0.5">
+                                                                                            Side {chapter.pageNumber}
+                                                                                        </p>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div className="flex flex-wrap gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                                                {STATUS_OPTIONS.map((opt) => {
+                                                                                    const isSelected = currentStatus === opt.value;
+                                                                                    return (
+                                                                                        <button
+                                                                                            key={opt.value}
+                                                                                            onClick={() => handleStatusChange(book.id, idx, opt.value)}
+                                                                                            className={`px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1 ${
+                                                                                                isSelected 
+                                                                                                    ? `${opt.color} shadow-sm scale-[1.02] border-transparent font-black` 
+                                                                                                    : 'border-slate-100 hover:border-slate-200 text-slate-400 bg-white hover:text-slate-600'
+                                                                                            }`}
+                                                                                        >
+                                                                                            {isSelected && (
+                                                                                                <>
+                                                                                                    {opt.value === 'read' && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
+                                                                                                    {opt.value === 'reading' && <PlayCircle className="w-3 h-3 text-amber-600" />}
+                                                                                                    {opt.value === 'difficult' && <AlertCircle className="w-3 h-3 text-rose-600" />}
+                                                                                                    {opt.value === 'unread' && <Circle className="w-3 h-3 text-slate-400" />}
+                                                                                                </>
+                                                                                            )}
+                                                                                            {opt.label}
+                                                                                        </button>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="mt-8 pt-8 border-t border-slate-100 text-center py-8">
+                                                            <p className="text-slate-400 text-xs font-semibold">Indholdsfortegnelse er ikke tilgængelig for denne bog.</p>
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.div>
+                                );
+                            })}
                         </AnimatePresence>
                     )}
 
