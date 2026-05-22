@@ -176,6 +176,7 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Korrektur", path: "/korrektur", icon: <Sparkles className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Mit pensum", path: "/mine-materialer", icon: <FileBox className="w-5 h-5 text-indigo-500" /> },
+          { title: "Pensumsøgning", path: "/pensum-search", icon: <BookOpen className="w-5 h-5 text-indigo-500" /> },
           { title: "Akademiet", path: "https://akademi.cohero.dk", icon: <Wand2 className="w-5 h-5" /> },
           // { title: "Jura", path: "https://law.cohero.dk", icon: <Scale className="w-5 h-5" /> },
           { title: "Shop", path: "/shop", icon: <ShoppingBag className="w-5 h-5" /> },
@@ -273,6 +274,7 @@ const Navbar: React.FC<NavbarProps> = ({
                    <NavDropdownLink href="/shop" icon={<ShoppingBag className="w-4 h-4 text-rose-500" />}>Shop</NavDropdownLink>
 
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
+                   <NavDropdownLink href="/pensum-search" icon={<BookOpen className="w-4 h-4 text-indigo-500" />}>Pensumsøgning</NavDropdownLink>
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
                    <NavDropdownLink href="/videnskabsteori" icon={<Scale className="w-4 h-4 text-indigo-500" />}>Videnskabsteori</NavDropdownLink>

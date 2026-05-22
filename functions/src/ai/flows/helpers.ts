@@ -1,10 +1,7 @@
-// @ts-nocheck
-import * as admin from 'firebase-admin';
+import { adminFirestore } from '@/firebase/server-init';
 
-// Helper to initialize and get Firestore instance on the server
+// Helper to get Firestore instance on the server
 export function getDb() {
-  if (!admin.apps.length) {
-    admin.initializeApp();
-  }
-  return (admin.firestore as any)(undefined, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "(default)");
+  return adminFirestore;
 }
+

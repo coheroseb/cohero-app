@@ -27,6 +27,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import ConceptModelMap from '@/components/concept/ConceptModelMap';
+import { clearConceptExplanationsCacheAction } from '@/app/actions';
 
 interface ConceptExplanation {
   id: string;
@@ -53,6 +54,7 @@ export default function AdminConceptsPage() {
   const [selectedConcept, setSelectedConcept] = useState<ConceptExplanation | null>(null);
   const [showModelOnly, setShowModelOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isClearingCache, setIsClearingCache] = useState(false);
   const itemsPerPage = 15;
 
   // Filter & Search
@@ -100,14 +102,31 @@ export default function AdminConceptsPage() {
     }
   };
 
+  const handleClearCache = async () => {
+    if (!window.confirm("Er du sikker på, at du vil rydde hele begrebscachen? Alle fremtidige søgninger vil generere nye svar fra AI'en.")) return;
+    setIsClearingCache(true);
+    try {
+      const res = await clearConceptExplanationsCacheAction();
+      if (res.success) {
+        toast({ title: 'Cache Ryddet', description: `${res.count} forklaringer er blevet slettet.` });
+      } else {
+        toast({ variant: 'destructive', title: 'Fejl', description: res.error || 'Kunne ikke rydde cachen.' });
+      }
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Fejl', description: err.message || 'Kunne ikke rydde cachen.' });
+    } finally {
+      setIsClearingCache(false);
+    }
+  };
+
   return (
     <div className="space-y-10 animate-ink pb-20">
       
       {/* 1. Header & Stats Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          <div className="lg:col-span-8 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+          <div className="lg:col-span-8 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
               <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-amber-950 text-amber-400 flex items-center justify-center shadow-xl shadow-amber-950/20">
                     <BrainCircuit className="w-6 h-6" />
                   </div>
@@ -117,6 +136,19 @@ export default function AdminConceptsPage() {
                   </div>
                 </div>
               </div>
+              <Button
+                variant="outline"
+                disabled={isClearingCache}
+                onClick={handleClearCache}
+                className="relative z-10 rounded-2xl border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all font-bold gap-2 text-xs font-black uppercase tracking-widest h-12 px-6"
+              >
+                {isClearingCache ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-rose-600" />
+                ) : (
+                  <Trash2 className="w-4 h-4 text-slate-400 hover:text-rose-600" />
+                )}
+                Ryd Cache
+              </Button>
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
           </div>
 

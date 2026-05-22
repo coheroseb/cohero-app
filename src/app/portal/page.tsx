@@ -879,11 +879,12 @@ const PortalPageContent: React.FC = () => {
                   { title: "Case Analyser", icon: FileSearch, path: "/case-analyser", color: "bg-purple-50 text-purple-600" },
                   { title: "Begreber", icon: Brain, path: "/concept-explainer", color: "bg-emerald-50 text-emerald-600" },
                   { title: "Lovportal", icon: Scale, path: "https://law.cohero.dk/", color: "bg-amber-50 text-amber-600" },
+                  { title: "Pensumsøgning", icon: BookOpen, path: "/pensum-search", color: "bg-violet-50 text-violet-600" },
                 ].map((tool, i) => (
                   <div 
                     key={i} 
                     onClick={(e) => tool.path.startsWith('http') ? handleSSORedirect(tool.path, e) : router.push(tool.path)}
-                    className="group flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-3xl border border-transparent hover:border-amber-200 hover:bg-white transition-all shadow-sm cursor-pointer"
+                    className={`group flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-3xl border border-transparent hover:border-amber-200 hover:bg-white transition-all shadow-sm cursor-pointer ${i === 8 ? 'col-span-2' : ''}`}
                   >
                     <div className={`w-12 h-12 ${tool.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
                       <tool.icon className="w-6 h-6" />

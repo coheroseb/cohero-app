@@ -4797,7 +4797,7 @@ export async function processBookTocAction(input: { images: string[] }) {
 /**
  * getGeminiEmbeddings: Calls models/gemini-embedding-2 REST API to generate embeddings.
  */
-async function getGeminiEmbeddings(texts: string[]): Promise<number[][]> {
+async function getGeminiEmbeddings(texts: string[], maxRetries = 6): Promise<number[][]> {
     const key = getGeminiApiKey();
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:batchEmbedContents?key=${key}`;
     const requests = texts.map(text => ({
@@ -4806,23 +4806,51 @@ async function getGeminiEmbeddings(texts: string[]): Promise<number[][]> {
         outputDimensionality: 768
     }));
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requests })
-    });
+    let attempt = 0;
+    let delay = 5000; // Start with 5 seconds delay for 429 errors
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to generate embeddings: ${response.statusText} - ${errorText}`);
+    while (attempt < maxRetries) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ requests })
+            });
+
+            if (response.status === 429) {
+                attempt++;
+                if (attempt >= maxRetries) {
+                    const errorText = await response.text();
+                    throw new Error(`Rate limit exceeded (429) after ${maxRetries} attempts: ${errorText}`);
+                }
+                console.warn(`[getGeminiEmbeddings] Modtog 429 (Rate Limit). Forsøg ${attempt}/${maxRetries}. Venter ${delay / 1000} sekunder før nyt forsøg...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; // Exponential backoff
+                continue;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to generate embeddings: ${response.statusText} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            if (!data.embeddings || !Array.isArray(data.embeddings)) {
+                throw new Error(`Invalid embeddings response: ${JSON.stringify(data)}`);
+            }
+
+            return data.embeddings.map((e: any) => e.values);
+        } catch (error: any) {
+            if (attempt >= maxRetries - 1) {
+                throw error;
+            }
+            attempt++;
+            console.warn(`[getGeminiEmbeddings] Fejl under kald. Forsøg ${attempt}/${maxRetries}. Venter ${delay / 1000} sekunder... Fejl:`, error.message);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2;
+        }
     }
-
-    const data = await response.json();
-    if (!data.embeddings || !Array.isArray(data.embeddings)) {
-        throw new Error(`Invalid embeddings response: ${JSON.stringify(data)}`);
-    }
-
-    return data.embeddings.map((e: any) => e.values);
+    throw new Error("Failed to generate embeddings after max retries.");
 }
 
 /**
@@ -4859,68 +4887,78 @@ export async function saveBookAction(input: {
 
         // Perform vectorization of each TOC chunk if we have a table of contents
         if (input.toc && input.toc.length > 0) {
-            const chunksData = input.toc.map((item: any, idx: number) => {
-                const titleStr = item.title || 'Uden titel';
-                const pageStr = item.pageNumber ? `(s. ${item.pageNumber}) ` : '';
-                const text = `"${titleStr}" ${pageStr}i "${input.title}" af ${input.author}`;
-                return {
-                    title: titleStr,
-                    pageNumber: item.pageNumber || '',
-                    text,
-                    index: idx
-                };
-            });
-
-            // Call models/gemini-embedding-2 in batches of 100
-            const batchSize = 100;
-            const embeddings: number[][] = [];
-            
-            for (let i = 0; i < chunksData.length; i += batchSize) {
-                const slice = chunksData.slice(i, i + batchSize);
-                const sliceTexts = slice.map(c => c.text);
-                const sliceEmbeddings = await getGeminiEmbeddings(sliceTexts);
-                embeddings.push(...sliceEmbeddings);
-            }
-
-            // Write chunks to books/{bookId}/tocChunks in transaction/batch chunks of 400
-            const writeBatchLimit = 400;
-            let currentBatch = adminFirestore.batch();
-            let opCount = 0;
-
-            for (let i = 0; i < chunksData.length; i++) {
-                const chunk = chunksData[i];
-                const embedding = embeddings[i];
-                
-                if (!embedding) continue;
-
-                const chunkRef = bookRef.collection('tocChunks').doc(`chunk_${chunk.index}`);
-                currentBatch.set(chunkRef, {
-                    bookId,
-                    bookTitle: input.title,
-                    bookAuthor: input.author,
-                    bookYear: input.year || '',
-                    bookPublisher: input.publisher || '',
-                    bookEdition: input.edition || '',
-                    bookApaCitation: input.apaCitation || '',
-                    title: chunk.title,
-                    pageNumber: chunk.pageNumber,
-                    text: chunk.text,
-                    embedding: FieldValue.vector(embedding),
-                    createdAt: now
+            try {
+                const chunksData = input.toc.map((item: any, idx: number) => {
+                    const titleStr = item.title || 'Uden titel';
+                    const pageStr = item.pageNumber ? `(s. ${item.pageNumber}) ` : '';
+                    const text = `"${titleStr}" ${pageStr}i "${input.title}" af ${input.author}`;
+                    return {
+                        title: titleStr,
+                        pageNumber: item.pageNumber || '',
+                        text,
+                        index: idx
+                    };
                 });
 
-                opCount++;
-                if (opCount >= writeBatchLimit) {
-                    await currentBatch.commit();
-                    currentBatch = adminFirestore.batch();
-                    opCount = 0;
+                // Call models/gemini-embedding-2 in batches of 100
+                const batchSize = 100;
+                const embeddings: number[][] = [];
+                
+                for (let i = 0; i < chunksData.length; i += batchSize) {
+                    const slice = chunksData.slice(i, i + batchSize);
+                    const sliceTexts = slice.map(c => c.text);
+                    const sliceEmbeddings = await getGeminiEmbeddings(sliceTexts);
+                    embeddings.push(...sliceEmbeddings);
                 }
-            }
 
-            if (opCount > 0) {
-                await currentBatch.commit();
+                // Write chunks to books/{bookId}/tocChunks in transaction/batch chunks of 400
+                const writeBatchLimit = 400;
+                let currentBatch = adminFirestore.batch();
+                let opCount = 0;
+
+                for (let i = 0; i < chunksData.length; i++) {
+                    const chunk = chunksData[i];
+                    const embedding = embeddings[i];
+                    
+                    if (!embedding) continue;
+
+                    const chunkRef = bookRef.collection('tocChunks').doc(`chunk_${chunk.index}`);
+                    currentBatch.set(chunkRef, {
+                        bookId,
+                        bookTitle: input.title,
+                        bookAuthor: input.author,
+                        bookYear: input.year || '',
+                        bookPublisher: input.publisher || '',
+                        bookEdition: input.edition || '',
+                        bookApaCitation: input.apaCitation || '',
+                        title: chunk.title,
+                        pageNumber: chunk.pageNumber,
+                        text: chunk.text,
+                        embedding: FieldValue.vector(embedding),
+                        createdAt: now
+                    });
+
+                    opCount++;
+                    if (opCount >= writeBatchLimit) {
+                        await currentBatch.commit();
+                        currentBatch = adminFirestore.batch();
+                        opCount = 0;
+                    }
+                }
+
+                if (opCount > 0) {
+                    await currentBatch.commit();
+                }
+            } catch (vectError) {
+                // If vectorization fails after the book document was created, delete the book document to avoid orphans
+                console.error("Vectorization failed, cleaning up book document:", bookId, vectError);
+                await bookRef.delete().catch(e => console.error("Failed to delete orphan book document:", e));
+                throw vectError;
             }
         }
+
+        // Invalidate the concept explanations cache
+        await clearConceptExplanationsCacheAction().catch(e => console.error("Cache invalidation failed in saveBookAction:", e));
 
         return { success: true, id: bookId };
     } catch (error: any) {
@@ -5130,10 +5168,54 @@ export async function deleteBookAction(bookId: string) {
         // 2. Delete the main book document
         await bookRef.delete();
         
+        // Invalidate the concept explanations cache
+        await clearConceptExplanationsCacheAction().catch(e => console.error("Cache invalidation failed in deleteBookAction:", e));
+
         return { success: true };
     } catch (error: any) {
         console.error("deleteBookAction failed:", error);
         return { success: false, error: error.message };
     }
+}
+
+/**
+ * clearConceptExplanationsCacheAction: Clears all cached concept explanations in conceptExplanations-v2.
+ */
+export async function clearConceptExplanationsCacheAction() {
+    const { adminFirestore } = await import('@/firebase/server-init');
+    if (!adminFirestore) return { success: false, error: "Firestore is not initialized" };
+    try {
+        const snap = await adminFirestore.collection('conceptExplanations-v2').get();
+        if (snap.empty) {
+            return { success: true, count: 0 };
+        }
+        
+        const batchSize = 400;
+        let currentBatch = adminFirestore.batch();
+        let count = 0;
+        
+        for (const doc of snap.docs) {
+            currentBatch.delete(doc.ref);
+            count++;
+            if (count >= batchSize) {
+                await currentBatch.commit();
+                currentBatch = adminFirestore.batch();
+                count = 0;
+            }
+        }
+        if (count > 0) {
+            await currentBatch.commit();
+        }
+        
+        console.log(`[Cache Invalidation] Successfully cleared ${snap.size} cached explanations.`);
+        return { success: true, count: snap.size };
+    } catch (error: any) {
+        console.error("clearConceptExplanationsCacheAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function searchLiteratureAction(query: string, limit?: number) {
+    return callFirebaseFlow('searchLiteratureFlow', { query, limit });
 }
 

@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 
 /**
  * Initialiserer Firebase Admin SDK på serveren.
@@ -48,11 +49,15 @@ function getAdminApp() {
 }
 
 const app = getAdminApp();
-const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'cohero-database';
+
+console.log(`[Firebase Admin Init] databaseId = ${databaseId}`);
+console.log(`[Firebase Admin Init] app name = ${app.name}`);
+console.log(`[Firebase Admin Init] app project = ${app.options.projectId || 'N/A'}`);
+
 
 export const adminAuth = admin.auth(app);
-// @ts-ignore - databaseId is supported in newer versions of firebase-admin
-export const adminFirestore = admin.firestore(app, databaseId);
+export const adminFirestore = getFirestore(app, databaseId);
 export const adminStorage = admin.storage(app);
 
 // Legacy support
