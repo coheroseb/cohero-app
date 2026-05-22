@@ -9,6 +9,9 @@ export const BookSchemaForPrompt = z.object({
   title: z.string(),
   author: z.string(),
   year: z.string().optional(),
+  publisher: z.string().optional(),
+  edition: z.string().optional(),
+  apaCitation: z.string().optional().describe('Det præcise fulde APA 7 reference string for bogen'),
   RAG: z.string().optional().describe('Relevant content excerpts, keywords, and topics from the book for retrieval-augmented generation.'),
 });
 
@@ -833,6 +836,7 @@ export const ExplanationSchema = z.object({
     author: z.string(),
     relevance: z.string().optional(),
     chapters: z.array(z.string()).optional(),
+    apaCitation: z.string().optional().describe('Det præcise fulde APA 7 reference string for bogen'),
   })).optional(),
   relevantTheorists: z.array(z.object({
     name: z.string(),

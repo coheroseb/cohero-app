@@ -15,11 +15,16 @@ import {
 } from './types';
 import { getCachedBooks } from './book-cache';
 import { getRelevantLawContext } from '../../lib/law-context-helper';
+import { getDb } from './helpers';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const BookSchemaForPrompt = z.object({
   title: z.string(),
   author: z.string(),
-  year: z.string().optional(),  
+  year: z.string().optional(),
+  publisher: z.string().optional(),
+  edition: z.string().optional(),
+  apaCitation: z.string().optional().describe('Det præcise fulde APA 7 reference string for bogen'),
   RAG: z.string().optional().describe('Relevant content excerpts, keywords, and topics from the book for retrieval-augmented generation.'),
 });
 
@@ -56,6 +61,7 @@ Tilpas hele dit svar til denne professions konkrete udfordringer, fagsprog og pr
 ---
 {{#each books}}
 - **{{{this.title}}}** af {{{this.author}}}{{#if this.year}} ({{{this.year}}}){{/if}}: {{{this.RAG}}}
+  APA reference: {{{this.apaCitation}}}
 {{/each}}
 ---
 {{/if}}
@@ -70,7 +76,7 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
 
 1. **definition**: 
    - Hvis det er et *begreb*: Giv en dybtgående og nuanceret definition med underoverskrifter (<h3>) for centrale dimensioner.
-   - Hvis det er et *spørgsmål*: BESVAR spørgsmålet direkte og udtømmende. Brug <h3> til at strukturere delsvaret. Vær konkret og handlingsorienteret.
+   - Hvis det er et *spørgsmål*: BESVAR spørgsmålet direkte og udtømmende. Brug <h3> to at strukturere delsvaret. Vær konkret og handlingsorienteret.
    - Hvis det er et *sammensat emne*: Syntetisér alle facetter i en sammenhængende forklaring.
    - Minimum 4-6 afsnit. Brug <p>, <h3>, <ul>, <li>, <strong>, <em> til strukturering.
    - Inkludér altid: kernedefinition, centrale komponenter, nuancer og eventuelle kontroverser.
@@ -96,7 +102,7 @@ Returnér et JSON-objekt med ALLE nedenstående felter udfyldt på DANSK og med 
    - Hvad mangler der – hvad kan metoden/tilgangen IKKE? 
    Skriv mindst 3 afsnit med HTML-formatering.
 
-7. **suggestedLiterature**: 1-3 bøger/redskaber KUN fra den vedlagte pensumliste, der bedst belyser emnet. Angiv specifikt hvilke kapitler/sider der er mest relevante baseret på RAG-information. Inkludér altid mindst én bog hvis listen ikke er tom.
+7. **suggestedLiterature**: 1-3 bøger/redskaber KUN fra den vedlagte pensumliste, der bedst belyser emnet. Hvert element i listen skal indeholde den præcise, uændrede 'apaCitation' fra pensumlisten som sit 'apaCitation'-felt. Angiv derudover specifikt hvilke kapitler/sider der er mest relevante baseret på RAG-information. Inkludér altid mindst én bog hvis listen ikke er tom.
 
 8. **relevantTheorists**: 2-4 centrale teoretikere. For HVER: navn, tidsperiode, specifikt bidrag til dette emne, og reference til pensumliste hvis muligt.
 
@@ -147,56 +153,139 @@ export const explainConceptFlow = ai.defineFlow(
   async (input, { sendChunk }) => {
     console.log(`[EXPLAIN-CONCEPT-FLOW] Starting for: "${input.concept}"...`);
 
-    // 1. Fetch all books
-    const allBooks = await getCachedBooks();
-    
-    // 2. Smarter book filtering
-    const rawKeywords = input.concept.toLowerCase().split(/[\s,;.?!]+/).filter(w => w.length > 2);
-    
-    // Generate keyword variants to handle Danish word forms
-    const expandedKeywords = new Set<string>(rawKeywords);
-    rawKeywords.forEach(kw => {
-      // Common suffixes
-      if (kw.endsWith('ing')) expandedKeywords.add(kw.slice(0, -3));
-      if (kw.endsWith('else')) expandedKeywords.add(kw.slice(0, -4));
-      if (kw.endsWith('erne')) expandedKeywords.add(kw.slice(0, -4));
-      if (kw.endsWith('ene')) expandedKeywords.add(kw.slice(0, -3));
-      if (kw.endsWith('er')) expandedKeywords.add(kw.slice(0, -2));
-      
-      // Truncated root forms for compound word matching
-      if (kw.length > 6) {
-        expandedKeywords.add(kw.substring(0, kw.length - 2));
+    let booksForPrompt: any[] = [];
+    let vectorSearchSuccess = false;
+
+    // 1. Try vector search
+    try {
+      console.log(`[EXPLAIN-CONCEPT-FLOW] Generating embedding for query: "${input.concept}"...`);
+      const queryEmbeddingRes = await ai.embed({
+        embedder: 'googleai/gemini-embedding-2',
+        content: input.concept,
+      });
+      const queryVector = queryEmbeddingRes[0].embedding.slice(0, 768);
+
+      const db = getDb();
+      console.log(`[EXPLAIN-CONCEPT-FLOW] Executing collectionGroup('tocChunks') vector search...`);
+      const snapshot = await db.collectionGroup('tocChunks')
+        .findNearest('embedding', FieldValue.vector(queryVector), {
+          limit: 15,
+          distanceMeasure: 'COSINE'
+        })
+        .get();
+
+      if (!snapshot.empty) {
+        console.log(`[EXPLAIN-CONCEPT-FLOW] Found ${snapshot.size} matching chunks in vector search.`);
+        
+        // Group by bookId
+        const groupedBooks: Record<string, {
+          title: string;
+          author: string;
+          year?: string;
+          publisher?: string;
+          edition?: string;
+          apaCitation?: string;
+          chunks: { title: string; pageNumber: string; text: string }[];
+        }> = {};
+
+        snapshot.docs.forEach((doc: any) => {
+          const data = doc.data();
+          const bid = data.bookId;
+          if (!groupedBooks[bid]) {
+            groupedBooks[bid] = {
+              title: data.bookTitle,
+              author: data.bookAuthor,
+              year: data.bookYear,
+              publisher: data.bookPublisher,
+              edition: data.bookEdition,
+              apaCitation: data.bookApaCitation,
+              chunks: []
+            };
+          }
+          groupedBooks[bid].chunks.push({
+            title: data.title,
+            pageNumber: data.pageNumber,
+            text: data.text
+          });
+        });
+
+        // Convert the grouped books to the format expected by the model
+        booksForPrompt = Object.values(groupedBooks).map(gb => {
+          // Format RAG content as a list of matching chapters/sections from the Table of Contents
+          const ragText = gb.chunks.map(c => `- Kapitel/afsnit: "${c.title}"${c.pageNumber ? ` (s. ${c.pageNumber})` : ''}`).join('\n');
+          return {
+            title: gb.title,
+            author: gb.author,
+            year: gb.year,
+            publisher: gb.publisher,
+            edition: gb.edition,
+            apaCitation: gb.apaCitation,
+            RAG: ragText
+          };
+        });
+
+        vectorSearchSuccess = true;
+      } else {
+        console.log(`[EXPLAIN-CONCEPT-FLOW] Vector search returned 0 results. Falling back to keyword search.`);
       }
-    });
+    } catch (err) {
+      console.error("[EXPLAIN-CONCEPT-FLOW] Vector search failed:", err);
+    }
 
-    const keywordArray = Array.from(expandedKeywords).filter(kw => kw.length > 2);
+    // 2. Fallback to keyword-based book filtering if vector search failed or returned nothing
+    if (!vectorSearchSuccess || booksForPrompt.length === 0) {
+      console.log(`[EXPLAIN-CONCEPT-FLOW] Running keyword-based fallback search...`);
+      // Fetch all books
+      const allBooks = await getCachedBooks();
+      
+      // Smarter book filtering
+      const rawKeywords = input.concept.toLowerCase().split(/[\s,;.?!]+/).filter(w => w.length > 2);
+      
+      // Generate keyword variants to handle Danish word forms
+      const expandedKeywords = new Set<string>(rawKeywords);
+      rawKeywords.forEach(kw => {
+        // Common suffixes
+        if (kw.endsWith('ing')) expandedKeywords.add(kw.slice(0, -3));
+        if (kw.endsWith('else')) expandedKeywords.add(kw.slice(0, -4));
+        if (kw.endsWith('erne')) expandedKeywords.add(kw.slice(0, -4));
+        if (kw.endsWith('ene')) expandedKeywords.add(kw.slice(0, -3));
+        if (kw.endsWith('er')) expandedKeywords.add(kw.slice(0, -2));
+        
+        // Truncated root forms for compound word matching
+        if (kw.length > 6) {
+          expandedKeywords.add(kw.substring(0, kw.length - 2));
+        }
+      });
 
-    // Score each book by number of keyword matches
-    const scoredBooks = allBooks
-      .map(book => {
-        const bookText = `${book.title} ${book.author} ${book.RAG || ''}`.toLowerCase();
-        let score = 0;
-        keywordArray.forEach(kw => {
-            if (bookText.includes(kw)) score += 1;
-        });
-        // Boost books that have exact word matches in title
-        rawKeywords.forEach(kw => {
-            if (book.title.toLowerCase().includes(kw)) score += 2;
-        });
-        return { book, score };
-      })
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8); // Top 8 most relevant books
-    
-    // 3. Fallback: If no matches, send top 4 general books
-    const booksForPrompt = scoredBooks.length > 0 ? scoredBooks.map(s => s.book) : allBooks.slice(0, 4);
+      const keywordArray = Array.from(expandedKeywords).filter(kw => kw.length > 2);
 
-    // If the concept is "books" or "bøger", ensure we have good matches
-    if (input.concept.toLowerCase().includes('book') || input.concept.toLowerCase().includes('bøg')) {
-        // Boost literature related books if they exist in allBooks
-        const litBooks = allBooks.filter(b => b.title.toLowerCase().includes('litteratur') || b.RAG?.toLowerCase().includes('kildehenvisning'));
-        if (litBooks.length > 0) booksForPrompt.push(...litBooks.slice(0, 2));
+      // Score each book by number of keyword matches
+      const scoredBooks = allBooks
+        .map(book => {
+          const bookText = `${book.title} ${book.author} ${book.RAG || ''}`.toLowerCase();
+          let score = 0;
+          keywordArray.forEach(kw => {
+              if (bookText.includes(kw)) score += 1;
+          });
+          // Boost books that have exact word matches in title
+          rawKeywords.forEach(kw => {
+              if (book.title.toLowerCase().includes(kw)) score += 2;
+          });
+          return { book, score };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8); // Top 8 most relevant books
+      
+      // Fallback: If no matches, send top 4 general books
+      booksForPrompt = scoredBooks.length > 0 ? scoredBooks.map(s => s.book) : allBooks.slice(0, 4);
+
+      // If the concept is "books" or "bøger", ensure we have good matches
+      if (input.concept.toLowerCase().includes('book') || input.concept.toLowerCase().includes('bøg')) {
+          // Boost literature related books if they exist in allBooks
+          const litBooks = allBooks.filter(b => b.title.toLowerCase().includes('litteratur') || b.RAG?.toLowerCase().includes('kildehenvisning'));
+          if (litBooks.length > 0) booksForPrompt.push(...litBooks.slice(0, 2));
+      }
     }
     
     let lawContext = input.lawContext || '';

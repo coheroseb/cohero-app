@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Brain, BrainCircuit, Sparkles, Loader2, Send, Plus, Scale, Target, Zap, BookOpen, Quote, ChevronDown, ChevronUp, Lock, Check, History, X, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Brain, BrainCircuit, Sparkles, Loader2, Send, Plus, Scale, Target, Zap, BookOpen, Quote, ChevronDown, ChevronUp, Lock, Check, History, X, RotateCcw, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import { useFirestore } from '@/firebase';
@@ -54,6 +54,37 @@ function Section({ title, icon, children, open: defaultOpen = false }: {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ─── Citation Copy Button ──────────────────────────────────────────────────────
+
+function CopyCitationButton({ citation }: { citation: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      const cleanText = citation.replace(/\*/g, '');
+      await navigator.clipboard.writeText(cleanText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="p-1.5 rounded-lg border border-amber-200 bg-white hover:bg-amber-50 hover:border-amber-300 active:scale-95 transition-all text-amber-800 shrink-0 self-center"
+      title="Kopier APA-reference"
+    >
+      {copied ? (
+        <Check className="w-3.5 h-3.5 text-green-600 animate-in fade-in zoom-in duration-200" />
+      ) : (
+        <Copy className="w-3.5 h-3.5 text-amber-600" />
+      )}
+    </button>
   );
 }
 
@@ -193,6 +224,15 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
                           ))}
                         </div>
                       )}
+                    </div>
+                  )}
+                  {b.apaCitation && (
+                    <div className="mt-2 pl-7 flex items-start justify-between gap-3 p-3 bg-amber-950/5 border border-amber-950/10 rounded-xl">
+                      <div className="text-[10px] text-amber-950/80 leading-relaxed font-sans pr-2">
+                        <span className="font-bold text-[9px] text-amber-950/55 uppercase tracking-wider block mb-1">APA 7 Reference</span>
+                        <span dangerouslySetInnerHTML={{ __html: marked.parseInline(b.apaCitation) }} />
+                      </div>
+                      <CopyCitationButton citation={b.apaCitation} />
                     </div>
                   )}
                 </div>

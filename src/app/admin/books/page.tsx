@@ -23,6 +23,80 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { processBookTocAction, saveBookAction, fetchBookMetadataAction } from '@/app/actions';
 
+function parseAuthors(rawAuthors: string) {
+    const majorParts = rawAuthors.split(/\s+(?:og|and|&)\s+/i).map(p => p.trim()).filter(Boolean);
+    const allAuthors: string[] = [];
+    for (const part of majorParts) {
+        const commaParts = part.split(',').map(s => s.trim()).filter(Boolean);
+        const merged: string[] = [];
+        for (let i = 0; i < commaParts.length; i++) {
+            const current = commaParts[i];
+            const isInitials = /^[A-Z]\.?\s*([A-Z]\.?\s*)*$/i.test(current) && current.length <= 4;
+            if (isInitials && merged.length > 0) {
+                const prevIdx = merged.length - 1;
+                merged[prevIdx] = `${merged[prevIdx]}, ${current}`;
+            } else {
+                merged.push(current);
+            }
+        }
+        allAuthors.push(...merged);
+    }
+    return allAuthors;
+}
+
+function formatAuthorName(author: string) {
+    const authors = parseAuthors(author);
+    const formattedParts = authors.map(part => {
+        if (part.includes(',')) {
+            const [last, first] = part.split(',').map(s => s.trim());
+            const isInitials = /^[A-Z]\.?\s*([A-Z]\.?\s*)*$/i.test(first);
+            if (isInitials) {
+                return part;
+            } else {
+                const initials = first.split(/\s+/).map(n => `${n.charAt(0).toUpperCase()}.`).join(' ');
+                return `${last}, ${initials}`;
+            }
+        }
+        const nameWords = part.split(/\s+/);
+        if (nameWords.length > 1) {
+            const lastName = nameWords[nameWords.length - 1];
+            const firstNames = nameWords.slice(0, nameWords.length - 1);
+            const initials = firstNames.map(f => `${f.charAt(0).toUpperCase()}.`).join(' ');
+            return `${lastName}, ${initials}`;
+        }
+        return part;
+    });
+    if (formattedParts.length > 1) {
+        const lastAuthor = formattedParts.pop();
+        return `${formattedParts.join(', ')} & ${lastAuthor}`;
+    }
+    return formattedParts[0] || '';
+}
+
+function formatApaCitation(author: string, year: string, title: string, edition: string, publisher: string) {
+    const formattedAuthor = formatAuthorName(author) || 'Ukendt forfatter';
+    const formattedYear = year.trim() ? `(${year.trim()})` : '(n.d.)';
+    const formattedTitle = title.trim() ? `*${title.trim()}*` : 'Ukendt titel';
+
+    let formattedEdition = '';
+    if (edition && edition.trim()) {
+        const ed = edition.trim();
+        if (/\d/.test(ed) && !/[a-zA-Z]/.test(ed)) {
+            formattedEdition = ` (${ed}. udg.)`;
+        } else {
+            formattedEdition = ` (${ed})`;
+        }
+    }
+
+    const formattedPublisher = publisher && publisher.trim() ? `${publisher.trim()}.` : '';
+
+    let citation = `${formattedAuthor} ${formattedYear}. ${formattedTitle}${formattedEdition}.`;
+    if (formattedPublisher) {
+        citation += ` ${formattedPublisher}`;
+    }
+    return citation;
+}
+
 interface TocItem {
     title: string;
     pageNumber: string;
@@ -32,14 +106,25 @@ export default function AdminBooksPage() {
     const router = useRouter();
     const { toast } = useToast();
     
-    const [title, setTitle] = useState('');
+        const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [isbn, setIsbn] = useState('');
+    const [year, setYear] = useState('');
+    const [publisher, setPublisher] = useState('');
+    const [edition, setEdition] = useState('');
+    const [apaCitation, setApaCitation] = useState('');
+    const [isApaEdited, setIsApaEdited] = useState(false);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isIsbnLoading, setIsIsbnLoading] = useState(false);
     const [extractedToc, setExtractedToc] = useState<TocItem[]>([]);
+
+    React.useEffect(() => {
+        if (!isApaEdited) {
+            setApaCitation(formatApaCitation(author, year, title, edition, publisher));
+        }
+    }, [author, year, title, edition, publisher, isApaEdited]);
 
     const handleIsbnLookup = async () => {
         if (!isbn || isbn.length < 10) {
@@ -57,6 +142,10 @@ export default function AdminBooksPage() {
             if (res.success && res.metadata) {
                 if (res.metadata.title) setTitle(res.metadata.title);
                 if (res.metadata.author) setAuthor(res.metadata.author);
+                if (res.metadata.year) setYear(res.metadata.year);
+                if (res.metadata.publisher) setPublisher(res.metadata.publisher);
+                if (res.metadata.edition) setEdition(res.metadata.edition);
+                setIsApaEdited(false);
                 toast({
                     title: "Bog fundet!",
                     description: `Hentede info for: ${res.metadata.title}`,
@@ -137,6 +226,10 @@ export default function AdminBooksPage() {
             const res = await saveBookAction({
                 title,
                 author,
+                year,
+                publisher,
+                edition,
+                apaCitation,
                 toc: extractedToc
             });
 
@@ -251,6 +344,71 @@ export default function AdminBooksPage() {
                                     placeholder="F.eks. Staf Callewaert"
                                     className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all"
                                 />
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Årstal</label>
+                                    <input 
+                                        type="text" 
+                                        value={year}
+                                        onChange={(e) => setYear(e.target.value)}
+                                        placeholder="2019"
+                                        className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Udgave</label>
+                                    <input 
+                                        type="text" 
+                                        value={edition}
+                                        onChange={(e) => setEdition(e.target.value)}
+                                        placeholder="2"
+                                        className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Forlag</label>
+                                    <input 
+                                        type="text" 
+                                        value={publisher}
+                                        onChange={(e) => setPublisher(e.target.value)}
+                                        placeholder="Akademisk Forlag"
+                                        className="w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="pt-2 border-t border-slate-100">
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">APA 7 Reference</label>
+                                    {isApaEdited && (
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                setIsApaEdited(false);
+                                                setApaCitation(formatApaCitation(author, year, title, edition, publisher));
+                                            }}
+                                            className="text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700 outline-none"
+                                        >
+                                            Gendan automatisk
+                                        </button>
+                                    )}
+                                </div>
+                                <textarea 
+                                    value={apaCitation}
+                                    onChange={(e) => {
+                                        setApaCitation(e.target.value);
+                                        setIsApaEdited(true);
+                                    }}
+                                    placeholder="Gemmes som APA-reference"
+                                    className="w-full min-h-[80px] p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all resize-y"
+                                />
+                                <div className="mt-2 p-4 bg-slate-50 border border-slate-200/60 rounded-2xl">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Live APA Preview</span>
+                                    <div className="text-xs text-slate-700 font-serif italic">
+                                        {apaCitation.split('*').map((part, i) => i % 2 === 1 ? <em key={i} className="font-bold not-italic">{part}</em> : part)}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>

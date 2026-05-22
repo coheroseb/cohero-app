@@ -4795,9 +4795,48 @@ export async function processBookTocAction(input: { images: string[] }) {
 }
 
 /**
- * saveBookAction: Saves a digitized book and its structure to Firestore.
+ * getGeminiEmbeddings: Calls models/text-embedding-004 REST API to generate embeddings.
  */
-export async function saveBookAction(input: { title: string, author: string, toc: any[] }) {
+async function getGeminiEmbeddings(texts: string[]): Promise<number[][]> {
+    const key = getGeminiApiKey();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${key}`;
+    const requests = texts.map(text => ({
+        model: 'models/text-embedding-004',
+        content: { parts: [{ text }] },
+        outputDimensionality: 768
+    }));
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to generate embeddings: ${response.statusText} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (!data.embeddings || !Array.isArray(data.embeddings)) {
+        throw new Error(`Invalid embeddings response: ${JSON.stringify(data)}`);
+    }
+
+    return data.embeddings.map((e: any) => e.values);
+}
+
+/**
+ * saveBookAction: Saves a digitized book and its structure (including vector chunks) to Firestore.
+ */
+export async function saveBookAction(input: { 
+    title: string, 
+    author: string, 
+    year?: string, 
+    publisher?: string, 
+    edition?: string, 
+    apaCitation?: string, 
+    toc: any[] 
+}) {
     if (!adminFirestore) return { success: false };
     try {
         const bookRef = adminFirestore.collection('books').doc();
@@ -4806,13 +4845,84 @@ export async function saveBookAction(input: { title: string, author: string, toc
         await bookRef.set({
             title: input.title,
             author: input.author,
+            year: input.year || '',
+            publisher: input.publisher || '',
+            edition: input.edition || '',
+            apaCitation: input.apaCitation || '',
             toc: input.toc,
-            status: 'metadata_only',
+            status: 'vectorized',
             createdAt: now,
             updatedAt: now
         });
 
-        return { success: true, id: bookRef.id };
+        const bookId = bookRef.id;
+
+        // Perform vectorization of each TOC chunk if we have a table of contents
+        if (input.toc && input.toc.length > 0) {
+            const chunksData = input.toc.map((item: any, idx: number) => {
+                const titleStr = item.title || 'Uden titel';
+                const pageStr = item.pageNumber ? `(s. ${item.pageNumber}) ` : '';
+                const text = `"${titleStr}" ${pageStr}i "${input.title}" af ${input.author}`;
+                return {
+                    title: titleStr,
+                    pageNumber: item.pageNumber || '',
+                    text,
+                    index: idx
+                };
+            });
+
+            // Call models/text-embedding-004 in batches of 100
+            const batchSize = 100;
+            const embeddings: number[][] = [];
+            
+            for (let i = 0; i < chunksData.length; i += batchSize) {
+                const slice = chunksData.slice(i, i + batchSize);
+                const sliceTexts = slice.map(c => c.text);
+                const sliceEmbeddings = await getGeminiEmbeddings(sliceTexts);
+                embeddings.push(...sliceEmbeddings);
+            }
+
+            // Write chunks to books/{bookId}/tocChunks in transaction/batch chunks of 400
+            const writeBatchLimit = 400;
+            let currentBatch = adminFirestore.batch();
+            let opCount = 0;
+
+            for (let i = 0; i < chunksData.length; i++) {
+                const chunk = chunksData[i];
+                const embedding = embeddings[i];
+                
+                if (!embedding) continue;
+
+                const chunkRef = bookRef.collection('tocChunks').doc(`chunk_${chunk.index}`);
+                currentBatch.set(chunkRef, {
+                    bookId,
+                    bookTitle: input.title,
+                    bookAuthor: input.author,
+                    bookYear: input.year || '',
+                    bookPublisher: input.publisher || '',
+                    bookEdition: input.edition || '',
+                    bookApaCitation: input.apaCitation || '',
+                    title: chunk.title,
+                    pageNumber: chunk.pageNumber,
+                    text: chunk.text,
+                    embedding: FieldValue.vector(embedding),
+                    createdAt: now
+                });
+
+                opCount++;
+                if (opCount >= writeBatchLimit) {
+                    await currentBatch.commit();
+                    currentBatch = adminFirestore.batch();
+                    opCount = 0;
+                }
+            }
+
+            if (opCount > 0) {
+                await currentBatch.commit();
+            }
+        }
+
+        return { success: true, id: bookId };
     } catch (error: any) {
         console.error("saveBookAction failed:", error);
         return { success: false, error: error.message };
@@ -4841,12 +4951,18 @@ export async function fetchBookMetadataAction(isbn: string) {
         
         // Use Gemini to extract metadata from HTML
         const geminiKey = getGeminiApiKey();
-        const prompt = `Du får her rå HTML fra en bogside. Din opgave er at udtrække bogens titel og forfatter.
-        Returner KUN et JSON-objekt med formatet: { "title": "Bogens titel", "author": "Forfatterens navn" }.
-        Hvis du ikke kan finde informationerne, returner tomme strenge.
+        const prompt = `Du får her rå HTML fra en bogside. Din opgave er at udtrække bogens titel, forfatter, udgivelsesår, forlag og udgave.
+        Returner KUN et JSON-objekt med formatet: { 
+            "title": "Bogens titel", 
+            "author": "Forfatterens navn",
+            "year": "Udgivelsesår (f.eks. '2019' - kun årstallet)",
+            "publisher": "Udgiver/Forlag",
+            "edition": "Udgave (f.eks. '2' eller '3. udgave' - lad være tom hvis det er 1. udgave eller ikke angivet)"
+        }.
+        Hvis du ikke kan finde en af informationerne, returner en tom streng for det felt.
         
         HTML:
-        ${html.substring(0, 50000)} // Limit size to avoid token issues`;
+        ${html.substring(0, 50000)}`;
 
         const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiKey}`, {
             method: 'POST',
