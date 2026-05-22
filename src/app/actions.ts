@@ -4795,13 +4795,13 @@ export async function processBookTocAction(input: { images: string[] }) {
 }
 
 /**
- * getGeminiEmbeddings: Calls models/text-embedding-004 REST API to generate embeddings.
+ * getGeminiEmbeddings: Calls models/gemini-embedding-2 REST API to generate embeddings.
  */
 async function getGeminiEmbeddings(texts: string[]): Promise<number[][]> {
     const key = getGeminiApiKey();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${key}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:batchEmbedContents?key=${key}`;
     const requests = texts.map(text => ({
-        model: 'models/text-embedding-004',
+        model: 'models/gemini-embedding-2',
         content: { parts: [{ text }] },
         outputDimensionality: 768
     }));
@@ -4871,7 +4871,7 @@ export async function saveBookAction(input: {
                 };
             });
 
-            // Call models/text-embedding-004 in batches of 100
+            // Call models/gemini-embedding-2 in batches of 100
             const batchSize = 100;
             const embeddings: number[][] = [];
             
