@@ -5179,6 +5179,79 @@ export async function deleteBookAction(bookId: string) {
 }
 
 /**
+ * updateBookMetadataAction: Updates a book's metadata and synchronizes it across all its tocChunks.
+ */
+export async function updateBookMetadataAction(input: {
+    id: string;
+    title: string;
+    author: string;
+    year?: string;
+    publisher?: string;
+    edition?: string;
+    apaCitation?: string;
+}) {
+    if (!adminFirestore) return { success: false, error: "Firestore is not initialized" };
+    try {
+        const bookRef = adminFirestore.collection('books').doc(input.id);
+        const now = FieldValue.serverTimestamp();
+        
+        // 1. Update the parent book document
+        await bookRef.update({
+            title: input.title,
+            author: input.author,
+            year: input.year || '',
+            publisher: input.publisher || '',
+            edition: input.edition || '',
+            apaCitation: input.apaCitation || '',
+            updatedAt: now
+        });
+
+        // 2. Update nested tocChunks copies to ensure vector search returns updated data
+        const chunksSnap = await bookRef.collection('tocChunks').get();
+        if (!chunksSnap.empty) {
+            const batchSize = 400;
+            let currentBatch = adminFirestore.batch();
+            let count = 0;
+            
+            for (const doc of chunksSnap.docs) {
+                const data = doc.data();
+                const titleStr = data.title || 'Uden titel';
+                const pageStr = data.pageNumber ? `(s. ${data.pageNumber}) ` : '';
+                const newText = `"${titleStr}" ${pageStr}i "${input.title}" af ${input.author}`;
+
+                currentBatch.update(doc.ref, {
+                    bookTitle: input.title,
+                    bookAuthor: input.author,
+                    bookYear: input.year || '',
+                    bookPublisher: input.publisher || '',
+                    bookEdition: input.edition || '',
+                    bookApaCitation: input.apaCitation || '',
+                    text: newText
+                });
+
+                count++;
+                if (count >= batchSize) {
+                    await currentBatch.commit();
+                    currentBatch = adminFirestore.batch();
+                    count = 0;
+                }
+            }
+            if (count > 0) {
+                await currentBatch.commit();
+            }
+        }
+
+        // 3. Invalidate the concept explanations cache
+        await clearConceptExplanationsCacheAction().catch(e => console.error("Cache invalidation failed in updateBookMetadataAction:", e));
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("updateBookMetadataAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * clearConceptExplanationsCacheAction: Clears all cached concept explanations in conceptExplanations-v2.
  */
 export async function clearConceptExplanationsCacheAction() {
