@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Brain, BrainCircuit, Sparkles, Loader2, Send, Plus, Scale, Target, Zap, BookOpen, Quote, ChevronDown, ChevronUp, Lock, Check, History, X, RotateCcw, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -135,10 +135,10 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
               {ex.disambiguation.map((a, i) => (
                 <button 
                   key={i} 
-                  onClick={() => onAngleClick(a.query || a.question)}
+                  onClick={() => onAngleClick(a.query || (a as any).question)}
                   className="px-5 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-black text-slate-600 hover:bg-white hover:border-indigo-200 hover:text-indigo-600 transition-all active:scale-95 shadow-sm"
                 >
-                  {a.title || a.label}
+                  {a.title || (a as any).label}
                 </button>
               ))}
             </div>
@@ -230,7 +230,7 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
                     <div className="mt-2 pl-7 flex items-start justify-between gap-3 p-3 bg-amber-950/5 border border-amber-950/10 rounded-xl">
                       <div className="text-[10px] text-amber-950/80 leading-relaxed font-sans pr-2">
                         <span className="font-bold text-[9px] text-amber-950/55 uppercase tracking-wider block mb-1">APA 7 Reference</span>
-                        <span dangerouslySetInnerHTML={{ __html: marked.parseInline(b.apaCitation) }} />
+                        <span dangerouslySetInnerHTML={{ __html: marked.parseInline(b.apaCitation) as string }} />
                       </div>
                       <CopyCitationButton citation={b.apaCitation} />
                     </div>
@@ -448,6 +448,7 @@ function ConceptChatContent() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Hook to lock body scroll
   useEffect(() => {
@@ -628,7 +629,7 @@ function ConceptChatContent() {
           const [snap1, snap2] = await Promise.all([getDoc(docRef), getDoc(genRef)]);
 
           if (snap1.exists() || snap2.exists()) {
-            const explanation = snap1.exists() ? snap1.data().explanation : snap2.data().explanation;
+            const explanation = (snap1.exists() ? snap1.data() : snap2.data())?.explanation;
             setMessages(prev => [...prev, { id: aiMsgId, role: 'concept', explanation, conceptName: term }]);
             setCurrentDefinition(explanation.definition || '');
             setCurrentConceptName(term);

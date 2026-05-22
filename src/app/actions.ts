@@ -5070,3 +5070,70 @@ export async function sendAdminEmailAction(input: {
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * listBooksAction: Fetches all books from the books collection, ordered by title or createdAt.
+ */
+export async function listBooksAction() {
+    if (!adminFirestore) return { success: false, error: "Firestore is not initialized" };
+    try {
+        const snap = await adminFirestore.collection('books').orderBy('createdAt', 'desc').get();
+        const books = snap.docs.map((doc: any) => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                title: data.title || '',
+                author: data.author || '',
+                year: data.year || '',
+                publisher: data.publisher || '',
+                edition: data.edition || '',
+                apaCitation: data.apaCitation || '',
+                tocLength: Array.isArray(data.toc) ? data.toc.length : 0,
+                status: data.status || '',
+                createdAt: data.createdAt ? (typeof data.createdAt.toDate === 'function' ? data.createdAt.toDate().toISOString() : data.createdAt) : null
+            };
+        });
+        return { success: true, books };
+    } catch (error: any) {
+        console.error("listBooksAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * deleteBookAction: Deletes a book and all its associated tocChunks vector documents.
+ */
+export async function deleteBookAction(bookId: string) {
+    if (!adminFirestore) return { success: false, error: "Firestore is not initialized" };
+    try {
+        const bookRef = adminFirestore.collection('books').doc(bookId);
+        
+        // 1. Delete all tocChunks in batches
+        const chunksSnap = await bookRef.collection('tocChunks').get();
+        const batchSize = 400;
+        let currentBatch = adminFirestore.batch();
+        let count = 0;
+        
+        for (const doc of chunksSnap.docs) {
+            currentBatch.delete(doc.ref);
+            count++;
+            if (count >= batchSize) {
+                await currentBatch.commit();
+                currentBatch = adminFirestore.batch();
+                count = 0;
+            }
+        }
+        if (count > 0) {
+            await currentBatch.commit();
+        }
+        
+        // 2. Delete the main book document
+        await bookRef.delete();
+        
+        return { success: true };
+    } catch (error: any) {
+        console.error("deleteBookAction failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
