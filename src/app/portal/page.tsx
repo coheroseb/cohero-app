@@ -226,6 +226,35 @@ const PortalPageContent: React.FC = () => {
     }
   };
 
+  // Quick Semantic Search
+  const [portalSearchQuery, setPortalSearchQuery] = useState('');
+  const [portalSearchResults, setPortalSearchResults] = useState<any[] | null>(null);
+  const [isPortalSearchLoading, setIsPortalSearchLoading] = useState(false);
+  const [portalSearchError, setPortalSearchError] = useState<string | null>(null);
+
+  const handlePortalSearch = async (queryText: string) => {
+    const cleanQuery = queryText.trim();
+    if (!cleanQuery) return;
+
+    setIsPortalSearchLoading(true);
+    setPortalSearchError(null);
+    try {
+      const response = await searchLiteratureAction(cleanQuery, 3);
+      setPortalSearchResults(response?.results || []);
+    } catch (err: any) {
+      console.error("Portal literature search error:", err);
+      setPortalSearchError("Kunne ikke gennemføre søgningen. Prøv igen.");
+    } finally {
+      setIsPortalSearchLoading(false);
+    }
+  };
+
+  const clearPortalSearch = () => {
+    setPortalSearchQuery('');
+    setPortalSearchResults(null);
+    setPortalSearchError(null);
+  };
+
   // --- Curriculum / Module Identification ---
   const curriculumsQuery = useMemoFirebase(() => {
     if (!firestore || !userProfile?.profession) return null;
@@ -538,6 +567,189 @@ const PortalPageContent: React.FC = () => {
           {/* LEFT COLUMN: Academic/Professional Focus */}
           <div className="lg:col-span-8 space-y-8">
             
+            {/* QUICK SEMANTIC PENSUM SEARCH */}
+            <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 border border-slate-100 shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+                <Search className="w-40 h-40 text-violet-500" />
+              </div>
+
+              <div className="relative z-10 space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-violet-50 text-violet-600 rounded-2xl flex items-center justify-center">
+                    <Search className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight">Hurtig Pensumsøgning</h3>
+                    <p className="text-xs font-medium text-slate-400">Søg semantisk i bogbasen og find relevante kapitler med det samme</p>
+                  </div>
+                </div>
+
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handlePortalSearch(portalSearchQuery);
+                  }}
+                  className="relative flex items-center gap-3"
+                >
+                  <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input 
+                      type="text"
+                      value={portalSearchQuery}
+                      onChange={(e) => setPortalSearchQuery(e.target.value)}
+                      placeholder="Søg i dit pensum (f.eks. 'Magtrelationer', 'Forvaltningsret'...)"
+                      className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 outline-none transition-all"
+                    />
+                    {portalSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={clearPortalSearch}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <Button 
+                    type="submit"
+                    disabled={isPortalSearchLoading || !portalSearchQuery.trim()}
+                    className="bg-violet-600 hover:bg-violet-700 text-white rounded-2xl px-6 font-black uppercase tracking-widest text-[11px] h-14 shadow-lg shadow-violet-100 active:scale-95 transition-all"
+                  >
+                    Søg
+                  </Button>
+                </form>
+
+                {/* Popular Topics (When no search has been run) */}
+                {!portalSearchResults && !isPortalSearchLoading && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Hurtige emner:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {["Magtrelationer", "Forvaltningsloven", "Børnekonventionen", "Socialt arbejde"].map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            setPortalSearchQuery(tag);
+                            handlePortalSearch(tag);
+                          }}
+                          className="px-3.5 py-2 bg-slate-50 hover:bg-violet-50 text-[10px] text-slate-500 hover:text-violet-600 border border-slate-100 hover:border-violet-100 rounded-xl font-bold transition-all cursor-pointer"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Loading state */}
+                {isPortalSearchLoading && (
+                  <div className="py-12 text-center space-y-4 border-t border-slate-100 pt-6">
+                    <Loader2 className="w-8 h-8 text-violet-600 animate-spin mx-auto" />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Finder de mest relevante kilder i bogbasen...</p>
+                  </div>
+                )}
+
+                {/* Error state */}
+                {portalSearchError && (
+                  <div className="p-4 bg-rose-50 text-rose-600 text-xs font-bold rounded-2xl border border-rose-100 mt-4">
+                    {portalSearchError}
+                  </div>
+                )}
+
+                {/* Search Results */}
+                {portalSearchResults && !isPortalSearchLoading && (
+                  <div className="space-y-6 mt-6 pt-6 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-black text-violet-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Library className="w-4 h-4" />
+                        Søgeresultater ({portalSearchResults.length})
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={clearPortalSearch}
+                        className="text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+                      >
+                        Ryd søgning
+                      </button>
+                    </div>
+
+                    {portalSearchResults.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">Ingen matchende litteratur fundet i bogbasen for denne søgning.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {portalSearchResults.map((book: any, bIdx: number) => (
+                          <div 
+                            key={bIdx} 
+                            className="bg-slate-50/50 rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-4 relative group hover:bg-white hover:shadow-md transition-all duration-300"
+                          >
+                            <div className="space-y-4">
+                              <div className="flex gap-3 items-start">
+                                {/* Spine cover */}
+                                <div className={`w-10 h-14 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded-lg shadow-sm shrink-0 flex items-end p-1`}>
+                                  <BookOpen className="w-3.5 h-3.5 text-white/50" />
+                                </div>
+                                <div className="min-w-0 space-y-0.5">
+                                  <h5 className="text-[11px] font-black text-slate-900 leading-snug line-clamp-2" title={book.bookTitle}>
+                                    {book.bookTitle}
+                                  </h5>
+                                  <p className="text-[9px] text-slate-400 font-bold truncate">
+                                    {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Chapters list */}
+                              {book.matchingChapters && book.matchingChapters.length > 0 && (
+                                <div className="space-y-1.5 pl-1 shrink-0">
+                                  {book.matchingChapters.map((chap: any, cIdx: number) => (
+                                    <div key={cIdx} className="flex justify-between text-[10px] text-slate-500 font-bold gap-2 leading-tight">
+                                      <span className="line-clamp-1">· {chap.title}</span>
+                                      {chap.pageNumber && <span className="shrink-0 text-slate-400">S. {chap.pageNumber}</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Reference */}
+                            {book.apaCitation && (
+                              <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-200/50">
+                                <span className="text-[9px] text-slate-400 font-medium italic truncate flex-1" title={book.apaCitation}>
+                                  {book.apaCitation}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCopyCitation(book.apaCitation, e)}
+                                  className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors shadow-sm shrink-0 flex items-center justify-center active:scale-95"
+                                  title="Kopier reference"
+                                >
+                                  {copiedCitation === book.apaCitation ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex justify-center pt-2">
+                      <Link 
+                        href={`/pensum-search?q=${encodeURIComponent(portalSearchQuery)}`}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-violet-50 hover:bg-violet-100 border border-violet-100 text-[10px] font-black uppercase tracking-widest text-violet-600 rounded-xl transition-all hover:scale-105 active:scale-95"
+                      >
+                        Se alle resultater i pensumsøgningen
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* GRADUATED / PROFESSIONAL HEADER */}
             {userProfile?.isQualified && (
                <div className="relative bg-slate-900 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-12 text-white shadow-2xl overflow-hidden group">
