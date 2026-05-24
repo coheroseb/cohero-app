@@ -123,7 +123,7 @@ function CopyCitationButton({ citation }: { citation: string }) {
 
 // Main page content that uses SearchParams
 function PensumSearchContent() {
-  const { user, openAuthPage } = useApp();
+  const { user, openAuthPage, userProfile } = useApp();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -140,6 +140,8 @@ function PensumSearchContent() {
   // Filters state
   const [relevanceFilter, setRelevanceFilter] = useState<'all' | 'high'>('all');
   const [languageFilter, setLanguageFilter] = useState<'all' | 'da'>('all');
+
+  const hasProAccess = userProfile?.membership === 'Kollega+' || userProfile?.membership === 'Semesterpakken' || userProfile?.role === 'admin';
 
   const handleLikeBook = async (bookId: string) => {
     if (!user) {
@@ -430,6 +432,38 @@ function PensumSearchContent() {
     }
     return true;
   });
+
+  if (!hasProAccess) {
+    return (
+      <div className="bg-[#F8F9FA] min-h-screen pb-24 font-sans selection:bg-indigo-100 flex flex-col">
+        <div className="max-w-7xl mx-auto px-6 pt-6 w-full">
+          <Link href="/portal" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-xs uppercase tracking-wider bg-white px-5 py-3 rounded-full border border-slate-100 shadow-sm">
+            <ArrowLeft className="w-4 h-4" />
+            Tilbage til portalen
+          </Link>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6 mt-12">
+          <div className="max-w-2xl mx-auto bg-white rounded-[3rem] p-12 text-center border border-indigo-100 shadow-[0_30px_70px_rgba(0,0,0,0.06)] relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-10 opacity-[0.03] scale-150 pointer-events-none">
+              <Search className="w-64 h-64 text-indigo-500" />
+            </div>
+            <div className="relative z-10">
+               <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
+                 <BrainCircuit className="w-12 h-12 text-indigo-600" />
+               </div>
+               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6 serif tracking-tight">Lås op for Pensumsøgning</h2>
+               <p className="text-slate-500 mb-10 font-medium text-lg max-w-lg mx-auto leading-relaxed">Pensumsøgning og konkrete litteraturhenvisninger er eksklusivt for Kollega+ og Semesterpakken. Opgrader dit abonnement for at få adgang og søg i hele din uddannelses pensum.</p>
+               <Link href="/upgrade">
+                 <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-200">
+                   Opgrader Nu
+                 </button>
+               </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#F8F9FA] min-h-screen pb-24 font-sans selection:bg-indigo-100">

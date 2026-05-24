@@ -117,6 +117,7 @@ const getGradient = (title: string) => {
 
 const PortalPageContent: React.FC = () => {
   const { user, userProfile, isUserLoading, refetchUserProfile } = useApp();
+  const hasProAccess = userProfile?.membership === 'Kollega+' || userProfile?.membership === 'Semesterpakken' || userProfile?.role === 'admin';
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -584,8 +585,23 @@ const PortalPageContent: React.FC = () => {
                   </div>
                 </div>
 
-                <form 
-                  onSubmit={(e) => {
+                {!hasProAccess ? (
+                  <div className="mt-4 p-8 bg-slate-50 rounded-[1.5rem] border border-slate-100 text-center relative overflow-hidden flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Crown className="w-8 h-8 text-violet-600" />
+                    </div>
+                    <h4 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Eksklusivt for Kollega+</h4>
+                    <p className="text-sm text-slate-500 mb-6 font-medium max-w-sm">Hurtig pensumsøgning og litteraturhenvisninger er forbeholdt Kollega+ medlemmer.</p>
+                    <Link href="/upgrade">
+                      <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl px-8 font-black uppercase tracking-widest text-[11px] h-12 shadow-lg shadow-violet-100 transition-all hover:scale-105 active:scale-95">
+                        Opgrader Nu <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <form 
+                      onSubmit={(e) => {
                     e.preventDefault();
                     handlePortalSearch(portalSearchQuery);
                   }}
@@ -746,6 +762,8 @@ const PortalPageContent: React.FC = () => {
                       </Link>
                     </div>
                   </div>
+                )}
+                  </>
                 )}
               </div>
             </div>

@@ -363,7 +363,6 @@ export default function LandingPage() {
                     <div className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">0 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/mdr</span></div>
                     <ul className="space-y-6 mb-16 flex-grow">
                       {[
-                        "Begrænset Pensumsøgning",
                         "1 dagligt opslag i Begrebsguiden",
                         "Udvalgte paragraffer i Lovportalen",
                         "Se dine personlige fremskridt",

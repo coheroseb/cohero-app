@@ -137,6 +137,7 @@ const getGradient = (title: string) => {
 
 function MineMaterialerContent() {
   const { user, userProfile, isUserLoading } = useApp();
+  const hasProAccess = userProfile?.membership === 'Kollega+' || userProfile?.membership === 'Semesterpakken' || userProfile?.role === 'admin';
   const firestore = useFirestore();
   const storage = useStorage();
   const { toast } = useToast();
@@ -1730,7 +1731,20 @@ function MineMaterialerContent() {
                                   </Link>
                               </div>
 
-                              {isGoalLiteratureLoading ? (
+                              {!hasProAccess ? (
+                                  <div className="p-8 bg-slate-50 rounded-[1.5rem] border border-slate-100 text-center relative overflow-hidden flex flex-col items-center justify-center">
+                                      <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                          <Crown className="w-8 h-8 text-indigo-600" />
+                                      </div>
+                                      <h4 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Eksklusivt for Kollega+</h4>
+                                      <p className="text-sm text-slate-500 mb-6 font-medium max-w-sm">Få serveret konkrete litteraturforslag til dine læringsmål med sidetal og APA-referencer.</p>
+                                      <Link href="/upgrade">
+                                          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 font-black uppercase tracking-widest text-[11px] h-12 shadow-lg shadow-indigo-100 transition-all hover:scale-105 active:scale-95">
+                                              Opgrader Nu <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                                          </Button>
+                                      </Link>
+                                  </div>
+                              ) : isGoalLiteratureLoading ? (
                                   <div className="py-12 text-center space-y-4">
                                       <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
                                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Finder relevante bøger og kapitler...</p>
