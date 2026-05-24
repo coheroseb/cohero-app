@@ -20,6 +20,7 @@ import {
   Wand2,
   Trophy,
   Library,
+  BookOpen,
   ShieldCheck,
   Check,
   Heart,
@@ -191,7 +192,7 @@ export default function LandingPage() {
                 </motion.h1>
                 
                 <p className="text-[16px] sm:text-lg lg:text-xl text-slate-600 max-w-lg lg:max-w-xl leading-relaxed sm:leading-relaxed font-medium">
-                  Socialrådgiverstudiet er krævende, og lovgivningen er uoverskuelig. Cohéro strukturerer din viden og validerer din juridiske forståelse i realtid, så du kan fokusere på at gøre en forskel – med fuld professionel rygdækning.
+                  Socialrådgiverstudiet er krævende, og pensum er overvældende. Cohéro strukturerer din viden, foreslår relevant litteratur direkte ud fra dine læringsmål med præcise sidetal, genererer færdige APA-referencer og validerer din juridiske forståelse. Alt sammen samlet på én intelligent platform.
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -282,14 +283,14 @@ export default function LandingPage() {
                 >
                    <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center">
-                        <Scale className="w-5 h-5 font-bold" />
+                        <BookOpen className="w-5 h-5 font-bold" />
                       </div>
                       <div>
-                        <div className="text-[10px] font-black uppercase text-amber-400 tracking-widest">Lovportalen</div>
-                        <div className="text-sm font-bold">Punkt 7.2 Analyseret</div>
+                        <div className="text-[10px] font-black uppercase text-amber-400 tracking-widest">Pensumsøgning</div>
+                        <div className="text-sm font-bold">Kapitel 4 fundet</div>
                       </div>
                    </div>
-                   <p className="text-[11px] text-slate-400 leading-relaxed italic">"Retssikkerheden for den enkelte borger vægtes tungt jf. Servicelovens §82..."</p>
+                   <p className="text-[11px] text-slate-400 leading-relaxed italic">"Kapitel 4: 'Magt og autoritet i socialt arbejde' (s. 124) er direkte relevant for dit læringsmål."</p>
                 </motion.div>
 
                 {/* Floating "AI Intelligence" - Interactive Element 2 */}
@@ -462,33 +463,55 @@ export default function LandingPage() {
                       <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                      </div>
                   </div>
-               </div>
+                </div>
+              </Reveal>
+
+             {/* Feature 2.5: Pensumsøgning & Litteraturforslag */}
+             <Reveal className="lg:col-span-8">
+                <div onClick={onStart} className="h-full bg-white border border-slate-100 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] shadow-sm relative overflow-hidden group sm:hover:shadow-2xl sm:hover:border-violet-200 transition-all cursor-pointer active:scale-[0.98]">
+                   <div className="absolute top-[-20%] right-[-10%] p-12 opacity-[0.03] sm:group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+                      <BookOpen className="w-80 h-80 -rotate-12 text-slate-900" />
+                   </div>
+                   <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-10">
+                      <div className="w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-br from-violet-100 to-violet-50 text-violet-600 rounded-[24px] sm:rounded-[32px] flex items-center justify-center flex-shrink-0 sm:group-hover:rotate-6 sm:group-hover:scale-105 transition-all shadow-sm border border-violet-200/50">
+                         <Library className="w-10 h-10 sm:w-12 sm:h-12" />
+                      </div>
+                      <div className="space-y-4">
+                         <span className="inline-block px-3 py-1.5 bg-slate-50 text-slate-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full border border-slate-200">Nyhed: Pensumsøgning</span>
+                         <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Intelligent Litteratursøgning</h3>
+                         <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium">Søg semantisk i hele dit pensum. Få konkrete litteraturforslag koblet direkte til dine læringsmål, komplet med sidetal og færdige APA-referencer.</p>
+                         <div className="flex items-center gap-2 text-violet-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
+                           Prøv pensumsøgning <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                         </div>
+                      </div>
+                   </div>
+                </div>
              </Reveal>
 
              {/* Feature 3: Folketinget */}
-             <Reveal className="lg:col-span-12">
-               <div onClick={onStart} className="bg-gradient-to-br from-rose-50 to-white border border-rose-100 p-8 sm:p-12 lg:p-16 rounded-[32px] sm:rounded-[48px] flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-12 group sm:hover:shadow-2xl sm:hover:border-rose-200 transition-all cursor-pointer shadow-sm relative overflow-hidden active:scale-[0.98]">
-                  <div className="flex-1 space-y-4 sm:space-y-6 order-2 sm:order-1 relative z-10">
-                     <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-rose-600 uppercase tracking-widest bg-white px-3 py-1.5 rounded-full border border-rose-100 mb-2">
-                        <Zap className="w-3.5 h-3.5 fill-current" /> Sagens kerne i realtid
-                     </div>
-                     <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">Folketinget Direkte</h3>
-                     <p className="text-slate-500 text-[16px] sm:text-lg leading-relaxed font-medium max-w-2xl">Overvågning af nye lovforslag med direkte analyse af betydningen for velfærdsstaten og dit faglige virke.</p>
-                     <div className="flex items-center gap-2 text-rose-600 font-bold uppercase text-[13px] tracking-wider pt-2 sm:group-hover:translate-x-2 transition-transform">
-                          Overvåg lovgivning <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+             <Reveal delay={0.1} className="lg:col-span-4">
+               <div onClick={onStart} className="h-full bg-gradient-to-br from-rose-50 to-white border border-rose-100 p-8 sm:p-12 rounded-[32px] sm:rounded-[48px] shadow-sm flex flex-col justify-between group cursor-pointer overflow-hidden relative active:scale-[0.98] transition-all hover:border-rose-200">
+                  <div className="absolute top-[-10%] right-[-10%] p-8 opacity-[0.02] sm:group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+                     <Building className="w-48 h-48 text-rose-900" />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-rose-500 text-white rounded-[24px] flex items-center justify-center mb-6 sm:mb-8 transition-colors border border-rose-100 shadow-sm">
+                      <Building className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-extrabold tracking-tight mb-3 text-slate-900">Folketinget Direkte</h3>
+                    <p className="text-slate-500 text-[15px] sm:text-base leading-relaxed font-medium">Overvågning af nye lovforslag med direkte analyse af betydningen for velfærdsstaten.</p>
+                  </div>
+                  <div className="pt-10 flex items-center justify-between border-t border-rose-100 mt-auto relative z-10">
+                     <span className="text-[11px] font-bold uppercase tracking-widest text-rose-600">Overvåg lovgivning</span>
+                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-rose-100 flex items-center justify-center bg-white sm:group-hover:bg-rose-500 sm:group-hover:text-white transition-all">
+                       <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                      </div>
                   </div>
-                  <div className="w-20 h-20 sm:w-32 sm:h-32 bg-white text-rose-500 rounded-[24px] sm:rounded-[32px] flex items-center justify-center flex-shrink-0 sm:group-hover:-translate-y-2 transition-all shadow-xl border border-rose-100 order-1 sm:order-2 relative z-10">
-                     <Building className="w-10 h-10 sm:w-16 sm:h-16" />
-                  </div>
-                  {/* Decor */}
-                  <div className="absolute top-1/2 -translate-y-1/2 right-0 w-64 h-64 bg-rose-200/20 rounded-full blur-[60px] pointer-events-none"></div>
                </div>
              </Reveal>
-
-          </div>
-        </div>
-      </section>
+           </div>
+         </div>
+       </section>
 
       {/* 3.5 SECOND OPINION DEEP DIVE (Innovative Visual Stack) */}
       <section className="py-32 sm:py-48 bg-white relative overflow-hidden px-5 sm:px-8">
