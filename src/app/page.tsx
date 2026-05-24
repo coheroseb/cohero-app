@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { 
   Sparkles, Brain, ArrowRight, Scale, ChevronRight, FileText,
   ArrowUpRight, CheckCircle2, Building, BookOpen, Music, Check, Gift, Bird, Ghost,
-  ShieldCheck
+  ShieldCheck, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -344,9 +344,9 @@ export default function LandingPage() {
          </div>
        </section>
 
-       {/* 5. PRICING SECTION (Ultra Minimal) */}
+       {/* 5. PRICING SECTION (All 3 Tiers) */}
        <section className="bg-[#FAF9F6] py-32 sm:py-48 px-5 sm:px-8 relative z-20">
-          <div className="max-w-4xl mx-auto text-center space-y-16">
+          <div className="max-w-7xl mx-auto text-center space-y-16">
              <Reveal>
                <h2 className="text-5xl sm:text-7xl font-black text-slate-900 tracking-tight">
                  Din fremtidige <br/>
@@ -354,29 +354,88 @@ export default function LandingPage() {
                </h2>
              </Reveal>
 
-             <Reveal delay={0.1}>
-               <div className="max-w-xl mx-auto bg-white rounded-[3rem] p-10 sm:p-14 border border-slate-100 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] flex flex-col items-center">
-                  <span className="px-4 py-2 bg-indigo-50 text-indigo-600 font-black text-[10px] uppercase tracking-widest rounded-full mb-8">Ubegrænset adgang</span>
-                  <div className="text-6xl font-black text-slate-900 tracking-tighter mb-8">Kollega+</div>
-                  <ul className="space-y-4 text-left w-full max-w-sm mb-10">
-                    {[
-                      "Ubegrænset Pensumsøgning",
-                      "Ubegrænset AI Opslagsværk",
-                      "Fuld adgang til Lovportalen",
-                      "Folketinget Direkte overvågning"
-                    ].map((feature, i) => (
-                      <li key={i} className="flex items-center gap-4 text-slate-600 font-medium">
-                         <CheckCircle2 className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-                         <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button onClick={onStart} className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-xl">
-                     Prøv gratis i 7 dage
-                  </button>
-                  <p className="text-slate-400 text-xs font-medium mt-6">Ingen binding. Afmeld når som helst.</p>
-               </div>
-             </Reveal>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch mt-16 text-left">
+               {/* Free Plan */}
+               <Reveal delay={0} className="w-full">
+                 <div className="h-full bg-white border border-slate-200 p-10 sm:p-14 rounded-[3.5rem] flex flex-col hover:shadow-xl hover:border-slate-300 transition-all">
+                    <h3 className="text-2xl font-black text-slate-900 mb-2">Gratis</h3>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10">Basis Adgang</p>
+                    <div className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">0 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/mdr</span></div>
+                    <ul className="space-y-6 mb-16 flex-grow">
+                      {[
+                        "Begrænset Pensumsøgning",
+                        "1 dagligt opslag i Begrebsguiden",
+                        "Udvalgte paragraffer i Lovportalen",
+                        "Se dine personlige fremskridt",
+                      ].map(item => (
+                        <li key={item} className="flex items-center gap-4 text-slate-600 font-medium">
+                           <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                           <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button onClick={onStart} className="w-full py-6 border-2 border-slate-200 text-slate-900 rounded-[2rem] font-bold text-[13px] uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all">Start gratis</button>
+                 </div>
+               </Reveal>
+
+               {/* Kollega+ */}
+               <Reveal delay={0.1} className="w-full lg:-mt-8 lg:mb-[-2rem] relative z-10">
+                  <div className="h-full bg-slate-900 p-10 sm:p-14 rounded-[4rem] shadow-2xl flex flex-col text-white relative overflow-hidden border border-white/10">
+                     <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(99,102,241,0.2)_0%,transparent_50%)]"></div>
+                     <div className="relative z-10">
+                           <div className="inline-block bg-indigo-500 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 shadow-xl shadow-indigo-500/20">Mest Populære</div>
+                           <h3 className="text-3xl font-black mb-2">Kollega+</h3>
+                           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-10">Fuld Adgang</p>
+                           
+                           <div className="mb-12">
+                               <div className="text-6xl font-black tracking-tighter mb-4">89 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/mdr</span></div>
+                               <p className="text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                                   <Zap className="w-4 h-4 fill-current" /> 7 dages gratis prøve
+                               </p>
+                           </div>
+                     </div>
+
+                     <ul className="space-y-6 mb-16 flex-grow relative z-10">
+                        {[
+                          "Ubegrænset Pensumsøgning",
+                          "Ubegrænset AI Opslagsværk",
+                          "Fuld adgang til Lovportalen",
+                          "Folketinget Direkte overvågning",
+                          "Gem vigtige kilder & arkiv"
+                        ].map(item => (
+                          <li key={item} className="flex items-center gap-4 text-white font-medium">
+                             <div className="w-6 h-6 bg-indigo-500/20 rounded-full flex items-center justify-center border border-indigo-500/30 flex-shrink-0">
+                                <Check className="w-4 h-4 text-indigo-400" />
+                             </div>
+                             <span>{item}</span>
+                          </li>
+                        ))}
+                     </ul>
+                     <button onClick={onStart} className="relative z-10 w-full py-7 bg-indigo-500 text-white rounded-[2.5rem] font-bold text-[13px] uppercase tracking-widest shadow-2xl shadow-indigo-500/30 hover:scale-105 active:scale-95 transition-all">Vælg Kollega+</button>
+                  </div>
+               </Reveal>
+
+               {/* Semesterpakken */}
+               <Reveal delay={0.2} className="w-full">
+                  <div className="h-full bg-white p-10 sm:p-14 rounded-[3.5rem] border border-slate-200 flex flex-col hover:shadow-xl transition-all relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-slate-50/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative z-10 flex flex-col h-full">
+                       <h3 className="text-2xl font-black text-slate-900 mb-2">Semesterpakken</h3>
+                       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10">Spar på Kollega+</p>
+                       <div className="mb-10">
+                         <div className="text-5xl font-black text-slate-900 tracking-tighter mb-4">329 kr. <span className="text-base font-medium text-slate-400 tracking-normal">/5 mdr</span></div>
+                         <p className="text-emerald-600 text-xs font-black uppercase tracking-widest flex items-center gap-1.5">
+                           <CheckCircle2 className="w-3.5 h-3.5" /> Spar 116 kr. totalt
+                         </p>
+                       </div>
+                       <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed">Præcis det samme som Kollega+ – alle funktioner og ubegrænset adgang – bare betalt samlet for et helt semester.</p>
+                       <div className="mt-auto pt-8">
+                         <button onClick={onStart} className="w-full py-6 border-2 border-slate-200 text-slate-900 rounded-[2rem] font-bold text-[13px] uppercase tracking-widest hover:border-slate-300 hover:shadow-md transition-all">Vælg Semester</button>
+                       </div>
+                    </div>
+                  </div>
+               </Reveal>
+             </div>
           </div>
        </section>
     </div>
