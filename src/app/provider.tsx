@@ -10,7 +10,20 @@ import React, {
   Suspense,
   useMemo,
 } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+interface ProfilePlugin {
+  updateProfile(data: {
+    userProfile: any;
+    curriculum: any;
+    activeModule: any;
+  }): Promise<void>;
+  reportLoggingIn(): Promise<void>;
+  reportLoginError(data: { message: string }): Promise<void>;
+}
+
+const ProfilePlugin = registerPlugin<ProfilePlugin>('ProfilePlugin');
+
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -281,6 +294,45 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const IS_PRE_LAUNCH = false;
 
   const { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin, handleAppleLogin, handleResetPassword } = useUser();
+
+  useEffect(() => {
+    const handleNativeLogin = async (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { provider, email, password } = customEvent.detail || {};
+      
+      try {
+        if (Capacitor.isNativePlatform()) {
+          await ProfilePlugin.reportLoggingIn();
+        }
+        if (provider === 'google') {
+          await handleGoogleLogin();
+        } else if (provider === 'apple') {
+          await handleAppleLogin();
+        } else if (provider === 'email') {
+          if (!email || !password) {
+            throw new Error('E-mail og adgangskode skal udfyldes.');
+          }
+          await handleLogin(email, password);
+        }
+      } catch (err: any) {
+        console.error('Native login failed:', err);
+        const errMsg = err?.message || 'Login fejlede. Prøv venligst igen.';
+        if (Capacitor.isNativePlatform()) {
+          await ProfilePlugin.reportLoginError({ message: errMsg });
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('native-login', handleNativeLogin as any);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('native-login', handleNativeLogin as any);
+      }
+    };
+  }, [handleLogin, handleGoogleLogin, handleAppleLogin]);
+
   const [userProfile, setUserProfile] = useState<UserProfile | null | undefined>(undefined);
   const [isProfileInitialized, setIsProfileInitialized] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);

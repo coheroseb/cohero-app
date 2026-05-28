@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { 
   GraduationCap, 
   Flame, 
@@ -12,14 +12,98 @@ import {
 import { useApp } from '@/app/provider';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
+import { registerPlugin, Capacitor } from '@capacitor/core';
+
+interface ProfilePlugin {
+  updateProfile(data: {
+    userProfile: any;
+    curriculum: any;
+    activeModule: any;
+  }): Promise<void>;
+  reportLoggingIn(): Promise<void>;
+  reportLoginError(data: { message: string }): Promise<void>;
+}
+
+const ProfilePlugin = registerPlugin<ProfilePlugin>('ProfilePlugin');
 
 function getSemNum(semester: string): number {
   return parseInt(semester?.match(/\d+/)?.[0] ?? '1');
 }
 
 export default function NativePortal() {
-  const { userProfile } = useApp();
+  const { userProfile, handleLogin, handleGoogleLogin, handleAppleLogin } = useApp();
   const firestore = useFirestore();
+
+  useEffect(() => {
+    const handleNativeLogin = async (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { provider, email, password } = customEvent.detail || {};
+      
+      try {
+        if (Capacitor.isNativePlatform()) {
+          await ProfilePlugin.reportLoggingIn();
+        }
+        if (provider === 'google') {
+          await handleGoogleLogin();
+        } else if (provider === 'apple') {
+          await handleAppleLogin();
+        } else if (provider === 'email') {
+          if (!email || !password) {
+            throw new Error('E-mail og adgangskode skal udfyldes.');
+          }
+          await handleLogin(email, password);
+        }
+      } catch (err: any) {
+        console.error('Native login failed:', err);
+        const errMsg = err?.message || 'Login fejlede. Prøv venligst igen.';
+        if (Capacitor.isNativePlatform()) {
+          await ProfilePlugin.reportLoginError({ message: errMsg });
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('native-login', handleNativeLogin as any);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('native-login', handleNativeLogin as any);
+      }
+    };
+  }, [handleLogin, handleGoogleLogin, handleAppleLogin]);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform() && userProfile) {
+      const data = {
+        userProfile: {
+          uid: userProfile.uid || '',
+          name: userProfile.name || '',
+          profession: userProfile.profession || '',
+          institution: userProfile.institution || '',
+          semester: userProfile.semester || '',
+          studyStarted: userProfile.studyStarted || '',
+          dailyChallengeStreak: userProfile.dailyChallengeStreak || 0,
+        },
+        curriculum: curriculum ? {
+          id: curriculum.id || '',
+          name: curriculum.name || '',
+          institution: curriculum.institution || '',
+          profession: curriculum.profession || '',
+        } : null,
+        activeModule: activeModule ? {
+          id: activeModule.id || '',
+          name: activeModule.name || '',
+          about: activeModule.about || '',
+          learningGoals: activeModule.learningGoals || [],
+        } : null,
+      };
+      
+      console.log('Sending profile data to native iOS:', data);
+      ProfilePlugin.updateProfile(data)
+        .then(() => console.log('Successfully updated profile data in native'))
+        .catch(err => console.error('Failed to update profile data in native', err));
+    }
+  }, [userProfile, curriculum, activeModule]);
 
   // --- Curriculum / Module Identification ---
   const curriculumsQuery = useMemoFirebase(() => {
