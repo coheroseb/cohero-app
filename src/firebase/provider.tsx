@@ -9,6 +9,7 @@ import {
   updateProfile,
   signInWithPopup,
   GoogleAuthProvider,
+  OAuthProvider,
   type User 
 } from 'firebase/auth';
 import { getFirestore, initializeFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -225,6 +226,70 @@ export const useUser = () => {
     return userCredential;
   };
 
+  const handleAppleLogin = async () => {
+    if (!auth || !firestore) throw new Error("Authentication service is not available.");
+    const provider = new OAuthProvider('apple.com');
+    const userCredential = await signInWithPopup(auth, provider);
+    
+    if (userCredential.user) {
+      // Collect attribution (same logic as signup)
+      let sourceData = {};
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('cohero_attribution');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            sourceData = {
+              conversionSource: parsed.source,
+              fbclid: parsed.fbclid || null,
+              uf: parsed.uf || null,
+              utm_source: parsed.utm_source || null,
+              convertedAt: serverTimestamp()
+            };
+          } catch (e) {}
+        }
+      }
+
+      // Compliance: Fetch latest terms version for new users
+      let latestTermsVersion = '1.0.0';
+      try {
+        const termsSnap = await getDoc(doc(firestore, 'globalConfigs', 'terms'));
+        if (termsSnap.exists()) {
+          latestTermsVersion = termsSnap.data().version || '1.0.0';
+        }
+      } catch (e) {
+        console.error("Failed to fetch terms version during Apple login:", e);
+      }
+      
+      const userDocRef = doc(firestore, 'users', userCredential.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      const isNewUser = !userDocSnap.exists();
+
+      const updateData: any = {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName || userCredential.user.email?.split('@')[0] || 'Ny Bruger',
+        lastLogin: serverTimestamp(),
+        lastActivityAt: serverTimestamp(),
+        ...sourceData
+      };
+
+      // Only set terms acceptance for new users to avoid unintended updates for existing users
+      if (isNewUser) {
+        updateData.acceptedTermsVersion = latestTermsVersion;
+        updateData.acceptedTermsAt = serverTimestamp();
+        updateData.role = 'user';
+        updateData.createdAt = serverTimestamp();
+      }
+
+      await setDoc(userDocRef, updateData, { merge: true });
+
+      if (typeof window !== 'undefined') localStorage.removeItem('cohero_attribution');
+    }
+
+    return userCredential;
+  };
+
   const handleResetPassword = async (email: string) => {
     const res = await sendPasswordResetEmailAction({ userEmail: email });
     if (!res.success) {
@@ -232,5 +297,5 @@ export const useUser = () => {
     }
   };
 
-  return { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin, handleResetPassword };
+  return { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin, handleAppleLogin, handleResetPassword };
 };

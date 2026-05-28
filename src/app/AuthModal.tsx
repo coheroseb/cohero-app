@@ -9,6 +9,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithPopup,
   getAdditionalUserInfo,
   sendPasswordResetEmail,
@@ -238,6 +239,36 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
     }
   };
 
+  const handleAppleSignIn = async () => {
+    if (!auth) return;
+    setLoading(true);
+    setError(null);
+    const provider = new OAuthProvider('apple.com');
+    
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const additionalUserInfo = getAdditionalUserInfo(result);
+      const isNewUser = !!additionalUserInfo?.isNewUser;
+
+      if (isNewUser) {
+        if(!user.emailVerified){
+          await sendVerificationEmail(auth, user);
+        }
+        await handleNewUser(user, pendingPriceId, user.displayName || user.email?.split('@')[0] || 'Ny Bruger');
+      } else {
+        setIsWaitingForProfile(true);
+      }
+
+    } catch (err: any) {
+      console.error('Apple sign-in error:', err);
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError('Der opstod en fejl under Apple login. Prøv venligst igen.');
+      }
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) return;
@@ -346,25 +377,44 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialState = '
             </div>
 
             {mode !== 'forgot' && (
-              <button
-                 onClick={handleGoogleSignIn}
-                 disabled={loading}
-                 className="w-full mb-4 py-3 sm:py-4 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all disabled:opacity-50 flex items-center justify-center group h-12 sm:h-14"
-              >
-                 {loading ? (
-                   <div className="w-5 h-5 border-2 border-slate-400/30 border-t-slate-400 rounded-full animate-spin"></div>
-                 ) : (
-                   <>
-                     <svg className="w-5 h-5 mr-3" viewBox="0 0 48 48">
-                       <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                       <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
-                       <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
-                       <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.02,35.636,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                     </svg>
-                     Fortsæt med Google
-                   </>
-                 )}
-              </button>
+              <div className="flex flex-col gap-3 mb-4">
+                <button
+                   onClick={handleGoogleSignIn}
+                   disabled={loading}
+                   className="w-full py-3 sm:py-4 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all disabled:opacity-50 flex items-center justify-center group h-12 sm:h-14"
+                >
+                   {loading ? (
+                     <div className="w-5 h-5 border-2 border-slate-400/30 border-t-slate-400 rounded-full animate-spin"></div>
+                   ) : (
+                     <>
+                       <svg className="w-5 h-5 mr-3" viewBox="0 0 48 48">
+                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+                         <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+                         <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.02,35.636,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                       </svg>
+                       Fortsæt med Google
+                     </>
+                   )}
+                </button>
+
+                <button
+                   onClick={handleAppleSignIn}
+                   disabled={loading}
+                   className="w-full py-3 sm:py-4 bg-slate-900 text-white hover:bg-black rounded-xl font-bold transition-all disabled:opacity-50 flex items-center justify-center group h-12 sm:h-14 shadow-sm"
+                >
+                   {loading ? (
+                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                   ) : (
+                     <>
+                       <svg className="w-5 h-5 mr-3 fill-current" viewBox="0 0 24 24">
+                         <path d="M17.05 20.28c-.98.95-2.05 1.88-3.08 1.88-1.04 0-1.37-.62-2.52-.62-1.15 0-1.52.6-2.52.64-1.04.04-2.23-1-3.23-1.95-2.03-1.93-3.58-5.46-3.58-8.77 0-5.26 3.42-8.04 6.78-8.04 1.06 0 2.06.66 2.72.66.65 0 1.9-.8 3.19-.8 1.34 0 2.58.48 3.38 1.4-2.82 1.7-2.38 5.68.83 6.98-1.08 2.65-2.55 5.25-3.57 6.62zM12.03 5.07c1.38-1.68 2.3-4.02 2.05-6.07-2.05.08-4.53 1.36-6 3.08-1.27 1.48-2.38 3.86-2.09 5.87 2.27.17 4.67-1.2 6.04-2.88z"/>
+                       </svg>
+                       Fortsæt med Apple
+                     </>
+                   )}
+                </button>
+              </div>
             )}
 
             {mode !== 'forgot' && (

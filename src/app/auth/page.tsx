@@ -13,7 +13,7 @@ import { Suspense } from 'react';
 type AuthMode = 'signin' | 'signup' | 'forgot';
 
 const AuthContent = () => {
-  const { user, handleLogin, handleSignup, handleGoogleLogin, handleResetPassword } = useApp();
+  const { user, handleLogin, handleSignup, handleGoogleLogin, handleAppleLogin, handleResetPassword } = useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialMode = searchParams?.get('mode') === 'signup' ? 'signup' : 'signin';
@@ -84,6 +84,17 @@ const AuthContent = () => {
       await handleGoogleLogin();
     } catch (err: any) {
       setError('Kunne ikke logge ind med Google. Prøv igen.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleAppleSubmit = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await handleAppleLogin();
+    } catch (err: any) {
+      setError('Kunne ikke logge ind med Apple. Prøv igen.');
       setIsLoading(false);
     }
   };
@@ -273,16 +284,30 @@ const AuthContent = () => {
                     <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.4em]"><span className="bg-white px-6 text-slate-300">Social Login</span></div>
                   </div>
 
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleGoogleSubmit}
-                    disabled={isLoading}
-                    className="w-full h-16 rounded-[2rem] text-[13px] font-black uppercase tracking-widest text-slate-600 flex items-center justify-center gap-4 bg-white border border-slate-100 hover:bg-slate-50 transition-all"
-                  >
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 grayscale opacity-70" />
-                    Fortsæt med Google
-                  </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={handleGoogleSubmit}
+                      disabled={isLoading}
+                      className="w-full h-16 rounded-[2rem] text-[13px] font-black uppercase tracking-widest text-slate-600 flex items-center justify-center gap-4 bg-white border border-slate-100 hover:bg-slate-50 transition-all"
+                    >
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 grayscale opacity-70" />
+                      Fortsæt med Google
+                    </Button>
+
+                    <Button 
+                      type="button" 
+                      onClick={handleAppleSubmit}
+                      disabled={isLoading}
+                      className="w-full h-16 rounded-[2rem] text-[13px] font-black uppercase tracking-widest bg-slate-900 text-white hover:bg-black transition-all flex items-center justify-center gap-4 shadow-sm"
+                    >
+                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M17.05 20.28c-.98.95-2.05 1.88-3.08 1.88-1.04 0-1.37-.62-2.52-.62-1.15 0-1.52.6-2.52.64-1.04.04-2.23-1-3.23-1.95-2.03-1.93-3.58-5.46-3.58-8.77 0-5.26 3.42-8.04 6.78-8.04 1.06 0 2.06.66 2.72.66.65 0 1.9-.8 3.19-.8 1.34 0 2.58.48 3.38 1.4-2.82 1.7-2.38 5.68.83 6.98-1.08 2.65-2.55 5.25-3.57 6.62zM12.03 5.07c1.38-1.68 2.3-4.02 2.05-6.07-2.05.08-4.53 1.36-6 3.08-1.27 1.48-2.38 3.86-2.09 5.87 2.27.17 4.67-1.2 6.04-2.88z"/>
+                      </svg>
+                      Fortsæt med Apple
+                    </Button>
+                  </div>
                 </>
               )}
             </form>

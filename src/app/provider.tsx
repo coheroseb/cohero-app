@@ -87,6 +87,7 @@ interface AppContextType {
   handleLogin: (email: string, pass: string) => Promise<any>;
   handleSignup: (email: string, pass: string, displayName: string) => Promise<any>;
   handleGoogleLogin: () => Promise<any>;
+  handleAppleLogin: () => Promise<any>;
   handleResetPassword: (email: string) => Promise<void>;
   isNativeApp: boolean;
   isNavbarHidden: boolean;
@@ -278,7 +279,7 @@ const MobileTabNavigation = ({ userProfile }: { userProfile: any }) => {
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const IS_PRE_LAUNCH = false;
 
-  const { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin, handleResetPassword } = useUser();
+  const { user, isUserLoading, handleLogin, handleSignup, handleGoogleLogin, handleAppleLogin, handleResetPassword } = useUser();
   const [userProfile, setUserProfile] = useState<UserProfile | null | undefined>(undefined);
   const [isProfileInitialized, setIsProfileInitialized] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
@@ -734,6 +735,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     handleLogin,
     handleSignup,
     handleGoogleLogin,
+    handleAppleLogin,
     handleResetPassword,
     isNativeApp,
     isNavbarHidden,
@@ -743,7 +745,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     effectiveTheme,
     campaigns,
     isMaintenanceMode,
-  }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, handleResetPassword, isNativeApp, isNavbarHidden, setIsNavbarHidden, usageLimits, activeTheme, effectiveTheme, campaigns, isMaintenanceMode]);
+  }), [user, userProfile, isUserLoading, hasPlayedDailyChallenge, cookieConsent, dailyChallengeGameType, refetchUserProfile, handleLogout, openAuthPage, openTeamModal, handleResendVerification, handleLogin, handleSignup, handleGoogleLogin, handleAppleLogin, handleResetPassword, isNativeApp, isNavbarHidden, setIsNavbarHidden, usageLimits, activeTheme, effectiveTheme, campaigns, isMaintenanceMode]);
 
   if (IS_PRE_LAUNCH) {
     return <ComingSoon />;
