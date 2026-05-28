@@ -238,6 +238,7 @@ const MobileTabNavigation = ({ userProfile }: { userProfile: any }) => {
 
     const mainTabs = [
         { label: 'Hjem', icon: Home, path: '/portal' },
+        { label: 'Pensum', icon: BookOpen, path: '/pensum-search' },
         { label: 'Jura', icon: Scale, path: '/lov-portal' },
         { label: 'Grupper', icon: MessageSquare, path: '/rum/groups' },
     ];
