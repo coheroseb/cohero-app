@@ -32,6 +32,8 @@ interface UserProfile {
   cohéroPoints?: number;
   lastLogin?: { toDate: () => Date };
   lastActivityAt?: { toDate: () => Date };
+  lastLoginLovportal?: { toDate: () => Date };
+  lastActivityLovportal?: { toDate: () => Date };
   createdAt?: { toDate: () => Date };
   role?: 'admin' | 'user';
   cprNumber?: string;
@@ -282,8 +284,18 @@ const AdminUsersPage = () => {
         const dateB = b.createdAt?.toDate()?.getTime() || 0;
         const pointsA = a.cohéroPoints || 0;
         const pointsB = b.cohéroPoints || 0;
-        const activityA = a.lastActivityAt?.toDate()?.getTime() || a.lastLogin?.toDate()?.getTime() || 0;
-        const activityB = b.lastActivityAt?.toDate()?.getTime() || b.lastLogin?.toDate()?.getTime() || 0;
+        const activityA = Math.max(
+            a.lastActivityAt?.toDate()?.getTime() || 0,
+            a.lastLogin?.toDate()?.getTime() || 0,
+            a.lastActivityLovportal?.toDate()?.getTime() || 0,
+            a.lastLoginLovportal?.toDate()?.getTime() || 0
+        );
+        const activityB = Math.max(
+            b.lastActivityAt?.toDate()?.getTime() || 0,
+            b.lastLogin?.toDate()?.getTime() || 0,
+            b.lastActivityLovportal?.toDate()?.getTime() || 0,
+            b.lastLoginLovportal?.toDate()?.getTime() || 0
+        );
 
         switch (sortBy) {
             case 'oldest': return dateA - dateB;
@@ -617,9 +629,11 @@ const AdminUsersPage = () => {
                 <tbody className="divide-y divide-slate-50">
                   {paginatedUsers.map((u, idx) => {
                     const lastActivity = u.lastActivityAt?.toDate() || u.lastLogin?.toDate();
+                    const lastLovportal = u.lastActivityLovportal?.toDate() || u.lastLoginLovportal?.toDate();
                     const createdAt = u.createdAt?.toDate();
                     const now = new Date();
-                    const isOnline = lastActivity ? (now.getTime() - lastActivity.getTime()) < 5 * 60 * 1000 : false;
+                    const isOnlineApp = lastActivity ? (now.getTime() - lastActivity.getTime()) < 5 * 60 * 1000 : false;
+                    const isOnlineLov = lastLovportal ? (now.getTime() - lastLovportal.getTime()) < 5 * 60 * 1000 : false;
                     const isAdmin = u.role === 'admin';
                     
                     return (
@@ -714,15 +728,24 @@ const AdminUsersPage = () => {
                            </div>
                         </td>
                         <td className="px-10 py-6">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.6)]' : 'bg-slate-200'}`}></div>
-                                <div>
-                                    <p className="text-[14px] font-bold text-slate-800 leading-none mb-1">
-                                        {lastActivity ? new Date(lastActivity).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) : 'Aldrig'}
-                                    </p>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        Kl. {lastActivity ? new Date(lastActivity).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) : '00:00'}
-                                    </p>
+                            <div className="flex flex-col gap-2">
+                                {/* App Activity */}
+                                <div className="flex items-center gap-2" title={isOnlineApp ? "Aktiv i Appen nu" : "Seneste aktivitet i Appen"}>
+                                    <div className={`w-2 h-2 rounded-full shrink-0 ${isOnlineApp ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-slate-200'}`}></div>
+                                    <div>
+                                        <p className="text-[11px] font-bold text-slate-800 leading-none mb-0.5">
+                                            App: {lastActivity ? new Date(lastActivity).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) + ' ' + new Date(lastActivity).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) : 'Aldrig'}
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Lovportal Activity */}
+                                <div className="flex items-center gap-2" title={isOnlineLov ? "Aktiv i Lovportalen nu" : "Seneste aktivitet i Lovportalen"}>
+                                    <div className={`w-2 h-2 rounded-full shrink-0 ${isOnlineLov ? 'bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'bg-slate-200'}`}></div>
+                                    <div>
+                                        <p className="text-[11px] font-bold text-indigo-600 leading-none">
+                                            Lov: {lastLovportal ? new Date(lastLovportal).toLocaleDateString('da-DK', { day: 'numeric', month: 'short' }) + ' ' + new Date(lastLovportal).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) : 'Aldrig'}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </td>
