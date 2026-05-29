@@ -37,7 +37,9 @@ import {
   ClipboardCheck,
   Wand2,
   Newspaper,
-  Search
+  Search,
+  Smartphone,
+  Globe
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
 import { generateAdminInsights, generateTikTokScripts, generateBlogPost } from './actions';
@@ -217,12 +219,34 @@ export default function StatsPage() {
           return actA - actB;
       });
 
+      const getLovportalActivity = (u: any) => {
+          const activity = u.lastActivityLovportal || u.lastLoginLovportal;
+          if (!activity) return null;
+          if (typeof activity.toDate === 'function') return activity.toDate();
+          if (activity instanceof Date) return activity;
+          if (typeof activity === 'string') return new Date(activity);
+          if (activity.seconds) return new Date(activity.seconds * 1000);
+          return null;
+      };
+
+      const lovportalUsers24h = allUsers.filter(u => {
+          const lastLovActivity = getLovportalActivity(u);
+          return lastLovActivity && lastLovActivity > d1;
+      });
+
+      const activeLovportal = lovportalUsers24h.length;
+      const activeLovportalIos = lovportalUsers24h.filter(u => u.lastActivityLovportalPlatform === 'ios' || u.createdSource === 'ios').length;
+      const activeLovportalWeb = lovportalUsers24h.filter(u => u.lastActivityLovportalPlatform === 'web' || (!u.lastActivityLovportalPlatform && u.createdSource !== 'ios')).length;
+
       const totalRiskMRR = riskUsers.length * 89; 
 
       return {
           totalUsers,
           dau,
           mau,
+          activeLovportal,
+          activeLovportalIos,
+          activeLovportalWeb,
           growth: growth30d.toFixed(1),
           monthlyTokenCost: realAiCost.toFixed(2),
           stickiness: stickiness.toFixed(1),
@@ -270,6 +294,17 @@ export default function StatsPage() {
           { title: 'Aktive (24t)', value: stats.dau, description: 'Kolleger online i dag', icon: Zap, color: 'emerald' },
           { title: 'Aktive (30d)', value: stats.mau, description: 'Unikke brugere denne mdr.', icon: Calendar, color: 'violet' },
           { title: 'Stickiness', value: stats.stickiness, suffix: '%', description: 'DAU/MAU Ratio (Engagement)', icon: MousePointer2, color: 'amber' },
+        ]
+      },
+      {
+        id: 'lovportal_activity',
+        title: 'Lovportal Aktivitet (24t)',
+        description: 'Hvor mange er aktive på Lovportalen fordelt på iOS app og Web?',
+        items: [
+          { title: 'Lovportal Aktive', value: stats.activeLovportal, description: 'Unikke brugere på Lovportalen i dag', icon: Zap, color: 'indigo' },
+          { title: 'iOS App (24t)', value: stats.activeLovportalIos, description: 'Aktive på Lovportal iOS appen', icon: Smartphone, color: 'emerald' },
+          { title: 'Webudgave (24t)', value: stats.activeLovportalWeb, description: 'Aktive på webversionen (law.cohero.dk)', icon: Globe, color: 'violet' },
+          { title: 'Lovportal Andel', value: stats.dau > 0 ? ((stats.activeLovportal / stats.dau) * 100).toFixed(0) : '0', suffix: '%', description: 'Andel af daglige aktive brugere på Lovportalen', icon: MousePointer2, color: 'amber' },
         ]
       },
       {
