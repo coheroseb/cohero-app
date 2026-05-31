@@ -314,7 +314,7 @@ const FileInputCard: React.FC<{
 
 const SecondOpinionPageContent = () => {
     const router = useRouter();
-    const { user, userProfile, refetchUserProfile } = useApp();
+    const { user, userProfile, refetchUserProfile, usageLimits } = useApp();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -474,25 +474,23 @@ const SecondOpinionPageContent = () => {
             const now = new Date();
             const isNewMonth = !lastUsage || lastUsage.getMonth() !== now.getMonth() || lastUsage.getFullYear() !== now.getFullYear();
 
-            let limitVal = 1;
-            switch (userProfile.membership) {
-                case 'Group Pro':
-                case 'Kollega':
-                    limitVal = 100;
-                    break;
-                case 'Kollega+':
-                case 'Institution':
-                    limitVal = 1000;
-                    break;
-                default:
-                    limitVal = 1; 
-            }
+            const currentTier = userProfile.membership || 'Kollega';
+            const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+            const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : { opinion: 0 };
+            const limitVal = tierLimits.opinion === -1 ? Infinity : (tierLimits.opinion ?? 0);
             
             const currentCount = isNewMonth ? 0 : (userData.monthlySecondOpinionCount || 0);
 
-            if (currentCount >= limitVal && !['Kollega+', 'Institution'].includes(userProfile.membership || '')) {
+            if (limitVal === 0) {
+                 setLimitError(`Second Opinion er ikke tilgængeligt på din nuværende plan. Opgrader til Kollega+ for adgang.`);
+                 setIsAnalyzing(false);
+                 if (progressInterval) clearInterval(progressInterval);
+                 return;
+            }
+
+            if (currentCount >= limitVal && !['Kollega+', 'Institution', 'Semesterpakken'].includes(userProfile.membership || '')) {
                  const planName = userProfile.membership || 'din plan';
-                 setLimitError(`Månedlig grænse nået for ${planName}.`);
+                 setLimitError(`Månedlig grænse nået for ${planName} (${limitVal} stk.). Opgrader til Kollega+ for fri adgang.`);
                  setIsAnalyzing(false);
                  if (progressInterval) clearInterval(progressInterval);
                  return;
@@ -533,7 +531,7 @@ const SecondOpinionPageContent = () => {
             const dataToSave = { 
                 input: { 
                     grade, 
-                    assignmentTitle: assignmentFile.name,
+                    assignmentTitle: assignmentFile!.name,
                     fileUrl: savedFileUrl, // Gemmer linket til PDF'en så admin kan se den
                     curriculumTitle: matchedModule.curriculumTitle,
                     moduleName: matchedModule.name,

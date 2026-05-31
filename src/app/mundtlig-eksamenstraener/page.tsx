@@ -64,7 +64,7 @@ interface AnalysisResult {
 }
 
 export default function MundtligEksamenstraenerPage() {
-  const { user, userProfile, isUserLoading } = useApp();
+  const { user, userProfile, isUserLoading, usageLimits } = useApp();
   const isUnderDevelopment = false;
   const router = useRouter();
   const { toast } = useToast();
@@ -95,8 +95,15 @@ export default function MundtligEksamenstraenerPage() {
   };
 
   const usedToday = userProfile ? getDailyCount(userProfile.lastOralExamUsage, userProfile.dailyOralExamCount) : 0;
-  const totalAllowed = isPremiumUser ? Infinity : 0;
-  const isOverLimit = !isPremiumUser;
+  
+  const isOverLimit = useMemo(() => {
+    if (isPremiumUser) return false;
+    const currentTier = userProfile?.membership || 'Kollega';
+    const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+    const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : { oralExam: 1 };
+    const oralExamLimit = tierLimits.oralExam === -1 ? Infinity : (tierLimits.oralExam ?? 1);
+    return usedToday >= oralExamLimit;
+  }, [isPremiumUser, userProfile, usageLimits, usedToday]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {

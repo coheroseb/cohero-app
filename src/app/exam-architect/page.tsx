@@ -83,7 +83,7 @@ const StageIndicator = ({ currentStage }: { currentStage: number }) => {
 };
 
 const ExamArchitectPageContent: React.FC = () => {
-  const { user, userProfile, refetchUserProfile, isUserLoading } = useApp();
+  const { user, userProfile, refetchUserProfile, isUserLoading, usageLimits } = useApp();
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -247,13 +247,18 @@ const ExamArchitectPageContent: React.FC = () => {
     setLimitError(null);
 
     // Limit check
-    if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
+    const currentTier = userProfile.membership || 'Kollega';
+    const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+    const tierLimits = (usageLimits && usageLimits[effectiveTier]) ? usageLimits[effectiveTier] : { architect: 1 };
+    const lim = tierLimits.architect === -1 ? Infinity : (tierLimits.architect ?? 1);
+
+    if (['Kollega', 'Group Pro'].includes(currentTier)) {
       const lastUsage = userProfile.lastExamArchitectUsage?.toDate();
       const now = new Date();
       const isNewMonth = !lastUsage || lastUsage.getMonth() !== now.getMonth() || lastUsage.getFullYear() !== now.getFullYear();
       const count = isNewMonth ? 0 : (userProfile.monthlyExamArchitectCount || 0);
-      if (count >= 2) {
-        setLimitError('Du har brugt dine 2 månedlige forsøg. Opgrader til Kollega+ for ubegrænset adgang.');
+      if (count >= lim) {
+        setLimitError(`Du har brugt din månedlige grænse (${lim} stk.). Opgrader til Kollega+ for ubegrænset adgang.`);
         setIsGenerating(false);
         return;
       }
@@ -281,7 +286,7 @@ const ExamArchitectPageContent: React.FC = () => {
       const batch = writeBatch(firestore);
       const userRef = doc(firestore, 'users', user.uid);
       const userUpdates: {[key: string]: any} = { lastExamArchitectUsage: serverTimestamp() };
-      if (userProfile.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership)) {
+      if (['Kollega', 'Group Pro'].includes(currentTier)) {
         const lastUsage = userProfile.lastExamArchitectUsage?.toDate();
         if (!lastUsage || lastUsage.getMonth() !== new Date().getMonth() || lastUsage.getFullYear() !== new Date().getFullYear()) {
           userUpdates.monthlyExamArchitectCount = 1;

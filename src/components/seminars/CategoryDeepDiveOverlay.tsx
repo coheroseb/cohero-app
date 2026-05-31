@@ -103,7 +103,7 @@ const CategoryDeepDiveOverlay: React.FC<CategoryDeepDiveProps> = ({
     return () => clearInterval(interval);
   }, [isGeneratingResearch]);
 
-  const isKollegaPlus = userProfile?.membership === 'Kollega+';
+  const isKollegaPlus = !!userProfile && (['Kollega+', 'Semesterpakken'].includes(userProfile.membership ?? '') || userProfile.role === 'admin');
   const isResearchLocked = !isKollegaPlus;
 
 

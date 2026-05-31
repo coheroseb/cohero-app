@@ -450,6 +450,10 @@ function ConceptChatContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const currentTier = userProfile?.membership || 'Kollega';
+  const effectiveTier = ['Kollega', 'Group Pro'].includes(currentTier) ? 'Kollega' : 'Kollega+';
+  const lim = (usageLimits && usageLimits[effectiveTier]) ? (usageLimits[effectiveTier]?.concepts === -1 ? Infinity : (usageLimits[effectiveTier]?.concepts ?? 1)) : 1;
+
   // Hook to lock body scroll
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -497,13 +501,13 @@ function ConceptChatContent() {
 
   const checkLimit = useCallback(() => {
     if (!userProfile || !usageLimits) return true;
-    const tier = ['Kollega', 'Group Pro'].includes(userProfile.membership || '') ? 'Kollega' : 'Kollega+';
-    const lim = usageLimits[tier]?.concepts === -1 ? Infinity : (usageLimits[tier]?.concepts ?? 1);
+    const tier = ['Kollega', 'Group Pro'].includes(userProfile.membership || 'Kollega') ? 'Kollega' : 'Kollega+';
+    const currentLim = usageLimits[tier]?.concepts === -1 ? Infinity : (usageLimits[tier]?.concepts ?? 1);
     const today = new Date().toDateString();
     const last = userProfile.lastConceptExplainerUsage?.toDate().toDateString();
     const count = last === today ? userProfile.dailyConceptExplainerCount || 0 : 0;
-    if (count >= lim) {
-      setLimitError(`Dine opslag for i dag er brugt (${lim} stk.). Opgrader til Kollega+ for fri adgang.`);
+    if (count >= currentLim) {
+      setLimitError(`Dine opslag for i dag er brugt (${currentLim} stk.). Opgrader til Kollega+ for fri adgang.`);
       return false;
     }
     return true;
@@ -946,9 +950,9 @@ function ConceptChatContent() {
           </form>
           
           {/* Limit indicator */}
-          {userProfile?.membership === 'Gratis Plan' && (
+          {['Kollega', 'Group Pro'].includes(userProfile?.membership || 'Kollega') && (
              <p className="text-center mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                {20 - (userProfile?.dailyConceptExplainerCount || 0)} gratis forklaringer tilbage
+                {Math.max(0, lim - (userProfile?.dailyConceptExplainerCount || 0))} gratis forklaringer tilbage i dag
              </p>
           )}
         </div>

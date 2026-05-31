@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   FileText, 
@@ -50,7 +50,7 @@ const getShortDateStr = (d = new Date()) => d.toLocaleString('da-DK', { hour: '2
 
 export default function PageClient() {
   const router = useRouter();
-  const { user, userProfile, refetchUserProfile } = useApp();
+  const { user, userProfile, refetchUserProfile, isUserLoading } = useApp();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -60,8 +60,10 @@ export default function PageClient() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState('Blandede Socialsager');
   
-  const isPremiumUser = ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile?.membership ?? '');
-  const [showPremiumTeaser, setShowPremiumTeaser] = useState(!isPremiumUser);
+  const isPremiumUser = useMemo(() => {
+    return ['Kollega+', 'Semesterpakken', 'Institutionspakken'].includes(userProfile?.membership ?? '');
+  }, [userProfile]);
+  const showPremiumTeaser = !isUserLoading && !isPremiumUser;
   
   const [activeView, setActiveView] = useState<'inbox' | 'case' | 'feedback'>('inbox');
   const [selectedItem, setSelectedItem] = useState<string | null>(null);

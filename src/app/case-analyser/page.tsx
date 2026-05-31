@@ -458,10 +458,11 @@ const CaseAnalyserPage: React.FC = () => {
     return found?.id || null;
   };
 
-  const isFreeTier = useMemo(() => 
-    userProfile?.membership && ['Kollega', 'Group Pro'].includes(userProfile.membership),
-    [userProfile]
-  );
+  const isFreeTier = useMemo(() => {
+    if (userProfile?.role === 'admin') return false;
+    const mem = userProfile?.membership || 'Kollega';
+    return ['Kollega', 'Group Pro'].includes(mem);
+  }, [userProfile]);
 
   if (isUserLoading || !user) return <AuthLoadingScreen />;
 

@@ -199,7 +199,7 @@ function MineMaterialerContent() {
   }, [curriculum, selectedSemesterId]);
 
   const currentDisplayName = activeModule?.name || (isNaN(parseInt(selectedSemesterId)) ? selectedSemesterId : `${selectedSemesterId}. semester`);
-  const isKollegaPlus = userProfile?.membership === 'Kollega+';
+  const isKollegaPlus = hasProAccess;
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   
   const [localOverview, setLocalOverview] = useState<Record<string, string>>({});
