@@ -21,12 +21,13 @@ import {
   CreditCard,
   Send,
   ExternalLink,
-  Trash2
+  Trash2,
+  Bell
 } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { updateProofreadingRequestStatusAction, sendKorrekturPaymentLinkAction, deleteProofreadingRequestAction } from '@/app/actions';
+import { updateProofreadingRequestStatusAction, sendKorrekturPaymentLinkAction, sendKorrekturReminderAction, deleteProofreadingRequestAction } from '@/app/actions';
 
 export default function AdminKorrekturPage() {
   const firestore = useFirestore();
@@ -39,6 +40,27 @@ export default function AdminKorrekturPage() {
   const [isSubmittingLink, setIsSubmittingLink] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState<boolean | null>(null);
+  const [submittingReminders, setSubmittingReminders] = useState<Record<string, boolean>>({});
+
+  const handleSendReminder = async (req: any) => {
+    if (!window.confirm(`Vil du sende en påmindelse (rykkermail) til ${req.name} (${req.email})?`)) {
+      return;
+    }
+    setSubmittingReminders(prev => ({ ...prev, [req.id]: true }));
+    try {
+      const res = await sendKorrekturReminderAction(req.id);
+      if (res.success) {
+        alert('Rykkermail er sendt til kunden!');
+      } else {
+        alert(res.message || 'Der opstod en fejl under afsendelse af rykker.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Der opstod en fejl.');
+    } finally {
+      setSubmittingReminders(prev => ({ ...prev, [req.id]: false }));
+    }
+  };
+
 
   const openPaymentPanel = (req: any) => {
     setActiveReqId(req.id);
@@ -203,8 +225,17 @@ export default function AdminKorrekturPage() {
                     <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black">
                       {req.name.charAt(0)}
                     </div>
-                    <div>
-                      <h3 className="text-xl font-black text-slate-900 serif leading-none">{req.name}</h3>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h3 className="text-xl font-black text-slate-900 serif leading-none">{req.name}</h3>
+                        {req.reminderCount > 0 && (
+                          <span className="text-[9px] font-black text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-lg flex items-center gap-1 uppercase tracking-wider">
+                            <Bell className="w-2.5 h-2.5 animate-pulse" />
+                            {req.reminderCount} {req.reminderCount === 1 ? 'rykker' : 'rykkere'}
+                            {req.reminderSentAt && ` (d. ${req.reminderSentAt.toDate ? req.reminderSentAt.toDate().toLocaleDateString('da-DK') : new Date(req.reminderSentAt).toLocaleDateString('da-DK')})`}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
                         <Calendar className="w-3 h-3" />
                         {req.createdAt?.toDate().toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -311,16 +342,27 @@ export default function AdminKorrekturPage() {
 
                 <div className="shrink-0 flex flex-wrap items-center gap-3">
                    {req.paymentUrl && (
-                     <a
-                       href={req.paymentUrl}
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl hover:bg-emerald-100 transition-colors text-xs font-black uppercase tracking-widest"
-                       title="Vis betalingslink"
-                     >
-                       <ExternalLink className="w-4 h-4" />
-                       Link
-                     </a>
+                     <>
+                       <a
+                         href={req.paymentUrl}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl hover:bg-emerald-100 transition-colors text-xs font-black uppercase tracking-widest"
+                         title="Vis betalingslink"
+                       >
+                         <ExternalLink className="w-4 h-4" />
+                         Link
+                       </a>
+                       <button
+                         onClick={() => handleSendReminder(req)}
+                         disabled={submittingReminders[req.id]}
+                         className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl hover:bg-amber-100 transition-colors text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                         title="Send rykkermail"
+                       >
+                         {submittingReminders[req.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+                         Rykker
+                       </button>
+                     </>
                    )}
                    <button
                      onClick={() => openPaymentPanel(req)}

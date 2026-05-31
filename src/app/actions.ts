@@ -4489,6 +4489,77 @@ export async function sendKorrekturPaymentLinkAction(input: {
     }
 }
 
+/**
+ * sendKorrekturReminderAction:
+ * Sends a friendly reminder email to a customer with their existing payment link.
+ */
+export async function sendKorrekturReminderAction(requestId: string): Promise<{ success: boolean; message: string }> {
+    try {
+        const { adminFirestore } = await import('@/firebase/server-init');
+        const { wrapEmailHtml } = await import('@/lib/email-helper');
+        
+        const docRef = adminFirestore.collection('proofreadingRequests').doc(requestId);
+        const docSnap = await docRef.get();
+        
+        if (!docSnap.exists) {
+            return { success: false, message: 'Forespørgslen blev ikke fundet.' };
+        }
+        
+        const data = docSnap.data();
+        if (!data) {
+            return { success: false, message: 'Forespørgselsdata er tomt.' };
+        }
+        
+        if (!data.paymentUrl) {
+            return { success: false, message: 'Der er ikke genereret et betalingslink til denne anmodning endnu.' };
+        }
+
+        const customerName = data.name;
+        const customerEmail = data.email;
+        const amountDkk = data.estimatedPrice;
+        const paymentUrl = data.paymentUrl;
+        
+        const html = wrapEmailHtml(`
+            <h1 style="color: #451a03; font-size: 24px; margin-bottom: 20px; font-family: serif;">Påmindelse: Betaling for korrekturlæsning</h1>
+            <p>Hej ${customerName},</p>
+            <p>Dette er blot en venlig reminder om din udestående betaling for din korrekturlæsning.</p>
+            <p>Vi står klar til at gå i gang med din korrekturlæsning og sende resultatet til dig inden din deadline, så snart betalingen er modtaget.</p>
+            <p><strong>Beløb: ${amountDkk} kr.</strong></p>
+            <p>Klik på knappen herunder for at gennemføre betalingen sikkert via Stripe:</p>
+            <div style="margin: 30px 0; text-align: center;">
+                <a href="${paymentUrl}" style="background-color: #451a03; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">Betal ${amountDkk} kr.</a>
+            </div>
+            <p style="font-size: 13px; color: #64748b;">Når betalingen er gennemført, går vi i gang med din korrekturlæsning og sender resultatet til dig inden din deadline. Betalingen håndteres sikkert af Stripe.</p>
+            <p style="font-size: 11px; color: #94a3b8; word-break: break-all; margin-top: 20px;">Virker knappen ikke? Kopiér dette link: ${paymentUrl}</p>
+        `);
+
+        const emailResult = await sendResendEmailRaw({
+            from: 'Cohéro Korrektur <info@platform.cohero.dk>',
+            to: customerEmail,
+            subject: `Påmindelse: Betalingslink til din korrekturlæsning – ${amountDkk} kr.`,
+            html,
+        });
+
+        if (!emailResult.ok) {
+            console.error('Resend error sending reminder:', emailResult);
+            return { success: false, message: 'E-mail kunne ikke sendes.' };
+        }
+
+        // Update Firestore
+        const currentCount = data.reminderCount || 0;
+        await docRef.update({
+            reminderSentAt: new Date(),
+            reminderCount: currentCount + 1,
+        });
+
+        return { success: true, message: 'Rykkermail sendt til kunden.' };
+    } catch (error: any) {
+        console.error('sendKorrekturReminderAction error:', error);
+        return { success: false, message: error.message || 'Der opstod en fejl.' };
+    }
+}
+
+
 
 
 export async function generateCourseAction(input: Types.GenerateCourseInput): Promise<Types.GenerateCourseOutput> {
