@@ -32,7 +32,7 @@ export default function KorrekturPage() {
     setHasMounted(true);
   }, []);
 
-  const PRICE_PER_PAGE = 25;
+  const PRICE_PER_PAGE = 59;
   const CHARS_PER_PAGE = 2400;
   const SMALL_ORDER_FEE = 75;
   const SMALL_ORDER_THRESHOLD = 10;
@@ -150,7 +150,7 @@ export default function KorrekturPage() {
                     </div>
                     <div className="p-8 bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100 space-y-2">
                       <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Pris pr. side</p>
-                      <p className="text-4xl font-black text-indigo-600">25 <span className="text-sm">kr.</span></p>
+                      <p className="text-4xl font-black text-indigo-600">59 <span className="text-sm">kr.</span></p>
                     </div>
                     <div className="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 space-y-2">
                       <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Lille-ordre tillæg</p>
@@ -177,7 +177,7 @@ export default function KorrekturPage() {
                                 <span className="text-xl font-bold text-slate-500 uppercase">kr.</span>
                             </div>
                             <p className="text-[10px] text-slate-400 font-medium italic">
-                              {isSmallOrder ? 'Inkl. 75 kr. tillæg for under 10 sider' : '25 kr. pr. normalside'}
+                              {isSmallOrder ? 'Inkl. 75 kr. tillæg for under 10 sider' : '59 kr. pr. normalside'}
                             </p>
                         </div>
                         
@@ -430,7 +430,7 @@ export default function KorrekturPage() {
                       <div className="p-6 bg-indigo-50/50 rounded-[2rem] border border-indigo-100 space-y-1">
                         <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Estimeret pris</p>
                         <p className="text-xl font-black text-slate-950 tabular-nums">{hasMounted ? totalPrice.toLocaleString('da-DK') : totalPrice} kr.</p>
-                        <p className="text-[9px] text-slate-400 font-medium italic">{isSmallOrder ? 'Inkl. 75 kr. tillæg for under 10 sider' : '25 kr. pr. normalside'}</p>
+                        <p className="text-[9px] text-slate-400 font-medium italic">{isSmallOrder ? 'Inkl. 75 kr. tillæg for under 10 sider' : '59 kr. pr. normalside'}</p>
                       </div>
                     </div>
 
@@ -507,7 +507,7 @@ export default function KorrekturPage() {
       <footer className="px-6 py-20 text-center border-t border-slate-50">
         <div className="flex flex-col items-center gap-6">
             <p className="text-slate-300 text-[10px] font-black uppercase tracking-[0.4em]">
-                © {new Date().getFullYear()} Cohéro I/S • Pris: 25 kr. pr. 2.400 tegn • Tillæg på 75 kr. for opgaver under 10 sider
+                © {new Date().getFullYear()} Cohéro I/S • Pris: 59 kr. pr. 2.400 tegn • Tillæg på 75 kr. for opgaver under 10 sider
             </p>
             <div className="flex gap-8 opacity-20 grayscale">
                <ShieldCheck className="w-5 h-5" />
