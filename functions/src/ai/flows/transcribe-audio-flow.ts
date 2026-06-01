@@ -30,7 +30,7 @@ const transcribeAudioFlow = ai.defineFlow(
   async ({ audio }) => {
     // This part is problematic and has been disabled.
     const { text, usage } = await ai.generate({
-        model: googleAI.model('gemini-1.5-pro-latest'),
+        model: googleAI.model('gemini-3.1-flash-lite'),
         prompt: [{ media: { url: audio, contentType: 'audio/webm' }}, { text: 'Transskriber lyden til tekst. Ret eventuelle grammatiske fejl, men bevar den originale ordlyd så meget som muligt. Svar kun med den transskriberede tekst.'}],
     });
     

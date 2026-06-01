@@ -11,7 +11,7 @@ export async function generateAdminInsights(stats: any) {
     }
 
     // Use gemini-1.5-flash which is the current stable flash model.
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" }); 
 
     const prompt = `
       Du er en erfaren forretningsanalytiker for platformen Cohéro (en platform for socialrådgiverstuderende).
@@ -56,7 +56,7 @@ export async function generateTikTokScripts(topic: string = "", goal: string = "
     }
 
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
+        model: "gemini-3.1-flash-lite",
         generationConfig: {
             responseMimeType: "application/json",
         }
@@ -97,7 +97,7 @@ export async function generateBlogPost(topic: string = "", keywords: string = ""
     }
 
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
+        model: "gemini-3.1-flash-lite",
         generationConfig: {
             responseMimeType: "application/json",
         }

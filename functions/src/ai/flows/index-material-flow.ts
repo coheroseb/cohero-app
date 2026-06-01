@@ -81,7 +81,7 @@ export const indexMaterialFlow = ai.defineFlow(
         let suggestedQuestions: string[] = [];
         try {
             const insightRes = await ai.generate({
-                model: 'googleai/gemini-3.5-flash',
+                model: 'googleai/gemini-3.1-flash-lite',
                 system: `Du er en ekspert i akademisk analyse. Din opgave er at analysere teksten og generere:
                 1. 3-5 korte, præcise tags (emner).
                 2. 3 "Smarte Spørgsmål", som er DYBT SPECIFIKKE for dette dokument. 

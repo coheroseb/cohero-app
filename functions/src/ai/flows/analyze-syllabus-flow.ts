@@ -31,7 +31,7 @@ export const analyzeSyllabusFlow = ai.defineFlow(
     let output, usage;
     try {
         const genResult = await ai.generate({
-          model: 'googleai/gemini-3.5-flash',
+          model: 'googleai/gemini-3.1-flash-lite',
           prompt: [
             mediaObj,
             {

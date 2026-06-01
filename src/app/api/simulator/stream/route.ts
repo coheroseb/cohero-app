@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     
     // Using gemini-1.5-flash which is the current stable flash model
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash", 
+        model: "gemini-3.1-flash-lite", 
         generationConfig: {
             temperature: 0.9,
             topP: 0.95,

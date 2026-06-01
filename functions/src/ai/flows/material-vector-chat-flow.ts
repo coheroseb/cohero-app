@@ -75,7 +75,7 @@ export const materialVectorChatFlow = ai.defineFlow(
             
         // 3. Generér svar direkte med ai.generate (undgår Dotprompt parsing fejl)
         const res = await ai.generate({
-            model: 'googleai/gemini-3.5-flash',
+            model: 'googleai/gemini-3.1-flash-lite',
             system: `Du er en hjælpsom akademisk assistent. Du har adgang til relevante uddrag fra ${materialId ? 'et specifikt dokument' : 'brugerens personlige vidensarkiv'}.
             
 DIN OPGAVE:

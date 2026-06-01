@@ -37,7 +37,7 @@ export const unifiedChatFlow = ai.defineFlow(
       name: 'unifiedChatPrompt',
       input: { schema: UnifiedChatInputSchema },
       output: { schema: UnifiedChatDataSchema },
-      model: 'googleai/gemini-3.5-flash',
+      model: 'googleai/gemini-3.1-flash-lite',
       prompt: `
 ${personaDescription}
 
