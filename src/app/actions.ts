@@ -4452,13 +4452,13 @@ export async function sendKorrekturPaymentLinkAction(input: {
         const html = wrapEmailHtml(`
             <h1 style="color: #451a03; font-size: 24px; margin-bottom: 20px; font-family: serif;">Dit betalingslink er klar</h1>
             <p>Hej ${input.customerName},</p>
-            <p>Tak for din forespørgsel på korrekturlæsning. Vi har gennemgået dit materiale og er klar til at gå i gang, så snart betalingen er modtaget.</p>
+            <p>Tak for din forespørgsel på korrekturlæsning. Vi har nu færdiggjort arbejdet med din korrekturlæsning og er klar til at sende det færdige resultat til dig, så snart betalingen er modtaget.</p>
             <p><strong>Beløb: ${input.amountDkk} kr.</strong></p>
             <p>Klik på knappen herunder for at gennemføre betalingen sikkert via Stripe:</p>
             <div style="margin: 30px 0; text-align: center;">
                 <a href="${paymentUrl}" style="background-color: #451a03; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">Betal ${input.amountDkk} kr.</a>
             </div>
-            <p style="font-size: 13px; color: #64748b;">Når betalingen er gennemført, går vi i gang med din korrekturlæsning og sender resultatet til dig inden din deadline. Betalingen håndteres sikkert af Stripe.</p>
+            <p style="font-size: 13px; color: #64748b;">Når betalingen er gennemført, sendes det færdige resultat straks til din e-mail. Betalingen håndteres sikkert af Stripe.</p>
             <p style="font-size: 11px; color: #94a3b8; word-break: break-all; margin-top: 20px;">Virker knappen ikke? Kopiér dette link: ${paymentUrl}</p>
         `);
 
@@ -4523,13 +4523,13 @@ export async function sendKorrekturReminderAction(requestId: string): Promise<{ 
             <h1 style="color: #451a03; font-size: 24px; margin-bottom: 20px; font-family: serif;">Påmindelse: Betaling for korrekturlæsning</h1>
             <p>Hej ${customerName},</p>
             <p>Dette er blot en venlig reminder om din udestående betaling for din korrekturlæsning.</p>
-            <p>Vi står klar til at gå i gang med din korrekturlæsning og sende resultatet til dig inden din deadline, så snart betalingen er modtaget.</p>
+            <p>Vi har færdiggjort arbejdet med din korrekturlæsning og står klar til at sende det færdige resultat til dig, så snart betalingen er modtaget.</p>
             <p><strong>Beløb: ${amountDkk} kr.</strong></p>
             <p>Klik på knappen herunder for at gennemføre betalingen sikkert via Stripe:</p>
             <div style="margin: 30px 0; text-align: center;">
                 <a href="${paymentUrl}" style="background-color: #451a03; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">Betal ${amountDkk} kr.</a>
             </div>
-            <p style="font-size: 13px; color: #64748b;">Når betalingen er gennemført, går vi i gang med din korrekturlæsning og sender resultatet til dig inden din deadline. Betalingen håndteres sikkert af Stripe.</p>
+            <p style="font-size: 13px; color: #64748b;">Når betalingen er gennemført, sendes det færdige resultat straks til din e-mail. Betalingen håndteres sikkert af Stripe.</p>
             <p style="font-size: 11px; color: #94a3b8; word-break: break-all; margin-top: 20px;">Virker knappen ikke? Kopiér dette link: ${paymentUrl}</p>
         `);
 
