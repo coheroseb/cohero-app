@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/app/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Check, AlertTriangle, Mail, Lock, User, ArrowRight, Sparkles, ShieldCheck, Zap } from 'lucide-react';
+import { Loader2, Check, AlertTriangle, Mail, Lock, User, ArrowRight, Sparkles, ShieldCheck, Zap, Building2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Suspense } from 'react';
 
@@ -306,6 +306,16 @@ const AuthContent = () => {
                         <path d="M17.05 20.28c-.98.95-2.05 1.88-3.08 1.88-1.04 0-1.37-.62-2.52-.62-1.15 0-1.52.6-2.52.64-1.04.04-2.23-1-3.23-1.95-2.03-1.93-3.58-5.46-3.58-8.77 0-5.26 3.42-8.04 6.78-8.04 1.06 0 2.06.66 2.72.66.65 0 1.9-.8 3.19-.8 1.34 0 2.58.48 3.38 1.4-2.82 1.7-2.38 5.68.83 6.98-1.08 2.65-2.55 5.25-3.57 6.62zM12.03 5.07c1.38-1.68 2.3-4.02 2.05-6.07-2.05.08-4.53 1.36-6 3.08-1.27 1.48-2.38 3.86-2.09 5.87 2.27.17 4.67-1.2 6.04-2.88z"/>
                       </svg>
                       Fortsæt med Apple
+                    </Button>
+
+                    <Button 
+                      type="button" 
+                      onClick={() => router.push('/praktik-rating')}
+                      disabled={isLoading}
+                      className="w-full h-16 rounded-[2rem] text-[13px] font-black uppercase tracking-widest bg-amber-50 text-amber-950 hover:bg-amber-100/80 transition-all flex items-center justify-center gap-4 shadow-sm"
+                    >
+                      <Building2 className="w-5 h-5" />
+                      Praktik-Rating (Uden login)
                     </Button>
                   </div>
                 </>

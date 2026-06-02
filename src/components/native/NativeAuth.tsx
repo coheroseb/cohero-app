@@ -14,14 +14,17 @@ import {
   Sparkles,
   ShieldCheck,
   Zap,
-  Github
+  Github,
+  Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { triggerHapticFeedback } from '@/lib/haptics';
 import { ImpactStyle } from '@capacitor/haptics';
 
 export const NativeAuth = () => {
   const { handleLogin, handleSignup, handleGoogleLogin, handleResetPassword } = useApp();
+  const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -259,13 +262,25 @@ export const NativeAuth = () => {
                </div>
             </div>
 
-            <button 
+             <button 
               type="button"
               onClick={handleGoogleSubmit}
               className="w-full h-16 bg-white border border-slate-100 rounded-3xl flex items-center justify-center gap-4 shadow-sm active:bg-slate-50 active:scale-95 transition-all"
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6 grayscale opacity-60" alt="Google" />
               <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Google</span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => {
+                triggerHapticFeedback(ImpactStyle.Light);
+                router.push('/praktik-rating');
+              }}
+              className="w-full h-16 bg-amber-50 rounded-3xl flex items-center justify-center gap-4 shadow-sm active:bg-amber-100 active:scale-95 transition-all mt-4 border border-amber-100/50"
+            >
+              <Building2 className="w-5 h-5 text-amber-950" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-amber-950">Praktik-Rating (Uden login)</span>
             </button>
           </>
         )}
