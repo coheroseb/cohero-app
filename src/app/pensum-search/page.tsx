@@ -506,41 +506,60 @@ function PensumSearchContent() {
     );
   }
 
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'results' | 'library'>('results');
+
+  // Automatically switch tab on search
+  useEffect(() => {
+    if (searched) {
+      setActiveTab('results');
+    }
+  }, [searched]);
+
   return (
-    <div className="bg-[#F8F9FA] min-h-screen pb-24 font-sans selection:bg-indigo-100">
+    <div className="bg-[#FAF9F6] min-h-screen pb-32 font-sans selection:bg-indigo-100 relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-indigo-50/40 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[20%] right-[-10%] w-[500px] h-[500px] bg-amber-50/30 rounded-full blur-[100px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:5rem_5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] opacity-[0.4]" />
+      </div>
       
-      {/* Top Banner Navigation */}
-      <div className="max-w-7xl mx-auto px-6 pt-6">
-        <Link href="/portal" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-xs uppercase tracking-wider bg-white px-5 py-3 rounded-full border border-slate-100 shadow-sm">
-          <ArrowLeft className="w-4 h-4" />
+      {/* Top Navigation Bar */}
+      <div className="max-w-7xl mx-auto px-6 pt-8 flex items-center justify-between">
+        <Link href="/portal" className="inline-flex items-center gap-2.5 text-slate-500 hover:text-slate-900 transition-all font-bold text-xs uppercase tracking-wider bg-white hover:bg-slate-50 px-6 py-3.5 rounded-full border border-slate-100 shadow-sm active:scale-95">
+          <ArrowLeft className="w-4 h-4 text-indigo-500" />
           Tilbage til portalen
         </Link>
+        <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50/50 border border-indigo-100/50 rounded-2xl">
+          <Crown className="w-4 h-4 text-indigo-600 fill-current" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Kollega+ Adgang Aktiv</span>
+        </div>
       </div>
 
-      <main className="max-w-5xl mx-auto px-6 pt-12 space-y-12">
+      <main className="max-w-5xl mx-auto px-6 pt-16 space-y-16">
         
-        {/* Header Title Section */}
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-slate-900 rounded-[2rem] flex items-center justify-center text-indigo-400 shadow-xl mx-auto mb-6">
-            <BrainCircuit className="w-8 h-8" />
+        {/* Interactive Header Hero */}
+        <div className="text-center space-y-6 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-900/10 mb-2">
+            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" /> Semantisk Søgemotor
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black text-slate-950 tracking-tighter serif leading-tight">
-            Semantisk Pensumsøgning
+          <h1 className="text-5xl sm:text-7xl font-black text-slate-950 tracking-tight serif leading-none">
+            Pensum<span className="text-indigo-600 italic font-medium font-serif">Søgning</span>
           </h1>
-          <p className="text-slate-500 text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto">
-            Søg efter emner, teorier eller begreber på tværs af hele din uddannelses pensumliste. 
-            Vores AI finder de mest relevante bøger og præcise kapitler.
+          <p className="text-slate-500 text-base sm:text-lg font-medium leading-relaxed">
+            Søg semantisk på tværs af din uddannelses pensumliste. Find præcise kapitler, sidetal og litteraturhenvisninger til dine opgaver med det samme.
           </p>
         </div>
 
-        {/* Search Form Area */}
-        <div className="max-w-3xl mx-auto w-full">
+        {/* Semantic Search Console / Terminal */}
+        <div className="max-w-3xl mx-auto w-full space-y-4">
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSearch(query); }}
-            className="bg-white/80 backdrop-blur-3xl p-3.5 rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.06)] border border-slate-100 relative group transition-all duration-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-200"
+            className="bg-white p-4 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.05)] border border-slate-100 relative group transition-all duration-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-200"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-slate-50 rounded-[1.5rem] flex items-center justify-center text-slate-400 group-focus-within:text-indigo-600 group-focus-within:bg-indigo-50 transition-all duration-500">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-focus-within:text-indigo-600 group-focus-within:bg-indigo-50 transition-all duration-500 shrink-0">
                 <Search className="w-6 h-6" />
               </div>
               <input
@@ -549,15 +568,15 @@ function PensumSearchContent() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={placeholders[placeholderIndex]}
                 disabled={loading}
-                className="grow bg-transparent border-none focus:ring-0 text-slate-900 placeholder:text-slate-400 font-bold text-lg px-2 h-14"
+                className="grow bg-transparent border-none focus:ring-0 text-slate-900 placeholder:text-slate-300 font-extrabold text-lg px-2 h-14 focus:outline-none"
               />
               <button 
                 type="submit"
                 disabled={loading || !query.trim()}
-                className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center transition-all duration-500 shadow-lg ${
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg shrink-0 ${
                   loading || !query.trim() 
-                  ? 'bg-slate-100 text-slate-300' 
-                  : 'bg-slate-900 text-white hover:scale-105 active:scale-95 shadow-slate-900/20'
+                  ? 'bg-slate-50 text-slate-300' 
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 active:scale-95 shadow-indigo-600/20'
                 }`}
               >
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <ArrowRight className="w-6 h-6" />}
@@ -565,9 +584,16 @@ function PensumSearchContent() {
             </div>
           </form>
 
+          {/* Copyright Safe Indicator */}
+          <div className="text-center">
+            <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic max-w-xl mx-auto">
+              *Grundet regler om ophavsret (copyright) gennemsøger vi bøgernes metadata. Vi henviser direkte til relevante kapitler, afsnit og sidetal.
+            </p>
+          </div>
+
           {/* Quick-Search Chips */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-2">Prøv at søge:</span>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-2">Hurtige søgninger:</span>
             {[
               'Bourdieu kapital',
               'Anerkendende pædagogik',
@@ -577,8 +603,9 @@ function PensumSearchContent() {
             ].map((term) => (
               <button
                 key={term}
+                type="button"
                 onClick={() => handleChipClick(term)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200/80 active:scale-95 rounded-full text-xs font-bold text-slate-600 transition-all"
+                className="px-4 py-2 bg-white hover:bg-indigo-50/50 hover:border-indigo-100 border border-slate-100 active:scale-95 rounded-full text-xs font-bold text-slate-600 transition-all shadow-sm"
               >
                 {term}
               </button>
@@ -586,314 +613,381 @@ function PensumSearchContent() {
           </div>
         </div>
 
-        {/* Results Area */}
-        <div className="space-y-6">
-          
-          {/* Skeletons Loading State */}
-          {loading && (
-            <div className="space-y-6 max-w-3xl mx-auto pt-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div className="h-5 bg-slate-100 rounded-full w-48 animate-pulse" />
-                <div className="h-5 bg-slate-100 rounded-full w-24 animate-pulse" />
-              </div>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 space-y-4 animate-pulse">
-                  <div className="flex items-start gap-5">
-                    <div className="w-16 h-24 bg-slate-100 rounded-xl shrink-0" />
-                    <div className="space-y-2 flex-grow">
-                      <div className="h-6 bg-slate-100 rounded-full w-2/3" />
-                      <div className="h-4 bg-slate-100 rounded-full w-1/3" />
+        {/* Dynamic Navigation Tabs (Overskueligt layout) */}
+        <div className="max-w-4xl mx-auto w-full space-y-10">
+          <div className="flex border-b border-slate-200">
+            <button
+              onClick={() => setActiveTab('results')}
+              className={`pb-4 px-6 font-bold text-sm uppercase tracking-widest border-b-2 transition-all relative ${
+                activeTab === 'results' 
+                ? 'border-indigo-600 text-indigo-600' 
+                : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Søgeresultater
+              {searched && filteredResults.length > 0 && (
+                <span className="absolute -top-1 -right-0 px-2 py-0.5 bg-indigo-600 text-white text-[9px] font-bold rounded-full">{filteredResults.length}</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('library')}
+              className={`pb-4 px-6 font-bold text-sm uppercase tracking-widest border-b-2 transition-all relative ${
+                activeTab === 'library' 
+                ? 'border-indigo-600 text-indigo-600' 
+                : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Kendte pensumbøger
+              {books && books.length > 0 && (
+                <span className="absolute -top-1 -right-0 px-2 py-0.5 bg-slate-200 text-slate-600 text-[9px] font-bold rounded-full">{books.length}</span>
+              )}
+            </button>
+          </div>
+
+          {/* TAB 1: SEARCH RESULTS */}
+          {activeTab === 'results' && (
+            <div className="space-y-8">
+              
+              {/* Skeletons Loading State */}
+              {loading && (
+                <div className="space-y-6 max-w-4xl mx-auto pt-6">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 space-y-4 animate-pulse">
+                      <div className="flex items-start gap-5">
+                        <div className="w-16 h-24 bg-slate-100 rounded-xl shrink-0" />
+                        <div className="space-y-2 flex-grow">
+                          <div className="h-6 bg-slate-100 rounded-full w-2/3" />
+                          <div className="h-4 bg-slate-100 rounded-full w-1/3" />
+                        </div>
+                      </div>
+                      <div className="h-[1px] bg-slate-50 w-full" />
+                      <div className="space-y-2">
+                        <div className="h-4 bg-slate-100 rounded-full w-5/6" />
+                        <div className="h-4 bg-slate-100 rounded-full w-4/6" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Error Message */}
+              {!loading && error && (
+                <div className="max-w-md mx-auto bg-rose-50 border border-rose-100 rounded-[2rem] p-6 text-center space-y-4 shadow-sm">
+                  <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
+                  <p className="text-sm font-bold text-rose-950">{error}</p>
+                </div>
+              )}
+
+              {/* Search Result Output */}
+              {!loading && searched && !error && (
+                <div className="space-y-8 animate-in fade-in duration-500">
+                  
+                  {/* Summary and Filters Bar */}
+                  <div className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 max-w-4xl mx-auto">
+                    <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Søgestatus</h3>
+                      <p className="text-slate-900 font-bold mt-1 text-sm">
+                        Fandt <span className="text-indigo-600">{filteredResults.length}</span> {filteredResults.length === 1 ? 'bog' : 'bøger'} ud af {results.length} oprindelige fund.
+                      </p>
+                    </div>
+                    
+                    {/* Filters */}
+                    <div className="flex flex-wrap gap-4 items-center">
+                      <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-100">
+                        <button
+                          onClick={() => setRelevanceFilter('all')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            relevanceFilter === 'all' 
+                            ? 'bg-white text-slate-900 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-900'
+                          }`}
+                        >
+                          Alle
+                        </button>
+                        <button
+                          onClick={() => setRelevanceFilter('high')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            relevanceFilter === 'high' 
+                            ? 'bg-white text-slate-900 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-900'
+                          }`}
+                          title="Vis kun bøger med 3+ matchende afsnit"
+                        >
+                          Høj Relevans
+                        </button>
+                      </div>
+
+                      <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-100">
+                        <button
+                          onClick={() => setLanguageFilter('all')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            languageFilter === 'all' 
+                            ? 'bg-white text-slate-900 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-900'
+                          }`}
+                        >
+                          Alle sprog
+                        </button>
+                        <button
+                          onClick={() => setLanguageFilter('da')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            languageFilter === 'da' 
+                            ? 'bg-white text-slate-900 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-900'
+                          }`}
+                        >
+                          Kun Dansk
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="h-[1px] bg-slate-50 w-full" />
+
+                  {/* Empty Results Screen */}
+                  {filteredResults.length === 0 && (
+                    <div className="max-w-md mx-auto text-center py-16 space-y-6">
+                      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mx-auto">
+                        <BookOpen className="w-7 h-7" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold text-slate-900">Ingen resultater fundet</h3>
+                        <p className="text-slate-500 text-sm leading-relaxed">
+                          Søgeordet gav ingen resultater i databasen, der matcher dine valgte filtre. Prøv at søge bredere eller juster filtrene.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Book Cards Grid */}
+                  {filteredResults.length > 0 && (
+                    <div className="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
+                      <AnimatePresence mode="popLayout">
+                        {filteredResults.map((book, index) => {
+                          const relevanceScore = book.chunkCount;
+                          const badgeText = relevanceScore >= 4 ? 'Meget relevant' : relevanceScore >= 2 ? 'Relevant' : 'Relateret';
+                          const badgeColor = relevanceScore >= 4 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                            : relevanceScore >= 2 
+                            ? 'bg-sky-50 text-sky-700 border-sky-100' 
+                            : 'bg-slate-100 text-slate-600 border-transparent';
+
+                          // Match strength percentage calculation (Match-styrke)
+                          const matchStrength = Math.min(100, Math.max(50, 50 + (relevanceScore * 10)));
+                          
+                          return (
+                            <motion.div
+                              key={book.bookId}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.4, delay: index * 0.05 }}
+                              className="bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-950/[0.03] rounded-[2.5rem] p-8 transition-all group overflow-hidden relative"
+                            >
+                              <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${getGradient(book.bookTitle)} opacity-[0.02] rounded-full blur-xl group-hover:scale-150 transition-all duration-700 pointer-events-none`} />
+
+                              <div className="flex flex-col md:flex-row items-start gap-8">
+                                
+                                {/* Book Spine Cover Element */}
+                                <div className="shrink-0 mx-auto md:mx-0">
+                                  <div className={`w-28 h-40 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded-2xl shadow-[0_15px_35px_-5px_rgba(0,0,0,0.12)] flex flex-col justify-between p-4 text-white relative overflow-hidden group-hover:rotate-1 transition-all duration-500`}>
+                                    <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
+                                    <div className="w-1.5 h-full bg-white/20 absolute top-0 left-2.5 blur-[0.5px]" />
+                                    
+                                    <div className="space-y-1 relative z-10">
+                                      <BookOpen className="w-5 h-5 opacity-80" />
+                                      <p className="text-[7px] font-black uppercase tracking-widest leading-tight text-white/90 truncate max-w-[80px]">
+                                        {book.bookAuthor}
+                                      </p>
+                                    </div>
+                                    <div className="relative z-10">
+                                      <p className="text-[10px] font-black leading-tight tracking-tight line-clamp-3 uppercase serif">
+                                        {book.bookTitle}
+                                      </p>
+                                      {book.bookYear && (
+                                        <p className="text-[8px] font-bold text-white/70 mt-1">({book.bookYear})</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Book Meta and Details */}
+                                <div className="flex-1 space-y-6 w-full">
+                                  
+                                  {/* Title block */}
+                                  <div className="flex justify-between items-start gap-4">
+                                    <div className="space-y-2 flex-grow">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className={`px-2.5 py-0.5 border text-[9px] font-black uppercase tracking-widest rounded-full ${badgeColor}`}>
+                                          {badgeText}
+                                        </span>
+                                        <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-[9px] font-black uppercase rounded-full tracking-wider">
+                                          {matchStrength}% Match-styrke
+                                        </span>
+                                      </div>
+                                      <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight serif group-hover:text-indigo-600 transition-colors">
+                                        {book.bookTitle}
+                                      </h2>
+                                      <p className="text-sm font-bold text-slate-500 leading-none">
+                                        af {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''} 
+                                        {book.bookEdition ? ` · ${book.bookEdition}` : ''}
+                                      </p>
+                                    </div>
+
+                                    {/* Book Like Button */}
+                                    <button
+                                      onClick={() => handleLikeBook(book.bookId)}
+                                      className={`p-2.5 rounded-2xl border transition-all duration-300 active:scale-90 flex items-center justify-center gap-2 shrink-0 ${
+                                        user && book.likedBy?.includes(user.uid)
+                                        ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-sm shadow-rose-500/5'
+                                        : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50 text-slate-400 hover:text-slate-600'
+                                      }`}
+                                      title={user && book.likedBy?.includes(user.uid) ? "Fjern synes godt om" : "Synes godt om denne bog"}
+                                    >
+                                      <Heart 
+                                        className={`w-4 h-4 transition-transform duration-300 ${
+                                          user && book.likedBy?.includes(user.uid) 
+                                          ? 'fill-rose-500 text-rose-500 scale-110' 
+                                          : ''
+                                        }`} 
+                                      />
+                                      <span className="text-xs font-bold font-sans">
+                                        {book.likesCount || 0}
+                                      </span>
+                                    </button>
+                                  </div>
+
+                                  {/* Match strength progress bar */}
+                                  <div className="space-y-1">
+                                    <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                                       <div 
+                                          className={`h-full rounded-full bg-indigo-500`}
+                                          style={{ width: `${matchStrength}%` }}
+                                       />
+                                    </div>
+                                  </div>
+
+                                  {/* Matching chunks list */}
+                                  <div className="space-y-3 pt-2">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                      Relevante kapitler og afsnit ({book.chunkCount})
+                                    </p>
+                                    <div className="grid grid-cols-1 gap-2.5">
+                                      {book.matchingChapters.map((chapter, cIdx) => (
+                                        <div 
+                                          key={cIdx} 
+                                          className="flex items-center justify-between gap-4 p-4 bg-slate-50/50 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-200"
+                                        >
+                                          <div className="min-w-0 flex-grow">
+                                            <h4 className="text-xs font-bold text-slate-800 leading-snug truncate">
+                                              {chapter.title}
+                                            </h4>
+                                            {chapter.pageNumber && (
+                                              <p className="text-[10px] text-slate-400 font-bold mt-1">
+                                                Side {chapter.pageNumber}
+                                              </p>
+                                            )}
+                                          </div>
+
+                                          {/* Chapter Heart Button */}
+                                          <button
+                                            onClick={() => handleLikeChapter(book.bookId, chapter.title)}
+                                            className={`px-3 py-1.5 rounded-xl border transition-all duration-300 active:scale-95 flex items-center gap-1.5 shrink-0 ${
+                                              user && chapter.likedBy?.includes(user.uid)
+                                              ? 'bg-rose-50/70 border-rose-100 text-rose-600 shadow-sm shadow-rose-500/5'
+                                              : 'bg-transparent border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
+                                            }`}
+                                            title={user && chapter.likedBy?.includes(user.uid) ? "Fjern synes godt om" : "Synes godt om dette kapitel"}
+                                          >
+                                            <Heart 
+                                              className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                                                user && chapter.likedBy?.includes(user.uid) 
+                                                ? 'fill-rose-500 text-rose-500 scale-110' 
+                                                : ''
+                                              }`} 
+                                            />
+                                            <span className="text-[10px] font-bold font-sans">
+                                              {chapter.likesCount || 0}
+                                            </span>
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* APA Citation copy panel */}
+                                  {book.apaCitation && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-indigo-950/[0.02] border border-indigo-950/[0.06] rounded-2xl">
+                                      <div className="text-xs text-slate-700 leading-relaxed font-sans min-w-0">
+                                        <span className="font-black text-[9px] text-indigo-950/40 uppercase tracking-widest block mb-1 leading-none">
+                                          APA 7. udgave reference
+                                        </span>
+                                        <span className="font-bold italic block truncate sm:max-w-md md:max-w-lg" title={book.apaCitation}>
+                                          {book.apaCitation}
+                                        </span>
+                                      </div>
+                                      <CopyCitationButton citation={book.apaCitation} />
+                                    </div>
+                                  )}
+
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+              {/* Empty Search Prompt */}
+              {!loading && !searched && (
+                <div className="max-w-2xl mx-auto text-center py-20 space-y-6">
+                  <div className="w-20 h-20 bg-white border border-slate-100 rounded-[2rem] flex items-center justify-center text-slate-400 mx-auto shadow-sm">
+                    <BookOpen className="w-9 h-9" />
+                  </div>
                   <div className="space-y-2">
-                    <div className="h-4 bg-slate-100 rounded-full w-5/6" />
-                    <div className="h-4 bg-slate-100 rounded-full w-4/6" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Error Message */}
-          {!loading && error && (
-            <div className="max-w-md mx-auto bg-rose-50 border border-rose-100 rounded-[2rem] p-6 text-center space-y-4 shadow-sm">
-              <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
-              <p className="text-sm font-bold text-rose-950">{error}</p>
-            </div>
-          )}
-
-          {/* Search Result Output */}
-          {!loading && searched && !error && (
-            <div className="space-y-8 animate-in fade-in duration-500">
-              
-              {/* Summary and Filters Bar */}
-              <div className="bg-white border border-slate-100/60 shadow-[0_15px_40px_rgba(0,0,0,0.02)] rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 max-w-4xl mx-auto">
-                <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Søgestatus</h3>
-                  <p className="text-slate-900 font-bold mt-1 text-sm">
-                    Fandt <span className="text-indigo-600">{filteredResults.length}</span> {filteredResults.length === 1 ? 'bog' : 'bøger'} ud af {results.length} oprindelige fund.
-                  </p>
-                </div>
-                
-                {/* Filters */}
-                <div className="flex flex-wrap gap-4 items-center">
-                  <div className="flex items-center gap-2">
-                    <Filter className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Filtre:</span>
-                  </div>
-                  
-                  {/* Relevance filter */}
-                  <div className="flex bg-slate-100 p-1 rounded-xl">
-                    <button
-                      onClick={() => setRelevanceFilter('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        relevanceFilter === 'all' 
-                        ? 'bg-white text-slate-900 shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                    >
-                      Alle
-                    </button>
-                    <button
-                      onClick={() => setRelevanceFilter('high')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        relevanceFilter === 'high' 
-                        ? 'bg-white text-slate-900 shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                      title="Vis kun bøger med 3+ matchende afsnit"
-                    >
-                      Høj Relevans
-                    </button>
-                  </div>
-
-                  {/* Language filter */}
-                  <div className="flex bg-slate-100 p-1 rounded-xl">
-                    <button
-                      onClick={() => setLanguageFilter('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        languageFilter === 'all' 
-                        ? 'bg-white text-slate-900 shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                    >
-                      Alle sprog
-                    </button>
-                    <button
-                      onClick={() => setLanguageFilter('da')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        languageFilter === 'da' 
-                        ? 'bg-white text-slate-900 shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                    >
-                      Kun Dansk
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Empty Results Screen */}
-              {filteredResults.length === 0 && (
-                <div className="max-w-md mx-auto text-center py-16 space-y-6">
-                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mx-auto">
-                    <BookOpen className="w-7 h-7" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold text-slate-900">Ingen resultater fundet</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">
-                      Søgeordet gav ingen resultater i databasen, der matcher dine valgte filtre. Prøv at søge bredere eller juster filtrene.
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight serif">Klar til din litteratursøgning</h3>
+                    <p className="text-slate-500 text-sm leading-relaxed max-w-md mx-auto">
+                      Indtast et teoretisk emne, en sociolog, et begreb eller en problemstilling ovenfor, så gennemsøger vi alt relevant studielitteratur med det samme.
                     </p>
                   </div>
                 </div>
               )}
-
-              {/* Book Cards Grid */}
-              {filteredResults.length > 0 && (
-                <div className="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
-                  <AnimatePresence mode="popLayout">
-                    {filteredResults.map((book, index) => {
-                      const relevanceScore = book.chunkCount;
-                      const badgeText = relevanceScore >= 4 ? 'Meget relevant' : relevanceScore >= 2 ? 'Relevant' : 'Relateret';
-                      const badgeColor = relevanceScore >= 4 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                        : relevanceScore >= 2 
-                        ? 'bg-sky-50 text-sky-700 border-sky-100' 
-                        : 'bg-slate-100 text-slate-600 border-transparent';
-                      
-                      return (
-                        <motion.div
-                          key={book.bookId}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.4, delay: index * 0.05 }}
-                          className="bg-white border border-slate-100/80 shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_30px_60px_rgba(0,0,0,0.05)] rounded-[2.5rem] p-8 transition-all group overflow-hidden relative"
-                        >
-                          {/* Inner cover graphic decorations */}
-                          <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${getGradient(book.bookTitle)} opacity-[0.02] rounded-full blur-xl group-hover:scale-150 transition-all duration-700 pointer-events-none`} />
-
-                          <div className="flex flex-col md:flex-row items-start gap-8">
-                            
-                            {/* Book Spine Cover Element */}
-                            <div className="shrink-0 mx-auto md:mx-0">
-                              <div className={`w-28 h-40 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded-2xl shadow-[0_15px_35px_-5px_rgba(0,0,0,0.15)] flex flex-col justify-between p-4 text-white relative overflow-hidden group-hover:rotate-1 transition-all duration-500`}>
-                                <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
-                                <div className="w-1.5 h-full bg-white/20 absolute top-0 left-2.5 blur-[0.5px]" />
-                                
-                                <div className="space-y-1 relative z-10">
-                                  <BookOpen className="w-5 h-5 opacity-80" />
-                                  <p className="text-[7px] font-black uppercase tracking-widest leading-tight text-white/90 truncate max-w-[80px]">
-                                    {book.bookAuthor}
-                                  </p>
-                                </div>
-                                <div className="relative z-10">
-                                  <p className="text-[10px] font-black leading-tight tracking-tight line-clamp-3 uppercase serif">
-                                    {book.bookTitle}
-                                  </p>
-                                  {book.bookYear && (
-                                    <p className="text-[8px] font-bold text-white/70 mt-1">({book.bookYear})</p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Book Meta and Details */}
-                            <div className="flex-1 space-y-6 w-full">
-                              
-                              {/* Title block */}
-                              <div className="flex justify-between items-start gap-4">
-                                <div className="space-y-2 flex-grow">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className={`px-2.5 py-0.5 border text-[9px] font-black uppercase tracking-widest rounded-full ${badgeColor}`}>
-                                      {badgeText}
-                                    </span>
-                                    {book.bookPublisher && (
-                                      <span className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold uppercase rounded-md">
-                                        {book.bookPublisher}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight serif group-hover:text-indigo-600 transition-colors">
-                                    {book.bookTitle}
-                                  </h2>
-                                  <p className="text-sm font-bold text-slate-500 leading-none">
-                                    af {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''} 
-                                    {book.bookEdition ? ` · ${book.bookEdition}` : ''}
-                                  </p>
-                                </div>
-
-                                {/* Book Like Button */}
-                                <button
-                                  onClick={() => handleLikeBook(book.bookId)}
-                                  className={`p-2.5 rounded-2xl border transition-all duration-300 active:scale-90 flex items-center justify-center gap-2 shrink-0 ${
-                                    user && book.likedBy?.includes(user.uid)
-                                    ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-sm shadow-rose-500/5'
-                                    : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50 text-slate-400 hover:text-slate-600'
-                                  }`}
-                                  title={user && book.likedBy?.includes(user.uid) ? "Fjern synes godt om" : "Synes godt om denne bog"}
-                                >
-                                  <Heart 
-                                    className={`w-4 h-4 transition-transform duration-300 ${
-                                      user && book.likedBy?.includes(user.uid) 
-                                      ? 'fill-rose-500 text-rose-500 scale-110' 
-                                      : ''
-                                    }`} 
-                                  />
-                                  <span className="text-xs font-bold font-sans">
-                                    {book.likesCount || 0}
-                                  </span>
-                                </button>
-                              </div>
-
-                              {/* Matching chunks list */}
-                              <div className="space-y-3">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                  Relevante kapitler og afsnit ({book.chunkCount})
-                                </p>
-                                <div className="grid grid-cols-1 gap-2.5">
-                                  {book.matchingChapters.map((chapter, cIdx) => (
-                                    <div 
-                                      key={cIdx} 
-                                      className="flex items-center justify-between gap-4 p-4 bg-slate-50/50 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-200"
-                                    >
-                                      <div className="min-w-0 flex-grow">
-                                        <h4 className="text-xs font-bold text-slate-800 leading-snug truncate">
-                                          {chapter.title}
-                                        </h4>
-                                        {chapter.pageNumber && (
-                                          <p className="text-[10px] text-slate-400 font-bold mt-1">
-                                            Side {chapter.pageNumber}
-                                          </p>
-                                        )}
-                                      </div>
-
-                                      {/* Chapter Heart Button */}
-                                      <button
-                                        onClick={() => handleLikeChapter(book.bookId, chapter.title)}
-                                        className={`px-3 py-1.5 rounded-xl border transition-all duration-300 active:scale-95 flex items-center gap-1.5 shrink-0 ${
-                                          user && chapter.likedBy?.includes(user.uid)
-                                          ? 'bg-rose-50/70 border-rose-100 text-rose-600 shadow-sm shadow-rose-500/5'
-                                          : 'bg-transparent border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
-                                        }`}
-                                        title={user && chapter.likedBy?.includes(user.uid) ? "Fjern synes godt om" : "Synes godt om dette kapitel"}
-                                      >
-                                        <Heart 
-                                          className={`w-3.5 h-3.5 transition-transform duration-300 ${
-                                            user && chapter.likedBy?.includes(user.uid) 
-                                            ? 'fill-rose-500 text-rose-500 scale-110' 
-                                            : ''
-                                          }`} 
-                                        />
-                                        <span className="text-[10px] font-bold font-sans">
-                                          {chapter.likesCount || 0}
-                                        </span>
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* APA Citation copy panel */}
-                              {book.apaCitation && (
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-indigo-950/[0.02] border border-indigo-950/[0.06] rounded-2xl">
-                                  <div className="text-xs text-slate-700 leading-relaxed font-sans min-w-0">
-                                    <span className="font-black text-[9px] text-indigo-950/40 uppercase tracking-widest block mb-1 leading-none">
-                                      APA 7. udgave reference
-                                    </span>
-                                    <span className="font-bold italic block truncate sm:max-w-md md:max-w-lg" title={book.apaCitation}>
-                                      {book.apaCitation}
-                                    </span>
-                                  </div>
-                                  <CopyCitationButton citation={book.apaCitation} />
-                                </div>
-                              )}
-
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </AnimatePresence>
-                </div>
-              )}
-
             </div>
           )}
 
-          {/* Empty Search Prompt */}
-          {!loading && !searched && (
-            <div className="max-w-2xl mx-auto text-center py-20 space-y-6">
-              <div className="w-20 h-20 bg-white border border-slate-100 rounded-[2rem] flex items-center justify-center text-slate-400 mx-auto shadow-sm">
-                <BookOpen className="w-9 h-9" />
+          {/* TAB 2: FULL BOOK DATABASE (Overskueligt overblik) */}
+          {activeTab === 'library' && (
+            <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="bg-white border border-slate-100 shadow-sm rounded-3xl p-8 space-y-4">
+                 <h4 className="text-lg font-black text-slate-900 serif tracking-tight">Pensumsamling – hvad kan du søge i?</h4>
+                 <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                   Vores semantiske søgemotor kender metadata og indholdsfortegnelser for de mest populære lærebøger på socialrådgiver-studiet. Herunder kan du se listen over de faglitterære værker, der er indekseret i systemet lige nu:
+                 </p>
               </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight serif">Klar til din litteratursøgning</h3>
-                <p className="text-slate-500 text-sm leading-relaxed max-w-md mx-auto">
-                  Indtast et teoretisk emne, en sociolog, et begreb eller en problemstilling ovenfor, så gennemsøger vi alt relevant studielitteratur med det samme.
-                </p>
-              </div>
+
+              {booksLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Henter pensumbøger...</p>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4 pb-20">
+                   {books?.map((book: any) => (
+                      <div key={book.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4">
+                         <div className="w-12 h-16 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 text-slate-300">
+                            <Book className="w-6 h-6" />
+                         </div>
+                         <div className="space-y-1 min-w-0">
+                            <h4 className="text-sm font-black text-slate-900 leading-snug truncate">{book.title}</h4>
+                            <p className="text-[11px] font-semibold text-slate-400 truncate">{book.author}</p>
+                            {book.year && <p className="text-[9px] font-black text-indigo-500/80 uppercase tracking-widest">{book.year} • {book.publisher || 'Pensum'}</p>}
+                         </div>
+                      </div>
+                   ))}
+                </div>
+              )}
             </div>
           )}
 
