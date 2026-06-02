@@ -153,153 +153,140 @@ export const explainConceptFlow = ai.defineFlow(
   async (input, { sendChunk }) => {
     console.log(`[EXPLAIN-CONCEPT-FLOW] Starting for: "${input.concept}"...`);
 
-    let booksForPrompt: any[] = [];
-    let vectorSearchSuccess = false;
+    // 1 & 2. Try vector search with keyword fallback and 3. Fetch law context concurrently
+    const vectorSearchPromise = (async () => {
+      let books: any[] = [];
+      let vectorSearchSuccess = false;
+      try {
+        console.log(`[EXPLAIN-CONCEPT-FLOW] Generating embedding for query: "${input.concept}"...`);
+        const queryEmbeddingRes = await ai.embed({
+          embedder: 'googleai/gemini-embedding-2',
+          content: input.concept,
+        });
+        const queryVector = queryEmbeddingRes[0].embedding.slice(0, 768);
 
-    // 1. Try vector search
-    try {
-      console.log(`[EXPLAIN-CONCEPT-FLOW] Generating embedding for query: "${input.concept}"...`);
-      const queryEmbeddingRes = await ai.embed({
-        embedder: 'googleai/gemini-embedding-2',
-        content: input.concept,
-      });
-      const queryVector = queryEmbeddingRes[0].embedding.slice(0, 768);
+        const db = getDb();
+        console.log(`[EXPLAIN-CONCEPT-FLOW] Executing collectionGroup('tocChunks') vector search...`);
+        const snapshot = await db.collectionGroup('tocChunks')
+          .findNearest('embedding', FieldValue.vector(queryVector), {
+            limit: 15,
+            distanceMeasure: 'COSINE'
+          })
+          .get();
 
-      const db = getDb();
-      console.log(`[EXPLAIN-CONCEPT-FLOW] Executing collectionGroup('tocChunks') vector search...`);
-      const snapshot = await db.collectionGroup('tocChunks')
-        .findNearest('embedding', FieldValue.vector(queryVector), {
-          limit: 15,
-          distanceMeasure: 'COSINE'
-        })
-        .get();
+        if (!snapshot.empty) {
+          console.log(`[EXPLAIN-CONCEPT-FLOW] Found ${snapshot.size} matching chunks in vector search.`);
+          
+          const groupedBooks: Record<string, {
+            title: string;
+            author: string;
+            year?: string;
+            publisher?: string;
+            edition?: string;
+            apaCitation?: string;
+            chunks: { title: string; pageNumber: string; text: string }[];
+          }> = {};
 
-      if (!snapshot.empty) {
-        console.log(`[EXPLAIN-CONCEPT-FLOW] Found ${snapshot.size} matching chunks in vector search.`);
-        
-        // Group by bookId
-        const groupedBooks: Record<string, {
-          title: string;
-          author: string;
-          year?: string;
-          publisher?: string;
-          edition?: string;
-          apaCitation?: string;
-          chunks: { title: string; pageNumber: string; text: string }[];
-        }> = {};
+          snapshot.docs.forEach((doc: any) => {
+            const data = doc.data();
+            const bid = data.bookId;
+            if (!groupedBooks[bid]) {
+              groupedBooks[bid] = {
+                title: data.bookTitle,
+                author: data.bookAuthor,
+                year: data.bookYear,
+                publisher: data.bookPublisher,
+                edition: data.bookEdition,
+                apaCitation: data.bookApaCitation,
+                chunks: []
+              };
+            }
+            groupedBooks[bid].chunks.push({
+              title: data.title,
+              pageNumber: data.pageNumber,
+              text: data.text
+            });
+          });
 
-        snapshot.docs.forEach((doc: any) => {
-          const data = doc.data();
-          const bid = data.bookId;
-          if (!groupedBooks[bid]) {
-            groupedBooks[bid] = {
-              title: data.bookTitle,
-              author: data.bookAuthor,
-              year: data.bookYear,
-              publisher: data.bookPublisher,
-              edition: data.bookEdition,
-              apaCitation: data.bookApaCitation,
-              chunks: []
+          books = Object.values(groupedBooks).map(gb => {
+            const ragText = gb.chunks.map(c => `- Kapitel/afsnit: "${c.title}"${c.pageNumber ? ` (s. ${c.pageNumber})` : ''}`).join('\n');
+            return {
+              title: gb.title,
+              author: gb.author,
+              year: gb.year,
+              publisher: gb.publisher,
+              edition: gb.edition,
+              apaCitation: gb.apaCitation,
+              RAG: ragText
             };
-          }
-          groupedBooks[bid].chunks.push({
-            title: data.title,
-            pageNumber: data.pageNumber,
-            text: data.text
           });
-        });
 
-        // Convert the grouped books to the format expected by the model
-        booksForPrompt = Object.values(groupedBooks).map(gb => {
-          // Format RAG content as a list of matching chapters/sections from the Table of Contents
-          const ragText = gb.chunks.map(c => `- Kapitel/afsnit: "${c.title}"${c.pageNumber ? ` (s. ${c.pageNumber})` : ''}`).join('\n');
-          return {
-            title: gb.title,
-            author: gb.author,
-            year: gb.year,
-            publisher: gb.publisher,
-            edition: gb.edition,
-            apaCitation: gb.apaCitation,
-            RAG: ragText
-          };
-        });
-
-        vectorSearchSuccess = true;
-      } else {
-        console.log(`[EXPLAIN-CONCEPT-FLOW] Vector search returned 0 results. Falling back to keyword search.`);
-      }
-    } catch (err) {
-      console.error("[EXPLAIN-CONCEPT-FLOW] Vector search failed:", err);
-    }
-
-    // 2. Fallback to keyword-based book filtering if vector search failed or returned nothing
-    if (!vectorSearchSuccess || booksForPrompt.length === 0) {
-      console.log(`[EXPLAIN-CONCEPT-FLOW] Running keyword-based fallback search...`);
-      // Fetch all books
-      const allBooks = await getCachedBooks();
-      
-      // Smarter book filtering
-      const rawKeywords = input.concept.toLowerCase().split(/[\s,;.?!]+/).filter(w => w.length > 2);
-      
-      // Generate keyword variants to handle Danish word forms
-      const expandedKeywords = new Set<string>(rawKeywords);
-      rawKeywords.forEach(kw => {
-        // Common suffixes
-        if (kw.endsWith('ing')) expandedKeywords.add(kw.slice(0, -3));
-        if (kw.endsWith('else')) expandedKeywords.add(kw.slice(0, -4));
-        if (kw.endsWith('erne')) expandedKeywords.add(kw.slice(0, -4));
-        if (kw.endsWith('ene')) expandedKeywords.add(kw.slice(0, -3));
-        if (kw.endsWith('er')) expandedKeywords.add(kw.slice(0, -2));
-        
-        // Truncated root forms for compound word matching
-        if (kw.length > 6) {
-          expandedKeywords.add(kw.substring(0, kw.length - 2));
+          vectorSearchSuccess = true;
+        } else {
+          console.log(`[EXPLAIN-CONCEPT-FLOW] Vector search returned 0 results. Falling back to keyword search.`);
         }
-      });
-
-      const keywordArray = Array.from(expandedKeywords).filter(kw => kw.length > 2);
-
-      // Score each book by number of keyword matches
-      const scoredBooks = allBooks
-        .map(book => {
-          const bookText = `${book.title} ${book.author} ${book.RAG || ''}`.toLowerCase();
-          let score = 0;
-          keywordArray.forEach(kw => {
-              if (bookText.includes(kw)) score += 1;
-          });
-          // Boost books that have exact word matches in title
-          rawKeywords.forEach(kw => {
-              if (book.title.toLowerCase().includes(kw)) score += 2;
-          });
-          return { book, score };
-        })
-        .filter(({ score }) => score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 8); // Top 8 most relevant books
-      
-      // Fallback: If no matches, send top 4 general books
-      booksForPrompt = scoredBooks.length > 0 ? scoredBooks.map(s => s.book) : allBooks.slice(0, 4);
-
-      // If the concept is "books" or "bøger", ensure we have good matches
-      if (input.concept.toLowerCase().includes('book') || input.concept.toLowerCase().includes('bøg')) {
-          // Boost literature related books if they exist in allBooks
-          const litBooks = allBooks.filter(b => b.title.toLowerCase().includes('litteratur') || b.RAG?.toLowerCase().includes('kildehenvisning'));
-          if (litBooks.length > 0) booksForPrompt.push(...litBooks.slice(0, 2));
+      } catch (err) {
+        console.error("[EXPLAIN-CONCEPT-FLOW] Vector search failed:", err);
       }
-    }
-    
-    let lawContext = input.lawContext || '';
-    
-    // 3. Fetch law context if not provided
-    if (!lawContext) {
+
+      if (!vectorSearchSuccess || books.length === 0) {
+        console.log(`[EXPLAIN-CONCEPT-FLOW] Running keyword-based fallback search...`);
+        const allBooks = await getCachedBooks();
+        const rawKeywords = input.concept.toLowerCase().split(/[\s,;.?!]+/).filter(w => w.length > 2);
+        const expandedKeywords = new Set<string>(rawKeywords);
+        rawKeywords.forEach(kw => {
+          if (kw.endsWith('ing')) expandedKeywords.add(kw.slice(0, -3));
+          if (kw.endsWith('else')) expandedKeywords.add(kw.slice(0, -4));
+          if (kw.endsWith('erne')) expandedKeywords.add(kw.slice(0, -4));
+          if (kw.endsWith('ene')) expandedKeywords.add(kw.slice(0, -3));
+          if (kw.endsWith('er')) expandedKeywords.add(kw.slice(0, -2));
+          if (kw.length > 6) {
+            expandedKeywords.add(kw.substring(0, kw.length - 2));
+          }
+        });
+
+        const keywordArray = Array.from(expandedKeywords).filter(kw => kw.length > 2);
+        const scoredBooks = allBooks
+          .map(book => {
+            const bookText = `${book.title} ${book.author} ${book.RAG || ''}`.toLowerCase();
+            let score = 0;
+            keywordArray.forEach(kw => {
+              if (bookText.includes(kw)) score += 1;
+            });
+            rawKeywords.forEach(kw => {
+              if (book.title.toLowerCase().includes(kw)) score += 2;
+            });
+            return { book, score };
+          })
+          .filter(({ score }) => score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 8);
+
+        books = scoredBooks.length > 0 ? scoredBooks.map(s => s.book) : allBooks.slice(0, 4);
+
+        if (input.concept.toLowerCase().includes('book') || input.concept.toLowerCase().includes('bøg')) {
+          const litBooks = allBooks.filter(b => b.title.toLowerCase().includes('litteratur') || b.RAG?.toLowerCase().includes('kildehenvisning'));
+          if (litBooks.length > 0) books.push(...litBooks.slice(0, 2));
+        }
+      }
+      return books;
+    })();
+
+    const lawContextPromise = (async () => {
+      if (input.lawContext) return input.lawContext;
       console.log(`[EXPLAIN-CONCEPT-FLOW] Fetching law context for: "${input.concept}"...`);
       try {
-        lawContext = await getRelevantLawContext(input.concept);
+        return await getRelevantLawContext(input.concept);
       } catch (e) {
         console.error('[EXPLAIN-CONCEPT-FLOW] Law context fetch failed:', e);
-        lawContext = 'Kunne ikke hente juridisk kontekst automatisk.';
+        return 'Kunne ikke hente juridisk kontekst automatisk.';
       }
-    }
+    })();
+
+    const [booksForPrompt, lawContext] = await Promise.all([
+      vectorSearchPromise,
+      lawContextPromise
+    ]);
 
     // 4. Stream response
     const streamRes = await prompt.stream({ 
