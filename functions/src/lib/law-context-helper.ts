@@ -125,28 +125,30 @@ export async function getRelevantLawContext(topicOrQuery: string): Promise<strin
         });
     }
 
-    // 4. AI DISAMBIGUATION (Broader selection)
-    try {
-        const detectionResponse = await ai.generate({
-            model: 'googleai/gemini-3.1-flash-lite',
-            system: "Du er en dansk juridisk bibliotekar. Din opgave er at identificere ALL relevante love for en given problemstilling eller et spørgsmål. Identificer op til 5-6 mest relevante love. Svar kun med en komma-separeret liste af ID'er.",
-            prompt: `Find relevante love for dette spørgsmål/begreb: "${topicOrQuery}"
-            
-            LOV-SAMLING (Lovportalen):
-            ${allLaws.map(l => `- ID: ${l.id}, Navn: ${l.name} (${l.abbreviation})`).join('\n')}
-            
-            Svar KUN med ID'erne (f.eks. barnetslov, forvaltningsloven) eller 'none' hvis intet er relevant.`
-        });
-
-        const rawIds = detectionResponse.text;
-        if (rawIds && rawIds.toLowerCase() !== 'none') {
-            rawIds.split(',').map(id => id.trim()).forEach(p => {
-                const found = allLaws.find(l => l.id.toLowerCase() === p.toLowerCase() || (l.abbreviation && l.abbreviation.toLowerCase() === p.toLowerCase()));
-                if (found && !detectedIds.includes(found.id)) detectedIds.push(found.id);
+    // 4. AI DISAMBIGUATION (Broader selection - only if no laws have been matched by previous exact/core checks)
+    if (detectedIds.length === 0) {
+        try {
+            const detectionResponse = await ai.generate({
+                model: 'googleai/gemini-3.1-flash-lite',
+                system: "Du er en dansk juridisk bibliotekar. Din opgave er at identificere ALL relevante love for en given problemstilling eller et spørgsmål. Identificer op til 5-6 mest relevante love. Svar kun med en komma-separeret liste af ID'er.",
+                prompt: `Find relevante love for dette spørgsmål/begreb: "${topicOrQuery}"
+                
+                LOV-SAMLING (Lovportalen):
+                ${allLaws.map(l => `- ID: ${l.id}, Navn: ${l.name} (${l.abbreviation})`).join('\n')}
+                
+                Svar KUN med ID'erne (f.eks. barnetslov, forvaltningsloven) eller 'none' hvis intet er relevant.`
             });
+
+            const rawIds = detectionResponse.text;
+            if (rawIds && rawIds.toLowerCase() !== 'none') {
+                rawIds.split(',').map(id => id.trim()).forEach(p => {
+                    const found = allLaws.find(l => l.id.toLowerCase() === p.toLowerCase() || (l.abbreviation && l.abbreviation.toLowerCase() === p.toLowerCase()));
+                    if (found && !detectedIds.includes(found.id)) detectedIds.push(found.id);
+                });
+            }
+        } catch (error) {
+            console.error('[LAW-CONTEXT] AI detection error:', error);
         }
-    } catch (error) {
-        console.error('[LAW-CONTEXT] AI detection error:', error);
     }
 
     // 5. Build Context
