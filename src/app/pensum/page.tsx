@@ -246,11 +246,13 @@ export default function PensumPage() {
                                 <Info className="w-6 h-6" />
                             </div>
                             <div className="space-y-4">
-                                <h3 className="text-xl font-bold text-amber-950 uppercase tracking-widest text-[13px]">Vigtigt om AI og Kilder</h3>
+                                <h3 className="text-xl font-bold text-amber-950 uppercase tracking-widest text-[13px]">Vigtigt om AI, ophavsret & kendte bøger</h3>
                                 <p className="text-amber-900/70 text-sm font-medium leading-relaxed max-w-3xl">
-                                    Grundet regler om ophavsret kender Cohéros AI <span className="text-amber-950 font-black">ikke</span> det fulde indhold af bøgerne. AI'ens viden er baseret på metadata som indholdsfortegnelser og stikordsregistre. 
+                                    Nedenfor kan du se den fulde liste over de faglitterære bøger, som Cohéro kender til.
                                     <br /><br />
-                                    Cohéro kan derfor <span className="text-rose-600 font-black">aldrig citere direkte</span> fra en bog. Platformen guider dig til relevant litteratur, men du skal altid selv slå op i de originale kilder.
+                                    <strong>Bemærk:</strong> Grundet regler om ophavsret (copyright) har vi <span className="text-amber-950 font-black">ikke adgang til bøgernes fulde tekst eller materialer</span>. Vores AI's viden er baseret på metadata som indholdsfortegnelser, kapitler og stikordsregistre.
+                                    <br /><br />
+                                    Vi kan derfor <span className="text-rose-600 font-black">udelukkende vejlede og henvise dig til de specifikke kapitler, afsnit og sidetal</span>, hvor de faglige emner behandles. Du skal altid selv slå op i dit eget fysiske eller digitale pensummateriale for at læse den reelle tekst og foretage direkte citater.
                                 </p>
                             </div>
                         </div>
