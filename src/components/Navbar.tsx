@@ -272,7 +272,14 @@ const Navbar: React.FC<NavbarProps> = ({
                    <NavDropdownLink href="/shop" icon={<ShoppingBag className="w-4 h-4 text-rose-500" />}>Shop</NavDropdownLink>
 
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
-                   <NavDropdownLink href="/pensum-search" icon={<BookOpen className="w-4 h-4 text-indigo-500" />}>Pensumsøgning</NavDropdownLink>
+                    <NavDropdownLink 
+                      href="/pensum-search" 
+                      icon={<BookOpen className="w-4 h-4 text-indigo-500" />}
+                      isPremium={true}
+                      userMembership={userProfile?.membership}
+                    >
+                      Pensumsøgning
+                    </NavDropdownLink>
                    <NavDropdownLink href="/medbestemmelse" icon={<Lightbulb className="w-4 h-4 text-amber-500" />}>Vision & Roadmap</NavDropdownLink>
                    <NavDropdownLink href="/praktik-rating" icon={<Star className="w-4 h-4 text-amber-500" />}>Praktik Rating</NavDropdownLink>
                    <NavDropdownLink href="/videnskabsteori" icon={<Scale className="w-4 h-4 text-indigo-500" />}>Videnskabsteori</NavDropdownLink>
