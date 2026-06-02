@@ -461,7 +461,7 @@ function PensumSearchContent() {
                  <BrainCircuit className="w-12 h-12 text-indigo-600" />
                </div>
                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6 serif tracking-tight">Lås op for Pensumsøgning</h2>
-               <p className="text-slate-500 mb-10 font-medium text-lg max-w-lg mx-auto leading-relaxed">Pensumsøgning og konkrete litteraturhenvisninger er eksklusivt for Kollega+ og Semesterpakken. Opgrader dit abonnement for at få adgang og søg i hele din uddannelses pensum.</p>
+               <p className="text-slate-500 mb-10 font-medium text-lg max-w-lg mx-auto leading-relaxed">Pensumsøgning og konkrete litteraturhenvisninger til kapitler og sidetal er eksklusivt for Kollega+ og Semesterpakken. Vi kan ikke søge i bøgernes fulde indhold, men vejleder dig præcist til, hvor i dit eget pensum du kan læse om emnet.</p>
                <Link href="/upgrade">
                  <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-200">
                    Opgrader Nu
@@ -476,7 +476,7 @@ function PensumSearchContent() {
                   <Crown className="w-3 h-3 fill-current text-indigo-500" /> Bogbase
                </div>
                <h3 className="text-3xl font-black text-slate-900 serif tracking-tight">Søg semantisk i hele din uddannelse</h3>
-               <p className="text-slate-500 text-sm max-w-lg mx-auto font-semibold">Med Kollega+ kan du lave lynopslag og kilde-søgninger på tværs af alle de faglitterære værker, vi kender til:</p>
+               <p className="text-slate-500 text-sm max-w-lg mx-auto font-semibold">Med Kollega+ kan du søge efter præcise kapitler og sidetal (ikke selve bøgernes fulde indhold) på tværs af alle disse værker. Vi vejleder dig til, hvor du kan læse om emnet:</p>
             </div>
 
             {booksLoading ? (
@@ -586,8 +586,8 @@ function PensumSearchContent() {
 
           {/* Copyright Safe Indicator */}
           <div className="text-center">
-            <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic max-w-xl mx-auto">
-              *Grundet regler om ophavsret (copyright) gennemsøger vi bøgernes metadata. Vi henviser direkte til relevante kapitler, afsnit og sidetal.
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-400 leading-relaxed italic max-w-2xl mx-auto">
+              <strong>Bemærk:</strong> Du kan udelukkende søge efter <span className="text-indigo-600">kapitler og sidetal</span> – ikke i selve bøgernes fulde indhold (grundet ophavsret). Vi vejleder dig dog præcist til, hvor i dit eget pensum du kan læse om et givent emne.
             </p>
           </div>
 
