@@ -17,11 +17,15 @@ import {
   Filter,
   FileText,
   Volume2,
-  Heart
+  Heart,
+  Book,
+  Crown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query as firestoreQuery, orderBy } from 'firebase/firestore';
 import { searchLiteratureAction, toggleLikeBookAction, toggleLikeChapterAction } from '@/app/actions';
 
 // --- Types ---
@@ -124,6 +128,11 @@ function CopyCitationButton({ citation }: { citation: string }) {
 // Main page content that uses SearchParams
 function PensumSearchContent() {
   const { user, openAuthPage, userProfile } = useApp();
+  const firestore = useFirestore();
+  
+  const booksQuery = useMemoFirebase(() => (firestore ? firestoreQuery(collection(firestore, 'books'), orderBy('title', 'asc')) : null), [firestore]);
+  const { data: books, isLoading: booksLoading } = useCollection<any>(booksQuery);
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -442,8 +451,8 @@ function PensumSearchContent() {
             Tilbage til portalen
           </Link>
         </div>
-        <div className="flex-1 flex items-center justify-center p-6 mt-12">
-          <div className="max-w-2xl mx-auto bg-white rounded-[3rem] p-12 text-center border border-indigo-100 shadow-[0_30px_70px_rgba(0,0,0,0.06)] relative overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 mt-12 space-y-16">
+          <div className="max-w-2xl w-full bg-white rounded-[3rem] p-12 text-center border border-indigo-100 shadow-[0_30px_70px_rgba(0,0,0,0.06)] relative overflow-hidden">
             <div className="absolute top-0 right-0 p-10 opacity-[0.03] scale-150 pointer-events-none">
               <Search className="w-64 h-64 text-indigo-500" />
             </div>
@@ -459,6 +468,38 @@ function PensumSearchContent() {
                  </button>
                </Link>
             </div>
+          </div>
+
+          <div className="max-w-4xl w-full px-6 space-y-8">
+            <div className="text-center space-y-3">
+               <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 border border-indigo-100/50 rounded-full text-[9px] font-black uppercase tracking-widest text-indigo-600">
+                  <Crown className="w-3 h-3 fill-current text-indigo-500" /> Bogbase
+               </div>
+               <h3 className="text-3xl font-black text-slate-900 serif tracking-tight">Søg semantisk i hele din uddannelse</h3>
+               <p className="text-slate-500 text-sm max-w-lg mx-auto font-semibold">Med Kollega+ kan du lave lynopslag og kilde-søgninger på tværs af alle de faglitterære værker, vi kender til:</p>
+            </div>
+
+            {booksLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Indlæser pensumbøger...</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4 pb-20">
+                 {books?.map((book: any) => (
+                    <div key={book.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4">
+                       <div className="w-12 h-16 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 text-slate-300">
+                          <Book className="w-6 h-6" />
+                       </div>
+                       <div className="space-y-1 min-w-0">
+                          <h4 className="text-sm font-black text-slate-900 leading-snug truncate">{book.title}</h4>
+                          <p className="text-[11px] font-semibold text-slate-400 truncate">{book.author}</p>
+                          {book.year && <p className="text-[9px] font-black text-indigo-500/80 uppercase tracking-widest">{book.year} • {book.publisher || 'Pensum'}</p>}
+                       </div>
+                    </div>
+                 ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
