@@ -284,7 +284,7 @@ export default function AdminOverviewPage() {
                                 })()
                             )}
                         </div>
-                        <Link href="/admin/users" className="p-6 bg-slate-50 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-all">
+                        <Link href="/admin/activity" className="p-6 bg-slate-50 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-all">
                             Se alle aktiviteter <ArrowRight className="w-3 h-3 inline ml-1" />
                         </Link>
                     </section>
