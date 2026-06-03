@@ -157,7 +157,9 @@ export default function AdminOverviewPage() {
             return createdAt && createdAt < d30;
         }).length;
         const growth = usersOlderThan30d > 0 ? ((nonAdmins.length - usersOlderThan30d) / usersOlderThan30d * 100).toFixed(1) : '100';
-        const aiCost = (((aiUsage?.totalInputTokens || 0) / 1000000 * 2.1) + ((aiUsage?.totalOutputTokens || 0) / 1000000 * 17.5));
+        const inputCostDkkPerMillion = 0.075 * 7.0; // 0.525 kr
+        const outputCostDkkPerMillion = 0.30 * 7.0; // 2.10 kr
+        const aiCost = (((aiUsage?.totalInputTokens || 0) / 1000000 * inputCostDkkPerMillion) + ((aiUsage?.totalOutputTokens || 0) / 1000000 * outputCostDkkPerMillion));
         const premiumCount = nonAdmins.filter(u => u.membership && u.membership !== 'free').length;
         const premiumPercentage = nonAdmins.length > 0 ? ((premiumCount / nonAdmins.length) * 100).toFixed(1) : '0';
         
@@ -256,10 +258,18 @@ export default function AdminOverviewPage() {
                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Uptime</p>
                                  <p className="text-xl font-black text-emerald-600 serif">99.9%</p>
                              </div>
-                             <div className="text-center">
-                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Tokens (30d)</p>
-                                 <p className="text-xl font-black text-indigo-600 serif">{aiUsage ? `${Math.round((aiUsage.totalInputTokens + aiUsage.totalOutputTokens)/1000)}k` : '0k'} <small className="text-[10px]">tokens</small></p>
-                             </div>
+                              <div className="text-center">
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Tokens (30d)</p>
+                                  <p className="text-xl font-black text-indigo-600 serif">
+                                      {(() => {
+                                          if (!aiUsage) return '0';
+                                          const total = aiUsage.totalInputTokens + aiUsage.totalOutputTokens;
+                                          if (total >= 1000000) return `${(total / 1000000).toFixed(1)}m`;
+                                          if (total >= 1000) return `${Math.round(total / 1000)}k`;
+                                          return total.toLocaleString('da-DK');
+                                      })()} <small className="text-[10px]">tokens</small>
+                                  </p>
+                              </div>
                         </div>
                     </section>
                 </div>
@@ -291,37 +301,28 @@ export default function AdminOverviewPage() {
                 </div>
             </div>
 
-            {/* 4. Strategic Navigation: The Nexus */}
+            {/* 4. Strategic Navigation: Symmetrical Control Center Grid */}
             <div className="space-y-8">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-900 shadow-sm"><LayoutGrid className="w-6 h-6" /></div>
-                    <h2 className="text-2xl font-black text-slate-900 serif">Modul-Oversigt</h2>
+                    <h2 className="text-2xl font-black text-slate-900 serif">Kontrolpanel & Værktøjer</h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Finance & Growth */}
-                    <div className="col-span-1 sm:col-span-2 lg:col-span-2 grid grid-cols-2 gap-4">
-                        <NexusCard title="Kampagner" icon={Sparkles} color="text-amber-500" bg="bg-amber-50" href="/admin/marketing" desc="Rabatter, Tilbud" />
-                        <NexusCard title="Konkurrence" icon={Trophy} color="text-rose-500" bg="bg-rose-50" href="/admin/konkurrence" desc="Deltagere fra /journey" />
-                        <NexusCard title="Uddannelse" icon={BarChart3} color="text-purple-500" bg="bg-purple-50" href="/admin/education" desc="Kohorte-data, Progression" />
-                    </div>
-
-                    {/* Communication */}
-                    <div className="col-span-1 lg:col-span-1 space-y-4">
-                        <NexusCard title="Notifikationer" icon={Smartphone} color="text-indigo-500" bg="bg-indigo-50" href="/admin/notifications" desc="Push, Direkte beskeder" />
-                        <NexusCard title="Email Broadcast" icon={Mail} color="text-indigo-600" bg="bg-indigo-50" href="/admin/email" desc="Send emails via Resend" />
-                    </div>
-
-                    {/* Research & Core */}
-                    <div className="col-span-1 lg:col-span-1 space-y-4">
-                        <NexusCard title="Seminarer" icon={MonitorPlay} color="text-indigo-600" bg="bg-indigo-50" href="/admin/seminarer" desc="Bruger-analyser & Slides" />
-                        <NexusCard title="Case Analyser" icon={Sparkles} color="text-rose-600" bg="bg-rose-50" href="/admin/case-analyser" desc="Bruger-cases & AI-indsigt" />
-                        <NexusCard title="Begreber" icon={BrainCircuit} color="text-amber-600" bg="bg-amber-50" href="/admin/begreber" desc="Vidensbase & Modeller" />
-                        <NexusCard title="Digitaliser Bøger" icon={Book} color="text-emerald-600" bg="bg-emerald-50" href="/admin/books" desc="AI-udlæsning af TOC" />
-                        <NexusCard title="Surveys" icon={MessageSquare} color="text-rose-500" bg="bg-rose-50" href="/admin/surveys" desc="NPS, Feedback" />
-                        <NexusCard title="Korrektur" icon={FileText} color="text-amber-800" bg="bg-amber-50" href="/admin/korrektur" desc="Lead-styring & Kalkulator" />
-                        <NexusCard title="System" icon={Zap} color="text-slate-100" bg="bg-slate-900" href="/admin/system" desc="Infrastruktur, Arkitektur" />
-                    </div>
+                    <NexusCard title="Brugeraktivitet" icon={Activity} color="text-indigo-600" bg="bg-indigo-50" href="/admin/activity" desc="Realtids hændelseslog & overvågning" />
+                    <NexusCard title="Korrektur" icon={FileText} color="text-amber-800" bg="bg-amber-50" href="/admin/korrektur" desc="Kalkulator, Lead-styring & afregning" />
+                    <NexusCard title="Digitaliser Bøger" icon={Book} color="text-emerald-600" bg="bg-emerald-50" href="/admin/books" desc="AI-indlæsning af indholdsfortegnelser" />
+                    <NexusCard title="Begreber" icon={BrainCircuit} color="text-emerald-700" bg="bg-emerald-50" href="/admin/begreber" desc="AI Begrebsguide & vidensbase" />
+                    
+                    <NexusCard title="Case Analyser" icon={FileSearch} color="text-rose-600" bg="bg-rose-50" href="/admin/case-analyser" desc="Bruger-sagsakter & AI-indsigter" />
+                    <NexusCard title="Seminarer" icon={MonitorPlay} color="text-purple-600" bg="bg-purple-50" href="/admin/seminarer" desc="Litteratur, slides & upload-logs" />
+                    <NexusCard title="Email Broadcast" icon={Mail} color="text-blue-600" bg="bg-blue-50" href="/admin/email" desc="Skabeloner & udsendelse via Resend" />
+                    <NexusCard title="Notifikationer" icon={Smartphone} color="text-cyan-600" bg="bg-cyan-50" href="/admin/notifications" desc="Mobil push-notifikationer & alarmer" />
+                    
+                    <NexusCard title="Kampagner" icon={Sparkles} color="text-amber-500" bg="bg-amber-50" href="/admin/marketing" desc="Rabatkoder, kampagnebannere & SEO" />
+                    <NexusCard title="Konkurrence" icon={Trophy} color="text-rose-500" bg="bg-rose-50" href="/admin/konkurrence" desc="Deltagere, streaks & journey-data" />
+                    <NexusCard title="Uddannelse" icon={BarChart3} color="text-indigo-500" bg="bg-indigo-50" href="/admin/education" desc="Studieordninger, moduler & progression" />
+                    <NexusCard title="Surveys" icon={MessageSquare} color="text-teal-600" bg="bg-teal-50" href="/admin/surveys" desc="Brugerfeedback, NPS & anmeldelser" />
                 </div>
             </div>
 
