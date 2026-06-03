@@ -61,8 +61,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/app/provider';
-import { Capacitor } from '@capacitor/core';
-import NativeMineMaterialer from '@/components/native/NativeMineMaterialer';
 import { useFirestore, useStorage, useCollection, useMemoFirebase } from '@/firebase';
 import { 
   collection, 
@@ -150,12 +148,9 @@ function MineMaterialerContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [studyMode, setStudyMode] = useState<{ active: boolean, materialId: string | null, page: number }>({ active: false, materialId: null, page: 1 });
-  const [isNative, setIsNative] = useState(false);
-
   const [selectedSemesterId, setSelectedSemesterId] = useState<string>(userProfile?.semester || '1');
   
   useEffect(() => {
-    setIsNative(Capacitor.isNativePlatform());
     if (userProfile?.semester && !isUserLoading) {
         setSelectedSemesterId(userProfile.semester);
     }
@@ -739,10 +734,6 @@ function MineMaterialerContent() {
     : null;
   const hasMaterialsForGoal = currentGoalMapping ? currentGoalMapping.count > 0 : false;
 
-  if (isNative) {
-    return <NativeMineMaterialer />;
-  }
-
   if (isUserLoading || userProfile === undefined || (userProfile && isLoading)) {
     return <AuthLoadingScreen />;
   }
@@ -751,8 +742,7 @@ function MineMaterialerContent() {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col selection:bg-indigo-100 font-sans">
       <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.03)_0%,transparent_70%)] rounded-full blur-[120px] pointer-events-none z-0"></div>
       
-      {!isNative && (
-        <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 py-6 sticky top-0 z-[60]">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 py-6 sticky top-0 z-[60]">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/portal" className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-95">
@@ -775,7 +765,6 @@ function MineMaterialerContent() {
           </div>
         </div>
       </header>
-      )}
 
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-12 relative z-10">
         <div className="grid lg:grid-cols-[380px,1fr] gap-8 sm:gap-12 items-start">

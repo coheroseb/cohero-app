@@ -48,7 +48,6 @@ import { useApp } from '@/app/provider';
 import { useToast } from '@/hooks/use-toast';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 import { Capacitor } from '@capacitor/core';
-import NativePortal from '@/components/native/NativePortal';
 import { fetchPoliticalNews, fetchSocialMinistryNews, processStudyRegulationAction, searchLiteratureAction } from '@/app/actions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -506,8 +505,6 @@ const PortalPageContent: React.FC = () => {
   };
 
   if (isUserLoading || !user || !userProfile) return <AuthLoadingScreen />;
-
-  if (isNative) return <NativePortal />;
 
   const hour = new Date().getHours();
   const greeting = hour < 10 ? 'Godmorgen' : hour < 18 ? 'Goddag' : 'Godaften';

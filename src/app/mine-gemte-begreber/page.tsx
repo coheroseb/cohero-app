@@ -37,9 +37,6 @@ interface SavedConcept {
   savedAt: { toDate: () => Date } | Timestamp;
 }
 
-import { Capacitor } from '@capacitor/core';
-import NativeSavedConcepts from '@/components/native/NativeSavedConcepts';
-
 export default function MineGemteBegreberPage() {
     const { user, isUserLoading } = useApp();
     const router = useRouter();
@@ -63,10 +60,6 @@ export default function MineGemteBegreberPage() {
             toast({ variant: "destructive", title: "Fejl", description: "Kunne ikke fjerne begrebet." });
         }
     }, [user, firestore, toast]);
-
-    if (Capacitor.isNativePlatform()) {
-      return <NativeSavedConcepts />;
-    }
 
     if (isUserLoading || isLoading) {
         return <AuthLoadingScreen />;

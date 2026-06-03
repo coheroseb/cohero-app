@@ -18,9 +18,6 @@ import { encryptData } from '@/lib/encryption';
 import { motion, AnimatePresence } from 'framer-motion';
 import { INSTITUTIONS, PROFESSION_OPTIONS, SEMESTER_OPTIONS } from '@/lib/constants';
 
-import { Capacitor } from '@capacitor/core';
-import NativeSettings from '@/components/native/NativeSettings';
-
 function capitalize(str: string) {
   return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 }
@@ -433,10 +430,6 @@ export default function SettingsPage() {
       setIsSyncing(null);
     }
   };
-
-  if (Capacitor.isNativePlatform()) {
-    return <NativeSettings />;
-  }
 
   if (!userProfile) {
      return (
