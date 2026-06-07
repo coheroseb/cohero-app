@@ -2675,7 +2675,29 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
       {/* MAIN CONTENT AREA */}
       <div ref={mainScrollRef as any} className="flex-1 min-w-0 relative pt-0 custom-scrollbar pb-32 lg:pb-32 lg:h-full lg:overflow-y-auto">
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 hidden lg:flex items-center justify-between sticky top-0 z-50">
-            <form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
+            {/* Task-based supplement chips */}
+<div className="mt-4 flex flex-wrap gap-2 px-2">
+  {[
+    { label: 'Vurder merudgifter', query: 'merudgifter' },
+    { label: 'Underretning', query: 'underretning' },
+    { label: 'Partshøring', query: 'partshøring' },
+    { label: 'Børnesamtale', query: 'børnesamtale' },
+    { label: 'BPA-ordning', query: 'BPA' }
+  ].map((task) => (
+    <button
+      key={task.query}
+      onClick={() => {
+        setSearchQuery(task.query);
+        // Trigger search logic if necessary
+      }}
+      className="px-4 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-full text-[10px] font-black text-amber-900 uppercase tracking-widest transition-all shadow-sm"
+    >
+      {task.label}
+    </button>
+  ))}
+</div>
+
+<form onSubmit={handleSearch} className="flex items-center gap-6 flex-1 max-w-2xl">
                 <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-950 transition-colors" />
                     <input 
