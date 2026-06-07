@@ -2688,7 +2688,6 @@ export function LovPortalViewer({ initialViewMode }: { initialViewMode?: 'laws' 
       key={task.query}
       onClick={() => {
         setSearchQuery(task.query);
-        // Trigger search logic if necessary
       }}
       className="px-4 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-full text-[10px] font-black text-amber-900 uppercase tracking-widest transition-all shadow-sm"
     >
