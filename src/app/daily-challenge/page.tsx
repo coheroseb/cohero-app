@@ -236,7 +236,7 @@ export default function DailyChallengePage() {
     const [isLoadingSave, setIsLoadingSave] = useState(false);
 
     return (
-        <div className="min-h-screen bg-[#FAF9F6] text-slate-900 pb-20 relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-background text-slate-900 pb-20 relative overflow-hidden font-sans">
             {/* Header / Nav */}
             <div className="max-w-4xl mx-auto px-6 pt-8 flex items-center justify-between relative z-10">
                 <Link href="/portal" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-all font-bold text-xs uppercase tracking-wider bg-white px-5 py-3 rounded-full border border-slate-100 shadow-sm">

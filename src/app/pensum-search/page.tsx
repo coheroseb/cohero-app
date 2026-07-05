@@ -444,7 +444,7 @@ function PensumSearchContent() {
 
   if (!hasProAccess) {
     return (
-      <div className="bg-[#F8F9FA] min-h-screen pb-24 font-sans selection:bg-indigo-100 flex flex-col">
+      <div className="bg-background min-h-screen pb-24 font-sans selection:bg-indigo-100 flex flex-col">
         <div className="max-w-7xl mx-auto px-6 pt-6 w-full">
           <Link href="/portal" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-xs uppercase tracking-wider bg-white px-5 py-3 rounded-full border border-slate-100 shadow-sm">
             <ArrowLeft className="w-4 h-4" />
@@ -517,7 +517,7 @@ function PensumSearchContent() {
   }, [searched]);
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen pb-32 font-sans selection:bg-indigo-100 relative overflow-hidden">
+    <div className="bg-background min-h-screen pb-32 font-sans selection:bg-indigo-100 relative overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
         <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-indigo-50/40 rounded-full blur-[120px]" />
