@@ -421,7 +421,37 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const userRef = doc(firestore, 'users', user.uid);
     const unsubscribe = onSnapshot(userRef, (docSnap) => {
       if (docSnap.exists()) {
-        setUserProfile(docSnap.data() as UserProfile);
+        const data = docSnap.data();
+        const MAPPING: Record<string, string> = {
+          "kp": "Københavns Professionshøjskole",
+          "KP": "Københavns Professionshøjskole",
+          "via": "VIA University College",
+          "VIA": "VIA University College",
+          "ucl": "UCL Erhvervsakademi og Professionshøjskole",
+          "UCL": "UCL Erhvervsakademi og Professionshøjskole",
+          "absalon": "Professionshøjskolen Absalon",
+          "Absalon": "Professionshøjskolen Absalon",
+          "ucn": "Professionshøjskolen UCN",
+          "UCN": "Professionshøjskolen UCN",
+          "uc syd": "UC SYD",
+          "UC SYD": "UC SYD",
+          "aau": "Aalborg Universitet",
+          "AAU": "Aalborg Universitet"
+        };
+        const PROFESSION_MAPPING: Record<string, string> = {
+          "socialrådgiver": "Socialrådgiver",
+          "pædagog": "Pædagog",
+          "lærer": "Lærer",
+          "sygeplejerske": "Sygeplejerske",
+          "andet": "Andet"
+        };
+        const rawInst = data.institution || '';
+        const rawProf = data.profession || '';
+        setUserProfile({
+          ...data,
+          institution: MAPPING[rawInst] || rawInst,
+          profession: PROFESSION_MAPPING[rawProf.toLowerCase().trim()] || rawProf
+        } as UserProfile);
       } else {
         setUserProfile(null);
       }
