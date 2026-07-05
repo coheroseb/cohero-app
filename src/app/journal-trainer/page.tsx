@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { 
     FileText, 
     Sparkles, 
@@ -179,31 +180,20 @@ export default function JournalTrainerPage() {
                     </motion.div>
                 </div>
             )}
-            {/* Navigation Header */}
-            <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-6 py-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link href="/portal" className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-                            <ArrowLeft className="w-5 h-5 text-slate-500" />
-                        </Link>
-                        <div className="h-6 w-px bg-slate-200 mx-2" />
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-                                <FileText className="w-4 h-4" />
-                            </div>
-                            <span className="font-black serif text-lg tracking-tight">Journal-Træner <span className="text-indigo-600 text-xs font-black uppercase tracking-widest ml-1 px-2 py-0.5 bg-indigo-50 rounded-full">v2.0</span></span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+            {/* Main Content Area */}
+            <main className="max-w-5xl mx-auto px-6 pt-12 pb-32">
+                <PageHeader
+                    title="Journal-Træner"
+                    subtitle="Træn din evne til at skrive præcise, objektive og juridisk holdbare journalnotater."
+                    icon={<FileText className="w-5 h-5" />}
+                    backHref="/portal"
+                    actions={
+                        <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100/60">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI Mentor Aktiv</span>
                         </div>
-                    </div>
-                </div>
-            </nav>
-
-            <main className="max-w-5xl mx-auto px-6 pt-12">
+                    }
+                />
                 <AnimatePresence mode="wait">
                     {step === 'selection' && (
                         <motion.div 

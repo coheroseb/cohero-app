@@ -17,6 +17,9 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+import PageHeader from '@/components/PageHeader';
+import EmptyState from '@/components/EmptyState';
+
 interface Notification {
   id: string;
   title: string;
@@ -68,54 +71,52 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 pt-4 pb-8">
-      <div className="flex items-center justify-between mb-8 px-2">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Notifikationer</h1>
-          <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Status & Opdateringer</p>
-        </div>
-        {notifications.some(n => !n.read) && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={markAllAsRead}
-            className="text-[10px] font-black uppercase text-indigo-600 tracking-widest gap-2"
-          >
-            <Check className="w-3.5 h-3.5" />
-            Meld alt læst
-          </Button>
-        )}
-      </div>
+    <div className="min-h-screen bg-slate-50/60 px-6 py-10 max-w-4xl mx-auto font-sans">
+      <PageHeader
+        title="Notifikationer"
+        subtitle="Hold dig opdateret på AI-analyser og studiet"
+        icon={<Bell className="w-5 h-5" />}
+        backHref="/portal"
+        actions={
+          notifications.some(n => !n.read) && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={markAllAsRead}
+              className="text-[10px] font-black uppercase text-indigo-600 tracking-widest gap-2"
+            >
+              <Check className="w-3.5 h-3.5" />
+              Meld alt læst
+            </Button>
+          )
+        }
+      />
 
       <div className="space-y-4">
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-white rounded-3xl animate-pulse border border-slate-100" />
+              <div key={i} className="h-24 bg-white rounded-[var(--radius-lg)] animate-pulse border border-slate-100/60" />
             ))}
           </div>
         ) : notifications.length === 0 ? (
-          <div className="py-20 text-center space-y-6">
-            <div className="w-20 h-20 bg-white rounded-[2.5rem] flex items-center justify-center mx-auto text-slate-100 shadow-sm">
-              <BellOff className="w-10 h-10" />
-            </div>
-            <div className="space-y-2">
-              <p className="text-lg font-bold text-slate-900">Ingen notifikationer</p>
-              <p className="text-sm text-slate-400 font-medium">Vi giver dig besked når der sker noget nyt.</p>
-            </div>
-          </div>
+          <EmptyState
+            title="Ingen nye beskeder"
+            description="Vi giver dig besked direkte her på portalen, når der sker noget nyt med dine analyser eller opgaver."
+            icon={<BellOff className="w-6 h-6 text-slate-300" />}
+          />
         ) : (
           notifications.map((n) => (
             <div 
               key={n.id} 
-              className={`p-5 bg-white rounded-[2rem] border transition-all relative overflow-hidden group ${
+              className={`p-5 bg-white rounded-[var(--radius-lg)] border transition-all relative overflow-hidden group ${
                 !n.read ? 'border-indigo-100 shadow-md shadow-indigo-500/5' : 'border-slate-100 opacity-80'
               }`}
             >
               {!n.read && <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500" />}
               
               <div className="flex gap-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                <div className={`w-12 h-12 rounded-[var(--radius-sm)] flex items-center justify-center shrink-0 border ${
                   n.type === 'plan' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
                   n.type === 'schedule' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                   n.type === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-100' :
@@ -158,7 +159,7 @@ export default function NotificationsPage() {
         )}
       </div>
 
-      <div className="mt-12 p-8 bg-indigo-950 rounded-[3rem] text-center space-y-6 relative overflow-hidden group">
+      <div className="mt-12 p-8 bg-indigo-950 rounded-[var(--radius-xl)] text-center space-y-6 relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-8 text-white/5 group-hover:rotate-12 transition-transform">
           <Sparkles className="w-32 h-32" />
         </div>
@@ -167,9 +168,11 @@ export default function NotificationsPage() {
             <h2 className="text-white font-black text-xl">Husk push-beskeder</h2>
             <p className="text-indigo-200/60 text-sm font-medium">Hold dig opdateret på AI-analyser og sagsbehandling, selv når appen er lukket.</p>
           </div>
-          <Button variant="secondary" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest text-xs bg-white text-indigo-950 hover:bg-slate-100">
-            Gå til indstillinger
-          </Button>
+          <Link href="/settings">
+            <Button variant="secondary" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest text-xs bg-white text-indigo-950 hover:bg-slate-100">
+              Gå til indstillinger
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

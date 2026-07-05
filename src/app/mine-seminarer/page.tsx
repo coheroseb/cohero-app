@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import EmptyState from '@/components/EmptyState';
 import {
   ArrowLeft,
   BookCopy,
@@ -1372,44 +1374,37 @@ export default function MineSeminarerPage() {
   if (isLoading) return <AuthLoadingScreen />;
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8]">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10">
-        <div className="mb-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-            <div className="flex items-center gap-4 sm:gap-6">
-                <Link href="/portal" className="p-3 sm:p-4 bg-white border border-slate-100 text-slate-400 rounded-[1.25rem] sm:rounded-[1.5rem] hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0">
-                    <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                </Link>
-                <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2 sm:gap-3 mb-1 overflow-x-auto no-scrollbar">
-                      <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-indigo-600 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-indigo-600/20 whitespace-nowrap">Arkiv</span>
-                      <span className="text-slate-300 text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap">Studie-materiale</span>
-                    </div>
-                    <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-slate-900 serif tracking-tighter leading-tight">Mit Vidensbibliotek</h1>
-                    <p className="text-slate-400 font-medium text-xs sm:text-sm line-clamp-1 sm:line-clamp-none">Organiser, repetér og få AI-indsigt i alle dine seminarer.</p>
-                </div>
+    <div className="min-h-screen bg-slate-50/60 font-sans pb-32">
+      <main className="max-w-7xl mx-auto px-6 py-10">
+        <PageHeader
+          title="Mit Vidensbibliotek"
+          subtitle="Organiser, repetér og få AI-indsigt i alle dine seminarer."
+          icon={<BookCopy className="w-5 h-5" />}
+          backHref="/portal"
+          actions={
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1 p-1 bg-white rounded-xl border border-slate-100 shrink-0 shadow-sm">
+                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <button 
+                onClick={() => setShowStats(!showStats)} 
+                className={`h-11 px-4 sm:px-5 rounded-[var(--radius-sm)] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border shrink-0 ${showStats ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50 shadow-sm'}`}
+              >
+                <Activity className="w-3.5 h-3.5" /> {showStats ? 'Skjul Statistik' : 'Statistik'}
+              </button>
+              <Link href="/seminar-architect" className="shrink-0">
+                <Button className="rounded-[var(--radius-sm)] bg-slate-900 hover:bg-indigo-600 text-white h-11 px-6 shadow-sm text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Ny Analyse
+                </Button>
+              </Link>
             </div>
-            <div className="flex flex-row items-center justify-start lg:justify-end gap-2 sm:gap-3 w-full lg:w-auto overflow-x-auto no-scrollbar pb-2 lg:pb-0">
-                 <div className="flex items-center gap-1 p-1 bg-slate-50/50 backdrop-blur-sm rounded-xl border border-slate-100 shrink-0">
-                    <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <LayoutGrid className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <List className="w-3.5 h-3.5" />
-                    </button>
-                 </div>
-                 <button 
-                    onClick={() => setShowStats(!showStats)} 
-                    className={`h-11 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border shrink-0 ${showStats ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-600/20' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
-                 >
-                    <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {showStats ? 'Skjul Statistik' : 'Statistik'}
-                 </button>
-                 <Link href="/seminar-architect" className="shrink-0">
-                    <Button className="rounded-xl sm:rounded-2xl bg-slate-950 hover:bg-indigo-600 text-white h-11 sm:h-14 px-6 sm:px-8 shadow-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
-                        <Plus className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-3" /> <span className="hidden sm:inline">Ny Analyse</span>
-                    </Button>
-                </Link>
-            </div>
-        </div>
+          }
+        />
 
         <AnimatePresence>
             {showStats && (
@@ -1533,23 +1528,14 @@ export default function MineSeminarerPage() {
         </div>
 
         {!isLoading && filtered.length === 0 && (
-            <div className="py-40 text-center space-y-6">
-                <div className="w-32 h-32 bg-slate-50 rounded-[3rem] flex items-center justify-center text-slate-200 mx-auto shadow-inner relative group">
-                    <FileSearch className="w-12 h-12 group-hover:scale-110 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-indigo-500/5 rounded-[3rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="max-w-xs mx-auto">
-                  <h3 className="text-2xl font-black text-slate-900 serif mb-2 tracking-tight">Biblioteket er tomt</h3>
-                  <p className="text-slate-400 font-medium text-sm leading-relaxed">Der er ikke noget materiale her endnu. Start din første analyse for at se viden tage form.</p>
-                </div>
-                <div className="pt-4">
-                  <Link href="/seminar-architect">
-                      <Button variant="outline" className="rounded-2xl border-slate-200 text-slate-600 font-black uppercase tracking-widest text-[10px] h-12 px-8 hover:bg-slate-50 transition-all active:scale-95">
-                          Start første analyse
-                      </Button>
-                  </Link>
-                </div>
-            </div>
+          <EmptyState
+            title="Biblioteket er tomt"
+            description="Der er ikke noget materiale her endnu. Start din første analyse for at se din viden tage form."
+            icon={<FileSearch className="w-6 h-6 text-slate-300" />}
+            actionLabel="Start første analyse"
+            actionHref="/seminar-architect"
+            className="my-10"
+          />
         )}
       </main>
 
