@@ -99,14 +99,33 @@ export default function SettingsPage() {
       setSemester(userProfile.semester || '');
       
       const MAPPING: Record<string, string> = {
+        "kp": "Københavns Professionshøjskole",
+        "KP": "Københavns Professionshøjskole",
+        "via": "VIA University College",
+        "VIA": "VIA University College",
+        "ucl": "UCL Erhvervsakademi og Professionshøjskole",
         "UCL": "UCL Erhvervsakademi og Professionshøjskole",
+        "absalon": "Professionshøjskolen Absalon",
         "Absalon": "Professionshøjskolen Absalon",
-        "UCN": "Professionshøjskolen UCN"
+        "ucn": "Professionshøjskolen UCN",
+        "UCN": "Professionshøjskolen UCN",
+        "uc syd": "UC SYD",
+        "UC SYD": "UC SYD",
+        "aau": "Aalborg Universitet",
+        "AAU": "Aalborg Universitet"
       };
       const inst = userProfile.institution || '';
       setInstitution(MAPPING[inst] || inst);
 
-      setProfession(userProfile.profession || '');
+      const PROFESSION_MAPPING: Record<string, string> = {
+        "socialrådgiver": "Socialrådgiver",
+        "pædagog": "Pædagog",
+        "lærer": "Lærer",
+        "sygeplejerske": "Sygeplejerske",
+        "andet": "Andet"
+      };
+      const prof = userProfile.profession || '';
+      setProfession(PROFESSION_MAPPING[prof.toLowerCase().trim()] || prof);
       setIsQualified(userProfile.isQualified || false);
       setEmailNotificationsEnabled(userProfile.emailNotificationsEnabled ?? true);
 
