@@ -28,6 +28,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
+import Sidebar from '@/components/Sidebar';
 import OnboardingModal from '@/components/OnboardingModal';
 import Footer from '@/components/Footer';
 import ComingSoon from '@/components/ComingSoon';
@@ -362,6 +363,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const isAdminPage = useMemo(() => pathname?.startsWith('/admin'), [pathname]);
   const isPublicProfile = useMemo(() => pathname?.startsWith('/u/'), [pathname]);
   const isJourney = useMemo(() => pathname === '/journey', [pathname]);
+  const showSidebar = useMemo(() => {
+    return mounted && user && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isJourney && pathname !== '/' && !pathname?.startsWith('/auth') && !pathname?.startsWith('/cookie-policy') && !pathname?.startsWith('/privacy-policy') && !pathname?.startsWith('/terms-of-service');
+  }, [mounted, user, isNativeApp, isStandaloneGroups, isRaadgivning, isJourney, pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -846,18 +850,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 .border-amber-200, .border-amber-100 { border-color: #a78bfa !important; }
             ` : ''}
         ` }} />
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isPublicProfile && !isNavbarHidden && !isJourney && showBannerOverlays && (
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !isPublicProfile && !isNavbarHidden && !isJourney && pathname !== '/' && !showSidebar && showBannerOverlays && (
           <>
             {showUpgradeBanner && <UpgradeBanner />}
             <Navbar onAuth={(mode) => openAuthPage(mode)} user={user} userProfile={userProfile} onLogout={handleLogout} topOffset={totalBannerOffset} />
           </>
         )}
+        
+        {showSidebar && <Sidebar />}
+
         <main 
-          className={`relative ${isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage || isJourney || pathname?.includes('/mindmap')) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32'} ${((isLovPortal || isMitSemester) && !isNativeApp) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
-          style={{ paddingTop: !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' && !isJourney && !pathname?.includes('/mindmap') ? `calc(${totalBannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` : (totalBannerOffset > 0 && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${totalBannerOffset}px` : undefined) }}
+          className={`relative ${
+            showSidebar 
+              ? 'pt-16 md:pt-0 md:pl-64 flex-grow flex flex-col bg-[#F8F9FA]' 
+              : (isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage || isJourney || pathname?.includes('/mindmap')) ? 'pt-0' : pathname === '/' ? 'pt-0' : 'pt-24 md:pt-32')
+          } ${((isLovPortal || isMitSemester) && !isNativeApp && !showSidebar) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
+          style={{ 
+            paddingTop: showSidebar 
+              ? undefined 
+              : (!isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && pathname !== '/' && !isJourney && !pathname?.includes('/mindmap') 
+                ? `calc(${totalBannerOffset}px + ${typeof window !== 'undefined' && window.innerWidth < 768 ? '6rem' : '8rem'})` 
+                : (totalBannerOffset > 0 && (pathname === '/' || isRaadgivning || isStandaloneGroups) ? `${totalBannerOffset}px` : undefined)) 
+          }}
         >
             {/* Soft top gradient to blend with navbar when scrolling */}
-            {!isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && (
+            {!isNativeApp && !isStandaloneGroups && !isRaadgivning && !isAdminPage && !showSidebar && (
                 <div className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-inherit to-transparent pointer-events-none z-10`} />
             )}
             
@@ -871,7 +888,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/klaus-viste') && !isJourney && !pathname?.includes('/mindmap') && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/klaus-viste') && !isJourney && !pathname?.includes('/mindmap') && !showSidebar && <Footer />}
 
 
         

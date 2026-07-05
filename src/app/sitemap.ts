@@ -28,7 +28,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/quiz-creator',
     '/pensum',
     '/vive-indsigt',
-    '/folketinget',
     '/reform-radar',
     '/seminar-architect',
     '/semester-planlaegger',

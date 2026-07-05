@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { 
   Sparkles, Brain, ArrowRight, Scale, ChevronRight, FileText,
   ArrowUpRight, CheckCircle2, Building, BookOpen, Music, Check, Gift, Bird, Ghost,
-  ShieldCheck, Zap
+  ShieldCheck, Zap, Lock, Globe, Users, Bell, Search, Menu, X, Star, FileBox
 } from 'lucide-react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
+import { BookSpine } from '@/components/BookSpine';
 import TikTokFeed from '@/components/home/TikTokFeed';
 import ReviewMarquee from '@/components/home/ReviewMarquee';
 import TrustStats from '@/components/home/TrustStats';
@@ -29,6 +30,8 @@ const Reveal = ({ children, delay = 0, className = "" }: { children: React.React
 export default function LandingPage() {
   const { openAuthPage, campaigns, effectiveTheme, isUserLoading, user } = useApp();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeMockupTab, setActiveMockupTab] = useState<'pensum' | 'begreber' | 'lovportal' | 'secondOpinion'>('pensum');
   const router = useRouter();
 
   useEffect(() => {
@@ -48,72 +51,393 @@ export default function LandingPage() {
 
   const onStart = () => openAuthPage('signup');
 
-  // Scroll animations for the Hero Section
-  const { scrollYProgress } = useScroll();
-  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-
   return (
     <div className={`flex flex-col selection:bg-indigo-500/30 selection:text-indigo-900 overflow-x-hidden font-sans antialiased bg-[#FAF9F6]`}>
        
+       {/* Floating Navigation */}
+       <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-4 py-4 md:px-12">
+         <div className="max-w-7xl mx-auto w-full bg-[#090d16]/75 backdrop-blur-xl border border-white/5 rounded-[2rem] h-20 px-8 flex items-center justify-between shadow-2xl shadow-black/30">
+           <div className="flex items-center gap-3">
+              <Link href="/" className="flex items-end -space-x-[1.5px] scale-[0.85] origin-left">
+                 <BookSpine index={0} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-5 sm:h-6" color="bg-white" decoration="plain" tilt="-rotate-1" />
+                 <BookSpine index={1} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-7 sm:h-8" color="bg-white" decoration="bands" />
+                 <BookSpine index={2} theme={effectiveTheme} width="w-1 sm:w-1.5" height="h-6 sm:h-7" color="bg-white" decoration="plain" />
+
+                 <BookSpine index={3} theme={effectiveTheme} letter="C" width="w-3 sm:w-3.5" height="h-8 sm:h-9" color="bg-white" decoration="bands" />
+                 <BookSpine index={4} theme={effectiveTheme} letter="o" width="w-3 sm:w-3.5" height="h-6 sm:h-7" color="bg-white" decoration="gold" />
+                 <BookSpine index={5} theme={effectiveTheme} letter="h" width="w-3 sm:w-3.5" height="h-9 sm:h-10" color="bg-white" decoration="bands" tilt="-rotate-[1.5deg]" />
+                 <BookSpine index={6} theme={effectiveTheme} letter="é" width="w-3 sm:w-3.5" height="h-7 sm:h-8" color="bg-white" decoration="stripes" />
+                 <BookSpine index={7} theme={effectiveTheme} letter="r" width="w-3 sm:w-3.5" height="h-8 sm:h-9" color="bg-white" decoration="bands" />
+                 <BookSpine index={8} theme={effectiveTheme} letter="o" width="w-3 sm:w-3.5" height="h-6 sm:h-7" color="bg-white" decoration="gold" tilt="rotate-[1deg]" />
+
+                 <BookSpine index={9} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-7 sm:h-8" color="bg-white" decoration="ornament" />
+                 <BookSpine index={10} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-5 sm:h-6" color="bg-white" decoration="plain" tilt="rotate-2" />
+                 <BookSpine index={11} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-6 sm:h-7" color="bg-white" decoration="bands" />
+              </Link>
+           </div>
+           
+           <div className="hidden md:flex items-center gap-1.5">
+              <a href="#showcase" className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white uppercase tracking-wider transition-colors">Funktioner</a>
+              <a href="#pricing" className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white uppercase tracking-wider transition-colors">Priser</a>
+              <Link href="/shop" className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white uppercase tracking-wider transition-colors">Shop</Link>
+              <Link href="/om-second-opinion" className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white uppercase tracking-wider transition-colors">Second Opinion</Link>
+           </div>
+
+           <div className="flex items-center gap-4">
+              {user ? (
+                 <Link 
+                   href="/portal"
+                   className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-extrabold uppercase tracking-widest transition-all"
+                 >
+                    Min Portal
+                 </Link>
+              ) : (
+                 <>
+                    <button 
+                      onClick={() => openAuthPage('signin')} 
+                      className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                    >
+                       Log ind
+                    </button>
+                    <button 
+                      onClick={() => openAuthPage('signup')} 
+                      className="shimmer-btn hidden sm:inline-flex px-6 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-widest transition-all"
+                    >
+                       Opret gratis profil
+                    </button>
+                 </>
+              )}
+              
+              {/* Mobile Hamburger menu button */}
+              <button 
+                className="md:hidden p-2 text-slate-400 hover:text-white"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                 {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+           </div>
+         </div>
+
+         {/* Mobile menu dropdown */}
+         <AnimatePresence>
+           {isMobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-24 left-4 right-4 bg-[#090d16]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 flex flex-col gap-4 shadow-2xl z-40"
+              >
+                 <a href="#showcase" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-300 hover:text-white uppercase tracking-wider py-2">Funktioner</a>
+                 <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-300 hover:text-white uppercase tracking-wider py-2">Priser</a>
+                 <Link href="/shop" className="text-sm font-bold text-slate-300 hover:text-white uppercase tracking-wider py-2">Shop</Link>
+                 <Link href="/om-second-opinion" className="text-sm font-bold text-slate-300 hover:text-white uppercase tracking-wider py-2">Second Opinion</Link>
+                 
+                 <div className="w-full h-[1px] bg-white/5 my-2" />
+                 
+                 {user ? (
+                    <Link 
+                      href="/portal" 
+                      className="w-full py-4 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl text-center font-bold text-sm uppercase tracking-widest transition-all"
+                    >
+                       Min Portal
+                    </Link>
+                 ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                       <button 
+                         onClick={() => { openAuthPage('signin'); setIsMobileMenuOpen(false); }} 
+                         className="py-4 border border-white/10 text-white rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-white/5 transition-all"
+                       >
+                          Log ind
+                       </button>
+                       <button 
+                         onClick={() => { openAuthPage('signup'); setIsMobileMenuOpen(false); }} 
+                         className="shimmer-btn py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all"
+                       >
+                          Opret konto
+                       </button>
+                    </div>
+                 )}
+              </motion.div>
+           )}
+         </AnimatePresence>
+       </nav>
+
        {/* 1. HERO SECTION */}
-       <motion.section 
-         style={{ scale: heroScale, opacity: heroOpacity }}
-         className="relative min-h-[100dvh] flex flex-col items-center justify-center pt-32 pb-20 px-5 sm:px-8 overflow-hidden sticky top-0"
-       >
-          <div className="absolute inset-0 -z-20">
-             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-indigo-200/40 to-purple-200/40 blur-[120px]"></div>
-             <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-amber-100/50 to-orange-100/40 blur-[150px]"></div>
+       <header className="relative min-h-[100dvh] flex flex-col justify-center pt-32 pb-20 px-5 sm:px-8 overflow-hidden bg-[#090d16] text-white border-b border-white/5">
+         {/* Glow Effects in Background */}
+         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-500/10 blur-[130px] pointer-events-none" />
+         <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-500/15 blur-[140px] pointer-events-none" />
+         
+         {/* Grid pattern background */}
+         <div 
+           className="absolute inset-0 opacity-[0.03] pointer-events-none"
+           style={{ 
+             backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px)`,
+             backgroundSize: '24px 24px'
+           }}
+         />
+
+         <div className="max-w-7xl mx-auto w-full relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+           {/* Left Text Column */}
+           <div className="lg:col-span-7 text-left space-y-8 flex flex-col items-start">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full shadow-sm"
+              >
+                 <Sparkles className="w-4 h-4 text-indigo-400" />
+                 <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300">Den nye standard for socialrådgiverstuderende</span>
+              </motion.div>
+
+              <motion.h1 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                className="text-[44px] sm:text-[64px] lg:text-[76px] font-black text-white tracking-tight leading-[1.05]"
+              >
+                Læs smartere.<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400 italic pr-2">Ikke hårdere.</span>
+              </motion.h1>
+
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="text-lg sm:text-xl text-slate-400 max-w-xl font-medium leading-relaxed"
+              >
+                Cohéro strukturerer din viden, foreslår relevant litteratur direkte ud fra dine læringsmål med præcise sidetal, og genererer færdige APA-referencer.
+              </motion.p>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4"
+              >
+                 <button 
+                   onClick={onStart}
+                   className="shimmer-btn px-10 py-5 rounded-[2rem] text-lg font-bold transition-all shadow-[0_20px_40px_-15px_rgba(99,102,241,0.3)] flex items-center justify-center gap-3 w-full sm:w-auto"
+                 >
+                    Opret gratis profil <ArrowRight className="w-5 h-5" />
+                 </button>
+                 <a 
+                   href="#showcase"
+                   className="px-10 py-5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-[2rem] text-lg font-bold transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+                 >
+                    Se funktioner
+                 </a>
+              </motion.div>
+           </div>
+
+           {/* Right Mockup/Interactive Column */}
+           <div className="lg:col-span-5 relative w-full flex justify-center mt-10 lg:mt-0">
+              {/* Glow Behind Mockup */}
+              <div className="absolute inset-[-40px] bg-indigo-500/10 rounded-full filter blur-[100px] pointer-events-none" />
+
+              {/* Floating Badge 1: GDPR */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+                className="float-animation absolute top-[10%] left-[-20px] sm:left-[-40px] bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-3 z-20 pointer-events-none"
+              >
+                <div className="bg-emerald-500/20 text-emerald-400 p-2 rounded-xl">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[12px] font-black text-white leading-none">100% GDPR-Sikret</span>
+                  <span className="text-[10px] text-slate-400 mt-1">Dansk hosting og kryptering</span>
+                </div>
+              </motion.div>
+
+              {/* Floating Badge 2: Efficiency */}
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8 }}
+                className="float-animation absolute bottom-[10%] right-[-20px] sm:right-[-40px] bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-3 z-20 pointer-events-none"
+                style={{ animationDelay: '-3s' }}
+              >
+                <div className="bg-indigo-500/20 text-indigo-400 p-2 rounded-xl">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[12px] font-black text-white leading-none">Læs Hurtigere</span>
+                  <span className="text-[10px] text-slate-400 mt-1">Spar timer på pensumlæsning</span>
+                </div>
+              </motion.div>
+
+              {/* Interactive Showcase Window */}
+              <div className="w-full max-w-[480px] bg-slate-950/40 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative z-10">
+                 {/* Window Header */}
+                 <div className="flex items-center justify-between px-6 py-4 bg-slate-900/40 border-b border-white/5">
+                    <div className="flex gap-2">
+                       <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                       <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                       <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-500">student.cohero.dk/dashboard</div>
+                 </div>
+
+                 {/* Tabs */}
+                 <div className="grid grid-cols-4 border-b border-white/5 bg-slate-900/20">
+                    {[
+                       { id: 'pensum', label: 'Pensum' },
+                       { id: 'begreber', label: 'Begreber' },
+                       { id: 'lovportal', label: 'Lovportal' },
+                       { id: 'secondOpinion', label: 'Opinion' },
+                    ].map((t) => (
+                       <button
+                         key={t.id}
+                         onClick={() => setActiveMockupTab(t.id as any)}
+                         className={`py-3 text-[11px] font-black uppercase tracking-wider border-b-2 transition-all ${
+                            activeMockupTab === t.id
+                               ? 'border-indigo-500 text-white bg-white/5'
+                               : 'border-transparent text-slate-400 hover:text-slate-200'
+                         }`}
+                       >
+                          {t.label}
+                       </button>
+                    ))}
+                 </div>
+
+                 {/* Tab content panel */}
+                 <div className="p-6 min-h-[300px] flex flex-col justify-between">
+                    {activeMockupTab === 'pensum' && (
+                       <div className="space-y-4 text-left">
+                          <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
+                             <Search className="w-4 h-4 text-indigo-400" />
+                             <span className="text-xs text-slate-300">Barnets Lov § 43 samvær...</span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                             <div className="bg-white/5 border border-white/5 rounded-xl p-3 relative overflow-hidden">
+                                <div className="flex justify-between items-center mb-1">
+                                   <span className="text-[9px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-md">Pensum Match</span>
+                                   <span className="text-[9px] text-slate-400 font-mono">Side 142</span>
+                                </div>
+                                <h4 className="text-xs font-bold text-white">Socialt Arbejde med Børn og Unge</h4>
+                                <p className="text-[11px] text-slate-400 leading-normal mt-1">"Betingelser for samvær og kontakt under anbringelse reguleres efter Barnets Lov § 43..."</p>
+                             </div>
+
+                             <div className="bg-white/5 border border-white/5 rounded-xl p-3 opacity-60">
+                                <div className="flex justify-between items-center mb-1">
+                                   <span className="text-[9px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-md">Supplerende</span>
+                                   <span className="text-[9px] text-slate-400 font-mono">Side 89</span>
+                                </div>
+                                <h4 className="text-xs font-bold text-white">Vejledning om Barnets Lov</h4>
+                                <p className="text-[11px] text-slate-400 leading-normal mt-1">"Det overordnede formål er at understøtte barnets stabile relationer..."</p>
+                             </div>
+                          </div>
+                       </div>
+                    )}
+
+                    {activeMockupTab === 'begreber' && (
+                       <div className="space-y-4 text-left">
+                          <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
+                             <Brain className="w-4 h-4 text-purple-400" />
+                             <span className="text-xs text-slate-300">Søg ord: Helhedsvurdering</span>
+                          </div>
+                          
+                          <div className="bg-white/5 border border-white/5 rounded-xl p-4 space-y-3">
+                             <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-bold text-white">Helhedsvurdering</h4>
+                                <span className="text-[9px] font-black uppercase bg-purple-500/25 text-purple-300 px-2 py-0.5 rounded-md">Metode & Ret</span>
+                             </div>
+                             <p className="text-[11px] text-slate-300 leading-relaxed">
+                                Princippet om, at myndigheden skal vurdere alle forhold i borgerens liv (økonomi, helbred, sociale forhold, netværk) for at yde den rette støtte, jf. Retssikkerhedsloven § 5.
+                             </p>
+                             <div className="border-t border-white/5 pt-2 text-[10px] text-slate-400 italic">
+                                💡 Tip: Vigtigt til eksamen i forvaltningsret!
+                             </div>
+                          </div>
+                       </div>
+                    )}
+
+                    {activeMockupTab === 'lovportal' && (
+                       <div className="space-y-4 text-left">
+                          <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
+                             <Scale className="w-4 h-4 text-amber-400" />
+                             <span className="text-xs text-slate-300">Slå op: Retssikkerhedsloven § 5</span>
+                          </div>
+                          
+                          <div className="bg-white/5 border border-white/5 rounded-xl p-3.5 space-y-2">
+                             <div className="flex justify-between items-center">
+                                <h4 className="text-xs font-black uppercase text-amber-400">§ 5. Helhedsvurdering</h4>
+                                <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md uppercase font-bold">Gældende</span>
+                             </div>
+                             <p className="text-[10px] text-slate-400 italic">"Kommunen skal behandle ansøgninger om hjælp i forhold til alle de muligheder..."</p>
+                             
+                             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 mt-2">
+                                <span className="text-[9px] font-black text-amber-300 uppercase block mb-1">AI Fortolkning i øjenhøjde:</span>
+                                <p className="text-[11px] text-slate-200 leading-normal">
+                                   Kommunen må ikke kun se snævert på ét enkelt problem. De skal afdække, om borgeren har brug for andre typer hjælp undervejs.
+                                </p>
+                             </div>
+                          </div>
+                       </div>
+                    )}
+
+                    {activeMockupTab === 'secondOpinion' && (
+                       <div className="space-y-4 text-left">
+                          <div className="border-2 border-dashed border-white/10 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-white/5">
+                             <FileText className="w-8 h-8 text-rose-400 mb-2" />
+                             <span className="text-xs font-bold text-white text-ellipsis overflow-hidden max-w-full">Eksamensbesvarelse_Endelig.docx</span>
+                             <span className="text-[9px] text-slate-400 mt-1">Analyse fuldført på 12 sekunder</span>
+                          </div>
+
+                          <div className="bg-white/5 border border-white/5 rounded-xl p-3.5 flex items-center justify-between">
+                             <div className="space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                   <span className="w-2 h-2 rounded-full bg-rose-500" />
+                                   <span className="text-xs font-bold text-white">Manglende partshøring</span>
+                                </div>
+                                <p className="text-[10px] text-slate-400">Forvaltningsloven § 19 er ikke nævnt i din vurdering.</p>
+                             </div>
+                             <div className="bg-rose-500/20 text-rose-400 text-xs font-black px-3 py-2 rounded-xl border border-rose-500/30">
+                                92% Match
+                             </div>
+                          </div>
+                       </div>
+                    )}
+
+                    {/* Footer CTA in card */}
+                    <div className="border-t border-white/5 pt-4 flex items-center justify-between text-[11px] text-slate-400 mt-4">
+                       <span>Prøv det nu helt gratis</span>
+                       <button onClick={onStart} className="text-indigo-400 font-bold hover:underline flex items-center gap-1">
+                          Opret profil <ChevronRight className="w-3.5 h-3.5" />
+                       </button>
+                    </div>
+                 </div>
+              </div>
+           </div>
+         </div>
+       </header>
+
+       {/* 2. TRUST BADGES ROW */}
+       <section className="py-12 bg-white border-b border-slate-100 relative z-20">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+             <div className="flex flex-wrap justify-center gap-6 sm:gap-12 md:gap-20 items-center text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                   <ShieldCheck className="w-5 h-5 text-indigo-500" />
+                   <span>100% GDPR-Sikret</span>
+                </div>
+                <div className="flex items-center gap-2">
+                   <CheckCircle2 className="w-5 h-5 text-indigo-500" />
+                   <span>Udviklet med studerende</span>
+                </div>
+                <div className="flex items-center gap-2">
+                   <Sparkles className="w-5 h-5 text-indigo-500" />
+                   <span>AI Fortolkning</span>
+                </div>
+                <div className="flex items-center gap-2">
+                   <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                   <span>4.9 på Trustpilot</span>
+                </div>
+             </div>
           </div>
-          
-          <div className="max-w-5xl mx-auto text-center space-y-8 relative z-10 flex flex-col items-center mt-[-5dvh]">
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.9 }}
-               animate={{ opacity: 1, scale: 1 }}
-               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-               className="inline-flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-xl border border-white/80 rounded-full shadow-sm mb-4"
-             >
-                <Sparkles className="w-4 h-4 text-indigo-500" />
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-800">Den nye standard for socialrådgivere</span>
-             </motion.div>
-
-             <motion.h1 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-               className="text-[50px] sm:text-[80px] lg:text-[100px] font-black text-slate-900 tracking-tight leading-[0.95]"
-             >
-               Læs smartere.<br />
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-amber-500 italic pr-2">Ikke hårdere.</span>
-             </motion.h1>
-
-             <motion.p 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-               className="text-lg sm:text-2xl text-slate-500 max-w-2xl font-medium leading-relaxed"
-             >
-               Cohéro strukturerer din viden, foreslår relevant litteratur direkte ud fra dine læringsmål med præcise sidetal, og genererer færdige APA-referencer.
-             </motion.p>
-
-             <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-               className="pt-6"
-             >
-                <button 
-                  onClick={onStart}
-                  className="group relative flex items-center gap-3 px-10 py-5 sm:px-12 sm:py-6 bg-slate-900 text-white rounded-[2rem] text-lg sm:text-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)]"
-                >
-                   Opret gratis profil <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-             </motion.div>
-          </div>
-       </motion.section>
-
-       {/* Spacer to allow sticky hero to scroll out */}
-       <div className="h-[15dvh]"></div>
+        </section>
 
        {/* Active Campaign Spotlight */}
        {campaigns && campaigns.length > 0 && (
@@ -167,7 +491,7 @@ export default function LandingPage() {
        )}
 
        {/* 2. THE PLATFORM SHOWCASE (BENTO GRID) */}
-       <section className="relative z-20 bg-white rounded-t-[3rem] sm:rounded-t-[4rem] shadow-[0_-20px_40px_rgba(0,0,0,0.02)] px-5 sm:px-8 py-24 sm:py-32">
+       <section id="showcase" className="relative z-20 bg-white rounded-t-[3rem] sm:rounded-t-[4rem] shadow-[0_-20px_40px_rgba(0,0,0,0.02)] px-5 sm:px-8 py-24 sm:py-32">
           <div className="max-w-7xl mx-auto space-y-20">
              
              <div className="text-center max-w-3xl mx-auto space-y-6">
@@ -216,23 +540,8 @@ export default function LandingPage() {
                  </div>
                </Reveal>
 
-               {/* Bento 3: Folketinget */}
-               <Reveal className="md:col-span-4 h-full">
-                 <div onClick={onStart} className="h-full bg-rose-50 border border-rose-100 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden group cursor-pointer hover:bg-white transition-colors hover:shadow-[0_40px_80px_-20px_rgba(225,29,72,0.15)]">
-                    <div className="relative z-10 flex flex-col h-full">
-                       <div className="w-16 h-16 bg-rose-500 rounded-2xl flex items-center justify-center border border-rose-200 mb-8 text-white group-hover:-translate-y-2 transition-transform shadow-md">
-                          <Building className="w-8 h-8" />
-                       </div>
-                       <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Folketinget</h3>
-                       <p className="text-base text-slate-600 font-medium leading-relaxed">
-                         Overvåg nye lovforslag med direkte analyse af betydningen for velfærdsstaten.
-                       </p>
-                    </div>
-                 </div>
-               </Reveal>
-
                {/* Bento 4: Lovportalen */}
-               <Reveal delay={0.1} className="md:col-span-8 h-full">
+               <Reveal delay={0.1} className="md:col-span-12 h-full">
                  <div onClick={onStart} className="h-full bg-slate-50 border border-slate-100 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden group cursor-pointer hover:bg-white transition-colors hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] flex flex-col md:flex-row gap-8 items-center justify-between">
                     <div className="relative z-10 flex flex-col h-full justify-center md:w-1/2">
                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 mb-8 text-amber-600">
@@ -345,7 +654,7 @@ export default function LandingPage() {
        </section>
 
        {/* 5. PRICING SECTION (All 3 Tiers) */}
-       <section className="bg-[#FAF9F6] py-32 sm:py-48 px-5 sm:px-8 relative z-20">
+       <section id="pricing" className="bg-[#FAF9F6] py-32 sm:py-48 px-5 sm:px-8 relative z-20">
           <div className="max-w-7xl mx-auto text-center space-y-16">
              <Reveal>
                <h2 className="text-5xl sm:text-7xl font-black text-slate-900 tracking-tight">
@@ -399,7 +708,6 @@ export default function LandingPage() {
                           "Ubegrænset Pensumsøgning",
                           "Ubegrænset AI Opslagsværk",
                           "Fuld adgang til Lovportalen",
-                          "Folketinget Direkte overvågning",
                           "Gem vigtige kilder & arkiv"
                         ].map(item => (
                           <li key={item} className="flex items-center gap-4 text-white font-medium">

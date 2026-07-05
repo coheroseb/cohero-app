@@ -565,205 +565,7 @@ const PortalPageContent: React.FC = () => {
           {/* LEFT COLUMN: Academic/Professional Focus */}
           <div className="lg:col-span-8 space-y-8">
             
-            {/* QUICK SEMANTIC PENSUM SEARCH */}
-            <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:scale-110 transition-transform duration-700 pointer-events-none">
-                <Search className="w-40 h-40 text-violet-500" />
-              </div>
 
-              <div className="relative z-10 space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-violet-50 text-violet-600 rounded-2xl flex items-center justify-center">
-                    <Search className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight">Hurtig Pensumsøgning</h3>
-                    <p className="text-xs font-medium text-slate-400">Søg semantisk i bogbasen og find relevante kapitler med det samme</p>
-                  </div>
-                </div>
-
-                {!hasProAccess ? (
-                  <div className="mt-4 p-8 bg-slate-50 rounded-[1.5rem] border border-slate-100 text-center relative overflow-hidden flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Crown className="w-8 h-8 text-violet-600" />
-                    </div>
-                    <h4 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Eksklusivt for Kollega+</h4>
-                    <p className="text-sm text-slate-500 mb-6 font-medium max-w-sm">Hurtig pensumsøgning og litteraturhenvisninger er forbeholdt Kollega+ medlemmer.</p>
-                    <Link href="/upgrade">
-                      <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl px-8 font-black uppercase tracking-widest text-[11px] h-12 shadow-lg shadow-violet-100 transition-all hover:scale-105 active:scale-95">
-                        Opgrader Nu <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                      </Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <>
-                    <form 
-                      onSubmit={(e) => {
-                    e.preventDefault();
-                    handlePortalSearch(portalSearchQuery);
-                  }}
-                  className="relative flex items-center gap-3"
-                >
-                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input 
-                      type="text"
-                      value={portalSearchQuery}
-                      onChange={(e) => setPortalSearchQuery(e.target.value)}
-                      placeholder="Søg i dit pensum (f.eks. 'Magtrelationer', 'Forvaltningsret'...)"
-                      className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 outline-none transition-all"
-                    />
-                    {portalSearchQuery && (
-                      <button
-                        type="button"
-                        onClick={clearPortalSearch}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <Button 
-                    type="submit"
-                    disabled={isPortalSearchLoading || !portalSearchQuery.trim()}
-                    className="bg-violet-600 hover:bg-violet-700 text-white rounded-2xl px-6 font-black uppercase tracking-widest text-[11px] h-14 shadow-lg shadow-violet-100 active:scale-95 transition-all"
-                  >
-                    Søg
-                  </Button>
-                </form>
-
-                {/* Popular Topics (When no search has been run) */}
-                {!portalSearchResults && !isPortalSearchLoading && (
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Hurtige emner:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {["Magtrelationer", "Forvaltningsloven", "Børnekonventionen", "Socialt arbejde"].map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => {
-                            setPortalSearchQuery(tag);
-                            handlePortalSearch(tag);
-                          }}
-                          className="px-3.5 py-2 bg-slate-50 hover:bg-violet-50 text-[10px] text-slate-500 hover:text-violet-600 border border-slate-100 hover:border-violet-100 rounded-xl font-bold transition-all cursor-pointer"
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Loading state */}
-                {isPortalSearchLoading && (
-                  <div className="py-12 text-center space-y-4 border-t border-slate-100 pt-6">
-                    <Loader2 className="w-8 h-8 text-violet-600 animate-spin mx-auto" />
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Finder de mest relevante kilder i bogbasen...</p>
-                  </div>
-                )}
-
-                {/* Error state */}
-                {portalSearchError && (
-                  <div className="p-4 bg-rose-50 text-rose-600 text-xs font-bold rounded-2xl border border-rose-100 mt-4">
-                    {portalSearchError}
-                  </div>
-                )}
-
-                {/* Search Results */}
-                {portalSearchResults && !isPortalSearchLoading && (
-                  <div className="space-y-6 mt-6 pt-6 border-t border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-[10px] font-black text-violet-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <Library className="w-4 h-4" />
-                        Søgeresultater ({portalSearchResults.length})
-                      </h4>
-                      <button
-                        type="button"
-                        onClick={clearPortalSearch}
-                        className="text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
-                      >
-                        Ryd søgning
-                      </button>
-                    </div>
-
-                    {portalSearchResults.length === 0 ? (
-                      <p className="text-xs text-slate-400 italic">Ingen matchende litteratur fundet i bogbasen for denne søgning.</p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {portalSearchResults.map((book: any, bIdx: number) => (
-                          <div 
-                            key={bIdx} 
-                            className="bg-slate-50/50 rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-4 relative group hover:bg-white hover:shadow-md transition-all duration-300"
-                          >
-                            <div className="space-y-4">
-                              <div className="flex gap-3 items-start">
-                                {/* Spine cover */}
-                                <div className={`w-10 h-14 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded-lg shadow-sm shrink-0 flex items-end p-1`}>
-                                  <BookOpen className="w-3.5 h-3.5 text-white/50" />
-                                </div>
-                                <div className="min-w-0 space-y-0.5">
-                                  <h5 className="text-[11px] font-black text-slate-900 leading-snug line-clamp-2" title={book.bookTitle}>
-                                    {book.bookTitle}
-                                  </h5>
-                                  <p className="text-[9px] text-slate-400 font-bold truncate">
-                                    {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Chapters list */}
-                              {book.matchingChapters && book.matchingChapters.length > 0 && (
-                                <div className="space-y-1.5 pl-1 shrink-0">
-                                  {book.matchingChapters.map((chap: any, cIdx: number) => (
-                                    <div key={cIdx} className="flex justify-between text-[10px] text-slate-500 font-bold gap-2 leading-tight">
-                                      <span className="line-clamp-1">· {chap.title}</span>
-                                      {chap.pageNumber && <span className="shrink-0 text-slate-400">S. {chap.pageNumber}</span>}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Reference */}
-                            {book.apaCitation && (
-                              <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-200/50">
-                                <span className="text-[9px] text-slate-400 font-medium italic truncate flex-1" title={book.apaCitation}>
-                                  {book.apaCitation}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleCopyCitation(book.apaCitation, e)}
-                                  className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors shadow-sm shrink-0 flex items-center justify-center active:scale-95"
-                                  title="Kopier reference"
-                                >
-                                  {copiedCitation === book.apaCitation ? (
-                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                  ) : (
-                                    <Copy className="w-3.5 h-3.5" />
-                                  )}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="flex justify-center pt-2">
-                      <Link 
-                        href={`/pensum-search?q=${encodeURIComponent(portalSearchQuery)}`}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-violet-50 hover:bg-violet-100 border border-violet-100 text-[10px] font-black uppercase tracking-widest text-violet-600 rounded-xl transition-all hover:scale-105 active:scale-95"
-                      >
-                        Se alle resultater i pensumsøgningen
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </div>
-                  </div>
-                )}
-                  </>
-                )}
-              </div>
-            </div>
 
             {/* GRADUATED / PROFESSIONAL HEADER */}
             {userProfile?.isQualified && (
@@ -1258,6 +1060,171 @@ const PortalPageContent: React.FC = () => {
           {/* RIGHT COLUMN: Tools & News */}
           <div className="lg:col-span-4 space-y-8">
             
+            {/* HURTIG PENSUMSØGNING */}
+            {!hasProAccess ? (
+              <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm text-center relative overflow-hidden flex flex-col items-center justify-center">
+                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-3">
+                  <Crown className="w-5 h-5 text-indigo-500" />
+                </div>
+                <h4 className="text-sm font-black text-slate-900 mb-1">Pensumsøgning er forbeholdt Kollega+</h4>
+                <p className="text-[11px] text-slate-400 mb-4 max-w-xs leading-relaxed">Søg på tværs af alt pensum og find relevante kapitler med det samme.</p>
+                <Link href="/upgrade" className="w-full">
+                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black uppercase tracking-widest text-[9px] h-10 shadow-sm active:scale-95 transition-all">
+                    Opgrader Nu
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 tracking-tight">Hurtig Pensumsøgning</h3>
+                    <p className="text-[10px] text-slate-400 leading-none">Find relevante kilder i pensum-databasen</p>
+                  </div>
+                </div>
+                <form 
+                  onSubmit={(e) => { e.preventDefault(); handlePortalSearch(portalSearchQuery); }}
+                  className="space-y-3"
+                >
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                      type="text"
+                      value={portalSearchQuery}
+                      onChange={(e) => setPortalSearchQuery(e.target.value)}
+                      placeholder="Søg i dit pensum..."
+                      className="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all"
+                    />
+                    {portalSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={clearPortalSearch}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <Button 
+                    type="submit"
+                    disabled={isPortalSearchLoading || !portalSearchQuery.trim()}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black uppercase tracking-widest text-[9px] h-10 shadow-sm active:scale-95 transition-all"
+                  >
+                    Søg
+                  </Button>
+                </form>
+                
+                {/* Popular Topics */}
+                {!portalSearchResults && !isPortalSearchLoading && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {["Magtrelationer", "Forvaltningsloven", "Børnekonventionen"].map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => { setPortalSearchQuery(tag); handlePortalSearch(tag); }}
+                        className="px-2 py-1 bg-slate-50 hover:bg-indigo-50 text-[9px] text-slate-500 hover:text-indigo-600 border border-slate-100 hover:border-indigo-100 rounded-lg font-bold transition-all cursor-pointer"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Loading state */}
+                {isPortalSearchLoading && (
+                  <div className="py-6 text-center space-y-2 border-t border-slate-100 pt-4">
+                    <Loader2 className="w-5 h-5 text-indigo-600 animate-spin mx-auto" />
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Søger i bogbasen...</p>
+                  </div>
+                )}
+
+                {/* Error state */}
+                {portalSearchError && (
+                  <div className="p-3 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-xl border border-rose-100">
+                    {portalSearchError}
+                  </div>
+                )}
+
+                {/* Search Results */}
+                {portalSearchResults && !isPortalSearchLoading && (
+                  <div className="space-y-4 mt-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[9px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1">
+                        <Library className="w-3.5 h-3.5" />
+                        Resultater ({portalSearchResults.length})
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={clearPortalSearch}
+                        className="text-[9px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+                      >
+                        Ryd
+                      </button>
+                    </div>
+
+                    {portalSearchResults.length === 0 ? (
+                      <p className="text-[10px] text-slate-400 italic">Ingen matchende litteratur fundet.</p>
+                    ) : (
+                      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                        {portalSearchResults.map((book: any, bIdx: number) => (
+                          <div 
+                            key={bIdx} 
+                            className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex flex-col gap-2 hover:bg-white transition-all duration-300"
+                          >
+                            <div className="flex gap-2.5 items-start">
+                              <div className={`w-8 h-11 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded shadow-sm shrink-0 flex items-end p-1`}>
+                                <BookOpen className="w-2.5 h-2.5 text-white/50" />
+                              </div>
+                              <div className="min-w-0 space-y-0.5">
+                                <h5 className="text-[10px] font-black text-slate-900 leading-snug line-clamp-2" title={book.bookTitle}>
+                                  {book.bookTitle}
+                                </h5>
+                                <p className="text-[9px] text-slate-400 font-bold truncate">
+                                  {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {book.matchingChapters && book.matchingChapters.length > 0 && (
+                              <div className="pl-10 space-y-1">
+                                {book.matchingChapters.map((chap: any, cIdx: number) => (
+                                  <div key={cIdx} className="flex justify-between text-[9px] text-slate-500 font-bold leading-normal">
+                                    <span className="truncate pr-2">· {chap.title}</span>
+                                    {chap.pageNumber && <span className="shrink-0 text-slate-400">s. {chap.pageNumber}</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {book.apaCitation && (
+                              <div className="pl-10 flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-200/50">
+                                <span className="text-[8px] text-slate-400 font-medium italic truncate max-w-[120px]" title={book.apaCitation}>
+                                  {book.apaCitation}
+                                </span>
+                                <button
+                                  onClick={(e) => handleCopyCitation(book.apaCitation, e)}
+                                  className="p-1 rounded bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 transition-colors shadow-sm shrink-0 flex items-center justify-center"
+                                >
+                                  {copiedCitation === book.apaCitation ? (
+                                    <Check className="w-2.5 h-2.5 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-2.5 h-2.5" />
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* STREAK CARD */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -1295,64 +1262,6 @@ const PortalPageContent: React.FC = () => {
                 <span className="text-sm font-black text-slate-400">{userProfile.highestStreak || 0} dage</span>
               </div>
             </motion.div>
-
-            {/* CORE TOOLS GRID */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 mb-6 pl-2">Værktøjskasse</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { title: "Case-træner", icon: Zap, path: "/case-trainer", color: "bg-sky-50 text-sky-600" },
-                  { title: "Journal-træner", icon: FileText, path: "/journal-trainer", color: "bg-indigo-50 text-indigo-600" },
-                  { title: "Second Opinion", icon: Scale, path: "/second-opinion", color: "bg-amber-50 text-amber-600" },
-                  { title: "VIVE Indsigt", icon: TrendingUp, path: "/vive-indsigt", color: "bg-blue-50 text-blue-600" },
-                  { title: "Eksamen", icon: Layout, path: "/exam-architect", color: "bg-indigo-50 text-indigo-600" },
-                  { title: "Case Analyser", icon: FileSearch, path: "/case-analyser", color: "bg-purple-50 text-purple-600" },
-                  { title: "Begreber", icon: Brain, path: "/concept-explainer", color: "bg-emerald-50 text-emerald-600" },
-                  { title: "Lovportal", icon: Scale, path: "https://law.cohero.dk/", color: "bg-amber-50 text-amber-600" },
-                  { title: "Pensumsøgning", icon: BookOpen, path: "/pensum-search", color: "bg-violet-50 text-violet-600" },
-                ].map((tool, i) => (
-                  <div 
-                    key={i} 
-                    onClick={(e) => tool.path.startsWith('http') ? handleSSORedirect(tool.path, e) : router.push(tool.path)}
-                    className={`group flex flex-col items-center justify-center gap-3 p-6 bg-slate-50 rounded-3xl border border-transparent hover:border-amber-200 hover:bg-white transition-all shadow-sm cursor-pointer ${i === 8 ? 'col-span-2' : ''}`}
-                  >
-                    <div className={`w-12 h-12 ${tool.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <tool.icon className="w-6 h-6" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{tool.title}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* INTEGRATION CARD */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#7737ad]/5 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-all duration-700" />
-              <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-[#7737ad]/10 rounded-2xl flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="#7737ad"/>
-                        <path d="M8 7H11V17H8V7Z" fill="white"/>
-                        <path d="M12 7H16V9H12V7Z" fill="white"/>
-                        <path d="M12 11H16V13H12V11Z" fill="white"/>
-                        <path d="M12 15H16V17H12V15Z" fill="white"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-[#7737ad]">Integration</p>
-                      <span className="px-2 py-0.5 bg-[#7737ad]/10 text-[#7737ad] text-[8px] font-black uppercase tracking-widest rounded-full border border-[#7737ad]/10">Kommer snart</span>
-                    </div>
-                    <h3 className="text-sm font-black serif">OneNote Sync</h3>
-                  </div>
-                </div>
-                <p className="text-[11px] font-medium text-slate-500 leading-relaxed mb-6">Få dine OneNote-noter direkte ind i Cohero til quizzer og AI-hjælp.</p>
-                <Button disabled className="w-full rounded-2xl bg-slate-100 text-slate-400 font-black uppercase tracking-widest text-[9px] h-10 cursor-not-allowed">
-                  Kommer snart
-                </Button>
-              </div>
-            </div>
 
             {/* EXAM INFO CARD */}
             {activeModule?.examForm && (
