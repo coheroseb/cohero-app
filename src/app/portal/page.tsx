@@ -65,7 +65,7 @@ const ActionCard = ({ title, icon: Icon, description, path, color }: any) => (
     className="relative group cursor-pointer"
   >
     <Link href={path} className="block h-full">
-      <div className="bg-white p-8 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100/50 flex flex-col items-center text-center gap-6 group-hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] group-hover:border-slate-200 transition-all duration-500 h-full">
+      <div className="bg-white p-8 rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] border border-slate-100/60 flex flex-col items-center text-center gap-6 group-hover:shadow-[var(--shadow-lg)] group-hover:border-indigo-100/60 transition-all duration-500 h-full">
         <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-2 shadow-sm ${color} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
           <Icon className="w-10 h-10" />
         </div>
@@ -82,12 +82,12 @@ const ActionCard = ({ title, icon: Icon, description, path, color }: any) => (
 );
 
 const SmallTool = ({ title, icon: Icon, path }: any) => (
-  <Link href={path} className="group flex items-center gap-4 p-4 bg-white/50 hover:bg-white border border-transparent hover:border-slate-100 rounded-2xl transition-all">
-    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-amber-50 group-hover:scale-110 transition-all">
-      <Icon className="w-5 h-5 text-slate-400 group-hover:text-amber-600" />
+  <Link href={path} className="group flex items-center gap-4 p-4 bg-white/50 hover:bg-white border border-transparent hover:border-indigo-100 rounded-[var(--radius-md)] transition-all">
+    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-50 group-hover:scale-110 transition-all">
+      <Icon className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" />
     </div>
-    <span className="font-bold text-slate-600 group-hover:text-slate-950 transition-colors">{title}</span>
-    <ChevronRight className="w-4 h-4 ml-auto text-slate-200 group-hover:text-slate-400 transition-colors" />
+    <span className="font-semibold text-slate-600 group-hover:text-slate-950 transition-colors">{title}</span>
+    <ChevronRight className="w-4 h-4 ml-auto text-slate-200 group-hover:text-indigo-400 transition-colors" />
   </Link>
 );
 
@@ -510,7 +510,7 @@ const PortalPageContent: React.FC = () => {
   const greeting = hour < 10 ? 'Godmorgen' : hour < 18 ? 'Goddag' : 'Godaften';
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen font-sans selection:bg-amber-100 pb-20">
+    <div className="min-h-screen font-sans selection:bg-indigo-100 pb-20">
       
 
 

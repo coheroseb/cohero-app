@@ -6,168 +6,251 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, BookOpen, Search, Zap, FileText, Scale, Brain, 
   TrendingUp, Bell, Settings, ShoppingBag, LogOut, Menu, X, 
-  ChevronRight, Presentation, Star, Lightbulb, User, Building, Shield, FileBox
+  Presentation, Shield, FileBox, ExternalLink, GraduationCap,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
 import { BookSpine } from '@/components/BookSpine';
 import { useFunctions } from '@/firebase';
 import { httpsCallable } from 'firebase/functions';
+import { useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
+/* ─── Nav item types ──────────────────────────────────── */
+interface NavItem {
+  label: string;
+  path: string;
+  icon: React.ReactNode;
+  isSSO?: boolean;
+  isExternal?: boolean;
+  badge?: number | null;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+/* ─── Individual nav link ─────────────────────────────── */
+const NavLink = ({
+  item,
+  isActive,
+  onClick,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  onClick?: (e: React.MouseEvent) => void;
+}) => {
+  const Tag = onClick ? 'button' : Link;
+  const props = onClick
+    ? { onClick, className: '' }
+    : { href: item.path, className: '' };
+
+  return (
+    <Tag
+      {...(props as any)}
+      className={`
+        group relative flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)]
+        text-[13px] font-semibold transition-all duration-150
+        ${isActive
+          ? 'text-indigo-600 bg-indigo-50/80'
+          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+        }
+      `}
+    >
+      {/* Active left-bar indicator */}
+      {isActive && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-indigo-500 rounded-r-full" />
+      )}
+
+      {/* Icon */}
+      <span className={`shrink-0 transition-colors ${isActive ? 'text-indigo-500' : 'text-slate-400 group-hover:text-slate-600'}`}>
+        {item.icon}
+      </span>
+
+      {/* Label */}
+      <span className="flex-1 text-left leading-none">{item.label}</span>
+
+      {/* Badge */}
+      {item.badge != null && item.badge > 0 && (
+        <span className="ml-auto bg-indigo-500 text-white text-[9px] font-black rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none">
+          {item.badge > 99 ? '99+' : item.badge}
+        </span>
+      )}
+
+      {/* External indicator */}
+      {item.isExternal && (
+        <ExternalLink className="w-3 h-3 opacity-40 group-hover:opacity-70 transition-opacity" />
+      )}
+    </Tag>
+  );
+};
+
+/* ─── Main Sidebar component ──────────────────────────── */
 export default function Sidebar() {
   const { user, userProfile, handleLogout, effectiveTheme } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const functions = useFunctions();
-  
+  const firestore = useFirestore();
+
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSSOLoading, setIsSSOLoading] = useState(false);
 
-  // Close mobile sidebar on route change
+  // Close mobile drawer on route change
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  const handleSSORedirect = async (url: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    if (!functions || isSSOLoading) {
-      window.open(url, '_blank');
-      return;
-    }
+  // Unread notification count
+  const notifQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(
+      collection(firestore, 'users', user.uid, 'notifications'),
+      where('read', '==', false),
+      limit(10)
+    );
+  }, [firestore, user?.uid]);
+  const { data: unreadNotifs } = useCollection<any>(notifQuery);
+  const unreadCount = unreadNotifs?.length ?? 0;
 
+  // SSO redirect handler
+  const handleSSORedirect = async (url: string, e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (!functions || isSSOLoading) { window.open(url, '_blank'); return; }
     setIsSSOLoading(true);
     try {
       const generateSSOToken = httpsCallable(functions, 'generateSSOToken');
       const result = await generateSSOToken();
       const token = (result.data as any).token;
-      
       const targetUrl = new URL(url);
       targetUrl.searchParams.set('token', token);
       window.open(targetUrl.toString(), '_blank');
-    } catch (err) {
-      console.error("SSO failed", err);
+    } catch {
       window.open(url, '_blank');
     } finally {
       setIsSSOLoading(false);
     }
   };
 
-  const navItems = [
-    { label: "Overblik", path: "/portal", icon: <LayoutDashboard className="w-5 h-5" /> },
-    { label: "Mit Pensum", path: "/mine-materialer", icon: <FileBox className="w-5 h-5" /> },
-    { label: "Pensumsøgning", path: "/pensum-search", icon: <BookOpen className="w-5 h-5" /> },
-    { label: "Case-træner", path: "/case-trainer", icon: <Zap className="w-5 h-5" /> },
-    { label: "Journal-træner", path: "/journal-trainer", icon: <FileText className="w-5 h-5" /> },
-    { label: "Second Opinion", path: "/second-opinion", icon: <Scale className="w-5 h-5" /> },
-    { label: "Begreber", path: "/concept-explainer", icon: <Brain className="w-5 h-5" /> },
-    { label: "Lovportal", path: "https://law.cohero.dk/", icon: <Scale className="w-5 h-5 text-amber-500" />, isSSO: true },
-    { label: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
-    { label: "Notifikationer", path: "/notifications", icon: <Bell className="w-5 h-5" /> },
-    { label: "Shop", path: "/shop", icon: <ShoppingBag className="w-5 h-5" /> },
+  // Active module label
+  const activeModuleLabel = userProfile?.semester
+    ? typeof userProfile.semester === 'string' && userProfile.semester.length > 4
+      ? userProfile.semester.split(' ').slice(0, 3).join(' ')
+      : `Semester ${userProfile.semester}`
+    : null;
+
+  // Navigation structure
+  const sections: NavSection[] = [
+    {
+      label: 'Studier',
+      items: [
+        { label: 'Overblik', path: '/portal', icon: <LayoutDashboard className="w-4 h-4" /> },
+        { label: 'Mit Pensum', path: '/mine-materialer', icon: <FileBox className="w-4 h-4" /> },
+        { label: 'Pensumsøgning', path: '/pensum-search', icon: <Search className="w-4 h-4" /> },
+      ],
+    },
+    {
+      label: 'Værktøjer',
+      items: [
+        { label: 'Case-træner', path: '/case-trainer', icon: <Zap className="w-4 h-4" /> },
+        { label: 'Journal-træner', path: '/journal-trainer', icon: <FileText className="w-4 h-4" /> },
+        { label: 'Second Opinion', path: '/second-opinion', icon: <Scale className="w-4 h-4" /> },
+        { label: 'Begreber', path: '/concept-explainer', icon: <Brain className="w-4 h-4" /> },
+        { label: 'Lovportal', path: 'https://law.cohero.dk/', icon: <Scale className="w-4 h-4" />, isSSO: true, isExternal: true },
+        { label: 'Slides', path: '/mine-seminarer', icon: <Presentation className="w-4 h-4" /> },
+      ],
+    },
+    {
+      label: 'Konto',
+      items: [
+        { label: 'Notifikationer', path: '/notifications', icon: <Bell className="w-4 h-4" />, badge: unreadCount },
+        { label: 'Shop', path: '/shop', icon: <ShoppingBag className="w-4 h-4" /> },
+      ],
+    },
   ];
 
   if (userProfile?.role === 'admin') {
-    navItems.push({ label: "Admin Panel", path: "/admin", icon: <Shield className="w-5 h-5" /> });
+    sections[2].items.push({ label: 'Admin Panel', path: '/admin', icon: <Shield className="w-4 h-4" /> });
   }
 
-  // Common Sidebar Inner Contents
+  // Inner sidebar contents
   const SidebarContent = () => (
-    <div className="flex flex-col h-full justify-between">
-      <div className="space-y-6">
-        {/* Brand/Logo */}
-        <div className="flex items-center gap-3 px-2">
+    <div className="flex flex-col h-full justify-between overflow-y-auto no-scrollbar">
+      <div className="space-y-5">
+        {/* Brand */}
+        <div className="px-1 pb-2">
           <Link href="/portal" className="flex items-end -space-x-[1.5px] scale-[0.8] origin-left">
             <BookSpine index={0} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-5 sm:h-6" color="bg-slate-900" decoration="plain" tilt="-rotate-1" />
             <BookSpine index={1} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-7 sm:h-8" color="bg-slate-900" decoration="bands" />
             <BookSpine index={2} theme={effectiveTheme} width="w-1 sm:w-1.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="plain" />
-
             <BookSpine index={3} theme={effectiveTheme} letter="C" width="w-3 sm:w-3.5" height="h-8 sm:h-9" color="bg-slate-900" decoration="bands" />
             <BookSpine index={4} theme={effectiveTheme} letter="o" width="w-3 sm:w-3.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="gold" />
             <BookSpine index={5} theme={effectiveTheme} letter="h" width="w-3 sm:w-3.5" height="h-9 sm:h-10" color="bg-slate-900" decoration="bands" tilt="-rotate-[1.5deg]" />
             <BookSpine index={6} theme={effectiveTheme} letter="é" width="w-3 sm:w-3.5" height="h-7 sm:h-8" color="bg-slate-900" decoration="stripes" />
             <BookSpine index={7} theme={effectiveTheme} letter="r" width="w-3 sm:w-3.5" height="h-8 sm:h-9" color="bg-slate-900" decoration="bands" />
             <BookSpine index={8} theme={effectiveTheme} letter="o" width="w-3 sm:w-3.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="gold" tilt="rotate-[1deg]" />
-
             <BookSpine index={9} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-7 sm:h-8" color="bg-slate-900" decoration="ornament" />
             <BookSpine index={10} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-5 sm:h-6" color="bg-slate-900" decoration="plain" tilt="rotate-2" />
             <BookSpine index={11} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-6 sm:h-7" color="bg-slate-900" decoration="bands" />
           </Link>
         </div>
 
-        {/* Navigation list */}
-        <nav className="space-y-1">
-          {navItems.map((item, idx) => {
-            const isActive = pathname === item.path || (item.path !== '/portal' && pathname?.startsWith(item.path));
-            
-            if (item.isSSO) {
-              return (
-                <button
-                  key={idx}
-                  onClick={(e) => handleSSORedirect(item.path, e)}
-                  disabled={isSSOLoading}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-black uppercase tracking-wider text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-                >
-                  <span className="shrink-0">{item.icon}</span>
-                  <span className="text-left flex-1">{isSSOLoading ? "Forbinder..." : item.label}</span>
-                </button>
-              );
-            }
+        {/* Nav sections */}
+        {sections.map((section) => (
+          <div key={section.label}>
+            <p className="label-2xs text-slate-300 px-3 mb-1.5">{section.label}</p>
+            <nav className="space-y-0.5">
+              {section.items.map((item, idx) => {
+                const isActive = pathname === item.path || 
+                  (item.path !== '/portal' && !item.isSSO && pathname?.startsWith(item.path));
 
-            return (
-              <Link
-                key={idx}
-                href={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-black uppercase tracking-wider transition-colors ${
-                  isActive 
-                    ? 'bg-indigo-50 text-indigo-600' 
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                <span className="shrink-0">{item.icon}</span>
-                <span className="flex-1">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+                if (item.isSSO) {
+                  return (
+                    <NavLink
+                      key={idx}
+                      item={item}
+                      isActive={false}
+                      onClick={(e) => handleSSORedirect(item.path, e)}
+                    />
+                  );
+                }
+
+                return <NavLink key={idx} item={item} isActive={isActive} />;
+              })}
+            </nav>
+          </div>
+        ))}
       </div>
 
-      {/* Profile & Settings section */}
-      <div className="space-y-4 pt-4 border-t border-slate-100">
-        <Link
-          href="/settings"
-          className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-black uppercase tracking-wider transition-colors ${
-            pathname === '/settings' 
-              ? 'bg-indigo-50 text-indigo-600' 
-              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-          }`}
-        >
-          <Settings className="w-5 h-5" />
-          <span>Indstillinger</span>
-        </Link>
-        
-        {/* User Card */}
+      {/* Bottom: Settings + User card */}
+      <div className="pt-4 border-t border-slate-100/80 space-y-1">
+        <NavLink
+          item={{ label: 'Indstillinger', path: '/settings', icon: <Settings className="w-4 h-4" /> }}
+          isActive={pathname === '/settings'}
+        />
+
         {user && (
-          <div className="flex items-center justify-between gap-3 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
-            <Link href="/settings" className="flex items-center gap-3 overflow-hidden">
-              <div className="w-10 h-10 shrink-0 rounded-xl bg-amber-950 flex items-center justify-center text-amber-400 font-black text-sm">
-                {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+          <div className="mt-2 flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-[var(--radius-md)] p-3">
+            <Link href="/settings" className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+              {/* Avatar */}
+              <div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white font-black text-sm shadow-sm">
+                {(user.displayName?.charAt(0) || user.email?.charAt(0) || '?').toUpperCase()}
               </div>
-              <div className="overflow-hidden">
-                <p className="font-bold text-slate-900 text-xs truncate leading-none mb-1">
+              <div className="overflow-hidden min-w-0">
+                <p className="font-semibold text-slate-900 text-[13px] truncate leading-tight">
                   {user.displayName || user.email?.split('@')[0]}
                 </p>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none truncate">
-                  {userProfile?.membership || "Basis"}
+                <p className="label-2xs text-slate-400 truncate">
+                  {activeModuleLabel || userProfile?.membership || 'Basis'}
                 </p>
               </div>
             </Link>
-            <button 
-              onClick={handleLogout} 
-              className="p-2 text-slate-400 hover:text-rose-500 active:scale-95 transition-all"
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all shrink-0"
               title="Log ud"
             >
               <LogOut className="w-4 h-4" />
@@ -180,45 +263,50 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* 1. MOBILE TOP HEADER */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-100/60 z-30 flex items-center justify-between px-6 md:hidden">
+      {/* ── Mobile top header ── */}
+      <header className="fixed top-0 left-0 right-0 h-14 bg-white/90 backdrop-blur-md border-b border-slate-100/60 z-30 flex items-center justify-between px-5 md:hidden">
+        <Link href="/portal" className="font-black text-[17px] text-slate-900 tracking-tight">
+          Cohéro
+        </Link>
         <div className="flex items-center gap-2">
-          {/* Compact brand text */}
-          <Link href="/portal" className="font-black text-lg text-slate-900 tracking-tight">Cohéro</Link>
+          {unreadCount > 0 && (
+            <Link href="/notifications" className="relative p-2">
+              <Bell className="w-5 h-5 text-slate-500" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full" />
+            </Link>
+          )}
+          <button
+            onClick={() => setIsMobileOpen(true)}
+            className="p-2 text-slate-600 hover:text-slate-900 active:scale-90 transition-transform rounded-xl hover:bg-slate-100"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
         </div>
-        <button 
-          onClick={() => setIsMobileOpen(true)}
-          className="p-2 text-slate-600 hover:text-slate-950 active:scale-90 transition-transform"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
       </header>
 
-      {/* 2. MOBILE DRAWER SIDEBAR */}
+      {/* ── Mobile drawer ── */}
       <AnimatePresence>
         {isMobileOpen && (
           <>
-            {/* Backdrop Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileOpen(false)}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+              className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden"
             />
-            {/* Drawer */}
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-slate-200/60 shadow-2xl z-50 flex flex-col justify-between py-6 px-4 md:hidden"
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-slate-200/60 shadow-2xl z-50 flex flex-col py-6 px-4 md:hidden"
             >
-              <button 
+              <button
                 onClick={() => setIsMobileOpen(false)}
-                className="absolute top-6 right-4 p-2 text-slate-400 hover:text-slate-600 active:scale-90 transition-all"
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
               <SidebarContent />
             </motion.div>
@@ -226,8 +314,8 @@ export default function Sidebar() {
         )}
       </AnimatePresence>
 
-      {/* 3. DESKTOP SIDEBAR */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white/80 backdrop-blur-xl border-r border-slate-200/50 shadow-sm flex-col justify-between py-6 px-4 z-30">
+      {/* ── Desktop sidebar ── */}
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white/85 backdrop-blur-xl border-r border-slate-200/50 flex-col py-6 px-4 z-30 shadow-sm">
         <SidebarContent />
       </aside>
     </>

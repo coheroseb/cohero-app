@@ -452,8 +452,8 @@ export default function SettingsPage() {
 
   if (!userProfile) {
      return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC]">
-        <Loader2 className="w-10 h-10 animate-spin text-amber-500 mb-4" />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
         <p className='text-sm font-bold text-slate-400 tracking-widest uppercase'>Henter indstillinger...</p>
       </div>
     );
@@ -472,7 +472,7 @@ export default function SettingsPage() {
   ] as const;
 
   return (
-    <div className="bg-[#F8FAFC] min-h-screen pb-32">
+    <div className="bg-slate-50/60 min-h-screen pb-32">
       {/* Premium Header Area */}
       <div className="bg-white border-b border-slate-200/60 pt-20 sm:pt-28 md:pt-32 pb-8 sm:pb-10 px-4 sm:px-6 relative overflow-hidden">
          {/* Minimalist ambient glow */}
@@ -519,11 +519,11 @@ export default function SettingsPage() {
                        onClick={() => setActiveTab(tab.id)}
                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all whitespace-nowrap snap-center ${
                          isActive 
-                           ? 'bg-amber-50 text-amber-900 border border-amber-100/50 shadow-sm' 
+                           ? 'bg-indigo-50 text-indigo-900 border border-indigo-100/50 shadow-sm' 
                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
                        }`}
                      >
-                       <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-amber-500' : 'text-slate-400'}`} />
+                       <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-indigo-500' : 'text-slate-400'}`} />
                        <span className="text-sm">{tab.label}</span>
                      </button>
                    )
@@ -561,7 +561,7 @@ export default function SettingsPage() {
                                       <label htmlFor="username" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Fulde Navn</label>
                                       <div className="relative">
                                           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                          <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-amber-500/20" />
+                                          <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-indigo-500/20" />
                                       </div>
                                   </div>
 
@@ -569,7 +569,7 @@ export default function SettingsPage() {
                                       <label htmlFor="phoneNumber" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Telefonnummer</label>
                                       <div className="relative">
                                           <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                          <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-amber-500/20" placeholder="+45 12 34 56 78" />
+                                          <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full h-12 pl-11 bg-slate-50 focus:bg-white rounded-xl border-slate-200 font-bold text-slate-900 transition-all focus:ring-2 focus:ring-indigo-500/20" placeholder="+45 12 34 56 78" />
                                       </div>
                                   </div>
                               </div>
@@ -579,7 +579,7 @@ export default function SettingsPage() {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                                   <div className="space-y-2">
                                       <label htmlFor="profession" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Profession / Studie</label>
-                                      <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
+                                      <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/30 transition-all">
                                           <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                           <select id="profession" value={profession} onChange={(e) => setProfession(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer">
                                               <option value="" disabled>Vælg profession...</option>
@@ -595,7 +595,7 @@ export default function SettingsPage() {
                                      <>
                                         <div className="space-y-2 md:col-span-2">
                                             <label htmlFor="institution" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Uddannelsesinstitution</label>
-                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
+                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/30 transition-all">
                                                 <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                                 <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer">
                                                     <option value="" disabled>Vælg institution...</option>
@@ -609,7 +609,7 @@ export default function SettingsPage() {
 
                                         <div className="space-y-2">
                                             <label htmlFor="semester" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
-                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all">
+                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/30 transition-all">
                                                 <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                                                 <select
                                                     id="semester"
@@ -805,7 +805,7 @@ export default function SettingsPage() {
                                           value={redemptionCode} 
                                           onChange={e => setRedemptionCode(e.target.value)} 
                                           placeholder="F.eks. CAMPUS24" 
-                                          className="flex-1 h-12 bg-slate-50 border-slate-200 rounded-xl font-mono uppercase focus:ring-amber-500/20" 
+                                          className="flex-1 h-12 bg-slate-50 border-slate-200 rounded-xl font-mono uppercase focus:ring-indigo-500/20" 
                                        />
                                        <Button type="submit" disabled={isRedeeming || !redemptionCode} className="h-12 px-8 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800">
                                            {isRedeeming ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Indløs'}

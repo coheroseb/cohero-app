@@ -303,24 +303,24 @@ const CaseTrainerPageContent: React.FC = () => {
 
   if (isCaseLoading) {
       return (
-        <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center">
-            <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-        </div>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+      </div>
       );
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8] flex flex-col lg:flex-row text-slate-900 selection:bg-amber-100 overflow-x-hidden">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row text-slate-900 selection:bg-indigo-100 overflow-x-hidden">
       
       {/* SIDEBAR (THE DOSSIER) */}
-      <aside className="w-full lg:w-80 bg-white border-r border-amber-100 flex flex-col sticky top-0 lg:h-screen z-30 shadow-sm overflow-y-auto custom-scrollbar">
-        <div className="p-8 flex items-center gap-4 border-b border-amber-50 bg-[#FDFCF8]/50">
-            <div className="w-10 h-10 bg-amber-950 rounded-xl flex items-center justify-center text-amber-400 shadow-lg shrink-0">
+      <aside className="w-full lg:w-80 bg-white border-r border-slate-100/80 flex flex-col sticky top-0 lg:h-screen z-30 shadow-sm overflow-y-auto no-scrollbar">
+        <div className="p-8 flex items-center gap-4 border-b border-slate-50 bg-slate-50/50">
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
                 <Zap className="w-6 h-6" />
             </div>
             <div>
-                <h1 className="text-xl font-bold text-amber-950 serif tracking-tight">Case-træner</h1>
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">Dannelsesrejse</p>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">Case-træner</h1>
+                <p className="label-xs text-slate-400">Sagsmappe</p>
             </div>
         </div>
 
@@ -342,9 +342,9 @@ const CaseTrainerPageContent: React.FC = () => {
                                 <span className="text-[10px] font-bold text-amber-900">{showFeedback ? '100%' : Math.round((currentDilemmaIndex / activeCase.dilemmas.length) * 100)}% Gennemført</span>
                                 <span className="text-[10px] font-black text-slate-300 uppercase">{currentDilemmaIndex}/{activeCase.dilemmas.length} Dilemmaer</span>
                             </div>
-                            <div className="w-full h-2 bg-amber-50 rounded-full overflow-hidden border border-amber-100 shadow-inner">
+                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                                 <div 
-                                    className="h-full bg-amber-950 transition-all duration-1000 ease-out" 
+                                    className="h-full bg-indigo-600 transition-all duration-1000 ease-out" 
                                     style={{ width: `${showFeedback ? 100 : (currentDilemmaIndex / activeCase.dilemmas.length) * 100}%` }}
                                 />
                             </div>
