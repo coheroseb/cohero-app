@@ -616,34 +616,7 @@ const PortalPageContent: React.FC = () => {
               </div>
             )}
 
-            {/* SEMESTER / MODULE SELECTION NUDGE */}
-            {!userProfile?.isQualified && (!activeModule?.id || activeModule.id.length <= 2) && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-amber-50 border-2 border-amber-200 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 shadow-xl shadow-amber-500/5 relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-transform duration-1000">
-                  <Target className="w-32 h-32 text-amber-600" />
-                </div>
-                <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8">
-                  <div className="w-16 h-16 bg-amber-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30">
-                    <Layout className="w-8 h-8" />
-                  </div>
-                  <div className="flex-1 text-center lg:text-left space-y-2">
-                    <h3 className="text-2xl font-black text-amber-950 tracking-tight">Få den fulde oplevelse! 🎯</h3>
-                    <p className="text-amber-800/70 text-sm font-medium leading-relaxed max-w-2xl">
-                      Du har endnu ikke valgt dit specifikke modul. Ved at vælge det korrekte modul i indstillinger, får du en skræddersyet studieplan, relevante lovparagraffer og præcise læringsmål direkte her på din portal.
-                    </p>
-                  </div>
-                  <Link href="/settings" className="shrink-0 w-full lg:w-auto">
-                    <Button className="w-full bg-amber-950 text-white hover:bg-black font-black uppercase tracking-widest text-[11px] px-10 h-14 rounded-2xl shadow-xl transition-all active:scale-95">
-                      Vælg dit modul nu
-                    </Button>
-                  </Link>
-                </div>
-              </motion.div>
-            )}
+
 
             {/* SEMESTER HUB HERO (Students Only) */}
             {!userProfile?.isQualified && (
