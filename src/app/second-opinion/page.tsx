@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import EmptyState from '@/components/EmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Building,
@@ -121,7 +123,7 @@ const DashboardCard: React.FC<{
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className={`${variantStyles[variant]} p-10 rounded-[3.5rem] border shadow-sm relative group hover:shadow-xl transition-all duration-500 ${className}`}
+            className={`${variantStyles[variant]} p-10 rounded-[var(--radius-lg)] border shadow-[var(--shadow-sm)] relative group hover:shadow-md transition-all duration-500 ${className}`}
         >
             <div className="flex items-center gap-3 border-b border-black/5 pb-6 mb-8">
                 <div className="w-8 h-8 rounded-lg bg-white/80 flex items-center justify-center text-amber-950 shadow-sm border border-black/5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
@@ -144,10 +146,10 @@ const ModuleCard: React.FC<{
   return (
     <button 
       onClick={onSelect}
-      className={`relative p-8 rounded-[2.5rem] border transition-all duration-500 text-left flex flex-col gap-4 group ${
+      className={`relative p-8 rounded-[var(--radius-lg)] border transition-all duration-500 text-left flex flex-col gap-4 group ${
         isSelected 
-          ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400 ring-offset-4 ring-offset-[#FDFCF8] shadow-2xl shadow-amber-500/10' 
-          : 'bg-white border-slate-100 hover:border-amber-200 hover:shadow-xl hover:shadow-slate-200/50'
+          ? 'bg-amber-50 border-amber-400 ring-4 ring-amber-500/10 shadow-md' 
+          : 'bg-white border-slate-200/60 shadow-[var(--shadow-sm)] hover:border-amber-200 hover:shadow-md'
       }`}
     >
       <div className="flex items-start justify-between">
@@ -204,12 +206,12 @@ const MultiCurriculumSelection: React.FC<{
   return (
     <div className="col-span-1 md:col-span-2 space-y-8">
       {/* Selection Header */}
-      <div className="bg-white p-10 rounded-[3.5rem] border border-amber-100 shadow-sm relative overflow-hidden">
+      <div className="bg-white p-10 rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 w-32 h-32 bg-amber-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-10" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-               <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center border border-amber-100 shadow-inner">
+               <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center border border-amber-100 shadow-inner">
                   <Building className="w-6 h-6 text-amber-600" />
                </div>
                <div>
@@ -217,7 +219,7 @@ const MultiCurriculumSelection: React.FC<{
                     <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-200">{profession || 'Uddannelse'}</span>
                     <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200">{institution || 'Institution'}</span>
                   </div>
-                  <h3 className="text-2xl font-black text-amber-950 serif">{currentCurriculum?.title || 'Studieordning er indlæst'}</h3>
+                  <h3 className="text-2xl font-black text-amber-950">{currentCurriculum?.title || 'Studieordning er indlæst'}</h3>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">Automatisk matchet ud fra din brugerprofil</p>
                </div>
             </div>
@@ -235,7 +237,7 @@ const MultiCurriculumSelection: React.FC<{
         </div>
 
         {isLoading ? (
-          <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-amber-100">
+          <div className="text-center py-20 bg-white rounded-[var(--radius-lg)] border border-dashed border-amber-100">
              <Loader2 className="w-10 h-10 animate-spin text-amber-200 mx-auto mb-4" />
              <p className="text-sm text-slate-400 font-bold italic">Søger efter studieordninger...</p>
           </div>
@@ -251,7 +253,7 @@ const MultiCurriculumSelection: React.FC<{
             ))}
           </div>
         ) : (
-          <div className="bg-rose-50/50 border-2 border-dashed border-rose-100 rounded-[3rem] p-12 text-center">
+          <div className="bg-rose-50/50 border-2 border-dashed border-rose-100 rounded-[var(--radius-lg)] p-12 text-center">
              <AlertTriangle className="w-12 h-12 text-rose-300 mx-auto mb-4" />
              <h5 className="text-lg font-bold text-rose-950">Ingen studieordning fundet</h5>
              <p className="text-sm text-rose-500/70 max-w-sm mx-auto leading-relaxed mt-2">
@@ -278,14 +280,14 @@ const FileInputCard: React.FC<{
   };
 
   return (
-    <div className="bg-white/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-black/[0.03] shadow-sm hover:border-amber-400 hover:shadow-2xl hover:shadow-amber-500/5 transition-all duration-500 group overflow-hidden relative">
+    <div className="bg-white p-8 rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] hover:border-amber-400 hover:shadow-md transition-all duration-500 group overflow-hidden relative">
       <label htmlFor={id} className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 group-hover:text-amber-600 transition-colors">
         {label} {required && <span className="text-rose-500">*</span>}
       </label>
       {file ? (
-        <div className="flex items-center justify-between gap-4 p-5 bg-amber-50/50 rounded-[1.5rem] border border-amber-200/50 animate-ink">
+        <div className="flex items-center justify-between gap-4 p-5 bg-amber-50/50 rounded-[var(--radius-sm)] border border-amber-200/50 animate-ink">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-amber-100">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-amber-100">
                <FileIcon className="w-6 h-6 text-amber-600" />
             </div>
             <div className="min-w-0">
@@ -298,8 +300,8 @@ const FileInputCard: React.FC<{
           </button>
         </div>
       ) : (
-        <label htmlFor={id} className="relative block w-full border-2 border-dashed border-slate-100 rounded-[1.5rem] p-10 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50/20 transition-all duration-500 group/label">
-            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover/label:bg-amber-100 group-hover/label:scale-110 transition-all duration-500">
+        <label htmlFor={id} className="relative block w-full border-2 border-dashed border-slate-200 rounded-[var(--radius-sm)] p-10 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50/20 transition-all duration-500 group/label">
+            <div className="w-16 h-16 bg-slate-50 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover/label:bg-amber-100 group-hover/label:scale-110 transition-all duration-500">
                 <UploadCloud className="h-8 w-8 text-slate-300 group-hover/label:text-amber-600 transition-colors" />
             </div>
             <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover/label:text-amber-900 transition-colors">Vælg PDF Dokument</span>
@@ -565,54 +567,47 @@ const SecondOpinionPageContent = () => {
     };
 
     return (
-        <div className="bg-[#FDFCF8] min-h-screen flex flex-col selection:bg-amber-100 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(245,158,11,0.05)_0%,transparent_70%)] pointer-events-none" />
+        <div className="bg-slate-50/60 min-h-screen flex flex-col selection:bg-amber-100 relative overflow-hidden pb-32">
         
-        {/* HEADER */}
-        <header className="w-full h-24 bg-white/40 backdrop-blur-2xl border-b border-black/[0.03] px-8 flex items-center justify-between sticky top-0 z-[100]">
-            <div className="flex items-center gap-8">
-                <Link href="/portal" className="w-12 h-12 bg-white text-slate-900 rounded-[1.25rem] flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all duration-500 border border-black/[0.03] shadow-sm">
-                    <ArrowLeft className="w-5 h-5" />
-                </Link>
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-rose-950 rounded-[1.25rem] flex items-center justify-center text-amber-400 shadow-2xl shadow-rose-950/20 ring-4 ring-rose-900/5"><Scale className="w-6 h-6" /></div>
-                    <div>
-                        <h1 className="text-xl font-black text-slate-900 serif tracking-tighter leading-none hidden sm:block">Second Opinion</h1>
-                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1 hidden sm:block">Akademisk Revision</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex items-center gap-2 bg-slate-900/5 p-1.5 rounded-[1.5rem] border border-black/[0.02]">
-                <button 
-                    onClick={() => setAnalysisMode('audit')}
-                    className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${analysisMode === 'audit' ? 'bg-white text-rose-900 shadow-xl shadow-black/5 ring-1 ring-black/[0.02]' : 'text-slate-400 hover:text-slate-600'}`}
-                >
-                    Grade Audit
-                </button>
-                <button 
-                    onClick={() => setAnalysisMode('feedback')}
-                    className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${analysisMode === 'feedback' ? 'bg-white text-rose-900 shadow-xl shadow-black/5 ring-1 ring-black/[0.02]' : 'text-slate-400 hover:text-slate-600'}`}
-                >
-                    Preview & Feedback
-                </button>
-            </div>
-
-            <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setShowHistory(!showHistory)}
-                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-[1.25rem] flex items-center justify-center transition-all duration-500 border ${showHistory ? 'bg-slate-900 text-white border-slate-900 shadow-xl' : 'bg-white text-slate-400 border-black/[0.03] hover:border-amber-200'}`}
-                >
-                    <History className="w-5 h-5" />
-                </button>
-                <div className="hidden lg:flex items-center gap-3 px-6 py-3 bg-amber-400 text-amber-950 rounded-full shadow-lg shadow-amber-400/20 text-[10px] font-black uppercase tracking-widest animate-pulse">
-                    <ShieldCheck className="w-4 h-4" /> Klage-tjek aktivt
-                </div>
-            </div>
-        </header>
-
         {/* MAIN DASHBOARD */}
-        <main className="w-full max-w-[1600px] mx-auto px-6 sm:px-12 pt-12 pb-40">
+        <main className="w-full max-w-[1600px] mx-auto px-6 sm:px-12 pt-10">
+            <PageHeader
+              title="Second Opinion"
+              subtitle={analysisMode === 'audit' ? 'Få en uvildig analyse af din bedømmelse – før du beslutter dig for at klage.' : 'Få en kvalificeret karakter-forudsigelse og feedback inden aflevering.'}
+              icon={<Scale className="w-5 h-5 text-amber-600" />}
+              backHref="/portal"
+              actions={
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex bg-slate-900/5 p-1 rounded-xl border border-black/[0.02] shrink-0">
+                      <button 
+                          onClick={() => setAnalysisMode('audit')}
+                          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${analysisMode === 'audit' ? 'bg-white text-rose-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                      >
+                          Grade Audit
+                      </button>
+                      <button 
+                          onClick={() => setAnalysisMode('feedback')}
+                          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${analysisMode === 'feedback' ? 'bg-white text-rose-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                      >
+                          Preview & Feedback
+                      </button>
+                  </div>
+
+                  <button 
+                    onClick={() => setShowHistory(!showHistory)}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border shrink-0 ${showHistory ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-200 hover:border-amber-200 shadow-sm'}`}
+                  >
+                      <History className="w-4 h-4" />
+                  </button>
+                  
+                  <div className="hidden lg:flex items-center gap-2 px-4 py-2.5 bg-amber-400 text-amber-950 rounded-xl shadow-sm text-[10px] font-black uppercase tracking-widest animate-pulse">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Klage-tjek
+                  </div>
+                </div>
+              }
+            />
+
+            <div className="mt-12">
             <AnimatePresence mode="wait">
                 {!result && !isAnalyzing ? (
                     <motion.div 
@@ -650,8 +645,8 @@ const SecondOpinionPageContent = () => {
                                     { title: "Pensum-match", desc: "Vi holder din besvarelse direkte op mod studieordningens kriterier.", icon: <Target className="w-5 h-5" /> },
                                     { title: "Juridisk Audit", desc: "AI-drevet vurdering af det juridiske grundlag i din argumentation.", icon: <Scale className="w-5 h-5" /> },
                                 ].map((feature, i) => (
-                                    <div key={i} className="flex gap-6 p-8 bg-white rounded-[2.5rem] border border-black/[0.03] shadow-sm group hover:border-amber-200 transition-all duration-500">
-                                        <div className="w-14 h-14 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-amber-50 group-hover:text-amber-600 transition-all duration-500">
+                                                                    <div key={i} className="flex gap-6 p-8 bg-white rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] group hover:border-amber-200 transition-all duration-500">
+                                        <div className="w-14 h-14 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-amber-50 group-hover:text-amber-600 transition-all duration-500">
                                             {feature.icon}
                                         </div>
                                         <div className="space-y-1">
@@ -665,12 +660,12 @@ const SecondOpinionPageContent = () => {
 
                             {/* HISTORY DRAWER (Inline on Desktop) */}
                             {showHistory && (
-                                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="p-8 bg-white border border-amber-100 rounded-[3rem] shadow-sm space-y-6">
+                                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="p-8 bg-white border border-slate-200/60 rounded-[var(--radius-lg)] shadow-[var(--shadow-sm)] space-y-6">
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tidligere analyser</h4>
                                     <div className="space-y-3">
                                         {pastOpinions.length > 0 ? (
                                             pastOpinions.map(op => (
-                                                <button key={op.id} onClick={() => setResult(op.analysis)} className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-amber-50 transition-colors group">
+                                                <button key={op.id} onClick={() => setResult(op.analysis)} className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-amber-50 transition-colors group">
                                                     <div className="flex items-center gap-3">
                                                         <FileText className="w-4 h-4 text-slate-400" />
                                                         <span className="text-xs font-bold text-amber-950">Karakter {op.input.grade}</span>
@@ -687,7 +682,7 @@ const SecondOpinionPageContent = () => {
                         
                         {/* RIGHT: UPLOAD FORM */}
                         <div className="lg:col-span-7">
-                            <div className="bg-white p-6 sm:p-10 md:p-16 rounded-[2.5rem] sm:rounded-[4rem] border border-black/[0.03] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] relative overflow-hidden">
+                            <div className="bg-white p-6 sm:p-10 md:p-16 rounded-[var(--radius-xl)] border border-slate-200/60 shadow-[var(--shadow-sm)] relative overflow-hidden">
                                  <div className="absolute top-0 right-0 p-16 w-96 h-96 bg-amber-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-10 opacity-50" />
                                  <div className="absolute bottom-0 left-0 p-16 w-64 h-64 bg-rose-50 rounded-full -translate-x-1/2 translate-y-1/2 -z-10 opacity-30" />
                              
@@ -924,6 +919,7 @@ const SecondOpinionPageContent = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+            </div>
         </main>
             </div>
     );
