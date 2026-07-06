@@ -1058,11 +1058,11 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       className="group relative h-full"
     >
-      <div className="h-full bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] hover:border-slate-200 transition-all duration-500 flex flex-col overflow-hidden">
+      <div className="h-full bg-white rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] hover:shadow-md hover:border-indigo-200 transition-all duration-500 flex flex-col overflow-hidden">
         {/* Top Section */}
         <div className="p-6 sm:p-8 flex-1 cursor-pointer" onClick={onOpen}>
           <div className="flex items-start justify-between mb-6 sm:mb-8">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-950 rounded-2xl flex items-center justify-center text-indigo-400 shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all duration-500">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-950 rounded-xl flex items-center justify-center text-indigo-400 shadow-sm group-hover:rotate-6 group-hover:scale-110 transition-all duration-500">
               <Presentation className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100/50">
@@ -1081,7 +1081,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
             </div>
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 serif leading-tight mb-3 group-hover:text-indigo-900 transition-colors line-clamp-2">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mb-3 group-hover:text-indigo-900 transition-colors line-clamp-2">
             {seminar.overallTitle}
           </h3>
 
@@ -1100,7 +1100,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
         </div>
 
         {/* Bottom Bar */}
-        <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between group-hover:bg-indigo-50/30 transition-colors">
+        <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between group-hover:bg-indigo-50/30 transition-colors">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">
@@ -1114,7 +1114,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
       </div>
       
       {showCatPicker && (
-        <div className="absolute inset-0 bg-white/98 backdrop-blur-md z-30 p-8 flex flex-col justify-center animate-in fade-in zoom-in-95 duration-200 rounded-[2.5rem]" onClick={e => e.stopPropagation()}>
+        <div className="absolute inset-0 bg-white/98 backdrop-blur-md z-30 p-8 flex flex-col justify-center animate-in fade-in zoom-in-95 duration-200 rounded-[var(--radius-lg)]" onClick={e => e.stopPropagation()}>
             <div className="mb-6">
                 <p className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-[0.2em] text-center">Definér Kategori</p>
                 <div className="relative group">
@@ -1125,7 +1125,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
                         value={newCat}
                         onChange={e => e.target.value.length <= 20 && setNewCat(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && newCat && handleSetCat(newCat)}
-                        className="w-full h-12 pl-10 pr-4 bg-slate-50 border-none rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
+                        className="w-full h-12 pl-10 pr-4 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
                     />
                     {newCat && (
                         <button 
@@ -1149,7 +1149,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
                 </div>
             </div>
 
-            <div className="mt-8 flex items-center justify-between border-t border-slate-50 pt-4">
+            <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-4">
                 <button onClick={() => handleSetCat('')} className="text-[10px] font-black uppercase text-rose-500 hover:bg-rose-50 px-3 py-2 rounded-xl transition-all">Slet Kategori</button>
                 <button onClick={() => setShowCatPicker(false)} className="text-[10px] font-black uppercase text-slate-300 hover:text-slate-600 px-3 py-2 transition-all">Luk</button>
             </div>
@@ -1160,7 +1160,7 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
 
   if (viewMode === 'list') {
     return (
-        <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl p-4 border border-slate-100 hover:border-indigo-200 cursor-pointer flex items-center gap-4 group" onClick={onOpen}>
+        <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-[var(--radius-lg)] p-4 border border-slate-200/60 shadow-[var(--shadow-sm)] hover:border-indigo-200 cursor-pointer flex items-center gap-4 group" onClick={onOpen}>
             <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400"><Presentation className="w-5 h-5" /></div>
             <div className="flex-1 min-w-0"><h3 className="font-bold text-slate-900 truncate leading-snug">{seminar.overallTitle}</h3><p className="text-[10px] text-slate-400">{seminar.category || 'Ingen kategori'}</p></div>
             <button onClick={e => { e.stopPropagation(); onDelete(); }} className="p-2 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500"><Trash2 className="w-4 h-4"/></button>
@@ -1414,17 +1414,17 @@ export default function MineSeminarerPage() {
                     exit={{ height: 0, opacity: 0, y: -20 }}
                     className="overflow-hidden mb-12"
                 >
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 p-6 sm:p-10 bg-white/40 backdrop-blur-xl rounded-[2.5rem] sm:rounded-[3rem] border border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)]">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 p-6 sm:p-10 bg-white/40 backdrop-blur-xl rounded-[var(--radius-xl)] border border-slate-200/60 shadow-[var(--shadow-sm)]">
                         {[
-                            { label: 'Total Viden', val: stats.seminars, sub: 'Seminarer', icon: <Presentation className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-slate-950', bg: 'bg-white shadow-xl shadow-slate-900/5' },
+                            { label: 'Total Viden', val: stats.seminars, sub: 'Seminarer', icon: <Presentation className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-slate-950', bg: 'bg-white shadow-sm' },
                             { label: 'Begreber', val: stats.concepts, sub: 'Kortlagt viden', icon: <Tags className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-indigo-600', bg: 'bg-indigo-50/50' },
                             { label: 'Noter', val: stats.notes, sub: 'Studienoter', icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-emerald-600', bg: 'bg-emerald-50/50' }
                         ].map((s, i) => (
                             <div key={i} className="flex items-center gap-4 sm:gap-6 group">
-                                <div className={`w-12 h-12 sm:w-16 sm:h-16 ${s.bg} ${s.color} rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center group-hover:scale-110 transition-all duration-500`}>{s.icon}</div>
+                                <div className={`w-12 h-12 sm:w-16 sm:h-16 ${s.bg} ${s.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-500`}>{s.icon}</div>
                                 <div>
                                     <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-0.5">{s.label}</p>
-                                    <p className={`text-2xl sm:text-3xl font-black serif ${s.color}`}>{s.val}</p>
+                                    <p className={`text-2xl sm:text-3xl font-black ${s.color}`}>{s.val}</p>
                                     <p className="text-[8px] sm:text-[10px] font-medium text-slate-400">{s.sub}</p>
                                 </div>
                             </div>
@@ -1434,7 +1434,7 @@ export default function MineSeminarerPage() {
             )}
         </AnimatePresence>
 
-        <div className="mb-8 sm:mb-10 p-1.5 sm:p-2 bg-white rounded-2xl sm:rounded-[2rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 overflow-hidden">
+        <div className="mb-8 sm:mb-10 p-1.5 sm:p-2 bg-white rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 overflow-hidden">
             <div className="flex-1 relative w-full group">
                 <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
                 <input 
@@ -1481,12 +1481,12 @@ export default function MineSeminarerPage() {
             <motion.div 
                 initial={{ opacity: 0, scale: 0.98 }} 
                 animate={{ opacity: 1, scale: 1 }} 
-                className="mb-10 flex items-center justify-between p-6 bg-slate-900 rounded-[2rem] text-white shadow-xl shadow-slate-900/10 relative group z-[20]"
+                className="mb-10 flex items-center justify-between p-6 bg-slate-900 rounded-[var(--radius-lg)] text-white shadow-[var(--shadow-sm)] relative group z-[20]"
             >
-                <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 rounded-[var(--radius-lg)] overflow-hidden pointer-events-none">
                     <div className="absolute inset-0 bg-indigo-500/10 blur-3xl opacity-50 group-hover:scale-110 transition-transform duration-1000" />
                 </div>
-                <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/50 p-6 sm:p-8 rounded-[3rem] flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-2xl relative z-10 w-full">
+                <div className="bg-white border border-slate-200/60 p-6 sm:p-8 rounded-[var(--radius-lg)] flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-[var(--shadow-sm)] relative z-10 w-full">
                         <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Intelligent Kategori Analyse</p>
@@ -1498,21 +1498,21 @@ export default function MineSeminarerPage() {
                         <div className="flex flex-wrap gap-3">
                             <button 
                                 onClick={() => setShowCategoryDeepDive(true)}
-                                className="flex items-center gap-2.5 px-8 py-4 bg-slate-900 text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest hover:bg-indigo-950 shadow-xl shadow-slate-900/10 active:scale-95 transition-all group"
+                                className="flex items-center gap-2.5 px-8 py-4 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-950 shadow-sm active:scale-95 transition-all group"
                             >
                                 <Target className="w-4 h-4 text-indigo-400 group-hover:scale-125 transition-transform" /> START ANALYSE
                             </button>
                             <div className="flex gap-2">
                                 <button 
                                     onClick={handleOpenCategoryConceptList}
-                                    className="p-4 bg-amber-50 text-amber-600 rounded-2xl hover:bg-amber-100 transition-colors border border-amber-100"
+                                    className="p-4 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition-colors border border-amber-100"
                                     title="Vis Begreber"
                                 >
                                     <BookOpen className="w-5 h-5" />
                                 </button>
                                 <button 
                                     onClick={() => setCategoryChatData({ title: activeCategory || '', seminars: filtered })}
-                                    className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-colors border border-indigo-100"
+                                    className="p-4 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors border border-indigo-100"
                                     title="Chat med viden"
                                 >
                                     <BrainCircuit className="w-5 h-5" />
