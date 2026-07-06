@@ -70,6 +70,8 @@ import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 interface Analysis {
   isComplaintJustified: boolean;
   isGradeAccurate: boolean;
+  gradeAssessmentType?: 'too_low' | 'accurate' | 'too_high';
+  complaintRecommendation?: 'complain' | 'satisfied' | 'risky';
   suggestedGrade?: string;
   gradeAccuracyArgument: string;
 
@@ -752,7 +754,7 @@ const SecondOpinionPageContent = () => {
                              
                              {/* COLUMN 1: VERDICT & ARGUMENT */}
                              <div className="lg:col-span-8 space-y-8">
-                                 <section className={`rounded-[4rem] overflow-hidden shadow-2xl border transition-all duration-1000 ${result.isGradeAccurate ? 'bg-emerald-950 border-emerald-900 shadow-emerald-900/20' : 'bg-rose-950 border-rose-900 shadow-rose-900/20'}`}>
+                                 <section className={`rounded-[var(--radius-xl)] overflow-hidden shadow-2xl border transition-all duration-1000 ${result.isGradeAccurate ? 'bg-emerald-950 border-emerald-900 shadow-emerald-900/20' : 'bg-rose-950 border-rose-900 shadow-rose-900/20'}`}>
                                      <div className="p-16 md:p-24 flex flex-col md:flex-row items-center gap-16 border-b border-white/5 relative">
                                          <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
                                          <div className="absolute top-0 right-0 p-12 w-96 h-96 bg-white/[0.03] blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
@@ -760,37 +762,78 @@ const SecondOpinionPageContent = () => {
                                          <motion.div 
                                             initial={{ scale: 0.8, rotate: -10 }}
                                             animate={{ scale: 1, rotate: 0 }}
-                                            className="w-48 h-48 bg-white/[0.05] rounded-[4rem] flex flex-col items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl shrink-0 group transition-all duration-700 relative"
+                                            className="w-48 h-48 bg-white/[0.05] rounded-full flex flex-col items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl shrink-0 group transition-all duration-700 relative"
                                          >
-                                              <div className="absolute -inset-4 border border-white/5 rounded-[4.5rem] animate-pulse" />
+                                              <div className="absolute -inset-4 border border-white/5 rounded-full animate-pulse" />
                                               <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/30 mb-3">Vurdering</p>
                                               <p className="text-8xl font-black text-white serif tracking-tighter">{grade || result.suggestedGrade}</p>
                                          </motion.div>
+                                         <div className="text-center md:text-left space-y-6 flex-1 min-w-0">
+                                              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                                                  {analysisMode === 'audit' && (
+                                                    <>
+                                                      {/* Grade Assessment Type Badge */}
+                                                      {result.gradeAssessmentType === 'too_low' && (
+                                                          <div className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-400">
+                                                              Karakteren er sat for lavt
+                                                          </div>
+                                                      )}
+                                                      {result.gradeAssessmentType === 'accurate' && (
+                                                          <div className="px-4 py-2 bg-sky-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest border border-sky-500">
+                                                              Karakteren er retvisende
+                                                          </div>
+                                                      )}
+                                                      {result.gradeAssessmentType === 'too_high' && (
+                                                          <div className="px-4 py-2 bg-amber-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-400">
+                                                              Karakteren er sat for højt
+                                                          </div>
+                                                      )}
+                                                      {!result.gradeAssessmentType && (
+                                                          <div className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest border ${result.isGradeAccurate ? 'bg-sky-600 text-white border-sky-500' : 'bg-emerald-500 text-white border-emerald-400'}`}>
+                                                              {result.isGradeAccurate ? 'Karakter bekræftet' : 'Afvigelse fundet'}
+                                                          </div>
+                                                      )}
 
-                                         <div className="text-center md:text-left space-y-6">
-                                             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                                                 <div className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border shadow-2xl transition-all duration-1000 ${result.isGradeAccurate ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-rose-600 text-white border-rose-500'}`}>
-                                                     {result.isGradeAccurate ? 'Karakter Bekræftet' : 'Misforhold fundet'}
-                                                 </div>
-                                                 <div className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 text-white/40 border border-white/10 backdrop-blur-md`}>
-                                                     Audit Log ID: {Math.random().toString(36).substr(2, 6).toUpperCase()}
-                                                 </div>
-                                             </div>
-                                             <h2 className="text-5xl md:text-7xl font-black text-white serif tracking-tighter leading-[0.9] text-balance">
-                                                  {analysisMode === 'audit' ? (
-                                                     result.isGradeAccurate 
-                                                        ? 'Din bedømmelse matcher kriterierne.' 
-                                                        : <>Karakteren er <span className="text-rose-400 italic">undervurderet</span>. <br/><span className="text-white/40">Bør være {result.suggestedGrade}</span></>
-                                                  ) : (
-                                                     <>Forventet karakter: <span className="text-rose-400 italic">{result.suggestedGrade || 'Ej fastsat'}</span></>
+                                                      {/* Complaint Recommendation Badge */}
+                                                      {result.complaintRecommendation === 'complain' && (
+                                                          <div className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-500 shadow-lg shadow-emerald-950/20">
+                                                              Anbefaling: Klag
+                                                          </div>
+                                                      )}
+                                                      {result.complaintRecommendation === 'satisfied' && (
+                                                          <div className="px-4 py-2 bg-slate-800 text-slate-200 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-700">
+                                                              Anbefaling: Vær tilfreds
+                                                          </div>
+                                                      )}
+                                                      {result.complaintRecommendation === 'risky' && (
+                                                          <div className="px-4 py-2 bg-rose-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest border border-rose-500 shadow-lg shadow-rose-950/20 animate-pulse">
+                                                              Anbefaling: Klag ikke (Risikabelt)
+                                                          </div>
+                                                      )}
+                                                    </>
                                                   )}
+                                                  <div className="px-4 py-2 bg-white/5 text-white/40 rounded-lg text-[9px] font-black uppercase tracking-widest border border-white/10">
+                                                      Audit Log ID: {Math.random().toString(36).substr(2, 6).toUpperCase()}
+                                                  </div>
+                                              </div>
+
+                                              <h2 className="text-4xl md:text-6xl font-black text-white leading-tight text-balance">
+                                                   {analysisMode === 'audit' ? (
+                                                      result.gradeAssessmentType === 'too_low' 
+                                                         ? <>Karakteren er <span className="text-emerald-400 italic">undervurderet</span>. <br/><span className="text-white/40 text-2xl font-medium">Bør være {result.suggestedGrade}</span></>
+                                                         : result.gradeAssessmentType === 'too_high'
+                                                         ? <>Karakteren er <span className="text-amber-400 italic">overvurderet</span>. <br/><span className="text-white/40 text-2xl font-medium">Bør være {result.suggestedGrade}</span></>
+                                                         : <>Din bedømmelse matcher faglige kriterier.</>
+                                                   ) : (
+                                                      <>Forventet karakter: <span className="text-rose-400 italic">{result.suggestedGrade || 'Ej fastsat'}</span></>
+                                                   )}
                                               </h2>
-                                         </div>
+                                          </div>
                                      </div>
                                      <div className="p-16 md:p-24 space-y-10 bg-black/10 relative overflow-hidden">
                                          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                                          <div className="flex items-center gap-4">
-                                             <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white/40 border border-white/10"><Gavel className="w-5 h-5" /></div>
+                                             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/40 border border-white/10"><Gavel className="w-5 h-5" /></div>
                                              <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/30">Akademisk Revison & Argumentation</h4>
                                          </div>
                                          <div className="prose prose-invert prose-2xl max-w-none text-white/90 serif italic leading-relaxed tracking-tight" dangerouslySetInnerHTML={{ __html: result.gradeAccuracyArgument }} />
@@ -803,7 +846,7 @@ const SecondOpinionPageContent = () => {
                                          <DashboardCard title="Opgavens Styrker" icon={<ThumbsUp className="w-4 h-4 text-emerald-600" />} variant="slate">
                                             <ul className="space-y-4">
                                                 {result.strengths.map((s, i) => (
-                                                     <li key={i} className="flex items-start gap-4 p-5 bg-white rounded-3xl border border-slate-100/50 shadow-sm text-sm text-slate-700 font-medium">
+                                                     <li key={i} className="flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200/60 shadow-[var(--shadow-sm)] text-sm text-slate-700 font-medium">
                                                          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                                                          <span dangerouslySetInnerHTML={{ __html: s }} />
                                                      </li>
@@ -813,7 +856,7 @@ const SecondOpinionPageContent = () => {
                                          <DashboardCard title="Opgavens Svagheder" icon={<ThumbsDown className="w-4 h-4 text-rose-600" />} variant="rose">
                                             <ul className="space-y-4">
                                                 {result.weaknesses.map((w, i) => (
-                                                     <li key={i} className="flex items-start gap-4 p-5 bg-white rounded-3xl border border-rose-100 shadow-sm text-sm text-rose-800 font-medium italic">
+                                                     <li key={i} className="flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200/60 shadow-[var(--shadow-sm)] text-sm text-rose-800 font-medium italic">
                                                          <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
                                                          <span dangerouslySetInnerHTML={{ __html: w }} />
                                                      </li>
@@ -822,13 +865,13 @@ const SecondOpinionPageContent = () => {
                                          </DashboardCard>
                                     </div>
                                  ) : (
-                                    <section className="bg-amber-950 p-12 md:p-20 rounded-[4rem] text-center space-y-10 shadow-2xl overflow-hidden relative group">
+                                    <section className="bg-amber-950 p-12 md:p-20 rounded-[var(--radius-xl)] text-center space-y-10 shadow-2xl overflow-hidden relative group">
                                          <div className="absolute inset-0 bg-gradient-to-br from-rose-900/40 to-black/40" />
                                          <div className="relative z-10 space-y-6">
-                                             <div className="w-20 h-20 bg-amber-400 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl text-amber-950 group-hover:rotate-12 transition-transform duration-500"><Lock className="w-10 h-10" /></div>
+                                             <div className="w-20 h-20 bg-amber-400 rounded-xl flex items-center justify-center mx-auto shadow-2xl text-amber-950 group-hover:rotate-12 transition-transform duration-500"><Lock className="w-10 h-10" /></div>
                                              <h3 className="text-3xl md:text-5xl font-black text-white serif tracking-tighter">Lås op for dybden</h3>
                                              <p className="text-white/60 text-lg max-w-sm mx-auto font-medium italic">Få præcise styrker, svagheder og din personlige klage-risiko vurdering.</p>
-                                             <Link href="/upgrade" className="inline-block px-12 py-6 bg-white text-rose-950 rounded-full font-black uppercase text-xs tracking-widest hover:bg-amber-400 transition-all shadow-2xl">Opgrader nu</Link>
+                                             <Link href="/upgrade" className="inline-block px-12 py-6 bg-white text-rose-950 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-amber-400 transition-all shadow-2xl">Opgrader nu</Link>
                                          </div>
                                     </section>
                                  )}
@@ -841,7 +884,7 @@ const SecondOpinionPageContent = () => {
                                          <DashboardCard title="Risiko ved klage" icon={<AlertTriangle className="w-4 h-4 text-amber-600" />} variant="amber">
                                             <div className="space-y-4">
                                                 {result.riskAssessment.map((r, i) => (
-                                                     <div key={i} className="flex items-start gap-4 p-5 bg-white rounded-3xl border border-amber-100 text-xs font-bold text-amber-900 italic shadow-sm">
+                                                     <div key={i} className="flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200/60 text-xs font-bold text-amber-900 italic shadow-[var(--shadow-sm)]">
                                                          <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0 mt-1.5" />
                                                          <span dangerouslySetInnerHTML={{ __html: r }} />
                                                      </div>
@@ -852,7 +895,7 @@ const SecondOpinionPageContent = () => {
                                          <DashboardCard title="Anbefalede skridt" icon={<ListChecks className="w-4 h-4 text-indigo-600" />} variant="slate">
                                             <div className="space-y-3">
                                                 {result.suggestedNextSteps.map((step, i) => (
-                                                     <button key={i} className="w-full text-left p-6 bg-white border border-slate-100 rounded-3xl flex items-center justify-between group hover:border-indigo-200 transition-all shadow-sm">
+                                                     <button key={i} className="w-full text-left p-6 bg-white border border-slate-200/60 rounded-xl flex items-center justify-between group hover:border-indigo-200 transition-all shadow-[var(--shadow-sm)]">
                                                          <span className="text-[12px] font-black text-slate-500 group-hover:text-indigo-950 transition-colors leading-relaxed" dangerouslySetInnerHTML={{ __html: step }} />
                                                          <ArrowUpRight className="w-5 h-5 text-slate-200 group-hover:text-indigo-400 group-hover:-translate-y-1 group-hover:translate-x-1 shrink-0 ml-4" />
                                                      </button>
@@ -863,11 +906,11 @@ const SecondOpinionPageContent = () => {
                                  )}
 
                                  <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={() => window.print()} className="p-8 bg-white border border-amber-100 rounded-[3rem] flex flex-col items-center gap-4 shadow-sm hover:bg-slate-50 transition-all group">
+                                    <button onClick={() => window.print()} className="p-8 bg-white border border-slate-200/60 rounded-[var(--radius-lg)] flex flex-col items-center gap-4 shadow-[var(--shadow-sm)] hover:bg-slate-50 transition-all group">
                                         <Share2 className="w-6 h-6 text-slate-300 group-hover:scale-110 transition-transform" />
                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">PDF Audit</span>
                                     </button>
-                                    <button className="p-8 bg-white border border-amber-100 rounded-[3rem] flex flex-col items-center gap-4 shadow-sm hover:bg-slate-50 transition-all group">
+                                    <button className="p-8 bg-white border border-slate-200/60 rounded-[var(--radius-lg)] flex flex-col items-center gap-4 shadow-[var(--shadow-sm)] hover:bg-slate-50 transition-all group">
                                         <Bookmark className="w-6 h-6 text-slate-300 group-hover:scale-110 transition-transform" />
                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gem Fund</span>
                                     </button>
@@ -879,7 +922,7 @@ const SecondOpinionPageContent = () => {
                          {!result.isGradeAccurate && (
                              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center pt-12">
                                 <Link href="/klage-hjaelp">
-                                    <button className="px-12 py-6 bg-amber-950 text-white rounded-full font-black uppercase text-xs tracking-[0.4em] flex items-center gap-6 shadow-2xl hover:bg-rose-900 transition-all group">
+                                    <button className="px-12 py-6 bg-amber-950 text-white rounded-xl font-black uppercase text-xs tracking-[0.4em] flex items-center gap-6 shadow-2xl hover:bg-rose-900 transition-all group">
                                         Generér din officielle klage <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                                     </button>
                                 </Link>

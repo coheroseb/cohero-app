@@ -28,6 +28,8 @@ export type SecondOpinionInput = z.infer<typeof SecondOpinionInputSchema>;
 const AnalysisSchema = z.object({
   isComplaintJustified: z.boolean().describe('A boolean indicating whether there is a plausible basis for a complaint.'),
   isGradeAccurate: z.boolean().describe('A boolean indicating if the given grade is considered accurate/fair based on the analysis. In feedback mode, set this to true if you are confident in your suggestion.'),
+  gradeAssessmentType: z.enum(['too_low', 'accurate', 'too_high']).describe("En vurdering af den modtagne karakter i forhold til den reelle kvalitet: 'too_low' (karakteren er for lav), 'accurate' (karakteren er retvisende), 'too_high' (karakteren er for høj)."),
+  complaintRecommendation: z.enum(['complain', 'satisfied', 'risky']).describe("En klar anbefaling af om det kan betale sig at klage: 'complain' (klag, karakteren er for lav), 'satisfied' (vær tilfreds/retvisende), 'risky' (for risikabelt at klage, risiko for lavere karakter)."),
   suggestedGrade: z.string().optional().describe("The grade you suggest for the work (e.g., '7', '10', '12'). Mandatory in 'feedback' mode."),
   gradeAccuracyArgument: z.string().describe("A detailed, concrete argument explaining your assessment. Reference specific parts of the assignment and learning goals. Use HTML for formatting."),
 
@@ -68,11 +70,17 @@ const secondOpinionFlow = ai.defineFlow(
         { text: `You are an impartial and expert external examiner (censor) and university lecturer in the Danish higher education system. Your task is to provide a highly concrete, document-based analysis of a student's graded assignment.
 
 **YOUR OBJECTIVE (MODE: ${input.mode}):**
-- **Hvis mode er 'audit':** Afgør om den modtagne karakter (${input.grade}) er retvisende i forhold til opgavens kvalitet og læringsmålene. Indstil 'suggestedGrade' til din vurdering af den korrekte karakter.
+- **Hvis mode er 'audit':**
+  1. Afgør om den modtagne karakter (${input.grade}) er retvisende, for høj eller for lav ift. opgavens kvalitet og læringsmålene. Sæt 'gradeAssessmentType' til henholdsvis 'accurate', 'too_high' eller 'too_low'.
+  2. Vurder om det kan betale sig at klage. Sæt 'complaintRecommendation' til:
+     - 'complain': hvis karakteren er for lav ('too_low') og der er gode, konkrete argumenter samt lav risiko for at gå ned i karakter.
+     - 'satisfied': hvis karakteren er fair/retvisende ('accurate') eller endda for høj ('too_high'), hvor man bør være fuldt ud tilfreds.
+     - 'risky': hvis karakteren er for lav, men det faglige niveau er usikkert, eller der er væsentlige mangler, som gør det risikabelt at klage (risiko for at en ny censor vurderer opgaven endnu lavere).
+  3. Indstil 'suggestedGrade' til din vurdering af den reelle, korrekte karakter.
 - **Hvis mode er 'feedback':** Analysér opgavens kvalitet i forhold til læringsmålene og giv en præcis vurdering af, hvilken karakter arbejdet vil lande på i 'suggestedGrade'. Fokusér her på pædagogisk feedback og konkrete forbedringsforslag.
 
 **YOUR PHILOSOPHY:**
-You are a conservative, strict, but fair examiner. Your goal is to ensure students are not misled into false hope. Din analyse skal være 100% konsekvent; det samme faglige niveau skal altid resultere i de samme argumenter og den samme karaktervurdering, uanset hvornår eller hvordan opgaven præsenteres. If an assignment is on the border between two grades, you must select the lower grade. Always prioritize evidence of deep understanding and critical thinking over simple repetition of theory. Be critical of documentation, hierarchy of sources, and the logical 'red thread' in the work.
+You are a conservative, strict, but fair examiner. Your goal is to ensure students are not misled into false hope. Din analyse skal være 100% konsekvent; det samme faglige niveau skal altid resultere i de samme argumenter og den samme karaktervurdering, uanset hvornår eller hvordan opgaven præsenteres. If an assignment is on the border between two grades, you must select the lower grade. Always prioritize evidence of deep understanding and critical thinking over simple repetition of theory. Be critical of documentation, hierarchy of sources, and the logical 'red thread' in the work. Vurder altid klage-risikoen realistisk ud fra de konkrete mangler, da en klage i det danske system kan føre til en lavere karakter.
 
 **CRITICAL REQUIREMENT:**
 You MUST use the specific learning objectives (læringsmål) and exam criteria provided in the 'studyRegulations' and 'examRegulations' as your absolute reference point. Your assessment should reflect exactly how well the work fulfills these specific requirements for the current semester and module. Disregard any general knowledge that contradicts the specific goals provided.
