@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import EmptyState from '@/components/EmptyState';
+import { SkeletonGrid } from '@/components/Skeleton';
 import { 
   ArrowLeft, 
   Search, 
@@ -444,50 +447,51 @@ function PensumSearchContent() {
 
   if (!hasProAccess) {
     return (
-      <div className="bg-background min-h-screen pb-24 font-sans selection:bg-indigo-100 flex flex-col">
-        <div className="max-w-7xl mx-auto px-6 pt-6 w-full">
-          <Link href="/portal" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-xs uppercase tracking-wider bg-white px-5 py-3 rounded-full border border-slate-100 shadow-sm">
-            <ArrowLeft className="w-4 h-4" />
-            Tilbage til portalen
-          </Link>
+      <div className="bg-slate-50/60 min-h-screen pb-24 font-sans selection:bg-indigo-100 flex flex-col">
+        <div className="max-w-6xl mx-auto px-6 pt-10 w-full">
+          <PageHeader
+            title="Pensumsøgning"
+            subtitle="Søg semantisk på tværs af din uddannelse."
+            icon={<Search className="w-5 h-5" />}
+            backHref="/portal"
+          />
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center p-6 mt-12 space-y-16">
-          <div className="max-w-2xl w-full bg-white rounded-[3rem] p-12 text-center border border-indigo-100 shadow-[0_30px_70px_rgba(0,0,0,0.06)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-10 opacity-[0.03] scale-150 pointer-events-none">
-              <Search className="w-64 h-64 text-indigo-500" />
-            </div>
-            <div className="relative z-10">
-               <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
-                 <BrainCircuit className="w-12 h-12 text-indigo-600" />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 mt-6 space-y-16 max-w-6xl mx-auto w-full">
+          <div className="max-w-2xl w-full bg-white rounded-[var(--radius-lg)] p-10 text-center border border-slate-200/60 shadow-[var(--shadow-md)] relative overflow-hidden">
+            <div className="relative z-10 space-y-6">
+               <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                 <BrainCircuit className="w-8 h-8 text-indigo-600" />
                </div>
-               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6 serif tracking-tight">Lås op for Pensumsøgning</h2>
-               <p className="text-slate-500 mb-10 font-medium text-lg max-w-lg mx-auto leading-relaxed">Pensumsøgning og konkrete litteraturhenvisninger til kapitler og sidetal er eksklusivt for Kollega+ og Semesterpakken. Vi kan ikke søge i bøgernes fulde indhold, men vejleder dig præcist til, hvor i dit eget pensum du kan læse om emnet.</p>
-               <Link href="/upgrade">
-                 <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-200">
+               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Lås op for Pensumsøgning</h2>
+               <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-lg mx-auto">
+                 Pensumsøgning og konkrete litteraturhenvisninger til kapitler og sidetal er eksklusivt for Kollega+ og Semesterpakken. Vi kan ikke søge i bøgernes fulde indhold, men vejleder dig præcist til, hvor i dit eget pensum du kan læse om emnet.
+               </p>
+               <Link href="/upgrade" className="inline-block">
+                 <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold text-xs hover:scale-105 active:scale-95 transition-all shadow-sm">
                    Opgrader Nu
                  </button>
                </Link>
             </div>
           </div>
 
-          <div className="max-w-4xl w-full px-6 space-y-8">
-            <div className="text-center space-y-3">
-               <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 border border-indigo-100/50 rounded-full text-[9px] font-black uppercase tracking-widest text-indigo-600">
+          <div className="w-full space-y-6">
+            <div className="text-center space-y-2">
+               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100/50 rounded-full text-[9px] font-black uppercase tracking-wider text-indigo-600">
                   <Crown className="w-3 h-3 fill-current text-indigo-500" /> Bogbase
                </div>
-               <h3 className="text-3xl font-black text-slate-900 serif tracking-tight">Søg semantisk i hele din uddannelse</h3>
-               <p className="text-slate-500 text-sm max-w-lg mx-auto font-semibold">Med Kollega+ kan du søge efter præcise kapitler og sidetal (ikke selve bøgernes fulde indhold) på tværs af alle disse værker. Vi vejleder dig til, hvor du kan læse om emnet:</p>
+               <h3 className="text-xl font-black text-slate-900 tracking-tight">Søg semantisk i hele din uddannelse</h3>
+               <p className="text-slate-500 text-xs max-w-md mx-auto font-semibold">Med Kollega+ kan du søge efter præcise kapitler og sidetal (ikke selve bøgernes fulde indhold) på tværs af alle disse værker. Vi vejleder dig til, hvor du kan læse om emnet:</p>
             </div>
 
             {booksLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Indlæser pensumbøger...</p>
+              <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Indlæser pensumbøger...</p>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-4 pb-20">
                  {books?.map((book: any) => (
-                    <div key={book.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4">
+                    <div key={book.id} className="bg-white p-5 rounded-[var(--radius-lg)] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4">
                        <div className="w-12 h-16 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 text-slate-300">
                           <Book className="w-6 h-6" />
                        </div>
@@ -517,50 +521,31 @@ function PensumSearchContent() {
   }, [searched]);
 
   return (
-    <div className="bg-background min-h-screen pb-32 font-sans selection:bg-indigo-100 relative overflow-hidden">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
-        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-indigo-50/40 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[20%] right-[-10%] w-[500px] h-[500px] bg-amber-50/30 rounded-full blur-[100px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:5rem_5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] opacity-[0.4]" />
-      </div>
+    <div className="bg-slate-50/60 min-h-screen pb-32 font-sans selection:bg-indigo-100 relative overflow-hidden">
       
-      {/* Top Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-6 pt-8 flex items-center justify-between">
-        <Link href="/portal" className="inline-flex items-center gap-2.5 text-slate-500 hover:text-slate-900 transition-all font-bold text-xs uppercase tracking-wider bg-white hover:bg-slate-50 px-6 py-3.5 rounded-full border border-slate-100 shadow-sm active:scale-95">
-          <ArrowLeft className="w-4 h-4 text-indigo-500" />
-          Tilbage til portalen
-        </Link>
-        <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50/50 border border-indigo-100/50 rounded-2xl">
-          <Crown className="w-4 h-4 text-indigo-600 fill-current" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Kollega+ Adgang Aktiv</span>
-        </div>
-      </div>
-
-      <main className="max-w-5xl mx-auto px-6 pt-16 space-y-16">
-        
-        {/* Interactive Header Hero */}
-        <div className="text-center space-y-6 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-900/10 mb-2">
-            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" /> Semantisk Søgemotor
-          </div>
-          <h1 className="text-5xl sm:text-7xl font-black text-slate-950 tracking-tight serif leading-none">
-            Pensum<span className="text-indigo-600 italic font-medium font-serif">Søgning</span>
-          </h1>
-          <p className="text-slate-500 text-base sm:text-lg font-medium leading-relaxed">
-            Søg semantisk på tværs af din uddannelses pensumliste. Find præcise kapitler, sidetal og litteraturhenvisninger til dine opgaver med det samme.
-          </p>
-        </div>
+      <main className="max-w-5xl mx-auto px-6 pt-10 space-y-12">
+        <PageHeader
+          title="Pensumsøgning"
+          subtitle="Søg semantisk på tværs af dit pensum og find præcise kapitler, sidetal og litteraturhenvisninger."
+          icon={<Search className="w-5 h-5" />}
+          backHref="/portal"
+          actions={
+            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl">
+              <Crown className="w-4 h-4 text-indigo-600 fill-current" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Kollega+</span>
+            </div>
+          }
+        />
 
         {/* Semantic Search Console / Terminal */}
         <div className="max-w-3xl mx-auto w-full space-y-4">
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSearch(query); }}
-            className="bg-white p-4 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.05)] border border-slate-100 relative group transition-all duration-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-200"
+            className="bg-white p-4 rounded-[var(--radius-lg)] shadow-[var(--shadow-sm)] border border-slate-200/60 relative group transition-all duration-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-200"
           >
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-focus-within:text-indigo-600 group-focus-within:bg-indigo-50 transition-all duration-500 shrink-0">
-                <Search className="w-6 h-6" />
+              <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-focus-within:text-indigo-600 group-focus-within:bg-indigo-50 transition-all shrink-0">
+                <Search className="w-5 h-5" />
               </div>
               <input
                 type="text"
@@ -568,18 +553,18 @@ function PensumSearchContent() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={placeholders[placeholderIndex]}
                 disabled={loading}
-                className="grow bg-transparent border-none focus:ring-0 text-slate-900 placeholder:text-slate-300 font-extrabold text-lg px-2 h-14 focus:outline-none"
+                className="grow bg-transparent border-none focus:ring-0 text-slate-900 placeholder:text-slate-300 font-extrabold text-lg px-2 h-12 focus:outline-none"
               />
               <button 
                 type="submit"
                 disabled={loading || !query.trim()}
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg shrink-0 ${
+                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-sm shrink-0 ${
                   loading || !query.trim() 
                   ? 'bg-slate-50 text-slate-300' 
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 active:scale-95 shadow-indigo-600/20'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 active:scale-95'
                 }`}
               >
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <ArrowRight className="w-6 h-6" />}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
               </button>
             </div>
           </form>
@@ -587,7 +572,7 @@ function PensumSearchContent() {
           {/* Copyright Safe Indicator */}
           <div className="text-center">
             <p className="text-[10px] sm:text-xs font-semibold text-slate-400 leading-relaxed italic max-w-2xl mx-auto">
-              <strong>Bemærk:</strong> Du kan udelukkende søge efter <span className="text-indigo-600">kapitler og sidetal</span> – ikke i selve bøgernes fulde indhold (grundet ophavsret). Vi vejleder dig dog præcist til, hvor i dit eget pensum du kan læse om et givent emne.
+              <strong>Bemærk:</strong> Du kan udelukkende søge efter <span className="text-indigo-600 font-bold">kapitler og sidetal</span> – ikke i selve bøgernes fulde indhold. Vi vejleder dig præcist til, hvor du kan læse om emnet.
             </p>
           </div>
 
@@ -650,29 +635,14 @@ function PensumSearchContent() {
               
               {/* Skeletons Loading State */}
               {loading && (
-                <div className="space-y-6 max-w-4xl mx-auto pt-6">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 space-y-4 animate-pulse">
-                      <div className="flex items-start gap-5">
-                        <div className="w-16 h-24 bg-slate-100 rounded-xl shrink-0" />
-                        <div className="space-y-2 flex-grow">
-                          <div className="h-6 bg-slate-100 rounded-full w-2/3" />
-                          <div className="h-4 bg-slate-100 rounded-full w-1/3" />
-                        </div>
-                      </div>
-                      <div className="h-[1px] bg-slate-50 w-full" />
-                      <div className="space-y-2">
-                        <div className="h-4 bg-slate-100 rounded-full w-5/6" />
-                        <div className="h-4 bg-slate-100 rounded-full w-4/6" />
-                      </div>
-                    </div>
-                  ))}
+                <div className="max-w-4xl mx-auto pt-6">
+                  <SkeletonGrid count={2} columns="grid-cols-1" variant="book" />
                 </div>
               )}
 
               {/* Error Message */}
               {!loading && error && (
-                <div className="max-w-md mx-auto bg-rose-50 border border-rose-100 rounded-[2rem] p-6 text-center space-y-4 shadow-sm">
+                <div className="max-w-md mx-auto bg-rose-50 border border-rose-100 rounded-xl p-6 text-center space-y-4 shadow-sm">
                   <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
                   <p className="text-sm font-bold text-rose-950">{error}</p>
                 </div>
@@ -683,7 +653,7 @@ function PensumSearchContent() {
                 <div className="space-y-8 animate-in fade-in duration-500">
                   
                   {/* Summary and Filters Bar */}
-                  <div className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 max-w-4xl mx-auto">
+                  <div className="bg-white border border-slate-200/60 shadow-[var(--shadow-sm)] rounded-[var(--radius-lg)] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 max-w-4xl mx-auto">
                     <div>
                       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Søgestatus</h3>
                       <p className="text-slate-900 font-bold mt-1 text-sm">
@@ -744,17 +714,12 @@ function PensumSearchContent() {
 
                   {/* Empty Results Screen */}
                   {filteredResults.length === 0 && (
-                    <div className="max-w-md mx-auto text-center py-16 space-y-6">
-                      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mx-auto">
-                        <BookOpen className="w-7 h-7" />
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-slate-900">Ingen resultater fundet</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed">
-                          Søgeordet gav ingen resultater i databasen, der matcher dine valgte filtre. Prøv at søge bredere eller juster filtrene.
-                        </p>
-                      </div>
-                    </div>
+                    <EmptyState
+                      title="Ingen resultater fundet"
+                      description="Søgeordet gav ingen resultater i databasen, der matcher dine valgte filtre. Prøv at søge bredere eller juster filtrene."
+                      icon={<BookOpen className="w-6 h-6 text-slate-300" />}
+                      className="max-w-2xl mx-auto"
+                    />
                   )}
 
                   {/* Book Cards Grid */}
@@ -780,7 +745,7 @@ function PensumSearchContent() {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.95 }}
                               transition={{ duration: 0.4, delay: index * 0.05 }}
-                              className="bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-950/[0.03] rounded-[2.5rem] p-8 transition-all group overflow-hidden relative"
+                              className="bg-white border border-slate-200/60 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] rounded-[var(--radius-lg)] p-8 transition-all group overflow-hidden relative"
                             >
                               <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${getGradient(book.bookTitle)} opacity-[0.02] rounded-full blur-xl group-hover:scale-150 transition-all duration-700 pointer-events-none`} />
 
@@ -942,17 +907,12 @@ function PensumSearchContent() {
 
               {/* Empty Search Prompt */}
               {!loading && !searched && (
-                <div className="max-w-2xl mx-auto text-center py-20 space-y-6">
-                  <div className="w-20 h-20 bg-white border border-slate-100 rounded-[2rem] flex items-center justify-center text-slate-400 mx-auto shadow-sm">
-                    <BookOpen className="w-9 h-9" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight serif">Klar til din litteratursøgning</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed max-w-md mx-auto">
-                      Indtast et teoretisk emne, en sociolog, et begreb eller en problemstilling ovenfor, så gennemsøger vi alt relevant studielitteratur med det samme.
-                    </p>
-                  </div>
-                </div>
+                <EmptyState
+                  title="Klar til din litteratursøgning"
+                  description="Indtast et teoretisk emne, en sociolog, et begreb eller en problemstilling ovenfor, så gennemsøger vi alt relevant studielitteratur med det samme."
+                  icon={<BookOpen className="w-6 h-6 text-slate-300" />}
+                  className="max-w-2xl mx-auto"
+                />
               )}
             </div>
           )}
@@ -960,8 +920,8 @@ function PensumSearchContent() {
           {/* TAB 2: FULL BOOK DATABASE (Overskueligt overblik) */}
           {activeTab === 'library' && (
             <div className="space-y-8 animate-in fade-in duration-500">
-              <div className="bg-white border border-slate-100 shadow-sm rounded-3xl p-8 space-y-4">
-                 <h4 className="text-lg font-black text-slate-900 serif tracking-tight">Pensumsamling – hvad kan du søge i?</h4>
+              <div className="bg-white border border-slate-200/60 shadow-[var(--shadow-sm)] rounded-[var(--radius-lg)] p-8 space-y-4">
+                 <h4 className="text-lg font-black text-slate-900 tracking-tight">Pensumsamling – hvad kan du søge i?</h4>
                  <p className="text-sm text-slate-500 font-medium leading-relaxed">
                    Vores semantiske søgemotor kender metadata og indholdsfortegnelser for de mest populære lærebøger på socialrådgiver-studiet. Herunder kan du se listen over de faglitterære værker, der er indekseret i systemet lige nu:
                  </p>
@@ -975,7 +935,7 @@ function PensumSearchContent() {
               ) : (
                 <div className="grid sm:grid-cols-2 gap-4 pb-20">
                    {books?.map((book: any) => (
-                      <div key={book.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4">
+                      <div key={book.id} className="bg-white p-5 rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] hover:shadow-md transition-all flex items-start gap-4">
                          <div className="w-12 h-16 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 text-slate-300">
                             <Book className="w-6 h-6" />
                          </div>
