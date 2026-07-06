@@ -78,6 +78,8 @@ import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebas
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import PageHeader from '@/components/PageHeader';
+import EmptyState from '@/components/EmptyState';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 // --- TYPES ---
@@ -739,35 +741,23 @@ function MineMaterialerContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col selection:bg-indigo-100 font-sans">
-      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.03)_0%,transparent_70%)] rounded-full blur-[120px] pointer-events-none z-0"></div>
+    <div className="min-h-screen bg-slate-50/60 flex flex-col selection:bg-indigo-100 font-sans pb-32">
       
-      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 py-6 sticky top-0 z-[60]">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/portal" className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-95">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <FileBox className="w-3.5 h-3.5 text-indigo-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vidensarkiv</span>
-              </div>
-              <h1 className="text-xl font-[900] text-slate-900 tracking-tight">Mine Materialer</h1>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
+      <main className="flex-grow max-w-7xl mx-auto w-full px-6 pt-10 relative z-10">
+        <PageHeader
+          title="Mine Materialer"
+          subtitle="Dit personlige vidensarkiv. Upload dit pensum, og lad AI hjælpe dig med at strukturere din viden."
+          icon={<FileBox className="w-5 h-5" />}
+          backHref="/portal"
+          actions={
              <div className="hidden md:flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Sikkert Arkiv</span>
              </div>
-          </div>
-        </div>
-      </header>
+          }
+        />
 
-      <main className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-12 relative z-10">
-        <div className="grid lg:grid-cols-[380px,1fr] gap-8 sm:gap-12 items-start">
+        <div className="grid lg:grid-cols-[380px,1fr] gap-8 sm:gap-12 items-start mt-8">
           
           <aside className="space-y-8">
             <section className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
@@ -886,24 +876,16 @@ function MineMaterialerContent() {
           </aside>
 
           <div className="space-y-10">
-            <section className="bg-white p-12 rounded-[3.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-all group relative overflow-hidden shadow-sm">
+            <section className="bg-white rounded-[var(--radius-xl)] border border-slate-200/60 shadow-[var(--shadow-sm)] overflow-hidden relative">
                {!isKollegaPlus ? (
-                 <div className="flex flex-col items-center justify-center py-10 space-y-8 text-center">
-                    <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-[2.5rem] flex items-center justify-center shadow-lg shadow-amber-100/50">
-                       <Crown className="w-10 h-10" />
-                    </div>
-                    <div className="space-y-4 max-w-sm">
-                       <h3 className="text-2xl font-black text-slate-900 tracking-tight">Kollega+ påkrævet</h3>
-                       <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                          Få adgang til dit eget personlige vidensarkiv og AI-analyse af dit pensum med Kollega+.
-                       </p>
-                    </div>
-                    <Link href="/upgrade">
-                       <Button className="bg-slate-950 text-white hover:bg-indigo-600 font-black uppercase tracking-widest text-[11px] px-12 h-14 rounded-2xl shadow-xl transition-all active:scale-95">
-                          Opgrader nu
-                       </Button>
-                    </Link>
-                 </div>
+                  <EmptyState
+                    title="Kollega+ påkrævet"
+                    description="Få adgang til dit eget personlige vidensarkiv, uploade filer, og få dybdegående AI-analyse af dit pensum med Kollega+."
+                    icon={<Crown className="w-6 h-6 text-amber-500 fill-amber-500 animate-pulse" />}
+                    actionLabel="Opgrader nu"
+                    actionHref="/upgrade"
+                    className="border-none py-20"
+                  />
                ) : (
                  <>
                    <AnimatePresence>
@@ -1063,16 +1045,11 @@ function MineMaterialerContent() {
                     )}
 
                   {filteredMaterials.length === 0 ? (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="p-32 text-center bg-white rounded-[3.5rem] border border-slate-100 shadow-sm"
-                    >
-                      <div className="w-20 h-20 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mx-auto mb-8">
-                        <FileBox className="w-10 h-10" />
-                      </div>
-                      <h4 className="text-slate-400 font-bold italic">Du har endnu ikke uploadet materialer til dette semester.</h4>
-                    </motion.div>
+                    <EmptyState
+                      title="Ingen uploadede materialer"
+                      description="Du har endnu ikke uploadet studiematerialer til det valgte semester. Upload dine filer ovenfor for at starte."
+                      icon={<FileBox className="w-6 h-6 text-slate-300" />}
+                    />
                   ) : (
                     filteredMaterials.map((material, idx) => (
                       <motion.div
@@ -1082,12 +1059,12 @@ function MineMaterialerContent() {
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ delay: idx * 0.05 }}
                         onClick={() => setSelectedMaterial(material)}
-                        className={`bg-white p-6 rounded-[2.5rem] border transition-all flex items-center justify-between group cursor-pointer ${
-                          selectedMaterial?.id === material.id ? 'border-indigo-600 ring-4 ring-indigo-500/5 shadow-xl' : 'border-slate-100 shadow-sm hover:shadow-lg hover:border-indigo-100'
+                        className={`bg-white p-6 rounded-[var(--radius-lg)] border transition-all flex items-center justify-between group cursor-pointer ${
+                          selectedMaterial?.id === material.id ? 'border-indigo-600 ring-4 ring-indigo-500/5 shadow-md' : 'border-slate-200/60 shadow-[var(--shadow-sm)] hover:shadow-md hover:border-indigo-200'
                         }`}
                       >
                         <div className="flex items-center gap-6 min-w-0">
-                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border ${
+                          <div className={`w-14 h-14 rounded-[var(--radius-sm)] flex items-center justify-center shrink-0 shadow-sm border ${
                             material.type.includes('pdf') ? 'bg-rose-50 text-rose-600 border-rose-100' :
                             material.type.includes('word') ? 'bg-blue-50 text-blue-600 border-blue-100' :
                             'bg-slate-50 text-slate-600 border-slate-100'
