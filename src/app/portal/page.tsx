@@ -516,46 +516,7 @@ const PortalPageContent: React.FC = () => {
 
       <main className="max-w-[1400px] mx-auto px-6 py-8">
         
-        {/* --- GLOBAL SEMESTER REMINDER --- */}
-        <AnimatePresence>
-          {showSemesterReminder && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: 'auto' }}
-              exit={{ opacity: 0, y: -20, height: 0 }}
-              className="mb-10 relative overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-[2.5rem] opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-700" />
-              <div className="bg-white border border-indigo-100 rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-8 flex flex-col md:flex-row items-center gap-4 sm:gap-8 relative overflow-hidden shadow-sm">
-                <button 
-                  onClick={dismissReminder}
-                  className="absolute top-4 right-4 text-slate-300 hover:text-slate-600 transition-colors"
-                >
-                  <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-50 text-indigo-600 rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-sm">
-                  <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 animate-spin-slow" />
-                </div>
-                <div className="flex-1 text-center md:text-left space-y-2">
-                  <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
-                    <span className="px-3 py-1 bg-indigo-600 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] rounded-full">System Opdatering</span>
-                    <span className="text-indigo-400 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em]">Vigtigt</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight serif">Husk dit semester! 🎓</h3>
-                  <p className="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed max-w-3xl">
-                    For at vi kan give dig de helt rigtige lovparagraffer og læringsmål, skal du vælge dit **aktuelle semester** i indstillingerne.
-                  </p>
-                </div>
-                <Link href="/settings" className="shrink-0 w-full md:w-auto">
-                  <Button className="w-full md:w-auto bg-slate-900 text-white hover:bg-indigo-600 font-black uppercase tracking-widest text-[10px] sm:text-[11px] px-8 sm:px-10 h-12 sm:h-14 rounded-xl sm:rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
-                    Opdatér Semester
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
         
 
 
