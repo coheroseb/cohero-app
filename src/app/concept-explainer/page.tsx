@@ -10,6 +10,7 @@ import { useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc, writeBatch, increment, collection, serverTimestamp } from 'firebase/firestore';
 import type { Explanation } from '@/ai/flows/types';
 import { useToast } from '@/hooks/use-toast';
+import PageHeader from '@/components/PageHeader';
 import { marked } from 'marked';
 
 // Configure marked
@@ -39,7 +40,7 @@ function Section({ title, icon, children, open: defaultOpen = false }: {
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-t border-slate-100">
+    <div className="border-t border-slate-200/60">
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-8 py-5 hover:bg-slate-50/50 transition-colors">
         <span className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{icon}{title}</span>
         <div className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`}>
@@ -100,9 +101,9 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
         <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center text-amber-400 shadow-sm"><BrainCircuit className="w-4 h-4" /></div>
         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Akademisk Analyse</span>
       </div>
-      <div className="bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] rounded-[2.5rem] overflow-hidden group hover:border-slate-200 transition-all duration-500">
+      <div className="bg-white border border-slate-200/60 shadow-[var(--shadow-sm)] rounded-[var(--radius-lg)] overflow-hidden group hover:border-slate-350 transition-all duration-500">
         {/* Header */}
-        <div className="px-8 pt-8 pb-6 bg-slate-50/50 border-b border-slate-100 relative overflow-hidden">
+        <div className="px-8 pt-8 pb-6 bg-slate-50/50 border-b border-slate-200/60 relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2 flex items-center gap-2">
                <Sparkles className="w-3 h-3" />
@@ -135,10 +136,10 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
               {ex.disambiguation.map((a, i) => (
                 <button 
                   key={i} 
-                  onClick={() => onAngleClick(a.query || (a as any).question)}
-                  className="px-5 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-black text-slate-600 hover:bg-white hover:border-indigo-200 hover:text-indigo-600 transition-all active:scale-95 shadow-sm"
+                  onClick={() => onAngleClick(a.query)}
+                  className="px-5 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl text-[11px] font-black text-slate-600 hover:bg-white hover:border-indigo-200 hover:text-indigo-600 transition-all active:scale-95 shadow-[var(--shadow-sm)]"
                 >
-                  {a.title || (a as any).label}
+                  {a.title}
                 </button>
               ))}
             </div>
@@ -154,7 +155,7 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
 
         {ex.practicalExample && (
           <Section title="Case eksempel" icon={<Zap className="w-3 h-3" />}>
-            <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 italic leading-relaxed" 
+            <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-600 italic leading-relaxed border border-slate-100" 
                  dangerouslySetInnerHTML={{ __html: marked.parse(ex.practicalExample || '') as string }} />
           </Section>
         )}
@@ -188,7 +189,7 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
 
         {/* Tags row */}
         {ex.relatedConcepts && ex.relatedConcepts.length > 0 && (
-          <div className="px-7 py-4 border-t border-amber-50 flex flex-wrap gap-1.5">
+          <div className="px-7 py-4 border-t border-slate-200/60 flex flex-wrap gap-1.5">
             {ex.relatedConcepts.map((c, i) => (
               <button key={i} onClick={() => onAngleClick(c)}
                 className="px-3 py-1 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-bold text-amber-800 hover:bg-amber-100 transition-all">
@@ -200,8 +201,8 @@ function ConceptCard({ msg, onAngleClick }: { msg: ChatMsg; onAngleClick: (q: st
 
         {/* Literature */}
         {ex.suggestedLiterature && ex.suggestedLiterature.length > 0 && (
-          <div className="px-7 py-5 border-t border-amber-50">
-            <p className="text-[9px] font-black uppercase tracking-widest text-amber-950/30 mb-3">Anbefalet litteratur</p>
+          <div className="px-7 py-5 border-t border-slate-200/60">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Anbefalet litteratur</p>
             <div className="space-y-2">
               {ex.suggestedLiterature.map((b, i) => (
                 <div key={i} className="flex flex-col gap-2 p-4 bg-amber-50 rounded-2xl border border-amber-100/50">
@@ -370,13 +371,13 @@ function HistorySidebar({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose} className="fixed inset-0 bg-amber-950/20 backdrop-blur-sm z-[10000]" />
           <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 bottom-0 w-80 bg-white shadow-2xl z-[10001] flex flex-col border-l border-amber-50">
-            <div className="p-6 border-b border-amber-50 flex items-center justify-between">
-              <h2 className="text-sm font-black text-amber-950 uppercase tracking-widest flex items-center gap-2">
-                <History className="w-4 h-4 text-amber-500" />
+            className="fixed top-0 right-0 bottom-0 w-80 bg-white shadow-xl z-[10001] flex flex-col border-l border-slate-200/60">
+            <div className="p-6 border-b border-slate-200/60 flex items-center justify-between">
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                <History className="w-4 h-4 text-indigo-500" />
                 Dine opslag
               </h2>
-              <button onClick={onClose} className="p-2 hover:bg-amber-50 rounded-xl transition-colors">
+              <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
                 <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
@@ -384,18 +385,18 @@ function HistorySidebar({
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {recent.length === 0 ? (
                 <div className="text-center py-20 px-6">
-                  <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-6 h-6 text-amber-200" />
+                  <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                    <Sparkles className="w-6 h-6 text-slate-300" />
                   </div>
                   <p className="text-xs font-medium text-slate-400">Du har ikke slået noget op endnu.</p>
                 </div>
               ) : (
                 recent.map((term, i) => (
                   <button key={i} onClick={() => { onSelect(term); onClose(); }}
-                    className="w-full text-left p-4 hover:bg-amber-50 rounded-2xl border border-transparent hover:border-amber-100 transition-all group">
-                    <p className="text-sm font-bold text-amber-950 group-hover:text-amber-900 transition-colors">{term}</p>
+                    className="w-full text-left p-4 hover:bg-slate-50 rounded-xl border border-slate-200/40 hover:border-slate-200 transition-all group">
+                    <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-900 transition-colors">{term}</p>
                     <div className="flex items-center gap-1.5 mt-1">
-                      <div className="w-1 h-1 bg-amber-400 rounded-full" />
+                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
                       <span className="text-[10px] font-medium text-slate-400">Gense forklaring</span>
                     </div>
                   </button>
@@ -810,43 +811,40 @@ function ConceptChatContent() {
   }, [searchParams, sendMessage, userProfile, firestore]);
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-[#F8FAFC] z-[9999]">
+    <div className="fixed inset-0 flex flex-col bg-slate-50/60 z-[9999]">
 
-      {/* ── Header ─────────────────────────────────────── */}
-      <header className="shrink-0 h-20 bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 flex items-center justify-between px-4 sm:px-8 z-50">
-        <div className="flex items-center gap-3 sm:gap-6">
-          <Link href="/portal" className="p-2 sm:p-3 bg-white text-slate-900 rounded-xl sm:rounded-2xl hover:bg-slate-50 transition-all border border-slate-200 shadow-sm active:scale-95">
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </Link>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-400 shadow-xl shadow-slate-900/10">
-              <BrainCircuit className="w-4 h-4 sm:w-5 sm:h-5" />
+      {/* ── Page Header ─────────────────────────────────── */}
+      <div className="shrink-0 bg-white border-b border-slate-200/60 px-6 py-1 z-50">
+        <PageHeader
+          title="Begrebsforklarer"
+          subtitle="Slå faglige og juridiske begreber op og få en dybdegående akademisk forklaring."
+          icon={<Brain className="w-5 h-5 text-indigo-600" />}
+          backHref="/portal"
+          actions={
+            <div className="flex items-center gap-3">
+               <div className="hidden md:flex items-center gap-2 px-3.5 py-2 bg-slate-50 rounded-xl border border-slate-200/60">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">System Online</span>
+               </div>
+               
+               <button 
+                 onClick={() => setShowHistory(!showHistory)}
+                 className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all shadow-sm ${showHistory ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50 shadow-sm'}`}
+               >
+                 <History className="w-4 h-4" />
+               </button>
+               
+               <button 
+                 onClick={startNew}
+                 className="w-10 h-10 bg-white text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all shadow-sm active:scale-95 group flex items-center justify-center"
+                 title="Start forfra"
+               >
+                 <RotateCcw className="w-4 h-4 group-hover:rotate-[-90deg] transition-transform duration-500" />
+               </button>
             </div>
-            <div>
-               <p className="hidden sm:block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Værktøj</p>
-               <h1 className="text-sm sm:text-xl font-black text-slate-900 serif tracking-tight">Begrebsforklarer</h1>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-           <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Online</span>
-           </div>
-           <button onClick={() => setShowHistory(!showHistory)}
-             className={`p-3 rounded-2xl border transition-all ${showHistory ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50 shadow-sm'}`}>
-            <History className="w-5 h-5" />
-           </button>
-           <button 
-             onClick={startNew}
-             className="p-3 bg-white text-slate-400 hover:text-rose-600 rounded-2xl hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all shadow-sm active:scale-95 group"
-             title="Start forfra"
-           >
-             <RotateCcw className="w-5 h-5 group-hover:rotate-[-90deg] transition-transform duration-500" />
-           </button>
-        </div>
-      </header>
+          }
+        />
+      </div>
       
       <HistorySidebar 
         open={showHistory} 
@@ -859,7 +857,7 @@ function ConceptChatContent() {
       />
 
       {/* ── Main Chat Area ─────────────────────────────── */}
-      <main className="grow overflow-y-auto pt-10 pb-40 px-6 bg-[#F8FAFC]">
+      <main className="grow overflow-y-auto pt-10 pb-40 px-6 bg-slate-50/60">
         <div className="max-w-3xl mx-auto space-y-12">
           
           <AnimatePresence mode="popLayout">
@@ -900,7 +898,7 @@ function ConceptChatContent() {
           {messages.map((m) => (
             <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} gap-4`}>
               {m.role === 'user' && (
-                <div className="max-w-[80%] bg-slate-900 text-white px-8 py-5 rounded-[2.5rem] rounded-tr-lg font-bold text-lg shadow-xl shadow-slate-900/10 border border-slate-800">
+                <div className="max-w-[80%] bg-slate-900 text-white px-6 py-4 rounded-xl rounded-tr-sm font-bold text-base shadow-[var(--shadow-sm)] border border-slate-800">
                   {m.text}
                 </div>
               )}
@@ -920,7 +918,7 @@ function ConceptChatContent() {
         <div className="max-w-3xl mx-auto w-full pointer-events-auto">
           <form 
             onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
-            className="bg-white/80 backdrop-blur-3xl p-3 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.15)] border border-white relative group transition-all duration-500 focus-within:ring-4 focus-within:ring-indigo-500/10"
+            className="bg-white/90 backdrop-blur-3xl p-3 rounded-[var(--radius-lg)] shadow-[var(--shadow-sm)] border border-slate-200/60 relative group transition-all duration-500 focus-within:ring-4 focus-within:ring-indigo-500/10"
           >
             <div className="flex items-center gap-3">
                <div className="w-12 h-12 bg-slate-50 rounded-[1.5rem] flex items-center justify-center text-slate-400 group-focus-within:text-indigo-600 group-focus-within:bg-indigo-50 transition-all duration-500">
