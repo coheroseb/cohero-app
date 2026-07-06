@@ -811,7 +811,7 @@ function ConceptChatContent() {
   }, [searchParams, sendMessage, userProfile, firestore]);
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-slate-50/60 z-[9999]">
+    <div className="flex flex-col bg-slate-50/60 h-[calc(100vh-3.5rem)] md:h-screen w-full relative overflow-hidden">
 
       {/* ── Page Header ─────────────────────────────────── */}
       <div className="shrink-0 bg-white border-b border-slate-200/60 px-6 py-1 z-50">
