@@ -517,7 +517,7 @@ function MindmapContent() {
                                     })}
                                 </svg>
 
-                                {/* ROOT NODE */}
+                                 {/* ROOT NODE */}
                                 <motion.div 
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
@@ -526,11 +526,11 @@ function MindmapContent() {
                                     <div 
                                         id={mindmapData.root.id || 'root'}
                                         onClick={() => handleNodeClick(mindmapData.root)}
-                                        className="px-16 py-10 bg-white text-slate-950 rounded-[3rem] shadow-[0_0_100px_rgba(99,102,241,0.2)] relative z-10 border-[6px] border-indigo-500/20 cursor-pointer hover:scale-105 transition-transform"
+                                        className="px-16 py-10 bg-white text-slate-950 rounded-[var(--radius-xl)] shadow-[0_0_100px_rgba(99,102,241,0.2)] relative z-10 border-[6px] border-indigo-500/20 cursor-pointer hover:scale-105 transition-transform"
                                     >
                                         <h2 className="text-4xl font-[950] tracking-tighter text-center">{mindmapData.root.text}</h2>
                                     </div>
-                                    <div className="absolute -inset-4 bg-indigo-500/10 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity rounded-[4rem]" />
+                                    <div className="absolute -inset-4 bg-indigo-500/10 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity rounded-[var(--radius-xl)]" />
                                 </motion.div>
 
                                 {/* BRANCHES */}
@@ -547,7 +547,7 @@ function MindmapContent() {
                                                 <div 
                                                     id={branch.id}
                                                     onClick={() => handleNodeClick(branch)}
-                                                    className={`p-10 rounded-[2.5rem] ${colorClasses[branch.color as keyof typeof colorClasses] || colorClasses.indigo} shadow-2xl relative z-10 min-w-[300px] cursor-pointer hover:scale-105 transition-transform`}
+                                                    className={`p-10 rounded-[var(--radius-lg)] ${colorClasses[branch.color as keyof typeof colorClasses] || colorClasses.indigo} shadow-2xl relative z-10 min-w-[300px] cursor-pointer hover:scale-105 transition-transform`}
                                                 >
                                                     <h3 className="text-xl font-black tracking-tight text-center">{branch.text}</h3>
                                                 </div>
@@ -558,7 +558,7 @@ function MindmapContent() {
                                                     branch.color === 'amber' ? 'bg-amber-500' :
                                                     branch.color === 'sky' ? 'bg-sky-500' :
                                                     'bg-white'
-                                                }`} />
+                                                 }`} />
                                             </motion.div>
 
                                             {/* Sub Nodes */}
@@ -575,7 +575,7 @@ function MindmapContent() {
                                                             id={child.id}
                                                             onClick={() => handleNodeClick(child)}
                                                             whileHover={{ x: 10, scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
-                                                            className="p-8 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-[2rem] hover:border-white/20 transition-all group/node cursor-pointer shadow-xl"
+                                                            className="p-8 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-[var(--radius-md)] hover:border-white/20 transition-all group/node cursor-pointer shadow-xl"
                                                         >
                                                             <div className="flex items-start gap-4 mb-3">
                                                                 <div className="mt-1 shrink-0">
@@ -633,7 +633,7 @@ function MindmapContent() {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+                            className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[var(--radius-lg)] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
                         >
                             {/* Header */}
                             <div className="p-8 border-b border-white/5 bg-white/5 shrink-0">
