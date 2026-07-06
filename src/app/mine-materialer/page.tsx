@@ -989,9 +989,13 @@ function MineMaterialerContent() {
                       </div>
                       
                       <div className="flex items-center gap-3">
-                        <Link href={`/mine-materialer/mindmap?semesterId=${selectedSemesterId}`}>
+                        <Link 
+                          href={`/mine-materialer/mindmap?semesterId=${selectedSemesterId}`}
+                          className={materials.length === 0 ? 'pointer-events-none' : ''}
+                        >
                             <Button 
-                                className="h-14 px-6 bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100/20 flex items-center gap-2 shrink-0 transition-all hover:scale-105 active:scale-95"
+                                disabled={materials.length === 0}
+                                className="h-14 px-6 bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100/20 flex items-center gap-2 shrink-0 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
                             >
                                 <Layout className="w-4 h-4" />
                                 <span className="hidden sm:inline">Vis Mindmap</span>
@@ -1000,7 +1004,8 @@ function MineMaterialerContent() {
 
                         <Button 
                             onClick={() => setIsGlobalChatOpen(true)}
-                            className="h-14 px-6 sm:px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100 flex items-center gap-2 shrink-0 transition-all hover:scale-105 active:scale-95"
+                            disabled={materials.length === 0}
+                            className="h-14 px-6 sm:px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-100 flex items-center gap-2 shrink-0 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
                         >
                             <Brain className="w-4 h-4" />
                             <span className="hidden sm:inline">Chat med arkiv</span>
