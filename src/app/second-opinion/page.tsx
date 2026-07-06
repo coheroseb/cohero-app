@@ -617,122 +617,91 @@ const SecondOpinionPageContent = () => {
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start"
                     >
-                        {/* BOTTOM / FULL WIDTH: AI INSIGHTS FROM PREVIOUS DECISIONS */}
-
-
-                        {/* LEFT: HERO & INFO */}
-                        <div className="lg:col-span-5 space-y-12">
-                            <div className="space-y-8">
-                                <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-rose-950 text-amber-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-rose-950/20 ring-1 ring-white/10">
-                                    <Sparkles className="w-4 h-4" /> AI Karakter-Audit
-                                </div>
-                                <h2 className="text-4xl sm:text-6xl md:text-8xl font-black text-slate-900 serif tracking-tighter leading-[0.85] text-balance">
-                                    {analysisMode === 'audit' ? (
-                                        <>Er din karakter <br/><span className="text-rose-700 italic">retvisende</span>?</>
-                                    ) : (
-                                        <>Hvad vil din <br/><span className="text-rose-700 italic">karakter</span> blive?</>
-                                    )}
-                                </h2>
-                                <p className="text-lg sm:text-xl text-slate-400 font-medium italic leading-relaxed max-w-lg">
-                                    {analysisMode === 'audit' 
-                                        ? 'Få en uvildig analyse af din bedømmelse – før du beslutter dig for at klage.'
-                                        : 'Få en kvalificeret karakter-forudsigelse og feedback inden aflevering.'}
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-6">
-                                {[
-                                    { title: "Pensum-match", desc: "Vi holder din besvarelse direkte op mod studieordningens kriterier.", icon: <Target className="w-5 h-5" /> },
-                                    { title: "Juridisk Audit", desc: "AI-drevet vurdering af det juridiske grundlag i din argumentation.", icon: <Scale className="w-5 h-5" /> },
-                                ].map((feature, i) => (
-                                                                    <div key={i} className="flex gap-6 p-8 bg-white rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] group hover:border-amber-200 transition-all duration-500">
-                                        <div className="w-14 h-14 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-amber-50 group-hover:text-amber-600 transition-all duration-500">
-                                            {feature.icon}
-                                        </div>
-                                        <div className="space-y-1">
-                                            <h4 className="font-black text-slate-900 uppercase text-[11px] tracking-widest">{feature.title}</h4>
-                                            <p className="text-sm text-slate-400 font-medium leading-relaxed">{feature.desc}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                        {/* LEFT COLUMN: CURRICULUM SELECTOR */}
+                        <div className="lg:col-span-7 space-y-8">
+                            <MultiCurriculumSelection 
+                                institution={userProfile?.institution}
+                                profession={userProfile?.profession}
+                                curriculums={curriculums}
+                                selectedCurriculumId={selectedCurriculumId}
+                                selectedModuleId={selectedModuleId}
+                                setSelectedModuleId={setSelectedModuleId}
+                                isLoading={isLoadingCurriculums}
+                            />
                         </div>
 
-                            {/* HISTORY DRAWER (Inline on Desktop) */}
-                            {showHistory && (
-                                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="p-8 bg-white border border-slate-200/60 rounded-[var(--radius-lg)] shadow-[var(--shadow-sm)] space-y-6">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tidligere analyser</h4>
-                                    <div className="space-y-3">
-                                        {pastOpinions.length > 0 ? (
-                                            pastOpinions.map(op => (
-                                                <button key={op.id} onClick={() => setResult(op.analysis)} className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-amber-50 transition-colors group">
-                                                    <div className="flex items-center gap-3">
-                                                        <FileText className="w-4 h-4 text-slate-400" />
-                                                        <span className="text-xs font-bold text-amber-950">Karakter {op.input.grade}</span>
-                                                    </div>
-                                                    <ChevronRight className="w-3 h-3 text-slate-300 group-hover:translate-x-1" />
-                                                </button>
-                                            ))
-                                        ) : (
-                                            <p className="text-[10px] text-slate-300 text-center py-4 uppercase font-black">Ingen historik fundet</p>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            )}
-                        
-                        {/* RIGHT: UPLOAD FORM */}
-                        <div className="lg:col-span-7">
-                            <div className="bg-white p-6 sm:p-10 md:p-16 rounded-[var(--radius-xl)] border border-slate-200/60 shadow-[var(--shadow-sm)] relative overflow-hidden">
-                                 <div className="absolute top-0 right-0 p-16 w-96 h-96 bg-amber-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-10 opacity-50" />
-                                 <div className="absolute bottom-0 left-0 p-16 w-64 h-64 bg-rose-50 rounded-full -translate-x-1/2 translate-y-1/2 -z-10 opacity-30" />
-                             
-                             <form onSubmit={handleGetSecondOpinion} className="space-y-12">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <MultiCurriculumSelection 
-                                        institution={userProfile?.institution}
-                                        profession={userProfile?.profession}
-                                        curriculums={curriculums}
-                                        selectedCurriculumId={selectedCurriculumId}
-                                        selectedModuleId={selectedModuleId}
-                                        setSelectedModuleId={setSelectedModuleId}
-                                        isLoading={isLoadingCurriculums}
-                                    />
-                                    <FileInputCard file={assignmentFile} setFile={setAssignmentFile} label="Besvarelse" id="assign" required />
-                                    <FileInputCard file={feedbackFile} setFile={setFeedbackFile} label="Feedback (valgfri)" id="feed" />
+                        {/* RIGHT COLUMN: UPLOAD & GRADE AUDIT FORM */}
+                        <div className="lg:col-span-5">
+                            <div className="bg-white p-8 rounded-[var(--radius-xl)] border border-slate-200/60 shadow-[var(--shadow-sm)] relative overflow-hidden space-y-8">
+                                <div className="absolute top-0 right-0 p-16 w-96 h-96 bg-amber-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-10 opacity-50" />
+                                <div className="absolute bottom-0 left-0 p-16 w-64 h-64 bg-rose-50 rounded-full -translate-x-1/2 translate-y-1/2 -z-10 opacity-30" />
+                                
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 leading-tight">Upload opgave & feedback</h3>
+                                    <p className="text-xs text-slate-400 font-medium mt-1">Upload dine dokumenter for at starte karakter-analysen.</p>
                                 </div>
 
-                                <div className="flex flex-col md:flex-row items-center gap-8 pt-8 border-t border-amber-50">
+                                <form onSubmit={handleGetSecondOpinion} className="space-y-6">
+                                    <FileInputCard file={assignmentFile} setFile={setAssignmentFile} label="Besvarelse" id="assign" required />
+                                    <FileInputCard file={feedbackFile} setFile={setFeedbackFile} label="Feedback (valgfri)" id="feed" />
+
                                     {analysisMode === 'audit' && (
-                                        <div className="flex-1 w-full space-y-3">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-amber-900/50">Modtaget Karakter</label>
+                                        <div className="space-y-3 pt-4">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Modtaget Karakter</label>
                                             <input 
                                                 value={grade} 
                                                 onChange={e => setGrade(e.target.value)}
                                                 placeholder="f.eks. 4 el. 7" 
-                                                className="w-full bg-slate-50 border border-amber-100 py-6 px-10 rounded-[2.5rem] text-2xl font-black text-amber-950 focus:ring-4 focus:ring-rose-100 outline-none transition-all placeholder:text-slate-200"
+                                                className="w-full bg-slate-50 border border-slate-200/60 py-4 px-6 rounded-xl text-lg font-bold text-slate-950 focus:ring-4 focus:ring-rose-50 focus:border-rose-200 outline-none transition-all placeholder:text-slate-300"
                                             />
                                         </div>
                                     )}
-                                    <button 
-                                        type="submit"
-                                        disabled={!isFormValid || isAnalyzing}
-                                        className={`h-20 w-full md:w-auto px-12 bg-rose-950 text-white rounded-[2.5rem] font-black uppercase text-xs tracking-[0.3em] shadow-2xl hover:bg-rose-900 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30 ${analysisMode === 'feedback' ? 'flex-1' : ''}`}
-                                    >
-                                        {analysisMode === 'audit' ? 'Start Analysen' : 'Få Feedback & Bedømmelse'} <Zap className="w-5 h-5 text-amber-400" />
-                                    </button>
-                                </div>
 
-
-                                {limitError && (
-                                    <div className="p-6 bg-amber-950 text-white rounded-3xl text-center space-y-4">
-                                        <p className="text-xs font-bold font-serif italic text-amber-200">{limitError}</p>
-                                        <Link href="/upgrade" className="inline-flex items-center gap-2 text-[10px] font-black uppercase border-b border-white/20 pb-1">Opgrader nu</Link>
+                                    <div className="pt-4">
+                                        <button 
+                                            type="submit"
+                                            disabled={!isFormValid || isAnalyzing}
+                                            className="h-14 w-full px-8 bg-rose-950 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-900 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-30"
+                                        >
+                                            <span>{analysisMode === 'audit' ? 'Start Analysen' : 'Få Feedback'}</span>
+                                            <Zap className="w-4 h-4 text-amber-400" />
+                                        </button>
                                     </div>
-                                )}
-                             </form>
+
+                                    {limitError && (
+                                        <div className="p-5 bg-amber-950 text-white rounded-[var(--radius-sm)] text-center space-y-3">
+                                            <p className="text-xs font-bold italic text-amber-200">{limitError}</p>
+                                            <Link href="/upgrade" className="inline-flex items-center gap-2 text-[10px] font-black uppercase border-b border-white/20 pb-1">Opgrader nu</Link>
+                                        </div>
+                                    )}
+                                </form>
+                            </div>
+
+                            {/* HISTORY DRAWER (Placed below form) */}
+                            {showHistory && (
+                                <div className="mt-8">
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 bg-white border border-slate-200/60 rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] space-y-4">
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tidligere analyser</h4>
+                                        <div className="space-y-2">
+                                            {pastOpinions.length > 0 ? (
+                                                pastOpinions.map(op => (
+                                                    <button key={op.id} onClick={() => setResult(op.analysis)} className="w-full flex items-center justify-between p-3.5 bg-slate-50 rounded-xl hover:bg-amber-50/50 transition-colors group text-left">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                                                            <span className="text-xs font-bold text-slate-700 truncate">Karakter {op.input.grade} ({op.analysis.isGradeAccurate ? 'Retvisende' : 'Uoverensstemmelse'})</span>
+                                                        </div>
+                                                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <p className="text-[10px] text-slate-300 text-center py-2 uppercase font-black">Ingen historik fundet</p>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                </motion.div>
+                    </motion.div>
                 ) : isAnalyzing ? (
                    <motion.div 
                         key="loading-screen"
