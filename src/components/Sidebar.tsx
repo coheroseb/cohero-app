@@ -181,20 +181,10 @@ export default function Sidebar() {
     <div className="flex flex-col h-full justify-between overflow-y-auto no-scrollbar">
       <div className="space-y-5">
         {/* Brand */}
-        <div className="px-1 pb-2">
-          <Link href="/portal" className="flex items-end -space-x-[1.5px] scale-[0.8] origin-left">
-            <BookSpine index={0} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-5 sm:h-6" color="bg-slate-900" decoration="plain" tilt="-rotate-1" />
-            <BookSpine index={1} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-7 sm:h-8" color="bg-slate-900" decoration="bands" />
-            <BookSpine index={2} theme={effectiveTheme} width="w-1 sm:w-1.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="plain" />
-            <BookSpine index={3} theme={effectiveTheme} letter="C" width="w-3 sm:w-3.5" height="h-8 sm:h-9" color="bg-slate-900" decoration="bands" />
-            <BookSpine index={4} theme={effectiveTheme} letter="o" width="w-3 sm:w-3.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="gold" />
-            <BookSpine index={5} theme={effectiveTheme} letter="h" width="w-3 sm:w-3.5" height="h-9 sm:h-10" color="bg-slate-900" decoration="bands" tilt="-rotate-[1.5deg]" />
-            <BookSpine index={6} theme={effectiveTheme} letter="é" width="w-3 sm:w-3.5" height="h-7 sm:h-8" color="bg-slate-900" decoration="stripes" />
-            <BookSpine index={7} theme={effectiveTheme} letter="r" width="w-3 sm:w-3.5" height="h-8 sm:h-9" color="bg-slate-900" decoration="bands" />
-            <BookSpine index={8} theme={effectiveTheme} letter="o" width="w-3 sm:w-3.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="gold" tilt="rotate-[1deg]" />
-            <BookSpine index={9} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-7 sm:h-8" color="bg-slate-900" decoration="ornament" />
-            <BookSpine index={10} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-5 sm:h-6" color="bg-slate-900" decoration="plain" tilt="rotate-2" />
-            <BookSpine index={11} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-6 sm:h-7" color="bg-slate-900" decoration="bands" />
+        <div className="px-3 pb-2 pt-1">
+          <Link href="/portal" className="block select-none">
+            <span className="text-xl font-black tracking-tight text-slate-900 serif">Cohéro</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 block mt-0.5">Student</span>
           </Link>
         </div>
 
