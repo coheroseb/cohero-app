@@ -42,6 +42,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
+import PageHeader from '@/components/PageHeader';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const socialWorkTopics = [
@@ -67,31 +68,31 @@ const pedagogicalTopics = [
 ];
 
 const PersonaCard = ({ icon, title, color, feedback, score, subtitle }: { icon: React.ReactNode, title: string, color: string, feedback: string, score: number, subtitle: string }) => (
-    <div className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm relative overflow-hidden group hover:shadow-xl transition-all duration-500 animate-ink">
-      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+    <div className="bg-white p-6 rounded-xl border border-slate-200/60 shadow-[var(--shadow-sm)] relative overflow-hidden group hover:border-slate-300 transition-all duration-300">
+      <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
         {icon}
       </div>
       <div className="relative z-10">
-        <div className="flex items-center gap-4 mb-6">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${color}`}>
+        <div className="flex items-center gap-4 mb-4">
+          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
             {icon}
           </div>
           <div>
-            <h3 className="text-xl font-bold text-amber-950 serif">{title}</h3>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{subtitle}</p>
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{subtitle}</p>
           </div>
         </div>
-        <div className="prose prose-sm text-slate-600 leading-relaxed font-medium italic border-l-2 border-amber-100 pl-6 mb-2" dangerouslySetInnerHTML={{ __html: feedback }} />
-        <div className="flex items-center justify-between pt-8 mt-8 border-t border-amber-50">
+        <div className="prose prose-sm text-slate-600 leading-relaxed font-medium italic border-l-2 border-indigo-100 pl-4 mb-2" dangerouslySetInnerHTML={{ __html: feedback }} />
+        <div className="flex items-center justify-between pt-4 mt-6 border-t border-slate-200/60">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase text-slate-300">Faglig vurdering</span>
+            <span className="text-[9px] font-black uppercase text-slate-400">Faglig vurdering</span>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className={`w-2 h-4 rounded-sm ${i <= Math.ceil(score/2) ? color.split(' ')[1] : 'bg-slate-50'}`} />
+                <div key={i} className={`w-2 h-4 rounded-sm ${i <= Math.ceil(score/2) ? color.split(' ')[1] : 'bg-slate-100'}`} />
               ))}
             </div>
           </div>
-          <span className="text-2xl font-black text-amber-950 serif">{score}<span className="text-sm text-slate-300">/10</span></span>
+          <span className="text-xl font-black text-slate-800">{score}<span className="text-xs text-slate-400 font-medium">/10</span></span>
         </div>
       </div>
     </div>
@@ -310,17 +311,17 @@ const CaseTrainerPageContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row text-slate-900 selection:bg-indigo-100 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50/60 flex flex-col lg:flex-row text-slate-900 selection:bg-indigo-100 overflow-x-hidden">
       
       {/* SIDEBAR (THE DOSSIER) */}
-      <aside className="w-full lg:w-80 bg-white border-r border-slate-100/80 flex flex-col sticky top-0 lg:h-screen z-30 shadow-sm overflow-y-auto no-scrollbar">
-        <div className="p-8 flex items-center gap-4 border-b border-slate-50 bg-slate-50/50">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
-                <Zap className="w-6 h-6" />
+      <aside className="w-full lg:w-80 bg-white border-r border-slate-200/60 flex flex-col sticky top-0 lg:h-screen z-30 shadow-sm overflow-y-auto no-scrollbar">
+        <div className="p-6 flex items-center gap-4 border-b border-slate-200/60 bg-slate-50/50">
+            <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
+                <FileText className="w-5 h-5" />
             </div>
             <div>
-                <h1 className="text-xl font-bold text-slate-900 tracking-tight">Case-træner</h1>
-                <p className="label-xs text-slate-400">Sagsmappe</p>
+                <h1 className="text-base font-bold text-slate-800 tracking-tight">Træningsmappe</h1>
+                <p className="label-2xs text-slate-400 uppercase tracking-widest">Sagsdossier</p>
             </div>
         </div>
 
@@ -329,9 +330,9 @@ const CaseTrainerPageContent: React.FC = () => {
                 <div className="space-y-10 animate-ink">
                     <section>
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2">Aktiv Sagsmappe</h3>
-                        <div className="p-5 bg-amber-50 rounded-2xl border border-amber-100 shadow-inner">
-                            <span className="text-[8px] font-black uppercase text-amber-700 bg-white px-2 py-0.5 rounded border mb-2 inline-block">{activeCase.topic}</span>
-                            <h4 className="font-bold text-amber-950 text-sm leading-tight">{activeCase.title}</h4>
+                        <div className="p-5 bg-slate-50 rounded-xl border border-slate-200/60 shadow-inner">
+                            <span className="text-[8px] font-black uppercase text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100/50 mb-2 inline-block">{activeCase.topic}</span>
+                            <h4 className="font-bold text-slate-800 text-sm leading-tight">{activeCase.title}</h4>
                         </div>
                     </section>
 
@@ -339,10 +340,10 @@ const CaseTrainerPageContent: React.FC = () => {
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2">Fremdrift</h3>
                         <div className="space-y-4">
                             <div className="flex justify-between items-end mb-1 px-1">
-                                <span className="text-[10px] font-bold text-amber-900">{showFeedback ? '100%' : Math.round((currentDilemmaIndex / activeCase.dilemmas.length) * 100)}% Gennemført</span>
-                                <span className="text-[10px] font-black text-slate-300 uppercase">{currentDilemmaIndex}/{activeCase.dilemmas.length} Dilemmaer</span>
+                                <span className="text-[10px] font-bold text-indigo-600">{showFeedback ? '100%' : Math.round((currentDilemmaIndex / activeCase.dilemmas.length) * 100)}% Gennemført</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase">{currentDilemmaIndex}/{activeCase.dilemmas.length} Dilemmaer</span>
                             </div>
-                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                 <div 
                                     className="h-full bg-indigo-600 transition-all duration-1000 ease-out" 
                                     style={{ width: `${showFeedback ? 100 : (currentDilemmaIndex / activeCase.dilemmas.length) * 100}%` }}
@@ -379,7 +380,7 @@ const CaseTrainerPageContent: React.FC = () => {
         </div>
 
         {activeCase && (
-            <div className="p-6 border-t border-amber-50">
+            <div className="p-6 border-t border-slate-200/60">
                 <Button variant="ghost" onClick={handleEndExercise} className="w-full text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl h-12">
                     <X className="w-4 h-4 mr-2" /> Afslut Case
                 </Button>
@@ -388,62 +389,63 @@ const CaseTrainerPageContent: React.FC = () => {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto custom-scrollbar">
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100 px-8 flex items-center justify-between sticky top-0 z-20 shrink-0">
-            <div className="flex items-center gap-4">
-                <button onClick={() => router.back()} className="p-2.5 bg-amber-50 text-amber-900 rounded-xl hover:bg-amber-100 transition-all active:scale-95">
-                    <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="h-6 w-px bg-amber-100"></div>
-                <h2 className="font-bold text-amber-950 serif">{activeCase ? activeCase.title : 'Ny Træning'}</h2>
-            </div>
-            {activeCase && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-full border border-amber-100">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <p className="text-[9px] font-black text-amber-900 uppercase tracking-widest">Live Simulering</p>
-                </div>
+      <main className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] md:h-screen overflow-y-auto custom-scrollbar bg-slate-50/60">
+        <div className="shrink-0 bg-white border-b border-slate-200/60 px-8 py-4 z-20 sticky top-0">
+          <PageHeader
+            title="Case-træner"
+            subtitle={activeCase ? activeCase.title : "Træn dit faglige skøn i realistiske, komplekse dilemmer."}
+            icon={<Zap className="w-5 h-5" />}
+            iconColor="bg-indigo-50 text-indigo-600"
+            className="mb-0"
+            backHref="/portal"
+            actions={activeCase && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <p className="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Live Simulering</p>
+              </div>
             )}
-        </header>
+          />
+        </div>
 
         <div className="flex-1 p-6 md:p-12 lg:p-16 max-w-5xl mx-auto w-full">
             <AnimatePresence mode="wait">
                 {showStartScreen ? (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="h-full flex flex-col items-center justify-center max-w-lg mx-auto text-center space-y-12">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="h-full flex flex-col items-center justify-center max-w-lg mx-auto text-center space-y-8 py-12">
                         <div className="relative">
-                            <div className="w-32 h-32 bg-amber-50 rounded-[3rem] flex items-center justify-center text-amber-200 shadow-inner group transition-transform hover:rotate-6">
-                                <BookMarked className="w-16 h-16 group-hover:scale-110 transition-transform" />
+                            <div className="w-24 h-24 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 shadow-[var(--shadow-sm)] group transition-transform hover:rotate-6">
+                                <BookMarked className="w-10 h-10 group-hover:scale-110 transition-transform" />
                             </div>
-                            <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white border border-amber-100 rounded-2xl flex items-center justify-center shadow-lg">
-                                <Sparkles className="w-6 h-6 text-amber-400 animate-pulse" />
+                            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center shadow-md">
+                                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
                             </div>
                         </div>
                         
-                        <div className="space-y-4">
-                            <h2 className="text-4xl font-bold text-amber-950 serif">Klar til at teste dit skøn?</h2>
-                            <p className="text-slate-500 leading-relaxed italic text-lg">
+                        <div className="space-y-3">
+                            <h2 className="text-3xl font-bold text-slate-800">Klar til at teste dit skøn?</h2>
+                            <p className="text-slate-500 leading-relaxed italic text-base">
                                 Vælg et fagligt område for at generere et realistisk scenarie med komplekse dilemmaer.
                             </p>
                         </div>
 
-                        <div className="w-full space-y-6">
+                        <div className="w-full space-y-4">
                             <div className="relative group">
                                 <select 
                                     value={selectedTopic} 
                                     onChange={(e) => setSelectedTopic(e.target.value)}
-                                    className="w-full h-16 px-8 bg-white border border-amber-100 rounded-3xl appearance-none focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 focus:outline-none transition-all text-base font-bold text-amber-950 shadow-sm cursor-pointer"
+                                    className="w-full h-14 px-6 bg-white border border-slate-200/60 rounded-xl appearance-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all text-sm font-bold text-slate-800 shadow-sm cursor-pointer"
                                 >
                                     <option value="" disabled>Vælg sagsområde...</option>
                                     {(userProfile?.profession === 'Pædagog' ? pedagogicalTopics : socialWorkTopics).map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
-                                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300 pointer-events-none group-hover:text-amber-950 transition-colors" />
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-hover:text-slate-800 transition-colors" />
                             </div>
 
                             <button 
                                 onClick={handleGenerateCase}
                                 disabled={!selectedTopic || isGenerating}
-                                className="w-full py-6 bg-amber-950 text-white rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-amber-950/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-3"
+                                className="w-full py-4 bg-slate-900 hover:bg-slate-950 text-white rounded-xl font-black uppercase text-[11px] tracking-[0.2em] shadow-md hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-2"
                             >
-                                {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 text-amber-400" />}
+                                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 text-indigo-400" />}
                                 Generér Sagsmappe
                             </button>
 
@@ -452,42 +454,42 @@ const CaseTrainerPageContent: React.FC = () => {
                 ) : showDilemma ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12 pb-32">
                         {/* THE SCENARIO CARD */}
-                        <section className="bg-white p-8 md:p-16 rounded-[3rem] sm:rounded-[4rem] border border-amber-100 shadow-xl relative overflow-hidden group">
+                        <section className="bg-white p-8 rounded-xl border border-slate-200/60 shadow-[var(--shadow-sm)] relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
-                                <FileText className="w-96 h-96 -rotate-12" />
+                                <FileText className="w-96 h-96 -rotate-12 text-slate-300" />
                             </div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-10 text-amber-900/40">
-                                    <BookOpen className="w-5 h-5" />
-                                    <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em]">Beskrivelse af hændelsen</span>
+                                <div className="flex items-center gap-3 mb-6 text-slate-400">
+                                    <BookOpen className="w-4 h-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">Beskrivelse af hændelsen</span>
                                 </div>
-                                <div className="bg-slate-50/50 p-8 rounded-3xl border-l-4 border-amber-950 mb-12 italic text-lg text-slate-700 leading-relaxed shadow-inner">
-                                    <p><span className="font-black not-italic text-amber-950 uppercase text-[10px] block mb-3 tracking-[0.2em]">Indledende Observation:</span> {activeCase.initialObservation}</p>
+                                <div className="bg-slate-50/50 p-6 rounded-lg border-l-4 border-indigo-600 mb-8 italic text-base text-slate-700 leading-relaxed shadow-inner">
+                                    <p><span className="font-black not-italic text-slate-800 uppercase text-[10px] block mb-2 tracking-wider">Indledende Observation:</span> {activeCase.initialObservation}</p>
                                 </div>
-                                <div className="prose prose-amber prose-lg max-w-none text-slate-700 leading-[1.8] serif italic" dangerouslySetInnerHTML={{ __html: activeCase.scenario }} />
+                                <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed text-base" dangerouslySetInnerHTML={{ __html: activeCase.scenario }} />
                             </div>
                         </section>
 
                         {/* ACTIVE DILEMMA */}
-                        <section className="bg-amber-50/50 p-10 rounded-[3rem] border-2 border-dashed border-amber-200 relative group animate-float-spine">
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className="w-12 h-12 bg-amber-950 text-white rounded-2xl flex items-center justify-center shadow-lg"><Target className="w-6 h-6" /></div>
-                                <h3 className="text-2xl font-bold text-amber-950 serif">Hvad er din næste handling?</h3>
+                        <section className="bg-slate-50/50 p-8 rounded-xl border border-slate-200/60 relative group">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-10 h-10 bg-slate-900 text-white rounded-lg flex items-center justify-center shadow-md"><Target className="w-5 h-5" /></div>
+                                <h3 className="text-xl font-bold text-slate-800">Hvad er din næste handling?</h3>
                             </div>
                             
-                            <div className="grid gap-4">
+                            <div className="grid gap-3">
                                 {activeCase.dilemmas[currentDilemmaIndex].choices.map((choice: any) => (
                                     <button 
                                         key={choice.id} 
                                         onClick={() => setPendingChoice(choice)}
                                         disabled={isSubmitting}
-                                        className={`bg-white p-8 rounded-3xl border transition-all text-left flex items-start gap-6 group/choice disabled:opacity-50 active:scale-[0.99] ${pendingChoice?.id === choice.id ? 'border-amber-950 ring-4 ring-amber-950/5' : 'border-amber-100 hover:border-amber-950 hover:shadow-2xl'}`}
+                                        className={`bg-white p-5 rounded-lg border transition-all text-left flex items-start gap-4 group/choice disabled:opacity-50 active:scale-[0.99] ${pendingChoice?.id === choice.id ? 'border-indigo-600 ring-4 ring-indigo-500/10 shadow-[var(--shadow-sm)]' : 'border-slate-200 hover:border-slate-350 hover:shadow-sm'}`}
                                     >
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black serif text-lg transition-colors shrink-0 ${pendingChoice?.id === choice.id ? 'bg-amber-950 text-white' : 'bg-amber-50 border border-amber-100 text-amber-950 group-hover/choice:bg-amber-950 group-hover/choice:text-white'}`}>
+                                        <div className={`w-8 h-8 rounded-md flex items-center justify-center font-black text-sm transition-colors shrink-0 ${pendingChoice?.id === choice.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 border border-slate-200/60 text-slate-700 group-hover/choice:bg-indigo-600 group-hover/choice:text-white'}`}>
                                             {choice.id}
                                         </div>
-                                        <span className="flex-1 text-lg text-amber-950 font-bold leading-snug pt-1">{choice.text}</span>
-                                        <ChevronRight className={`w-6 h-6 transition-all self-center shrink-0 ${pendingChoice?.id === choice.id ? 'translate-x-2 text-amber-950' : 'text-amber-200 group-hover/choice:translate-x-2 group-hover/choice:text-amber-950'}`} />
+                                        <span className="flex-1 text-sm text-slate-800 font-bold leading-normal pt-1.5">{choice.text}</span>
+                                        <ChevronRight className={`w-4 h-4 transition-all self-center shrink-0 ${pendingChoice?.id === choice.id ? 'translate-x-1 text-indigo-600' : 'text-slate-300 group-hover/choice:translate-x-1 group-hover/choice:text-slate-500'}`} />
                                     </button>
                                 ))}
                             </div>
@@ -498,37 +500,37 @@ const CaseTrainerPageContent: React.FC = () => {
                                         initial={{ opacity: 0, height: 0 }} 
                                         animate={{ opacity: 1, height: 'auto' }} 
                                         exit={{ opacity: 0, height: 0 }}
-                                        className="mt-8 space-y-6 pt-8 border-t border-amber-100 overflow-hidden"
+                                        className="mt-6 space-y-4 pt-6 border-t border-slate-200/60 overflow-hidden"
                                     >
-                                        <div className="space-y-4">
+                                        <div className="space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-xs font-black uppercase tracking-widest text-amber-900/40 px-2 italic">Faglig Begrundelse (Valgfrit, men anbefales)</label>
-                                                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 rounded-full border border-amber-100">
-                                                    <Sparkles className="w-3 h-3 text-amber-400" />
-                                                    <span className="text-[9px] font-bold text-amber-900 uppercase">Giver bedre feedback</span>
+                                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-1">Faglig Begrundelse (Valgfrit, men anbefales)</label>
+                                                <div className="flex items-center gap-1 px-2.5 py-0.5 bg-indigo-50 rounded-full border border-indigo-100">
+                                                    <Sparkles className="w-2.5 h-2.5 text-indigo-500 animate-pulse" />
+                                                    <span className="text-[8px] font-bold text-indigo-700 uppercase">Giver bedre feedback</span>
                                                 </div>
                                             </div>
                                             <textarea 
                                                 value={justification}
                                                 onChange={(e) => setJustification(e.target.value)}
                                                 placeholder="Hvorfor vælger du denne handling? Skriv kort din faglige overvejelse her..."
-                                                className="w-full h-32 p-6 bg-white border border-amber-100 rounded-2xl focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 focus:outline-none transition-all text-slate-600 italic resize-none shadow-inner"
+                                                className="w-full h-24 p-4 bg-white border border-slate-200/60 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all text-xs text-slate-600 italic resize-none shadow-inner"
                                             />
                                         </div>
-                                        <div className="flex gap-4">
+                                        <div className="flex gap-3">
                                             <Button 
                                                 variant="outline" 
                                                 onClick={() => setPendingChoice(null)}
-                                                className="px-8 h-14 rounded-2xl border-amber-100 text-slate-400 hover:text-amber-950"
+                                                className="px-6 h-11 rounded-xl border-slate-200 text-slate-400 hover:text-slate-900 text-xs"
                                             >
                                                 Annuller
                                             </Button>
                                             <button 
                                                 onClick={handleSelectChoice}
                                                 disabled={isSubmitting}
-                                                className="flex-1 h-14 bg-amber-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                className="flex-1 h-11 bg-slate-900 hover:bg-slate-950 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-md hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2"
                                             >
-                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                                                {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                                                 Bekræft mit valg
                                             </button>
                                         </div>
@@ -536,72 +538,72 @@ const CaseTrainerPageContent: React.FC = () => {
                                 )}
                             </AnimatePresence>
                             {isSubmitting && (
-                                <div className="absolute inset-0 bg-[#FDFCF8]/60 backdrop-blur-sm rounded-[3rem] flex flex-col items-center justify-center space-y-6 z-10 animate-ink">
+                                <div className="absolute inset-0 bg-white/70 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center space-y-4 z-10">
                                     <div className="relative">
-                                        <Loader2 className="w-16 h-16 animate-spin text-amber-950/20" />
-                                        <Zap className="absolute inset-0 m-auto w-6 h-6 text-amber-950 animate-pulse" />
+                                        <Loader2 className="w-12 h-12 animate-spin text-slate-300" />
+                                        <Zap className="absolute inset-0 m-auto w-5 h-5 text-indigo-600 animate-pulse" />
                                     </div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/40">Beregner konsekvenser...</p>
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Beregner konsekvenser...</p>
                                 </div>
                             )}
                         </section>
                     </motion.div>
                 ) : showConsequenceScreen ? (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 pb-32">
-                        <section className="bg-white p-8 md:p-16 rounded-[4rem] border border-emerald-100 shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-12 opacity-[0.03] text-emerald-500">
+                    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8 pb-32">
+                        <section className="bg-white p-8 rounded-xl border border-slate-200/60 shadow-[var(--shadow-sm)] relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-12 opacity-[0.015] text-indigo-500 pointer-events-none">
                                 <CheckCircle2 className="w-64 h-64" />
                             </div>
-                            <div className="relative z-10 space-y-12">
+                            <div className="relative z-10 space-y-8">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
-                                        <Zap className="w-6 h-6" />
+                                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                                        <Zap className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600/50 mb-1">Konsekvens af dit valg</h3>
-                                        <p className="text-2xl font-bold text-amber-950 serif">Hvad skete der?</p>
+                                        <h3 className="text-[10px] font-black uppercase tracking-wider text-indigo-500 mb-0.5">Konsekvens af dit valg</h3>
+                                        <p className="text-xl font-bold text-slate-800">Hvad skete der?</p>
                                     </div>
                                 </div>
 
-                                <div className="prose prose-slate prose-lg max-w-none">
-                                    <div className="bg-emerald-50/30 p-8 rounded-[2.5rem] border border-emerald-100 italic text-slate-700 leading-relaxed shadow-inner" dangerouslySetInnerHTML={{ __html: consequences[currentDilemmaIndex - 1]?.consequence }} />
+                                <div className="prose prose-slate max-w-none">
+                                    <div className="bg-slate-50 p-6 rounded-lg border border-slate-200/60 italic text-slate-600 leading-relaxed text-sm shadow-inner" dangerouslySetInnerHTML={{ __html: consequences[currentDilemmaIndex - 1]?.consequence }} />
                                 </div>
 
-                                <div className="space-y-6">
+                                <div className="space-y-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="h-px flex-1 bg-amber-100"></div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-900/30">Faglig Refleksion</span>
-                                        <div className="h-px flex-1 bg-amber-100"></div>
+                                        <div className="h-px flex-1 bg-slate-200/60"></div>
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Faglig Refleksion</span>
+                                        <div className="h-px flex-1 bg-slate-200/60"></div>
                                     </div>
-                                    <div className="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 relative group">
-                                        <div className="absolute -left-2 top-10 w-4 h-8 bg-amber-200 rounded-r-full"></div>
-                                        <p className="text-slate-600 leading-[1.8] italic font-medium">
+                                    <div className="p-6 bg-indigo-50/30 rounded-lg border border-indigo-100 relative group">
+                                        <div className="absolute -left-[1px] top-6 w-[3px] h-6 bg-indigo-500 rounded-r-full"></div>
+                                        <p className="text-slate-600 leading-relaxed italic text-xs font-medium">
                                             {consequences[currentDilemmaIndex - 1]?.reflection}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="pt-8">
+                                <div className="pt-4">
                                     <button 
                                         onClick={() => setShowConsequence(false)}
-                                        className="w-full py-6 bg-amber-950 text-white rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-amber-950/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 group"
+                                        className="w-full py-4 bg-slate-900 hover:bg-slate-950 text-white rounded-xl font-black uppercase text-[11px] tracking-widest shadow-md hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 group"
                                     >
                                         Fortsæt til Næste Dilemma
-                                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                                     </button>
                                 </div>
                             </div>
                         </section>
                     </motion.div>
                 ) : showFeedback ? (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-16 pb-32 animate-ink">
-                        <div className="text-center max-w-2xl mx-auto space-y-6">
-                            <div className="w-24 h-24 bg-amber-950 rounded-[2.5rem] flex items-center justify-center text-amber-400 mx-auto shadow-2xl relative">
-                               <Trophy className="w-12 h-12 animate-bounce" />
-                               <div className="absolute -top-2 -right-2 bg-emerald-500 text-white p-2 rounded-full shadow-lg border-4 border-white"><CheckCircle2 className="w-6 h-6"/></div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+                        <div className="text-center max-w-2xl mx-auto space-y-4 py-6">
+                            <div className="w-20 h-20 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mx-auto shadow-md relative">
+                               <Trophy className="w-10 h-10" />
+                               <div className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white p-1 rounded-full shadow-md"><CheckCircle2 className="w-4 h-4"/></div>
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-bold text-amber-950 serif">Supervision Modtaget</h2>
-                            <p className="text-slate-500 italic text-lg leading-relaxed">Dine kolleger har evalueret din samlede indsats og det faglige skøn, du har udvist gennem casen.</p>
+                            <h2 className="text-3xl font-bold text-slate-800">Supervision Modtaget</h2>
+                            <p className="text-slate-500 italic text-base leading-relaxed">Dine kolleger har evalueret din samlede indsats og det faglige skøn, du har udvist gennem casen.</p>
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-8">
@@ -631,32 +633,32 @@ const CaseTrainerPageContent: React.FC = () => {
                             />
                         </div>
 
-                        <div className="p-12 md:p-16 bg-amber-950 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group max-w-4xl mx-auto">
-                           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-                              <div className="flex-1 space-y-6">
-                                 <h4 className="text-3xl font-bold serif">Case Arkiveret</h4>
-                                 <p className="text-amber-100/60 leading-relaxed text-lg italic">
-                                   Du har gennemført træningen og optjent <strong>150 CP</strong>. Din faglige dannelse er vokset med denne erfaring.
+                        <div className="p-8 bg-slate-900 border border-slate-800 rounded-xl text-white shadow-xl relative overflow-hidden group max-w-4xl mx-auto">
+                           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                              <div className="flex-1 space-y-3">
+                                 <h4 className="text-2xl font-bold">Case Arkiveret</h4>
+                                 <p className="text-slate-300 leading-relaxed text-sm italic">
+                                    Du har gennemført træningen og optjent <strong className="text-indigo-400">150 CP</strong>. Din faglige dannelse er vokset med denne erfaring.
                                  </p>
                               </div>
-                              <div className="flex flex-col sm:flex-row gap-4 shrink-0">
+                              <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                                  <button 
                                     onClick={() => handleEndExercise()}
-                                    className="px-10 py-5 bg-amber-400 text-amber-950 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-white hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    className="px-6 py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-black uppercase text-[10px] tracking-widest shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
                                  >
-                                    <RotateCcw className="w-4 h-4" /> Nyt Scenarie
+                                    <RotateCcw className="w-3.5 h-3.5" /> Nyt Scenarie
                                  </button>
                                  <button 
                                     onClick={handleArchiveCase}
                                     disabled={isSaving}
-                                    className="px-10 py-5 bg-white/10 text-white border border-white/20 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    className="px-6 py-3.5 bg-white/10 text-white border border-white/15 rounded-lg font-black uppercase text-[10px] tracking-widest hover:bg-white/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                  >
-                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Bookmark className="w-4 h-4" />}
+                                    {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Bookmark className="w-3.5 h-3.5" />}
                                     Gem Resultat
                                  </button>
                               </div>
                            </div>
-                           <div className="absolute top-0 right-0 w-96 h-96 bg-amber-400/5 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none"></div>
+                           <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none"></div>
                         </div>
                     </motion.div>
                 ) : null}
@@ -669,39 +671,39 @@ const CaseTrainerPageContent: React.FC = () => {
               <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-amber-100 p-10 text-center space-y-8 relative overflow-hidden"
+                  className="max-w-md w-full bg-white rounded-xl shadow-2xl border border-slate-200/60 p-8 text-center space-y-6 relative overflow-hidden"
               >
                   <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
                       <Sparkles className="w-32 h-32" />
                   </div>
                   
-                  <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner border border-amber-100/50 relative z-10">
-                      <BookOpen className="w-8 h-8" />
+                  <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto border border-indigo-100 relative z-10">
+                      <BookOpen className="w-6 h-6" />
                   </div>
                   
-                  <div className="space-y-3 relative z-10">
-                      <h2 className="text-3xl font-black text-amber-950 serif tracking-tight">Kollega+ Eksklusivt</h2>
+                  <div className="space-y-2 relative z-10">
+                      <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Kollega+ Eksklusivt</h2>
                       <p className="text-slate-500 leading-relaxed italic text-sm">
                           Træn dit faglige skøn i komplekse sager med realistiske konsekvenser og supervision.
                       </p>
                   </div>
 
-                  <div className="space-y-4 text-left relative z-10 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                  <div className="space-y-3 text-left relative z-10 bg-slate-50/50 p-5 rounded-lg border border-slate-200/60">
                       {[
                           "Ubegrænsede træningscases",
                           "Realistiske konsekvens-loops",
                           "Faglig supervision fra 3 personaer",
                           "Gem resultater i dit arkiv"
                       ].map((feat, i) => (
-                          <div key={i} className="flex items-center gap-3 text-[12px] font-bold text-slate-700">
-                              <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
+                          <div key={i} className="flex items-center gap-3 text-[11px] font-bold text-slate-700">
+                              <div className="w-4 h-4 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-[10px]">✓</div>
                               {feat}
                           </div>
                       ))}
                   </div>
 
-                  <div className="space-y-4 relative z-10">
-                      <Button onClick={() => router.push('/upgrade')} className="w-full h-16 bg-amber-950 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 text-[12px]">
+                  <div className="space-y-3 relative z-10">
+                      <Button onClick={() => router.push('/upgrade')} className="w-full h-12 bg-slate-900 hover:bg-slate-950 text-white rounded-xl font-black uppercase tracking-widest transition-all shadow-md active:scale-95 text-[11px]">
                           Opgrader til Kollega+
                       </Button>
                       <button onClick={() => setLimitError(null)} className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em] w-full">
