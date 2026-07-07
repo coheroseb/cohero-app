@@ -814,11 +814,13 @@ function ConceptChatContent() {
     <div className="flex flex-col bg-slate-50/60 h-[calc(100vh-3.5rem)] md:h-screen w-full relative overflow-hidden">
 
       {/* ── Page Header ─────────────────────────────────── */}
-      <div className="shrink-0 bg-white border-b border-slate-200/60 px-6 py-1 z-50">
+      <div className="shrink-0 bg-white border-b border-slate-200/60 px-8 py-4 z-50">
         <PageHeader
           title="Begrebsforklarer"
           subtitle="Slå faglige og juridiske begreber op og få en dybdegående akademisk forklaring."
-          icon={<Brain className="w-5 h-5 text-indigo-600" />}
+          icon={<Brain className="w-5 h-5" />}
+          iconColor="bg-indigo-50 text-indigo-600"
+          className="mb-0"
           backHref="/portal"
           actions={
             <div className="flex items-center gap-3">
