@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
-import { BookSpine } from '@/components/BookSpine';
 import TikTokFeed from '@/components/home/TikTokFeed';
 import ReviewMarquee from '@/components/home/ReviewMarquee';
 import TrustStats from '@/components/home/TrustStats';
@@ -55,28 +54,13 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col selection:bg-indigo-500/20 selection:text-indigo-900 overflow-x-hidden font-sans antialiased bg-[#FAF9F6] text-slate-900">
        
-       {/* FLOATING NAVIGATION BAR - COHERO STUDENT BRANDING */}
+       {/* FLOATING NAVIGATION BAR - CLEAN TEXT COHERO STUDENT */}
        <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-4 py-4 md:px-12">
          <div className="max-w-7xl mx-auto w-full bg-white/85 backdrop-blur-2xl border border-slate-200/80 rounded-[2rem] h-20 px-6 sm:px-8 flex items-center justify-between shadow-xl shadow-slate-900/5">
            <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-3 group">
-                 <div className="flex items-end -space-x-[1.5px] scale-[0.85] origin-left">
-                    <BookSpine index={0} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-5 sm:h-6" color="bg-slate-900" decoration="plain" tilt="-rotate-1" />
-                    <BookSpine index={1} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-7 sm:h-8" color="bg-slate-900" decoration="bands" />
-                    <BookSpine index={2} theme={effectiveTheme} width="w-1 sm:w-1.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="plain" />
-
-                    <BookSpine index={3} theme={effectiveTheme} letter="C" width="w-3 sm:w-3.5" height="h-8 sm:h-9" color="bg-slate-900" decoration="bands" />
-                    <BookSpine index={4} theme={effectiveTheme} letter="o" width="w-3 sm:w-3.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="gold" />
-                    <BookSpine index={5} theme={effectiveTheme} letter="h" width="w-3 sm:w-3.5" height="h-9 sm:h-10" color="bg-slate-900" decoration="bands" tilt="-rotate-[1.5deg]" />
-                    <BookSpine index={6} theme={effectiveTheme} letter="é" width="w-3 sm:w-3.5" height="h-7 sm:h-8" color="bg-slate-900" decoration="stripes" />
-                    <BookSpine index={7} theme={effectiveTheme} letter="r" width="w-3 sm:w-3.5" height="h-8 sm:h-9" color="bg-slate-900" decoration="bands" />
-                    <BookSpine index={8} theme={effectiveTheme} letter="o" width="w-3 sm:w-3.5" height="h-6 sm:h-7" color="bg-slate-900" decoration="gold" tilt="rotate-[1deg]" />
-
-                    <BookSpine index={9} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-7 sm:h-8" color="bg-slate-900" decoration="ornament" />
-                    <BookSpine index={10} theme={effectiveTheme} width="w-2 sm:w-2.5" height="h-5 sm:h-6" color="bg-slate-900" decoration="plain" tilt="rotate-2" />
-                 </div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.25em] px-2.5 py-1 bg-indigo-50 border border-indigo-200/80 text-indigo-700 rounded-full ml-1 shadow-sm">
-                   Student
+              <Link href="/" className="flex items-center gap-2 group">
+                 <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                   Cohéro Student
                  </span>
               </Link>
            </div>
@@ -169,7 +153,7 @@ export default function LandingPage() {
          </AnimatePresence>
        </nav>
 
-       {/* 1. HERO SECTION - COHERO STUDENT (PRO LAYOUT STRUCTURE) */}
+       {/* 1. HERO SECTION - COHERO STUDENT */}
        <header className="relative min-h-[100dvh] flex flex-col justify-center pt-36 pb-20 px-5 sm:px-8 overflow-hidden bg-[#FAF9F6] text-slate-900 border-b border-slate-200/80">
          {/* Background Glows */}
          <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/10 blur-[140px] pointer-events-none" />
@@ -296,7 +280,7 @@ export default function LandingPage() {
                  </div>
                </motion.div>
 
-               {/* Interactive Showcase Window - COHERO STUDENT WORKSTATION */}
+               {/* Interactive Showcase Window */}
                <div className="w-full max-w-[490px] bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/10 relative z-10">
                   {/* Window Header */}
                   <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200/80">
@@ -874,52 +858,6 @@ export default function LandingPage() {
              </div>
           </div>
        </section>
-
-       {/* FOOTER - COHERO STUDENT BRANDING */}
-       <footer className="bg-slate-950 border-t border-slate-800 py-16 px-5 sm:px-8 text-slate-400 text-sm">
-         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 text-left">
-            <div className="space-y-4 md:col-span-1">
-               <div className="flex items-center gap-2">
-                  <span className="text-lg font-black text-white tracking-tight">Cohéro Student</span>
-               </div>
-               <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                 Digital AI-kollega og studieplatform til velfærdsuddannelserne.
-               </p>
-               <p className="text-[11px] text-slate-400 pt-2">
-                 © {new Date().getFullYear()} Cohéro ApS · CVR: 43219876
-               </p>
-            </div>
-
-            <div>
-               <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">Værktøjer</h4>
-               <ul className="space-y-2.5 text-xs">
-                  <li><a href="#pro-tools" className="hover:text-white transition-colors">Pensumsøgning</a></li>
-                  <li><a href="#pro-tools" className="hover:text-white transition-colors">Lovportalen</a></li>
-                  <li><Link href="/om-second-opinion" className="hover:text-white transition-colors">Second Opinion</Link></li>
-                  <li><Link href="/concept-explainer" className="hover:text-white transition-colors">Begrebsguiden</Link></li>
-               </ul>
-            </div>
-
-            <div>
-               <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">Platform</h4>
-               <ul className="space-y-2.5 text-xs">
-                  <li><a href="#solutions" className="hover:text-white transition-colors">Socialrådgiver</a></li>
-                  <li><a href="#solutions" className="hover:text-white transition-colors">Pædagog</a></li>
-                  <li><Link href="/terms-of-service" className="hover:text-white transition-colors">Vilkår & Betingelser</Link></li>
-                  <li><Link href="/privacy-policy" className="hover:text-white transition-colors">Privatlivspolitik</Link></li>
-               </ul>
-            </div>
-
-            <div>
-               <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">Kontakt & Support</h4>
-               <ul className="space-y-2.5 text-xs">
-                  <li><a href="mailto:kontakt@cohero.dk" className="hover:text-white transition-colors">kontakt@cohero.dk</a></li>
-                  <li><Link href="/faq" className="hover:text-white transition-colors">Ofte stillede spørgsmål (FAQ)</Link></li>
-                  <li><Link href="/ambassadoer" className="hover:text-white transition-colors">Bliv Ambassadør</Link></li>
-               </ul>
-            </div>
-         </div>
-       </footer>
 
     </div>
   );
