@@ -178,45 +178,45 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-xl"
+        className="absolute inset-0 bg-slate-950/40 backdrop-blur-xl"
       />
       
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col min-h-[500px]"
+        className="relative bg-white/95 backdrop-blur-2xl w-full max-w-lg rounded-[2.5rem] shadow-[0_32px_100px_-20px_rgba(0,0,0,0.2)] border border-slate-100 overflow-hidden flex flex-col min-h-[480px]"
       >
         {/* Progress Bar Header */}
-        <div className="h-1.5 w-full bg-slate-50 flex">
+        <div className="h-1.5 w-full bg-slate-100 flex">
            {[...Array(totalSteps)].map((_, i) => (
               <motion.div 
                 key={i} 
                 className={`h-full flex-1 ${i === 0 ? 'rounded-tl-full' : ''} ${i === totalSteps - 1 ? 'rounded-tr-full' : ''}`}
                 initial={false}
-                animate={{ backgroundColor: step >= i + 1 ? '#78350f' : 'transparent' }} // amber-900
+                animate={{ backgroundColor: step >= i + 1 ? '#4f46e5' : 'transparent' }} // indigo-600
                 transition={{ duration: 0.3 }}
               />
            ))}
         </div>
 
-        <div className="p-8 sm:p-12 flex-grow flex flex-col">
-            <div className="flex items-center justify-between mb-8">
+        <div className="p-8 sm:p-10 flex-grow flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-6">
                <button 
                   onClick={handlePrevStep} 
-                  className={`p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-400 hover:text-amber-950 transition-colors ${step === 1 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  className={`p-2 -ml-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all active:scale-95 ${step === 1 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                >
                   <ArrowLeft className="w-5 h-5" />
                </button>
                <div className="flex items-center gap-2">
-                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-900/40 bg-amber-50 px-2.5 py-1 rounded-full">
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100/60">
                     Trin {step} af {totalSteps}
                  </span>
                </div>
                <div className="w-9" />
             </div>
 
-            <div className="flex-grow flex flex-col justify-center relative">
+            <div className="flex-grow flex flex-col justify-center relative my-auto">
               <AnimatePresence mode="wait" custom={1}>
                 
                 {step === 1 && (
@@ -228,28 +228,28 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                     animate="center"
                     exit="exit"
                     transition={{ duration: 0.3, ease: 'easeOut' }}
-                    className="space-y-8 flex flex-col items-center text-center"
+                    className="space-y-6 flex flex-col items-center text-center"
                   >
-                    <div className="w-20 h-20 bg-amber-100/50 text-amber-600 rounded-3xl flex items-center justify-center shadow-inner border border-amber-50">
-                      {isGroupsSource ? <Users className="w-10 h-10" /> : <Sparkles className="w-10 h-10" />}
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 border border-indigo-400/30">
+                      {isGroupsSource ? <Users className="w-8 h-8" /> : <Sparkles className="w-8 h-8" />}
                     </div>
                     <div>
-                      <h2 className="text-3xl font-bold text-slate-900 serif mb-3">
+                      <h2 className="text-2xl sm:text-3xl font-[900] text-slate-900 tracking-tight mb-2">
                         {isGroupsSource ? 'Velkommen til Opret Gruppe!' : 'Velkommen til Cohéro!'}
                       </h2>
-                      <p className="text-slate-500 font-medium max-w-sm mx-auto">
+                      <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto leading-relaxed">
                         Før vi starter, vil vi gerne vide, hvad vi skal kalde dig.
                       </p>
                     </div>
-                    <div className="w-full max-w-sm relative group mt-4">
-                      <User className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-amber-950 transition-colors" />
+                    <div className="w-full max-w-sm relative group mt-2">
+                      <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
                       <Input
                         type="text"
                         placeholder="Dit fulde navn"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
-                        className="w-full pl-14 pr-6 py-4 bg-slate-50 border-transparent rounded-[1.25rem] focus:bg-white focus:ring-4 focus:ring-amber-950/5 focus:border-amber-950 transition-all text-base h-16 font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400"
+                        className="w-full pl-13 pr-5 py-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all text-base h-14 font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 shadow-sm"
                         autoFocus
                       />
                     </div>
@@ -265,34 +265,34 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                     animate="center"
                     exit="exit"
                     transition={{ duration: 0.3, ease: 'easeOut' }}
-                    className="space-y-8 flex flex-col items-center text-center"
+                    className="space-y-6 flex flex-col items-center text-center"
                   >
-                    <div className="w-20 h-20 bg-slate-50 text-slate-600 rounded-3xl flex items-center justify-center shadow-inner border border-slate-100">
-                      <School className="w-10 h-10" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20 border border-amber-300/30">
+                      <School className="w-8 h-8" />
                     </div>
                     <div>
-                      <h2 className="text-3xl font-bold text-slate-900 serif mb-3">Din Baggrund</h2>
-                      <p className="text-slate-500 font-medium max-w-sm mx-auto">
-                        Hej {username.split(' ')[0]}, hvad studerer eller arbejder du med?
+                      <h2 className="text-2xl sm:text-3xl font-[900] text-slate-900 tracking-tight mb-2">Din Baggrund</h2>
+                      <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto leading-relaxed">
+                        Hej <span className="font-bold text-slate-900">{username.split(' ')[0]}</span>, hvad studerer eller arbejder du med?
                       </p>
                     </div>
-                    <div className="w-full max-w-sm grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                    <div className="w-full max-w-sm grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
                        {PROFESSION_OPTIONS.map((prof) => (
                            <button
                                key={prof}
                                onClick={() => { 
                                  setProfession(prof); 
                                  setError(null);
-                                 setTimeout(() => setStep(3), 200); 
+                                 setTimeout(() => setStep(3), 150); 
                                }}
-                               className={`p-4 rounded-[1.25rem] border-2 font-bold text-sm transition-all text-left flex items-center justify-between
+                               className={`p-3.5 rounded-2xl border font-bold text-sm transition-all text-left flex items-center justify-between shadow-sm active:scale-[0.98]
                                  ${profession === prof 
-                                   ? 'border-amber-950 bg-amber-50 text-amber-950 shadow-sm' 
-                                   : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50'
+                                   ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 ring-2 ring-indigo-500/20' 
+                                   : 'border-slate-200/80 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/80'
                                  }`}
                            >
-                              {prof}
-                              {profession === prof && <CheckCircle2 className="w-4 h-4 text-amber-950" />}
+                               <span>{prof}</span>
+                               {profession === prof && <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />}
                            </button>
                        ))}
                     </div>
@@ -308,34 +308,34 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                     animate="center"
                     exit="exit"
                     transition={{ duration: 0.3, ease: 'easeOut' }}
-                    className="space-y-6 flex flex-col items-center text-center"
+                    className="space-y-5 flex flex-col items-center text-center"
                   >
-                    <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center shadow-inner border border-emerald-100/50">
-                      <BookOpen className="w-10 h-10" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-400/30">
+                      <BookOpen className="w-8 h-8" />
                     </div>
                     <div>
-                      <h2 className="text-3xl font-bold text-slate-900 serif mb-3">Næsten I Mål</h2>
-                      <p className="text-slate-500 font-medium max-w-sm mx-auto">
+                      <h2 className="text-2xl sm:text-3xl font-[900] text-slate-900 tracking-tight mb-2">Næsten I Mål</h2>
+                      <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto leading-relaxed">
                         Fortæl os lidt om din studie status.
                       </p>
                     </div>
 
-                    <div className="w-full max-w-sm space-y-4 text-left mt-2">
+                    <div className="w-full max-w-sm space-y-3 text-left mt-1">
                       <div 
                          onClick={() => setIsQualified(!isQualified)}
-                         className={`p-4 rounded-[1.25rem] border-2 cursor-pointer transition-all flex items-center gap-4 select-none
+                         className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center gap-3.5 select-none shadow-sm active:scale-[0.99]
                             ${isQualified 
-                              ? 'border-emerald-500 bg-emerald-50' 
-                              : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'}`}
+                              ? 'border-emerald-500 bg-emerald-50/80 ring-2 ring-emerald-500/20' 
+                              : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
                       >
-                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
+                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
                            ${isQualified ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'}`}
                          >
-                            {isQualified && <CheckCircle2 className="w-4 h-4 text-white" />}
+                            {isQualified && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                          </div>
                          <div>
-                            <p className={`font-bold text-sm ${isQualified ? 'text-emerald-900' : 'text-slate-600'}`}>Jeg er færdiguddannet</p>
-                            <p className={`text-xs ${isQualified ? 'text-emerald-700/70' : 'text-slate-400'}`}>Spring studie detaljer over</p>
+                            <p className={`font-bold text-sm ${isQualified ? 'text-emerald-950' : 'text-slate-800'}`}>Jeg er færdiguddannet</p>
+                            <p className={`text-xs ${isQualified ? 'text-emerald-700' : 'text-slate-400'}`}>Spring studie detaljer over</p>
                          </div>
                       </div>
 
@@ -345,29 +345,29 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="space-y-4 overflow-hidden"
+                            className="space-y-3 overflow-hidden pt-1"
                           >
-                             <div className="relative group bg-slate-50 rounded-[1.25rem] focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-950/5 transition-all">
-                                <School className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none group-focus-within:text-amber-950 transition-colors" />
+                             <div className="relative group bg-slate-50 rounded-2xl border border-slate-200/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-600 transition-all shadow-sm">
+                                <School className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-600 transition-colors" />
                                 <select
                                     value={institution}
                                     onChange={(e) => setInstitution(e.target.value)}
-                                    className="w-full appearance-none pl-12 pr-10 py-4 bg-transparent border-transparent rounded-[1.25rem] focus:outline-none text-sm h-14 font-bold text-slate-900 cursor-pointer"
+                                    className="w-full appearance-none pl-11 pr-10 py-3.5 bg-transparent border-transparent rounded-2xl focus:outline-none text-sm h-12 font-bold text-slate-900 cursor-pointer"
                                 >
                                     <option value="" disabled className="text-slate-400">Vælg institution (Valgfrit)</option>
                                     {INSTITUTIONS.map(inst => (
                                         <option key={inst} value={inst}>{inst}</option>
                                     ))}
                                 </select>
-                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                              </div>
 
-                             <div className="relative group bg-slate-50 rounded-[1.25rem] focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-950/5 transition-all">
-                                <BookOpen className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none group-focus-within:text-amber-950 transition-colors" />
+                             <div className="relative group bg-slate-50 rounded-2xl border border-slate-200/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-600 transition-all shadow-sm">
+                                <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-600 transition-colors" />
                                 <select
                                   value={semester}
                                   onChange={(e) => setSemester(e.target.value)}
-                                  className="w-full appearance-none pl-12 pr-10 py-4 bg-transparent border-transparent rounded-[1.25rem] focus:outline-none text-sm h-14 font-bold text-slate-900 cursor-pointer"
+                                  className="w-full appearance-none pl-11 pr-10 py-3.5 bg-transparent border-transparent rounded-2xl focus:outline-none text-sm h-12 font-bold text-slate-900 cursor-pointer"
                                   disabled={fetchingCurriculum}
                                 >
                                   <option value="" disabled className="text-slate-400">
@@ -383,7 +383,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                                     ))
                                   )}
                                 </select>
-                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                              </div>
                           </motion.div>
                         )}
@@ -396,32 +396,32 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
             </div>
 
             {error && (
-               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
+               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
                  <p className="text-xs text-rose-600 font-bold bg-rose-50 px-4 py-3 rounded-xl border border-rose-100 flex items-center justify-center gap-2">
                    {error}
                  </p>
                </motion.div>
             )}
 
-            <div className="mt-10 pt-6 border-t border-slate-100 w-full flex items-center justify-center">
+            <div className="mt-8 pt-4 border-t border-slate-100 w-full flex items-center justify-center">
                 {step < totalSteps ? (
                    <button 
                      onClick={handleNextStep}
-                     className="w-full max-w-sm flex items-center justify-center h-14 bg-amber-950 text-white rounded-[1.25rem] font-black uppercase tracking-[0.2em] text-[11px] hover:bg-amber-900 transition-colors shadow-xl shadow-amber-950/20 active:scale-[0.98]"
+                     className="w-full max-w-sm flex items-center justify-center h-13 py-3.5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.18em] text-[11px] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-900/10 active:scale-[0.98] group cursor-pointer"
                    >
-                     Næste <ArrowRight className="w-4 h-4 ml-3" />
+                     Næste <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                    </button>
                 ) : (
                    <button 
                      onClick={handleSubmit}
                      disabled={loading}
-                     className="w-full max-w-sm flex items-center justify-center h-14 bg-emerald-600 text-white rounded-[1.25rem] font-black uppercase tracking-[0.2em] text-[11px] hover:bg-emerald-500 transition-colors shadow-xl shadow-emerald-600/20 active:scale-[0.98] disabled:opacity-70"
+                     className="w-full max-w-sm flex items-center justify-center h-13 py-3.5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-[0.18em] text-[11px] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-70 group cursor-pointer"
                    >
                      {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
                      ) : (
                         <>
-                           Færdiggør Profil <Send className="w-4 h-4 ml-3" />
+                           Færdiggør Profil <Send className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </>
                      )}
                    </button>
