@@ -92,22 +92,20 @@ function CopyCitationButton({ citation }: { citation: string }) {
 }
 
 // ─── Retsinformation API Section ────────────────────────────────────────────────
+
+// Live Retsinformation API Section for Relevant Laws & Paragraphs
 function RetsinformationSection({ conceptName }: { conceptName: string }) {
-  const [bills, setBills] = useState<any[]>([]);
-  const [cases, setCases] = useState<any[]>([]);
+  const [laws, setLaws] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedBillText, setSelectedBillText] = useState<any | null>(null);
-  const [loadingBill, setLoadingBill] = useState(false);
 
   useEffect(() => {
     if (!conceptName) return;
     let isMounted = true;
     setLoading(true);
-    searchRetsinformationApiAction(conceptName)
+    searchRetsinformationLawsAction(conceptName)
       .then(res => {
         if (isMounted) {
-          setBills(res.bills || []);
-          setCases(res.cases || []);
+          setLaws(res.laws || []);
           setLoading(false);
         }
       })
@@ -118,153 +116,70 @@ function RetsinformationSection({ conceptName }: { conceptName: string }) {
     return () => { isMounted = false; };
   }, [conceptName]);
 
-  const handleOpenBill = async (billNumber: string) => {
-    setLoadingBill(true);
-    try {
-      const details = await getRetsinformationBillTextAction(billNumber);
-      setSelectedBillText(details || { number: billNumber, title: 'Information ikke tilgængelig' });
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingBill(false);
-    }
-  };
-
   if (loading) {
     return (
-      <Section title="Retsinformation API — Gældende Lovgivning" icon={<Scale className="w-3 h-3 text-indigo-500" />}>
+      <Section title="Retsinformation API — Relevante Love & Paragraffer" icon={<Scale className="w-3 h-3 text-indigo-500" />}>
         <div className="flex items-center gap-3 py-4 text-xs text-slate-400 font-medium">
           <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
-          Henter retsakter og lovforslag fra retsinformation-api.dk...
+          Søger efter gældende love og relevante paragraffer hos Retsinformation...
         </div>
       </Section>
     );
   }
 
-  if (bills.length === 0 && cases.length === 0) return null;
+  if (laws.length === 0) return null;
 
   return (
-    <Section title="Retsinformation API — Gældende Lovgivning" icon={<Scale className="w-3 h-3 text-indigo-500" />} open={true}>
+    <Section title="Retsinformation API — Relevante Love & Paragraffer" icon={<Scale className="w-3 h-3 text-indigo-500" />} open={true}>
       <div className="space-y-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-          Fundet hos retsinformation-api.dk ({bills.length} lovforslag, {cases.length} sager)
-        </p>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+            Gældende dansk lovgivning fundet via Retsinformation ({laws.length} kilder)
+          </p>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-black uppercase tracking-widest">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Retsinformation Verificeret
+          </span>
+        </div>
 
         <div className="grid grid-cols-1 gap-2.5">
-          {bills.slice(0, 4).map((bill, i) => (
-            <div key={i} className="p-4 bg-slate-50 border border-slate-200/60 rounded-xl hover:bg-white hover:border-indigo-200 transition-all flex flex-col justify-between gap-2 group">
+          {laws.slice(0, 5).map((law, i) => (
+            <div key={i} className="p-4 bg-slate-50 border border-slate-200/60 rounded-2xl hover:bg-white hover:border-indigo-200 hover:shadow-md transition-all flex flex-col justify-between gap-3 group">
               <div>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-800 rounded-md text-[10px] font-black uppercase tracking-wider">
-                    {bill.number || 'Lovforslag'}
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100/80 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                    <Scale className="w-3 h-3 text-indigo-500" />
+                    {law.lawName || 'Gældende Lov'}
                   </span>
-                  {bill.status && (
-                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-[9px] font-bold">
-                      {bill.status}
-                    </span>
-                  )}
+                  <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 uppercase tracking-widest">
+                    Gældende Lovgivning
+                  </span>
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug line-clamp-2">
-                  {bill.title}
+                <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                  {law.title}
                 </h4>
-                {bill.short_title && bill.short_title !== bill.title && (
-                  <p className="text-[11px] text-slate-500 italic mt-0.5 line-clamp-1">{bill.short_title}</p>
+                {law.summary && (
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    {law.summary}
+                  </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-200/40 text-[10px]">
-                <span className="font-semibold text-slate-400">{bill.ressort || 'Folketinget'}</span>
-                <button
-                  onClick={() => handleOpenBill(bill.number)}
-                  className="font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group-hover:underline"
+              <div className="flex items-center justify-between pt-2.5 border-t border-slate-200/40 text-[10px]">
+                <span className="font-semibold text-slate-400">Retsinformation API</span>
+                <a
+                  href={law.retsinformationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 group-hover:underline"
                 >
-                  Læs bemærkninger & tekster →
-                </button>
+                  Læs lovtekst hos Retsinformation <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
-            </div>
-          ))}
-
-          {cases.slice(0, 2).map((item, i) => (
-            <div key={i} className="p-3.5 bg-amber-50/50 border border-amber-100 rounded-xl text-xs flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black uppercase text-amber-800 tracking-wider">{item.case_type || 'Parlamentarisk Sag'}</span>
-                {item.status && <span className="text-[9px] font-bold text-amber-700">{item.status}</span>}
-              </div>
-              <p className="font-bold text-amber-950 leading-snug">{item.title}</p>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Bill details modal */}
-      <AnimatePresence>
-        {(selectedBillText || loadingBill) && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[50000] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }} className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[85vh] flex flex-col">
-              <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-xs">
-                    <Scale className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900">{selectedBillText?.number || 'Lovforslag'}</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Retsinformation API</p>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedBillText(null)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-slate-400 hover:text-slate-700">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="p-6 overflow-y-auto space-y-6 text-slate-700 leading-relaxed text-xs custom-scrollbar">
-                {loadingBill ? (
-                  <div className="py-12 text-center text-slate-400 flex flex-col items-center gap-3">
-                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-                    <span>Henter fuld lovtekst fra retsinformation-api.dk...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-black text-slate-950">{selectedBillText?.title}</h4>
-                      {selectedBillText?.short_title && (
-                        <p className="text-xs italic text-slate-500">{selectedBillText.short_title}</p>
-                      )}
-                    </div>
-
-                    {selectedBillText?.resume && (
-                      <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl space-y-1">
-                        <h5 className="text-[10px] font-black uppercase text-indigo-900 tracking-wider">Resumé</h5>
-                        <p className="text-xs text-indigo-950 leading-relaxed">{selectedBillText.resume}</p>
-                      </div>
-                    )}
-
-                    {selectedBillText?.decision_text && (
-                      <div className="space-y-1">
-                        <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Afgørelse</h5>
-                        <p className="text-xs text-slate-700 leading-relaxed">{selectedBillText.decision_text}</p>
-                      </div>
-                    )}
-
-                    {selectedBillText?.justification && (
-                      <div className="space-y-1">
-                        <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Begrundelse</h5>
-                        <p className="text-xs text-slate-700 leading-relaxed">{selectedBillText.justification}</p>
-                      </div>
-                    )}
-
-                    {selectedBillText?.voting_conclusion && (
-                      <div className="space-y-1">
-                        <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Afstemning</h5>
-                        <p className="text-xs text-slate-700 leading-relaxed">{selectedBillText.voting_conclusion}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </Section>
   );
 }

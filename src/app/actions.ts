@@ -2344,9 +2344,70 @@ export async function fetchFolketingetSagByLovnummer(lovnummer: string, dato: st
 }
 
 /**
- * Retsinformation-API.dk Integration
- * Fetches Danish bills (lovforslag) and parliamentary cases from retsinformation-api.dk
+ * Retsinformation API Law Search
+ * Fetches applicable Danish laws, statutes, and paragraphs relevant to a search term / concept
  */
+export async function searchRetsinformationLawsAction(query: string): Promise<{
+    laws: Array<{
+        title: string;
+        retsinformationUrl: string;
+        documentId?: string;
+        summary?: string;
+        lawName: string;
+        paragraph?: string;
+    }>;
+}> {
+    if (!query || !query.trim()) return { laws: [] };
+    const cleanQuery = query.trim();
+    try {
+        const encoded = encodeURIComponent(cleanQuery);
+        const res = await fetch(`https://www.retsinformation.dk/api/documentsearch?ps=8&t=${encoded}`, {
+            headers: { 'Accept': 'application/json' },
+            next: { revalidate: 3600 }
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const docs = data.documents || data.items || [];
+            if (docs.length > 0) {
+                const laws = docs.map((doc: any) => {
+                    const docId = doc.id || doc.uniqueDocumentId;
+                    const path = doc.retsinfoLink || (docId ? `/eli/retsinfo/${docId}` : '');
+                    const rawTitle = doc.title || doc.name || cleanQuery;
+                    return {
+                        title: rawTitle,
+                        lawName: doc.shortTitle || rawTitle.split('.')[0] || cleanQuery,
+                        retsinformationUrl: path ? (path.startsWith('http') ? path : `https://www.retsinformation.dk${path}`) : `https://www.retsinformation.dk/search?t=${encoded}`,
+                        documentId: String(docId || ''),
+                        summary: doc.summary || doc.shortTitle || 'Gældende dansk lovgivning fundet via Retsinformation API'
+                    };
+                });
+                return { laws };
+            }
+        }
+        
+        // Fallback search to retsinformation-api.dk
+        const fallbackRes = await fetch(`https://retsinformation-api.dk/v1/lovgivning/bills/?search=${encoded}&limit=6`, { next: { revalidate: 3600 } });
+        if (fallbackRes.ok) {
+            const fallbackData = await fallbackRes.json();
+            const items = Array.isArray(fallbackData) ? fallbackData : (fallbackData.data || []);
+            const laws = items.map((item: any) => ({
+                title: item.titel || item.title || cleanQuery,
+                lawName: item.short_title || item.titel || cleanQuery,
+                retsinformationUrl: item.filurl || item.htmlurl || `https://www.retsinformation.dk/search?t=${encoded}`,
+                documentId: String(item.id || ''),
+                summary: item.resume || 'Relevant lovgivning'
+            }));
+            return { laws };
+        }
+
+        return { laws: [] };
+    } catch (error) {
+        console.error("Error searching Retsinformation laws:", error);
+        return { laws: [] };
+    }
+}
+
 export async function searchRetsinformationApiAction(query: string): Promise<{
     bills: any[];
     cases: any[];
