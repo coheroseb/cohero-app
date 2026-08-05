@@ -2343,6 +2343,48 @@ export async function fetchFolketingetSagByLovnummer(lovnummer: string, dato: st
     }
 }
 
+/**
+ * Retsinformation-API.dk Integration
+ * Fetches Danish bills (lovforslag) and parliamentary cases from retsinformation-api.dk
+ */
+export async function searchRetsinformationApiAction(query: string): Promise<{
+    bills: any[];
+    cases: any[];
+}> {
+    if (!query || !query.trim()) return { bills: [], cases: [] };
+    try {
+        const encoded = encodeURIComponent(query.trim());
+        const [billsRes, casesRes] = await Promise.all([
+            fetch(`https://retsinformation-api.dk/v1/lovgivning/bills/?search=${encoded}&limit=6`, { next: { revalidate: 3600 } }),
+            fetch(`https://retsinformation-api.dk/v1/lovgivning/cases/?search=${encoded}&limit=6`, { next: { revalidate: 3600 } })
+        ]);
+
+        const billsData = billsRes.ok ? await billsRes.json() : { data: [] };
+        const casesData = casesRes.ok ? await casesRes.json() : { data: [] };
+
+        return {
+            bills: Array.isArray(billsData) ? billsData : (billsData.data || []),
+            cases: Array.isArray(casesData) ? casesData : (casesData.data || []),
+        };
+    } catch (error) {
+        console.error("Error searching retsinformation-api.dk:", error);
+        return { bills: [], cases: [] };
+    }
+}
+
+export async function getRetsinformationBillTextAction(billNumber: string): Promise<any> {
+    if (!billNumber) return null;
+    try {
+        const formattedNum = billNumber.trim().replace(/\s+/g, '-');
+        const res = await fetch(`https://retsinformation-api.dk/v1/lovgivning/bills/${encodeURIComponent(formattedNum)}/text`, { next: { revalidate: 3600 } });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch (error) {
+        console.error("Error getting bill text from retsinformation-api.dk:", error);
+        return null;
+    }
+}
+
 // Stripe and other Server Actions
 export async function createCheckoutSession(params: { priceId: string, userId: string, userEmail?: string, userName?: string, stripeCustomerId?: string | null, originPath?: string, trialDays?: number }): Promise<{ success: boolean, sessionId?: string, stripeCustomerId?: string, error?: string }> {
     if (!isStripeConfigured) {
