@@ -943,26 +943,26 @@ const CaseAnalyserPage: React.FC = () => {
       </aside>
       
       {/* MAIN AREA - PDF VIEWER OR UPLOAD */}
-      <main className="flex-1 flex flex-col bg-slate-900/5 items-center justify-center p-8 relative">
+      <main className="flex-1 flex flex-col bg-slate-50/50 min-h-[calc(100vh-4rem)] p-4 md:p-8 overflow-y-auto relative">
         <AnimatePresence mode="wait">
             {!pdfUrl ? (
                 <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="max-w-2xl w-full"
+                    transition={{ duration: 0.4 }}
+                    className="max-w-2xl w-full mx-auto my-auto flex flex-col items-center justify-center py-6"
                 >
-                    <div className="text-center mb-12">
-                        <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 mb-8">
-                            <div className="w-6 h-6 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
-                                <Sparkles className="w-3.5 h-3.5" />
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-white border border-slate-200/60 rounded-full shadow-sm mb-6">
+                            <div className="w-5 h-5 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center">
+                                <Sparkles className="w-3 h-3" />
                             </div>
-                            <span className="text-[11px] font-[900] uppercase tracking-[0.2em] text-slate-900">Premium Workspace</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-700">Premium Workspace</span>
                         </div>
-                        <h2 className="text-5xl md:text-6xl font-[900] text-slate-900 tracking-tight mb-6">
-                            Lynhurtig <br />
-                            <span className="text-indigo-600">Sagsanalyse</span>
+                        <h2 className="text-3xl md:text-5xl font-[900] text-slate-900 tracking-tight mb-4">
+                            Lynhurtig <span className="bg-gradient-to-r from-indigo-600 to-indigo-800 bg-clip-text text-transparent">Sagsanalyse</span>
                         </h2>
-                        <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-lg mx-auto">
+                        <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed max-w-lg mx-auto">
                             Lad AI gennemgå dine sagsakter for dig. Identificér paragraffer, hændelser og videnshuller på få sekunder.
                         </p>
                     </div>
@@ -971,26 +971,26 @@ const CaseAnalyserPage: React.FC = () => {
                         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                         onDragLeave={() => setIsDragging(false)}
                         onDrop={handleDrop}
-                        className={`group relative flex flex-col items-center justify-center border-2 border-dashed rounded-[4rem] p-12 md:p-20 cursor-pointer transition-all duration-700 h-[450px]
+                        className={`group relative w-full flex flex-col items-center justify-center border-2 border-dashed rounded-[2.5rem] p-8 md:p-12 cursor-pointer transition-all duration-300 min-h-[260px] md:min-h-[300px]
                             ${isDragging 
-                                ? 'border-indigo-600 bg-indigo-50/30 scale-[1.02] shadow-2xl shadow-indigo-100' 
-                                : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50/50 hover:shadow-2xl hover:shadow-slate-200/50'}`}
+                                ? 'border-indigo-600 bg-indigo-50/40 scale-[1.01] shadow-xl shadow-indigo-100/50' 
+                                : 'border-slate-200 bg-white/80 backdrop-blur-sm hover:border-indigo-400 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50'}`}
                     >
-                        <div className={`w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-10 transition-all duration-700 shadow-2xl ${
+                        <div className={`w-20 h-20 md:w-24 md:h-24 rounded-[2rem] flex items-center justify-center mb-6 transition-all duration-500 shadow-xl ${
                             isDragging 
-                                ? 'bg-indigo-600 text-white scale-110 rotate-6' 
-                                : 'bg-slate-900 text-white group-hover:bg-indigo-600 group-hover:-rotate-3'
+                                ? 'bg-indigo-600 text-white scale-110 rotate-3' 
+                                : 'bg-slate-900 text-white group-hover:bg-indigo-600 group-hover:-rotate-3 group-hover:scale-105'
                         }`}>
-                            <UploadCloud className="w-12 h-12" />
+                            <UploadCloud className="w-9 h-9 md:w-11 md:h-11" />
                         </div>
-                        <div className="text-center space-y-3">
-                            <p className="text-2xl font-[900] text-slate-900 tracking-tight">Tryk eller træk din PDF her</p>
-                            <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Understøtter sagsakter op til 20 MB</p>
+                        <div className="text-center space-y-2">
+                            <p className="text-xl md:text-2xl font-[900] text-slate-900 tracking-tight">Tryk eller træk din PDF her</p>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Understøtter PDF sagsakter op til 20 MB</p>
                         </div>
 
-                        {/* Decoration */}
-                        <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-indigo-600/5 rounded-full blur-2xl group-hover:scale-150 transition-all" />
-                        <div className="absolute -top-6 -left-6 w-32 h-32 bg-amber-400/5 rounded-full blur-2xl group-hover:scale-150 transition-all" />
+                        {/* Subtle background blur decoration */}
+                        <div className="absolute -bottom-6 -right-6 w-28 h-28 bg-indigo-500/5 rounded-full blur-2xl group-hover:scale-150 transition-all pointer-events-none" />
+                        <div className="absolute -top-6 -left-6 w-28 h-28 bg-amber-400/5 rounded-full blur-2xl group-hover:scale-150 transition-all pointer-events-none" />
 
                         <input
                             type="file"
@@ -1001,17 +1001,17 @@ const CaseAnalyserPage: React.FC = () => {
                         />
                     </label>
 
-                    <div className="grid grid-cols-3 gap-8 mt-16">
+                    <div className="grid grid-cols-3 gap-4 md:gap-6 mt-10 w-full">
                         {[
-                            { icon: <Users className="w-5 h-5" />, label: "Persongalleri" },
-                            { icon: <Scale className="w-5 h-5" />, label: "Paragraffer" },
-                            { icon: <CalendarDays className="w-5 h-5" />, label: "Tidslinje" }
+                            { icon: <Users className="w-4 h-4 text-indigo-600" />, label: "Persongalleri" },
+                            { icon: <Scale className="w-4 h-4 text-amber-600" />, label: "Paragraffer" },
+                            { icon: <CalendarDays className="w-4 h-4 text-emerald-600" />, label: "Tidslinje" }
                         ].map((item, i) => (
-                            <div key={i} className="flex flex-col items-center gap-4 group cursor-default">
-                                <div className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-100 group-hover:shadow-md transition-all">
+                            <div key={i} className="flex flex-col items-center gap-3 p-4 bg-white/60 border border-slate-100 rounded-2xl shadow-sm hover:bg-white hover:border-slate-200 transition-all group cursor-default">
+                                <div className="w-10 h-10 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center group-hover:scale-110 transition-all">
                                     {item.icon}
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-slate-900 transition-colors">{item.label}</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 group-hover:text-slate-900 transition-colors">{item.label}</span>
                             </div>
                         ))}
                     </div>
