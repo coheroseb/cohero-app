@@ -827,6 +827,34 @@ const PortalPageContent: React.FC = () => {
                     {activeModule?.learningGoals?.length || 0} mål fundet
                   </span>
                 </div>
+
+                {/* Banner when module refers to external local semester document / URL */}
+                {activeModule?.learningGoals?.some((g: string) => g.includes('http') || g.includes('beskrevet i') || g.includes('separat modul')) && (
+                  <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-200/80 rounded-[2.5rem] space-y-4 shadow-sm">
+                    <div className="flex items-start gap-4">
+                      <div className="w-11 h-11 bg-amber-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
+                        <Sparkles className="w-6 h-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-black text-slate-900">Uddannelsens specifikke modulbeskrivelse</h4>
+                        <p className="text-xs font-medium text-slate-600 leading-relaxed">
+                          For dette modul henviser den overordnede studieordning til dit lokale semester- eller modulbeskrivelsesdokument. Klik på linket i målet nedenfor for at hente det, eller upload din modul-PDF her under <strong>Upload egen ordning</strong>, så udtrækker Cohéro AI dine specifikke læringsmål automatisk!
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 pt-1">
+                      <label 
+                        htmlFor="custom-curriculum-upload"
+                        className="px-6 py-3 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer shadow-md shadow-slate-950/10 flex items-center gap-2"
+                      >
+                        <Upload className="w-4 h-4 text-amber-400" />
+                        Upload din modulbeskrivelse (PDF)
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid md:grid-cols-2 gap-4">
                   {(activeModule?.learningGoals || ['Find dine læringsmål ved at vælge din uddannelse i indstillinger.']).map((goal: string, i: number) => {
                     const isExpanded = expandedGoalIndex === i;
@@ -839,6 +867,29 @@ const PortalPageContent: React.FC = () => {
                       }
                     };
 
+                    const renderTextWithLinks = (text: string) => {
+                      const urlRegex = /(https?:\/\/[^\s]+)/g;
+                      const parts = text.split(urlRegex);
+                      return parts.map((part, idx) => {
+                        if (part.match(urlRegex)) {
+                          return (
+                            <a
+                              key={idx}
+                              href={part}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-indigo-600 font-bold underline hover:text-indigo-800 transition-colors inline-flex items-center gap-1 mx-1"
+                            >
+                              {part}
+                              <ArrowRight className="w-3 h-3 inline" />
+                            </a>
+                          );
+                        }
+                        return part;
+                      });
+                    };
+
                     return (
                       <div 
                         key={i} 
@@ -849,7 +900,7 @@ const PortalPageContent: React.FC = () => {
                           <div className="w-8 h-8 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center text-[11px] font-black shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all">
                             {i + 1}
                           </div>
-                          <p className="text-xs font-bold text-slate-700 leading-relaxed pt-1.5 flex-grow">{goal}</p>
+                          <p className="text-xs font-bold text-slate-700 leading-relaxed pt-1.5 flex-grow">{renderTextWithLinks(goal)}</p>
                           <div className="shrink-0 pt-1 text-slate-300 group-hover:text-indigo-500 transition-colors">
                             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                           </div>
