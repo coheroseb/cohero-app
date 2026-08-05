@@ -108,13 +108,13 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
   };
 
   const handleSubmit = async () => {
-    if (!isQualified && !institution.trim()) {
-      setError('Vælg venligst din uddannelsesinstitution eller markér dig som færdiguddannet.');
+    if (!institution.trim()) {
+      setError('Vælg venligst din uddannelsesinstitution.');
       return;
     }
-    if (!isQualified && !semester.trim()) {
-        setError('Indtast venligst hvilket semester du er på.');
-        return;
+    if (!semester.trim()) {
+      setError('Vælg venligst dit semester/modul.');
+      return;
     }
     if (!user || !firestore) {
       setError('Bruger ikke fundet. Prøv at logge ind igen.');
@@ -125,7 +125,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
     setError(null);
     
     const capitalizedUsername = capitalize(username.trim());
-    const studyStarted = isQualified ? null : calculateStudyStarted(semester);
+    const studyStarted = calculateStudyStarted(semester);
 
     try {
       const batch = writeBatch(firestore);
@@ -133,11 +133,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       
       batch.set(userRef, {
         username: capitalizedUsername,
-        semester: isQualified ? '' : semester,
-        institution: isQualified ? '' : institution,
+        semester: semester,
+        institution: institution,
         profession: profession,
         studyStarted,
-        isQualified,
+        isQualified: false,
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
@@ -321,73 +321,44 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                     </div>
 
                     <div className="w-full max-w-sm space-y-3 text-left mt-1">
-                      <div 
-                         onClick={() => setIsQualified(!isQualified)}
-                         className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center gap-3.5 select-none shadow-sm active:scale-[0.99]
-                            ${isQualified 
-                              ? 'border-emerald-500 bg-emerald-50/80 ring-2 ring-emerald-500/20' 
-                              : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
-                      >
-                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
-                           ${isQualified ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'}`}
-                         >
-                            {isQualified && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                         </div>
-                         <div>
-                            <p className={`font-bold text-sm ${isQualified ? 'text-emerald-950' : 'text-slate-800'}`}>Jeg er færdiguddannet</p>
-                            <p className={`text-xs ${isQualified ? 'text-emerald-700' : 'text-slate-400'}`}>Spring studie detaljer over</p>
-                         </div>
-                      </div>
-
-                      <AnimatePresence>
-                        {!isQualified && (
-                          <motion.div 
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="space-y-3 overflow-hidden pt-1"
+                       <div className="relative group bg-slate-50 rounded-2xl border border-slate-200/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-600 transition-all shadow-sm">
+                          <School className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-600 transition-colors" />
+                          <select
+                              value={institution}
+                              onChange={(e) => setInstitution(e.target.value)}
+                              className="w-full appearance-none pl-11 pr-10 py-3.5 bg-transparent border-transparent rounded-2xl focus:outline-none text-sm h-12 font-bold text-slate-900 cursor-pointer"
                           >
-                             <div className="relative group bg-slate-50 rounded-2xl border border-slate-200/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-600 transition-all shadow-sm">
-                                <School className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-600 transition-colors" />
-                                <select
-                                    value={institution}
-                                    onChange={(e) => setInstitution(e.target.value)}
-                                    className="w-full appearance-none pl-11 pr-10 py-3.5 bg-transparent border-transparent rounded-2xl focus:outline-none text-sm h-12 font-bold text-slate-900 cursor-pointer"
-                                >
-                                    <option value="" disabled className="text-slate-400">Vælg institution (Valgfrit)</option>
-                                    {INSTITUTIONS.map(inst => (
-                                        <option key={inst} value={inst}>{inst}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                             </div>
+                              <option value="" disabled className="text-slate-400">Vælg institution...</option>
+                              {INSTITUTIONS.map(inst => (
+                                  <option key={inst} value={inst}>{inst}</option>
+                              ))}
+                          </select>
+                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                       </div>
 
-                             <div className="relative group bg-slate-50 rounded-2xl border border-slate-200/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-600 transition-all shadow-sm">
-                                <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-600 transition-colors" />
-                                <select
-                                  value={semester}
-                                  onChange={(e) => setSemester(e.target.value)}
-                                  className="w-full appearance-none pl-11 pr-10 py-3.5 bg-transparent border-transparent rounded-2xl focus:outline-none text-sm h-12 font-bold text-slate-900 cursor-pointer"
-                                  disabled={fetchingCurriculum}
-                                >
-                                  <option value="" disabled className="text-slate-400">
-                                    {fetchingCurriculum ? 'Henter moduler...' : 'Vælg semester/modul'}
-                                  </option>
-                                  {availableModules.length > 0 ? (
-                                    availableModules.map(mod => (
-                                      <option key={mod.id} value={mod.id}>{mod.name}</option>
-                                    ))
-                                  ) : (
-                                    SEMESTER_OPTIONS.map(sem => (
-                                      <option key={sem} value={sem}>{sem}. semester</option>
-                                    ))
-                                  )}
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                       <div className="relative group bg-slate-50 rounded-2xl border border-slate-200/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-600 transition-all shadow-sm">
+                          <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-600 transition-colors" />
+                          <select
+                            value={semester}
+                            onChange={(e) => setSemester(e.target.value)}
+                            className="w-full appearance-none pl-11 pr-10 py-3.5 bg-transparent border-transparent rounded-2xl focus:outline-none text-sm h-12 font-bold text-slate-900 cursor-pointer"
+                            disabled={fetchingCurriculum}
+                          >
+                            <option value="" disabled className="text-slate-400">
+                              {fetchingCurriculum ? 'Henter moduler...' : 'Vælg semester/modul...'}
+                            </option>
+                            {availableModules.length > 0 ? (
+                              availableModules.map(mod => (
+                                <option key={mod.id} value={mod.id}>{mod.name}</option>
+                              ))
+                            ) : (
+                              SEMESTER_OPTIONS.map(sem => (
+                                <option key={sem} value={sem}>{sem}. semester</option>
+                              ))
+                            )}
+                          </select>
+                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                       </div>
                     </div>
                   </motion.div>
                 )}

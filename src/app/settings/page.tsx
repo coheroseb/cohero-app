@@ -591,60 +591,46 @@ export default function SettingsPage() {
                                       </div>
                                   </div>
 
-                                  {!isQualified && (
-                                     <>
-                                        <div className="space-y-2 md:col-span-2">
-                                            <label htmlFor="institution" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Uddannelsesinstitution</label>
-                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/30 transition-all">
-                                                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                                <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer">
-                                                    <option value="" disabled>Vælg institution...</option>
-                                                    {INSTITUTIONS.map(inst => (
-                                                        <option key={inst} value={inst}>{inst}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                            </div>
-                                        </div>
+                                         <div className="space-y-2 md:col-span-2">
+                                             <label htmlFor="institution" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Uddannelsesinstitution</label>
+                                             <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/30 transition-all">
+                                                 <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                 <select id="institution" value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer">
+                                                     <option value="" disabled>Vælg institution...</option>
+                                                     {INSTITUTIONS.map(inst => (
+                                                         <option key={inst} value={inst}>{inst}</option>
+                                                     ))}
+                                                 </select>
+                                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                             </div>
+                                         </div>
 
-                                        <div className="space-y-2">
-                                            <label htmlFor="semester" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
-                                            <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/30 transition-all">
-                                                <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                                <select
-                                                    id="semester"
-                                                    value={semester}
-                                                    onChange={(e) => setSemester(e.target.value)}
-                                                    className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer"
-                                                >
-                                                    <option value="" disabled>Vælg semester...</option>
-                                                    {availableModules.map(mod => (
-                                                        <option key={mod.id} value={mod.id}>{mod.name}</option>
-                                                    ))}
-                                                    {!fetchingCurriculum && availableModules.length === 0 && SEMESTER_OPTIONS.map(sem => (
-                                                        <option key={sem} value={sem}>{sem}. semester</option>
-                                                    ))}
-                                                </select>
-                                                {fetchingCurriculum ? (
-                                                   <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500 animate-spin" />
-                                                ) : (
-                                                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                                                )}
-                                            </div>
-                                        </div>
-                                     </>
-                                  )}
-                              </div>
-
-                              <div className="w-full p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between cursor-pointer group" onClick={() => setIsQualified(!isQualified)}>
-                                  <div>
-                                      <p className="text-[13px] sm:text-sm font-bold text-slate-900">Er du færdiguddannet?</p>
-                                      <p className="text-[11px] sm:text-xs font-semibold text-slate-500 mt-0.5">Slå til hvis du har afsluttet dit studie.</p>
-                                  </div>
-                                  <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out shrink-0 ${isQualified ? 'bg-amber-500' : 'bg-slate-300'}`}>
-                                      <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200 ease-in-out ${isQualified ? 'translate-x-5' : 'translate-x-0'}`} />
-                                  </div>
-                              </div>
+                                         <div className="space-y-2">
+                                             <label htmlFor="semester" className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400">Semester</label>
+                                             <div className="relative bg-slate-50 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/30 transition-all">
+                                                 <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                 <select
+                                                     id="semester"
+                                                     value={semester}
+                                                     onChange={(e) => setSemester(e.target.value)}
+                                                     className="w-full h-12 pl-11 pr-10 bg-transparent text-[13px] font-bold text-slate-900 appearance-none outline-none cursor-pointer"
+                                                 >
+                                                     <option value="" disabled>Vælg semester...</option>
+                                                     {availableModules.map(mod => (
+                                                         <option key={mod.id} value={mod.id}>{mod.name}</option>
+                                                     ))}
+                                                     {!fetchingCurriculum && availableModules.length === 0 && SEMESTER_OPTIONS.map(sem => (
+                                                         <option key={sem} value={sem}>{sem}. semester</option>
+                                                     ))}
+                                                 </select>
+                                                 {fetchingCurriculum ? (
+                                                    <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500 animate-spin" />
+                                                 ) : (
+                                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                 )}
+                                             </div>
+                                         </div>
+                               </div>
                            </div>
 
                           <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-4">
