@@ -213,27 +213,14 @@ const Navbar: React.FC<NavbarProps> = ({
       >
         <div className="flex items-center justify-between h-full">
           
-          {/* Brand - Bookshelf Logo (Keep as requested) */}
-          <div className={`flex items-end h-12 mb-1 relative active:scale-[0.98] transition-all origin-bottom ${scrolled ? 'scale-[0.9]' : 'scale-110'}`}>
+          {/* Brand - Clean Text Cohéro Student */}
+          <div className="flex items-center">
             <Link
               href={user ? "/portal" : "/"}
-              className="flex items-end -space-x-[1.5px]"
-              aria-label="Cohéro Hjem"
+              className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight"
+              aria-label="Cohéro Student Hjem"
             >
-              <BookSpine index={0} theme={effectiveTheme} width="w-2 sm:w-3" height="h-6 sm:h-8" color="bg-white" decoration="plain" tilt="-rotate-1" />
-              <BookSpine index={1} theme={effectiveTheme} width="w-3 sm:w-4" height="h-9 sm:h-11" color="bg-white" decoration="bands" />
-              <BookSpine index={2} theme={effectiveTheme} width="w-1.5 sm:w-2" height="h-7 sm:h-9" color="bg-white" decoration="plain" />
-
-              <BookSpine index={3} theme={effectiveTheme} letter="C" width="w-4 sm:w-5" height="h-10 sm:h-12" color="bg-white" decoration="bands" />
-              <BookSpine index={4} theme={effectiveTheme} letter="o" width="w-4 sm:w-5" height="h-8 sm:h-10" color="bg-white" decoration="gold" />
-              <BookSpine index={5} theme={effectiveTheme} letter="h" width="w-4 sm:w-5" height="h-11 sm:h-13" color="bg-white" decoration="bands" tilt="-rotate-[1.5deg]" />
-              <BookSpine index={6} theme={effectiveTheme} letter="é" width="w-4 sm:w-5" height="h-9 sm:h-11" color="bg-white" decoration="stripes" />
-              <BookSpine index={7} theme={effectiveTheme} letter="r" width="w-4 sm:w-5" height="h-10 sm:h-12" color="bg-white" decoration="bands" />
-              <BookSpine index={8} theme={effectiveTheme} letter="o" width="w-4 sm:w-5" height="h-7 sm:h-9" color="bg-white" decoration="gold" tilt="rotate-[1deg]" />
-
-              <BookSpine index={9} theme={effectiveTheme} width="w-2 sm:w-3" height="h-9 sm:h-11" color="bg-white" decoration="ornament" />
-              <BookSpine index={10} theme={effectiveTheme} width="w-3 sm:w-4" height="h-6 sm:h-8" color="bg-white" decoration="plain" tilt="rotate-2" />
-              <BookSpine index={11} theme={effectiveTheme} width="w-2 sm:w-3" height="h-8 sm:h-10" color="bg-white" decoration="bands" />
+              Cohéro Student
             </Link>
           </div>
           
@@ -268,8 +255,6 @@ const Navbar: React.FC<NavbarProps> = ({
                 ))}
 
                 <NavDropdown title="Mere" icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}>
-                   <NavDropdownLink href="/shop" icon={<ShoppingBag className="w-4 h-4 text-rose-500" />}>Shop</NavDropdownLink>
-
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
                     <NavDropdownLink 
                       href="/pensum-search" 
@@ -295,10 +280,6 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center space-x-2"
               >
                 <Link href="/upgrade" prefetch={false} className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Priser</Link>
-                <Link href="/shop" prefetch={false} className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all flex items-center gap-2`}>
-                  <ShoppingBag className="w-4 h-4 text-rose-500" />
-                  Shop
-                </Link>
                 
                 <NavDropdown title="Udforsk" icon={<Wand2 className="w-4 h-4 text-amber-500" />}>
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
