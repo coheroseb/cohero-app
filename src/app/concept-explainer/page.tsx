@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import PageHeader from '@/components/PageHeader';
 import { marked } from 'marked';
 
-import { searchRetsinformationApiAction, getRetsinformationBillTextAction } from '@/app/actions';
+import { searchRetsinformationApiAction, getRetsinformationBillTextAction, explainConceptAction, unifiedChatAction } from '@/app/actions';
 
 // Configure marked
 marked.setOptions({
@@ -659,10 +659,12 @@ function ConceptChatContent() {
   const inputRef = useRef<HTMLInputElement>(null);
   const urlProcessed = useRef(false);
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  // Scroll to bottom when user sends a new message
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }, []);
 
   const hasConcept = messages.some(m => m.role === 'concept');
 
@@ -724,6 +726,7 @@ function ConceptChatContent() {
     const aiMsgId = (Date.now() + 1).toString();
     const userMsg: ChatMsg = { id: Date.now().toString(), role: 'user', text: term };
     setMessages(prev => [...prev, userMsg]);
+    scrollToBottom();
 
     const normalised = term.toLowerCase().trim().replace(/[^a-z0-9æøå-]/g, '-');
     const profKey = (userProfile.profession || 'socialrådgiver').toLowerCase().replace(/[^a-z0-9æøå-]/g, '-');
@@ -732,72 +735,6 @@ function ConceptChatContent() {
     setLoading(true);
 
     try {
-        const flowPath = "/runAiFlow";
-        const prodBaseUrl = "https://runaiflow-7pguetq4hq-uc.a.run.app";
-        const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
-          ? (process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL + flowPath) 
-          : (prodBaseUrl + flowPath);
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000);
-
-        // Helper to handle streaming
-        const handleStream = async (
-          reader: ReadableStreamDefaultReader<Uint8Array>, 
-          onChunk: (data: any) => void
-        ) => {
-          const decoder = new TextDecoder();
-          let buffer = '';
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const text = decoder.decode(value, { stream: true });
-            buffer += text;
-            
-            // Split by double newline (standard SSE) or single newline (sometimes used)
-            const parts = buffer.split(/\n\n|\n/);
-            buffer = parts.pop() || '';
-            
-            for (const part of parts) {
-              const line = part.trim();
-              if (line.startsWith('data: ')) {
-                let chunk;
-                try {
-                  const lineData = line.substring(6).trim();
-                  if (!lineData) continue;
-                  chunk = JSON.parse(lineData);
-                } catch (e) {
-                  // Partial JSON is common in streaming, but SSE should deliver whole lines
-                  console.warn("[Stream] Parse error for line:", line, e);
-                  continue;
-                }
-                
-                console.log("[Stream] Raw chunk:", chunk);
-                if (chunk && chunk.error) {
-                  throw new Error(chunk.error);
-                }
-                
-                // Genkit sends data in various nested forms:
-                // 1. { chunk: { ... } } -> streaming partials
-                // 2. { done: true, result: { data: { ... } } } -> final result
-                // 3. { message: { ... } } -> sometimes used in different versions
-                
-                let data = null;
-                if (chunk.chunk) data = chunk.chunk;
-                else if (chunk.done && chunk.result) data = chunk.result.data || chunk.result;
-                else if (chunk.message) data = chunk.message;
-                else if (!chunk.index && !chunk.done) data = chunk; // Raw object
-                
-                if (data) {
-                  console.log("[Stream] Extracted data:", data);
-                  onChunk(data);
-                }
-              }
-            }
-          }
-        };
-
         if (isInitial) {
           // Check cache first
           const cached = sessionStorage.getItem(cacheKey);
@@ -808,6 +745,7 @@ function ConceptChatContent() {
             setCurrentConceptName(term);
             trackUsage(term);
             setLoading(false);
+            scrollToBottom();
             return;
           }
 
@@ -823,157 +761,68 @@ function ConceptChatContent() {
             setCurrentConceptName(term);
             trackUsage(term);
             setLoading(false);
+            scrollToBottom();
             return;
           }
 
-          // No cache, no DB - start AI generation
-          setMessages(prev => [...prev, { id: aiMsgId, role: 'concept', explanation: {} as any, conceptName: term }]);
-
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              flowName: 'explainConceptFlow', 
-              data: { 
-                concept: term, 
-                profession: userProfile.profession || 'Socialrådgiver'
-              }, 
-              stream: true 
-            }),
-            signal: controller.signal,
+          // No cache, no DB - fetch complete explanation at once!
+          const result = await explainConceptAction({
+            concept: term,
+            profession: userProfile.profession || 'Socialrådgiver'
           });
-          clearTimeout(timeoutId);
 
-          if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Server returned ${response.status}: ${errText}`);
-          }
+          const explanation = (result?.explanation || result) as Explanation;
+          if (explanation && (explanation.definition || explanation.etymology || explanation.relevance)) {
+            setMessages(prev => [...prev, { id: aiMsgId, role: 'concept', explanation, conceptName: term }]);
+            setCurrentDefinition(explanation.definition || '');
+            setCurrentConceptName(term);
 
-          if (!response.body) throw new Error('No response body received from server');
-          
-          await handleStream(response.body.getReader(), (data) => {
-            setMessages(prev => prev.map(m => {
-              if (m.id !== aiMsgId) return m;
-              
-              const currentEx = m.explanation || {};
-              
-              if (typeof data === 'string') {
-                // If it's a raw string, it's a delta, so we APPEND to definition
-                return {
-                  ...m,
-                  explanation: {
-                    ...currentEx,
-                    definition: (currentEx.definition || '') + data
-                  } as Explanation
-                };
-              } else {
-                // If it's an object, it's accumulated, so we OVERWRITE/MERGE
-                return {
-                  ...m,
-                  explanation: {
-                    ...currentEx,
-                    ...data
-                  } as Explanation
-                };
+            // Background save
+            (async () => {
+              try {
+                const batch = writeBatch(firestore);
+                batch.set(docRef, { conceptName: term, explanation, profession: userProfile.profession, createdAt: serverTimestamp() });
+                if (!snap2.exists()) batch.set(genRef, { conceptName: term, explanation, profession: 'Generel', createdAt: serverTimestamp() });
+                await batch.commit();
+                sessionStorage.setItem(cacheKey, JSON.stringify(explanation));
+              } catch (e) {
+                console.error("Error saving concept explanation:", e);
               }
-            }));
-          });
-
-          // After stream completion, find the final state and save
-          setMessages(currentMessages => {
-             const finalMsg = currentMessages.find(m => m.id === aiMsgId);
-             const explanation = finalMsg?.explanation as Explanation;
-             if (explanation && explanation.definition) {
-                setCurrentDefinition(explanation.definition);
-                setCurrentConceptName(term);
-                // Background save
-                (async () => {
-                  const batch = writeBatch(firestore);
-                  batch.set(docRef, { conceptName: term, explanation, profession: userProfile.profession, createdAt: serverTimestamp() });
-                  if (!snap2.exists()) batch.set(genRef, { conceptName: term, explanation, profession: 'Generel', createdAt: serverTimestamp() });
-                  await batch.commit();
-                  sessionStorage.setItem(cacheKey, JSON.stringify(explanation));
-                })();
-             }
-             return currentMessages;
-          });
+            })();
+          } else {
+            throw new Error("Kunne ikke generere forklaring.");
+          }
 
           trackUsage(term);
 
         } else {
-          // Follow-up chat with streaming
-          setMessages(prev => [...prev, { id: aiMsgId, role: 'followup', text: '' }]);
-
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              flowName: 'unifiedChatFlow', 
-              data: {
-                message: term,
-                chatHistory: buildHistory(),
-                persona: 'academic',
-                context: {
-                  relevantDocumentIds: [],
-                  lawContext: `AKTUEL FAGLIG KONTEKST:\nBegreb: ${currentConceptName}\nDefinition: ${stripHtml(currentDefinition).substring(0, 1000)}`,
-                },
-              },
-              stream: true
-            }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-
-          if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Server returned ${response.status}: ${errText}`);
-          }
-
-          if (!response.body) throw new Error('No response body received from server');
-
-          await handleStream(response.body.getReader(), (data) => {
-            // Extraction
-            const answer = data.answer || data.text;
-            
-            if (answer) {
-              // Genkit sends accumulated objects, so we OVERWRITE
-              setMessages(prev => prev.map(m => 
-                m.id === aiMsgId ? { ...m, text: answer } : m
-              ));
-            } else if (typeof data === 'string' && data.length > 0) {
-              // If it's a raw string, it might be a delta, so we APPEND
-              setMessages(prev => prev.map(m => 
-                m.id === aiMsgId ? { ...m, text: (m.text || '') + data } : m
-              ));
+          // Follow-up chat - fetch complete answer at once!
+          const resp = await unifiedChatAction({
+            message: term,
+            chatHistory: buildHistory() as any,
+            persona: 'academic',
+            context: {
+              relevantDocumentIds: [],
+              lawContext: `AKTUEL FAGLIG KONTEKST:\nBegreb: ${currentConceptName}\nDefinition: ${stripHtml(currentDefinition).substring(0, 1000)}`,
             }
           });
+
+          const answerText = resp?.data?.answer || resp?.answer || "Beklager, jeg kunne ikke behandle dit spørgsmål.";
+          setMessages(prev => [...prev, { id: aiMsgId, role: 'followup', text: answerText }]);
         }
     } catch (err: any) {
       console.error('[ConceptExplainer] Error:', err);
-      // Remove placeholder AI message
-      setMessages(prev => prev.filter(m => m.id !== aiMsgId));
-
-      if (err.name !== 'AbortError') {
-        const isGeminiError = err.message?.includes('GoogleGenerativeAI') || err.message?.includes('Gemini');
-        toast({ 
-          variant: 'destructive', 
-          title: 'Fejl', 
-          description: isGeminiError 
-            ? 'Der opstod en midlertidig fejl hos Google Gemini. Prøv venligst igen om et øjeblik.' 
-            : 'Noget gik galt. Prøv igen.' 
-        });
-      } else {
-        toast({ 
-            variant: 'destructive', 
-            title: 'Forbindelse afbrudt', 
-            description: 'Svaret tog for lang tid. Prøv venligst igen.' 
-          });
-      }
+      toast({ 
+        variant: 'destructive', 
+        title: 'Fejl', 
+        description: 'Der opstod en fejl under genereringen. Prøv igen om et øjeblik.' 
+      });
     } finally {
       setLoading(false);
+      scrollToBottom();
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [user, userProfile, firestore, hasConcept, currentConceptName, currentDefinition, buildHistory, checkLimit, refetchUserProfile, toast, trackUsage]);
+  }, [user, userProfile, firestore, hasConcept, currentConceptName, currentDefinition, buildHistory, checkLimit, refetchUserProfile, toast, trackUsage, scrollToBottom]);
 
   const startNew = useCallback(() => {
     setMessages([]);
