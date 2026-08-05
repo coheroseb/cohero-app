@@ -680,13 +680,34 @@ function ConceptChatContent() {
             return;
           }
 
-          // No cache, no DB - fetch complete explanation at once!
-          const result = await explainConceptAction({
+          const rawResult: any = await explainConceptAction({
             concept: term,
             profession: userProfile.profession || 'Socialrådgiver'
           });
 
-          const explanation = (result?.explanation || result) as Explanation;
+          let explanation = (rawResult?.data?.explanation || rawResult?.data || rawResult?.explanation || rawResult) as Explanation;
+          
+          // Fallback normalization if string or alternative object shape returned
+          if (typeof explanation === 'string') {
+            explanation = {
+              definition: explanation,
+              etymology: '',
+              relevance: '',
+              perspectives: [],
+              examples: [],
+              faq: []
+            } as any;
+          } else if (explanation && !explanation.definition && (explanation as any).answer) {
+            explanation = {
+              definition: (explanation as any).answer,
+              etymology: '',
+              relevance: '',
+              perspectives: [],
+              examples: [],
+              faq: []
+            } as any;
+          }
+
           if (explanation && (explanation.definition || explanation.etymology || explanation.relevance)) {
             setMessages(prev => [...prev, { id: aiMsgId, role: 'concept', explanation, conceptName: term }]);
             setCurrentDefinition(explanation.definition || '');
