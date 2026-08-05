@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import PageHeader from '@/components/PageHeader';
 import { marked } from 'marked';
 
-import { searchRetsinformationApiAction, getRetsinformationBillTextAction, explainConceptAction, unifiedChatAction } from '@/app/actions';
+import { searchRetsinformationLawsAction, searchRetsinformationApiAction, getRetsinformationBillTextAction, explainConceptAction, unifiedChatAction } from '@/app/actions';
 
 // Configure marked
 marked.setOptions({
