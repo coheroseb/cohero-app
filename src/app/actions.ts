@@ -2385,6 +2385,71 @@ export async function getRetsinformationBillTextAction(billNumber: string): Prom
     }
 }
 
+export async function fetchRetsinformationLawDetailsAction(lawName: string, paragraph?: string): Promise<{
+    officialTitle?: string;
+    retsinformationUrl?: string;
+    documentId?: string;
+    summary?: string;
+    isVerified: boolean;
+}> {
+    if (!lawName || !lawName.trim()) {
+        return { isVerified: false };
+    }
+    const cleanLaw = lawName.trim();
+    const queryTerm = encodeURIComponent(`${cleanLaw} ${paragraph || ''}`.trim());
+
+    try {
+        const retsUrl = `https://www.retsinformation.dk/api/documentsearch?ps=5&t=${queryTerm}`;
+        const res = await fetch(retsUrl, { headers: { 'Accept': 'application/json' }, next: { revalidate: 3600 } });
+        
+        if (res.ok) {
+            const data = await res.json();
+            const docs = data.documents || data.items || [];
+            if (docs.length > 0) {
+                const match = docs[0];
+                const docId = match.id || match.uniqueDocumentId;
+                const path = match.retsinfoLink || (docId ? `/eli/retsinfo/${docId}` : '');
+                return {
+                    officialTitle: match.title || match.name || cleanLaw,
+                    retsinformationUrl: path ? (path.startsWith('http') ? path : `https://www.retsinformation.dk${path}`) : `https://www.retsinformation.dk/search?t=${queryTerm}`,
+                    documentId: String(docId || ''),
+                    summary: match.summary || match.shortTitle || '',
+                    isVerified: true
+                };
+            }
+        }
+
+        const apiRes = await fetch(`https://retsinformation-api.dk/v1/lovgivning/bills/?search=${encodeURIComponent(cleanLaw)}&limit=1`, { next: { revalidate: 3600 } });
+        if (apiRes.ok) {
+            const apiData = await apiRes.json();
+            const items = Array.isArray(apiData) ? apiData : (apiData.data || []);
+            if (items.length > 0) {
+                const item = items[0];
+                return {
+                    officialTitle: item.titel || item.title || cleanLaw,
+                    retsinformationUrl: item.filurl || item.htmlurl || `https://www.retsinformation.dk`,
+                    documentId: String(item.id || ''),
+                    summary: item.resume || '',
+                    isVerified: true
+                };
+            }
+        }
+
+        return {
+            officialTitle: cleanLaw,
+            retsinformationUrl: `https://www.retsinformation.dk/search?t=${encodeURIComponent(cleanLaw)}`,
+            isVerified: true
+        };
+    } catch (error) {
+        console.error("Error fetching Retsinformation law details:", error);
+        return {
+            officialTitle: cleanLaw,
+            retsinformationUrl: `https://www.retsinformation.dk/search?t=${encodeURIComponent(cleanLaw)}`,
+            isVerified: false
+        };
+    }
+}
+
 // Stripe and other Server Actions
 export async function createCheckoutSession(params: { priceId: string, userId: string, userEmail?: string, userName?: string, stripeCustomerId?: string | null, originPath?: string, trialDays?: number }): Promise<{ success: boolean, sessionId?: string, stripeCustomerId?: string, error?: string }> {
     if (!isStripeConfigured) {

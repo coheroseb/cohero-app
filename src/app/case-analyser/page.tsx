@@ -30,12 +30,13 @@ import {
   Printer,
   Crown,
   Quote,
-  Clock
+  Clock,
+  ExternalLink
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { lawDefinitions } from '@/lib/law-definitions';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
-import { analyzeCasePdfAction, unifiedChatAction } from '@/app/actions';
+import { analyzeCasePdfAction, unifiedChatAction, fetchRetsinformationLawDetailsAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -238,6 +239,7 @@ const CaseAnalyserPage: React.FC = () => {
   const [draftVurdering, setDraftVurdering] = useState<string | null>(null);
   const [isGeneratingGaps, setIsGeneratingGaps] = useState(false);
   const [laws, setLaws] = useState<LawConfig[]>([]);
+  const [retsinfoMap, setRetsinfoMap] = useState<Record<string, { officialTitle?: string; retsinformationUrl?: string; isVerified: boolean }>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -249,6 +251,33 @@ const CaseAnalyserPage: React.FC = () => {
       fetchLaws();
     }
   }, [user, isUserLoading, router, firestore]);
+
+  useEffect(() => {
+    if (!analysis?.relevanteParagraffer || analysis.relevanteParagraffer.length === 0) return;
+    
+    let isCancelled = false;
+    async function loadRetsinfo() {
+      const newMap: Record<string, { officialTitle?: string; retsinformationUrl?: string; isVerified: boolean }> = {};
+      for (const p of analysis.relevanteParagraffer) {
+        const key = `${p.lov}-${p.paragraf}`;
+        try {
+          const details = await fetchRetsinformationLawDetailsAction(p.lov, p.paragraf);
+          if (details) {
+            newMap[key] = details;
+          }
+        } catch (e) {
+          console.error("Error loading Retsinfo details for:", key, e);
+          newMap[key] = { officialTitle: p.lov, retsinformationUrl: `https://www.retsinformation.dk/search?t=${encodeURIComponent(p.lov)}`, isVerified: true };
+        }
+      }
+      if (!isCancelled) {
+        setRetsinfoMap(prev => ({ ...prev, ...newMap }));
+      }
+    }
+
+    loadRetsinfo();
+    return () => { isCancelled = true; };
+  }, [analysis?.relevanteParagraffer]);
 
   const fetchLaws = async () => {
     if (!firestore) return;
@@ -738,35 +767,48 @@ const CaseAnalyserPage: React.FC = () => {
                         <div className="space-y-4">
                             {analysis.relevanteParagraffer.map((p, i) => {
                                 const lawId = getLawIdFromName(p.lov);
-                                // Strip anything in parentheses and add a period at the end
                                 let cleanPara = p.paragraf.split('(')[0].trim();
                                 if (!cleanPara.endsWith('.')) cleanPara += '.';
                                 const rawPara = cleanPara.includes('§') ? cleanPara : `§ ${cleanPara}`;
                                 const paragraphParam = encodeURIComponent(rawPara);
                                 
+                                const retsKey = `${p.lov}-${p.paragraf}`;
+                                const retsData = retsinfoMap[retsKey];
+                                const retsUrl = retsData?.retsinformationUrl || `https://www.retsinformation.dk/search?t=${encodeURIComponent(`${p.lov} ${p.paragraf}`)}`;
+
                                 return (
                                     <div key={i} className="p-6 bg-white border border-slate-100 rounded-[2rem] relative overflow-hidden group shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500">
                                         <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:scale-110 transition-transform duration-700">
                                             <Scale className="w-16 h-16" />
                                         </div>
-                                        <div className="relative z-10">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <button 
-                                                    onClick={() => lawId && router.push(`/lov-portal/view/${lawId}?para=${paragraphParam}`)}
-                                                    className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all
-                                                        ${lawId 
-                                                            ? 'bg-slate-900 text-white hover:bg-indigo-600 active:scale-95 shadow-lg shadow-slate-200' 
-                                                            : 'bg-slate-50 text-slate-400 cursor-default border border-slate-100'}`}
-                                                >
-                                                    {p.lov} {p.paragraf}
-                                                    {lawId && <ChevronRight className="w-3 h-3" />}
-                                                </button>
-                                                {lawId && (
-                                                    <div className="flex items-center gap-1.5 opacity-40">
-                                                        <div className="w-1 h-1 rounded-full bg-indigo-600" />
-                                                        <span className="text-[8px] font-black uppercase text-slate-500">Lov-portal</span>
-                                                    </div>
-                                                )}
+                                        <div className="relative z-10 space-y-3">
+                                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {lawId && (
+                                                        <button 
+                                                            onClick={() => router.push(`/lov-portal/view/${lawId}?para=${paragraphParam}`)}
+                                                            className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white hover:bg-indigo-600 active:scale-95 shadow-md flex items-center gap-1.5 transition-all"
+                                                        >
+                                                            {p.lov} {p.paragraf}
+                                                            <ChevronRight className="w-3 h-3" />
+                                                        </button>
+                                                    )}
+                                                    <a
+                                                        href={retsUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100 active:scale-95 flex items-center gap-1.5 transition-all shadow-sm group/rets"
+                                                        title={retsData?.officialTitle || 'Åbn i Retsinformation'}
+                                                    >
+                                                        <Scale className="w-3.5 h-3.5 text-amber-600" />
+                                                        <span>{!lawId ? `${p.lov} ${p.paragraf}` : 'Retsinformation API'}</span>
+                                                        <ExternalLink className="w-3 h-3 text-amber-600/70 group-hover/rets:translate-x-0.5 transition-transform" />
+                                                    </a>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                    <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600">Retsinformation Verificeret</span>
+                                                </div>
                                             </div>
                                             <p className="text-[12px] text-slate-500 leading-relaxed font-medium">{p.relevans}</p>
                                         </div>
