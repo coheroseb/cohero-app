@@ -44,21 +44,37 @@ import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/fire
 import { collection, doc, addDoc, updateDoc, serverTimestamp, query, orderBy, limit, getDocs, deleteDoc } from 'firebase/firestore';
 import type { CaseAnalysis } from '@/ai/flows/types';
 
-// PDF extraction helper (reused from SeminarArchitect but simplified)
+// PDF extraction helper with fallback worker URLs
 async function extractTextFromPdf(file: File): Promise<string> {
-  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist/build/pdf.mjs');
-  const pdfjsVersion = '4.10.38';
-  GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
-  const buffer = await file.arrayBuffer();
-  const pdf = await getDocument({ data: new Uint8Array(buffer) }).promise;
-  let fullText = "";
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const strings = content.items.map((item: any) => item.str || '').join(' ');
-    fullText += strings + "\n\n";
+  try {
+    const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist/build/pdf.mjs');
+    const pdfjsVersion = '4.10.38';
+    GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.mjs`;
+    const buffer = await file.arrayBuffer();
+    const pdf = await getDocument({ data: new Uint8Array(buffer) }).promise;
+    let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const strings = content.items.map((item: any) => item.str || '').join(' ');
+      fullText += strings + "\n\n";
+    }
+    return fullText;
+  } catch (e) {
+    console.warn("Primary PDF worker failed, trying fallback...", e);
+    const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist/build/pdf.mjs');
+    GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs`;
+    const buffer = await file.arrayBuffer();
+    const pdf = await getDocument({ data: new Uint8Array(buffer) }).promise;
+    let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const strings = content.items.map((item: any) => item.str || '').join(' ');
+      fullText += strings + "\n\n";
+    }
+    return fullText;
   }
-  return fullText;
 }
 
 // ---------------------------------------------------------------------------
@@ -892,13 +908,28 @@ const CaseAnalyserPage: React.FC = () => {
                     <MessageSquare className="w-4 h-4 mr-2" /> Start Case Sparring
                 </Button>
 
-                <Button 
-                    onClick={() => window.print()}
-                    variant="outline"
-                    className="w-full h-14 border-amber-200 text-amber-900 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-50 transition-all text-[11px]"
-                >
-                    <Printer className="w-4 h-4 mr-2" /> Eksporter Rapport
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                      onClick={() => {
+                          if (!analysis) return;
+                          const reportText = `CASE-ANALYSE: ${file?.name || 'Case'}\n\nRESUMÉ:\n${analysis.sammenfatning}\n\nPERSONGALLERI:\n${analysis.personer.map(p => `- ${p.navn} (${p.rolle}): ${p.beskrivelse}`).join('\n')}\n\nJURIDISK FUNDAMENT:\n${analysis.relevanteParagraffer.map(p => `- ${p.lov} ${p.paragraf}: ${p.relevans}`).join('\n')}\n\nHÆNDELSESFORLØB:\n${analysis.tidslinje.map(t => `- [${t.dato}] ${t.hændelse}`).join('\n')}${draftVurdering ? `\n\nSOCIALFAGLIG VURDERING:\n${draftVurdering}` : ''}`;
+                          navigator.clipboard.writeText(reportText);
+                          toast({ title: "Kopieret!", description: "Hele analysen er kopieret til udklipsholderen." });
+                      }}
+                      variant="outline"
+                      className="h-12 border-amber-200 text-amber-900 rounded-xl font-bold uppercase tracking-wider hover:bg-amber-50 transition-all text-[10px]"
+                  >
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-600" /> Kopier Tekst
+                  </Button>
+
+                  <Button 
+                      onClick={() => window.print()}
+                      variant="outline"
+                      className="h-12 border-amber-200 text-amber-900 rounded-xl font-bold uppercase tracking-wider hover:bg-amber-50 transition-all text-[10px]"
+                  >
+                      <Printer className="w-3.5 h-3.5 mr-1.5" /> Eksporter PDF
+                  </Button>
+                </div>
 
                 <Button 
                     variant="ghost" 
@@ -1195,7 +1226,7 @@ const CaseAnalyserPage: React.FC = () => {
 
                   {/* Footer */}
                   <div className="pt-20 border-t border-slate-100 text-[10px] text-center text-slate-400 font-bold uppercase tracking-[0.6em]">
-                      Slut på rapport • Genereret via cohéro.dk
+                      Slut på rapport • Genereret via student.cohero.dk
                   </div>
               </div>
           )}
