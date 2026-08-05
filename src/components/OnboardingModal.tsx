@@ -242,14 +242,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                       </p>
                     </div>
                     <div className="w-full max-w-sm relative group mt-2">
-                      <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
-                      <Input
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none z-10" />
+                      <input
                         type="text"
                         placeholder="Dit fulde navn"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
-                        className="w-full pl-13 pr-5 py-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all text-base h-14 font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 shadow-sm"
+                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all text-base h-14 font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 shadow-sm"
                         autoFocus
                       />
                     </div>
