@@ -172,12 +172,11 @@ const Navbar: React.FC<NavbarProps> = ({
       {
         title: "Hovedmenu",
         items: [
-
           { title: "Korrektur", path: "/korrektur", icon: <Sparkles className="w-5 h-5" /> },
           { title: "Slides", path: "/mine-seminarer", icon: <Presentation className="w-5 h-5" /> },
           { title: "Mit pensum", path: "/mine-materialer", icon: <FileBox className="w-5 h-5 text-indigo-500" /> },
           { title: "Pensumsøgning", path: "/pensum-search", icon: <BookOpen className="w-5 h-5 text-indigo-500" /> },
-          // { title: "Jura", path: "https://law.cohero.dk", icon: <Scale className="w-5 h-5" /> },
+          { title: "Case-analyse", path: "/case-analyser", icon: <FileText className="w-5 h-5 text-amber-500" /> },
           { title: "Form fremtiden", path: "/medbestemmelse", icon: <Lightbulb className="w-5 h-5" /> },
         ]
       }
@@ -225,7 +224,6 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
           
 
-
           {/* Desktop menu - Modern Sleek Links */}
           <div className="hidden lg:flex items-center space-x-2">
             {user ? (
@@ -238,7 +236,6 @@ const Navbar: React.FC<NavbarProps> = ({
                 {[
                   { label: "Mit pensum", href: "/mine-materialer", icon: <FileBox className="w-5 h-5"/>, color: "bg-indigo-100 text-indigo-700" },
                   { label: "Slides", href: "/mine-seminarer", icon: <Presentation className="w-5 h-5"/>, color: "bg-emerald-100 text-emerald-700" },
-                  // { label: "Jura", href: "https://law.cohero.dk", icon: <Scale className="w-5 h-5"/>, color: "bg-sky-100 text-sky-700" }
                 ].map((item) => (
                   <Link 
                     key={item.label} 
@@ -255,6 +252,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 ))}
 
                 <NavDropdown title="Mere" icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}>
+                   <NavDropdownLink href="/case-analyser" icon={<FileText className="w-4 h-4 text-amber-500" />}>Case-analyse</NavDropdownLink>
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
                     <NavDropdownLink 
                       href="/pensum-search" 
@@ -282,6 +280,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 <Link href="/upgrade" prefetch={false} className={`px-5 py-2.5 rounded-xl text-[13px] font-extrabold text-slate-600 hover:text-slate-950 transition-all`}>Priser</Link>
                 
                 <NavDropdown title="Udforsk" icon={<Wand2 className="w-4 h-4 text-amber-500" />}>
+                   <NavDropdownLink href="/case-analyser" icon={<FileText className="w-4 h-4 text-amber-500" />}>Case-analyse</NavDropdownLink>
                    <NavDropdownLink href="/korrektur" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>Korrekturlæsning</NavDropdownLink>
 
                    <NavDropdownLink href="/om-second-opinion" icon={<Scale className="w-4 h-4 text-emerald-500" />}>Få en Second Opinion</NavDropdownLink>
@@ -313,7 +312,16 @@ const Navbar: React.FC<NavbarProps> = ({
                 <Link href="/settings" className="w-10 h-10 rounded-2xl bg-amber-950 flex items-center justify-center text-amber-400 font-black text-sm shadow-lg shadow-amber-950/20 active:scale-95 transition-all lg:hover:rotate-6">
                     {user.displayName?.charAt(0)}
                 </Link>
-                <button onClick={onLogout} className="p-2.5 text-slate-400 lg:hover:text-rose-500 transition-all group active:scale-95">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onLogout();
+                  }}
+                  className="p-2.5 text-slate-400 lg:hover:text-rose-500 transition-all group active:scale-95 cursor-pointer relative z-20"
+                  title="Log ud"
+                >
                   <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                 </button>
               </div>

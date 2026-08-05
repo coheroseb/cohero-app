@@ -155,6 +155,7 @@ export default function Sidebar() {
     {
       label: 'Værktøjer',
       items: [
+        { label: 'Case-analyse', path: '/case-analyser', icon: <FileText className="w-4 h-4 text-amber-500" /> },
         { label: 'Case-træner', path: '/case-trainer', icon: <Zap className="w-4 h-4" /> },
         { label: 'Journal-træner', path: '/journal-trainer', icon: <FileText className="w-4 h-4" /> },
         { label: 'Second Opinion', path: '/second-opinion', icon: <Scale className="w-4 h-4" /> },
@@ -239,8 +240,13 @@ export default function Sidebar() {
               </div>
             </Link>
             <button
-              onClick={handleLogout}
-              className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all shrink-0"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleLogout(e);
+              }}
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shrink-0 cursor-pointer relative z-20"
               title="Log ud"
             >
               <LogOut className="w-4 h-4" />

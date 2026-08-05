@@ -726,8 +726,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, openAuthPage]);
 
-  const handleLogout = useCallback(() => {
-    if (auth) signOut(auth);
+  const handleLogout = useCallback(async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setUserProfile(null);
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error("Signout error:", err);
+      }
+    }
     if (isStandaloneGroups) {
       router.push('/rum/groups');
     } else {
