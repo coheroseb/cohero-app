@@ -739,10 +739,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         console.error("Signout error:", err);
       }
     }
-    if (isStandaloneGroups) {
-      router.push('/rum/groups');
-    } else {
-      router.push('/');
+    const target = isStandaloneGroups ? '/rum/groups' : '/';
+    router.push(target);
+    if (typeof window !== 'undefined') {
+      window.location.href = target;
     }
   }, [auth, isStandaloneGroups, router]);
   

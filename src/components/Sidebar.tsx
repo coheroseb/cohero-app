@@ -224,14 +224,14 @@ export default function Sidebar() {
         />
 
         {user && (
-          <div className="mt-2 flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-[var(--radius-md)] p-3">
-            <Link href="/settings" className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+          <div className="mt-2 flex items-center justify-between gap-2 bg-slate-50 border border-slate-200/80 rounded-[var(--radius-md)] p-2.5 shadow-sm">
+            <Link href="/settings" className="flex items-center gap-3 overflow-hidden flex-1 min-w-0 group hover:opacity-80 transition-opacity">
               {/* Avatar */}
               <div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white font-black text-sm shadow-sm">
                 {(user.displayName?.charAt(0) || user.email?.charAt(0) || '?').toUpperCase()}
               </div>
               <div className="overflow-hidden min-w-0">
-                <p className="font-semibold text-slate-900 text-[13px] truncate leading-tight">
+                <p className="font-semibold text-slate-900 text-[13px] truncate leading-tight group-hover:text-indigo-600 transition-colors">
                   {user.displayName || user.email?.split('@')[0]}
                 </p>
                 <p className="label-2xs text-slate-400 truncate">
@@ -246,8 +246,9 @@ export default function Sidebar() {
                 e.stopPropagation();
                 handleLogout(e);
               }}
-              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shrink-0 cursor-pointer relative z-20"
-              title="Log ud"
+              className="w-9 h-9 flex items-center justify-center bg-rose-50 border border-rose-100/80 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-xl transition-all shrink-0 cursor-pointer shadow-sm active:scale-95 z-30"
+              title="Log ud af Cohéro"
+              aria-label="Log ud"
             >
               <LogOut className="w-4 h-4" />
             </button>
