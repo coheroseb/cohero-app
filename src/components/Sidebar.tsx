@@ -312,7 +312,7 @@ export default function Sidebar() {
       </AnimatePresence>
 
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white/85 backdrop-blur-xl border-r border-slate-200/50 flex-col py-6 px-4 z-30 shadow-sm">
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white/85 backdrop-blur-xl border-r border-slate-200/50 flex-col py-6 px-4 z-[100] shadow-sm">
         <SidebarContent />
       </aside>
     </>

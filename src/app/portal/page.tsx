@@ -1330,9 +1330,9 @@ const PortalPageContent: React.FC = () => {
         <motion.div 
           initial={{ y: 100 }}
           animate={{ y: 0 }}
-          className="fixed bottom-8 inset-x-0 flex justify-center z-50 px-6"
+          className="fixed bottom-8 inset-x-0 flex justify-center z-50 px-6 pointer-events-none"
         >
-          <Link href="/upgrade" className="bg-slate-950 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full flex items-center gap-3 sm:gap-4 shadow-2xl hover:scale-105 transition-all border border-white/10 group">
+          <Link href="/upgrade" className="bg-slate-950 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full flex items-center gap-3 sm:gap-4 shadow-2xl hover:scale-105 transition-all border border-white/10 group pointer-events-auto cursor-pointer">
             <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
             <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">Opgrader til Kollega+</span>
             <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-amber-400 group-hover:text-amber-950 transition-colors">
