@@ -8,8 +8,10 @@ import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
 import { wrapEmailHtml } from '@/lib/email-helper';
 
-const PLATFORM_FEE_PERCENT = 15;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://student.cohero.dk';
+let APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://student.cohero.dk';
+if (APP_URL.includes('cohero.dk') && !APP_URL.includes('student.cohero.dk')) {
+    APP_URL = APP_URL.replace('cohero.dk', 'student.cohero.dk');
+}
 
 /**
  * Creates a new assistance request and sends confirmation email.

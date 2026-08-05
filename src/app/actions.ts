@@ -2354,7 +2354,10 @@ export async function createCheckoutSession(params: { priceId: string, userId: s
     const headersList = headers();
     const host = headersList.get('host');
     const protocol = headersList.get('x-forwarded-proto') || 'https';
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+    let origin = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
+    if (origin.includes('cohero.dk') && !origin.includes('student.cohero.dk')) {
+        origin = origin.replace('cohero.dk', 'student.cohero.dk');
+    }
 
     const basePath = originPath || '/portal';
     const separator = basePath.includes('?') ? '&' : '?';
@@ -2498,7 +2501,10 @@ export async function createPortalSession(stripeCustomerId: string): Promise<{ u
     const headersList = headers();
     const host = headersList.get('host');
     const protocol = headersList.get('x-forwarded-proto') || 'https';
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+    let origin = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
+    if (origin.includes('cohero.dk') && !origin.includes('student.cohero.dk')) {
+        origin = origin.replace('cohero.dk', 'student.cohero.dk');
+    }
 
     try {
         const portalSession = await stripe.billingPortal.sessions.create({
@@ -2530,7 +2536,10 @@ export async function createPortalSessionAction(stripeCustomerId: string): Promi
     // We use headers to get the dynamic host if NEXT_PUBLIC_APP_URL is missing
     const host = headers().get('host');
     const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+    if (baseUrl.includes('cohero.dk') && !baseUrl.includes('student.cohero.dk')) {
+        baseUrl = baseUrl.replace('cohero.dk', 'student.cohero.dk');
+    }
 
     try {
         const portalSession = await stripe.billingPortal.sessions.create({

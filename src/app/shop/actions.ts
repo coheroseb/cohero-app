@@ -41,7 +41,10 @@ export async function createShopCheckoutSessionAction(items: any[], userId: stri
         // 3. Create Stripe Session
         const host = headers().get('host');
         const protocol = host?.includes('localhost') ? 'http' : 'https';
-        const baseUrl = `${protocol}://${host}`;
+        let baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+        if (baseUrl.includes('cohero.dk') && !baseUrl.includes('student.cohero.dk')) {
+            baseUrl = baseUrl.replace('cohero.dk', 'student.cohero.dk');
+        }
         
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],

@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   // 2. Exchange code for tokens
   const clientId = process.env.AZURE_CLIENT_ID;
   const clientSecret = process.env.AZURE_CLIENT_SECRET;
-  const redirectUri = process.env.AZURE_REDIRECT_URI || 'https://cohero.dk/api/auth/callback/microsoft';
+  const redirectUri = process.env.AZURE_REDIRECT_URI || 'https://student.cohero.dk/api/auth/callback/microsoft';
 
   try {
     const response = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
