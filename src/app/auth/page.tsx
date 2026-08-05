@@ -10,6 +10,8 @@ import { Loader2, Check, AlertTriangle, Mail, Lock, User, ArrowRight, Sparkles, 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Suspense } from 'react';
 
+import HeaderNavbar from '@/components/HeaderNavbar';
+
 type AuthMode = 'signin' | 'signup' | 'forgot';
 
 const AuthContent = () => {
@@ -117,7 +119,11 @@ const AuthContent = () => {
 
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row font-sans bg-white selection:bg-indigo-100 selection:text-indigo-950">
+    <div className="min-h-[100dvh] w-full flex flex-col font-sans bg-white selection:bg-indigo-100 selection:text-indigo-950">
+      <HeaderNavbar />
+      
+      <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row pt-28 sm:pt-32">
+        {/* LEFT SIDE - FORM */}
       
       {/* LEFT SIDE - FORM */}
       <div className="w-full lg:w-5/12 flex items-center justify-center p-6 sm:p-12 lg:p-20 min-h-[100dvh] relative z-10">
@@ -397,7 +403,6 @@ const AuthContent = () => {
           .serif { font-family: 'Playfair Display', serif; }
         `}</style>
       </div>
-
     </div>
   );
 };

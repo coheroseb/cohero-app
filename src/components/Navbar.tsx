@@ -178,7 +178,6 @@ const Navbar: React.FC<NavbarProps> = ({
           { title: "Mit pensum", path: "/mine-materialer", icon: <FileBox className="w-5 h-5 text-indigo-500" /> },
           { title: "Pensumsøgning", path: "/pensum-search", icon: <BookOpen className="w-5 h-5 text-indigo-500" /> },
           // { title: "Jura", path: "https://law.cohero.dk", icon: <Scale className="w-5 h-5" /> },
-          { title: "Shop", path: "/shop", icon: <ShoppingBag className="w-5 h-5" /> },
           { title: "Form fremtiden", path: "/medbestemmelse", icon: <Lightbulb className="w-5 h-5" /> },
         ]
       }
