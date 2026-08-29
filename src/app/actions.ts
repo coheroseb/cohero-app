@@ -119,13 +119,12 @@ export async function callFirebaseFlow(flowName: string, data: any) {
   const adminSecret = process.env.CRON_SECRET || "dev-secret-123";
   const projectId = 'studio-7870211338-fe921';
   
-  // 2nd Gen functions have a unique hash in the URL. 
-  // We prioritize the environment variable if available.
-  const prodBaseUrl = `https://runaiflow-7pguetq4hq-uc.a.run.app`; 
+  const customAiServer = process.env.AI_SERVER_URL || 'https://ai.cohero.dk';
+  const prodCloudRunUrl = `https://runaiflow-7pguetq4hq-uc.a.run.app`; 
   const flowPath = "/runAiFlow";
   
   const fallbackUrl = process.env.NODE_ENV === 'production'
-    ? (prodBaseUrl + flowPath)
+    ? (`${customAiServer}${flowPath}`)
     : `http://127.0.0.1:5001/${projectId}/us-central1/runAiFlow`;
 
   const url = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL 
@@ -165,19 +164,24 @@ export async function callFirebaseFlow(flowName: string, data: any) {
   };
 
   try {
-    console.log(`[AI Flow] Calling ${flowName} at ${url}...`);
+    console.log(`[AI Server · ai.cohero.dk] Calling ${flowName} at ${url}...`);
     const result = await performFetch(url);
     // Sanitize to ensure POJO for Next.js Client boundary
     return JSON.parse(JSON.stringify(result));
   } catch (error: any) {
-    // If the emulator is not running, fail gracefully by trying the production URL in dev mode
-    const isConnRefused = error.cause && error.cause.code === 'ECONNREFUSED';
-    const isTargetingLocal = url.includes('127.0.0.1') || url.includes('localhost');
-
-    if (isConnRefused && isTargetingLocal && process.env.NODE_ENV !== 'production') {
-        const prodUrl = prodBaseUrl + flowPath;
-        console.warn(`[AI Flow] Emulator NOT found at ${url}. Falling back to production flows at ${prodUrl}.`);
-        return await performFetch(prodUrl);
+    console.warn(`[AI Server] Primary request to ${url} failed. Attempting fallback to Cloud Run...`, error?.message || error);
+    
+    // Fallback to Cloud Run or Production endpoint if ai.cohero.dk or local emulator failed
+    const cloudRunUrl = `${prodCloudRunUrl}${flowPath}`;
+    if (url !== cloudRunUrl) {
+      try {
+        console.log(`[AI Flow Fallback] Calling ${flowName} at ${cloudRunUrl}...`);
+        const fallbackResult = await performFetch(cloudRunUrl);
+        return JSON.parse(JSON.stringify(fallbackResult));
+      } catch (fallbackError: any) {
+        console.error(`[AI Flow Fallback] Cloud Run also failed for ${flowName}:`, fallbackError);
+        throw fallbackError;
+      }
     }
     
     console.error(`[AI Flow] Error calling ${flowName}:`, error);
