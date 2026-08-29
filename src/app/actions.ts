@@ -19,7 +19,7 @@ import { safeIsoDate } from '@/lib/utils';
 import { resend } from '@/lib/resend';
 import https from 'https';
 import { wrapEmailHtml } from '@/lib/email-helper';
-
+import { queryCoheroAiServer, queryCoheroAiChat } from '@/lib/coheroAiService';
 import { repairJson } from '@/lib/json-repair';
 
 function getGeminiApiKey(): string {
@@ -879,6 +879,45 @@ export async function getConsensusAnalysisAction(input: any) { return callFireba
 export async function getSocraticReflectionAction(input: Types.SocraticInput) { return callFirebaseFlow('getSocraticReflectionFlow', input); }
 
 export async function explainConceptAction(input: { concept: string, profession?: string }): Promise<Types.ExplainConceptOutput> {
+    const profession = input.profession || 'Socialrådgiver';
+    const systemPrompt = `Du er en erfaren akademisk rådgiver og underviser for Cohéro Student.
+Din opgave er at levere en dybdegående, pædagogisk og juridisk forankret begrebsanalyse til en studerende inden for ${profession}.
+
+Returnér et validt JSON-objekt med følgende felter:
+- "definition": Komplet og nuanceret faglig definition i markdown (brug overskrifter ###, punktopstillinger, fremhævelser).
+- "etymology": Begrebets historiske oprindelse og etymologi.
+- "relevance": Faglig relevans og hvorfor begrebet er afgørende for en ${profession}.
+- "practicalExample": Et konkret, virkelighedsnært praksis- og caseeksempel i dansk kontekst.
+- "legalAnchor": Præcis juridisk forankring og gældende dansk lovhjemmel hvis relevant (ellers tom streng).
+- "criticalReflection": Kritisk og etisk refleksion samt faglige dilemmaer.
+- "socraticQuestion": Et udfordrende sokratisk refleksionsspørgsmål til den studerende.
+- "relatedConcepts": Array af 4-5 relaterede faglige begreber.
+- "disambiguation": Valgfrit array af { "title": string, "query": string } med alternative faglige vinkler.
+
+Returnér KUN rå JSON uden markdown codeblocks.`;
+
+    try {
+        const rawAi = await queryCoheroAiServer({
+            prompt: `Analysér begrebet: "${input.concept}"`,
+            systemPrompt,
+            modelName: 'danskgpt',
+            temperature: 0.1
+        });
+
+        if (rawAi) {
+            const cleanJson = rawAi.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                if (parsed && (parsed.definition || parsed.etymology || parsed.relevance)) {
+                    return parsed as Types.ExplainConceptOutput;
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('[explainConceptAction] ai.cohero.dk direct call failed, falling back to flow:', err);
+    }
+
     return callFirebaseFlow('explainConceptFlow', { ...input });
 }
 
@@ -889,27 +928,45 @@ export async function conceptFollowUpAction(input: {
     chatHistory: { role: 'user' | 'assistant'; content: string }[];
     profession?: string;
 }): Promise<{ data: { answer: string } }> {
-    let lawContext = '';
-    try {
-        const fetchRes = await callFirebaseFlow('getRelevantLawContextFlow', { topicOrQuery: `${input.message} ${input.conceptName}` });
-        lawContext = fetchRes?.data || '';
-    } catch (e) {
-        console.error('[conceptFollowUp] Law context fetch failed:', e);
-    }
+    const profession = input.profession || 'Socialrådgiver';
+    const systemPrompt = `Du er Cohéro AI – en specialiseret akademisk og juridisk AI-rådgiver for Cohéro Student.
+AKTUEL FAGLIG KONTEKST:
+Begreb: ${input.conceptName}
+Definition: ${input.conceptDefinition.replace(/<[^>]*>/g, '').substring(0, 1500)}
+Målgruppe: ${profession}-studerende.
 
-    const conceptContext = `AKTUEL FAGLIG KONTEKST:\nBegreb: ${input.conceptName}\nDefinition (uddrag): ${input.conceptDefinition.replace(/<[^>]*>/g, '').substring(0, 1500)}`;
+Besvar den studerendes opfølgende spørgsmål præcist, fagligt og pædagogisk på fejlfrit dansk.`;
+
+    try {
+        const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+            { role: 'system', content: systemPrompt },
+            ...(input.chatHistory || []).map(h => ({ role: h.role as any, content: h.content })),
+            { role: 'user', content: input.message }
+        ];
+
+        const aiReply = await queryCoheroAiChat({
+            messages,
+            modelName: 'danskgpt',
+            temperature: 0.2
+        });
+
+        if (aiReply && aiReply.trim().length > 0) {
+            return { data: { answer: aiReply.trim() } };
+        }
+    } catch (err) {
+        console.warn('[conceptFollowUpAction] ai.cohero.dk chat failed, falling back to flow:', err);
+    }
 
     try {
         const result = await callFirebaseFlow('unifiedChatFlow', {
             message: input.message,
             chatHistory: input.chatHistory,
-            persona: 'academic',
+            persona: 'kollega',
             context: {
                 relevantDocumentIds: [],
-                lawContext: [conceptContext, lawContext].filter(Boolean).join('\n\n---\n\n'),
+                lawContext: `AKTUEL FAGLIG KONTEKST:\nBegreb: ${input.conceptName}\nDefinition: ${input.conceptDefinition.replace(/<[^>]*>/g, '').substring(0, 1500)}`,
             },
         });
-        // Normalise output shape
         const answer = result?.data?.answer || result?.answer || 'Jeg kunne ikke besvare spørgsmålet. Prøv igen.';
         return { data: { answer } };
     } catch (e: any) {
@@ -1158,6 +1215,35 @@ export async function oralExamAnalysisAction(input: Types.OralExamAnalysisInput)
     return callFirebaseFlow('oralExamAnalysisFlow', input);
 }
 export async function unifiedChatAction(input: Types.UnifiedChatInput): Promise<Types.UnifiedChatOutput> { 
+    try {
+        const systemPrompt = `Du er Cohéro AI – en specialiseret akademisk og socialfaglig AI-studieassistent for Cohéro Student.
+${input.context?.lawContext ? `AKTUELT RETSGRUNDLAG & KONTEKST:\n${input.context.lawContext}\n` : ''}
+Svar altid på fejlfrit, professionelt og pædagogisk dansk. Vær fagligt præcis, velstruktureret og giv konkrete henvisninger.`;
+
+        const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+            { role: 'system', content: systemPrompt },
+            ...(input.chatHistory || []).map(h => ({ role: h.role as any, content: h.content })),
+            { role: 'user', content: input.message }
+        ];
+
+        const aiReply = await queryCoheroAiChat({
+            messages,
+            modelName: 'danskgpt',
+            temperature: 0.2
+        });
+
+        if (aiReply && aiReply.trim().length > 0) {
+            return {
+                data: {
+                    answer: aiReply.trim(),
+                    relevantLawSections: []
+                }
+            } as any;
+        }
+    } catch (err) {
+        console.warn('[unifiedChatAction] ai.cohero.dk direct chat failed, falling back to flow:', err);
+    }
+
     return callFirebaseFlow('unifiedChatFlow', input); 
 }
 
