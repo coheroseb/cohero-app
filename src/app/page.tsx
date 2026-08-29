@@ -15,7 +15,6 @@ import {
 import { useApp } from '@/app/provider';
 import HeaderNavbar from '@/components/HeaderNavbar';
 import Footer from '@/components/Footer';
-import ReviewMarquee from '@/components/home/ReviewMarquee';
 
 const SafeItem: React.FC<{ text: string }> = ({ text }) => (
   <li className="flex items-center gap-3 text-sm text-emerald-900 font-bold">
@@ -1492,19 +1491,6 @@ export default function LandingPage() {
           </div>
 
         </div>
-      </section>
-
-      {/* 11. ANMELDELSER & STUDENTERFEEDBACK */}
-      <section id="anmeldelser" className="py-20 bg-white border-b border-slate-200">
-        <div className="max-w-[1280px] mx-auto px-6 sm:px-8 text-center mb-10">
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block">
-            Erfaringer fra Studerende
-          </span>
-          <h2 className="text-3xl font-black text-slate-900">
-            Hvad siger velfærdsstuderende om Cohéro?
-          </h2>
-        </div>
-        <ReviewMarquee />
       </section>
 
       {/* 12. PRISER & PAKKER */}
