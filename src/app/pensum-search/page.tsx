@@ -442,7 +442,10 @@ function PensumSearchContent() {
     if (languageFilter === 'da' && !isDanishBook(book.bookTitle)) {
       return false;
     }
-      if (!hasProAccess) {
+    return true;
+  });
+
+  if (!hasProAccess) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans pb-32">
         {/* ── Sticky Top Header ───────────────────────────── */}
