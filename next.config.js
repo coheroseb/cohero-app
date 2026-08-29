@@ -54,6 +54,7 @@ const nextConfig = {
 
   // 🔥 Ekstra: reducer unødvendig tracing (mindre bundle)
   productionBrowserSourceMaps: false,
+  swcMinify: true,
 
   async redirects() {
     return [
@@ -72,10 +73,29 @@ const nextConfig = {
         destination: 'https://law.cohero.dk',
         permanent: true,
       },
+      {
+        source: '/referencer',
+        destination: '/pensum-search',
+        permanent: true,
+      },
+      {
+        source: '/mine-studieplaner',
+        destination: '/mine-semesterplaner',
+        permanent: true,
+      },
     ];
   },
 
   experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-toast',
+      '@radix-ui/react-progress',
+      '@radix-ui/react-slot',
+      'recharts'
+    ],
     serverActions: {
       bodySizeLimit: '30mb',
     },
