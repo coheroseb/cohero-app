@@ -442,70 +442,73 @@ function PensumSearchContent() {
     if (languageFilter === 'da' && !isDanishBook(book.bookTitle)) {
       return false;
     }
-    return true;
-  });
-
-  if (!hasProAccess) {
+      if (!hasProAccess) {
     return (
-      <div className="bg-slate-50/60 min-h-screen pb-24 font-sans selection:bg-indigo-100 flex flex-col">
-        <div className="max-w-6xl mx-auto px-6 pt-10 w-full">
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans pb-32">
+        {/* ── Sticky Top Header ───────────────────────────── */}
+        <div className="shrink-0 bg-white border-b border-slate-200/80 px-6 sm:px-8 py-4 sticky top-0 z-30">
           <PageHeader
             title="Pensumsøgning"
             subtitle="Søg semantisk på tværs af din uddannelse."
             icon={<Search className="w-5 h-5" />}
+            iconColor="bg-indigo-50 text-indigo-600"
+            className="mb-0"
             backHref="/portal"
           />
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center p-6 mt-6 space-y-16 max-w-6xl mx-auto w-full">
-          <div className="max-w-2xl w-full bg-white rounded-[var(--radius-lg)] p-10 text-center border border-slate-200/60 shadow-[var(--shadow-md)] relative overflow-hidden">
-            <div className="relative z-10 space-y-6">
-               <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
-                 <BrainCircuit className="w-8 h-8 text-indigo-600" />
-               </div>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Lås op for Pensumsøgning</h2>
-               <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-lg mx-auto">
-                 Pensumsøgning og konkrete litteraturhenvisninger til kapitler og sidetal er eksklusivt for Kollega+ og Semesterpakken. Vi kan ikke søge i bøgernes fulde indhold, men vejleder dig præcist til, hvor i dit eget pensum du kan læse om emnet.
-               </p>
-               <Link href="/upgrade" className="inline-block">
-                 <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold text-xs hover:scale-105 active:scale-95 transition-all shadow-sm">
-                   Opgrader Nu
-                 </button>
-               </Link>
+
+        <main className="grow max-w-5xl mx-auto w-full px-4 sm:px-6 pt-8 space-y-12">
+          <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-200/90 shadow-sm relative overflow-hidden space-y-6">
+            <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-3xl flex items-center justify-center mx-auto shadow-sm">
+              <BrainCircuit className="w-8 h-8 text-indigo-600" />
             </div>
+            <div className="space-y-2 max-w-lg mx-auto">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Lås op for Pensumsøgning</h2>
+              <p className="text-slate-500 font-medium text-xs sm:text-sm leading-relaxed">
+                Pensumsøgning og konkrete litteraturhenvisninger til kapitler og sidetal er eksklusivt for Kollega+ og Semesterpakken. Vi vejleder dig præcist til, hvor i dit eget pensum du finder stoffet.
+              </p>
+            </div>
+            <Link href="/upgrade" className="inline-block pt-2">
+              <button className="bg-slate-900 hover:bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-sm">
+                Opgrader til Kollega+
+              </button>
+            </Link>
           </div>
 
-          <div className="w-full space-y-6">
+          <div className="space-y-6">
             <div className="text-center space-y-2">
-               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100/50 rounded-full text-[9px] font-black uppercase tracking-wider text-indigo-600">
-                  <Crown className="w-3 h-3 fill-current text-indigo-500" /> Bogbase
-               </div>
-               <h3 className="text-xl font-black text-slate-900 tracking-tight">Søg semantisk i hele din uddannelse</h3>
-               <p className="text-slate-500 text-xs max-w-md mx-auto font-semibold">Med Kollega+ kan du søge efter præcise kapitler og sidetal (ikke selve bøgernes fulde indhold) på tværs af alle disse værker. Vi vejleder dig til, hvor du kan læse om emnet:</p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-[10px] font-black uppercase tracking-wider text-indigo-700">
+                <Crown className="w-3.5 h-3.5 fill-current text-indigo-600" /> Bogbase
+              </div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Søg semantisk i hele din uddannelse</h3>
+              <p className="text-slate-500 text-xs max-w-md mx-auto font-medium">
+                Med Kollega+ kan du søge efter præcise kapitler og sidetal på tværs af alle disse lærebøger:
+              </p>
             </div>
 
             {booksLoading ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Indlæser pensumbøger...</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Indlæser pensumbøger...</p>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-4 pb-20">
-                 {books?.map((book: any) => (
-                    <div key={book.id} className="bg-white p-5 rounded-[var(--radius-lg)] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4">
-                       <div className="w-12 h-16 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 text-slate-300">
-                          <Book className="w-6 h-6" />
-                       </div>
-                       <div className="space-y-1 min-w-0">
-                          <h4 className="text-sm font-black text-slate-900 leading-snug truncate">{book.title}</h4>
-                          <p className="text-[11px] font-semibold text-slate-400 truncate">{book.author}</p>
-                          {book.year && <p className="text-[9px] font-black text-indigo-500/80 uppercase tracking-widest">{book.year} • {book.publisher || 'Pensum'}</p>}
-                       </div>
+              <div className="grid sm:grid-cols-2 gap-4 pb-12">
+                {books?.map((book: any) => (
+                  <div key={book.id} className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-start gap-4">
+                    <div className="w-12 h-16 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shrink-0 text-indigo-400">
+                      <Book className="w-6 h-6" />
                     </div>
-                 ))}
+                    <div className="space-y-1 min-w-0">
+                      <h4 className="text-sm font-black text-slate-900 leading-snug truncate">{book.title}</h4>
+                      <p className="text-xs font-semibold text-slate-400 truncate">{book.author}</p>
+                      {book.year && <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">{book.year} • {book.publisher || 'Pensum'}</p>}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -521,30 +524,35 @@ function PensumSearchContent() {
   }, [searched]);
 
   return (
-    <div className="bg-slate-50/60 min-h-screen pb-32 font-sans selection:bg-indigo-100 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans pb-32">
       
-      <main className="max-w-5xl mx-auto px-6 pt-10 space-y-12">
+      {/* ── Sticky Top Header ───────────────────────────── */}
+      <div className="shrink-0 bg-white border-b border-slate-200/80 px-6 sm:px-8 py-4 sticky top-0 z-30">
         <PageHeader
           title="Pensumsøgning"
-          subtitle="Søg semantisk på tværs af dit pensum og find præcise kapitler, sidetal og litteraturhenvisninger."
           icon={<Search className="w-5 h-5" />}
+          iconColor="bg-indigo-50 text-indigo-600"
+          className="mb-0"
           backHref="/portal"
           actions={
-            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-50 border border-indigo-200/80 rounded-2xl shadow-sm">
               <Crown className="w-4 h-4 text-indigo-600 fill-current" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Kollega+</span>
+              <span className="text-xs font-black uppercase tracking-wider text-indigo-700">Kollega+</span>
             </div>
           }
         />
+      </div>
 
-        {/* Semantic Search Console / Terminal */}
-        <div className="max-w-3xl mx-auto w-full space-y-4">
+      <main className="grow max-w-5xl mx-auto w-full px-4 sm:px-6 pt-8 space-y-8">
+        
+        {/* ── Search Bar Console ──────────────────────────── */}
+        <div className="space-y-4">
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSearch(query); }}
-            className="bg-white p-4 rounded-[var(--radius-lg)] shadow-[var(--shadow-sm)] border border-slate-200/60 relative group transition-all duration-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-200"
+            className="bg-white p-3 sm:p-4 rounded-3xl shadow-sm border border-slate-200/90 relative group transition-all focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-500"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-focus-within:text-indigo-600 group-focus-within:bg-indigo-50 transition-all shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-focus-within:text-indigo-600 group-focus-within:bg-indigo-50 transition-all shrink-0">
                 <Search className="w-5 h-5" />
               </div>
               <input
@@ -553,15 +561,24 @@ function PensumSearchContent() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={placeholders[placeholderIndex]}
                 disabled={loading}
-                className="grow bg-transparent border-none focus:ring-0 text-slate-900 placeholder:text-slate-300 font-extrabold text-lg px-2 h-12 focus:outline-none"
+                className="grow bg-transparent border-none focus:ring-0 text-slate-900 placeholder:text-slate-400 font-bold text-base sm:text-lg px-2 h-12 focus:outline-none"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="text-slate-400 hover:text-slate-600 p-2"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
               <button 
                 type="submit"
                 disabled={loading || !query.trim()}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-sm shrink-0 ${
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm shrink-0 ${
                   loading || !query.trim() 
-                  ? 'bg-slate-50 text-slate-300' 
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 active:scale-95'
+                  ? 'bg-slate-100 text-slate-300' 
+                  : 'bg-slate-900 hover:bg-indigo-600 text-white active:scale-95'
                 }`}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
@@ -571,14 +588,14 @@ function PensumSearchContent() {
 
           {/* Copyright Safe Indicator */}
           <div className="text-center">
-            <p className="text-[10px] sm:text-xs font-semibold text-slate-400 leading-relaxed italic max-w-2xl mx-auto">
-              <strong>Bemærk:</strong> Du kan udelukkende søge efter <span className="text-indigo-600 font-bold">kapitler og sidetal</span> – ikke i selve bøgernes fulde indhold. Vi vejleder dig præcist til, hvor du kan læse om emnet.
+            <p className="text-[11px] sm:text-xs font-medium text-slate-400 leading-relaxed max-w-2xl mx-auto">
+              <strong>Bemærk:</strong> Du søger semantisk efter <span className="text-indigo-600 font-bold">kapitler, sidetal og kildehenvisninger</span> i pensumlitteraturen.
             </p>
           </div>
 
           {/* Quick-Search Chips */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-2">Hurtige søgninger:</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1">Hurtige emner:</span>
             {[
               'Bourdieu kapital',
               'Anerkendende pædagogik',
@@ -590,7 +607,7 @@ function PensumSearchContent() {
                 key={term}
                 type="button"
                 onClick={() => handleChipClick(term)}
-                className="px-4 py-2 bg-white hover:bg-indigo-50/50 hover:border-indigo-100 border border-slate-100 active:scale-95 rounded-full text-xs font-bold text-slate-600 transition-all shadow-sm"
+                className="px-3.5 py-1.5 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200/80 active:scale-95 rounded-2xl text-xs font-bold text-slate-600 transition-all shadow-sm"
               >
                 {term}
               </button>
@@ -598,75 +615,80 @@ function PensumSearchContent() {
           </div>
         </div>
 
-        {/* Dynamic Navigation Tabs (Overskueligt layout) */}
-        <div className="max-w-4xl mx-auto w-full space-y-10">
-          <div className="flex border-b border-slate-200">
+        {/* ── Navigation Tabs ─────────────────────────────── */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-slate-200/80 pb-px">
             <button
               onClick={() => setActiveTab('results')}
-              className={`pb-4 px-6 font-bold text-sm uppercase tracking-widest border-b-2 transition-all relative ${
+              className={`pb-3.5 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
                 activeTab === 'results' 
                 ? 'border-indigo-600 text-indigo-600' 
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                : 'border-transparent text-slate-400 hover:text-slate-700'
               }`}
             >
-              Søgeresultater
+              <span>Søgeresultater</span>
               {searched && filteredResults.length > 0 && (
-                <span className="absolute -top-1 -right-0 px-2 py-0.5 bg-indigo-600 text-white text-[9px] font-bold rounded-full">{filteredResults.length}</span>
+                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-black rounded-full border border-indigo-100">
+                  {filteredResults.length}
+                </span>
               )}
             </button>
+            
             <button
               onClick={() => setActiveTab('library')}
-              className={`pb-4 px-6 font-bold text-sm uppercase tracking-widest border-b-2 transition-all relative ${
+              className={`pb-3.5 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
                 activeTab === 'library' 
                 ? 'border-indigo-600 text-indigo-600' 
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                : 'border-transparent text-slate-400 hover:text-slate-700'
               }`}
             >
-              Kendte pensumbøger
+              <span>Kendte pensumbøger</span>
               {books && books.length > 0 && (
-                <span className="absolute -top-1 -right-0 px-2 py-0.5 bg-slate-200 text-slate-600 text-[9px] font-bold rounded-full">{books.length}</span>
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-black rounded-full">
+                  {books.length}
+                </span>
               )}
             </button>
           </div>
 
-          {/* TAB 1: SEARCH RESULTS */}
+          {/* ── TAB 1: SEARCH RESULTS ─────────────────────── */}
           {activeTab === 'results' && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               
               {/* Skeletons Loading State */}
               {loading && (
-                <div className="max-w-4xl mx-auto pt-6">
+                <div className="pt-4">
                   <SkeletonGrid count={2} columns="grid-cols-1" variant="book" />
                 </div>
               )}
 
               {/* Error Message */}
               {!loading && error && (
-                <div className="max-w-md mx-auto bg-rose-50 border border-rose-100 rounded-xl p-6 text-center space-y-4 shadow-sm">
-                  <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
+                <div className="bg-rose-50 border border-rose-200 rounded-3xl p-6 text-center space-y-2 shadow-sm">
+                  <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
                   <p className="text-sm font-bold text-rose-950">{error}</p>
                 </div>
               )}
 
               {/* Search Result Output */}
               {!loading && searched && !error && (
-                <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-300">
                   
                   {/* Summary and Filters Bar */}
-                  <div className="bg-white border border-slate-200/60 shadow-[var(--shadow-sm)] rounded-[var(--radius-lg)] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 max-w-4xl mx-auto">
+                  <div className="bg-white border border-slate-200/90 shadow-sm rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Søgestatus</h3>
-                      <p className="text-slate-900 font-bold mt-1 text-sm">
-                        Fandt <span className="text-indigo-600">{filteredResults.length}</span> {filteredResults.length === 1 ? 'bog' : 'bøger'} ud af {results.length} oprindelige fund.
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Søgestatus</p>
+                      <p className="text-slate-900 font-bold mt-0.5 text-xs sm:text-sm">
+                        Fandt <span className="text-indigo-600 font-black">{filteredResults.length}</span> {filteredResults.length === 1 ? 'bog' : 'bøger'} der matcher din søgning.
                       </p>
                     </div>
                     
                     {/* Filters */}
-                    <div className="flex flex-wrap gap-4 items-center">
-                      <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-100">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex bg-slate-100 p-1 rounded-2xl">
                         <button
                           onClick={() => setRelevanceFilter('all')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                             relevanceFilter === 'all' 
                             ? 'bg-white text-slate-900 shadow-sm' 
                             : 'text-slate-500 hover:text-slate-900'
@@ -676,21 +698,21 @@ function PensumSearchContent() {
                         </button>
                         <button
                           onClick={() => setRelevanceFilter('high')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                             relevanceFilter === 'high' 
                             ? 'bg-white text-slate-900 shadow-sm' 
                             : 'text-slate-500 hover:text-slate-900'
                           }`}
                           title="Vis kun bøger med 3+ matchende afsnit"
                         >
-                          Høj Relevans
+                          Høj relevans
                         </button>
                       </div>
 
-                      <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-100">
+                      <div className="flex bg-slate-100 p-1 rounded-2xl">
                         <button
                           onClick={() => setLanguageFilter('all')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                             languageFilter === 'all' 
                             ? 'bg-white text-slate-900 shadow-sm' 
                             : 'text-slate-500 hover:text-slate-900'
@@ -700,13 +722,13 @@ function PensumSearchContent() {
                         </button>
                         <button
                           onClick={() => setLanguageFilter('da')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                             languageFilter === 'da' 
                             ? 'bg-white text-slate-900 shadow-sm' 
                             : 'text-slate-500 hover:text-slate-900'
                           }`}
                         >
-                          Kun Dansk
+                          Dansk
                         </button>
                       </div>
                     </div>
@@ -716,55 +738,51 @@ function PensumSearchContent() {
                   {filteredResults.length === 0 && (
                     <EmptyState
                       title="Ingen resultater fundet"
-                      description="Søgeordet gav ingen resultater i databasen, der matcher dine valgte filtre. Prøv at søge bredere eller juster filtrene."
+                      description="Søgeordet gav ingen resultater i pensumdatabasen. Prøv at søge på et andet begreb eller sociologisk teori."
                       icon={<BookOpen className="w-6 h-6 text-slate-300" />}
-                      className="max-w-2xl mx-auto"
                     />
                   )}
 
-                  {/* Book Cards Grid */}
+                  {/* Book Cards List */}
                   {filteredResults.length > 0 && (
-                    <div className="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
+                    <div className="space-y-6">
                       <AnimatePresence mode="popLayout">
                         {filteredResults.map((book, index) => {
                           const relevanceScore = book.chunkCount;
-                          const badgeText = relevanceScore >= 4 ? 'Meget relevant' : relevanceScore >= 2 ? 'Relevant' : 'Relateret';
+                          const badgeText = relevanceScore >= 4 ? 'Højeste relevans' : relevanceScore >= 2 ? 'Relevant' : 'Relateret';
                           const badgeColor = relevanceScore >= 4 
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                             : relevanceScore >= 2 
-                            ? 'bg-sky-50 text-sky-700 border-sky-100' 
-                            : 'bg-slate-100 text-slate-600 border-transparent';
+                            ? 'bg-sky-50 text-sky-700 border-sky-200' 
+                            : 'bg-slate-100 text-slate-600 border-slate-200';
 
-                          // Match strength percentage calculation (Match-styrke)
                           const matchStrength = Math.min(100, Math.max(50, 50 + (relevanceScore * 10)));
                           
                           return (
                             <motion.div
                               key={book.bookId}
-                              initial={{ opacity: 0, y: 20 }}
+                              initial={{ opacity: 0, y: 15 }}
                               animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              transition={{ duration: 0.4, delay: index * 0.05 }}
-                              className="bg-white border border-slate-200/60 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] rounded-[var(--radius-lg)] p-8 transition-all group overflow-hidden relative"
+                              exit={{ opacity: 0, scale: 0.98 }}
+                              transition={{ duration: 0.3, delay: index * 0.04 }}
+                              className="bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-indigo-300 rounded-3xl p-6 sm:p-8 transition-all group overflow-hidden"
                             >
-                              <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${getGradient(book.bookTitle)} opacity-[0.02] rounded-full blur-xl group-hover:scale-150 transition-all duration-700 pointer-events-none`} />
-
-                              <div className="flex flex-col md:flex-row items-start gap-8">
+                              <div className="flex flex-col md:flex-row items-start gap-6 sm:gap-8">
                                 
-                                {/* Book Spine Cover Element */}
+                                {/* Book Spine Cover */}
                                 <div className="shrink-0 mx-auto md:mx-0">
-                                  <div className={`w-28 h-40 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded-2xl shadow-[0_15px_35px_-5px_rgba(0,0,0,0.12)] flex flex-col justify-between p-4 text-white relative overflow-hidden group-hover:rotate-1 transition-all duration-500`}>
+                                  <div className={`w-28 h-40 bg-gradient-to-br ${getGradient(book.bookTitle)} rounded-2xl shadow-md flex flex-col justify-between p-4 text-white relative overflow-hidden group-hover:scale-105 transition-all duration-300`}>
                                     <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
                                     <div className="w-1.5 h-full bg-white/20 absolute top-0 left-2.5 blur-[0.5px]" />
                                     
                                     <div className="space-y-1 relative z-10">
                                       <BookOpen className="w-5 h-5 opacity-80" />
-                                      <p className="text-[7px] font-black uppercase tracking-widest leading-tight text-white/90 truncate max-w-[80px]">
+                                      <p className="text-[8px] font-black uppercase tracking-widest leading-tight text-white/90 truncate max-w-[80px]">
                                         {book.bookAuthor}
                                       </p>
                                     </div>
                                     <div className="relative z-10">
-                                      <p className="text-[10px] font-black leading-tight tracking-tight line-clamp-3 uppercase serif">
+                                      <p className="text-[10px] font-black leading-tight tracking-tight line-clamp-3 uppercase">
                                         {book.bookTitle}
                                       </p>
                                       {book.bookYear && (
@@ -775,78 +793,68 @@ function PensumSearchContent() {
                                 </div>
 
                                 {/* Book Meta and Details */}
-                                <div className="flex-1 space-y-6 w-full">
+                                <div className="flex-1 space-y-5 w-full">
                                   
                                   {/* Title block */}
                                   <div className="flex justify-between items-start gap-4">
-                                    <div className="space-y-2 flex-grow">
+                                    <div className="space-y-1.5 flex-grow">
                                       <div className="flex flex-wrap items-center gap-2">
-                                        <span className={`px-2.5 py-0.5 border text-[9px] font-black uppercase tracking-widest rounded-full ${badgeColor}`}>
+                                        <span className={`px-2.5 py-0.5 border text-[10px] font-black uppercase tracking-wider rounded-md ${badgeColor}`}>
                                           {badgeText}
                                         </span>
-                                        <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-[9px] font-black uppercase rounded-full tracking-wider">
-                                          {matchStrength}% Match-styrke
+                                        <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase rounded-md tracking-wider">
+                                          {matchStrength}% Match
                                         </span>
                                       </div>
-                                      <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight serif group-hover:text-indigo-600 transition-colors">
+                                      <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors">
                                         {book.bookTitle}
-                                      </h2>
-                                      <p className="text-sm font-bold text-slate-500 leading-none">
+                                      </h3>
+                                      <p className="text-xs sm:text-sm font-bold text-slate-500">
                                         af {book.bookAuthor} {book.bookYear ? `(${book.bookYear})` : ''} 
-                                        {book.bookEdition ? ` · ${book.bookEdition}` : ''}
+                                        {book.bookEdition ? ` • ${book.bookEdition}` : ''}
                                       </p>
                                     </div>
 
                                     {/* Book Like Button */}
                                     <button
                                       onClick={() => handleLikeBook(book.bookId)}
-                                      className={`p-2.5 rounded-2xl border transition-all duration-300 active:scale-90 flex items-center justify-center gap-2 shrink-0 ${
+                                      className={`p-2.5 rounded-2xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 shrink-0 ${
                                         user && book.likedBy?.includes(user.uid)
-                                        ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-sm shadow-rose-500/5'
-                                        : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50 text-slate-400 hover:text-slate-600'
+                                        ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-sm'
+                                        : 'bg-slate-50 border-slate-200/80 hover:bg-slate-100 text-slate-400 hover:text-slate-600'
                                       }`}
                                       title={user && book.likedBy?.includes(user.uid) ? "Fjern synes godt om" : "Synes godt om denne bog"}
                                     >
                                       <Heart 
-                                        className={`w-4 h-4 transition-transform duration-300 ${
+                                        className={`w-4 h-4 transition-transform ${
                                           user && book.likedBy?.includes(user.uid) 
-                                          ? 'fill-rose-500 text-rose-500 scale-110' 
+                                          ? 'fill-rose-500 text-rose-500' 
                                           : ''
                                         }`} 
                                       />
-                                      <span className="text-xs font-bold font-sans">
+                                      <span className="text-xs font-bold">
                                         {book.likesCount || 0}
                                       </span>
                                     </button>
                                   </div>
 
-                                  {/* Match strength progress bar */}
-                                  <div className="space-y-1">
-                                    <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                                       <div 
-                                          className={`h-full rounded-full bg-indigo-500`}
-                                          style={{ width: `${matchStrength}%` }}
-                                       />
-                                    </div>
-                                  </div>
-
                                   {/* Matching chunks list */}
-                                  <div className="space-y-3 pt-2">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                  <div className="space-y-2.5 pt-1">
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                                       Relevante kapitler og afsnit ({book.chunkCount})
                                     </p>
-                                    <div className="grid grid-cols-1 gap-2.5">
+                                    <div className="grid grid-cols-1 gap-2">
                                       {book.matchingChapters.map((chapter, cIdx) => (
                                         <div 
                                           key={cIdx} 
-                                          className="flex items-center justify-between gap-4 p-4 bg-slate-50/50 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-200"
+                                          className="flex items-center justify-between gap-4 p-3.5 bg-slate-50 hover:bg-indigo-50/40 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-all"
                                         >
                                           <div className="min-w-0 flex-grow">
                                             <h4 className="text-xs font-bold text-slate-800 leading-snug truncate">
                                               {chapter.title}
                                             </h4>
                                             {chapter.pageNumber && (
-                                              <p className="text-[10px] text-slate-400 font-bold mt-1">
+                                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">
                                                 Side {chapter.pageNumber}
                                               </p>
                                             )}
@@ -855,21 +863,21 @@ function PensumSearchContent() {
                                           {/* Chapter Heart Button */}
                                           <button
                                             onClick={() => handleLikeChapter(book.bookId, chapter.title)}
-                                            className={`px-3 py-1.5 rounded-xl border transition-all duration-300 active:scale-95 flex items-center gap-1.5 shrink-0 ${
+                                            className={`px-2.5 py-1 rounded-xl border transition-all active:scale-95 flex items-center gap-1 shrink-0 ${
                                               user && chapter.likedBy?.includes(user.uid)
-                                              ? 'bg-rose-50/70 border-rose-100 text-rose-600 shadow-sm shadow-rose-500/5'
-                                              : 'bg-transparent border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
+                                              ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-sm'
+                                              : 'bg-transparent border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'
                                             }`}
                                             title={user && chapter.likedBy?.includes(user.uid) ? "Fjern synes godt om" : "Synes godt om dette kapitel"}
                                           >
                                             <Heart 
-                                              className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                                              className={`w-3.5 h-3.5 ${
                                                 user && chapter.likedBy?.includes(user.uid) 
-                                                ? 'fill-rose-500 text-rose-500 scale-110' 
+                                                ? 'fill-rose-500 text-rose-500' 
                                                 : ''
                                               }`} 
                                             />
-                                            <span className="text-[10px] font-bold font-sans">
+                                            <span className="text-[10px] font-bold">
                                               {chapter.likesCount || 0}
                                             </span>
                                           </button>
@@ -880,9 +888,9 @@ function PensumSearchContent() {
 
                                   {/* APA Citation copy panel */}
                                   {book.apaCitation && (
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-indigo-950/[0.02] border border-indigo-950/[0.06] rounded-2xl">
-                                      <div className="text-xs text-slate-700 leading-relaxed font-sans min-w-0">
-                                        <span className="font-black text-[9px] text-indigo-950/40 uppercase tracking-widest block mb-1 leading-none">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                                      <div className="text-xs text-slate-700 leading-relaxed min-w-0">
+                                        <span className="font-black text-[9px] text-indigo-600 uppercase tracking-wider block mb-0.5">
                                           APA 7. udgave reference
                                         </span>
                                         <span className="font-bold italic block truncate sm:max-w-md md:max-w-lg" title={book.apaCitation}>
@@ -911,41 +919,40 @@ function PensumSearchContent() {
                   title="Klar til din litteratursøgning"
                   description="Indtast et teoretisk emne, en sociolog, et begreb eller en problemstilling ovenfor, så gennemsøger vi alt relevant studielitteratur med det samme."
                   icon={<BookOpen className="w-6 h-6 text-slate-300" />}
-                  className="max-w-2xl mx-auto"
                 />
               )}
             </div>
           )}
 
-          {/* TAB 2: FULL BOOK DATABASE (Overskueligt overblik) */}
+          {/* ── TAB 2: FULL BOOK DATABASE ─────────────────── */}
           {activeTab === 'library' && (
-            <div className="space-y-8 animate-in fade-in duration-500">
-              <div className="bg-white border border-slate-200/60 shadow-[var(--shadow-sm)] rounded-[var(--radius-lg)] p-8 space-y-4">
-                 <h4 className="text-lg font-black text-slate-900 tracking-tight">Pensumsamling – hvad kan du søge i?</h4>
-                 <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                   Vores semantiske søgemotor kender metadata og indholdsfortegnelser for de mest populære lærebøger på socialrådgiver-studiet. Herunder kan du se listen over de faglitterære værker, der er indekseret i systemet lige nu:
-                 </p>
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="bg-white border border-slate-200/90 shadow-sm rounded-3xl p-6 sm:p-7 space-y-2">
+                <h4 className="text-base font-black text-slate-900 tracking-tight">Pensumsamling – hvad kan du søge i?</h4>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+                  Vores semantiske søgemotor kender metadata og indholdsfortegnelser for de mest populære lærebøger på socialrådgiver-studiet. Herunder kan du se listen over de faglitterære værker, der er indekseret i systemet:
+                </p>
               </div>
 
               {booksLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                  <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Henter pensumbøger...</p>
+                <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Henter pensumbøger...</p>
                 </div>
               ) : (
-                <div className="grid sm:grid-cols-2 gap-4 pb-20">
-                   {books?.map((book: any) => (
-                      <div key={book.id} className="bg-white p-5 rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] hover:shadow-md transition-all flex items-start gap-4">
-                         <div className="w-12 h-16 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 text-slate-300">
-                            <Book className="w-6 h-6" />
-                         </div>
-                         <div className="space-y-1 min-w-0">
-                            <h4 className="text-sm font-black text-slate-900 leading-snug truncate">{book.title}</h4>
-                            <p className="text-[11px] font-semibold text-slate-400 truncate">{book.author}</p>
-                            {book.year && <p className="text-[9px] font-black text-indigo-500/80 uppercase tracking-widest">{book.year} • {book.publisher || 'Pensum'}</p>}
-                         </div>
+                <div className="grid sm:grid-cols-2 gap-4 pb-12">
+                  {books?.map((book: any) => (
+                    <div key={book.id} className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-start gap-4">
+                      <div className="w-12 h-16 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shrink-0 text-indigo-400">
+                        <Book className="w-6 h-6" />
                       </div>
-                   ))}
+                      <div className="space-y-1 min-w-0">
+                        <h4 className="text-sm font-black text-slate-900 leading-snug truncate">{book.title}</h4>
+                        <p className="text-xs font-semibold text-slate-400 truncate">{book.author}</p>
+                        {book.year && <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">{book.year} • {book.publisher || 'Pensum'}</p>}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
