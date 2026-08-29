@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -38,6 +38,8 @@ import {
   where, 
   getDocs, 
   deleteDoc,
+  orderBy,
+  limit,
   DocumentData 
 } from 'firebase/firestore';
 import { generateStudyScheduleAction, sendInAppNotificationAction } from '@/app/actions';
@@ -72,7 +74,7 @@ export default function StudieplanlaeggerPage() {
 }
 
 function StudieplanlaeggerContent() {
-    const { user, userProfile } = useApp();
+    const { user, userProfile, isUserLoading } = useApp();
     const router = useRouter();
     const searchParams = useSearchParams();
     const firestore = useFirestore();
@@ -99,26 +101,60 @@ function StudieplanlaeggerContent() {
 
     // Fetch Plan
     useEffect(() => {
-        if (!user || !firestore || !planId) return;
+        if (isUserLoading) return;
+        if (!user || !firestore) {
+            setIsPlanLoading(false);
+            return;
+        }
+
+        let isMounted = true;
+
         const fetchPlan = async () => {
             setIsPlanLoading(true);
             try {
-                const planSnap = await getDocs(query(collection(firestore, 'users', user.uid, 'semesterPlans'), where('id', '==', planId)));
-                if (!planSnap.empty) {
-                    setPlan({ id: planSnap.docs[0].id, ...planSnap.docs[0].data() } as SavedSemesterPlan);
+                if (planId) {
+                    const planSnap = await getDocs(query(collection(firestore, 'users', user.uid, 'semesterPlans'), where('id', '==', planId)));
+                    if (!planSnap.empty && isMounted) {
+                        setPlan({ id: planSnap.docs[0].id, ...planSnap.docs[0].data() } as SavedSemesterPlan);
+                    } else {
+                        const singleSnap = await getDocs(query(collection(firestore, 'users', user.uid, 'semesterPlans')));
+                        const found = singleSnap.docs.find(d => d.id === planId);
+                        if (found && isMounted) setPlan({ id: found.id, ...found.data() } as SavedSemesterPlan);
+                    }
                 } else {
-                    const singleSnap = await getDocs(query(collection(firestore, 'users', user.uid, 'semesterPlans')));
-                    const found = singleSnap.docs.find(d => d.id === planId);
-                    if (found) setPlan({ id: found.id, ...found.data() } as SavedSemesterPlan);
+                    // Automatically load user's newest semester plan if no planId is provided
+                    try {
+                        const allPlansSnap = await getDocs(query(collection(firestore, 'users', user.uid, 'semesterPlans'), orderBy('createdAt', 'desc'), limit(1)));
+                        if (!allPlansSnap.empty && isMounted) {
+                            setPlan({ id: allPlansSnap.docs[0].id, ...allPlansSnap.docs[0].data() } as SavedSemesterPlan);
+                        } else {
+                            const fallbackSnap = await getDocs(collection(firestore, 'users', user.uid, 'semesterPlans'));
+                            if (!fallbackSnap.empty && isMounted) {
+                                setPlan({ id: fallbackSnap.docs[0].id, ...fallbackSnap.docs[0].data() } as SavedSemesterPlan);
+                            }
+                        }
+                    } catch (fallbackErr) {
+                        const fallbackSnap = await getDocs(collection(firestore, 'users', user.uid, 'semesterPlans'));
+                        if (!fallbackSnap.empty && isMounted) {
+                            setPlan({ id: fallbackSnap.docs[0].id, ...fallbackSnap.docs[0].data() } as SavedSemesterPlan);
+                        }
+                    }
                 }
             } catch (e) {
                 console.error("Error fetching plan:", e);
             } finally {
-                setIsPlanLoading(false);
+                if (isMounted) {
+                    setIsPlanLoading(false);
+                }
             }
         };
+
         fetchPlan();
-    }, [user, firestore, planId]);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user, isUserLoading, firestore, planId]);
 
     const handleGenerate = async () => {
         if (!plan || isGenerating) return;
@@ -193,15 +229,31 @@ function StudieplanlaeggerContent() {
     if (isPlanLoading) return <AuthLoadingScreen />;
     if (!plan && !isPlanLoading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
-                <AlertCircle className="w-16 h-16 text-rose-500 mb-6" />
-                <h2 className="text-xl font-black text-slate-900 mb-2">Plan ikke fundet</h2>
-                <p className="text-sm text-slate-400 mb-8 max-w-xs text-center font-medium">Vi kunne ikke indlæse den semesterplan, som din studieplan skal bygges på.</p>
-                <Link href="/mine-semesterplaner">
-                    <Button className="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-[10px] h-12 px-8">
-                        Gå tilbage
-                    </Button>
-                </Link>
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#F8FAFC]">
+                <div className="bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 max-w-md w-full text-center shadow-xl shadow-slate-200/50 flex flex-col items-center space-y-5">
+                    <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                        <CalendarDays className="w-8 h-8" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Opret din Semesterplan først</h2>
+                        <p className="text-xs font-medium text-slate-500 mt-2 leading-relaxed">
+                            For at AI-algoritmen kan generere dit ugentlige studie- og læseskema med tidsberegning, skal du have en aktiv semesterplan.
+                        </p>
+                    </div>
+                    <div className="flex flex-col w-full gap-3 pt-2">
+                        <Link href="/semester-planlaegger" className="w-full">
+                            <Button className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black uppercase tracking-widest text-[10px] h-12 shadow-sm">
+                                Opret Semesterplan nu
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                        </Link>
+                        <Link href="/portal" className="w-full">
+                            <Button variant="outline" className="w-full rounded-2xl border-slate-200 text-slate-600 font-bold text-xs h-11 hover:bg-slate-50">
+                                Tilbage til Dashboard
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -504,8 +556,4 @@ function StudieplanlaeggerContent() {
             </main>
         </div>
     );
-}
-
-function Suspense(props: any) {
-    return <React.Suspense fallback={props.fallback}>{props.children}</React.Suspense>;
 }
