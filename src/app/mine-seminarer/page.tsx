@@ -45,7 +45,8 @@ import {
   FolderOpen,
   Eye,
   Link as LinkIcon,
-  Target
+  Target,
+  Check
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import AuthLoadingScreen from '@/components/AuthLoadingScreen';
@@ -557,7 +558,6 @@ const ConceptListOverlay: React.FC<{
     </motion.div>
   );
 };
-
 // ---------------------------------------------------------------------------
 // Slide Feed Card
 // ---------------------------------------------------------------------------
@@ -578,95 +578,137 @@ const SlideCard = React.memo(({ slide, note, onNoteChange, isOpen, onToggle, ind
     <MotionDiv
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03 }}
-      className={`group bg-white rounded-3xl border transition-all duration-500 overflow-hidden ${
+      transition={{ delay: index * 0.02 }}
+      className={`group bg-white rounded-3xl border transition-all duration-300 overflow-hidden ${
         isOpen 
-          ? 'border-indigo-200 shadow-2xl shadow-indigo-500/5' 
-          : 'border-slate-100 shadow-sm hover:border-slate-200 hover:shadow-md'
-      } ${isSelected ? 'ring-2 ring-indigo-500 border-indigo-500 shadow-lg' : ''}`}
+          ? 'border-indigo-300 shadow-md ring-1 ring-indigo-500/10' 
+          : 'border-slate-200/80 shadow-sm hover:border-slate-300 hover:shadow-md'
+      } ${isSelected ? 'ring-2 ring-indigo-500 border-indigo-500 shadow-md' : ''}`}
     >
       <div className="w-full flex items-center relative">
         {onSelect && (
           <button 
             onClick={onSelect}
             className={`absolute left-5 z-20 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center ${
-              isSelected ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-200 opacity-0 group-hover:opacity-100'
+              isSelected ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300 opacity-60 hover:opacity-100'
             }`}
+            title={isSelected ? "Fravælg slide" : "Vælg slide"}
           >
             {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
           </button>
         )}
         <button 
           onClick={onToggle} 
-          className={`w-full h-20 flex items-center gap-6 px-6 text-left transition-colors relative ${onSelect ? 'pl-14' : ''}`}
+          className={`w-full py-5 px-6 sm:px-7 flex items-center gap-4 text-left transition-colors relative ${onSelect ? 'pl-14' : ''}`}
         >
-        <div className={`w-9 h-9 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-2xl flex items-center justify-center font-black text-xs sm:text-sm shrink-0 transition-all duration-500 ${
-          isOpen 
-            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-            : 'bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'
-        }`}>
-          {slide.slideNumber}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-black text-slate-900 truncate leading-tight serif">{slide.slideTitle}</p>
-          {!isOpen && <p className="text-[11px] text-slate-400 font-medium truncate mt-1 italic">{slide.summary}</p>}
-        </div>
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {slide.keyConcepts?.length > 0 && <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-indigo-400" />}
-            {slide.legalFrameworks?.length > 0 && <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-rose-400" />}
-            {slide.practicalTools?.length > 0 && <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400" />}
-          </div>
-          {note && <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><FileText className="w-3.5 h-3.5" /></div>}
-          <div className={`w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center transition-transform duration-500 ${
-            isOpen ? 'rotate-180 bg-indigo-50 text-indigo-600' : 'text-slate-300'
+          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 transition-all ${
+            isOpen 
+              ? 'bg-indigo-600 text-white shadow-sm' 
+              : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100'
           }`}>
-              <ChevronDown className="w-5 h-5" />
+            {slide.slideNumber}
           </div>
-        </div>
-      </button>
-    </div>
+
+          <div className="flex-1 min-w-0">
+            <h4 className="font-bold text-slate-900 truncate text-sm sm:text-base leading-tight">
+              {slide.slideTitle || `Slide ${slide.slideNumber}`}
+            </h4>
+            {!isOpen && slide.summary && (
+              <p className="text-xs text-slate-400 font-medium truncate mt-1">
+                {slide.summary}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-1.5">
+              {slide.keyConcepts?.length > 0 && (
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md text-[10px] font-bold">
+                  {slide.keyConcepts.length} {slide.keyConcepts.length === 1 ? 'begreb' : 'begreber'}
+                </span>
+              )}
+              {slide.legalFrameworks?.length > 0 && (
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 text-rose-700 rounded-md text-[10px] font-bold">
+                  {slide.legalFrameworks.length} lov
+                </span>
+              )}
+              {slide.practicalTools?.length > 0 && (
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold">
+                  {slide.practicalTools.length} metode
+                </span>
+              )}
+            </div>
+
+            {note && (
+              <div className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-md text-[10px] font-bold flex items-center gap-1">
+                <FileText className="w-3 h-3" />
+                <span className="hidden xs:inline">Note</span>
+              </div>
+            )}
+
+            <div className={`w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center transition-transform duration-300 ${
+              isOpen ? 'rotate-180 bg-indigo-50 text-indigo-600' : 'text-slate-400'
+            }`}>
+              <ChevronDown className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+      </div>
+
       <AnimatePresence initial={false}>
         {isOpen && (
           <MotionDiv 
             initial={{ height: 0, opacity: 0 }} 
             animate={{ height: 'auto', opacity: 1 }} 
             exit={{ height: 0, opacity: 0 }} 
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} 
-            className="overflow-hidden"
+            transition={{ duration: 0.3, ease: 'easeOut' }} 
+            className="overflow-hidden border-t border-slate-100"
           >
-            <div className="px-8 pb-10 space-y-8 pt-4">
-              <div className="relative">
-                <div className="absolute top-0 left-0 w-1 h-full bg-indigo-100 rounded-full" />
-                <div className="pl-6 space-y-2 pb-6">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Analytisk Resumé</p>
-                    <p className="text-sm text-slate-600 leading-relaxed font-medium">{slide.summary}</p>
+            <div className="p-6 sm:p-7 space-y-6 bg-slate-50/40">
+              
+              {/* Summary */}
+              {slide.summary && (
+                <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                      Analytisk Resumé
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                    {slide.summary}
+                  </p>
                 </div>
-              </div>
+              )}
 
+              {/* Images */}
               {slide.imageUrls && slide.imageUrls.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {slide.imageUrls.map((url: string, i: number) => (
-                    <div key={i} className="aspect-video bg-slate-50 rounded-[1.5rem] overflow-hidden border border-slate-100 relative group/img cursor-zoom-in shadow-sm hover:shadow-md transition-all" onClick={() => window.open(url, '_blank')}>
-                      <img src={url} alt={`Slide content ${i}`} className="w-full h-full object-contain group-hover/img:scale-110 transition-transform duration-700" />
-                      <div className="absolute inset-0 bg-slate-900/0 group-hover/img:bg-slate-900/5 transition-colors" />
+                    <div 
+                      key={i} 
+                      className="aspect-video bg-white rounded-2xl overflow-hidden border border-slate-200/80 relative group/img cursor-zoom-in shadow-sm hover:shadow-md transition-all" 
+                      onClick={() => window.open(url, '_blank')}
+                    >
+                      <img src={url} alt={`Slide content ${i}`} className="w-full h-full object-contain p-2" />
                     </div>
                   ))}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Three-column Insights: Concepts, Laws, Tools */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                {/* Concepts */}
                 {slide.keyConcepts?.length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600">
-                      <div className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center"><Tags className="w-3.5 h-3.5" /></div> Centrale Begreber
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                    <h5 className="text-[10px] font-black uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+                      <Tags className="w-3.5 h-3.5" /> Centrale Begreber
+                    </h5>
+                    <div className="flex flex-wrap gap-1.5">
                       {slide.keyConcepts.map((c: any, i: number) => (
                         <Link key={i} href={`/concept-explainer?term=${encodeURIComponent(c.term)}`}>
-                          <span className="group/tag inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-indigo-100 text-indigo-700 rounded-xl text-[11px] font-bold hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all cursor-pointer shadow-sm">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
                             {c.term}
-                            <ArrowLeft className="w-3 h-3 rotate-180 opacity-0 group-hover/tag:opacity-100 transition-opacity" />
                           </span>
                         </Link>
                       ))}
@@ -674,32 +716,46 @@ const SlideCard = React.memo(({ slide, note, onNoteChange, isOpen, onToggle, ind
                   </div>
                 )}
 
+                {/* Legal Frameworks */}
                 {slide.legalFrameworks?.length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-rose-600">
-                      <div className="w-6 h-6 rounded-lg bg-rose-50 flex items-center justify-center"><Scale className="w-3.5 h-3.5" /></div> Juridisk Ramme
-                    </h4>
-                    <ul className="space-y-3">
+                  <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                    <h5 className="text-[10px] font-black uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+                      <Scale className="w-3.5 h-3.5" /> Juridisk Ramme
+                    </h5>
+                    <ul className="space-y-2">
                       {slide.legalFrameworks.map((l: any, i: number) => (
-                        <li key={i} className="group/item p-4 bg-rose-50/50 rounded-2xl border border-rose-100 transition-colors hover:bg-rose-50">
-                          <span className="font-black text-rose-900 text-xs flex items-center gap-2 mb-1 cursor-default"><div className="w-1 h-1 rounded-full bg-rose-400" /> {l.law} {l.paragraphs?.join(', ')}</span>
-                          <span className="text-[11px] text-rose-700/70 font-medium leading-relaxed block">{l.relevance}</span>
+                        <li key={i} className="p-2.5 bg-rose-50/50 rounded-xl border border-rose-100/80">
+                          <p className="font-bold text-rose-900 text-xs mb-0.5">
+                            {l.law} {l.paragraphs?.join(', ')}
+                          </p>
+                          {l.relevance && (
+                            <p className="text-[11px] text-rose-700/80 leading-normal">
+                              {l.relevance}
+                            </p>
+                          )}
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
 
+                {/* Practical Tools / Methods */}
                 {slide.practicalTools?.length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                      <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center"><Wrench className="w-3.5 h-3.5" /></div> Metode & Praksis
-                    </h4>
-                    <ul className="space-y-3">
+                  <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                    <h5 className="text-[10px] font-black uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+                      <Wrench className="w-3.5 h-3.5" /> Metoder & Praksis
+                    </h5>
+                    <ul className="space-y-2">
                       {slide.practicalTools.map((t: any, i: number) => (
-                        <li key={i} className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 transition-colors hover:bg-emerald-50">
-                          <span className="font-black text-emerald-900 text-xs flex items-center gap-2 mb-1 cursor-default"><div className="w-1 h-1 rounded-full bg-emerald-400" /> {t.tool}</span>
-                          <span className="text-[11px] text-emerald-700/70 font-medium leading-relaxed block">{t.description}</span>
+                        <li key={i} className="p-2.5 bg-emerald-50/50 rounded-xl border border-emerald-100/80">
+                          <p className="font-bold text-emerald-900 text-xs mb-0.5">
+                            {t.tool}
+                          </p>
+                          {t.description && (
+                            <p className="text-[11px] text-emerald-700/80 leading-normal">
+                              {t.description}
+                            </p>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -707,19 +763,24 @@ const SlideCard = React.memo(({ slide, note, onNoteChange, isOpen, onToggle, ind
                 )}
               </div>
 
-              <div className="pt-6 border-t border-slate-50">
-                <div className="flex items-center justify-between mb-4">
-                    <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400"><FileText className="w-3.5 h-3.5" /> Mine studienoter</h4>
-                    {note && <span className="text-[9px] font-black uppercase text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">Noter gemt</span>}
+              {/* Study Notes */}
+              <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-amber-500" /> Mine Studienoter
+                  </span>
+                  {note && (
+                    <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Noter gemmes automatisk
+                    </span>
+                  )}
                 </div>
-                <div className="relative group">
-                    <Textarea 
-                      placeholder="Tilføj dine egne noter eller refleksioner..." 
-                      value={note} 
-                      onChange={e => onNoteChange(e.target.value)} 
-                      className="bg-slate-50 border-transparent rounded-[1.5rem] text-xs min-h-[100px] resize-none focus:bg-white focus:border-indigo-100 focus:ring-4 focus:ring-indigo-50/50 transition-all p-5 font-medium leading-relaxed" 
-                    />
-                </div>
+                <Textarea 
+                  placeholder="Skriv dine personlige noter, refleksioner eller spørgsmål til dette slide..." 
+                  value={note} 
+                  onChange={e => onNoteChange(e.target.value)} 
+                  className="bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm min-h-[90px] resize-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all p-3.5 font-medium leading-relaxed" 
+                />
               </div>
             </div>
           </MotionDiv>
@@ -736,7 +797,6 @@ SlideCard.displayName = 'SlideCard';
 const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfile: any; onClose: () => void }> = ({ seminar, user, userProfile, onClose }) => {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [activeSlide, setActiveSlide] = useState<number | null>(null);
   const [showConceptList, setShowConceptList] = useState(false);
   const [notes, setNotes] = useState<Record<number, string>>(() => (seminar.slides || []).reduce((acc, s) => { if (s.notes) acc[s.slideNumber] = s.notes; return acc; }, {} as Record<number, string>));
   const [debouncedNotes] = useDebounce(notes, 1500);
@@ -800,7 +860,15 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
   };
 
   const toggleSlide = (index: number) => setOpenSlides(prev => { const next = new Set(prev); if (next.has(index)) next.delete(index); else next.add(index); return next; });
-  const handleExpandAll = () => { if (expandAll) { setOpenSlides(new Set([0])); } else { setOpenSlides(new Set(slides.map((_, i) => i))); } setExpandAll(!expandAll); };
+  
+  const handleExpandAll = () => { 
+    if (expandAll) { 
+      setOpenSlides(new Set([0])); 
+    } else { 
+      setOpenSlides(new Set(slides.map((_, i) => i))); 
+    } 
+    setExpandAll(!expandAll); 
+  };
 
   const handleAutoSaveNotes = useCallback(async () => {
     if (!user || !seminar.id || !firestore) return;
@@ -815,8 +883,19 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
     } catch { setSaveStatus('idle'); }
   }, [user, seminar.id, firestore, debouncedNotes]);
 
-  useEffect(() => { if (isInitialMount.current) { isInitialMount.current = false; return; } handleAutoSaveNotes(); }, [debouncedNotes, handleAutoSaveNotes]);
-  useEffect(() => { let t: NodeJS.Timeout; if (saveStatus === 'saved') t = setTimeout(() => setSaveStatus('idle'), 2500); return () => clearTimeout(t); }, [saveStatus]);
+  useEffect(() => { 
+    if (isInitialMount.current) { 
+      isInitialMount.current = false; 
+      return; 
+    } 
+    handleAutoSaveNotes(); 
+  }, [debouncedNotes, handleAutoSaveNotes]);
+
+  useEffect(() => { 
+    let t: NodeJS.Timeout; 
+    if (saveStatus === 'saved') t = setTimeout(() => setSaveStatus('idle'), 2500); 
+    return () => clearTimeout(t); 
+  }, [saveStatus]);
 
   const handleStartQuiz = async () => {
     setIsGeneratingQuiz(true);
@@ -829,15 +908,18 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
         profession: userProfile?.profession
       });
       setQuizData(result.data);
-    } catch { toast({ title: 'Fejl', description: 'Quiz kunne ikke genereres.', variant: 'destructive' }); }
-    finally { setIsGeneratingQuiz(false); }
+    } catch { 
+      toast({ title: 'Fejl', description: 'Quiz kunne ikke genereres.', variant: 'destructive' }); 
+    } finally { 
+      setIsGeneratingQuiz(false); 
+    }
   };
 
   const scrollToSlide = (index: number) => {
     setOpenSlides(prev => new Set([...Array.from(prev), index]));
     const element = document.getElementById(`slide-${index}`);
     if (element && scrollContainerRef.current) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -848,194 +930,278 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-0 sm:top-[80px] z-[1500] bg-[#FDFCF8] overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-500 font-sans">
-      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-3 sm:px-6 md:px-10 py-3 sm:py-5 flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0 h-16 sm:h-20 md:h-24 z-50 shadow-sm">
-        <button onClick={quizData ? () => setQuizData(null) : onClose} className="p-2 sm:p-3 bg-white border border-slate-100 rounded-xl sm:rounded-2xl text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all active:scale-90 shrink-0 shadow-sm"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="font-black text-slate-950 truncate text-sm sm:text-xl md:text-2xl serif tracking-tight">{seminar.overallTitle}</h2>
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)] flex-shrink-0 animate-pulse" />
-          </div>
-          <div className="flex items-center gap-3">
-            <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{slides.length} slides</p>
-            <div className="w-1 h-1 rounded-full bg-slate-200" />
-            <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">{seminar.createdAt?.toDate().toLocaleDateString('da-DK')}</p>
+    <div className="fixed inset-0 z-50 bg-[#F8FAFC] overflow-hidden flex flex-col font-sans">
+      
+      {/* ── Top Header ─────────────────────────────────── */}
+      <header className="bg-white border-b border-slate-200/80 px-6 sm:px-8 py-3.5 flex items-center justify-between shrink-0 z-40 shadow-sm">
+        
+        {/* Left: Back + Title */}
+        <div className="flex items-center gap-4 min-w-0">
+          <button 
+            onClick={quizData ? () => setQuizData(null) : onClose} 
+            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 shrink-0"
+            title="Tilbage til oversigten"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="font-black text-slate-900 truncate text-base sm:text-lg tracking-tight">
+                {seminar.overallTitle}
+              </h2>
+              {seminar.category && (
+                <span className="hidden sm:inline-flex px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-md text-[10px] font-bold">
+                  {seminar.category}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 mt-0.5">
+              <span>{slides.length} slides</span>
+              <span>•</span>
+              <span>{seminar.createdAt?.toDate ? seminar.createdAt.toDate().toLocaleDateString('da-DK') : 'Oplæg'}</span>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {saveStatus === 'saving' && (
+            <span className="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Gemmer noter...
+            </span>
+          )}
+          {saveStatus === 'saved' && (
+            <span className="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600">
+              <Check className="w-3.5 h-3.5" /> Noter gemt
+            </span>
+          )}
+
           <button 
             onClick={() => setReadingMode(!readingMode)}
-            className={`p-2.5 sm:p-3 rounded-2xl transition-all border ${readingMode ? 'bg-slate-950 text-white border-slate-900 shadow-xl' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
-            title="Læse Mode"
+            className={`p-2.5 rounded-xl transition-all border ${
+              readingMode 
+                ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900'
+            }`}
+            title={readingMode ? "Forlad fuldskærm" : "Læsetilstand"}
           >
-            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Eye className="w-4 h-4" />
           </button>
-          <div className="h-8 sm:h-10 w-px bg-slate-100 hidden xs:block" />
-          <Button size="sm" variant="outline" onClick={() => setShowChat(true)} className="rounded-xl sm:rounded-2xl bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-600 h-10 sm:h-12 px-3 sm:px-6 flex items-center gap-2 transition-all text-[9px] sm:text-xs font-black tracking-widest shadow-sm">
-            <BrainCircuit className="w-4 h-4" />
-            <span className="hidden lg:inline">SPØRG AI</span>
+
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => setShowChat(true)} 
+            className="rounded-xl bg-indigo-50 border-indigo-200 hover:bg-indigo-100 text-indigo-700 h-10 px-4 flex items-center gap-2 transition-all text-xs font-bold shadow-sm"
+          >
+            <BrainCircuit className="w-4 h-4 text-indigo-600" />
+            <span className="hidden sm:inline">Spørg AI</span>
           </Button>
-          <Button size="sm" onClick={handleStartQuiz} disabled={isGeneratingQuiz} className="rounded-xl sm:rounded-2xl bg-slate-950 hover:bg-slate-800 text-white h-10 sm:h-12 px-3 sm:px-6 shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group text-[9px] sm:text-xs font-black tracking-widest">
-            {isGeneratingQuiz ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4 group-hover:rotate-12 transition-transform" />}
-            <span className="hidden sm:inline sm:ml-1 md:ml-2 uppercase">Quiz</span>
+
+          <Button 
+            size="sm" 
+            onClick={handleStartQuiz} 
+            disabled={isGeneratingQuiz} 
+            className="rounded-xl bg-slate-900 hover:bg-indigo-600 text-white h-10 px-4 shadow-sm transition-all flex items-center gap-2 text-xs font-bold"
+          >
+            {isGeneratingQuiz ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />}
+            <span className="hidden sm:inline">Start Quiz</span>
           </Button>
+
+          <button 
+            onClick={onClose}
+            className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all ml-1"
+            title="Luk"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
+      {/* ── Main Viewport ──────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* SIDE NAV FOR SLIDES */}
+        
+        {/* Left Slide Rail / Timeline */}
         {!readingMode && !quizData && (
-            <aside className="w-16 md:w-20 border-r border-slate-100 bg-white/50 backdrop-blur-sm flex flex-col items-center py-8 gap-3 overflow-y-auto hidden sm:flex shrink-0 custom-scrollbar">
-                {slides.map((s, i) => (
-                    <button 
-                        key={i}
-                        onClick={() => scrollToSlide(i)}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${openSlides.has(i) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-white border border-slate-100 text-slate-400 hover:border-indigo-200 hover:text-indigo-600'}`}
-                    >
-                        {s.slideNumber}
-                    </button>
-                ))}
-            </aside>
+          <aside className="w-56 lg:w-64 border-r border-slate-200/80 bg-white flex flex-col overflow-hidden hidden sm:flex shrink-0">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Oversigt ({slides.length})
+              </span>
+              <button 
+                onClick={handleSelectAll}
+                className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800"
+              >
+                {selectedSlides.size === slides.length ? 'Fravælg alle' : 'Vælg alle'}
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 no-scrollbar">
+              {slides.map((s, i) => {
+                const isOpen = openSlides.has(i);
+                return (
+                  <button 
+                    key={i}
+                    onClick={() => scrollToSlide(i)}
+                    className={`w-full text-left p-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-3 border ${
+                      isOpen 
+                        ? 'bg-indigo-50/80 text-indigo-900 border-indigo-200/80 shadow-sm' 
+                        : 'bg-transparent text-slate-600 border-transparent hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${
+                      isOpen ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {s.slideNumber}
+                    </span>
+                    <span className="truncate flex-1">
+                      {s.slideTitle || `Slide ${s.slideNumber}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
         )}
 
+        {/* Main Content / Quiz View */}
         <AnimatePresence mode="wait">
-            {quizData ? (
-            <motion.div key="quiz" className="flex-1 overflow-y-auto bg-white custom-scrollbar"><QuizView userId={user.uid} topic={seminar.overallTitle} quizData={quizData} onFinish={() => setQuizData(null)} /></motion.div>
-            ) : (
-            <motion.div 
-                key="feed" 
-                ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/notebook.png')] ${readingMode ? 'px-4' : 'px-4 sm:px-8'}`}
-            >
-                <div className={`${readingMode ? 'max-w-5xl' : 'max-w-4xl'} mx-auto py-12`}>
-                
-                <AnimatePresence>
-                    {!readingMode && (
-                        <motion.div 
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden mb-12"
-                        >
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-                                {[
-                                    { label: 'Indhold', val: slides.length, icon: <Presentation className="w-4 h-4 sm:w-5 sm:h-5"/>, bg: 'bg-slate-950 text-white shadow-2xl shadow-slate-900/20', sub: 'Slides' },
-                                    { label: 'Begreber', val: totals.concepts, icon: <Tags className="w-4 h-4 sm:w-5 sm:h-5"/>, bg: 'bg-white text-indigo-600 border border-indigo-50 shadow-sm', sub: 'Begreber' },
-                                    { label: 'Love', val: totals.law, icon: <Scale className="w-4 h-4 sm:w-5 sm:h-5"/>, bg: 'bg-white text-rose-600 border border-rose-50 shadow-sm', sub: 'Love' },
-                                    { label: 'Metoder', val: totals.tools, icon: <Wrench className="w-4 h-4 sm:w-5 sm:h-5"/>, bg: 'bg-white text-emerald-600 border border-emerald-50 shadow-sm', sub: 'Metoder' }
-                                ].map(s => (
-                                    <div key={s.label} className={`${s.bg} rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-6 text-center group hover:scale-105 transition-all duration-500`}>
-                                        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            {s.icon}
-                                            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{s.label}</span>
-                                        </div>
-                                        <p className="text-2xl sm:text-4xl font-black serif mb-0.5 sm:mb-1">{s.val}</p>
-                                        <p className="text-[7px] sm:text-[9px] font-bold opacity-40 uppercase tracking-widest">{s.sub}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <div className="flex items-center justify-between mb-8 px-4">
-                    <div className="flex items-center gap-6">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Gennemgang</span>
-                            <div className="w-12 h-1 bg-indigo-500 rounded-full mt-1" />
-                        </div>
-                        <button 
-                            onClick={handleSelectAll}
-                            className="text-[10px] font-black uppercase text-indigo-400 hover:text-indigo-600 transition-colors tracking-widest"
-                        >
-                            {selectedSlides.size === slides.length ? 'Fravælg alle' : 'Vælg alle'}
-                        </button>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setShowConceptList(true)} className="flex items-center gap-3 px-6 py-3 bg-amber-400 text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-500 active:scale-95 transition-all shadow-xl shadow-amber-400/20">
-                            <BookOpen className="w-4 h-4" /> Begreber
-                        </button>
-                    </div>
-                </div>
-
-                <div className="space-y-6 relative">
-                    {slides.map((s, i) => (
-                    <div id={`slide-${i}`} key={`${s.slideNumber}-${i}`}>
-                        <SlideCard 
-                            slide={s} 
-                            note={notes[s.slideNumber] || ''} 
-                            onNoteChange={v => setNotes(prev => ({ ...prev, [s.slideNumber]: v }))} 
-                            isOpen={openSlides.has(i)} 
-                            onToggle={() => toggleSlide(i)} 
-                            index={i}
-                            isSelected={selectedSlides.has(i)}
-                            onSelect={(e) => handleToggleSelect(i, e)}
-                        />
-                    </div>
-                    ))}
-
-                    <AnimatePresence>
-                    {selectedSlides.size > 0 && (
-                        <motion.div 
-                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 50, scale: 0.9 }}
-                        className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-white px-10 py-5 rounded-[2.5rem] shadow-3xl flex items-center gap-10 border border-white/5 backdrop-blur-2xl"
-                        >
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Markerede slides</span>
-                            <span className="text-2xl font-black serif">{selectedSlides.size} <span className="text-slate-500 font-medium">stk</span></span>
-                        </div>
-                        <div className="w-px h-12 bg-white/10" />
-                        <button 
-                            onClick={handleDeleteSelected}
-                            disabled={isDeletingSlides}
-                            className="flex items-center gap-3 px-8 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-rose-600/20"
-                        >
-                            {isDeletingSlides ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
-                            Fjern fra arkiv
-                        </button>
-                        </motion.div>
-                    )}
-                    </AnimatePresence>
-                </div>
-                </div>
+          {quizData ? (
+            <motion.div key="quiz" className="flex-1 overflow-y-auto bg-white">
+              <QuizView userId={user.uid} topic={seminar.overallTitle} quizData={quizData} onFinish={() => setQuizData(null)} />
             </motion.div>
-            )}
+          ) : (
+            <motion.div 
+              key="feed" 
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto p-6 sm:p-8 lg:p-10 space-y-6"
+            >
+              <div className={`${readingMode ? 'max-w-4xl' : 'max-w-3xl'} mx-auto space-y-6`}>
+                
+                {/* Compact Stats & Action Bar */}
+                {!readingMode && (
+                  <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-xl text-xs font-bold text-slate-700">
+                        <Presentation className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{slides.length} Slides</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-700">
+                        <Tags className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>{totals.concepts} Begreber</span>
+                      </div>
+                      {totals.law > 0 && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 border border-rose-100 rounded-xl text-xs font-bold text-rose-700">
+                          <Scale className="w-3.5 h-3.5 text-rose-500" />
+                          <span>{totals.law} Love</span>
+                        </div>
+                      )}
+                      {totals.tools > 0 && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-bold text-emerald-700">
+                          <Wrench className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>{totals.tools} Metoder</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={handleExpandAll}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
+                      >
+                        {expandAll ? 'Fold alle ind' : 'Fold alle ud'}
+                      </button>
+                      <button 
+                        onClick={() => setShowConceptList(true)}
+                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Begrebsoverblik</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Slides List */}
+                <div className="space-y-4 relative">
+                  {slides.map((s, i) => (
+                    <div id={`slide-${i}`} key={`${s.slideNumber}-${i}`}>
+                      <SlideCard 
+                        slide={s} 
+                        note={notes[s.slideNumber] || ''} 
+                        onNoteChange={v => setNotes(prev => ({ ...prev, [s.slideNumber]: v }))} 
+                        isOpen={openSlides.has(i)} 
+                        onToggle={() => toggleSlide(i)} 
+                        index={i}
+                        isSelected={selectedSlides.has(i)}
+                        onSelect={(e) => handleToggleSelect(i, e)}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Floating Bulk Action Bar */}
+                <AnimatePresence>
+                  {selectedSlides.size > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 30, scale: 0.95 }}
+                      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-6 border border-slate-800"
+                    >
+                      <span className="text-xs font-bold text-slate-300">
+                        {selectedSlides.size} {selectedSlides.size === 1 ? 'slide markeret' : 'slides markerede'}
+                      </span>
+                      <button 
+                        onClick={handleDeleteSelected}
+                        disabled={isDeletingSlides}
+                        className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {isDeletingSlides ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        <span>Slet markerede</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
+      {/* ── Slide-over Overlays: Concepts & AI Chat ─────── */}
       <AnimatePresence>
-            {showConceptList && (
-              <ConceptListOverlay 
-                title={seminar.overallTitle} 
-                slides={seminar.slides.map(s => ({ ...s, seminarTitle: seminar.overallTitle }))} 
-                learnedConcepts={userProfile?.learnedConcepts || []}
-                onToggleLearned={async (term) => {
-                    if (!user || !firestore) return;
-                    const learned = userProfile?.learnedConcepts || [];
-                    const newLearned = learned.includes(term) ? learned.filter(t => t !== term) : [...learned, term];
-                    await updateDoc(doc(firestore, 'users', user.uid), { learnedConcepts: newLearned });
-                }}
-                onClose={() => setShowConceptList(false)} 
-              />
-            )}
-            {showChat && (
-                <SeminarChatOverlay 
-                    title={seminar.overallTitle}
-                    seminars={[{ title: seminar.overallTitle, slides: seminar.slides }]}
-                    onClose={() => setShowChat(false)}
-                    initialMessages={seminar.chatHistory || []}
-                    onSave={async (msgs) => {
-                        if (!user || !firestore) return;
-                        try {
-                            const ref = doc(firestore, 'users', user.uid, 'seminars', seminar.id);
-                            await updateDoc(ref, { chatHistory: msgs });
-                        } catch (e) { console.error('Error saving chat:', e); }
-                    }}
-                />
-            )}
-          </AnimatePresence>
+        {showConceptList && (
+          <ConceptListOverlay 
+            title={seminar.overallTitle} 
+            slides={seminar.slides.map(s => ({ ...s, seminarTitle: seminar.overallTitle }))} 
+            learnedConcepts={userProfile?.learnedConcepts || []}
+            onToggleLearned={async (term) => {
+              if (!user || !firestore) return;
+              const learned = userProfile?.learnedConcepts || [];
+              const newLearned = learned.includes(term) ? learned.filter(t => t !== term) : [...learned, term];
+              await updateDoc(doc(firestore, 'users', user.uid), { learnedConcepts: newLearned });
+            }}
+            onClose={() => setShowConceptList(false)} 
+          />
+        )}
+        {showChat && (
+          <SeminarChatOverlay 
+            title={seminar.overallTitle}
+            seminars={[{ title: seminar.overallTitle, slides: seminar.slides }]}
+            onClose={() => setShowChat(false)}
+            initialMessages={seminar.chatHistory || []}
+            onSave={async (msgs) => {
+              if (!user || !firestore) return;
+              try {
+                const ref = doc(firestore, 'users', user.uid, 'seminars', seminar.id);
+                await updateDoc(ref, { chatHistory: msgs });
+              } catch (e) { console.error('Error saving chat:', e); }
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
