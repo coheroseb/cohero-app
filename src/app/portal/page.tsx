@@ -42,7 +42,9 @@ import {
   Copy,
   ChevronDown,
   ChevronUp,
-  Check
+  Check,
+  Bookmark,
+  FileBox
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import { useToast } from '@/hooks/use-toast';
@@ -813,6 +815,119 @@ const PortalPageContent: React.FC = () => {
                     </Link>
                   </div>
                </div>
+            )}
+
+            {/* 4 KERNESØJLER HUB (Students Only) */}
+            {!userProfile?.isQualified && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between px-2">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-indigo-500" />
+                      Faglige Kerneværktøjer
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Strukturér, planlæg, organisér og søg viden til dit semester</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {/* Søjle 1: Strukturering */}
+                  <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+                    <div>
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <GraduationCap className="w-6 h-6" />
+                      </div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1">1. Strukturering</div>
+                      <h4 className="text-base font-black text-slate-900 mb-2">Mit Semester & Moduler</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Overblik over studieordning, modulkrav, læringsmål og sagsanalyse.
+                      </p>
+                    </div>
+                    <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2">
+                      <Link href="/mit-semester" className="text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center justify-between">
+                        <span>Mit Semester</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                      <Link href="/case-analyser" className="text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center justify-between">
+                        <span>Sagsanalyse</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Søjle 2: Planlægning */}
+                  <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+                    <div>
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <CalendarDays className="w-6 h-6" />
+                      </div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">2. Planlægning</div>
+                      <h4 className="text-base font-black text-slate-900 mb-2">Studie- & Læseplan</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Ugeplaner, tidsestimater, eksamensdeadlines og studieoplæg.
+                      </p>
+                    </div>
+                    <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2">
+                      <Link href="/semester-planlaegger" className="text-xs font-bold text-slate-700 hover:text-emerald-600 flex items-center justify-between">
+                        <span>Semesterplanlægger</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                      <Link href="/studieplanlaegger" className="text-xs font-bold text-slate-700 hover:text-emerald-600 flex items-center justify-between">
+                        <span>Læseplanlægger</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Søjle 3: Organisering */}
+                  <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+                    <div>
+                      <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <FileBox className="w-6 h-6" />
+                      </div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-1">3. Organisering</div>
+                      <h4 className="text-base font-black text-slate-900 mb-2">Mit Pensum & Noter</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Materialearkiv, egne kompendier, opgavedispositioner og bogmærker.
+                      </p>
+                    </div>
+                    <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2">
+                      <Link href="/mine-materialer" className="text-xs font-bold text-slate-700 hover:text-amber-600 flex items-center justify-between">
+                        <span>Mit Pensum & Materialer</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                      <Link href="/mine-gemte-paragraffer" className="text-xs font-bold text-slate-700 hover:text-amber-600 flex items-center justify-between">
+                        <span>Gemte Paragraffer</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Søjle 4: Videnssøgning */}
+                  <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+                    <div>
+                      <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Search className="w-6 h-6" />
+                      </div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-1">4. Videnssøgning</div>
+                      <h4 className="text-base font-black text-slate-900 mb-2">Pensumsøgning & Jura</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Semantisk søgning i litteratur med APA-referencer og Second Opinion.
+                      </p>
+                    </div>
+                    <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2">
+                      <Link href="/pensum-search" className="text-xs font-bold text-slate-700 hover:text-purple-600 flex items-center justify-between">
+                        <span>Pensumsøgning</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                      <Link href="/concept-explainer" className="text-xs font-bold text-slate-700 hover:text-purple-600 flex items-center justify-between">
+                        <span>Begrebsguide</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* LEARNING GOALS - (Only for students) */}

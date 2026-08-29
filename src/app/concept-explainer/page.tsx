@@ -730,20 +730,19 @@ function ConceptChatContent() {
           }
 
           trackUsage(term);
-
         } else {
           // Follow-up chat - fetch complete answer at once!
           const resp = await unifiedChatAction({
             message: term,
             chatHistory: buildHistory() as any,
-            persona: 'academic',
+            persona: 'kollega',
             context: {
               relevantDocumentIds: [],
               lawContext: `AKTUEL FAGLIG KONTEKST:\nBegreb: ${currentConceptName}\nDefinition: ${stripHtml(currentDefinition).substring(0, 1000)}`,
             }
           });
 
-          const answerText = resp?.data?.answer || resp?.answer || "Beklager, jeg kunne ikke behandle dit spørgsmål.";
+          const answerText = (resp as any)?.data?.answer || (resp as any)?.answer || "Beklager, jeg kunne ikke behandle dit spørgsmål.";
           setMessages(prev => [...prev, { id: aiMsgId, role: 'followup', text: answerText }]);
         }
     } catch (err: any) {

@@ -45,6 +45,13 @@ import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/fire
 import { collection, doc, addDoc, updateDoc, serverTimestamp, query, orderBy, limit, getDocs, deleteDoc } from 'firebase/firestore';
 import type { CaseAnalysis } from '@/ai/flows/types';
 
+interface LawConfig {
+  id: string;
+  name?: string;
+  title?: string;
+  [key: string]: any;
+}
+
 // PDF extraction helper with fallback worker URLs
 async function extractTextFromPdf(file: File): Promise<string> {
   try {
@@ -253,12 +260,14 @@ const CaseAnalyserPage: React.FC = () => {
   }, [user, isUserLoading, router, firestore]);
 
   useEffect(() => {
-    if (!analysis?.relevanteParagraffer || analysis.relevanteParagraffer.length === 0) return;
+    const currentAnalysis = analysis;
+    if (!currentAnalysis?.relevanteParagraffer || currentAnalysis.relevanteParagraffer.length === 0) return;
     
     let isCancelled = false;
     async function loadRetsinfo() {
+      const list = currentAnalysis?.relevanteParagraffer || [];
       const newMap: Record<string, { officialTitle?: string; retsinformationUrl?: string; isVerified: boolean }> = {};
-      for (const p of analysis.relevanteParagraffer) {
+      for (const p of list) {
         const key = `${p.lov}-${p.paragraf}`;
         try {
           const details = await fetchRetsinformationLawDetailsAction(p.lov, p.paragraf);
@@ -496,9 +505,9 @@ const CaseAnalyserPage: React.FC = () => {
     const targetTerm = abbrevMap[normalized] || normalized;
 
     const found = laws.find(d => 
-        d.name.toLowerCase().includes(targetTerm) || 
+        (d.name && d.name.toLowerCase().includes(targetTerm)) || 
         d.id.toLowerCase() === normalized ||
-        d.abbreviation?.toLowerCase() === normalized
+        (d.abbreviation && d.abbreviation.toLowerCase() === normalized)
     );
     return found?.id || null;
   };

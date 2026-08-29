@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BookOpen, Search, Zap, FileText, Scale, Brain, 
   TrendingUp, Bell, Settings, ShoppingBag, LogOut, Menu, X, 
   Presentation, Shield, FileBox, ExternalLink, GraduationCap,
-  ChevronRight
+  ChevronRight, CalendarDays, Clock, Bookmark
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/app/provider';
@@ -142,24 +142,39 @@ export default function Sidebar() {
       : `Semester ${userProfile.semester}`
     : null;
 
-  // Navigation structure
+  // Navigation structure - 4 Kernesøjler
   const sections: NavSection[] = [
     {
-      label: 'Studier',
+      label: 'Struktur',
       items: [
-        { label: 'Overblik', path: '/portal', icon: <LayoutDashboard className="w-4 h-4" /> },
-        { label: 'Mit Pensum', path: '/mine-materialer', icon: <FileBox className="w-4 h-4" /> },
-        { label: 'Pensumsøgning', path: '/pensum-search', icon: <Search className="w-4 h-4" /> },
+        { label: 'Dashboard', path: '/portal', icon: <LayoutDashboard className="w-4 h-4" /> },
+        { label: 'Mit Semester', path: '/mit-semester', icon: <GraduationCap className="w-4 h-4" /> },
       ],
     },
     {
-      label: 'Værktøjer',
+      label: 'Planlægning',
       items: [
-        { label: 'Case-analyse', path: '/case-analyser', icon: <FileText className="w-4 h-4 text-amber-500" /> },
+        { label: 'Semesterplanlægger', path: '/semester-planlaegger', icon: <CalendarDays className="w-4 h-4" /> },
+        { label: 'Studie- & Læseplan', path: '/studieplanlaegger', icon: <Clock className="w-4 h-4" /> },
+        { label: 'Oplægsarkitekt', path: '/seminar-architect', icon: <Presentation className="w-4 h-4" /> },
+      ],
+    },
+    {
+      label: 'Organisering',
+      items: [
+        { label: 'Mit Pensum & Noter', path: '/mine-materialer', icon: <FileBox className="w-4 h-4" /> },
+        { label: 'Gemte Paragraffer', path: '/mine-gemte-paragraffer', icon: <Bookmark className="w-4 h-4" /> },
+      ],
+    },
+    {
+      label: 'Videnssøgning',
+      items: [
+        { label: 'Pensumsøgning', path: '/pensum-search', icon: <Search className="w-4 h-4" /> },
+        { label: 'Begrebsguide', path: '/concept-explainer', icon: <Brain className="w-4 h-4" /> },
+        { label: 'Sagsanalyse', path: '/case-analyser', icon: <FileText className="w-4 h-4 text-amber-500" /> },
         { label: 'Second Opinion', path: '/second-opinion', icon: <Scale className="w-4 h-4" /> },
-        { label: 'Begreber', path: '/concept-explainer', icon: <Brain className="w-4 h-4" /> },
-        { label: 'Lovportal', path: 'https://law.cohero.dk/', icon: <Scale className="w-4 h-4" />, isSSO: true, isExternal: true },
-        { label: 'Slides', path: '/mine-seminarer', icon: <Presentation className="w-4 h-4" /> },
+        { label: 'Lovportal', path: 'https://law.cohero.dk/', icon: <Scale className="w-4 h-4 text-indigo-500" />, isSSO: true, isExternal: true },
+        { label: 'Forskningsrapporter', path: '/vive-indsigt', icon: <TrendingUp className="w-4 h-4" /> },
       ],
     },
     {
@@ -171,7 +186,7 @@ export default function Sidebar() {
   ];
 
   if (userProfile?.role === 'admin') {
-    sections[2].items.push({ label: 'Admin Panel', path: '/admin', icon: <Shield className="w-4 h-4" /> });
+    sections[sections.length - 1].items.push({ label: 'Admin Panel', path: '/admin', icon: <Shield className="w-4 h-4" /> });
   }
 
   // Inner sidebar contents

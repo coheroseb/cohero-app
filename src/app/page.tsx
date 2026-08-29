@@ -9,7 +9,8 @@ import {
   Users, Bell, Search, Menu, X, Star, FileBox, Gavel, Briefcase, Award,
   Layers, ShieldAlert, Cpu, HeartHandshake, CheckCircle, GraduationCap,
   Play, Stethoscope, Baby, Activity, Dumbbell, Compass, HelpCircle,
-  Clock, ArrowUpRight, GitMerge, Send, Calendar, AlertTriangle, Shield
+  Clock, ArrowUpRight, GitMerge, Send, Calendar, AlertTriangle, Shield,
+  CalendarDays, Bookmark, FolderKanban, LayoutDashboard
 } from 'lucide-react';
 import { useApp } from '@/app/provider';
 import HeaderNavbar from '@/components/HeaderNavbar';
@@ -39,11 +40,10 @@ export default function LandingPage() {
   const router = useRouter();
 
   // Interactive States
-  const [heroActiveTab, setHeroActiveTab] = useState<'pensum' | 'lov' | 'analyse' | 'eksamen'>('pensum');
+  const [heroActiveTab, setHeroActiveTab] = useState<'struktur' | 'planlaegning' | 'organisering' | 'viden'>('struktur');
   const [activePracticeTab, setActivePracticeTab] = useState<'social_work' | 'pedagogy' | 'nursing' | 'midwifery' | 'therapy' | 'institution'>('social_work');
-  const [moduleCategory, setModuleCategory] = useState<'all' | 'legal' | 'curriculum' | 'exam' | 'study'>('all');
+  const [moduleCategory, setModuleCategory] = useState<'all' | 'struktur' | 'planlaegning' | 'organisering' | 'viden'>('all');
   const [selectedModule, setSelectedModule] = useState<any | null>(null);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   useEffect(() => {
@@ -68,31 +68,34 @@ export default function LandingPage() {
     }
   };
 
-  // Modules Catalog Data
+  // Modules Catalog Data (Grupperet efter de 4 søjler)
   const modulesList = [
+    // 1. STRUKTURERING
     {
-      id: 'lovportal',
-      title: 'Lovportal & Retsinformation',
-      category: 'legal',
-      badge: 'Gældende Ret',
+      id: 'mit_semester',
+      title: 'Mit Semester & Studieordning',
+      category: 'struktur',
+      pillar: '1. Strukturering',
+      badge: 'Struktur',
       badgeBg: '#eff6ff',
       badgeColor: '#1d4ed8',
       iconBg: '#dbeafe',
       iconColor: '#1d4ed8',
-      icon: <Scale size={24} />,
-      targetAudience: 'Socialrådgiver-, pædagog- og sundhedsstuderende',
-      plainExplanation: 'Direkte adgang til gældende dansk lovstof, herunder Barnets Lov, Serviceloven, Forvaltningsloven og Retssikkerhedsloven, koblet med Ankestyrelsens principmeddelelser og vejledninger.',
+      icon: <GraduationCap size={24} />,
+      targetAudience: 'Studerende på alle semestre',
+      plainExplanation: 'Få krystalklart overblik over dit aktuelle modul, officielle læringsmål, ECTS-point og eksamensform ud fra din institutions godkendte studieordning.',
       benefits: [
-        'Slå paragraffer op lynhurtigt med automatisk lovhistorik og kommentarer',
-        'Find relevante Ankestyrelsesafgørelser til brug i eksamensopgaver',
-        'Få præcise kildehenvisninger direkte klar til din litteraturliste'
+        'Automatisk indlæsning af dit semesters specifikke modulkrav og læringsmål',
+        'Upload af egen lokale modulbeskrivelse med automatisk AI-udtræk',
+        'Direkte link til anbefalet litteratur til hvert enkelt læringsmål'
       ],
-      whyItMatters: 'Du slipper for at lede i uoverskuelige PDF-filer og er altid 100% sikker på, at du citerer gældende ret.'
+      whyItMatters: 'Du ved præcis, hvad censor vurderer dig på, så du læser målrettet efter læringsmålene fra dag 1.'
     },
     {
       id: 'sagsanalyse',
       title: 'Juridisk Sagsanalyse & Subsumption',
-      category: 'legal',
+      category: 'struktur',
+      pillar: '1. Strukturering',
       badge: 'Metode',
       badgeBg: '#fef2f2',
       badgeColor: '#dc2626',
@@ -109,137 +112,210 @@ export default function LandingPage() {
       whyItMatters: 'Giver dig den stringente metode og faglige argumentation, der belønnes med topkarakterer til eksamen.'
     },
     {
-      id: 'eksamensarkitekt',
-      title: 'AI Eksamensarkitekt & Disposition',
-      category: 'exam',
-      badge: 'Eksamenshjælp',
-      badgeBg: '#f0fdf4',
-      badgeColor: '#15803d',
-      iconBg: '#dcfce7',
-      iconColor: '#15803d',
-      icon: <Sparkles size={24} />,
-      targetAudience: 'Alle velfærdsstuderende før mundtlig og skriftlig eksamen',
-      plainExplanation: 'Hjælper dig med at omdanne et bredt emne eller pensum til en skarp problemformulering, en logisk disposition og en stærk argumentationskæde.',
-      benefits: [
-        'Generer eksamensdispositioner med balance mellem teori, empiri og jura',
-        'Få forslag til kritiske perspektiveringer og metodiske overvejelser',
-        'Træn mundtlig eksamen med simulerede spørgsmål fra censor'
-      ],
-      whyItMatters: 'Fjerner eksamensstress og giver dig en krystalklar rød tråd i dit projekt eller mundtlige oplæg.'
-    },
-    {
-      id: 'pensum_assistent',
-      title: 'Pensum- & Bog-assistent',
-      category: 'curriculum',
-      badge: 'Studieoverblik',
-      badgeBg: '#eff6ff',
-      badgeColor: '#2563eb',
-      iconBg: '#dbeafe',
-      iconColor: '#2563eb',
-      icon: <BookOpen size={24} />,
-      targetAudience: 'Studerende med tunge pensumlister og lærebøger',
-      plainExplanation: 'Få overblik over hundredvis af siders faglitteratur. Få uddraget kernebegreber, teoretiske pointer og faglige sammenhænge på få minutter.',
-      benefits: [
-        'Hurtig opsummering af kapitler med fokus på eksamensrelevans',
-        'Uddrag automatisk nøglebegreber og faglige definitioner',
-        'Sammenlign forskellige teoretikeres syn på samme problemstilling'
-      ],
-      whyItMatters: 'Du sparer mange timers læsetid og får et bedre overblik over pensums vigtigste pointer.'
-    },
-    {
-      id: 'journaltraener',
-      title: 'Journaltræner (SOAP & ICS)',
-      category: 'study',
-      badge: 'Praksis',
-      badgeBg: '#faf5ff',
-      badgeColor: '#7e22ce',
-      iconBg: '#f3e8ff',
-      iconColor: '#7e22ce',
-      icon: <FileText size={24} />,
-      targetAudience: 'Studerende i praktik og praksisforberedelse',
-      plainExplanation: 'Lær at skrive professionelle, saglige og objektive journalnotater efter SOAP-modellen (Subjektivt, Objektivt, Analyse, Plan) og ICS-systematikken.',
-      benefits: [
-        'Træn adskillelse af borgerens udsagn og fagpersonens observationer',
-        'Undgå værdiladede og usaglige formuleringer',
-        'Få direkte feedback på sproglig præcision og juridisk holdbarhed'
-      ],
-      whyItMatters: 'Forbereder dig optimalt til dine praktikperioder og dit fremtidige virke som autoriseret fagperson.'
-    },
-    {
-      id: 'sags_simulator',
-      title: 'AI Sags-Simulator & Døgncases',
-      category: 'study',
-      badge: 'Interaktiv',
-      badgeBg: '#fffbeb',
-      badgeColor: '#b45309',
-      iconBg: '#fef3c7',
-      iconColor: '#b45309',
-      icon: <Compass size={24} />,
-      targetAudience: 'Studerende der ønsker at teste deres viden på virkelighedsnære cases',
-      plainExplanation: 'Træd ind i rollen som sagsbehandler, pædagog eller sundhedsfaglig i dynamiske borgerscenarier med etiske dilemmaer og svære valg.',
-      benefits: [
-        'Reager på uventede hændelser, akutte underretninger og konflikter',
-        'Få løbende feedback på dine lovvalg og handleplaner',
-        'Styrk din evne til at træffe velovervejede beslutninger under pres'
-      ],
-      whyItMatters: 'Giver dig værdifuld praktisk erfaring og metodeforståelse i et trygt læringsmiljø.'
-    },
-    {
-      id: 'apa_kildegenerator',
-      title: 'APA Kildegenerator & Litteraturliste',
-      category: 'study',
-      badge: 'Akademisk',
-      badgeBg: '#ecfdf5',
-      badgeColor: '#047857',
-      iconBg: '#d1fae5',
-      iconColor: '#047857',
-      icon: <Layers size={24} />,
-      targetAudience: 'Alle studerende der skriver eksamensopgaver og bachelor',
-      plainExplanation: 'Generer fejlfrie kildehenvisninger og litteraturlister efter gældende APA 7th standard til bøger, lovbekendtgørelser, domme og artikler.',
-      benefits: [
-        '100% korrekt formatering af både in-text henvisninger og kildelister',
-        'Understøtter danske love, bekendtgørelser, vejledninger og rapporter',
-        'Eksportér direkte til Word eller Google Docs med ét klik'
-      ],
-      whyItMatters: 'Du undgår dyre formfejl og sparer timer på manuel kildeformatering.'
-    },
-    {
-      id: 'begrebsordbog',
-      title: 'Faglig Begrebsordbog & Quiz',
-      category: 'curriculum',
-      badge: 'Opslag',
+      id: 'begrebsguide',
+      title: 'Faglig Begrebsguide & Videnskabsteori',
+      category: 'struktur',
+      pillar: '1. Strukturering',
+      badge: 'Begreber',
       badgeBg: '#fdf2f8',
       badgeColor: '#be185d',
       iconBg: '#fce7f3',
       iconColor: '#be185d',
       icon: <HelpCircle size={24} />,
       targetAudience: 'Studerende på tværs af alle semestre',
-      plainExplanation: 'Overskuelige definitioner og teoretiske forklaringer på over 1.000 centrale begreber inden for socialt arbejde, pædagogik, sundhed og jura.',
+      plainExplanation: 'Dybdegående forklaringer på over 1.000 centrale begreber inden for socialt arbejde, pædagogik, sundhed, jura og videnskabsteori.',
       benefits: [
-        'Søg lynhurtigt på faglige begreber og teorier',
-        'Test din viden med interaktive begrebsquizzer',
-        'Se hvordan begreberne anvendes i konkrete praksiseksempler'
+        'Søg lynhurtigt på faglige begreber, teoretikere og paradigmer',
+        'Se konkrete praksiseksempler og eksamensanvendelse',
+        'Interaktiv opfølgende sparring til dine opgaver'
       ],
-      whyItMatters: 'Sikrer at du har styr på det faglige ordforråd og kan formulere dig præcist til eksamen.'
+      whyItMatters: 'Sikrer at du har fuldstændig styr på det faglige ordforråd og kan anvende teorier korrekt i opgaver.'
     },
+
+    // 2. PLANLÆGNING
     {
       id: 'semester_plan',
-      title: 'Semester- & Studieplanlægger',
-      category: 'study',
-      badge: 'Struktur',
+      title: 'Semesterplanlægger & Tidslinje',
+      category: 'planlaegning',
+      pillar: '2. Planlægning',
+      badge: 'Planlægning',
+      badgeBg: '#f0fdf4',
+      badgeColor: '#15803d',
+      iconBg: '#dcfce7',
+      iconColor: '#15803d',
+      icon: <CalendarDays size={24} />,
+      targetAudience: 'Studerende der ønsker ro og overblik over semesteret',
+      plainExplanation: 'Få en struktureret ugetidsplan for dit semester: opdel pensum i ugentlige bidder, hold styr på afleveringsdeadlines og eksaminer med iCal-synk.',
+      benefits: [
+        'Uge-for-uge intensitetsgraf over dit faglige arbejdspres',
+        'Synkronisering direkte til din Google-, Apple- eller Outlook-kalender',
+        'Overblik over deadlines for synopser, opgaver og mundtlige eksaminer'
+      ],
+      whyItMatters: 'Skaber ro i hverdagen og forhindrer, at du havner i overvældende tidspres op til eksamensperioden.'
+    },
+    {
+      id: 'studieplanlaegger',
+      title: 'Studie- & Læseplanlægger',
+      category: 'planlaegning',
+      pillar: '2. Planlægning',
+      badge: 'Læseplan',
+      badgeBg: '#ecfdf5',
+      badgeColor: '#047857',
+      iconBg: '#d1fae5',
+      iconColor: '#047857',
+      icon: <Clock size={24} />,
+      targetAudience: 'Alle studerende med uoverskuelige læselister',
+      plainExplanation: 'Omdan tunge pensumlister til konkrete, realistiske dags- og ugeplaner med tidsestimater baseret på din personlige læsehastighed.',
+      benefits: [
+        'Beregner automatisk estimeret læsetid pr. kapitel og modul',
+        'Interaktiv tjekliste så du kan markere læste tekster',
+        'Indbygget tidsbuffer til eksamensforberedelse og repetition'
+      ],
+      whyItMatters: 'Gør det nemt at overskue 500+ siders pensum uden at miste modet undervejs.'
+    },
+    {
+      id: 'seminar_architect',
+      title: 'Oplægsarkitekt & Fremlæggelse',
+      category: 'planlaegning',
+      pillar: '2. Planlægning',
+      badge: 'Oplæg',
+      badgeBg: '#fffbeb',
+      badgeColor: '#b45309',
+      iconBg: '#fef3c7',
+      iconColor: '#b45309',
+      icon: <Sparkles size={24} />,
+      targetAudience: 'Studerende før seminarer, studiegruppemøder og mundtlige oplæg',
+      plainExplanation: 'Strukturér og disponér mundtlige oplæg med en krystalklar rød tråd mellem teori, empiri og diskussionsspørgsmål.',
+      benefits: [
+        'Generér tidsstyrede dispositioner til 10-, 20- eller 45-minutters oplæg',
+        'Foreslår faglige diskussionsspørgsmål til studiegruppen',
+        'Træn mundtlig fremlæggelse og argumentation'
+      ],
+      whyItMatters: 'Giver dig selvtillid foran holdet og sikrer professionelle præsentationer.'
+    },
+
+    // 3. ORGANISERING
+    {
+      id: 'mit_pensum',
+      title: 'Mit Pensum & Materialearkiv',
+      category: 'organisering',
+      pillar: '3. Organisering',
+      badge: 'Arkiv',
       badgeBg: '#f0f9ff',
       badgeColor: '#0284c7',
       iconBg: '#e0f2fe',
       iconColor: '#0284c7',
-      icon: <Calendar size={24} />,
-      targetAudience: 'Studerende der ønsker ro og overblik over semesteret',
-      plainExplanation: 'Få en struktureret tidsplan for dit semester: opdel pensum i ugentlige overskuelige bidder, hold styr på afleveringer og eksamensdatoer.',
+      icon: <FileBox size={24} />,
+      targetAudience: 'Studerende med mange PDF-filer, artikler og noter',
+      plainExplanation: 'Saml alle dine noter, PDF-kompendier, eksamensdispositioner og bachelormaterialer i et struktureret og søgbart studiearkiv.',
       benefits: [
-        'Automatisk opdeling af pensum ud fra din semesterkalender',
-        'Overblik over deadlines for synopser, opgaver og eksaminer',
-        'Mindsk stress ved at vide præcis hvad du skal nå hver uge'
+        'Upload og organisér noter og artikler direkte pr. modul',
+        'AI-assisteret overblik og interaktiv vektor-søgning i dine egne dokumenter',
+        'Generér visuelle faglige mindmaps ud fra dine materialer'
       ],
-      whyItMatters: 'Skaber ro i hverdagen og forhindrer at du havner i panik op til eksamensperioden.'
+      whyItMatters: 'Slut med at lede i uoverskuelige mapper på computeren – alt dit faglige guld er samlet ét sted.'
+    },
+    {
+      id: 'gemte_paragraffer',
+      title: 'Gemte Paragraffer & Bogmærker',
+      category: 'organisering',
+      pillar: '3. Organisering',
+      badge: 'Bogmærker',
+      badgeBg: '#faf5ff',
+      badgeColor: '#7e22ce',
+      iconBg: '#f3e8ff',
+      iconColor: '#7e22ce',
+      icon: <Bookmark size={24} />,
+      targetAudience: 'Studerende der skriver opgaver og forbereder eksamen',
+      plainExplanation: 'Gem nøgleparagraffer, Ankestyrelsens principmeddelelser og boguddrag med personlige noter til lynhurtig genfinding under eksamen.',
+      benefits: [
+        'Opret tematiske mapper til dine eksamensopgaver (f.eks. Børn & Unge, Handicap, Forvaltningsret)',
+        'Tilføj personlige noter og refleksioner til hver paragraf',
+        'Eksportér bogmærker direkte som referencer til dit skriveprogram'
+      ],
+      whyItMatters: 'Gør det lynhurtigt at genfinde dine vigtigste retskilder, når uret tikker til eksamen.'
+    },
+    {
+      id: 'apa_kildegenerator',
+      title: 'APA 7th Kildegenerator',
+      category: 'organisering',
+      pillar: '3. Organisering',
+      badge: 'Referencer',
+      badgeBg: '#ecfdf5',
+      badgeColor: '#047857',
+      iconBg: '#d1fae5',
+      iconColor: '#047857',
+      icon: <Layers size={24} />,
+      targetAudience: 'Alle studerende der skriver eksamensopgaver og bachelor',
+      plainExplanation: 'Generér fejlfrie kildehenvisninger og færdige litteraturlister efter gældende APA 7th standard til bøger, lovbekendtgørelser, domme og rapporter.',
+      benefits: [
+        '100% korrekt formatering af både in-text henvisninger og kildelister',
+        'Understøtter danske love, bekendtgørelser, vejledninger og forskningsrapporter',
+        'Kopiér direkte til Word eller Google Docs med ét klik'
+      ],
+      whyItMatters: 'Du undgår dyre formfejl til eksamen og sparer mange timers manuelt tastearbejde.'
+    },
+
+    // 4. VIDENSSØGNING
+    {
+      id: 'pensumsøgning',
+      title: 'Intelligent Pensumsøgning',
+      category: 'viden',
+      pillar: '4. Videnssøgning',
+      badge: 'Pensumsøg',
+      badgeBg: '#eff6ff',
+      badgeColor: '#2563eb',
+      iconBg: '#dbeafe',
+      iconColor: '#2563eb',
+      icon: <Search size={24} />,
+      targetAudience: 'Studerende med tunge pensumlister og faglitteratur',
+      plainExplanation: 'Søg på tværs af tusindvis af siders pensumlitteratur. Find præcise kapitler, sidetal og APA-referencer direkte på dine faglige spørgsmål.',
+      benefits: [
+        'Semantisk søgning der forstår faglige synonymer og problemstillinger',
+        'Viser nøjagtige kapitel- og sidetalsreferencer klar til kildeangivelse',
+        'Uddrager kernebegreber og faglige sammenhænge på få sekunder'
+      ],
+      whyItMatters: 'Du sparer timer på at bladre i tunge lærebøger og finder lynhurtigt præcis den teori, du skal bruge.'
+    },
+    {
+      id: 'lovportal',
+      title: 'Lovportal & Retsinformation',
+      category: 'viden',
+      pillar: '4. Videnssøgning',
+      badge: 'Gældende Ret',
+      badgeBg: '#eff6ff',
+      badgeColor: '#1d4ed8',
+      iconBg: '#dbeafe',
+      iconColor: '#1d4ed8',
+      icon: <Scale size={24} />,
+      targetAudience: 'Socialrådgiver-, pædagog- og sundhedsstuderende',
+      plainExplanation: 'Direkte adgang til gældende dansk lovstof, herunder Barnets Lov, Serviceloven, Forvaltningsloven og Retssikkerhedsloven, koblet med Ankestyrelsens principmeddelelser.',
+      benefits: [
+        'Slå paragraffer op lynhurtigt med automatisk lovhistorik og kommentarer',
+        'Find relevante Ankestyrelsesafgørelser til brug i eksamensopgaver',
+        'Få præcise kildehenvisninger direkte klar til din litteraturliste'
+      ],
+      whyItMatters: 'Du slipper for uoverskuelige PDF-filer og er altid 100% sikker på, at du citerer gældende ret.'
+    },
+    {
+      id: 'second_opinion',
+      title: 'Second Opinion Opgavesparring',
+      category: 'viden',
+      pillar: '4. Videnssøgning',
+      badge: 'Sparring',
+      badgeBg: '#fef2f2',
+      badgeColor: '#e11d48',
+      iconBg: '#ffe4e6',
+      iconColor: '#e11d48',
+      icon: <Sparkles size={24} />,
+      targetAudience: 'Studerende under opgaveskrivning og bachelorforløb',
+      plainExplanation: 'Uvildig AI-opgavesparring der vurderer dit opgaveudkast mod dit moduls specifikke læringsmål, akademisk stringens og kildebrug.',
+      benefits: [
+        'Tester om din besvarelse dækker alle modulets faglige læringsmål',
+        'Identificerer manglende juridiske eller teoretiske perspektiver',
+        'Giver konstruktive forslag til at styrke din argumentation'
+      ],
+      whyItMatters: 'Fungerer som en ekstra censor før aflevering, så du kan nå at finpudse dine pointer.'
     }
   ];
 
@@ -331,40 +407,38 @@ export default function LandingPage() {
             <div className="lg:col-span-7 flex flex-col items-start text-left">
               
               {/* Shimmer Pill Badge */}
-              <div className="inline-flex items-center gap-2 bg-white/95 text-emerald-800 border border-emerald-300 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider mb-5 shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shadow-[0_0_0_3px_rgba(16,185,129,0.2)]"></span>
-                <span>100% GRATIS FOR STUDERENDE • 0 KR. I OPSTART</span>
+              <div className="inline-flex items-center gap-2 bg-white/95 text-indigo-900 border border-indigo-200 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider mb-5 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block shadow-[0_0_0_3px_rgba(79,70,229,0.2)]"></span>
+                <span>STUDIEPARTNER FOR SUNDHEDS- & VELFÆRDSSTUDERENDE · 100% GRATIS</span>
               </div>
 
               {/* H1 Main Title */}
               <h1 className="text-4xl sm:text-5xl lg:text-[62px] font-black text-slate-900 leading-[1.08] tracking-tight mb-4">
                 Mindre pensumstress. <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-800 via-blue-600 to-amber-600 inline-block">
-                  Mere faglig tryghed.
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-800 via-blue-600 to-emerald-600 inline-block">
+                  Mere struktur & faglig ro.
                 </span>
               </h1>
 
               {/* Badges Glass Row */}
               <div className="flex gap-2 items-center mb-5 flex-wrap">
+                <div className="bg-indigo-50 border border-indigo-200 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-xs">
+                  <span className="text-xs text-indigo-900 font-extrabold">📐 1. Strukturering</span>
+                </div>
                 <div className="bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-xs">
-                  <span className="text-xs text-emerald-800 font-extrabold">✓ 100% gratis</span>
+                  <span className="text-xs text-emerald-900 font-extrabold">🗓️ 2. Planlægning</span>
                 </div>
-                <div className="bg-white/90 border border-slate-200 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-xs">
-                  <ShieldCheck size={14} className="text-blue-600" />
-                  <span className="text-xs text-slate-800 font-bold">Gældende Dansk Ret</span>
+                <div className="bg-amber-50 border border-amber-200 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-xs">
+                  <span className="text-xs text-amber-900 font-extrabold">📁 3. Organisering</span>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-xs">
-                  <span className="text-xs text-blue-800 font-extrabold">★ 6 Velfærdsuddannelser</span>
-                </div>
-                <div className="bg-white/90 border border-slate-200 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-xs">
-                  <Lock size={13} className="text-sky-600" />
-                  <span className="text-xs text-slate-800 font-bold">Eksamenssikker & Etisk AI</span>
+                <div className="bg-purple-50 border border-purple-200 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-xs">
+                  <span className="text-xs text-purple-900 font-extrabold">🔎 4. Videnssøgning</span>
                 </div>
               </div>
 
               {/* Lead Paragraph */}
               <p className="text-base sm:text-lg text-slate-600 max-w-xl mb-7 leading-relaxed font-normal">
-                Det komplette faglige studiesystem og intelligente rygdækning tilpasset socialrådgiver-, pædagog-, sygepleje-, jordemoder-, ergo- og fysioterapistuderende i Danmark. Få live lovopslag, pensumoverblik, juridisk metodehjælp, APA-kildestyring og eksamensarkitekt samlet ét sted.
+                Cohéro Student er bygget til at støtte dig gennem hele din professionsbachelor med strukturering af moduler og læringsmål, realistisk semester- og læseplanlægning, organisering af pensumnoter samt lynhurtig videns- og lovsøgning.
               </p>
 
               {/* Action Buttons */}
@@ -391,11 +465,11 @@ export default function LandingPage() {
                   <ArrowRight size={18} />
                 </button>
                 <a
-                  href="#moduler"
+                  href="#soejler"
                   className="inline-flex items-center gap-2.5 text-slate-900 font-extrabold text-base bg-white border border-slate-300 px-6 py-3 rounded-xl shadow-xs hover:bg-slate-50 transition-all no-underline"
                 >
                   <Play size={14} className="fill-slate-900 text-slate-900" />
-                  Udforsk funktioner
+                  Udforsk de 4 søjler
                 </a>
               </div>
 
@@ -403,7 +477,7 @@ export default function LandingPage() {
               <div className="flex items-center gap-4 text-xs text-slate-500 font-bold mb-7 flex-wrap">
                 <span className="text-emerald-700 font-extrabold">✓ 100% gratis for studerende</span>
                 <span>✓ 0 kr. i opstart</span>
-                <span>✓ Ingen binding</span>
+                <span>✓ Tilpasset alle semestre</span>
               </div>
 
               {/* Profession Quick Switcher Bar */}
@@ -450,12 +524,12 @@ export default function LandingPage() {
               <div 
                 className="float-smooth absolute -top-5 -left-4 sm:-left-6 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3 shadow-xl flex items-center gap-3 z-20"
               >
-                <div className="bg-emerald-50 text-emerald-700 p-2 rounded-full flex flex-shrink-0">
-                  <ShieldCheck size={18} />
+                <div className="bg-indigo-50 text-indigo-700 p-2 rounded-full flex flex-shrink-0">
+                  <GraduationCap size={18} />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-xs font-black text-slate-900 leading-tight">100% Faglig Præcision</span>
-                  <span className="text-[10px] text-slate-500 font-semibold">Retsinfo & Ankestyrelsen</span>
+                  <span className="text-xs font-black text-slate-900 leading-tight">4 Faglige Kernesøjler</span>
+                  <span className="text-[10px] text-slate-500 font-semibold">Struktur, Plan, Arkiv & Viden</span>
                 </div>
               </div>
 
@@ -463,11 +537,11 @@ export default function LandingPage() {
               <div 
                 className="float-smooth-delayed absolute -bottom-5 -right-3 sm:-right-5 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3 shadow-xl flex items-center gap-3 z-20"
               >
-                <div className="bg-amber-50 text-amber-700 p-2 rounded-full flex flex-shrink-0">
-                  <Zap size={18} />
+                <div className="bg-emerald-50 text-emerald-700 p-2 rounded-full flex flex-shrink-0">
+                  <CalendarDays size={18} />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-xs font-black text-slate-900 leading-tight">5 timer sparet/uge</span>
+                  <span className="text-xs font-black text-slate-900 leading-tight">Realistisk Læseplan</span>
                   <span className="text-[10px] text-slate-500 font-semibold">Overblik & eksamensro</span>
                 </div>
               </div>
@@ -483,26 +557,26 @@ export default function LandingPage() {
                     <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
                     <span className="ml-2 text-xs font-bold text-slate-500">Cohéro Student Workspace</span>
                   </div>
-                  <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-black flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                    COH_V3 Fagvalideret
+                  <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full font-black flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                    Kerneplatform
                   </span>
                 </div>
 
                 {/* Hero Interactive Tabs Bar */}
                 <div className="flex bg-slate-100/60 px-2 py-1.5 gap-1 border-b border-slate-200 overflow-x-auto">
                   {[
-                    { id: 'pensum', label: '📚 Pensum AI' },
-                    { id: 'lov', label: '⚖️ Lovportal § 85' },
-                    { id: 'analyse', label: '📝 Sagsanalyse' },
-                    { id: 'eksamen', label: '🎓 Eksamensarkitekt' }
+                    { id: 'struktur', label: '📐 1. Struktur' },
+                    { id: 'planlaegning', label: '🗓️ 2. Plan' },
+                    { id: 'organisering', label: '📁 3. Arkiv' },
+                    { id: 'viden', label: '🔎 4. Viden' }
                   ].map(tab => {
                     const isActive = heroActiveTab === tab.id;
                     return (
                       <button
                         key={tab.id}
                         onClick={() => setHeroActiveTab(tab.id as any)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                           isActive 
                             ? 'bg-white text-slate-900 shadow-xs' 
                             : 'text-slate-500 hover:text-slate-900 bg-transparent'
@@ -517,127 +591,131 @@ export default function LandingPage() {
                 {/* Simulated Interactive Tab Content */}
                 <div className="p-6 min-h-[300px] flex flex-col justify-center text-left">
                   
-                  {heroActiveTab === 'pensum' && (
+                  {heroActiveTab === 'struktur' && (
                     <div className="scale-in flex flex-col gap-3">
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="text-[11px] text-slate-500 font-bold">Kernebog: Socialt Arbejde (M. Järvinen)</div>
-                          <div className="text-sm font-black text-slate-900">Kapitel 4: Magt, Relation og Myndighed</div>
+                          <div className="text-[11px] text-slate-500 font-bold">4. Semester · Børn & Familier</div>
+                          <div className="text-sm font-black text-slate-900">Modul: Myndighed & Børneundersøgelse</div>
                         </div>
-                        <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-extrabold">
-                          Pensumoverblik
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full font-extrabold">
+                          1. Strukturering
                         </span>
                       </div>
 
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed">
-                        <strong className="text-slate-900">Kernebegreber:</strong> Lipskys 'Street-level bureaucracy', diskretionært råderum, institutionslogikker og asymmetriske magtrelationer.
+                      <div className="space-y-2">
+                        <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-2.5">
+                          <span className="w-5 h-5 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-[10px] font-black shrink-0">1</span>
+                          <p className="text-xs text-slate-700 font-medium m-0">
+                            <strong>Læringsmål:</strong> Redegør for handlepligt og anbringelseskriterier efter Barnets Lov § 32 & § 47.
+                          </p>
+                        </div>
+                        <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-2.5">
+                          <span className="w-5 h-5 bg-emerald-600 text-white rounded-lg flex items-center justify-center text-[10px] font-black shrink-0">2</span>
+                          <p className="text-xs text-emerald-900 font-medium m-0">
+                            <strong>Metode:</strong> Gennemfør 4-trins subsumption (Faktum, Retsregel, Vurdering, Afgørelse).
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 leading-relaxed">
-                        <strong className="text-emerald-950">💡 Eksamensfokus:</strong> Forklar hvordan socialrådgiveren navigerer mellem organisationens økonomiske rammer og borgerens individuelle retskrav.
-                      </div>
-
-                      <div className="flex justify-between items-center text-[11px] text-slate-500">
-                        <span>Side 112-148 opsummeret</span>
-                        <span className="text-emerald-700 font-bold">✓ 3 APA-kilder genereret</span>
+                      <div className="flex justify-between items-center text-[11px] text-slate-500 pt-1">
+                        <span>Studieordning indlæst</span>
+                        <span className="text-indigo-700 font-bold">✓ 12 læringsmål kortlagt</span>
                       </div>
                     </div>
                   )}
 
-                  {heroActiveTab === 'lov' && (
+                  {heroActiveTab === 'planlaegning' && (
                     <div className="scale-in flex flex-col gap-3">
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="text-[11px] text-slate-500 font-bold">Retsinformation & Ankestyrelsen</div>
-                          <div className="text-sm font-black text-slate-900">Serviceloven § 85 & Barnets Lov § 32</div>
+                          <div className="text-[11px] text-slate-500 font-bold">Semesterplan & Læsehastighed</div>
+                          <div className="text-sm font-black text-slate-900">Uge 42: Pensummål 118 sider</div>
                         </div>
                         <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-extrabold">
-                          Gældende ret
-                        </span>
-                      </div>
-
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                        <div className="text-xs font-black text-blue-900 mb-1">Principmeddelelse 85-15</div>
-                        <p className="text-xs text-blue-800 leading-relaxed m-0">
-                          "Kommunen skal foretage en konkret og individuel vurdering af borgerens behov for socialpædagogisk bistand i eget hjem."
-                        </p>
-                      </div>
-
-                      <div className="flex justify-between items-center text-[11px] text-slate-500">
-                        <span>Direkte koblet til sagsmetode</span>
-                        <span className="text-blue-700 font-bold">§-henvisning indsat</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {heroActiveTab === 'analyse' && (
-                    <div className="scale-in flex flex-col gap-3">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className="text-[11px] text-slate-500 font-bold">Case: Jonas (14 år) - Skolefravær</div>
-                          <div className="text-sm font-black text-slate-900">Juridisk Subsumption & VUM 2.0</div>
-                        </div>
-                        <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-extrabold">
-                          Metodetjek
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-4 gap-1.5">
-                        <div className="bg-rose-50 border border-rose-200 p-2 rounded-lg text-center">
-                          <span className="text-[10px] font-black text-rose-800">Faktum</span>
-                        </div>
-                        <div className="bg-blue-50 border border-blue-200 p-2 rounded-lg text-center">
-                          <span className="text-[10px] font-black text-blue-800">Retsregel</span>
-                        </div>
-                        <div className="bg-amber-50 border border-amber-200 p-2 rounded-lg text-center">
-                          <span className="text-[10px] font-black text-amber-800">Subsumption</span>
-                        </div>
-                        <div className="bg-emerald-50 border border-emerald-200 p-2 rounded-lg text-center">
-                          <span className="text-[10px] font-black text-emerald-800">Konklusion</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed">
-                        <strong className="text-slate-900">Metodisk vurdering:</strong> Betingelserne i Barnets Lov § 32, stk. 1, nr. 2 er opfyldt, idet det dokumenterede fravær truer barnets udvikling.
-                      </div>
-
-                      <div className="flex justify-between items-center text-[11px] text-slate-500">
-                        <span>Status: <strong>Metodisk valideret</strong></span>
-                        <span className="text-emerald-700 font-bold">✓ Klar til aflevering</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {heroActiveTab === 'eksamen' && (
-                    <div className="scale-in flex flex-col gap-3">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className="text-[11px] text-slate-500 font-bold">Bachelorprojekt / Modulopgave</div>
-                          <div className="text-sm font-black text-slate-900">Disposition & Rød Tråd</div>
-                        </div>
-                        <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-extrabold">
-                          Eksamensarkitekt
+                          2. Planlægning
                         </span>
                       </div>
 
                       <div className="space-y-1.5 text-xs text-slate-700">
-                        <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-                          <span>1. Problemformulering & afgrænsning</span>
-                          <span className="text-emerald-700 font-bold">✓ Godkendt</span>
+                        <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                          <span><strong>Mandag:</strong> Järvinen kap. 4 (24 s.)</span>
+                          <span className="text-slate-500 font-bold">45 min</span>
                         </div>
-                        <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-                          <span>2. Videnskabsteori & hermeneutik</span>
-                          <span className="text-emerald-700 font-bold">✓ Tilknyttet</span>
+                        <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                          <span><strong>Tirsdag:</strong> Serviceloven vejledning (18 s.)</span>
+                          <span className="text-slate-500 font-bold">35 min</span>
                         </div>
-                        <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-                          <span>3. Juridisk analyse & subsumption</span>
-                          <span className="text-blue-700 font-bold">§ Opdateret</span>
+                        <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-emerald-900">
+                          <span><strong>Torsdag:</strong> VUM 2.0 sagsøvelse</span>
+                          <span className="text-emerald-700 font-bold">✓ Fuldført</span>
                         </div>
                       </div>
 
+                      <div className="flex justify-between items-center text-[11px] text-slate-500 pt-1">
+                        <span>iCal kalendersynkronisering aktiv</span>
+                        <span className="text-emerald-700 font-bold">Eksamensdeadline: 18. dec</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {heroActiveTab === 'organisering' && (
+                    <div className="scale-in flex flex-col gap-3">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-[11px] text-slate-500 font-bold">Mit Pensum & Materialearkiv</div>
+                          <div className="text-sm font-black text-slate-900">Bachelor: 'Tidlig indsats og underretninger'</div>
+                        </div>
+                        <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-extrabold">
+                          3. Organisering
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                          <div className="text-[11px] font-black text-slate-900 mb-1">📁 Modulnoter & PDF</div>
+                          <p className="text-[10px] text-slate-500 m-0">14 uploadede artikler & 6 kompendier</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                          <div className="text-[11px] font-black text-slate-900 mb-1">🔖 Gemte Paragraffer</div>
+                          <p className="text-[10px] text-slate-500 m-0">Barnets Lov §§ 19, 32, 47 m. noter</p>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900">
+                        <strong>APA 7th Kilde:</strong> Hansen, L. (2023). <em>Socialret i praksis</em> (4. udg.). Hans Reitzels Forlag.
+                      </div>
+
                       <div className="flex justify-between items-center text-[11px] text-slate-500">
-                        <span>Samlet pensumdækning: <strong>94%</strong></span>
-                        <span className="text-emerald-700 font-bold">✓ Høj akademisk stringens</span>
+                        <span>Fuldtekstsøgning aktiv</span>
+                        <span className="text-blue-700 font-bold">✓ Alt samlet ét sted</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {heroActiveTab === 'viden' && (
+                    <div className="scale-in flex flex-col gap-3">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-[11px] text-slate-500 font-bold">Semantisk Pensumsøgning & Jura</div>
+                          <div className="text-sm font-black text-slate-900">Søgning: "Lipsky street-level bureaucracy"</div>
+                        </div>
+                        <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-extrabold">
+                          4. Videnssøgning
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed">
+                        <strong className="text-slate-900">Fundet i pensumbog:</strong> <em>Socialt Arbejde</em> af M. Järvinen, <strong>Kapitel 4, side 114-122</strong>. Beskriver frontlinjemedarbejderens skønsudøvelse under ressourcepres.
+                      </div>
+
+                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-2.5 text-xs text-purple-900">
+                        <strong>Principmeddelelse:</strong> Ankestyrelsen 85-15 (Konkret og individuel vurdering af behov).
+                      </div>
+
+                      <div className="flex justify-between items-center text-[11px] text-slate-500">
+                        <span>Præcise sidetal lokaliseret</span>
+                        <span className="text-purple-700 font-bold">✓ APA-kilde kopieret</span>
                       </div>
                     </div>
                   )}
@@ -684,6 +762,160 @@ export default function LandingPage() {
               <div className="text-2xl sm:text-3xl font-black text-slate-900">4.9 / 5</div>
               <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">Studievurdering</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3.5 DE 4 FAGLIGE SØJLER */}
+      <section id="soejler" className="py-24 bg-[#F8FAFC] border-b border-slate-200 relative">
+        <div className="max-w-[1280px] mx-auto px-6 sm:px-8">
+          
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-1 rounded-full inline-block mb-3">
+              Platformens 4 Faglige Kernesøjler
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Designet til at støtte dig gennem hele din uddannelse
+            </h2>
+            <p className="text-base text-slate-600 mt-3">
+              Fra semesterstart og pensumlæsning til skriftlige eksamensprojekter og mundtlige oplæg – alt er bygget op omkring 4 sammenhængende søjler.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            {/* Søjle 1 */}
+            <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <GraduationCap size={28} />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-indigo-600 mb-2 block">
+                  Søjle 1
+                </span>
+                <h3 className="text-xl font-black text-slate-900 mb-3">
+                  Strukturering
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-normal mb-6">
+                  Få fuld kontrol over dit semester. Få kortlagt studieordningens modulkrav, specifikke læringsmål, faglige begreber og 4-trins juridisk sagsanalyse.
+                </p>
+              </div>
+
+              <ul className="space-y-2.5 border-t border-slate-100 pt-5 text-xs text-slate-700 font-bold">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-indigo-600" />
+                  <span>Mit Semester & Læringsmål</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-indigo-600" />
+                  <span>Juridisk Sagsanalyse</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-indigo-600" />
+                  <span>Faglig Begrebsguide</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Søjle 2 */}
+            <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <CalendarDays size={28} />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-emerald-600 mb-2 block">
+                  Søjle 2
+                </span>
+                <h3 className="text-xl font-black text-slate-900 mb-3">
+                  Planlægning
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-normal mb-6">
+                  Omdan uoverskuelige pensumlister til konkrete uge- og dagsplaner. Få tidsestimater tilpasset din læsehastighed, eksamensdeadlines og iCal-synkronisering.
+                </p>
+              </div>
+
+              <ul className="space-y-2.5 border-t border-slate-100 pt-5 text-xs text-slate-700 font-bold">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-emerald-600" />
+                  <span>Semesterplan & Tidslinje</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-emerald-600" />
+                  <span>Ugentlig Læseplan & Buffer</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-emerald-600" />
+                  <span>Seminar- & Oplægsarkitekt</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Søjle 3 */}
+            <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <FileBox size={28} />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-amber-600 mb-2 block">
+                  Søjle 3
+                </span>
+                <h3 className="text-xl font-black text-slate-900 mb-3">
+                  Organisering
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-normal mb-6">
+                  Saml alle dine noter, PDF-kompendier, eksamensdispositioner og gemte paragraffer i ét overskueligt studiearkiv med fuldtekstsøgning og mindmaps.
+                </p>
+              </div>
+
+              <ul className="space-y-2.5 border-t border-slate-100 pt-5 text-xs text-slate-700 font-bold">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-amber-600" />
+                  <span>Mit Pensum & Materialearkiv</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-amber-600" />
+                  <span>Gemte Paragraffer & Bogmærker</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-amber-600" />
+                  <span>APA 7th Kildegenerator</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Søjle 4 */}
+            <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Search size={28} />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-purple-600 mb-2 block">
+                  Søjle 4
+                </span>
+                <h3 className="text-xl font-black text-slate-900 mb-3">
+                  Videnssøgning
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-normal mb-6">
+                  Søg semantisk i pensum med sidetal og APA-kilder, slå op i gældende lovgivning og få uvildig Second Opinion sparring på dine opgaveudkast.
+                </p>
+              </div>
+
+              <ul className="space-y-2.5 border-t border-slate-100 pt-5 text-xs text-slate-700 font-bold">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-purple-600" />
+                  <span>Semantisk Pensumsøgning</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-purple-600" />
+                  <span>Lovportal & Ankestyrelsen</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-purple-600" />
+                  <span>Second Opinion Opgavesparring</span>
+                </li>
+              </ul>
+            </div>
+
           </div>
         </div>
       </section>
@@ -1042,11 +1274,11 @@ export default function LandingPage() {
           {/* Module Category Filter */}
           <div className="flex justify-center gap-2 flex-wrap mb-10">
             {[
-              { id: 'all', label: 'Alle Moduler (9)' },
-              { id: 'legal', label: 'Lov & Jura' },
-              { id: 'curriculum', label: 'Pensum & Teori' },
-              { id: 'exam', label: 'Eksamen & Metoder' },
-              { id: 'study', label: 'Studie & Praksis' }
+              { id: 'all', label: 'Alle Værktøjer (12)' },
+              { id: 'struktur', label: '1. Strukturering' },
+              { id: 'planlaegning', label: '2. Planlægning' },
+              { id: 'organisering', label: '3. Organisering' },
+              { id: 'viden', label: '4. Videnssøgning' }
             ].map(cat => {
               const isActive = moduleCategory === cat.id;
               return (
@@ -1109,37 +1341,37 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 9. DARK SHOWCASE SECTION: AI SAGS-SIMULATOR */}
-      <section id="simulator" className="py-24 bg-gradient-to-b from-[#070a13] to-[#0f172a] text-white relative overflow-hidden">
+      {/* 9. DARK SHOWCASE SECTION: INTELLIGENT PLANLÆGNING & LÆSEPLAN */}
+      <section id="planlaegning" className="py-24 bg-gradient-to-b from-[#070a13] to-[#0f172a] text-white relative overflow-hidden">
         <div className="max-w-[1280px] mx-auto px-6 sm:px-8 relative z-10">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             <div className="lg:col-span-6 flex flex-col gap-5 text-left">
               <span className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400 bg-emerald-950/80 border border-emerald-700 px-3 py-1 rounded-full w-fit">
-                Interaktiv Praksistræning
+                2. Planlægning & Læseflow
               </span>
               
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-                Træn svære borgersager i et trygt simuleret miljø
+                Fra 500+ siders pensumstress til overskuelig ugeplan
               </h2>
 
               <p className="text-base text-slate-300 leading-relaxed font-normal">
-                Test dine handlekompetencer før din første praktik eller mundtlige eksamen. Vores AI Sags-Simulator præsenterer autentiske borgerforløb med uforudsete hændelser, hvor dine valg har direkte konsekvenser.
+                Cohéro Student beregner automatisk din ugentlige læsebelastning ud fra din personlige læsehastighed, dine modulkrav og dine eksamensdeadlines. Du får realistiske dagsmål, indbyggede buffere og direkte kalendersynkronisering.
               </p>
 
               <div className="space-y-3 mt-2">
                 <div className="flex items-center gap-3 text-xs font-bold text-slate-200">
                   <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">✓</div>
-                  <span>Realistiske cases inden for børn, voksne, psykiatri og ældreområdet</span>
+                  <span>Automatisk opdeling af pensumbøger og artikler i daglige etaper</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs font-bold text-slate-200">
                   <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">✓</div>
-                  <span>Løbende feedback på juridisk hjemmel og relationsarbejde</span>
+                  <span>Tidsestimater så du ved præcis, hvor mange minutter du skal bruge</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs font-bold text-slate-200">
                   <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">✓</div>
-                  <span>Opbygger faglig selvtillid og robusthed i praksis</span>
+                  <span>1-klik eksport og live synk til Google, Apple & Outlook kalender</span>
                 </div>
               </div>
 
@@ -1148,40 +1380,60 @@ export default function LandingPage() {
                   onClick={onStart}
                   className="px-6 py-3 rounded-xl bg-white text-slate-900 font-extrabold text-sm hover:bg-slate-100 transition-all shadow-lg inline-flex items-center gap-2"
                 >
-                  Prøv en sags-simulation gratis
+                  Prøv semesterplanlæggeren gratis
                   <ArrowRight size={16} />
                 </button>
               </div>
             </div>
 
-            {/* Right Side Simulator UI Mockup */}
+            {/* Right Side Study Planner UI Mockup */}
             <div className="lg:col-span-6">
               <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 shadow-2xl">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4 text-xs text-slate-400">
-                  <span className="font-bold text-white">Live Simulering · Case #104</span>
-                  <span className="text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded-full font-bold">Aktiv Case</span>
+                  <div className="flex items-center gap-2">
+                    <CalendarDays size={16} className="text-emerald-400" />
+                    <span className="font-bold text-white">Ugeplanlægger · Uge 43</span>
+                  </div>
+                  <span className="text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
+                    112 SIDER I ALT
+                  </span>
                 </div>
 
-                <div className="bg-slate-800/80 rounded-2xl p-4 mb-4 text-xs text-slate-200 leading-relaxed border border-slate-700/60">
-                  <strong className="text-white">Borger:</strong> "Jeg vil ikke have at I kontakter min læge, og I må ikke fortælle min sagsbehandler om det her."
-                  <div className="text-slate-400 mt-2 italic">Hvad er din faglige og juridiske vurdering?</div>
-                </div>
+                <div className="space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+                    <div>
+                      <div className="text-[11px] font-black text-emerald-400 uppercase tracking-wider">Mandag (24 sider)</div>
+                      <div className="text-xs font-bold text-white mt-0.5">Järvinen: Socialt Arbejde (Kapitel 3)</div>
+                    </div>
+                    <span className="text-xs font-extrabold text-slate-300 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-700">
+                      45 min
+                    </span>
+                  </div>
 
-                <div className="space-y-2">
-                  <button className="w-full text-left p-3 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-xs text-slate-200 font-semibold transition-colors">
-                    A. Respekter borgerens ønske jf. tavshedspligt i Forvaltningsloven § 27
-                  </button>
-                  <button className="w-full text-left p-3 rounded-xl bg-blue-900/40 border border-blue-500 text-xs text-blue-200 font-bold transition-colors">
-                    B. Vurder samtykkekrav og informer borgeren om regler for videregivelse (Anbefalet)
-                  </button>
-                  <button className="w-full text-left p-3 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-xs text-slate-200 font-semibold transition-colors">
-                    C. Indberet straks sagen uden yderligere dialog
-                  </button>
+                  <div className="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+                    <div>
+                      <div className="text-[11px] font-black text-blue-400 uppercase tracking-wider">Tirsdag (18 sider)</div>
+                      <div className="text-xs font-bold text-white mt-0.5">Vejledning om Barnets Lov (Sagsgange)</div>
+                    </div>
+                    <span className="text-xs font-extrabold text-slate-300 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-700">
+                      35 min
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-600/40 flex items-center justify-between">
+                    <div>
+                      <div className="text-[11px] font-black text-emerald-400 uppercase tracking-wider">Onsdag (16 sider)</div>
+                      <div className="text-xs font-bold text-white mt-0.5">Lipsky: Street-Level Bureaucracy uddrag</div>
+                    </div>
+                    <span className="text-xs font-extrabold text-emerald-300 bg-emerald-900/60 px-2.5 py-1 rounded-lg border border-emerald-700/50">
+                      ✓ Læst
+                    </span>
+                  </div>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-[11px] text-slate-400">
-                  <span>Feedback score: <strong className="text-emerald-400">98/100</strong></span>
-                  <span className="text-blue-400 font-bold">Juridisk begrundet</span>
+                  <span>Synkroniseret: <strong className="text-emerald-400">Apple & Google Cal</strong></span>
+                  <span className="text-slate-300 font-bold">Eksamensbuffer: +4 dage</span>
                 </div>
               </div>
             </div>
@@ -1260,46 +1512,19 @@ export default function LandingPage() {
         <div className="max-w-[1280px] mx-auto px-6 sm:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full inline-block mb-3">
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-1 rounded-full inline-block mb-3">
               Gennemskuelige Studiepriser
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              Kom i gang helt gratis – opgrader når du vil
+              Enkle studiepriser – tilpasset dit semester
             </h2>
             <p className="text-base text-slate-600 mt-3">
-              Ingen binding, ingen skjulte gebyrer. Skabt til studerendes budget.
+              Vælg månedlig fleksibilitet eller få den populære Semesterpakke og spar 33% på et helt semesters adgang.
             </p>
-
-            {/* Monthly / Yearly Toggle */}
-            <div className="flex items-center justify-center gap-3 mt-8">
-              <button
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
-                  billingCycle === 'monthly'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Månedlig betaling
-              </button>
-              <button
-                onClick={() => setBillingCycle('yearly')}
-                className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
-                  billingCycle === 'yearly'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                <span>Årlig betaling</span>
-                <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black">
-                  SPAR 25%
-                </span>
-              </button>
-            </div>
           </div>
 
           {/* Pricing Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
             
             {/* 1. Gratis Studerende */}
             <div className="pricing-card-hover bg-white border border-slate-200 rounded-3xl p-8 flex flex-col justify-between shadow-xs">
@@ -1341,99 +1566,117 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* 2. Cohéro Plus (Mest Populære) */}
-            <div className="pricing-card-hover bg-white border-2 border-blue-600 rounded-3xl p-8 flex flex-col justify-between shadow-xl relative scale-105">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
-                Mest Populære
-              </div>
-
+            {/* 2. Cohéro Student (Månedlig) */}
+            <div className="pricing-card-hover bg-white border border-slate-200 rounded-3xl p-8 flex flex-col justify-between shadow-xs">
               <div>
-                <div className="text-xs font-black uppercase tracking-wider text-blue-700 mb-2">Studiepakken</div>
-                <h3 className="text-2xl font-black text-slate-900 mb-1">Cohéro Plus</h3>
-                <p className="text-xs text-slate-500 mb-6">Alt hvad du skal bruge for topkarakterer og ro.</p>
+                <div className="text-xs font-black uppercase tracking-wider text-indigo-700 mb-2">Månedlig Fleksibilitet</div>
+                <h3 className="text-2xl font-black text-slate-900 mb-1">Cohéro Student</h3>
+                <p className="text-xs text-slate-500 mb-6">Fuld adgang til alle 4 søjler måned for måned.</p>
 
                 <div className="mb-6">
-                  <span className="text-4xl font-black text-slate-900">
-                    {billingCycle === 'monthly' ? '79 kr.' : '59 kr.'}
-                  </span>
-                  <span className="text-xs text-slate-500 ml-1">/ md.</span>
+                  <span className="text-4xl font-black text-slate-900">89 kr.</span>
+                  <span className="text-xs text-slate-500 ml-1">/ måned</span>
                 </div>
 
                 <ul className="space-y-3 text-xs text-slate-800 font-bold mb-8">
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-blue-600 flex-shrink-0" />
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
                     <span>Alt i Gratis-pakken</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-blue-600 flex-shrink-0" />
-                    <span>Ubegrænset AI Eksamensarkitekt</span>
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
+                    <span>Mit Semester & Læringsmål</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-blue-600 flex-shrink-0" />
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
+                    <span>Semesterplan & Ugentlig Læseplan</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
                     <span>Juridisk Sagsanalyse & Subsumption</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-blue-600 flex-shrink-0" />
-                    <span>Automatisk APA 7th Kildegenerator</span>
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
+                    <span>Pensumsøgning med sidetal & APA 7th</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-blue-600 flex-shrink-0" />
-                    <span>AI Sags-Simulator & Døgncases</span>
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
+                    <span>Second Opinion Opgavesparring</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-blue-600 flex-shrink-0" />
-                    <span>Journaltræner (SOAP & ICS)</span>
+                  <li className="flex items-center gap-2 text-slate-500 font-medium">
+                    <span>Ingen binding – opsig når du vil</span>
                   </li>
                 </ul>
               </div>
 
               <button
                 onClick={onStart}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 text-white font-extrabold text-sm shadow-md hover:from-blue-800 hover:to-blue-700 transition-all"
+                className="w-full py-3.5 rounded-xl border border-slate-300 text-slate-900 font-extrabold text-sm hover:bg-slate-50 transition-all shadow-xs"
               >
-                Prøv 1 måned gratis
+                Vælg Månedsabonnement (89 kr./md.)
               </button>
             </div>
 
-            {/* 3. Studiegruppe / Hold */}
-            <div className="pricing-card-hover bg-white border border-slate-200 rounded-3xl p-8 flex flex-col justify-between shadow-xs">
-              <div>
-                <div className="text-xs font-black uppercase tracking-wider text-purple-700 mb-2">Fællesskab</div>
-                <h3 className="text-2xl font-black text-slate-900 mb-1">Studiegruppe</h3>
-                <p className="text-xs text-slate-500 mb-6">Til studiegrupper (op til 5 personer) der vil samarbejde.</p>
+            {/* 3. Semesterpakken (5 Måneder) - MEST POPULÆRE */}
+            <div className="pricing-card-hover bg-white border-2 border-indigo-600 rounded-3xl p-8 flex flex-col justify-between shadow-2xl relative scale-105">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[10px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-md whitespace-nowrap">
+                ⭐ MEST POPULÆRE · 5 MÅNEDER
+              </div>
 
-                <div className="mb-6">
-                  <span className="text-4xl font-black text-slate-900">
-                    {billingCycle === 'monthly' ? '199 kr.' : '149 kr.'}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                    SPAR 146 KR. (33% RABAT)
                   </span>
-                  <span className="text-xs text-slate-500 ml-1">/ md. for 5 studerende</span>
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-1">Semesterpakken</h3>
+                <p className="text-xs text-slate-500 mb-4">Dækker et helt fuldt semester fra semesterstart til eksamen.</p>
+
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-slate-900">299 kr.</span>
+                    <span className="text-xs text-slate-500 font-bold">/ 5 måneder</span>
+                  </div>
+                  <div className="text-xs font-extrabold text-emerald-700 mt-1 flex items-center gap-1.5">
+                    <span>Svarer til kun <strong>59,80 kr. / md.</strong></span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 line-through mt-0.5">
+                    Normalpris: 445 kr. (5 x 89 kr.)
+                  </div>
                 </div>
 
-                <ul className="space-y-3 text-xs text-slate-700 font-semibold mb-8">
+                <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-2xl mb-6">
+                  <div className="text-xs font-black text-indigo-950 mb-0.5">🎓 Komplet Eksamensro</div>
+                  <div className="text-[11px] text-indigo-700 leading-snug">
+                    Ét engangsbeløb for 5 måneders fuld adgang. Udløber automatisk – ingen uventede træk.
+                  </div>
+                </div>
+
+                <ul className="space-y-3 text-xs text-slate-800 font-bold mb-8">
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-purple-600 flex-shrink-0" />
-                    <span>Alt i Cohéro Plus til 5 personer</span>
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
+                    <span>Alt i Cohéro Student i 5 fulde måneder</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-purple-600 flex-shrink-0" />
-                    <span>Delt gruppe-workspace og noter</span>
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
+                    <span>Ubegrænset adgang til alle 4 faglige søjler</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-purple-600 flex-shrink-0" />
-                    <span>Fælles kildebibliotek & litteraturliste</span>
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
+                    <span>Fuldt semester- og eksamensoverblik</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-purple-600 flex-shrink-0" />
-                    <span>Prioriteret support</span>
+                    <Check size={16} className="text-indigo-600 flex-shrink-0" />
+                    <span>Prioriteret support i eksamensperioder</span>
                   </li>
                 </ul>
               </div>
 
               <button
                 onClick={onStart}
-                className="w-full py-3 rounded-xl border border-slate-300 text-slate-900 font-extrabold text-sm hover:bg-slate-50 transition-all"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-extrabold text-sm shadow-md hover:from-indigo-700 hover:to-blue-700 transition-all"
               >
-                Opret studiegruppe
+                Vælg Semesterpakken (299 kr.)
               </button>
             </div>
 
@@ -1459,7 +1702,11 @@ export default function LandingPage() {
             {[
               {
                 q: 'Er det gratis at bruge Cohéro Student?',
-                a: 'Ja! Du kan oprette en gratis profil og få fuld adgang til Lovportalen, den faglige begrebsordbog og basale pensumfunktioner uden tidsbegrænsning og uden kreditkort.'
+                a: 'Ja! Du kan oprette en gratis profil og få adgang til Lovportalen, den faglige begrebsordbog og basale funktioner uden tidsbegrænsning og uden kreditkort.'
+              },
+              {
+                q: 'Hvad indeholder Semesterpakken?',
+                a: 'Med Semesterpakken får du 5 måneders fuld adgang til alle platformens værktøjer for kun 299 kr. (svarende til 59,80 kr./md.). Du sparer 146 kr. (33% rabat) sammenlignet med månedsbetaling (5 x 89 kr. = 445 kr.). Pakken udløber automatisk efter 5 måneder uden binding.'
               },
               {
                 q: 'Må jeg bruge Cohéro Student til mine eksamensopgaver?',

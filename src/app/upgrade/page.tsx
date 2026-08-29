@@ -252,23 +252,23 @@ const UpgradePageContent: React.FC = () => {
 
              <div className="space-y-6 relative z-10">
                 <div>
-                  <h3 className="text-lg font-black text-white">Kollega+</h3>
-                  <p className="label-xs text-indigo-400 mt-1">Ubegrænset adgang</p>
+                  <h3 className="text-lg font-black text-white">Cohéro Student</h3>
+                  <p className="label-xs text-indigo-400 mt-1">Fuld fleksibilitet</p>
                 </div>
                 
                 <div className="py-4 border-y border-white/5">
                   <div className="text-3xl font-black text-white">89 kr. <span className="text-xs text-slate-500 font-medium">/ md</span></div>
-                  <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mt-1">7 dages gratis prøveperiode</p>
+                  <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mt-1">Opsig når som helst</p>
                 </div>
                 
                 <ul className="space-y-4">
                   {[
                     "Alt i gratis-versionen",
-                    "Ubegrænset Studie-Arkitekt",
-                    "Ubegrænset Lovportal-søgning",
-                    "Ubegrænset STAR-analyse",
-                    "Ubegrænset Journal-træner",
-                    "Prioriteret support"
+                    "1. Strukturering (Semester & Læringsmål)",
+                    "2. Planlægning (Læseplan & Deadlines)",
+                    "3. Organisering (Noter & Materialer)",
+                    "4. Videnssøgning (Pensumsøgning & Lovportal)",
+                    "Second Opinion & Sagsanalyse"
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-semibold text-slate-300">
                       <Zap className="w-4 h-4 text-indigo-400 fill-indigo-400 shrink-0" />
@@ -287,40 +287,45 @@ const UpgradePageContent: React.FC = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    Aktiver prøveperiode <ArrowRight className="w-3.5 h-3.5" />
+                    Vælg Månedsabonnement (89 kr.) <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
              </button>
           </motion.div>
 
-          {/* Semesteret (Pack) */}
+          {/* Semesterpakken (5 Måneder - 299 kr.) */}
           <motion.div 
             variants={fadeIn}
             initial="hidden"
             animate="visible"
-            className="bg-white border border-slate-200/60 rounded-[var(--radius-lg)] p-8 shadow-[var(--shadow-sm)] flex flex-col justify-between"
+            className="bg-white border-2 border-indigo-600 rounded-[var(--radius-lg)] p-8 shadow-xl flex flex-col justify-between relative scale-105"
           >
+             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm">
+                SPAR 146 KR. (33% RABAT)
+             </div>
+
              <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-black text-slate-900">Semesterpakken</h3>
-                  <p className="label-xs text-emerald-600 mt-1">Engangsbetaling</p>
+                  <p className="label-xs text-emerald-600 mt-1 font-extrabold">5 Måneders Fuld Adgang</p>
                 </div>
                 
                 <div className="py-4 border-y border-slate-100">
-                  <div className="text-3xl font-black text-slate-900">329 kr. <span className="text-xs text-slate-400 font-medium">/ engangs</span></div>
-                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1">Spar over 25%</p>
+                  <div className="text-3xl font-black text-slate-900">299 kr. <span className="text-xs text-slate-400 font-medium">/ 5 mdr.</span></div>
+                  <div className="text-xs font-black text-emerald-600 mt-1">Svarer til kun 59,80 kr. / md.</div>
+                  <p className="text-[10px] text-slate-400 line-through mt-0.5">Normalpris: 445 kr. (Spar 146 kr.)</p>
                 </div>
                 
                 <ul className="space-y-4">
                   {[
-                    "Alt fra Kollega+ i 5 måneder",
-                    "Ingen løbende abonnement",
-                    "Det mest økonomiske studievalg",
-                    "Ubegrænset adgang til nye features",
-                    "Automatisk udløb efter semesteret"
+                    "Fuld adgang til alle 4 søjler i 5 måneder",
+                    "Ingen binding – udløber automatisk",
+                    "Dækker hele semesteret frem til eksamen",
+                    "Ubegrænset Second Opinion & sagsanalyse",
+                    "Prioriteret support i eksamensperioden"
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3 text-xs font-semibold text-slate-500">
-                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <li key={i} className="flex items-center gap-3 text-xs font-semibold text-slate-700">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0 font-bold" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -330,13 +335,13 @@ const UpgradePageContent: React.FC = () => {
              <button
                onClick={() => handleSubscription(PRICE_IDS.SEMESTER)}
                disabled={isSubscribing === PRICE_IDS.SEMESTER}
-               className="w-full mt-8 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
+               className="w-full mt-8 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-98"
              >
                 {isSubscribing === PRICE_IDS.SEMESTER ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    Vælg Semesterpakken <ArrowRight className="w-3.5 h-3.5" />
+                    Vælg Semesterpakken (299 kr.) <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
              </button>

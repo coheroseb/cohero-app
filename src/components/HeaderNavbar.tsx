@@ -306,23 +306,37 @@ export default function HeaderNavbar() {
                 </a>
 
                 <div className="grid grid-cols-2 gap-3 mb-3.5">
-                  {/* Søjle 1 */}
+                  {/* Søjle 1: Struktur & Planlægning */}
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 py-0.5">
-                      Lov & Juridisk Metode
+                      Struktur & Planlægning
                     </span>
 
                     <a 
-                      href="#lovportal" 
+                      href="#moduler" 
                       onClick={() => setIsToolsDropdownOpen(false)}
                       className="nav-dropdown-item flex items-start gap-3 p-2 rounded-xl no-underline"
                     >
                       <div className="bg-indigo-50 text-indigo-700 p-2 rounded-lg flex-shrink-0 mt-0.5">
-                        <Scale size={16} />
+                        <GraduationCap size={16} />
                       </div>
                       <div>
-                        <div className="text-[13px] font-extrabold text-slate-900">Lovportal & Retsinfo</div>
-                        <div className="text-[11px] text-slate-500">Live §-opslag, domme & Ankestyrelsen</div>
+                        <div className="text-[13px] font-extrabold text-slate-900">Mit Semester & Moduler</div>
+                        <div className="text-[11px] text-slate-500">Studieordning, krav & læringsmål</div>
+                      </div>
+                    </a>
+
+                    <a 
+                      href="#moduler" 
+                      onClick={() => setIsToolsDropdownOpen(false)}
+                      className="nav-dropdown-item flex items-start gap-3 p-2 rounded-xl no-underline"
+                    >
+                      <div className="bg-emerald-50 text-emerald-700 p-2 rounded-lg flex-shrink-0 mt-0.5">
+                        <Calendar size={16} />
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-extrabold text-slate-900">Semester- & Læseplan</div>
+                        <div className="text-[11px] text-slate-500">Ugeplaner, tidsestimat & deadlines</div>
                       </div>
                     </a>
 
@@ -339,26 +353,12 @@ export default function HeaderNavbar() {
                         <div className="text-[11px] text-slate-500">Faktum, retsregler & subsumption</div>
                       </div>
                     </a>
-
-                    <a 
-                      href="#moduler" 
-                      onClick={() => setIsToolsDropdownOpen(false)}
-                      className="nav-dropdown-item flex items-start gap-3 p-2 rounded-xl no-underline"
-                    >
-                      <div className="bg-purple-50 text-purple-700 p-2 rounded-lg flex-shrink-0 mt-0.5">
-                        <FileText size={16} />
-                      </div>
-                      <div>
-                        <div className="text-[13px] font-extrabold text-slate-900">Journaltræner (SOAP)</div>
-                        <div className="text-[11px] text-slate-500">Professionel sagsnotat-træning</div>
-                      </div>
-                    </a>
                   </div>
 
-                  {/* Søjle 2 */}
+                  {/* Søjle 2: Organisering & Videnssøgning */}
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 py-0.5">
-                      Pensum & Eksamen
+                      Organisering & Videnssøgning
                     </span>
 
                     <a 
@@ -370,22 +370,22 @@ export default function HeaderNavbar() {
                         <BookOpen size={16} />
                       </div>
                       <div>
-                        <div className="text-[13px] font-extrabold text-slate-900">Pensum & Bog-assistent</div>
-                        <div className="text-[11px] text-slate-500">Få overblik over 500+ siders bøger</div>
+                        <div className="text-[13px] font-extrabold text-slate-900">Pensumsøgning (APA 7th)</div>
+                        <div className="text-[11px] text-slate-500">Søg i pensum med sidetal & kilder</div>
                       </div>
                     </a>
 
                     <a 
-                      href="#moduler" 
+                      href="#lovportal" 
                       onClick={() => setIsToolsDropdownOpen(false)}
                       className="nav-dropdown-item flex items-start gap-3 p-2 rounded-xl no-underline"
                     >
                       <div className="bg-amber-50 text-amber-700 p-2 rounded-lg flex-shrink-0 mt-0.5">
-                        <Layers size={16} />
+                        <Scale size={16} />
                       </div>
                       <div>
-                        <div className="text-[13px] font-extrabold text-slate-900">APA Kildegenerator</div>
-                        <div className="text-[11px] text-slate-500">Automatiske referencer & litteraturliste</div>
+                        <div className="text-[13px] font-extrabold text-slate-900">Lovportal & Retsinfo</div>
+                        <div className="text-[11px] text-slate-500">Live §-opslag & Ankestyrelsen</div>
                       </div>
                     </a>
 
@@ -394,12 +394,12 @@ export default function HeaderNavbar() {
                       onClick={() => setIsToolsDropdownOpen(false)}
                       className="nav-dropdown-item flex items-start gap-3 p-2 rounded-xl no-underline"
                     >
-                      <div className="bg-teal-50 text-teal-700 p-2 rounded-lg flex-shrink-0 mt-0.5">
-                        <Calendar size={16} />
+                      <div className="bg-purple-50 text-purple-700 p-2 rounded-lg flex-shrink-0 mt-0.5">
+                        <Layers size={16} />
                       </div>
                       <div>
-                        <div className="text-[13px] font-extrabold text-slate-900">Semester- & Studieplan</div>
-                        <div className="text-[11px] text-slate-500">Struktur over moduler og eksaminer</div>
+                        <div className="text-[13px] font-extrabold text-slate-900">Begrebsguide & Noter</div>
+                        <div className="text-[11px] text-slate-500">Kernebegreber & materialearkiv</div>
                       </div>
                     </a>
                   </div>
