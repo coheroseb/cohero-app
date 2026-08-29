@@ -148,7 +148,7 @@ export default function Sidebar() {
       label: 'Struktur',
       items: [
         { label: 'Dashboard', path: '/portal', icon: <LayoutDashboard className="w-4 h-4" /> },
-        { label: 'Mit Semester', path: '/mit-semester', icon: <GraduationCap className="w-4 h-4" /> },
+        { label: 'Sagsanalyse', path: '/case-analyser', icon: <FileText className="w-4 h-4 text-indigo-500" /> },
       ],
     },
     {
@@ -171,7 +171,6 @@ export default function Sidebar() {
       items: [
         { label: 'Pensumsøgning', path: '/pensum-search', icon: <Search className="w-4 h-4" /> },
         { label: 'Begrebsguide', path: '/concept-explainer', icon: <Brain className="w-4 h-4" /> },
-        { label: 'Sagsanalyse', path: '/case-analyser', icon: <FileText className="w-4 h-4 text-amber-500" /> },
         { label: 'Second Opinion', path: '/second-opinion', icon: <Scale className="w-4 h-4" /> },
         { label: 'Lovportal', path: 'https://law.cohero.dk/', icon: <Scale className="w-4 h-4 text-indigo-500" />, isSSO: true, isExternal: true },
         { label: 'Forskningsrapporter', path: '/vive-indsigt', icon: <TrendingUp className="w-4 h-4" /> },

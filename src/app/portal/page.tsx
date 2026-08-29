@@ -838,18 +838,18 @@ const PortalPageContent: React.FC = () => {
                         <GraduationCap className="w-6 h-6" />
                       </div>
                       <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1">1. Strukturering</div>
-                      <h4 className="text-base font-black text-slate-900 mb-2">Mit Semester & Moduler</h4>
+                      <h4 className="text-base font-black text-slate-900 mb-2">Juridisk Sagsanalyse</h4>
                       <p className="text-xs text-slate-500 leading-relaxed">
-                        Overblik over studieordning, modulkrav, læringsmål og sagsanalyse.
+                        Metodisk 4-trins sagsanalyse, faktumkortlægning og subsumption.
                       </p>
                     </div>
                     <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2">
-                      <Link href="/mit-semester" className="text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center justify-between">
-                        <span>Mit Semester</span>
+                      <Link href="/case-analyser" className="text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center justify-between">
+                        <span>Gå til Sagsanalyse</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
-                      <Link href="/case-analyser" className="text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center justify-between">
-                        <span>Sagsanalyse</span>
+                      <Link href="/concept-explainer" className="text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center justify-between">
+                        <span>Begrebsguide</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>

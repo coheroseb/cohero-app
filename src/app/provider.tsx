@@ -359,7 +359,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const isStandaloneGroups = useMemo(() => pathname?.startsWith('/rum/groups'), [pathname]);
   const isRaadgivning = useMemo(() => pathname?.startsWith('/raadgivning'), [pathname]);
   const isLovPortal = useMemo(() => pathname?.startsWith('/lov-portal') && !pathname?.includes('/lov-stien'), [pathname]);
-  const isMitSemester = useMemo(() => pathname?.startsWith('/mit-semester'), [pathname]);
   const isAdminPage = useMemo(() => pathname?.startsWith('/admin'), [pathname]);
   const isPublicProfile = useMemo(() => pathname?.startsWith('/u/'), [pathname]);
   const isJourney = useMemo(() => pathname === '/journey', [pathname]);
@@ -904,7 +903,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             showSidebar 
               ? 'pt-16 md:pt-0 md:pl-64 flex-grow flex flex-col bg-[#F8F9FA]' 
               : (isNativeApp ? 'pb-24 pt-4' : (isStandaloneGroups || isRaadgivning || isAdminPage || isJourney || pathname?.includes('/mindmap') || pathname === '/' || pathname === '/auth') ? 'pt-0' : 'pt-24 md:pt-32')
-          } ${((isLovPortal || isMitSemester) && !isNativeApp && !showSidebar) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
+          } ${(isLovPortal && !isNativeApp && !showSidebar) ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-grow flex flex-col'}`}
           style={{ 
             paddingTop: showSidebar 
               ? undefined 
@@ -928,7 +927,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 {children}
             </motion.div>
         </main>
-        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isMitSemester && !isAdminPage && !pathname?.includes('/klaus-viste') && !isJourney && !pathname?.includes('/mindmap') && !showSidebar && <Footer />}
+        {mounted && !isNativeApp && !isStandaloneGroups && !isRaadgivning && !isLovPortal && !isAdminPage && !pathname?.includes('/klaus-viste') && !isJourney && !pathname?.includes('/mindmap') && !showSidebar && <Footer />}
 
 
         
