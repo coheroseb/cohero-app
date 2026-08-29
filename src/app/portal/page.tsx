@@ -896,8 +896,8 @@ const PortalPageContent: React.FC = () => {
                         <span>Mit Pensum & Materialer</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
-                      <Link href="/mine-gemte-paragraffer" className="text-xs font-bold text-slate-700 hover:text-amber-600 flex items-center justify-between">
-                        <span>Gemte Paragraffer</span>
+                      <Link href="/mine-semesterplaner" className="text-xs font-bold text-slate-700 hover:text-amber-600 flex items-center justify-between">
+                        <span>Mine Semesterplaner</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>

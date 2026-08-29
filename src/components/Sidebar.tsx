@@ -163,7 +163,7 @@ export default function Sidebar() {
       label: 'Organisering',
       items: [
         { label: 'Mit Pensum & Noter', path: '/mine-materialer', icon: <FileBox className="w-4 h-4" /> },
-        { label: 'Gemte Paragraffer', path: '/mine-gemte-paragraffer', icon: <Bookmark className="w-4 h-4" /> },
+        { label: 'Mine Semesterplaner', path: '/mine-semesterplaner', icon: <CalendarDays className="w-4 h-4" /> },
       ],
     },
     {
