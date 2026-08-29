@@ -809,7 +809,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     
     if (pathname?.includes('/lov-portal')) return 'bg-[#F9F7F2]';
     if (pathname?.includes('/rum/groups')) return 'bg-[#F8FAFC]';
-    if (pathname?.includes('/case-trainer')) return 'bg-[#FFFBF5]';
     return pathname === '/' ? 'bg-[#FDFBF7]' : 'bg-white';
   }, [pathname, effectiveTheme]);
 

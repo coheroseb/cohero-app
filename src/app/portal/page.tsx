@@ -779,15 +779,15 @@ const PortalPageContent: React.FC = () => {
                     </div>
 
 
-                    <Link href="/case-trainer" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
+                    <Link href="/case-analyser" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
                       <div className="flex items-start justify-between mb-6">
                         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                           <Brain className="w-6 h-6 sm:w-7 sm:h-7" />
                         </div>
                         <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-emerald-500 transition-colors" />
                       </div>
-                      <h4 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Metode-træner</h4>
-                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Træn faglige problemstillinger.</p>
+                      <h4 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Sagsanalyse</h4>
+                      <p className="text-xs font-medium text-slate-500 leading-relaxed">Faglig og juridisk vurdering.</p>
                     </Link>
 
                     <Link href="/concept-explainer" className="group relative bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500">

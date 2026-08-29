@@ -156,8 +156,6 @@ export default function Sidebar() {
       label: 'Værktøjer',
       items: [
         { label: 'Case-analyse', path: '/case-analyser', icon: <FileText className="w-4 h-4 text-amber-500" /> },
-        { label: 'Case-træner', path: '/case-trainer', icon: <Zap className="w-4 h-4" /> },
-        { label: 'Journal-træner', path: '/journal-trainer', icon: <FileText className="w-4 h-4" /> },
         { label: 'Second Opinion', path: '/second-opinion', icon: <Scale className="w-4 h-4" /> },
         { label: 'Begreber', path: '/concept-explainer', icon: <Brain className="w-4 h-4" /> },
         { label: 'Lovportal', path: 'https://law.cohero.dk/', icon: <Scale className="w-4 h-4" />, isSSO: true, isExternal: true },
@@ -168,7 +166,6 @@ export default function Sidebar() {
       label: 'Konto',
       items: [
         { label: 'Notifikationer', path: '/notifications', icon: <Bell className="w-4 h-4" />, badge: unreadCount },
-        { label: 'Shop', path: '/shop', icon: <ShoppingBag className="w-4 h-4" /> },
       ],
     },
   ];
