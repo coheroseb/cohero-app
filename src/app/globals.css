@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -258,3 +258,155 @@
   50%       { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.15); }
 }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ── Cohero Pro Design System Styles ───────────────── */
+:root {
+  --font-brand: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --primary-navy: #18223c;
+  --primary-blue: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg-main: #fcfcfd;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-light: #64748b;
+  --border: #e2e8f0;
+}
+
+.brand-font {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.nav-landing-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: none;
+  height: 76px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  box-shadow: 0 4px 25px -4px rgba(15, 23, 42, 0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-landing-wrapper:hover {
+  background: #ffffff;
+  border-bottom-color: #cbd5e1;
+  box-shadow: 0 8px 30px -4px rgba(15, 23, 42, 0.07);
+}
+
+.nav-landing-container {
+  width: 100%;
+  max-width: 1280px;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.nav-link-custom {
+  position: relative;
+  text-decoration: none;
+  color: #475569 !important;
+  font-weight: 700;
+  font-size: 0.84rem;
+  letter-spacing: 0.02em;
+  padding: 0.55rem 1rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-link-custom:hover {
+  color: #0f172a !important;
+  background: #f1f5f9;
+}
+
+.nav-dropdown-item {
+  transition: all 0.15s ease;
+}
+
+.nav-dropdown-item:hover {
+  background: #f8fafc;
+  transform: translateX(3px);
+}
+
+.nav-dropdown-item:hover h5,
+.nav-dropdown-item:hover div {
+  color: #0f172a;
+}
+
+.ambient-glow-hero {
+  position: absolute;
+  top: -15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.07) 0%, rgba(99, 102, 241, 0.03) 50%, transparent 70%);
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-glow-purple {
+  position: absolute;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.06) 0%, transparent 70%);
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-glow-emerald {
+  position: absolute;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.float-smooth {
+  animation: floatSmooth 6s ease-in-out infinite;
+}
+
+.float-smooth-delayed {
+  animation: floatSmooth 6s ease-in-out infinite 3s;
+}
+
+@keyframes floatSmooth {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.pricing-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pricing-card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 30px 60px -12px rgba(15, 23, 42, 0.12);
+  border-color: #93c5fd;
+}

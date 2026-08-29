@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Mail, Linkedin, Instagram, MapPin, Facebook, ArrowUpRight, Sparkles, ShieldCheck, Music } from 'lucide-react';
 import Link from 'next/link';
-import { BookSpine } from './BookSpine';
+import { Capacitor } from '@capacitor/core';
+import { Mail, Linkedin, Instagram, MapPin, Facebook, ArrowUpRight, Sparkles, ShieldCheck, Scale, Phone, Globe } from 'lucide-react';
 
 const Footer: React.FC = () => {
-  const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [currentYear, setCurrentYear] = useState<number>(2026);
   const [isNative, setIsNative] = useState(false);
 
   useEffect(() => {
@@ -16,147 +15,168 @@ const Footer: React.FC = () => {
   }, []);
 
   if (isNative) return null;
-  
-  return (
-    <footer className="bg-white border-t border-slate-100 relative overflow-hidden">
-      {/* Subtle Architectural Grid Overlay */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:32px_32px]" />
 
-      <div className="max-w-[1600px] mx-auto px-8 sm:px-12 pt-32 pb-16 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 mb-32">
+  return (
+    <footer className="bg-white border-t border-slate-200 brand-font py-16 text-slate-800 relative z-10">
+      <div className="max-w-[1280px] mx-auto px-6 sm:px-8">
+        
+        {/* Main 4-Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-14">
           
-          {/* BRAND STORY */}
-          <div className="lg:col-span-4 space-y-12">
-            <Link href="/" className="flex items-center space-x-4 group w-fit">
-              <BookSpine className="w-12 h-12 text-slate-950" />
-              <span className="text-3xl font-black text-slate-950 uppercase tracking-tighter italic serif">Cohéro</span>
+          {/* Kolonne 1: Brand & Virksomhed (4 cols) */}
+          <div className="lg:col-span-4 flex flex-col gap-4 max-w-sm">
+            <Link href="/" className="flex items-center gap-2 group w-fit">
+              <img 
+                src="/cohero-logo.png" 
+                alt="Cohéro Student" 
+                className="h-8 w-auto max-w-[160px] object-contain block" 
+              />
+              <span className="text-[10px] font-black tracking-widest uppercase bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full ml-1">
+                Student
+              </span>
             </Link>
             
-            <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-sm italic border-l-2 border-indigo-500/20 pl-8">
-              "Vi nytænker velfærdsuddannelse gennem teknologisk præcision og faglig tryghed."
+            <p className="text-sm text-slate-500 leading-relaxed font-normal">
+              Den digitale kollega og faglige rygdækning for Danmarks velfærdsstuderende. Vi styrker din faglige selvtillid og metode fra første semester til bacheloreksamen.
             </p>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-1.5 text-xs text-slate-600 mt-2">
+              <div className="font-extrabold text-slate-900">
+                Cohéro I/S · CVR: 46181425
+              </div>
+              <div className="text-slate-500">
+                København, Danmark · Hostet i ISO 27001 EU-datacenter
+              </div>
+              <div className="flex items-center gap-2 mt-1 flex-wrap font-semibold">
+                <a href="mailto:kontakt@cohero.dk" className="text-blue-700 hover:underline">kontakt@cohero.dk</a>
+                <span className="text-slate-300">•</span>
+                <span className="text-slate-600">support@cohero.dk</span>
+              </div>
+            </div>
+
+            {/* Social Icons */}
+            <div className="flex items-center gap-2.5 mt-2">
               {[
-                { icon: <Linkedin className="w-5 h-5" />, href: "https://linkedin.com/company/coherois/" },
-                { icon: <Instagram className="w-5 h-5" />, href: "https://www.instagram.com/cohero_is" },
-                { icon: <Facebook className="w-5 h-5" />, href: "https://www.facebook.com/profile.php?id=61586618395097" },
-                { icon: <Music className="w-5 h-5" />, href: "https://www.tiktok.com/@cohro" }
+                { icon: <Linkedin className="w-4 h-4" />, href: "https://linkedin.com/company/coherois/", label: "LinkedIn" },
+                { icon: <Instagram className="w-4 h-4" />, href: "https://www.instagram.com/cohero_is", label: "Instagram" },
+                { icon: <Facebook className="w-4 h-4" />, href: "https://www.facebook.com/profile.php?id=61586618395097", label: "Facebook" }
               ].map((social, i) => (
                 <a 
                   key={i}
                   href={social.href} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:bg-slate-950 hover:text-white hover:scale-110 transition-all shadow-sm"
+                  aria-label={social.label}
+                  className="w-9 h-9 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-xs"
                 >
                   {social.icon}
                 </a>
               ))}
             </div>
           </div>
-          
-          {/* NAVIGATION GRID */}
-          <div className="lg:col-span-5 grid grid-cols-2 gap-12">
-            <div>
-              <h4 className="font-black text-slate-950 mb-10 uppercase tracking-[0.4em] text-[10px]">Læringsunivers</h4>
-              <ul className="space-y-6">
-                {[
-                  { name: 'Forside', href: '/' },
-                  { name: 'Om os', href: '/om-os' },
-                  { name: 'Filosofi', href: '/hvorfor' },
-                  { name: 'Videnskabsteori', href: '/videnskabsteori' },
-                  { name: 'Ambassadør', href: '/ambassadoer', highlight: true }
-                ].map(link => (
-                  <li key={link.name}>
-                    <Link 
-                      href={link.href} 
-                      prefetch={false}
-                      className={`text-[13px] font-black uppercase tracking-widest flex items-center gap-2 group transition-colors ${link.highlight ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-950'}`}
-                    >
-                      {link.name}
-                      <ArrowUpRight className="w-4 h-4 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all text-indigo-500" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
 
-            <div>
-              <h4 className="font-black text-slate-950 mb-10 uppercase tracking-[0.4em] text-[10px]">Juridisk & Tillid</h4>
-              <ul className="space-y-6">
-                {[
-                  { name: 'Betingelser', href: '/terms-of-service' },
-                  { name: 'Privatliv', href: '/privacy-policy' },
-                  { name: 'Cookiepolitik', href: '/cookie-policy' },
-                  { name: 'Etiske regler', href: '/etik' }
-                ].map(link => (
-                  <li key={link.name}>
-                    <Link 
-                      href={link.href} 
-                      prefetch={false}
-                      className="text-[13px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-950 flex items-center gap-2 group transition-colors"
-                    >
-                      {link.name}
-                      <ArrowUpRight className="w-4 h-4 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all text-indigo-500" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Kolonne 2: Værktøjer & Studieplatform (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col gap-3">
+            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-1">
+              Faglige Værktøjer
+            </h4>
+            <ul className="space-y-2 text-sm text-slate-500">
+              <li>
+                <a href="#lovportal" className="hover:text-slate-900 transition-colors font-medium">Lovportal & Retsinformation</a>
+              </li>
+              <li>
+                <a href="#ai-agenter" className="hover:text-slate-900 transition-colors font-medium">Cohéro AI Eksamensarkitekt</a>
+              </li>
+              <li>
+                <a href="#moduler" className="hover:text-slate-900 transition-colors font-medium">Juridisk Sagsanalyse (SOAP/VUM)</a>
+              </li>
+              <li>
+                <a href="#moduler" className="hover:text-slate-900 transition-colors font-medium">Pensum & Bog-assistent</a>
+              </li>
+              <li>
+                <a href="#simulator" className="hover:text-slate-900 transition-colors font-medium">AI Sags-Simulator</a>
+              </li>
+              <li>
+                <a href="#moduler" className="hover:text-slate-900 transition-colors font-medium">APA Kildegenerator</a>
+              </li>
+              <li>
+                <a href="#pricing" className="hover:text-slate-900 transition-colors font-medium">Priser & Gratis Oprettelse</a>
+              </li>
+            </ul>
           </div>
 
-          {/* CONTACT & STATUS */}
-          <div className="lg:col-span-3 space-y-12">
-            <div className="bg-slate-50 p-10 rounded-[4rem] border border-slate-100 shadow-sm space-y-8 relative overflow-hidden group">
-              <h4 className="font-black text-slate-950 uppercase tracking-[0.4em] text-[10px] relative z-10">Kontakt</h4>
-              <div className="space-y-8 relative z-10">
-                <a href="mailto:kontakt@cohero.dk" className="flex items-center gap-5 group/mail">
-                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 group-hover/mail:bg-slate-950 group-hover/mail:text-white transition-all shadow-sm"><Mail className="w-5 h-5" /></div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase text-slate-400 leading-none mb-1">Direkte</span>
-                    <span className="text-sm font-black text-slate-600 group-hover/mail:text-slate-950 transition-colors">kontakt@cohero.dk</span>
-                  </div>
-                </a>
-                <div className="flex items-center gap-5">
-                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 shadow-sm"><MapPin className="w-5 h-5" /></div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase text-slate-400 leading-none mb-1">Lokation</span>
-                    <span className="text-sm font-bold text-slate-500">København, Danmark</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 px-8 py-5 bg-emerald-50/50 rounded-[2.5rem] border border-emerald-100">
-              <div className="relative">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping absolute inset-0" />
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full relative" />
-              </div>
-              <p className="text-[10px] font-black text-emerald-900 uppercase tracking-widest flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4" /> System Status: Online
-              </p>
-            </div>
+          {/* Kolonne 3: Uddannelser (2 cols) */}
+          <div className="lg:col-span-2 flex flex-col gap-3">
+            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-1">
+              Uddannelser
+            </h4>
+            <ul className="space-y-2 text-sm text-slate-500">
+              <li>
+                <a href="#uddannelser" className="hover:text-slate-900 transition-colors font-medium">Socialrådgiver</a>
+              </li>
+              <li>
+                <a href="#uddannelser" className="hover:text-slate-900 transition-colors font-medium">Pædagogik</a>
+              </li>
+              <li>
+                <a href="#uddannelser" className="hover:text-slate-900 transition-colors font-medium">Socialpædagogik</a>
+              </li>
+              <li>
+                <a href="#uddannelser" className="hover:text-slate-900 transition-colors font-medium">Sygeplejerske</a>
+              </li>
+              <li>
+                <a href="#uddannelser" className="hover:text-slate-900 transition-colors font-medium">Jordemoder</a>
+              </li>
+              <li>
+                <a href="#uddannelser" className="hover:text-slate-900 transition-colors font-medium">Ergo- & Fysioterapi</a>
+              </li>
+              <li>
+                <a href="#tvaerfagligt" className="hover:text-slate-900 transition-colors font-medium">Tværfagligt</a>
+              </li>
+            </ul>
           </div>
+
+          {/* Kolonne 4: Virksomhed & Etik (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col gap-3">
+            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-1">
+              Virksomhed & Tryghed
+            </h4>
+            <ul className="space-y-2 text-sm text-slate-500">
+              <li>
+                <Link href="/hvorfor" className="hover:text-slate-900 transition-colors font-medium">Vores Filosofi & Vision</Link>
+              </li>
+              <li>
+                <Link href="/etik" className="hover:text-slate-900 transition-colors font-medium">Eksamenssikker & Etisk AI</Link>
+              </li>
+              <li>
+                <Link href="/terms-of-service" className="hover:text-slate-900 transition-colors font-medium">Betingelser & Vilkår</Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy" className="hover:text-slate-900 transition-colors font-medium">Privatlivspolitik & GDPR</Link>
+              </li>
+              <li>
+                <Link href="/cookie-policy" className="hover:text-slate-900 transition-colors font-medium">Cookiepolitik</Link>
+              </li>
+              <li>
+                <a href="#faq" className="hover:text-slate-900 transition-colors font-medium">Ofte Stillede Spørgsmål (FAQ)</a>
+              </li>
+            </ul>
+          </div>
+
         </div>
-        
-        {/* BOTTOM BAR */}
-        <div className="pt-16 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="flex items-center gap-8">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-              &copy; {currentYear} Cohéro I/S · CVR: 46181425
-            </p>
-            <div className="h-1 w-1 bg-slate-200 rounded-full hidden md:block" />
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-              Pioneering Welfare Technology
-            </p>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+          <div>
+            &copy; {currentYear} Cohéro I/S · CVR: 46181425. Alle rettigheder forbeholdes.
           </div>
-          
-          <div className="flex items-center gap-3 text-slate-300">
-             <style jsx>{`
-               .serif { font-family: 'Playfair Display', serif; }
-             `}</style>
-            <span className="text-[10px] uppercase font-black tracking-[0.5em] text-slate-400">Designet til fremtiden</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              100% GDPR Compliant · Dansk Hostet
+            </span>
+            <span>
+              E-mail: <a href="mailto:kontakt@cohero.dk" className="text-blue-700 font-semibold hover:underline">kontakt@cohero.dk</a>
+            </span>
           </div>
         </div>
       </div>
