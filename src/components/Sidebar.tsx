@@ -172,7 +172,6 @@ export default function Sidebar() {
         { label: 'Pensumsøgning', path: '/pensum-search', icon: <Search className="w-4 h-4" /> },
         { label: 'Begrebsguide', path: '/concept-explainer', icon: <Brain className="w-4 h-4" /> },
         { label: 'Second Opinion', path: '/second-opinion', icon: <Scale className="w-4 h-4" /> },
-        { label: 'Lovportal', path: 'https://law.cohero.dk/', icon: <Scale className="w-4 h-4 text-indigo-500" />, isSSO: true, isExternal: true },
         { label: 'Forskningsrapporter', path: '/vive-indsigt', icon: <TrendingUp className="w-4 h-4" /> },
       ],
     },
