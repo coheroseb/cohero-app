@@ -930,7 +930,7 @@ const SeminarDetailView: React.FC<{ seminar: SavedSeminar; user: any; userProfil
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#F8FAFC] overflow-hidden flex flex-col font-sans">
+    <div className="fixed inset-0 z-[150] bg-[#F8FAFC] overflow-hidden flex flex-col font-sans">
       
       {/* ── Top Header ─────────────────────────────────── */}
       <header className="bg-white border-b border-slate-200/80 px-6 sm:px-8 py-3.5 flex items-center justify-between shrink-0 z-40 shadow-sm">
