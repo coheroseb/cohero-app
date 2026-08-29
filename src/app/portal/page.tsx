@@ -118,7 +118,7 @@ const getGradient = (title: string) => {
 
 const PortalPageContent: React.FC = () => {
   const { user, userProfile, isUserLoading, refetchUserProfile } = useApp();
-  const hasProAccess = userProfile?.membership === 'Kollega+' || userProfile?.membership === 'Semesterpakken' || userProfile?.role === 'admin';
+  const hasProAccess = userProfile?.membership === 'Cohéro Student' || userProfile?.membership === 'Semesterpakken' || userProfile?.membership === 'Kollega+' || userProfile?.role === 'admin';
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -1164,13 +1164,13 @@ const PortalPageContent: React.FC = () => {
             {!hasProAccess ? (
               <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm text-center relative overflow-hidden flex flex-col items-center justify-center">
                 <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-3">
-                  <Crown className="w-5 h-5 text-indigo-500" />
+                  <Sparkles className="w-5 h-5 text-indigo-500" />
                 </div>
-                <h4 className="text-sm font-black text-slate-900 mb-1">Pensumsøgning er forbeholdt Kollega+</h4>
-                <p className="text-[11px] text-slate-400 mb-4 max-w-xs leading-relaxed">Søg på tværs af alt pensum og find relevante kapitler med det samme.</p>
+                <h4 className="text-sm font-black text-slate-900 mb-1">Pensumsøgning med sidetal & APA 7th</h4>
+                <p className="text-[11px] text-slate-400 mb-4 max-w-xs leading-relaxed">Få fuld adgang til semantisk søgning i al pensumlitteratur med Cohéro Student.</p>
                 <Link href="/upgrade" className="w-full">
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black uppercase tracking-widest text-[9px] h-10 shadow-sm active:scale-95 transition-all">
-                    Opgrader Nu
+                  <Button className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl font-black uppercase tracking-widest text-[9px] h-10 shadow-sm active:scale-95 transition-all">
+                    Opgrader til Cohéro Student
                   </Button>
                 </Link>
               </div>
@@ -1349,11 +1349,11 @@ const PortalPageContent: React.FC = () => {
                 </div>
               </div>
 
-              {/* SPIL DAGENS CHALLENGE BUTTON */}
+              {/* SAGSANALYSE / DAGENS TRÆNING BUTTON */}
               <div className="mt-5 relative z-10">
-                <Link href="/daily-challenge">
-                  <button className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 active:scale-98 transition-all">
-                     <Sparkles className="w-4 h-4 fill-current text-white animate-pulse" /> Spil Teoretiker-Quiz
+                <Link href="/case-analyser">
+                  <button className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 active:scale-98 transition-all">
+                     <Sparkles className="w-4 h-4 fill-current text-white" /> Træn Juridisk Sagsanalyse
                   </button>
                 </Link>
               </div>
@@ -1441,15 +1441,17 @@ const PortalPageContent: React.FC = () => {
       </main>
 
       {/* --- UPGRADE FLOATER --- */}
-      {userProfile?.membership !== 'Kollega+' && (
+      {!hasProAccess && (
         <motion.div 
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           className="fixed bottom-8 inset-x-0 flex justify-center z-50 px-6 pointer-events-none"
         >
-          <Link href="/upgrade" className="bg-slate-950 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full flex items-center gap-3 sm:gap-4 shadow-2xl hover:scale-105 transition-all border border-white/10 group pointer-events-auto cursor-pointer">
-            <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">Opgrader til Kollega+</span>
+          <Link href="/upgrade" className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-full flex items-center gap-3 sm:gap-4 shadow-2xl hover:scale-105 transition-all border border-indigo-500/30 group pointer-events-auto cursor-pointer">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">
+              Opgrader til Semesterpakken <span className="text-emerald-400 ml-1 font-extrabold">(Spar 33%)</span>
+            </span>
             <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-amber-400 group-hover:text-amber-950 transition-colors">
               <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </div>

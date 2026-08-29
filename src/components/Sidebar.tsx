@@ -194,10 +194,16 @@ export default function Sidebar() {
     <div className="flex flex-col h-full justify-between overflow-y-auto no-scrollbar">
       <div className="space-y-5">
         {/* Brand */}
-        <div className="px-3 pb-2 pt-1">
-          <Link href="/portal" className="block select-none">
-            <span className="text-xl font-black tracking-tight text-slate-900 serif">Cohéro</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 block mt-0.5">Student</span>
+        <div className="px-3 pb-3 pt-2">
+          <Link href="/portal" className="flex items-center gap-2 select-none group">
+            <img 
+              src="/cohero-logo.png" 
+              alt="Cohéro Student" 
+              className="h-7 w-auto max-w-[130px] object-contain block -translate-y-0.5" 
+            />
+            <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full">
+              Student
+            </span>
           </Link>
         </div>
 
@@ -221,7 +227,7 @@ export default function Sidebar() {
                   );
                 }
 
-                return <NavLink key={idx} item={item} isActive={isActive} />;
+                return <NavLink key={idx} item={item} isActive={Boolean(isActive)} />;
               })}
             </nav>
           </div>
@@ -256,7 +262,7 @@ export default function Sidebar() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                handleLogout(e);
+                handleLogout();
               }}
               className="w-9 h-9 flex items-center justify-center bg-rose-50 border border-rose-100/80 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-xl transition-all shrink-0 cursor-pointer shadow-sm active:scale-95 z-30"
               title="Log ud af Cohéro"
@@ -274,8 +280,15 @@ export default function Sidebar() {
     <>
       {/* ── Mobile top header ── */}
       <header className="fixed top-0 left-0 right-0 h-14 bg-white/90 backdrop-blur-md border-b border-slate-100/60 z-30 flex items-center justify-between px-5 md:hidden">
-        <Link href="/portal" className="font-black text-[17px] text-slate-900 tracking-tight">
-          Cohéro
+        <Link href="/portal" className="flex items-center gap-2">
+          <img 
+            src="/cohero-logo.png" 
+            alt="Cohéro Student" 
+            className="h-6 w-auto max-w-[110px] object-contain block" 
+          />
+          <span className="text-[8px] font-black tracking-widest uppercase bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-1.5 py-0.5 rounded-full">
+            Student
+          </span>
         </Link>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
