@@ -1058,63 +1058,68 @@ const SeminarCard: React.FC<{ seminar: SavedSeminar; onOpen: () => void; onDelet
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       className="group relative h-full"
     >
-      <div className="h-full bg-white rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] hover:shadow-md hover:border-indigo-200 transition-all duration-500 flex flex-col overflow-hidden">
+      <div className="h-full bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-300 flex flex-col overflow-hidden">
         {/* Top Section */}
-        <div className="p-6 sm:p-8 flex-1 cursor-pointer" onClick={onOpen}>
-          <div className="flex items-start justify-between mb-6 sm:mb-8">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-950 rounded-xl flex items-center justify-center text-indigo-400 shadow-sm group-hover:rotate-6 group-hover:scale-110 transition-all duration-500">
-              <Presentation className="w-6 h-6 sm:w-7 sm:h-7" />
+        <div className="p-6 sm:p-7 flex-1 cursor-pointer" onClick={onOpen}>
+          <div className="flex items-start justify-between mb-5">
+            <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-400 shadow-sm group-hover:scale-105 transition-all">
+              <Presentation className="w-6 h-6" />
             </div>
-            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100/50">
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
               <button 
                 onClick={e => { e.stopPropagation(); setShowCatPicker(!showCatPicker); }} 
-                className={`p-2 rounded-lg transition-all ${seminar.category ? 'text-indigo-600 bg-white shadow-sm' : 'text-slate-300 hover:text-indigo-600' }`}
+                className={`p-2 rounded-lg transition-all ${seminar.category ? 'text-indigo-600 bg-white shadow-sm' : 'text-slate-400 hover:text-indigo-600' }`}
+                title="Skift kategori"
               >
                 <FolderOpen className="w-4 h-4"/>
               </button>
               <button 
                 onClick={e => { e.stopPropagation(); onDelete(); }} 
-                className="p-2 text-slate-200 hover:text-rose-500 transition-colors"
+                className="p-2 text-slate-300 hover:text-rose-600 transition-colors"
+                title="Slet oplæg"
               >
                 <Trash2 className="w-4 h-4"/>
               </button>
             </div>
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mb-3 group-hover:text-indigo-900 transition-colors line-clamp-2">
+          <h3 className="text-lg font-black text-slate-900 leading-snug mb-2.5 group-hover:text-indigo-600 transition-colors line-clamp-2">
             {seminar.overallTitle}
           </h3>
 
           {seminar.category && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-100/50 mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold border border-amber-200/60 mb-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
               {seminar.category}
             </div>
           )}
 
-          <div className="flex items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400 mt-4">
-            <div className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" />{date?.toLocaleDateString('da-DK')}</div>
+          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 mt-3">
+            <div className="flex items-center gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5 text-indigo-500" />
+              {date ? date.toLocaleDateString('da-DK', { year: 'numeric', month: 'short' }) : 'Dato'}
+            </div>
             <div className="w-1 h-1 rounded-full bg-slate-200" />
             <div>{seminar.slides?.length || 0} Slides</div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between group-hover:bg-indigo-50/30 transition-colors">
+        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between group-hover:bg-indigo-50/20 transition-colors">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[10px] font-bold">
               {totalConcepts} Begreber
             </span>
           </div>
-          <div className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
-            Studér <ArrowRight className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform">
+            <span>Åbn Oplæg</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>
       </div>
       
       {showCatPicker && (
-        <div className="absolute inset-0 bg-white/98 backdrop-blur-md z-30 p-8 flex flex-col justify-center animate-in fade-in zoom-in-95 duration-200 rounded-[var(--radius-lg)]" onClick={e => e.stopPropagation()}>
+        <div className="absolute inset-0 bg-white/98 backdrop-blur-md z-30 p-6 flex flex-col justify-center animate-in fade-in zoom-in-95 duration-200 rounded-3xl border border-slate-200" onClick={e => e.stopPropagation()}>
             <div className="mb-6">
                 <p className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-[0.2em] text-center">Definér Kategori</p>
                 <div className="relative group">
@@ -1374,174 +1379,259 @@ export default function MineSeminarerPage() {
   if (isLoading) return <AuthLoadingScreen />;
 
   return (
-    <div className="min-h-screen bg-slate-50/60 font-sans pb-32">
-      <main className="max-w-7xl mx-auto px-6 py-10">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans pb-32">
+      
+      {/* ── Top Header ─────────────────────────────────── */}
+      <div className="shrink-0 bg-white border-b border-slate-200/80 px-6 sm:px-8 py-4 sticky top-0 z-30">
         <PageHeader
-          title="Mit Vidensbibliotek"
-          subtitle="Organiser, repetér og få AI-indsigt i alle dine seminarer."
-          icon={<BookCopy className="w-5 h-5" />}
+          title="Mine Oplæg & Seminarer"
+          icon={<Presentation className="w-5 h-5" />}
+          iconColor="bg-indigo-50 text-indigo-600"
+          className="mb-0"
           backHref="/portal"
           actions={
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-1 p-1 bg-white rounded-xl border border-slate-100 shrink-0 shadow-sm">
-                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <LayoutGrid className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-2xl shrink-0">
+                <button 
+                  onClick={() => setViewMode('grid')} 
+                  className={`p-2 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                  title="Gittervisning"
+                >
+                  <LayoutGrid className="w-4 h-4" />
                 </button>
-                <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <List className="w-3.5 h-3.5" />
+                <button 
+                  onClick={() => setViewMode('list')} 
+                  className={`p-2 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                  title="Listevisning"
+                >
+                  <List className="w-4 h-4" />
                 </button>
               </div>
+
               <button 
                 onClick={() => setShowStats(!showStats)} 
-                className={`h-11 px-4 sm:px-5 rounded-[var(--radius-sm)] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border shrink-0 ${showStats ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50 shadow-sm'}`}
+                className={`h-11 px-4 sm:px-5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border shrink-0 ${
+                  showStats 
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm' 
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'
+                }`}
               >
-                <Activity className="w-3.5 h-3.5" /> {showStats ? 'Skjul Statistik' : 'Statistik'}
+                <Activity className="w-4 h-4 text-indigo-500" /> 
+                <span>{showStats ? 'Skjul Statistik' : 'Statistik'}</span>
               </button>
+
               <Link href="/seminar-architect" className="shrink-0">
-                <Button className="rounded-[var(--radius-sm)] bg-slate-900 hover:bg-indigo-600 text-white h-11 px-6 shadow-sm text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2">
-                  <Plus className="w-4 h-4" /> Ny Analyse
+                <Button className="rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white h-11 px-5 shadow-sm text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Nyt Oplæg
                 </Button>
               </Link>
             </div>
           }
         />
+      </div>
 
+      <main className="grow max-w-7xl mx-auto w-full px-4 sm:px-6 pt-8 relative z-10 space-y-6">
+
+        {/* ── Statistics Drawer ───────────────────────────── */}
         <AnimatePresence>
-            {showStats && (
-                <motion.div 
-                    initial={{ height: 0, opacity: 0, y: -20 }} 
-                    animate={{ height: 'auto', opacity: 1, y: 0 }} 
-                    exit={{ height: 0, opacity: 0, y: -20 }}
-                    className="overflow-hidden mb-12"
-                >
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 p-6 sm:p-10 bg-white/40 backdrop-blur-xl rounded-[var(--radius-xl)] border border-slate-200/60 shadow-[var(--shadow-sm)]">
-                        {[
-                            { label: 'Total Viden', val: stats.seminars, sub: 'Seminarer', icon: <Presentation className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-slate-950', bg: 'bg-white shadow-sm' },
-                            { label: 'Begreber', val: stats.concepts, sub: 'Kortlagt viden', icon: <Tags className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-indigo-600', bg: 'bg-indigo-50/50' },
-                            { label: 'Noter', val: stats.notes, sub: 'Studienoter', icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6"/>, color: 'text-emerald-600', bg: 'bg-emerald-50/50' }
-                        ].map((s, i) => (
-                            <div key={i} className="flex items-center gap-4 sm:gap-6 group">
-                                <div className={`w-12 h-12 sm:w-16 sm:h-16 ${s.bg} ${s.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-500`}>{s.icon}</div>
-                                <div>
-                                    <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-0.5">{s.label}</p>
-                                    <p className={`text-2xl sm:text-3xl font-black ${s.color}`}>{s.val}</p>
-                                    <p className="text-[8px] sm:text-[10px] font-medium text-slate-400">{s.sub}</p>
-                                </div>
-                            </div>
-                        ))}
+          {showStats && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0, y: -10 }} 
+              animate={{ height: 'auto', opacity: 1, y: 0 }} 
+              exit={{ height: 0, opacity: 0, y: -10 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 p-6 bg-white rounded-3xl border border-slate-200/90 shadow-sm">
+                {[
+                  { label: 'Oplæg & Seminarer', val: stats.seminars, sub: 'Gemte analyser', icon: <Presentation className="w-5 h-5"/>, color: 'text-slate-950', bg: 'bg-slate-50 border border-slate-200/60' },
+                  { label: 'Kortlagte Begreber', val: stats.concepts, sub: 'Faglige nøgleord', icon: <Tags className="w-5 h-5"/>, color: 'text-indigo-600', bg: 'bg-indigo-50/60 border border-indigo-100' },
+                  { label: 'Studienoter', val: stats.notes, sub: 'Egne notater', icon: <FileText className="w-5 h-5"/>, color: 'text-emerald-600', bg: 'bg-emerald-50/60 border border-emerald-100' }
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
+                    <div className={`w-12 h-12 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center shrink-0`}>
+                      {s.icon}
                     </div>
-                </motion.div>
-            )}
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</p>
+                      <p className={`text-2xl font-black ${s.color}`}>{s.val}</p>
+                      <p className="text-[10px] font-medium text-slate-400">{s.sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
-        <div className="mb-8 sm:mb-10 p-1.5 sm:p-2 bg-white rounded-[var(--radius-lg)] border border-slate-200/60 shadow-[var(--shadow-sm)] flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 overflow-hidden">
-            <div className="flex-1 relative w-full group">
-                <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
-                <input 
-                    type="text" 
-                    placeholder="Søg i dine seminarer..." 
-                    value={searchQuery} onChange={e => setSearchQuery(e.target.value)} 
-                    className="w-full h-11 sm:h-14 pl-11 sm:pl-14 pr-4 sm:pr-6 bg-transparent rounded-lg sm:rounded-2xl text-xs sm:text-sm font-semibold focus:outline-none" 
-                />
-            </div>
-            
-            <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto p-1.5 sm:p-0">
-                <div className="h-8 w-px bg-slate-100 mx-1 hidden md:block" />
-                
-                <select 
-                    value={activeCategory || ''} 
-                    onChange={e => setActiveCategory(e.target.value || null)} 
-                    className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-slate-50 border-none rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer"
-                >
-                    <option value="">Kategori</option>
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-
-                <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
-                    {['newest', 'title'].map(s => (
-                        <button 
-                            key={s} onClick={() => setSortBy(s as any)} 
-                            className={`px-3 sm:px-4 py-2 rounded-lg text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-                        >
-                            {s === 'newest' ? 'Dato' : 'A-Z'}
-                        </button>
-                    ))}
-                </div>
-
+        {/* ── Search & Filter Toolbar ─────────────────────── */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 space-y-4">
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="flex-1 relative w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Søg i dine oplæg, emner, slides eller noter..." 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)} 
+                className="w-full h-12 pl-11 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all" 
+              />
+              {searchQuery && (
                 <button 
-                    onClick={() => setFilterLaws(!filterLaws)} 
-                    className={`h-10 px-3 sm:px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 ${filterLaws ? 'bg-rose-50 text-rose-600 shadow-sm' : 'text-slate-300 hover:text-slate-600' }`}
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                 >
-                    <Scale className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </button>
+              )}
             </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
+                {['newest', 'title'].map(s => (
+                  <button 
+                    key={s} 
+                    onClick={() => setSortBy(s as any)} 
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      sortBy === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    {s === 'newest' ? 'Nyeste' : 'A-Å'}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => setFilterLaws(!filterLaws)} 
+                className={`h-10 px-3.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 border shrink-0 ${
+                  filterLaws 
+                    ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-sm' 
+                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900'
+                }`}
+                title="Filtrer oplæg med lovstof"
+              >
+                <Scale className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Lovstof</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Category Pills */}
+          {categories.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setActiveCategory(null)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                  activeCategory === null
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+              >
+                Alle kategorier ({seminars.length})
+              </button>
+              {categories.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setActiveCategory(activeCategory === c ? null : c)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                    activeCategory === c
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                      : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  {c} ({seminars.filter(s => s.category === c).length})
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* ── Active Category Deep Dive Banner ────────────── */}
         {activeCategory && (
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.98 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                className="mb-10 flex items-center justify-between p-6 bg-slate-900 rounded-[var(--radius-lg)] text-white shadow-[var(--shadow-sm)] relative group z-[20]"
-            >
-                <div className="absolute inset-0 rounded-[var(--radius-lg)] overflow-hidden pointer-events-none">
-                    <div className="absolute inset-0 bg-indigo-500/10 blur-3xl opacity-50 group-hover:scale-110 transition-transform duration-1000" />
-                </div>
-                <div className="bg-white border border-slate-200/60 p-6 sm:p-8 rounded-[var(--radius-lg)] flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-[var(--shadow-sm)] relative z-10 w-full">
-                        <div className="space-y-1.5">
-                            <div className="flex items-center gap-2">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Intelligent Kategori Analyse</p>
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            </div>
-                            <h4 className="text-2xl font-black text-slate-900 serif tracking-tight">Dyk ned i {activeCategory}</h4>
-                            <p className="text-xs text-slate-400 font-medium">Få et panoramasyn over dine {filtered.length} seminarer og faglige forbindelser.</p>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                            <button 
-                                onClick={() => setShowCategoryDeepDive(true)}
-                                className="flex items-center gap-2.5 px-8 py-4 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-950 shadow-sm active:scale-95 transition-all group"
-                            >
-                                <Target className="w-4 h-4 text-indigo-400 group-hover:scale-125 transition-transform" /> START ANALYSE
-                            </button>
-                            <div className="flex gap-2">
-                                <button 
-                                    onClick={handleOpenCategoryConceptList}
-                                    className="p-4 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition-colors border border-amber-100"
-                                    title="Vis Begreber"
-                                >
-                                    <BookOpen className="w-5 h-5" />
-                                </button>
-                                <button 
-                                    onClick={() => setCategoryChatData({ title: activeCategory || '', seminars: filtered })}
-                                    className="p-4 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors border border-indigo-100"
-                                    title="Chat med viden"
-                                >
-                                    <BrainCircuit className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-            </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="bg-white rounded-3xl border border-indigo-200/80 p-6 sm:p-7 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-lg">
+                  Kategori-overblik
+                </span>
+                <span className="text-xs font-bold text-slate-400">• {filtered.length} oplæg</span>
+              </div>
+              <h4 className="text-xl font-black text-slate-900 leading-tight">Dyk ned i {activeCategory}</h4>
+              <p className="text-xs text-slate-500 font-medium">Se begrebssammenhænge, kør en master quiz eller chat med hele emnet.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button 
+                onClick={() => setShowCategoryDeepDive(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-xs font-bold hover:bg-indigo-600 shadow-sm active:scale-95 transition-all"
+              >
+                <Target className="w-4 h-4 text-indigo-400" /> 
+                <span>Kategori Analyse</span>
+              </button>
+              <button 
+                onClick={handleOpenCategoryConceptList}
+                className="p-2.5 bg-amber-50 text-amber-700 rounded-2xl hover:bg-amber-100 transition-colors border border-amber-200/60"
+                title="Vis Begreber for kategorien"
+              >
+                <BookOpen className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setCategoryChatData({ title: activeCategory || '', seminars: filtered })}
+                className="p-2.5 bg-indigo-50 text-indigo-700 rounded-2xl hover:bg-indigo-100 transition-colors border border-indigo-200/60"
+                title="Chat med viden i kategorien"
+              >
+                <BrainCircuit className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {filtered.map(s => <SeminarCard key={s.id} seminar={s} viewMode={viewMode} onOpen={() => setOpenSeminar(s)} onDelete={() => handleDelete(s.id)} onCategorize={cat => handleCategorize(s.id, cat)} existingCategories={categories} />)}
+        {/* ── Seminar Cards Grid ──────────────────────────── */}
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+          {filtered.map(s => (
+            <SeminarCard 
+              key={s.id} 
+              seminar={s} 
+              viewMode={viewMode} 
+              onOpen={() => setOpenSeminar(s)} 
+              onDelete={() => handleDelete(s.id)} 
+              onCategorize={cat => handleCategorize(s.id, cat)} 
+              existingCategories={categories} 
+            />
+          ))}
         </div>
 
+        {/* ── Empty State ─────────────────────────────────── */}
         {!isLoading && filtered.length === 0 && (
-          <EmptyState
-            title="Biblioteket er tomt"
-            description="Der er ikke noget materiale her endnu. Start din første analyse for at se din viden tage form."
-            icon={<FileSearch className="w-6 h-6 text-slate-300" />}
-            actionLabel="Start første analyse"
-            actionHref="/seminar-architect"
-            className="my-10"
-          />
+          <div className="py-20 text-center space-y-4 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-8">
+            <Presentation className="w-12 h-12 text-slate-300 mx-auto" />
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-slate-800">
+                {searchQuery || activeCategory ? 'Ingen oplæg matchede din søgning' : 'Dit oplægsarkiv er tomt'}
+              </h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                {searchQuery || activeCategory 
+                  ? 'Prøv at nulstille søgefeltet eller fjerne kategorifilteret.'
+                  : 'Upload og analyser dine PowerPoint- og PDF-slides i Oplægsarkitekten for at få dem struktureret her.'}
+              </p>
+            </div>
+            {!searchQuery && !activeCategory && (
+              <Link href="/seminar-architect" className="inline-block pt-2">
+                <Button className="rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white h-11 px-6 text-xs font-black uppercase tracking-wider">
+                  <Plus className="w-4 h-4 mr-2" /> Start første oplægsanalyse
+                </Button>
+              </Link>
+            )}
+          </div>
         )}
       </main>
 
       {(() => {
-          const s = seminars.find(s => s.id === openSeminar?.id);
-          return s ? <SeminarDetailView seminar={s} user={user} userProfile={userProfile} onClose={() => setOpenSeminar(null)} /> : null;
+        const s = seminars.find(s => s.id === openSeminar?.id);
+        return s ? <SeminarDetailView seminar={s} user={user} userProfile={userProfile} onClose={() => setOpenSeminar(null)} /> : null;
       })()}
       
       <AnimatePresence>

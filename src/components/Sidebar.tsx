@@ -164,6 +164,7 @@ export default function Sidebar() {
       items: [
         { label: 'Mit Pensum & Noter', path: '/mine-materialer', icon: <FileBox className="w-4 h-4" /> },
         { label: 'Mine Semesterplaner', path: '/mine-semesterplaner', icon: <CalendarDays className="w-4 h-4" /> },
+        { label: 'Mine Oplæg & Seminarer', path: '/mine-seminarer', icon: <Presentation className="w-4 h-4" /> },
       ],
     },
     {
