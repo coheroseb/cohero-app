@@ -1905,30 +1905,7 @@ export async function generateCaseUpdateEmailAction(input: Types.CaseUpdateEmail
 
 
 export async function sendStreakReminderEmailAction(input: { userEmail: string, userName: string, streakCount: number, userId: string }): Promise<{ success: boolean; message: string; }> {
-    try {
-        const { subject, body } = await callFirebaseFlow('generateStreakReminderEmailFlow', { ...input });
-        
-        await resend.emails.send({
-            from: 'Cohéro Notifikationer <info@platform.cohero.dk>',
-            to: input.userEmail,
-            subject: subject,
-            html: wrapEmailHtml(body),
-        });
-
-        // Add in-app notification
-        await sendInAppNotificationAction({
-            uid: input.userId,
-            title: "Hold din streak i live! 🔥",
-            body: `Du har en streak på ${input.streakCount} dage. Log ind i dag for at holde den kørende!`,
-            type: 'warning',
-            link: '/portal'
-        });
-
-        return { success: true, message: "Streak reminder sent." };
-    } catch (error) {
-        console.error('Failed to send streak reminder:', error);
-        return { success: false, message: "Failed to send streak reminder." };
-    }
+    return { success: true, message: "Streak reminders are disabled." };
 }
 
 export async function sendGroupInvitationEmailAction(input: { recipientEmail: string, inviteeName: string, inviterName: string, groupName: string, groupUrl: string }): Promise<{ success: boolean; message: string; }> {

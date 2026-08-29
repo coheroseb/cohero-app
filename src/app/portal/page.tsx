@@ -1325,43 +1325,7 @@ const PortalPageContent: React.FC = () => {
               </div>
             )}
 
-            {/* STREAK CARD */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm relative overflow-hidden group"
-            >
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
-                <Flame className="w-32 h-32 text-amber-500" />
-              </div>
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Din Daglige Streak</p>
-                  <h3 className="text-3xl font-black text-slate-950 serif">
-                    {userProfile.dailyChallengeStreak || 0} dage
-                  </h3>
-                  <p className="text-[10px] font-bold text-amber-600/80 leading-relaxed max-w-[160px]">
-                    Lidt har også ret! Din streak er beviset på, at du faktisk har fået studeret hver eneste dag. Godt gået!
-                  </p>
-                </div>
-                <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center">
-                   <Flame className={`w-8 h-8 ${ (userProfile.dailyChallengeStreak || 0) > 0 ? 'text-amber-500 fill-amber-500 animate-pulse' : 'text-slate-200' }`} />
-                </div>
-              </div>
 
-              {/* SAGSANALYSE / DAGENS TRÆNING BUTTON */}
-              <div className="mt-5 relative z-10">
-                <Link href="/case-analyser">
-                  <button className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 active:scale-98 transition-all">
-                     <Sparkles className="w-4 h-4 fill-current text-white" /> Træn Juridisk Sagsanalyse
-                  </button>
-                </Link>
-              </div>
-              <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Personlig Rekord</span>
-                <span className="text-sm font-black text-slate-400">{userProfile.highestStreak || 0} dage</span>
-              </div>
-            </motion.div>
 
             {/* EXAM INFO CARD */}
             {activeModule?.examForm && (

@@ -77,7 +77,6 @@ import {
   Skull,
   AlertTriangle
 } from 'lucide-react';
-import { sendStreakReminderEmailAction } from '@/app/actions';
 import { UserProfile } from '@/ai/flows/types';
 import { calculateStudyStarted } from '@/lib/education';
 
@@ -574,44 +573,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const runMaintenance = async () => {
         const updateObj: any = {};
         
-        // 1. Streak check
-        const lastStreakUpdate = userProfile.lastDailyChallengeDate?.toDate 
-            ? userProfile.lastDailyChallengeDate.toDate() 
-            : (userProfile.lastDailyChallengeDate?.seconds 
-                ? new Date(userProfile.lastDailyChallengeDate.seconds * 1000)
-                : (userProfile.lastDailyChallengeDate ? new Date(userProfile.lastDailyChallengeDate) : null));
-        
-        if (lastStreakUpdate) {
-            lastStreakUpdate.setHours(0, 0, 0, 0);
-        }
-
-        if (!lastStreakUpdate || (lastStreakUpdate.getTime() < today.getTime())) {
-            const yesterday = new Date(today);
-            yesterday.setDate(today.getDate() - 1);
-            yesterday.setHours(0,0,0,0);
-
-            let newStreak = 1;
-            const isYesterday = lastStreakUpdate && lastStreakUpdate.getTime() === yesterday.getTime();
-            
-            if (isYesterday) {
-                newStreak = (userProfile.dailyChallengeStreak || 0) + 1;
-            } else if (lastStreakUpdate && lastStreakUpdate.getTime() === today.getTime()) {
-                // Safeguard: already updated today
-                return;
-            }
-
-            const currentHighest = userProfile.highestStreak || 0;
-            const finalHighest = Math.max(currentHighest, newStreak);
-
-            updateObj.dailyChallengeStreak = newStreak;
-            updateObj.lastDailyChallengeDate = serverTimestamp();
-            updateObj.lastLogin = serverTimestamp();
-            if (finalHighest > currentHighest) {
-                updateObj.highestStreak = finalHighest;
-            }
-        }
-
-        // 2. Missing Start Date check
+        // Missing Start Date check
         if (!userProfile.isQualified && userProfile.semester && !userProfile.studyStarted) {
             updateObj.studyStarted = calculateStudyStarted(userProfile.semester);
         }
