@@ -65,11 +65,11 @@ export default function PageHeader({
           </div>
         )}
         <div className="min-w-0 pt-0.5">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none truncate">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
             {title}
           </h1>
           {subtitle && (
-            <p className="label-sm text-slate-400 mt-1.5 leading-none">{subtitle}</p>
+            <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">{subtitle}</p>
           )}
         </div>
       </div>

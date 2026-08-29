@@ -585,7 +585,6 @@ DIN OPGAVE:
       <div className="shrink-0 bg-white border-b border-slate-200/80 px-6 sm:px-8 py-4 sticky top-0 z-30">
         <PageHeader
           title="Mit Pensum & Noter"
-          subtitle="Dit personlige vidensarkiv. Upload pensum, artikler og noter, og lad AI strukturere og søge i din viden."
           icon={<FileBox className="w-5 h-5" />}
           iconColor="bg-indigo-50 text-indigo-600"
           className="mb-0"
